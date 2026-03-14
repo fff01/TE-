@@ -1,0 +1,9 @@
+<?php
+return [
+    'dashscope_key' => '在这里填你的 DashScope API Key',
+    'dashscope_model' => 'qwen3.5-plus',
+    'dashscope_url' => 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+    'neo4j_url' => 'http://127.0.0.1:7474/db/tekg/tx/commit',
+    'neo4j_user' => 'neo4j',
+    'neo4j_password' => '在这里填你的 Neo4j 密码',
+];

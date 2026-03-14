@@ -1,0 +1,5 @@
+api/config.local.php
+assignment_pdf_extract.txt
+大作业.pdf
+__pycache__/
+*.pyc
