@@ -26,6 +26,7 @@ if (!function_exists('curl_init')) {
 $payload = json_decode(file_get_contents('php://input') ?: '{}', true);
 $question = trim((string)($payload['question'] ?? ''));
 $language = trim((string)($payload['language'] ?? ''));
+$answerStyle = trim((string)($payload['answer_style'] ?? 'simple'));
 $localConfig = [];
 $localConfigPath = __DIR__ . '/config.local.php';
 if (is_file($localConfigPath)) {
@@ -65,7 +66,7 @@ if ($config['neo4j_password'] === '') {
 
 try {
     $service = new QaService($config);
-    $result = $service->answer($question, $language);
+    $result = $service->answer($question, $language, $answerStyle);
     echo json_encode(['ok' => true] + $result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     http_response_code(500);
@@ -95,13 +96,15 @@ final class QaService
         $this->config = $config;
     }
 
-    public function answer(string $question, string $language = ''): array
+    public function answer(string $question, string $language = '', string $answerStyle = 'simple'): array
     {
+        $answerStyle = strtolower(trim($answerStyle)) === 'detailed' ? 'detailed' : 'simple';
         $language = $language !== '' ? $language : $this->detectLanguage($question);
         $smallTalkAnswer = $this->getSmallTalkAnswer($question, $language);
         if ($smallTalkAnswer !== null) {
             return [
                 'language' => $language,
+                'answer_style' => $answerStyle,
                 'entity' => null,
                 'intent' => 'smalltalk',
                 'mode' => 'smalltalk',
@@ -114,6 +117,7 @@ final class QaService
         if ($this->isSmallTalk($question)) {
             return [
                 'language' => $language,
+                'answer_style' => $answerStyle,
                 'entity' => null,
                 'intent' => 'smalltalk',
                 'mode' => 'smalltalk',
@@ -175,18 +179,19 @@ final class QaService
         $references = $this->prepareReferencesForAnswer($references, $intent);
         if ($this->config['dashscope_key']) {
             try {
-                $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity);
+                $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
             } catch (Throwable $e) {
                 $mode .= '+fallback';
-                $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity);
+                $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
             }
         } else {
-            $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity);
+            $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
         }
         $answer = $this->polishAnswer($answer, $language);
 
         return [
             'language' => $language,
+            'answer_style' => $answerStyle,
             'entity' => $entity,
             'intent' => $intent,
             'mode' => $mode,
@@ -468,40 +473,62 @@ final class QaService
         return $trimmed;
     }
 
-    private function generateAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity): string
+    private function generateAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle): string
     {
         $context = json_encode([
             'intent' => $intent,
             'entity' => $entity,
             'rows' => $rows,
             'references' => $references,
+            'answer_style' => $answerStyle,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        $langInstruction = $language === 'zh'
-            ? '请用中文作答，要求准确、学术、简洁。必须优先依据给定上下文，不能编造。请先直接回答问题，再用1到3点总结关键机制或关系。若证据不足，请明确写“本地知识库暂无直接证据”。最后单列“参考文献”，列出标题和 PMID。'
-            : 'Answer in English in a concise academic style. Use only the provided context and do not invent facts. Give a direct answer first, then summarize key mechanisms or relations in 1-3 points. If evidence is insufficient, explicitly state that the local knowledge graph lacks direct evidence. End with a "References" section with title and PMID.';
-
-        $langInstruction = $language === 'zh'
-            ? "请用中文作答，风格要求准确、学术、简洁，适合课程答辩展示。\n"
-                . "必须严格基于给定上下文，不能编造，也不要补充上下文以外的事实。\n"
-                . "输出结构固定为：\n"
-                . "## 结论\n"
-                . "## 关键点\n"
-                . "## 参考文献\n"
-                . "先用1段话直接回答问题；再列2到4条关键点；最后只列最关键的5到8条参考文献。\n"
-                . "参考文献格式统一为“标题（PMID: xxxx）”。\n"
-                . "如果上下文中有明显不像疾病、功能或文献标题的条目，不要主动写入答案。\n"
-                . "如果上下文中存在中英文混杂实体，请优先用中文；无法可靠翻译时保留原文。\n"
-                . "如果证据不足，请明确写“本地知识库暂无直接证据”。"
-            : "Answer in concise academic English suitable for a project demo.\n"
-                . "Use only the provided context and do not invent facts.\n"
-                . "Use exactly this structure:\n"
-                . "## Conclusion\n"
-                . "## Key Points\n"
-                . "## References\n"
-                . "First answer directly in one short paragraph, then give 2 to 4 key points, then list only the most important 5 to 8 references as “Title (PMID: xxxx)”.\n"
-                . "Ignore records that do not look like valid diseases, functions, or paper titles.\n"
-                . "If evidence is insufficient, explicitly state that the local knowledge graph lacks direct evidence.";
+        if ($language === 'zh') {
+            $langInstruction = $answerStyle === 'detailed'
+                ? "请用中文作答，风格要求准确、学术、完整，允许适度展开，整体效果应明显比简单模式更详细。\n"
+                    . "必须严格基于给定上下文，不能编造，也不要补充上下文以外的事实。\n"
+                    . "输出结构固定为：\n"
+                    . "## 结论\n"
+                    . "## 关键点\n"
+                    . "## 参考文献\n"
+                    . "“结论”部分至少写两段较完整的说明性文字，每段 2 到 4 句，解释实体与目标对象之间的总体关系、可能机制、证据范围和局限。\n"
+                    . "“关键点”部分请写 4 到 6 条，每条尽量写成完整句，优先说明关系类型、机制背景或证据特征，而不是只保留几个词。\n"
+                    . "参考文献列出最关键的 6 到 8 条，格式统一为“标题（PMID: xxxx）”。\n"
+                    . "如果上下文中有明显不像疾病、功能或文献标题的条目，不要写入答案。\n"
+                    . "如果上下文中存在中英混杂实体，正文优先使用中文；参考文献标题保持原文。\n"
+                    . "如果证据不足，请明确写“本地知识库暂无直接证据”。"
+                : "请用中文作答，风格要求准确、学术、简洁，适合课程答辩展示。\n"
+                    . "必须严格基于给定上下文，不能编造，也不要补充上下文以外的事实。\n"
+                    . "输出结构固定为：\n"
+                    . "## 结论\n"
+                    . "## 关键点\n"
+                    . "## 参考文献\n"
+                    . "先用 1 段话直接回答问题，再列出 2 到 4 条关键点，最后列出最关键的 5 到 6 条参考文献。\n"
+                    . "参考文献格式统一为“标题（PMID: xxxx）”。\n"
+                    . "如果上下文中有明显不像疾病、功能或文献标题的条目，不要写入答案。\n"
+                    . "如果上下文中存在中英混杂实体，正文优先使用中文；参考文献标题保持原文。\n"
+                    . "如果证据不足，请明确写“本地知识库暂无直接证据”。";
+        } else {
+            $langInstruction = $answerStyle === 'detailed'
+                ? "Answer in academic English with a noticeably more detailed style than brief mode.\n"
+                    . "Use only the provided context and do not invent facts.\n"
+                    . "Use exactly this structure:\n"
+                    . "## Conclusion\n"
+                    . "## Key Points\n"
+                    . "## References\n"
+                    . "Write at least two fuller explanatory paragraphs in the conclusion, then provide 4 to 6 sentence-level key points, then list 6 to 8 key references as Title (PMID: xxxx).\n"
+                    . "Ignore records that do not look like valid diseases, functions, or paper titles.\n"
+                    . "If evidence is insufficient, explicitly state that the local knowledge graph lacks direct evidence."
+                : "Answer in concise academic English suitable for a project demo.\n"
+                    . "Use only the provided context and do not invent facts.\n"
+                    . "Use exactly this structure:\n"
+                    . "## Conclusion\n"
+                    . "## Key Points\n"
+                    . "## References\n"
+                    . "First answer directly in one short paragraph, then give 2 to 4 key points, then list the most important 5 to 6 references as Title (PMID: xxxx).\n"
+                    . "Ignore records that do not look like valid diseases, functions, or paper titles.\n"
+                    . "If evidence is insufficient, explicitly state that the local knowledge graph lacks direct evidence.";
+        }
 
         return $this->dashscopeChat([
             ['role' => 'system', 'content' => 'You are a bioinformatics knowledge-graph QA assistant.'],
@@ -509,39 +536,48 @@ final class QaService
         ], 0.1);
     }
 
-    private function fallbackAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity): string
+    private function fallbackAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle): string
     {
         if (empty($rows)) {
             return $language === 'zh'
-                ? '本地知识库暂无直接证据，建议换一个更具体的实体或问题类型。'
+                ? '## 结论' . "\n" . '本地知识库暂无直接证据。' . "\n\n" . '## 关键点' . "\n" . '- 当前未检索到与该问题直接相关的结构化记录。' . "\n" . '- 建议改用更具体的实体名称或关系类型重新提问。' . "\n\n" . '## 参考文献' . "\n" . '暂无。'
                 : 'The local knowledge graph currently lacks direct evidence. Try a more specific entity or question type.';
         }
 
         if ($language === 'zh' && $intent === 'subfamily' && isset($rows[0][0])) {
             $parent = (string)$rows[0][0];
             $copies = isset($rows[0][1]) ? (string)$rows[0][1] : '';
-            return "## 结论\n该问题对应的是谱系/分类关系。根据本地知识库，当前实体属于 {$parent} 谱系。\n\n## 关键点\n"
+            $conclusion = $answerStyle === 'detailed'
+                ? "## 结论\n该问题对应的是谱系或分类关系。根据本地知识图谱，当前实体属于 {$parent} 谱系，这表示它与 LINE-1 总家族之间存在层级归属，而不是疾病关联或功能作用关系。\n\n这一结果主要用于支持亚家族结构展示、谱系浏览以及后续的局部子图分析，因此更适合从分类学和知识组织的角度来理解。"
+                : "## 结论\n该问题对应的是谱系/分类关系。根据本地知识库，当前实体属于 {$parent} 谱系。";
+            return $conclusion . "\n\n## 关键点\n"
                 . "- 当前查询结果显示该实体与 {$parent} 之间存在 `SUBFAMILY_OF` 关系。\n"
                 . ($copies !== '' ? "- 该关系记录中还包含拷贝数信息：{$copies}。\n" : '')
+                . ($answerStyle === 'detailed' ? "- 这类边主要用于支撑亚家族查询、谱系结构可视化以及知识图谱中的层级展示。\n- 它描述的是分类归属关系，而不是疾病、功能或文献证据关系。\n" : '')
                 . "\n## 参考文献\n本地知识库暂无直接文献证据。";
         }
 
         if ($language === 'zh') {
             $items = [];
-            foreach (array_slice($rows, 0, 5) as $row) {
+            foreach (array_slice($rows, 0, $answerStyle === 'detailed' ? 6 : 5) as $row) {
                 if (is_array($row) && isset($row[0])) {
                     $target = (string)$row[0];
                     $predicate = isset($row[1]) ? (string)$row[1] : '相关';
-                    $items[] = "- {$predicate} {$target}";
+                    $items[] = $answerStyle === 'detailed'
+                        ? "- 根据本地知识图谱记录，当前查询实体与 {$target} 之间表现为“{$predicate}”关系，这说明两者在已整理的文献证据中存在可追踪的结构化关联。"
+                        : "- {$predicate} {$target}";
                 }
             }
             $refs = [];
-            foreach (array_slice($references, 0, 6) as $ref) {
+            foreach (array_slice($references, 0, $answerStyle === 'detailed' ? 8 : 6) as $ref) {
                 $title = (string)($ref['title'] ?? '未命名文献');
                 $pmid = implode(',', $ref['pmids'] ?? []);
                 $refs[] = "- {$title}" . ($pmid !== '' ? "（PMID: {$pmid}）" : '');
             }
-            return "## 结论\n基于本地知识库，可以检索到与该问题直接相关的结构化记录。\n\n## 关键点\n"
+            $conclusion = $answerStyle === 'detailed'
+                ? "## 结论\n基于本地知识库，可以检索到与该问题直接相关的结构化记录。当前结果来自已导入的 Neo4j 图数据库，可用于概括实体与目标对象之间的主要关系。\n\n从现有记录来看，这些关系通常不是孤立事实，而是来自多篇文献整理后的结构化知识，因此详细模式会尽量把主要关系、证据方向和可能含义展开说明。"
+                : "## 结论\n基于本地知识库，可以检索到与该问题直接相关的结构化记录。";
+            return $conclusion . "\n\n## 关键点\n"
                 . implode("\n", $items)
                 . "\n\n## 参考文献\n"
                 . implode("\n", $refs);

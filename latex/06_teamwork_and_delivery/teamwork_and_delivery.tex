@@ -1,0 +1,56 @@
+\section{系统实现与关键文件说明}
+
+为方便说明项目整体结构，本项目将主要代码分为文献抓取与抽取、图数据库导入、前端可视化展示以及智能问答后端四部分。各关键文件作用如下表所示。
+
+\begin{longtable}{p{4cm} p{9cm}}
+  \toprule
+  文件/模块 & 说明 \\
+  \midrule
+  index\_demo.html & 图谱展示与问答前端页面 \\
+  api/qa.php & 问答后端接口 \\
+  llm\_relay.py & 本地大模型中转服务 \\
+  normalize\_line1\_graph.py & 数据清洗与规范化脚本 \\
+  import\_*.cypher & Neo4j 节点与关系导入脚本 \\
+  output.jsonl / normalized\_output.jsonl & 文献抽取结果与规范化结果 \\
+  \bottomrule
+\end{longtable}
+
+\section{小组成员分工}
+
+\placeholder{这一节需要你和队友根据真实分工补充最终内容。建议按“文献抓取与抽取 / 图数据库与导入 / 前端可视化 / 问答系统 / 联调与测试”划分。}
+
+\begin{table}[H]
+  \centering
+  \caption{成员分工模板}
+  \begin{tabular}{p{3cm} p{10cm}}
+    \toprule
+    成员 & 主要工作 \\
+    \midrule
+    成员 A & \placeholder{填写具体工作} \\
+    成员 B & \placeholder{填写具体工作} \\
+    成员 C & \placeholder{填写具体工作，如无则删除} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{总结与不足}
+
+目前，本项目已经实现了从文献获取、信息抽取、图数据库建模、图谱可视化展示到基于本地知识库的智能问答的完整闭环。系统能够围绕 LINE-1 及其亚家族构建知识子图，支持疾病、功能和文献证据的图谱化展示，并可通过自然语言问题从本地知识图谱中检索证据，再结合大模型生成带参考文献的回答。
+
+项目当前仍存在若干局限。首先，图谱中的部分实体名称仍存在中英文混杂和粒度不完全统一的问题，需要进一步规范化。其次，当前可视化页面以演示性子图为主，若后续扩展到更大范围的 TE 类型，还需要进一步优化动态加载与布局策略。最后，问答模块虽然已经支持模板化查询和受限 Text2Cypher，但在更复杂、开放的问题场景下，仍有提升空间。
+
+总体而言，本项目已经达到课程大作业的核心目标，并为后续扩展到更大规模的 TE 文献知识图谱提供了可复用的技术框架。
+
+\section*{正式写作前的材料准备清单}
+\begin{itemize}[leftmargin=2em]
+  \item 文献抓取与抽取脚本名称、运行流程、关键词策略
+  \item 实体类型与关系类型清单
+  \item Neo4j 节点与关系设计表
+  \item RAG 架构图
+  \item Prompt 设计说明
+  \item 3 到 5 张系统截图
+  \item 2 到 3 条典型问答示例
+  \item 人工抽样准确率评估结果
+  \item 小组成员分工说明
+  \item GitHub 仓库地址与主要文件说明
+\end{itemize}
