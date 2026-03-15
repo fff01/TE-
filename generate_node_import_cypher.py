@@ -21,20 +21,38 @@ def cypher_string(value: str) -> str:
 def build_block(group_name: str, label: str, items: list[dict]) -> str:
     lines = [f"// Import {group_name}", "UNWIND ["]
     payload_lines = []
-    for item in items:
-        payload_lines.append(
-            "  {name: "
-            + cypher_string(item.get("name", ""))
-            + ", description: "
-            + cypher_string(item.get("description", ""))
-            + "}"
+    if group_name == "papers":
+        for item in items:
+            payload_lines.append(
+                "  {pmid: "
+                + cypher_string(item.get("pmid", ""))
+                + ", name: "
+                + cypher_string(item.get("name", ""))
+                + ", description: "
+                + cypher_string(item.get("description", ""))
+                + "}"
+            )
+        lines.append(",\n".join(payload_lines))
+        lines.append(f"] AS row\nMERGE (n:{label} {{pmid: row.pmid}})")
+        lines.append(
+            "ON CREATE SET n.name = row.name, n.description = row.description, "
+            + f"n.source_group = {cypher_string(group_name)};"
         )
-    lines.append(",\n".join(payload_lines))
-    lines.append(f"] AS row\nMERGE (n:{label} {{name: row.name}})")
-    lines.append(
-        "ON CREATE SET n.description = row.description, "
-        + f"n.source_group = {cypher_string(group_name)};"
-    )
+    else:
+        for item in items:
+            payload_lines.append(
+                "  {name: "
+                + cypher_string(item.get("name", ""))
+                + ", description: "
+                + cypher_string(item.get("description", ""))
+                + "}"
+            )
+        lines.append(",\n".join(payload_lines))
+        lines.append(f"] AS row\nMERGE (n:{label} {{name: row.name}})")
+        lines.append(
+            "ON CREATE SET n.description = row.description, "
+            + f"n.source_group = {cypher_string(group_name)};"
+        )
     lines.append("")
     return "\n".join(lines)
 

@@ -100,9 +100,10 @@
       overlapIterations: 14
     };
     const demoData = window.GRAPH_DEMO_DATA || {elements:[],qa:{}};
+    const initialElements = JSON.parse(JSON.stringify(demoData.elements || []));
     const el = id => document.getElementById(id);
     const nodeDetails = el('node-details'), searchInput = el('node-search'), nav = el('search-results-nav'), prevBtn = el('prev-result'), nextBtn = el('next-result'), resultCounter = el('result-counter'), resultName = el('result-name'), chatMessages = el('chat-messages'), userInput = el('user-question'), sendBtn = el('send-question');
-    let currentLang = 'zh', currentAnswerStyle = 'simple', searchResults = [], currentResultIndex = -1, focusLevel = 0;
+    let currentLang = 'zh', currentAnswerStyle = 'simple', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null;
     const ui = {zh:{pageTitle:'转座元件知识图谱演示',badge:'LINE-1 本地图谱子图',graphTitle:'图谱可视化',qaTitle:'智能问答演示',search:'搜索 LINE-1、L1HS、疾病或功能',reset:'重置',footer:'演示页使用本地导出的 Neo4j 子图数据，不依赖在线接口。',empty:'点击节点或连线查看图谱详情。',orig:'原始名称',deg:'连接数',evi:'证据',none:'当前未列出',noneLocal:'当前没有检索到本地证据。',ph:'输入你的问题',q:'LINE-1 相关疾病',intro:'当前演示页已接入本地图谱子图。你可以提问：<br>“LINE-1 相关功能”<br>“LINE-1 相关疾病”<br>“L1HS 和 LINE-1 是什么关系”<br>“哪些文献支持 LINE-1 与阿尔茨海默病相关”',f:'根据当前本地图谱，LINE-1 主要涉及：',d:'根据当前本地图谱，LINE-1 与以下疾病关系较突出：',lp:'当前图谱已为 L1HS 整理出本地文献证据。',pp:'当前图谱已为 LINE-1 整理出本地文献证据。',fallback:'当前演示页支持围绕 LINE-1 的功能、疾病、谱系关系和文献证据查询。',ref:'证据来源',no:'暂无结果。',focus:'聚焦程度',focusHint:'高聚焦会更像手动滚轮放大'},en:{pageTitle:'TE Knowledge Graph Demo',badge:'LINE-1 Local Subgraph',graphTitle:'Graph View',qaTitle:'QA Demo',search:'Search LINE-1, L1HS, diseases, or functions',reset:'Reset',footer:'This demo uses a locally exported Neo4j subgraph and does not depend on online services.',empty:'Click a node or edge to inspect graph details.',orig:'Original name',deg:'Degree',evi:'Evidence',none:'Not listed',noneLocal:'No local evidence was found.',ph:'Ask a question',q:'LINE-1 related diseases',intro:'This demo is grounded on a local graph subnetwork. You can ask:<br>"LINE-1 related functions"<br>"LINE-1 related diseases"<br>"What is the relationship between L1HS and LINE-1?"<br>"What papers support the association between LINE-1 and Alzheimer\'s disease?"',f:'Based on the current local graph, LINE-1 is mainly involved in: ',d:'Based on the current local graph, LINE-1 is notably associated with: ',lp:'The current graph already includes local literature evidence for L1HS.',pp:'The current graph already includes local literature evidence for LINE-1.',fallback:'This demo currently supports LINE-1-centered questions about functions, diseases, lineage relations, and literature evidence.',ref:'Evidence',no:'No results.',focus:'Focus level',focusHint:'Higher focus behaves more like repeated wheel zoom'}}; 
     const typeLabel = {zh:{TE:'转座元件',Disease:'疾病',Function:'功能/机制',Paper:'文献'},en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
     const relLabel = {zh:{SUBFAMILY_OF:'属于亚家族谱系','与...相关':'与…相关','不导致':'不导致','促进':'促进','介导':'介导','报道':'报道'},en:{SUBFAMILY_OF:'subfamily of','与...相关':'associated with','不导致':'does not cause','促进':'promotes','介导':'mediates','报道':'reports'}};
@@ -112,10 +113,50 @@
     const getName = (name,type) => nameMap[currentLang][name] || name;
     const getType = type => (typeLabel[currentLang] && typeLabel[currentLang][type]) || type;
     const getRel = rel => relLabel[currentLang][rel] || rel;
-    const inferType = name => ((demoData.elements.find(x => x.data && x.data.label === name && !x.data.source) || {}).data || {}).type || 'Unknown';
+    const inferType = name => {
+      const current = cy.nodes().filter(n => n.data('label') === name)[0];
+      if(current) return current.data('type') || 'Unknown';
+      return ((demoData.elements.find(x => x.data && x.data.label === name && !x.data.source) || {}).data || {}).type || 'Unknown';
+    };
     function getDesc(name,type){if(descMap[currentLang][name]) return descMap[currentLang][name]; if(type==='TE') return currentLang==='zh' ? `${getName(name,type)} 是图谱中的转座元件节点，用于连接谱系、功能、疾病和文献证据。` : `${getName(name,type)} is a transposable element node used to connect lineage, function, disease, and literature evidence in the graph.`; if(type==='Function') return currentLang==='zh' ? `${getName(name,type)} 是图谱中的功能/机制节点。` : `${getName(name,type)} is a function or mechanism node in the current graph.`; if(type==='Disease') return currentLang==='zh' ? `${getName(name,type)} 是图谱中的疾病节点。` : `${getName(name,type)} is a disease node in the current graph.`; if(type==='Paper') return currentLang==='zh' ? '该节点表示支持当前知识关系的文献证据。' : 'This node represents a literature record supporting the current graph knowledge.'; return '';}
     function buildLayout(){return{name:'cose',fit:true,padding:75,randomize:true,animate:false,nodeDimensionsIncludeLabels:true,componentSpacing:180,nestingFactor:.9,gravity:45,numIter:1800,initialTemp:220,coolingFactor:.96,minTemp:1,idealEdgeLength:edge=>{const rel=edge.data('relation')||''; if(rel==='SUBFAMILY_OF') return 170; if(rel==='EVIDENCE_RELATION') return 240; return 210;},edgeElasticity:edge=>{const rel=edge.data('relation')||''; return rel==='EVIDENCE_RELATION'?40:90;},nodeRepulsion:node=>{const type=node.data('type')||''; return type==='Paper'?GRAPH_TUNING.evidenceNodeRepulsion:(type==='Disease'||type==='Function'?GRAPH_TUNING.diseaseFunctionRepulsion:GRAPH_TUNING.teNodeRepulsion);}}}
     const cy = cytoscape({container:el('cy'),elements:demoData.elements,style:[{selector:'node',style:{'label':e=>getName(e.data('label'),e.data('type')),'font-size':'11px','min-zoomed-font-size':9,'text-valign':'center','text-halign':'center','background-color':e=>getTypeColor(e.data('type')),'color':'#0f172a','text-outline-width':3,'text-outline-color':'#fff','width':'label','height':'label','padding':'14px','text-wrap':'wrap','text-max-width':150,'border-width':2,'border-color':'#fff','shape':'round-rectangle'}},{selector:'edge',style:{'width':2,'line-color':'#cbd5e1','target-arrow-color':'#64748b','target-arrow-shape':'triangle','curve-style':'bezier','control-point-step-size':55,'label':e=>{const rel=e.data('relation')||''; return rel==='EVIDENCE_RELATION'?'':getRel(rel)},'font-size':'9px','min-zoomed-font-size':8,'text-rotation':'autorotate','color':'#334155','text-background-color':'rgba(255,255,255,0.92)','text-background-opacity':1,'text-background-padding':'2px','text-outline-width':0}},{selector:'.highlight',style:{'border-width':6,'border-color':'#0f172a','font-weight':'800','overlay-color':'#2563eb','overlay-opacity':0.12,'overlay-padding':'16px','shadow-blur':18,'shadow-color':'#2563eb','shadow-opacity':0.35,'shadow-offset-x':0,'shadow-offset-y':0,'z-index':999}},{selector:'.neighbor',style:{'border-width':4,'border-color':'#60a5fa','overlay-color':'#93c5fd','overlay-opacity':0.03,'overlay-padding':'6px','opacity':GRAPH_TUNING.neighborOpacity,'shadow-blur':4,'shadow-color':'#93c5fd','shadow-opacity':0.08}},{selector:'.dimmed',style:{'opacity':GRAPH_TUNING.dimmedOpacity}},{selector:'.focus-edge',style:{'label':e=>getRel(e.data('relation')),'width':4,'line-color':'#2563eb','target-arrow-color':'#2563eb','font-size':'11px','color':'#0f172a','text-background-color':'rgba(255,255,255,0.98)','text-background-opacity':1,'text-background-padding':'4px','opacity':0.95}},{selector:'.edge-dimmed',style:{'opacity':0.28}}],layout:buildLayout(),wheelSensitivity:.2});
+    function applyGraphElements(elements, focusLabel=''){
+      cy.elements().remove();
+      cy.add(elements);
+      clearHighlights();
+      searchResults=[]; currentResultIndex=-1; updateNav();
+      const layout = cy.layout(buildLayout());
+      layout.run();
+      setTimeout(()=>{
+        refineGraphLayout();
+        const target = focusLabel ? cy.nodes().filter(n => n.data('label') === focusLabel)[0] : cy.nodes()[0];
+        if(target) focus(target); else cy.fit(undefined,55);
+      }, 320);
+    }
+    function restoreInitialGraph(){
+      searchInput.value='';
+      clearHighlights();
+      searchResults=[]; currentResultIndex=-1;
+      focusLevel=0;
+      el('focus-level').value='0';
+      updateFocusUi();
+      applyGraphElements(initialElements, 'LINE-1');
+      nodeDetails.textContent=ui[currentLang].empty;
+    }
+    async function loadDynamicGraph(query, fallbackToCurrent=false){
+      const keyword=(query||'').trim();
+      if(!keyword) return;
+      const response = await fetch(`api/graph.php?q=${encodeURIComponent(keyword)}`);
+      const payload = await response.json();
+      if(!response.ok || !payload.ok) throw new Error(payload.error || 'Graph request failed');
+      if(!payload.elements || payload.elements.length===0){
+        throw new Error(currentLang==='zh' ? '未找到相关节点或文献子图。' : 'No matching graph fragment was found.');
+      }
+      applyGraphElements(payload.elements, payload.anchor && payload.anchor.name ? payload.anchor.name : keyword);
+      searchInput.value = payload.anchor && payload.anchor.name ? payload.anchor.name : keyword;
+      return payload;
+    }
     function renderIntro(){chatMessages.innerHTML=''; addMessage(ui[currentLang].intro,'assistant')}
     function repairModeControls(){const host=document.querySelector('.segmented'); if(host){host.innerHTML='<button id="mode-simple" class="active" type="button">简单</button><button id="mode-detailed" type="button">详细</button>';}}
     function updateAnswerModeUi(){const modeSimpleBtn=el('mode-simple'), modeDetailedBtn=el('mode-detailed'); el('qa-mode-label').textContent=currentLang==='zh'?'回答模式':'Answer mode'; if(modeSimpleBtn&&modeDetailedBtn){modeSimpleBtn.textContent=currentLang==='zh'?'简单':'Brief'; modeDetailedBtn.textContent=currentLang==='zh'?'详细':'Detailed'; modeSimpleBtn.classList.toggle('active', currentAnswerStyle==='simple'); modeDetailedBtn.classList.toggle('active', currentAnswerStyle==='detailed');}}
@@ -208,7 +249,23 @@
     }
     function focus(node){clearHighlights(); const neighborhood=node.closedNeighborhood(); const others=cy.elements().difference(neighborhood); others.nodes().addClass('dimmed'); others.edges().addClass('edge-dimmed'); node.addClass('highlight'); node.neighborhood('node').addClass('neighbor'); node.connectedEdges().addClass('focus-edge'); showNode(node); if(focusLevel===0){cy.fit(node.closedNeighborhood(),80);} else {const zoom=Math.min(cy.maxZoom(), getTargetZoom(focusLevel)); cy.animate({center:{eles:node},zoom,duration:280});}}
     function updateNav(){if(searchResults.length===0){nav.style.display='none'; clearHighlights(); return;} const n=searchResults[currentResultIndex]; nav.style.display='flex'; resultCounter.textContent=`${currentResultIndex+1}/${searchResults.length}`; resultName.textContent=`${getName(n.data('label'),n.data('type'))} (${getType(n.data('type'))})`; prevBtn.disabled=currentResultIndex===0; nextBtn.disabled=currentResultIndex===searchResults.length-1; focus(n)}
-    function handleSearch(){const keyword=searchInput.value.trim().toLowerCase(); if(!keyword){searchResults=[]; currentResultIndex=-1; updateNav(); nodeDetails.textContent=ui[currentLang].empty; return;} searchResults=cy.nodes().filter(n => `${n.data('label')} ${getName(n.data('label'),n.data('type'))}`.toLowerCase().includes(keyword)).toArray(); currentResultIndex=searchResults.length>0?0:-1; updateNav()}
+    function handleSearch(){
+      const keyword=searchInput.value.trim().toLowerCase();
+      if(searchDebounceId){clearTimeout(searchDebounceId); searchDebounceId=null;}
+      if(!keyword){
+        searchResults=[]; currentResultIndex=-1; updateNav(); nodeDetails.textContent=ui[currentLang].empty; return;
+      }
+      searchResults=cy.nodes().filter(n => `${n.data('label')} ${getName(n.data('label'),n.data('type'))}`.toLowerCase().includes(keyword)).toArray();
+      currentResultIndex=searchResults.length>0?0:-1;
+      updateNav();
+      if(searchResults.length===0 && keyword.length>=2){
+        searchDebounceId = setTimeout(async()=>{
+          try{
+            await loadDynamicGraph(searchInput.value.trim());
+          }catch(_err){}
+        }, 350);
+      }
+    }
     function escapeHtml(text){const div=document.createElement('div'); div.textContent=text; return div.innerHTML;}
     function renderBubbleContent(text,sender){if(sender==='user') return escapeHtml(text).replace(/\n/g,'<br>'); if(window.marked){marked.setOptions({breaks:true,gfm:true}); return marked.parse(text);} return text.replace(/\n/g,'<br>');}
     function addMessage(text,sender){const m=document.createElement('div'); m.className=`msg ${sender}`; m.innerHTML=`<div class="avatar"><i class="fas ${sender==='user'?'fa-user':'fa-robot'}"></i></div><div class="bubble">${renderBubbleContent(text,sender)}</div>`; chatMessages.appendChild(m); chatMessages.scrollTop=chatMessages.scrollHeight; return m}
@@ -216,14 +273,21 @@
     function answerLocal(q){const modeLabel=currentLang==='zh'?(currentAnswerStyle==='detailed'?'详细模式':'简单模式'):(currentAnswerStyle==='detailed'?'Detailed mode':'Brief mode'); const intro=`<blockquote>${modeLabel}</blockquote>`; q=q.toLowerCase(); const askFunc=q.includes('line-1') && (q.includes('功能')||q.includes('机制')||q.includes('作用')||q.includes('function')||q.includes('mechanism')); const askDis=q.includes('line-1') && (q.includes('疾病')||q.includes('病')||q.includes('disease')||q.includes('cancer')); const askL1hs=q.includes('l1hs') && (q.includes('文献')||q.includes('证据')||q.includes('论文')||q.includes('paper')||q.includes('evidence')); const askL1=q.includes('line-1') && (q.includes('文献')||q.includes('证据')||q.includes('论文')||q.includes('paper')||q.includes('evidence')); if(askFunc){const items=demoData.qa.line1_functions||[]; const limit=currentAnswerStyle==='detailed'?8:5; const s=items.slice(0,limit).map(i => `${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join(currentLang==='zh'?'；':'; '); return `${intro}${ui[currentLang].f}${s || ui[currentLang].no}${makeRef(items.slice(0,limit))}`;} if(askDis){const items=demoData.qa.line1_diseases||[]; const limit=currentAnswerStyle==='detailed'?8:5; const s=items.slice(0,limit).map(i => `${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join(currentLang==='zh'?'；':'; '); return `${intro}${ui[currentLang].d}${s || ui[currentLang].no}${makeRef(items.slice(0,limit))}`;} if(askL1hs) return `${intro}${ui[currentLang].lp}${makeRef(demoData.qa.l1hs_papers||[])}`; if(askL1) return `${intro}${ui[currentLang].pp}${makeRef(demoData.qa.line1_papers||[])}`; return `${intro}${ui[currentLang].fallback}`}
     function formatBackendAnswer(result){const styleLabel=currentLang==='zh'?(result.answer_style==='detailed'?'详细模式':'简单模式'):(result.answer_style==='detailed'?'Detailed mode':'Brief mode'); return `> ${styleLabel}\n\n${result.answer||ui[currentLang].fallback}`;}
     async function answerWithBackend(question){const res=await fetch('api/qa.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,language:currentLang,answer_style:currentAnswerStyle})}); const data=await res.json(); if(!res.ok||!data.ok) throw new Error(data.error||'Backend request failed'); return formatBackendAnswer(data);}
-    cy.on('tap','node',e => focus(e.target)); cy.on('tap','edge',e => {clearHighlights(); const edge=e.target; const connected=edge.connectedNodes(); const others=cy.nodes().difference(connected); const otherEdges=cy.edges().difference(edge); others.addClass('dimmed'); otherEdges.addClass('edge-dimmed'); connected.addClass('neighbor'); edge.addClass('focus-edge'); showEdge(edge)}); cy.on('tap',e => { if(e.target===cy){clearHighlights(); nodeDetails.textContent=ui[currentLang].empty;} });
-    searchInput.addEventListener('input', handleSearch); prevBtn.addEventListener('click',()=>{if(currentResultIndex>0){currentResultIndex-=1; updateNav();}}); nextBtn.addEventListener('click',()=>{if(currentResultIndex<searchResults.length-1){currentResultIndex+=1; updateNav();}}); el('focus-level').addEventListener('input',e=>{focusLevel=Number(e.target.value)||0; updateFocusUi(); if(searchResults.length>0&&searchResults[currentResultIndex]) focus(searchResults[currentResultIndex]);});
-    el('reset-graph').addEventListener('click',()=>{clearHighlights(); focusLevel=0; el('focus-level').value='0'; updateFocusUi(); cy.layout(buildLayout()).run();});
+    cy.on('tap','node',async e => {
+      const node = e.target;
+      try{
+        await loadDynamicGraph(node.data('pmid') || node.data('label'));
+      }catch(_err){
+        focus(node);
+      }
+    }); cy.on('tap','edge',e => {clearHighlights(); const edge=e.target; const connected=edge.connectedNodes(); const others=cy.nodes().difference(connected); const otherEdges=cy.edges().difference(edge); others.addClass('dimmed'); otherEdges.addClass('edge-dimmed'); connected.addClass('neighbor'); edge.addClass('focus-edge'); showEdge(edge)}); cy.on('tap',e => { if(e.target===cy){clearHighlights(); nodeDetails.textContent=ui[currentLang].empty;} });
+    searchInput.addEventListener('input', handleSearch); searchInput.addEventListener('keydown',async e=>{if(e.key==='Enter'){e.preventDefault(); try{await loadDynamicGraph(searchInput.value.trim());}catch(err){nodeDetails.textContent = err && err.message ? err.message : ui[currentLang].empty;}}}); prevBtn.addEventListener('click',()=>{if(currentResultIndex>0){currentResultIndex-=1; updateNav();}}); nextBtn.addEventListener('click',()=>{if(currentResultIndex<searchResults.length-1){currentResultIndex+=1; updateNav();}}); el('focus-level').addEventListener('input',e=>{focusLevel=Number(e.target.value)||0; updateFocusUi(); if(searchResults.length>0&&searchResults[currentResultIndex]) focus(searchResults[currentResultIndex]);});
+    el('reset-graph').addEventListener('click',()=>{restoreInitialGraph();});
     sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const answer=await answerWithBackend(q); loading.remove(); addMessage(answer,'assistant');}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
     userInput.addEventListener('keypress',e => { if(e.key==='Enter') sendBtn.click(); });
     document.addEventListener('click',e => { if(e.target && e.target.id==='mode-simple') setAnswerStyle('simple'); if(e.target && e.target.id==='mode-detailed') setAnswerStyle('detailed'); });
     el('lang-zh').addEventListener('click',()=>{currentLang='zh'; setUi();}); el('lang-en').addEventListener('click',()=>{currentLang='en'; setUi();});
-    cy.on('layoutstop',()=>{refineGraphLayout(); cy.fit(undefined,55);}); repairModeControls(); setAnswerStyle('simple'); setUi(); el('focus-level').value=String(focusLevel); if(cy.nodes().length>0) focus(cy.nodes()[0]);
+    cy.on('layoutstop',()=>{refineGraphLayout(); cy.fit(undefined,55);}); repairModeControls(); setAnswerStyle('simple'); setUi(); el('focus-level').value=String(focusLevel); restoreInitialGraph();
   </script>
 </body>
 </html>

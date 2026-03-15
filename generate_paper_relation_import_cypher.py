@@ -26,13 +26,32 @@ def build_name_to_label(seed):
     return mapping
 
 
-def build_block(title, target_label, relations):
+def build_paper_title_to_pmids(seed):
+    mapping = {}
+    for item in seed["nodes"]["papers"]:
+        title = item["name"]
+        pmid = item.get("pmid", "")
+        if not title or not pmid:
+            continue
+        mapping.setdefault(title, []).append(pmid)
+    return mapping
+
+
+def build_block(title, target_label, relations, paper_title_to_pmids):
     lines = [f"// {title}", "UNWIND ["]
     payload_lines = []
     for rel in relations:
+        pmids = rel.get("pmids", [])
+        paper_pmids = paper_title_to_pmids.get(rel["source"], [])
+        if pmids:
+            matched_pmids = [pmid for pmid in pmids if pmid in paper_pmids]
+        else:
+            matched_pmids = list(paper_pmids)
+        if not matched_pmids and paper_pmids:
+            matched_pmids = list(paper_pmids)
         payload_lines.append(
-            "  {paper: "
-            + cypher_string(rel["source"])
+            "  {paper_pmids: "
+            + cypher_string(matched_pmids)
             + ", predicate: "
             + cypher_string(rel["relation"])
             + ", target: "
@@ -43,7 +62,8 @@ def build_block(title, target_label, relations):
         )
     lines.append(",\n".join(payload_lines))
     lines.append("] AS row")
-    lines.append("MATCH (p:Paper {name: row.paper})")
+    lines.append("UNWIND row.paper_pmids AS paper_pmid")
+    lines.append("MATCH (p:Paper {pmid: paper_pmid})")
     lines.append(f"MATCH (t:{target_label} {{name: row.target}})")
     lines.append("MERGE (p)-[r:EVIDENCE_RELATION {predicate: row.predicate}]->(t)")
     lines.append("SET r.pmids = row.pmids, r.source_group = 'paper_relation';")
@@ -54,6 +74,7 @@ def build_block(title, target_label, relations):
 def main():
     seed = json.loads(INPUT_FILE.read_text(encoding="utf-8"))
     name_to_label = build_name_to_label(seed)
+    paper_title_to_pmids = build_paper_title_to_pmids(seed)
 
     paper_to_te = []
     paper_to_disease = []
@@ -75,9 +96,9 @@ def main():
         "// Generated from neo4j_graph_seed.json",
         "// Import evidence relations from Paper nodes to entity nodes.",
         "",
-        build_block("Import Paper -> TE relations", "TE", paper_to_te),
-        build_block("Import Paper -> Disease relations", "Disease", paper_to_disease),
-        build_block("Import Paper -> Function relations", "Function", paper_to_function),
+        build_block("Import Paper -> TE relations", "TE", paper_to_te, paper_title_to_pmids),
+        build_block("Import Paper -> Disease relations", "Disease", paper_to_disease, paper_title_to_pmids),
+        build_block("Import Paper -> Function relations", "Function", paper_to_function, paper_title_to_pmids),
     ]
 
     OUTPUT_FILE.write_text("\n".join(blocks), encoding="utf-8")

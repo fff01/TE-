@@ -1,9 +1,11 @@
 import json
 import re
+import csv
 from pathlib import Path
 
 
 INPUT_FILE = Path("output.jsonl")
+CSV_FILE = Path("LINE1_pubmed_data.csv")
 NORMALIZED_JSONL = Path("normalized_output.jsonl")
 GRAPH_SEED_JSON = Path("neo4j_graph_seed.json")
 LINEAGE_CSV = Path("line1_subfamily_relations.csv")
@@ -199,7 +201,46 @@ def infer_entity_type(name: str, entities: dict) -> str:
     return "functions"
 
 
-def build_graph_seed(records: list[dict]) -> dict:
+def load_paper_metadata() -> dict[str, dict]:
+    if not CSV_FILE.exists():
+        raise FileNotFoundError(f"Missing CSV file: {CSV_FILE}")
+
+    metadata = {}
+    with CSV_FILE.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            pmid = normalize_whitespace(str(row.get("PMID", "")))
+            if not pmid:
+                continue
+            metadata[pmid] = {
+                "name": normalize_whitespace(str(row.get("Title", ""))),
+                "description": normalize_whitespace(str(row.get("Abstract", ""))),
+                "pmid": pmid,
+            }
+    return metadata
+
+
+def backfill_missing_records(records: list[dict], paper_metadata: dict[str, dict]) -> list[dict]:
+    existing_pmids = {record["pmid"] for record in records if record.get("pmid")}
+    missing_pmids = sorted(set(paper_metadata) - existing_pmids)
+    for pmid in missing_pmids:
+        records.append(
+            {
+                "pmid": pmid,
+                "entities": {
+                    "transposons": [],
+                    "diseases": [],
+                    "functions": [],
+                    "papers": [],
+                },
+                "relations": [],
+            }
+        )
+    records.sort(key=lambda x: x.get("pmid", ""))
+    return records
+
+
+def build_graph_seed(records: list[dict], paper_metadata: dict[str, dict]) -> dict:
     node_buckets = {
         "transposons": {},
         "diseases": {},
@@ -210,7 +251,13 @@ def build_graph_seed(records: list[dict]) -> dict:
 
     for record in records:
         pmid = record["pmid"]
+        paper_meta = paper_metadata.get(pmid)
+        if paper_meta:
+            node_buckets["papers"][pmid] = dict(paper_meta)
+
         for entity_type, items in record["entities"].items():
+            if entity_type == "papers":
+                continue
             for item in items:
                 key = item["name"].casefold()
                 bucket = node_buckets[entity_type]
@@ -293,11 +340,15 @@ def main() -> None:
             record = json.loads(line)
             normalized_records.append(normalize_record(record))
 
+    paper_metadata = load_paper_metadata()
+
+    normalized_records = backfill_missing_records(normalized_records, paper_metadata)
+
     with NORMALIZED_JSONL.open("w", encoding="utf-8") as handle:
         for record in normalized_records:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-    graph_seed = build_graph_seed(normalized_records)
+    graph_seed = build_graph_seed(normalized_records, paper_metadata)
     with GRAPH_SEED_JSON.open("w", encoding="utf-8") as handle:
         json.dump(graph_seed, handle, ensure_ascii=False, indent=2)
 
@@ -314,6 +365,7 @@ def main() -> None:
     print(f"Wrote: {GRAPH_SEED_JSON}")
     print(f"Wrote: {LINEAGE_CSV}")
     print(f"Lineage relations: {len(graph_seed['lineage_relations'])}")
+    print(f"Paper nodes: {len(graph_seed['nodes']['papers'])}")
 
 
 if __name__ == "__main__":
