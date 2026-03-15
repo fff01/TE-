@@ -92,6 +92,36 @@ RELATION_ALIASES = {
 }
 
 
+FUNCTION_CANONICAL_OVERRIDES = {
+    "3'transduction": "3'端转导",
+    "3'flankingsequencetransduction": "3'端转导",
+    "3'flankingsequencestransduction": "3'端转导",
+    "3'endtransduction": "3'端转导",
+    "3'侧翼序列转导": "3'端转导",
+    "3'端转导": "3'端转导",
+    "3'转导": "3'端转导",
+    "5'and3'transduction": "5'和3'端转导",
+    "5'和3'转导": "5'和3'端转导",
+    "5'和3'端转导": "5'和3'端转导",
+    "dnadoublestrandbreaks": "DNA double-strand breaks",
+    "dnadoublestrandbreaksdnadsbs": "DNA double-strand breaks",
+    "l1orf1p表达": "L1ORF1p表达",
+}
+
+
+DISEASE_CANONICAL_OVERRIDES = {
+    "rettsyndrome": "Rett syndrome",
+    "rett综合征": "Rett syndrome",
+    "autism": "autism spectrum disorder",
+    "autismspectrumdisorder": "autism spectrum disorder",
+    "autismspectrumdisorders": "autism spectrum disorder",
+    "autismspectrumdisordersasd": "autism spectrum disorder",
+    "ataxiatelangiectasia": "ataxia telangiectasia",
+    "aicardigoutièressyndrome": "Aicardi-Goutières syndrome",
+    "aicardigoutièressyndromeags": "Aicardi-Goutières syndrome",
+}
+
+
 def normalize_whitespace(text: str) -> str:
     text = text.replace("\u2010", "-").replace("\u2011", "-").replace("\u2012", "-")
     text = text.replace("\u2013", "-").replace("\u2014", "-").replace("\u2212", "-")
@@ -101,6 +131,16 @@ def normalize_whitespace(text: str) -> str:
 def normalize_key(text: str) -> str:
     text = normalize_whitespace(text)
     return text.casefold()
+
+
+def normalize_entity_compare_key(text: str) -> str:
+    text = normalize_whitespace(text)
+    text = text.casefold()
+    text = text.replace("’", "'").replace("´", "'").replace("`", "'")
+    text = text.replace("（", "(").replace("）", ")")
+    text = re.sub(r"\(.*?\)", "", text)
+    text = re.sub(r"[\s\-_]", "", text)
+    return text
 
 
 def infer_line1_subfamily(name: str) -> str | None:
@@ -118,6 +158,14 @@ def infer_line1_subfamily(name: str) -> str | None:
 
 def canonicalize_entity(entity_type: str, name: str) -> str:
     base = normalize_whitespace(name)
+    compare_key = normalize_entity_compare_key(base)
+
+    if entity_type == "functions" and compare_key in FUNCTION_CANONICAL_OVERRIDES:
+        return FUNCTION_CANONICAL_OVERRIDES[compare_key]
+
+    if entity_type == "diseases" and compare_key in DISEASE_CANONICAL_OVERRIDES:
+        return DISEASE_CANONICAL_OVERRIDES[compare_key]
+
     alias = ENTITY_ALIASES.get(entity_type, {})
     key = normalize_key(base)
     if key in alias:

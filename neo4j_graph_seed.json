@@ -476,10 +476,6 @@
         "description": "Aicardi-Goutières综合征是一种遗传性自身免疫性疾病，与干扰素信号通路异常相关。"
       },
       {
-        "name": "Aicardi-Goutières syndrome (AGS)",
-        "description": "一种由宿主免疫不当激活导致的自身免疫性疾病，与TREX1和ADAR1等蛋白的基因突变有关。"
-      },
-      {
         "name": "AIDS",
         "description": "获得性免疫缺陷综合征，由人类免疫缺陷病毒（HIV）感染引起。"
       },
@@ -508,28 +504,12 @@
         "description": "共济失调毛细血管扩张症，一种由ATM基因突变引起的神经退行性疾病。"
       },
       {
-        "name": "ataxia-telangiectasia",
-        "description": "摘要中提到的神经发育障碍之一。"
-      },
-      {
         "name": "atrophic macular degeneration",
         "description": "萎缩性黄斑变性，是年龄相关性黄斑变性的主要类型之一。"
       },
       {
-        "name": "autism",
-        "description": "摘要中提到的神经发育障碍之一。"
-      },
-      {
         "name": "autism spectrum disorder",
-        "description": "一组复杂的神经发育障碍，其特征是社会互动、沟通和行为方面的挑战。"
-      },
-      {
-        "name": "autism spectrum disorders",
         "description": "自闭症谱系障碍，一种神经发育障碍。"
-      },
-      {
-        "name": "autism spectrum disorders (ASD)",
-        "description": "自闭症谱系障碍，是一组以社交沟通障碍、兴趣狭窄和重复刻板行为为主要特征的神经发育障碍。"
       },
       {
         "name": "autoimmune disorders",
@@ -886,10 +866,6 @@
       {
         "name": "Rett syndrome",
         "description": "Rett综合征，一种由MeCP2基因突变引起的神经发育疾病。"
-      },
-      {
-        "name": "Rett综合征",
-        "description": "一种神经发育障碍，已知其患者体内LINE-1表达增加。"
       },
       {
         "name": "Rotor syndrome",
@@ -1462,20 +1438,8 @@
         "description": "在LINE-1和Alu转座子3'非翻译区发现的高度保守的RNA二级结构，可能被LINE-1逆转录酶识别，对逆转录转座至关重要。"
       },
       {
-        "name": "3' 转导",
-        "description": "LINE-1插入事件中，其3'端下游相邻的基因组序列被一同转座到新位点的过程。"
-      },
-      {
         "name": "3'-末端茎环结构",
         "description": "位于RNA或DNA序列3'末端的二级结构，由互补碱基配对形成的茎部和未配对的环部组成。"
-      },
-      {
-        "name": "3'-转导",
-        "description": "LINE-1逆转录转座时，将其3'侧翼基因组序列一同转导到新插入位点的现象。"
-      },
-      {
-        "name": "3'侧翼序列转导",
-        "description": "LINE-1逆转录转座过程中，将其3'端侧翼的非L1 DNA序列一同转座到新基因组位置的现象。"
       },
       {
         "name": "3'末端添加额外胞嘧啶",
@@ -1487,19 +1451,7 @@
       },
       {
         "name": "3'端转导",
-        "description": "3'端转导是LINE-1逆转录转座时，将自身3'端下游的基因组序列一同整合到新位点的现象。"
-      },
-      {
-        "name": "3'转导",
-        "description": "3'转导是L1逆转录转座事件中，将供体位点下游的基因组序列一同携带并插入新位点的现象。"
-      },
-      {
-        "name": "3´ transduction",
-        "description": "3´端转导，是LINE-1移动其侧翼非重复区域的一种机制，可用于识别源自特定活跃LINE-1的新插入事件。"
-      },
-      {
-        "name": "5' and 3' transduction",
-        "description": "5'和3'转导是逆转录转座子移动时，将侧翼基因组序列一同转移，从而重排基因组区域的过程。"
+        "description": "LINE-1逆转录转座过程中，将其3'端侧翼的非L1 DNA序列一同转座到新基因组位置的现象。"
       },
       {
         "name": "5' truncation",
@@ -1522,7 +1474,7 @@
         "description": "LINE逆转录转座过程中，其5'端与宿主染色体DNA连接的不同分子机制，包括退火通路和直接通路。"
       },
       {
-        "name": "5'和3'转导",
+        "name": "5'和3'端转导",
         "description": "LINE-1逆转录转座过程中，有时会捕获并携带其上游或下游的宿主基因组序列一同插入新位点。"
       },
       {
@@ -1872,10 +1824,6 @@
       {
         "name": "DNA deletions",
         "description": "DNA缺失，指转座子活动过程中或活动后导致的基因组DNA片段丢失。"
-      },
-      {
-        "name": "DNA double strand breaks (DNA DSBs)",
-        "description": "DNA双链断裂是DNA两条链同时断裂的严重损伤，可由LINE-1逆转录转座等活动引发。"
       },
       {
         "name": "DNA double-strand breaks",
@@ -2530,10 +2478,6 @@
         "description": "LINE-1编码的ORF1蛋白从细胞质转移到细胞核的现象。"
       },
       {
-        "name": "L1-ORF1p表达",
-        "description": "LINE-1编码的ORF1蛋白在细胞中的产生。"
-      },
-      {
         "name": "L1-ORF1蛋白染色质招募",
         "description": "LINE-1编码的ORF1蛋白被募集到染色质的过程，是逆转录转座的关键步骤。"
       },
@@ -2567,7 +2511,7 @@
       },
       {
         "name": "L1ORF1p表达",
-        "description": "LINE-1编码的ORF1蛋白的表达，通常用于评估LINE-1活性。"
+        "description": "LINE-1编码的ORF1蛋白在细胞中的产生。"
       },
       {
         "name": "L1ORF2p表达",
@@ -9754,7 +9698,16 @@
       ]
     },
     {
-      "source": "3' 转导",
+      "source": "3'端多聚腺苷酸化",
+      "relation": "参与",
+      "target": "逆转录转座",
+      "description": "LINE-1元件在3'端进行有效的多聚腺苷酸化，是其成功完成逆转录转座并整合到新基因组位置的关键机制。",
+      "pmids": [
+        "17023124"
+      ]
+    },
+    {
+      "source": "3'端转导",
       "relation": "参与",
       "target": "基因/外显子/调控元件易位",
       "description": "3'转导过程将基因、外显子和调控元件传播到基因组的新位置（通常是异染色质区域）。",
@@ -9763,7 +9716,7 @@
       ]
     },
     {
-      "source": "3' 转导",
+      "source": "3'端转导",
       "relation": "引发",
       "target": "体细胞插入突变",
       "description": "3'转导过程在肿瘤发生过程中导致体细胞插入突变。",
@@ -9772,30 +9725,13 @@
       ]
     },
     {
-      "source": "3' 转导",
-      "relation": "引发",
-      "target": "插入突变",
-      "description": "LINE-1介导的3'转导事件导致了插入突变。",
-      "pmids": [
-        "22095564"
-      ]
-    },
-    {
-      "source": "3'侧翼序列转导",
+      "source": "3'端转导",
       "relation": "引发",
       "target": "插入突变",
       "description": "LINE-1介导的3'侧翼序列转导将额外的非L1 DNA序列插入基因组，导致基因组扩增和潜在的突变效应。",
       "pmids": [
-        "10699189"
-      ]
-    },
-    {
-      "source": "3'端多聚腺苷酸化",
-      "relation": "参与",
-      "target": "逆转录转座",
-      "description": "LINE-1元件在3'端进行有效的多聚腺苷酸化，是其成功完成逆转录转座并整合到新基因组位置的关键机制。",
-      "pmids": [
-        "17023124"
+        "10699189",
+        "22095564"
       ]
     },
     {
@@ -13710,7 +13646,7 @@
     {
       "source": "Detection of Retrotransposition Activity of Hot LINE-1s by Long-Distance Inverse PCR",
       "relation": "报道",
-      "target": "3´ transduction",
+      "target": "3'端转导",
       "description": "本文描述的方法利用了3´端转导机制来识别源自特定活跃LINE-1的新插入事件。",
       "pmids": [
         "31403628"
@@ -20217,15 +20153,6 @@
       ]
     },
     {
-      "source": "L1-ORF1p表达",
-      "relation": "广泛存在于",
-      "target": "多种癌症",
-      "description": "摘要指出，L1-ORF1p的表达在作者检查的几乎所有乳腺癌以及多种其他癌症中被检测到。",
-      "pmids": [
-        "20948976"
-      ]
-    },
-    {
       "source": "L1-RNP形成",
       "relation": "参与",
       "target": "逆转录转座",
@@ -20703,6 +20630,15 @@
       "description": "在口腔鳞状细胞癌术后样本中检测到异常高的L1ORF1p表达。",
       "pmids": [
         "34044801"
+      ]
+    },
+    {
+      "source": "L1ORF1p表达",
+      "relation": "广泛存在于",
+      "target": "多种癌症",
+      "description": "摘要指出，L1-ORF1p的表达在作者检查的几乎所有乳腺癌以及多种其他癌症中被检测到。",
+      "pmids": [
+        "20948976"
       ]
     },
     {
@@ -22563,24 +22499,6 @@
     {
       "source": "LINE-1",
       "relation": "参与",
-      "target": "3' 转导",
-      "description": "LINE-1的转座机制介导了邻近非重复序列的动员，即3'转导。",
-      "pmids": [
-        "25082706"
-      ]
-    },
-    {
-      "source": "LINE-1",
-      "relation": "参与",
-      "target": "3'侧翼序列转导",
-      "description": "活跃的LINE-1元素具有将其3'端侧翼DNA转导到新基因组位置的能力。",
-      "pmids": [
-        "10699189"
-      ]
-    },
-    {
-      "source": "LINE-1",
-      "relation": "参与",
       "target": "3'末端添加额外胞嘧啶",
       "description": "论文实验表明，人类LINE-1逆转录酶在合成cDNA第一链时，会在其3'末端添加一个额外的胞嘧啶残基。",
       "pmids": [
@@ -22600,38 +22518,15 @@
       "source": "LINE-1",
       "relation": "参与",
       "target": "3'端转导",
-      "description": "约25%的LINE-1插入事件伴随3'端转导现象。",
+      "description": "活跃的LINE-1元素具有将其3'端侧翼DNA转导到新基因组位置的能力。",
       "pmids": [
+        "10699189",
         "15983781",
         "23553801",
-        "29643204"
-      ]
-    },
-    {
-      "source": "LINE-1",
-      "relation": "参与",
-      "target": "3'转导",
-      "description": "LINE-1的逆转录转座事件可以产生携带下游序列的3'转导。",
-      "pmids": [
-        "31230816"
-      ]
-    },
-    {
-      "source": "LINE-1",
-      "relation": "参与",
-      "target": "3´ transduction",
-      "description": "LINE-1通过3´端转导机制移动其侧翼序列。",
-      "pmids": [
+        "25082706",
+        "29643204",
+        "31230816",
         "31403628"
-      ]
-    },
-    {
-      "source": "LINE-1",
-      "relation": "参与",
-      "target": "5' and 3' transduction",
-      "description": "L1通过5'和3'转导机制重排基因组区域。",
-      "pmids": [
-        "23333607"
       ]
     },
     {
@@ -22646,10 +22541,11 @@
     {
       "source": "LINE-1",
       "relation": "参与",
-      "target": "5'和3'转导",
+      "target": "5'和3'端转导",
       "description": "LINE-1的逆转录转座机制可以导致5'和3'转导事件的发生。",
       "pmids": [
-        "21636526"
+        "21636526",
+        "23333607"
       ]
     },
     {
@@ -29284,7 +29180,7 @@
     {
       "source": "LINE-1_Cf",
       "relation": "参与",
-      "target": "3'-转导",
+      "target": "3'端转导",
       "description": "对LINE-1_Cf 3'端侧翼序列（即3'-转导）的分析表明，多个具有逆转录转座能力的LINE-1_Cf在犬种群中分离。",
       "pmids": [
         "33836575"
@@ -32175,7 +32071,7 @@
     {
       "source": "nonreference full-length LINE-1",
       "relation": "参与",
-      "target": "3' 转导",
+      "target": "3'端转导",
       "description": "该非参考全长LINE-1转座子介导了3'转导事件。",
       "pmids": [
         "22095564"
@@ -39196,7 +39092,7 @@
     {
       "source": "Transduction of 3'-flanking sequences is common in L1 retrotransposition.",
       "relation": "报道",
-      "target": "3'侧翼序列转导",
+      "target": "3'端转导",
       "description": "该论文发现并评估了LINE-1介导的3'侧翼序列转导在人类和小鼠基因组中的频率和影响。",
       "pmids": [
         "10699189"
@@ -44752,7 +44648,7 @@
     {
       "source": "癌症中的移动DNA。癌症基因组中由L1逆转录转座介导的非重复DNA的广泛转导。",
       "relation": "报道",
-      "target": "3' 转导",
+      "target": "3'端转导",
       "description": "论文发现并描述了在癌症患者肿瘤中发生的体细胞3'转导现象。",
       "pmids": [
         "25082706"
@@ -46402,7 +46298,7 @@
     {
       "source": "论文实体",
       "relation": "报道",
-      "target": "L1-ORF1p表达",
+      "target": "L1ORF1p表达",
       "description": "该论文检测了多种临床癌症标本和癌细胞系中L1-ORF1p的表达情况。",
       "pmids": [
         "20948976"
@@ -48079,19 +47975,11 @@
     {
       "source": "逆转录转座",
       "relation": "引发",
-      "target": "DNA double strand breaks (DNA DSBs)",
-      "description": "摘要指出，LINE-1逆转录转座在减数分裂机制之外起作用，导致DNA双链断裂的形成。",
-      "pmids": [
-        "30701021"
-      ]
-    },
-    {
-      "source": "逆转录转座",
-      "relation": "引发",
       "target": "DNA double-strand breaks",
       "description": "LINE-1逆转录转座过程中，其内切酶在目标DNA上切割，诱导DNA双链断裂。",
       "pmids": [
-        "27446907"
+        "27446907",
+        "30701021"
       ]
     },
     {

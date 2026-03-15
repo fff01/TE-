@@ -5,7 +5,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "LINE_1",
         "label": "LINE-1",
         "type": "TE",
-        "description": "LINE-1是人类基因组中唯一具有自主活性的逆转录转座子。"
+        "description": "人类基因组中最丰富的逆转录转座子，是逆转录酶活性的主要来源。"
       }
     },
     {
@@ -13,7 +13,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "L1HS",
         "label": "L1HS",
         "type": "TE",
-        "description": "L1HS是LINE-1的一个亚家族，其5' UTR区域的甲基化状态与RNA表达水平密切相关。"
+        "description": "L1Hs是人类基因组中的LINE-1逆转录转座子亚家族，其转录是逆转录转座过程中的限速步骤。"
       }
     },
     {
@@ -125,7 +125,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "L1PA2",
         "label": "L1PA2",
         "type": "TE",
-        "description": "位于14号染色体上的一个特定LINE-1序列。"
+        "description": "L1PA2是灵长类基因组中的一个LINE-1亚家族。"
       }
     },
     {
@@ -141,7 +141,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "L1PA4",
         "label": "L1PA4",
         "type": "TE",
-        "description": "L1PA4是比L1HS更古老的LINE-1亚家族。"
+        "description": "约1800万年前活跃的LINE-1亚家族。"
       }
     },
     {
@@ -173,7 +173,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "L1PA8",
         "label": "L1PA8",
         "type": "TE",
-        "description": "L1PA8是比L1HS更古老的LINE-1亚家族。"
+        "description": "约4000万年前活跃的LINE-1亚家族。"
       }
     },
     {
@@ -229,7 +229,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "Alu转座",
         "label": "Alu转座",
         "type": "Function",
-        "description": "非自主的Alu元件依赖LINE-1 ORF2蛋白进行传播的过程。"
+        "description": "由LINE-1介导的Alu元件的逆转录转座过程。"
       }
     },
     {
@@ -245,7 +245,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "L1_mediated_retrotransposition",
         "label": "L1-mediated retrotransposition",
         "type": "Function",
-        "description": "L1介导的逆转录转座，是LINE-1转座子移动并导致新插入事件的机制。"
+        "description": "由LINE-1转座子介导的逆转录转座过程，导致基因在基因组中移动和插入。"
       }
     },
     {
@@ -261,7 +261,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "双链断裂",
         "label": "双链断裂",
         "type": "Function",
-        "description": "双链断裂是DNA双螺旋结构的两条链同时断裂的损伤类型。"
+        "description": "由LINE-1表达产生的DNA损伤，是细胞毒性的一种来源。"
       }
     },
     {
@@ -269,7 +269,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "异位重组",
         "label": "异位重组",
         "type": "Function",
-        "description": "基因组中同源或相似的转座子序列之间发生非等位重组，导致基因组重排。"
+        "description": "异位重组是指发生在基因组中非等位同源序列之间的重组事件。"
       }
     },
     {
@@ -285,7 +285,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "插入突变",
         "label": "插入突变",
         "type": "Function",
-        "description": "插入突变是指转座子插入基因组导致基因功能破坏或调控改变的过程。"
+        "description": "转座子插入基因组特定位置，可能导致基因结构或功能改变的过程。"
       }
     },
     {
@@ -293,7 +293,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "逆转录转座",
         "label": "逆转录转座",
         "type": "Function",
-        "description": "逆转录转座是逆转录转座子通过“复制-粘贴”机制在基因组中移动的过程。"
+        "description": "LINE-1通过逆转录过程在基因组中移动的机制。"
       }
     },
     {
@@ -333,7 +333,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "类风湿关节炎",
         "label": "类风湿关节炎",
         "type": "Disease",
-        "description": "一种自身免疫性疾病，其特征是关节滑膜炎症和关节破坏。"
+        "description": "摘要中提到的疾病，是一种自身免疫性疾病，导致关节滑膜炎症和破坏。"
       }
     },
     {
@@ -341,7 +341,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "ataxia_telangiectasia",
         "label": "ataxia telangiectasia",
         "type": "Disease",
-        "description": "共济失调毛细血管扩张症，一种罕见的遗传性神经退行性疾病。"
+        "description": "共济失调毛细血管扩张症，一种由ATM基因突变引起的神经退行性疾病。"
       }
     },
     {
@@ -349,7 +349,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "breast_cancer",
         "label": "breast cancer",
         "type": "Disease",
-        "description": "乳腺癌。"
+        "description": "乳腺癌是一种发生在乳腺组织的恶性肿瘤。"
       }
     },
     {
@@ -378,18 +378,10 @@ window.GRAPH_DEMO_DATA = {
     },
     {
       "data": {
-        "id": "6_甲酰基吲哚[3_2_b]咔唑_FICZ_诱导长散布核元件_1_L1_逆转录转座",
-        "label": "6-甲酰基吲哚[3,2-b]咔唑 (FICZ) 诱导长散布核元件-1 (L1) 逆转录转座",
-        "type": "Paper",
-        "description": "本论文报道了色氨酸光产物FICZ作为一种候选的生理性配体，能够诱导LINE-1的逆转录转座活性，并揭示了ARNT1介导的细胞机制在此过程中的关键作用。"
-      }
-    },
-    {
-      "data": {
         "id": "A_20_7_kb_deletion_within_the_factor_VIII_gene_associated_with_LINE_1_element_insertion_",
         "label": "A 20.7 kb deletion within the factor VIII gene associated with LINE-1 element insertion.",
         "type": "Paper",
-        "description": "一篇报道在血友病A患者凝血因子VIII基因中发现一个20.7 kb缺失，且该缺失断点处存在LINE-1元件插入的论文。"
+        "description": "Large deletions within the factor VIII gene account for approximately 5% of the mutations causing haemophilia A. The characterization of such mutations can provide insights into the molecular mechanisms of these and other deletions in man. We have analyzed a 20.7 kb deletion spanning exons 15 to 20 within the factor VIII gene in a patient with severe haemophilia A. Long range PCR was used to investigate the extent of the deletion and to provide a template for sequencing across the deletion breakpoint. A 38-base insertion homologous to the 3' region of a LINE-1 (L1) element was detected at the breakpoint of the deletion. Normal sequence at the 5' breakpoint in intron 14 was homologous to an L1 flanking region and normal sequence at the 3' breakpoint in intron 20 was homologous to an adjacent sequence within the same L1 flanking region. A molecular mechanism for the deletion involving retrotransposition of a readthrough product of an L1 element plus its 3' flanking region is suggested."
       }
     },
     {
@@ -397,7 +389,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "A_3_PolyA_Tract_Is_Required_for_LINE_1_Retrotransposition_",
         "label": "A 3' Poly(A) Tract Is Required for LINE-1 Retrotransposition.",
         "type": "Paper",
-        "description": "该论文报道了LINE-1逆转录转座需要其RNA 3'端多聚腺苷酸尾的研究。"
+        "description": "L1 retrotransposons express proteins (ORF1p and ORF2p) that preferentially mobilize their encoding RNA in cis, but they also can mobilize Alu RNA and, more rarely, cellular mRNAs in trans. Although these RNAs differ in sequence, each ends in a 3' polyadenosine (poly(A)) tract. Here, we replace the L1 polyadenylation signal with sequences derived from a non-polyadenylated long non-coding RNA (MALAT1), which can form a stabilizing triple helix at the 3' end of an RNA. L1/MALAT RNAs accumulate in cells, lack poly(A) tails, and are translated; however, they cannot retrotranspose in cis. Remarkably, the addition of a 16 or 40 base poly(A) tract downstream of the L1/MALAT triple helix restores retrotransposition in cis. The presence of a poly(A) tract also allows ORF2p to bind and mobilize RNAs in trans. Thus, a 3' poly(A) tract is critical for the retrotransposition of sequences that comprise approximately one billion base pairs of human DNA."
       }
     },
     {
@@ -405,7 +397,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "A_BBS1_SVA_F_retrotransposon_insertion_is_a_frequent_cause_of_Bardet_Biedl_syndrome_",
         "label": "A BBS1 SVA F retrotransposon insertion is a frequent cause of Bardet-Biedl syndrome.",
         "type": "Paper",
-        "description": "一篇报道BBS1基因中SVA-F逆转录转座子插入是Bardet-Biedl综合征常见病因的论文。"
+        "description": "Bardet-Biedl syndrome (BBS) is a ciliopathy characterized by retinitis pigmentosa, obesity, polydactyly, cognitive impairment and renal failure. Pathogenic variants in 24 genes account for the molecular basis of >80% of cases. Toward saturated discovery of the mutational basis of the disorder, we carefully explored our cohorts and identified a hominid-specific SINE-R/VNTR/Alu type F (SVA-F) insertion in exon 13 of BBS1 in eight families. In six families, the repeat insertion was found in trans with c.1169 T > G, p.Met390Arg and in two families the insertion was found in addition to other recessive BBS loci. Whole genome sequencing, de novo assembly and SNP array analysis were performed to characterize the genomic event. This insertion is extremely rare in the general population (found in 8 alleles of 8 BBS cases but not in >10 800 control individuals from gnomAD-SV) and due to a founder effect. Its 2435 bp sequence contains hallmarks of LINE1 mediated retrotransposition. Functional studies with patient-derived cell lines confirmed that the BBS1 SVA-F is deleterious as evidenced by a significant depletion of both mRNA and protein levels. Such findings highlight the importance of dedicated bioinformatics pipelines to identify all types of variation."
       }
     },
     {
@@ -413,7 +405,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "A_comprehensive_approach_to_expression_of_L1_loci_",
         "label": "A comprehensive approach to expression of L1 loci.",
         "type": "Paper",
-        "description": "一种鉴定L1位点表达的综合性方法。"
+        "description": "L1 elements represent the only currently active, autonomous retrotransposon in the human genome, and they make major contributions to human genetic instability. The vast majority of the 500 000 L1 elements in the genome are defective, and only a relatively few can contribute to the retrotransposition process. However, there is currently no comprehensive approach to identify the specific loci that are actively transcribed separate from the excess of L1-related sequences that are co-transcribed within genes. We have developed RNA-Seq procedures, as well as a 1200 bp 5΄ RACE product coupled with PACBio sequencing that can identify the specific L1 loci that contribute most of the L1-related RNA reads. At least 99% of L1-related sequences found in RNA do not arise from the L1 promoter, instead representing pieces of L1 incorporated in other cellular RNAs. In any given cell type a relatively few active L1 loci contribute to the 'authentic' L1 transcripts that arise from the L1 promoter, with significantly different loci seen expressed in different tissues."
       }
     },
     {
@@ -421,7 +413,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "A_conserved_role_for_the_ESCRT_membrane_budding_complex_in_LINE_retrotransposition_",
         "label": "A conserved role for the ESCRT membrane budding complex in LINE retrotransposition.",
         "type": "Paper",
-        "description": "ESCRT膜出芽复合体在LINE逆转录转座中具有保守作用。"
+        "description": "Long interspersed nuclear element-1s (LINE-1s, or L1s) are an active family of retrotransposable elements that continue to mutate mammalian genomes. Despite the large contribution of L1 to mammalian genome evolution, we do not know where active L1 particles (particles in the process of retrotransposition) are located in the cell, or how they move towards the nucleus, the site of L1 reverse transcription. Using a yeast model of LINE retrotransposition, we identified ESCRT (endosomal sorting complex required for transport) as a critical complex for LINE retrotransposition, and verified that this interaction is conserved for human L1. ESCRT interacts with L1 via a late domain motif, and this interaction facilitates L1 replication. Loss of the L1/ESCRT interaction does not impair RNP formation or enzymatic activity, but leads to loss of retrotransposition and reduced L1 endonuclease activity in the nucleus. This study highlights the importance of the ESCRT complex in the L1 life cycle and suggests an unusual mode for L1 RNP trafficking."
       }
     },
     {
@@ -429,7 +421,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "A_human_genome_structural_variation_sequencing_resource_reveals_insights_into_mutational_mechanisms_",
         "label": "A human genome structural variation sequencing resource reveals insights into mutational mechanisms.",
         "type": "Paper",
-        "description": "一篇揭示人类基因组结构变异突变机制的论文。"
+        "description": "Understanding the prevailing mutational mechanisms responsible for human genome structural variation requires uniformity in the discovery of allelic variants and precision in terms of breakpoint delineation. We develop a resource based on capillary end sequencing of 13.8 million fosmid clones from 17 human genomes and characterize the complete sequence of 1054 large structural variants corresponding to 589 deletions, 384 insertions, and 81 inversions. We analyze the 2081 breakpoint junctions and infer potential mechanism of origin. Three mechanisms account for the bulk of germline structural variation: microhomology-mediated processes involving short (2-20 bp) stretches of sequence (28%), nonallelic homologous recombination (22%), and L1 retrotransposition (19%). The high quality and long-range continuity of the sequence reveals more complex mutational mechanisms, including repeat-mediated inversions and gene conversion, that are most often missed by other methods, such as comparative genomic hybridization, single nucleotide polymorphism microarrays, and next-generation sequencing."
       }
     },
     {
@@ -437,7 +429,31 @@ window.GRAPH_DEMO_DATA = {
         "id": "A_LINE_1_component_to_human_aging__do_LINE_elements_exact_a_longevity_cost_for_evolutionary_advantage?",
         "label": "A LINE-1 component to human aging: do LINE elements exact a longevity cost for evolutionary advantage?",
         "type": "Paper",
-        "description": "LINE-1对人类衰老的贡献：LINE元件是否为进化优势付出了长寿代价？"
+        "description": "Advancing age remains the largest risk factor for devastating diseases, such as heart disease, stroke, and cancer. The mechanisms by which advancing age predisposes to disease are now beginning to unfold, due in part, to genetic and environmental manipulations of longevity in lower organisms. Converging lines of evidence suggest that DNA damage may be a final common pathway linking several proposed mechanisms of aging. The present review forwards a theory for an additional aging pathway that involves modes of inherent genetic instability. Long interspersed nuclear elements (LINEs) are endogenous non-LTR retrotransposons that compose about 20% of the human genome. The LINE-1 (L1) gene products, ORF1p and ORF2p, possess mRNA binding, endonuclease, and reverse transcriptase activity that enable retrotransposition. While principally active only during embryogenesis, L1 transcripts are detected in adult somatic cells under certain conditions. The present hypothesis proposes that L1s act as an 'endogenous clock', slowly eroding genomic integrity by competing with the organism's double-strand break repair mechanism. Thus, while L1s are an accepted mechanism of genetic variation fueling evolution, it is proposed that longevity is negatively impacted by somatic L1 activity. The theory predicts testable hypotheses about the relationship between L1 activity, DNA repair, healthy aging, and longevity."
+      }
+    },
+    {
+      "data": {
+        "id": "A_mouse_model_of_human_L1_retrotransposition_",
+        "label": "A mouse model of human L1 retrotransposition.",
+        "type": "Paper",
+        "description": "The L1 retrotransposon has had an immense impact on the size and structure of the human genome through a variety of mechanisms, including insertional mutagenesis. To study retrotransposition in a living organism, we created a mouse model of human L1 retrotransposition. Here we show that L1 elements can retrotranspose in male germ cells, and that expression of a human L1 element under the control of its endogenous promoter is restricted to testis and ovary. In the mouse line with the highest level of L1 expression, we found two de novo L1 insertions in 135 offspring. Both insertions were structurally indistinguishable from natural endogenous insertions. This suggests that an individual L1 element can have substantial mutagenic potential. In addition to providing a valuable in vivo model of retrotransposition in mammals, these mice are an important step in the development of a new random mutagenesis system."
+      }
+    },
+    {
+      "data": {
+        "id": "A_comprehensive_analysis_of_recently_integrated_human_Ta_L1_elements_",
+        "label": "A comprehensive analysis of recently integrated human Ta L1 elements.",
+        "type": "Paper",
+        "description": "The Ta (transcribed, subset a) subfamily of L1 LINEs (long interspersed elements) is characterized by a 3-bp ACA sequence in the 3' untranslated region and contains approximately 520 members in the human genome. Here, we have extracted 468 Ta L1Hs (L1 human specific) elements from the draft human genomic sequence and screened individual elements using polymerase-chain-reaction (PCR) assays to determine their phylogenetic origin and levels of human genomic diversity. One hundred twenty-four of the elements amenable to complete sequence analysis were full length ( approximately 6 kb) and have apparently escaped any 5' truncation. Forty-four of these full-length elements have two intact open reading frames and may be capable of retrotransposition. Sequence analysis of the Ta L1 elements showed a low level of nucleotide divergence with an estimated age of 1.99 million years, suggesting that expansion of the L1 Ta subfamily occurred after the divergence of humans and African apes. A total of 262 Ta L1 elements were screened with PCR-based assays to determine their phylogenetic origin and the level of human genomic variation associated with each element. All of the Ta L1 elements analyzed by PCR were absent from the orthologous positions in nonhuman primate genomes, except for a single element (L1HS72) that was also present in the common (Pan troglodytes) and pygmy (P. paniscus) chimpanzee genomes. Sequence analysis revealed that this single exception is the product of a gene conversion event involving an older preexisting L1 element. One hundred fifteen (45%) of the Ta L1 elements were polymorphic with respect to insertion presence or absence and will serve as identical-by-descent markers for the study of human evolution."
+      }
+    },
+    {
+      "data": {
+        "id": "Deep_sequencing_reveals_low_incidence_of_endogenous_LINE_1_retrotransposition_in_human_induced_pluripotent_stem_cells_",
+        "label": "Deep sequencing reveals low incidence of endogenous LINE-1 retrotransposition in human induced pluripotent stem cells.",
+        "type": "Paper",
+        "description": "Long interspersed element-1 (LINE-1 or L1) retrotransposition induces insertional mutations that can result in diseases. It was recently shown that the copy number of L1 and other retroelements is stable in induced pluripotent stem cells (iPSCs). However, by using an engineered reporter construct over-expressing L1, another study suggests that reprogramming activates L1 mobility in iPSCs. Given the potential of human iPSCs in therapeutic applications, it is important to clarify whether these cells harbor somatic insertions resulting from endogenous L1 retrotransposition. Here, we verified L1 expression during and after reprogramming as well as potential somatic insertions driven by the most active human endogenous L1 subfamily (L1Hs). Our results indicate that L1 over-expression is initiated during the reprogramming process and is subsequently sustained in isolated clones. To detect potential somatic insertions in iPSCs caused by L1Hs retotransposition, we used a novel sequencing strategy. As opposed to conventional sequencing direction, we sequenced from the 3' end of L1Hs to the genomic DNA, thus enabling the direct detection of the polyA tail signature of retrotransposition for verification of true insertions. Deep coverage sequencing thus allowed us to detect seven potential somatic insertions with low read counts from two iPSC clones. Negative PCR amplification in parental cells, presence of a polyA tail and absence from seven L1 germline insertion databases highly suggested true somatic insertions in iPSCs. Furthermore, these insertions could not be detected in iPSCs by PCR, likely due to low abundance. We conclude that L1Hs retrotransposes at low levels in iPSCs and therefore warrants careful analyses for genotoxic effects."
       }
     },
     {
@@ -445,15 +461,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "Environmental_factors_affecting_transcription_of_the_human_L1_retrotransposon__I__Steroid_hormone_like_agents_",
         "label": "Environmental factors affecting transcription of the human L1 retrotransposon. I. Steroid hormone-like agents.",
         "type": "Paper",
-        "description": "影响人类L1逆转录转座子转录的环境因素。I. 类固醇激素样物质。"
-      }
-    },
-    {
-      "data": {
-        "id": "Genome_Wide_Young_L1_Methylation_Profiling_by_bs_ATLAS_seq",
-        "label": "Genome-Wide Young L1 Methylation Profiling by bs-ATLAS-seq",
-        "type": "Paper",
-        "description": "通过bs-ATLAS-seq进行全基因组年轻L1甲基化分析"
+        "description": "The L1 retrotransposon has significantly shaped the structure of the human genome. At least 30% of human genome sequence can be attributed to L1 reverse transcriptase activity. There are 10(5) copies of the human L1 retrotransposon, L1Hs, most of which are defective, although approximately 8-9 x 10(3) are full length. L1Hs elements transpose through an RNA intermediate and transcription is thought to be the rate limiting step in retrotransposition. Because transcription of retrotransposons in a variety of organisms has been shown to respond to environmental stimuli, we investigated the influence of various agents on transcription from two different L1Hs promoters. The activity of the L1Hs promoters was analyzed by transfecting L1Hs-expressing cell lines with plasmids containing the L1Hs promoters fused to the LacZ reporter gene and monitoring expression with a beta-galactosidase assay. Small increases in beta-galactosidase activity were observed with both L1Hs promoters after treatment with serum, testosterone, dihydrotestosterone and organochloride pesticides, indicating that these agents can influence L1Hs transcription."
       }
     },
     {
@@ -461,7 +469,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "High_throughput_sequencing_reveals_extensive_variation_in_human_specific_L1_content_in_individual_human_genomes_",
         "label": "High-throughput sequencing reveals extensive variation in human-specific L1 content in individual human genomes.",
         "type": "Paper",
-        "description": "高通量测序揭示个体人类基因组中人特异性L1含量存在广泛变异。"
+        "description": "Using high-throughput sequencing, we devised a technique to determine the insertion sites of virtually all members of the human-specific L1 retrotransposon family in any human genome. Using diagnostic nucleotides, we were able to locate the approximately 800 L1Hs copies corresponding specifically to the pre-Ta, Ta-0, and Ta-1 L1Hs subfamilies, with over 90% of sequenced reads corresponding to human-specific elements. We find that any two individual genomes differ at an average of 285 sites with respect to L1 insertion presence or absence. In total, we assayed 25 individuals, 15 of which are unrelated, at 1139 sites, including 772 shared with the reference genome and 367 nonreference L1 insertions. We show that L1Hs profiles recapitulate genetic ancestry, and determine the chromosomal distribution of these elements. Using these data, we estimate that the rate of L1 retrotransposition in humans is between 1/95 and 1/270 births, and the number of dimorphic L1 elements in the human population with gene frequencies greater than 0.05 is between 3000 and 10,000."
       }
     },
     {
@@ -469,15 +477,7 @@ window.GRAPH_DEMO_DATA = {
         "id": "Identification_and_characterization_of_occult_human_specific_LINE_1_insertions_using_long_read_sequencing_technology_",
         "label": "Identification and characterization of occult human-specific LINE-1 insertions using long-read sequencing technology.",
         "type": "Paper",
-        "description": "利用长读长测序技术鉴定和表征隐匿的人类特异性LINE-1插入。"
-      }
-    },
-    {
-      "data": {
-        "id": "LINE1_insertions_as_a_genomic_risk_factor_for_schizophrenia__Preliminary_evidence_from_an_affected_family_",
-        "label": "LINE1 insertions as a genomic risk factor for schizophrenia: Preliminary evidence from an affected family.",
-        "type": "Paper",
-        "description": "LINE1插入作为精神分裂症的基因组风险因素：来自一个受累家庭的初步证据。"
+        "description": "Long Interspersed Element-1 (LINE-1) retrotransposition contributes to inter- and intra-individual genetic variation and occasionally can lead to human genetic disorders. Various strategies have been developed to identify human-specific LINE-1 (L1Hs) insertions from short-read whole genome sequencing (WGS) data; however, they have limitations in detecting insertions in complex repetitive genomic regions. Here, we developed a computational tool (PALMER) and used it to identify 203 non-reference L1Hs insertions in the NA12878 benchmark genome. Using PacBio long-read sequencing data, we identified L1Hs insertions that were absent in previous short-read studies (90/203). Approximately 81% (73/90) of the L1Hs insertions reside within endogenous LINE-1 sequences in the reference assembly and the analysis of unique breakpoint junction sequences revealed 63% (57/90) of these L1Hs insertions could be genotyped in 1000 Genomes Project sequences. Moreover, we observed that amplification biases encountered in single-cell WGS experiments led to a wide variation in L1Hs insertion detection rates between four individual NA12878 cells; under-amplification limited detection to 32% (65/203) of insertions, whereas over-amplification increased false positive calls. In sum, these data indicate that L1Hs insertions are often missed using standard short-read sequencing approaches and long-read sequencing approaches can significantly improve the detection of L1Hs insertions present in individual genomes."
       }
     },
     {
@@ -896,15 +896,6 @@ window.GRAPH_DEMO_DATA = {
     },
     {
       "data": {
-        "id": "6_甲酰基吲哚[3_2_b]咔唑_FICZ_诱导长散布核元件_1_L1_逆转录转座__报道__LINE_1",
-        "source": "6_甲酰基吲哚[3_2_b]咔唑_FICZ_诱导长散布核元件_1_L1_逆转录转座",
-        "target": "LINE_1",
-        "relation": "报道",
-        "evidence": "20852066"
-      }
-    },
-    {
-      "data": {
         "id": "A_20_7_kb_deletion_within_the_factor_VIII_gene_associated_with_LINE_1_element_insertion___报道__LINE_1",
         "source": "A_20_7_kb_deletion_within_the_factor_VIII_gene_associated_with_LINE_1_element_insertion_",
         "target": "LINE_1",
@@ -968,20 +959,38 @@ window.GRAPH_DEMO_DATA = {
     },
     {
       "data": {
+        "id": "A_mouse_model_of_human_L1_retrotransposition___报道__LINE_1",
+        "source": "A_mouse_model_of_human_L1_retrotransposition_",
+        "target": "LINE_1",
+        "relation": "报道",
+        "evidence": "12415270"
+      }
+    },
+    {
+      "data": {
+        "id": "A_comprehensive_analysis_of_recently_integrated_human_Ta_L1_elements___报道__L1HS",
+        "source": "A_comprehensive_analysis_of_recently_integrated_human_Ta_L1_elements_",
+        "target": "L1HS",
+        "relation": "报道",
+        "evidence": "12070800"
+      }
+    },
+    {
+      "data": {
+        "id": "Deep_sequencing_reveals_low_incidence_of_endogenous_LINE_1_retrotransposition_in_human_induced_pluripotent_stem_cells___报道__L1HS",
+        "source": "Deep_sequencing_reveals_low_incidence_of_endogenous_LINE_1_retrotransposition_in_human_induced_pluripotent_stem_cells_",
+        "target": "L1HS",
+        "relation": "报道",
+        "evidence": "25289675"
+      }
+    },
+    {
+      "data": {
         "id": "Environmental_factors_affecting_transcription_of_the_human_L1_retrotransposon__I__Steroid_hormone_like_agents___报道__L1HS",
         "source": "Environmental_factors_affecting_transcription_of_the_human_L1_retrotransposon__I__Steroid_hormone_like_agents_",
         "target": "L1HS",
         "relation": "报道",
         "evidence": "11971989"
-      }
-    },
-    {
-      "data": {
-        "id": "Genome_Wide_Young_L1_Methylation_Profiling_by_bs_ATLAS_seq__报道__L1HS",
-        "source": "Genome_Wide_Young_L1_Methylation_Profiling_by_bs_ATLAS_seq",
-        "target": "L1HS",
-        "relation": "报道",
-        "evidence": "36449162"
       }
     },
     {
@@ -1000,15 +1009,6 @@ window.GRAPH_DEMO_DATA = {
         "target": "L1HS",
         "relation": "报道",
         "evidence": "31853540"
-      }
-    },
-    {
-      "data": {
-        "id": "LINE1_insertions_as_a_genomic_risk_factor_for_schizophrenia__Preliminary_evidence_from_an_affected_family___报道__L1HS",
-        "source": "LINE1_insertions_as_a_genomic_risk_factor_for_schizophrenia__Preliminary_evidence_from_an_affected_family_",
-        "target": "L1HS",
-        "relation": "报道",
-        "evidence": "26990047"
       }
     }
   ],
@@ -1169,12 +1169,6 @@ window.GRAPH_DEMO_DATA = {
     ],
     "line1_papers": [
       {
-        "name": "6-甲酰基吲哚[3,2-b]咔唑 (FICZ) 诱导长散布核元件-1 (L1) 逆转录转座",
-        "pmids": [
-          "20852066"
-        ]
-      },
-      {
         "name": "A 20.7 kb deletion within the factor VIII gene associated with LINE-1 element insertion.",
         "pmids": [
           "9609225"
@@ -1215,19 +1209,31 @@ window.GRAPH_DEMO_DATA = {
         "pmids": [
           "20346965"
         ]
+      },
+      {
+        "name": "A mouse model of human L1 retrotransposition.",
+        "pmids": [
+          "12415270"
+        ]
       }
     ],
     "l1hs_papers": [
       {
-        "name": "Environmental factors affecting transcription of the human L1 retrotransposon. I. Steroid hormone-like agents.",
+        "name": "A comprehensive analysis of recently integrated human Ta L1 elements.",
         "pmids": [
-          "11971989"
+          "12070800"
         ]
       },
       {
-        "name": "Genome-Wide Young L1 Methylation Profiling by bs-ATLAS-seq",
+        "name": "Deep sequencing reveals low incidence of endogenous LINE-1 retrotransposition in human induced pluripotent stem cells.",
         "pmids": [
-          "36449162"
+          "25289675"
+        ]
+      },
+      {
+        "name": "Environmental factors affecting transcription of the human L1 retrotransposon. I. Steroid hormone-like agents.",
+        "pmids": [
+          "11971989"
         ]
       },
       {
@@ -1240,12 +1246,6 @@ window.GRAPH_DEMO_DATA = {
         "name": "Identification and characterization of occult human-specific LINE-1 insertions using long-read sequencing technology.",
         "pmids": [
           "31853540"
-        ]
-      },
-      {
-        "name": "LINE1 insertions as a genomic risk factor for schizophrenia: Preliminary evidence from an affected family.",
-        "pmids": [
-          "26990047"
         ]
       }
     ]
