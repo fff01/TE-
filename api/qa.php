@@ -27,6 +27,7 @@ $payload = json_decode(file_get_contents('php://input') ?: '{}', true);
 $question = trim((string)($payload['question'] ?? ''));
 $language = trim((string)($payload['language'] ?? ''));
 $answerStyle = trim((string)($payload['answer_style'] ?? 'simple'));
+$answerDepth = trim((string)($payload['answer_depth'] ?? ''));
 $localConfig = [];
 $localConfigPath = __DIR__ . '/config.local.php';
 if (is_file($localConfigPath)) {
@@ -66,7 +67,7 @@ if ($config['neo4j_password'] === '') {
 
 try {
     $service = new QaService($config);
-    $result = $service->answer($question, $language, $answerStyle);
+    $result = $service->answer($question, $language, $answerStyle, $answerDepth);
     echo json_encode(['ok' => true] + $result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     http_response_code(500);
@@ -96,18 +97,20 @@ final class QaService
         $this->config = $config;
     }
 
-    public function answer(string $question, string $language = '', string $answerStyle = 'simple'): array
+    public function answer(string $question, string $language = '', string $answerStyle = 'simple', string $answerDepth = ''): array
     {
-        $this->debug('answer:start', ['question' => $question, 'language' => $language, 'style' => $answerStyle]);
+        $this->debug('answer:start', ['question' => $question, 'language' => $language, 'style' => $answerStyle, 'depth' => $answerDepth]);
         $answerStyle = strtolower(trim($answerStyle)) === 'detailed' ? 'detailed' : 'simple';
+        $answerDepth = $this->normalizeAnswerDepth($answerDepth, $answerStyle);
         $language = $language !== '' ? $language : $this->detectLanguage($question);
-        $this->debug('answer:normalized', ['language' => $language, 'style' => $answerStyle]);
+        $this->debug('answer:normalized', ['language' => $language, 'style' => $answerStyle, 'depth' => $answerDepth]);
         $smallTalkAnswer = $this->getSmallTalkAnswer($question, $language);
         if ($smallTalkAnswer !== null) {
             $this->debug('answer:smalltalk');
             return [
                 'language' => $language,
                 'answer_style' => $answerStyle,
+                'answer_depth' => $answerDepth,
                 'entity' => null,
                 'intent' => 'smalltalk',
                 'mode' => 'smalltalk',
@@ -121,6 +124,7 @@ final class QaService
             return [
                 'language' => $language,
                 'answer_style' => $answerStyle,
+                'answer_depth' => $answerDepth,
                 'entity' => null,
                 'intent' => 'smalltalk',
                 'mode' => 'smalltalk',
@@ -173,18 +177,18 @@ final class QaService
             $mode = 'neighbor_fallback';
         }
 
-        $rows = $this->prepareRowsForAnswer($rows, $intent, $answerStyle);
+        $rows = $this->prepareRowsForAnswer($rows, $intent, $answerStyle, $answerDepth);
         $references = $this->extractReferences($rows);
-        $references = $this->prepareReferencesForAnswer($references, $intent, $answerStyle);
-        $this->debug('answer:prepared', ['rows' => count($rows), 'refs' => count($references), 'intent' => $intent]);
+        $references = $this->prepareReferencesForAnswer($references, $intent, $answerStyle, $answerDepth);
+        $this->debug('answer:prepared', ['rows' => count($rows), 'refs' => count($references), 'intent' => $intent, 'depth' => $answerDepth]);
         try {
-            $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
+            $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth);
             $mode .= '+llm';
             $this->debug('answer:llm');
         } catch (Throwable $e) {
             $mode .= '+structured_local';
             $this->debug('answer:structured_local', ['error' => $e->getMessage()]);
-            $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
+            $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth);
         }
         $answer = $this->polishAnswer($answer, $language);
         $this->debug('answer:done', ['mode' => $mode]);
@@ -192,6 +196,7 @@ final class QaService
         return [
             'language' => $language,
             'answer_style' => $answerStyle,
+            'answer_depth' => $answerDepth,
             'entity' => $entity,
             'intent' => $intent,
             'mode' => $mode,
@@ -205,6 +210,15 @@ final class QaService
     private function detectLanguage(string $question): string
     {
         return preg_match('/[\x{4e00}-\x{9fff}]/u', $question) ? 'zh' : 'en';
+    }
+
+    private function normalizeAnswerDepth(string $answerDepth, string $answerStyle): string
+    {
+        $depth = strtolower(trim($answerDepth));
+        if (in_array($depth, ['shallow', 'medium', 'deep'], true)) {
+            return $depth;
+        }
+        return $answerStyle === 'detailed' ? 'deep' : 'shallow';
     }
 
     private function normalizeEntity(string $question): ?string
@@ -507,7 +521,7 @@ final class QaService
         return $trimmed;
     }
 
-    private function generateAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle): string
+    private function generateAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle, string $answerDepth): string
     {
         $context = json_encode([
             'intent' => $intent,
@@ -515,14 +529,16 @@ final class QaService
             'rows' => $rows,
             'references' => $references,
             'answer_style' => $answerStyle,
+            'answer_depth' => $answerDepth,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        $template = $this->loadPromptTemplate($language, $answerStyle);
+        $template = $this->loadPromptTemplate($language, $answerStyle, $answerDepth);
         $prompt = $this->renderPromptTemplate($template, [
             'question' => $question,
             'context' => $context,
             'language' => $language,
             'answer_style' => $answerStyle,
+            'answer_depth' => $answerDepth,
             'intent' => $intent ?? 'unknown',
             'entity' => $entity ?? '',
         ]);
@@ -533,46 +549,37 @@ final class QaService
         ], 0.1);
     }
 
-    private function loadPromptTemplate(string $language, string $answerStyle): string
+    private function loadPromptTemplate(string $language, string $answerStyle, string $answerDepth): string
     {
         $lang = strtolower($language) === 'en' ? 'en' : 'zh';
         $style = strtolower($answerStyle) === 'detailed' ? 'detailed' : 'simple';
-        $path = __DIR__ . DIRECTORY_SEPARATOR . 'prompts' . DIRECTORY_SEPARATOR . "{$lang}_{$style}.md";
+        $depth = in_array(strtolower($answerDepth), ['shallow', 'medium', 'deep'], true) ? strtolower($answerDepth) : ($style === 'detailed' ? 'deep' : 'shallow');
+        $basePath = __DIR__ . DIRECTORY_SEPARATOR . 'prompts' . DIRECTORY_SEPARATOR . "{$lang}_{$style}.md";
+        $depthPath = __DIR__ . DIRECTORY_SEPARATOR . 'prompts' . DIRECTORY_SEPARATOR . "{$lang}_depth_{$depth}.md";
+        $parts = [];
 
-        if (is_file($path)) {
-            $content = file_get_contents($path);
+        if (is_file($basePath)) {
+            $content = file_get_contents($basePath);
             if (is_string($content) && trim($content) !== '') {
-                return $content;
+                $parts[] = trim($content);
             }
+        }
+
+        if (is_file($depthPath)) {
+            $content = file_get_contents($depthPath);
+            if (is_string($content) && trim($content) !== '') {
+                $parts[] = trim($content);
+            }
+        }
+
+        if (!empty($parts)) {
+            return implode("\n\n", $parts);
         }
 
         if ($lang === 'zh') {
             return $style === 'detailed'
-                ? "??????????????????????????????????
-
-????????
-## ??
-## ???????
-## ?????
-## ?????
-
-?????
-{{question}}
-
-????
-{{context}}"
-                : "?????????????????
-
-????????
-## ??
-## ???
-## ????
-
-?????
-{{question}}
-
-????
-{{context}}";
+                ? "请用中文作答，并严格基于给定上下文生成详细回答。\n\n输出结构：\n## 结论\n## 机制与关系解释\n## 证据与文献\n## 局限与说明\n\n用户问题：\n{{question}}\n\n上下文：\n{{context}}"
+                : "请用中文作答，并严格基于给定上下文生成简洁回答。\n\n输出结构：\n## 结论\n## 关键点\n## 参考文献\n\n用户问题：\n{{question}}\n\n上下文：\n{{context}}";
         }
 
         return $style === 'detailed'
@@ -614,7 +621,7 @@ Context:
         return strtr($template, $replacements);
     }
 
-    private function fallbackAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle): string
+    private function fallbackAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle, string $answerDepth): string
     {
         if ($language === 'zh') {
             $templateName = empty($rows)
@@ -626,7 +633,7 @@ Context:
                 : "## 结论\n本地知识图谱暂无直接证据。";
 
             $items = [];
-            foreach (array_slice($rows, 0, $answerStyle === 'detailed' ? 8 : 5) as $row) {
+            foreach (array_slice($rows, 0, $this->fallbackRowLimit($answerStyle, $answerDepth)) as $row) {
                 if (!is_array($row) || !isset($row[0])) {
                     continue;
                 }
@@ -645,7 +652,7 @@ Context:
             }
 
             $refs = [];
-            foreach (array_slice($references, 0, $answerStyle === 'detailed' ? 10 : 6) as $ref) {
+            foreach (array_slice($references, 0, $this->fallbackReferenceLimit($answerStyle, $answerDepth)) as $ref) {
                 $title = (string) ($ref['title'] ?? '未命名文献');
                 $pmid = implode(',', $ref['pmids'] ?? []);
                 $refs[] = '- ' . $title . ($pmid !== '' ? '（PMID: ' . $pmid . '）' : '');
@@ -690,7 +697,7 @@ None.";
         }
 
         $items = [];
-        foreach (array_slice($rows, 0, $answerStyle === 'detailed' ? 8 : 5) as $row) {
+        foreach (array_slice($rows, 0, $this->fallbackRowLimit($answerStyle, $answerDepth)) as $row) {
             if (is_array($row) && isset($row[0])) {
                 $target = $this->extractFallbackTarget($row);
                 $predicate = isset($row[1]) ? (string) $row[1] : 'related to';
@@ -700,7 +707,7 @@ None.";
             }
         }
         $refs = [];
-        foreach (array_slice($references, 0, $answerStyle === 'detailed' ? 10 : 6) as $ref) {
+        foreach (array_slice($references, 0, $this->fallbackReferenceLimit($answerStyle, $answerDepth)) as $ref) {
             $title = (string) ($ref['title'] ?? 'Untitled reference');
             $pmid = implode(',', $ref['pmids'] ?? []);
             $refs[] = '- ' . $title . ($pmid !== '' ? ' (PMID: ' . $pmid . ')' : '');
@@ -756,7 +763,7 @@ Relevant structured records were retrieved from the local knowledge graph.
         return '未知对象';
     }
 
-    private function prepareRowsForAnswer(array $rows, ?string $intent, string $answerStyle = 'simple'): array
+    private function prepareRowsForAnswer(array $rows, ?string $intent, string $answerStyle = 'simple', string $answerDepth = 'shallow'): array
     {
         if ($intent === 'te_to_disease' || $intent === 'te_disease_relation' || $intent === 'te_disease_evidence') {
             $rows = array_values(array_filter($rows, function ($row): bool {
@@ -774,7 +781,7 @@ Relevant structured records were retrieved from the local knowledge graph.
 
         $rows = $this->normalizeRows($rows, $intent);
 
-        $limit = $answerStyle === 'detailed' ? 10 : 4;
+        $limit = $this->rowLimit($answerStyle, $answerDepth);
         return array_slice($rows, 0, $limit);
     }
 
@@ -812,7 +819,7 @@ Relevant structured records were retrieved from the local knowledge graph.
         return array_values($references);
     }
 
-    private function prepareReferencesForAnswer(array $references, ?string $intent, string $answerStyle = 'simple'): array
+    private function prepareReferencesForAnswer(array $references, ?string $intent, string $answerStyle = 'simple', string $answerDepth = 'shallow'): array
     {
         $filtered = array_values(array_filter($references, function ($ref): bool {
             $title = (string)($ref['title'] ?? '');
@@ -823,8 +830,44 @@ Relevant structured records were retrieved from the local knowledge graph.
             return count($b['pmids'] ?? []) <=> count($a['pmids'] ?? []);
         });
 
-        $limit = $answerStyle === 'detailed' ? 6 : 3;
+        $limit = $this->referenceLimit($answerStyle, $answerDepth);
         return array_slice($filtered, 0, $limit);
+    }
+
+    private function rowLimit(string $answerStyle, string $answerDepth): int
+    {
+        return match ($answerDepth) {
+            'medium' => $answerStyle === 'detailed' ? 8 : 6,
+            'deep' => $answerStyle === 'detailed' ? 12 : 8,
+            default => $answerStyle === 'detailed' ? 6 : 4,
+        };
+    }
+
+    private function referenceLimit(string $answerStyle, string $answerDepth): int
+    {
+        return match ($answerDepth) {
+            'medium' => $answerStyle === 'detailed' ? 6 : 4,
+            'deep' => $answerStyle === 'detailed' ? 8 : 5,
+            default => $answerStyle === 'detailed' ? 4 : 3,
+        };
+    }
+
+    private function fallbackRowLimit(string $answerStyle, string $answerDepth): int
+    {
+        return match ($answerDepth) {
+            'medium' => $answerStyle === 'detailed' ? 7 : 5,
+            'deep' => $answerStyle === 'detailed' ? 9 : 6,
+            default => $answerStyle === 'detailed' ? 5 : 4,
+        };
+    }
+
+    private function fallbackReferenceLimit(string $answerStyle, string $answerDepth): int
+    {
+        return match ($answerDepth) {
+            'medium' => $answerStyle === 'detailed' ? 8 : 5,
+            'deep' => $answerStyle === 'detailed' ? 10 : 6,
+            default => $answerStyle === 'detailed' ? 6 : 4,
+        };
     }
 
     private function looksLikePaperTitle(string $title): bool
@@ -852,7 +895,8 @@ Relevant structured records were retrieved from the local knowledge graph.
         $positive = [
             'disease', 'syndrome', 'cancer', 'carcinoma', 'disorder', 'tumor', 'tumour',
             'leukemia', 'leukaemia', 'lymphoma', 'thalassemia', 'alzheimer', 'huntington',
-            'autism', 'rett', 'rotor', 'ataxia', 'hemophilia', '??', '?', '?', '???', '?'
+            'autism', 'rett', 'rotor', 'ataxia', 'hemophilia',
+            '病', '癌', '综合征', '白血病', '淋巴瘤'
         ];
         foreach ($positive as $keyword) {
             if (str_contains($lower, $keyword)) {
@@ -875,7 +919,7 @@ Relevant structured records were retrieved from the local knowledge graph.
             return false;
         }
         $lower = mb_strtolower($trimmed);
-        $negative = ['disease', 'syndrome', 'cancer', 'carcinoma', 'disorder', '??', '?', '???'];
+        $negative = ['disease', 'syndrome', 'cancer', 'carcinoma', 'disorder', '病', '癌', '综合征'];
         foreach ($negative as $keyword) {
             if (str_contains($lower, $keyword)) {
                 return false;
