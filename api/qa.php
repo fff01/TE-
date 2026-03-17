@@ -98,10 +98,13 @@ final class QaService
 
     public function answer(string $question, string $language = '', string $answerStyle = 'simple'): array
     {
+        $this->debug('answer:start', ['question' => $question, 'language' => $language, 'style' => $answerStyle]);
         $answerStyle = strtolower(trim($answerStyle)) === 'detailed' ? 'detailed' : 'simple';
         $language = $language !== '' ? $language : $this->detectLanguage($question);
+        $this->debug('answer:normalized', ['language' => $language, 'style' => $answerStyle]);
         $smallTalkAnswer = $this->getSmallTalkAnswer($question, $language);
         if ($smallTalkAnswer !== null) {
+            $this->debug('answer:smalltalk');
             return [
                 'language' => $language,
                 'answer_style' => $answerStyle,
@@ -132,6 +135,18 @@ final class QaService
         $entity = $this->normalizeEntity($question);
         $disease = $this->normalizeDisease($question);
         $intent = $this->detectIntent($question);
+        if ($intent === null) {
+            if ($this->containsAny($question, ['文献', '论文', '证据', 'paper', 'evidence', 'reference'])) {
+                $intent = 'entity_to_paper';
+            } elseif ($this->containsAny($question, ['功能', '机制', '作用', 'function', 'mechanism', 'role'])) {
+                $intent = 'te_to_function';
+            } elseif ($this->containsAny($question, ['疾病', '癌', '病', 'disease', 'cancer', 'disorder'])) {
+                $intent = 'te_to_disease';
+            } elseif ($this->containsAny($question, ['亚家族', '谱系', '关系', 'subfamily', 'lineage', 'relationship'])) {
+                $intent = 'subfamily';
+            }
+        }
+        $this->debug('answer:intent', ['entity' => $entity, 'disease' => $disease, 'intent' => $intent]);
         $mode = 'template_rag';
         $cypher = '';
         $rows = [];
@@ -140,32 +155,16 @@ final class QaService
             $intent = 'te_disease_evidence';
             [$cypher, $params] = $this->buildPairQuery($intent, $entity, $disease);
             $rows = $this->runNeo4j($cypher, $params);
+            $this->debug('answer:pair_query', ['rows' => count($rows)]);
         } elseif ($entity !== null && $disease !== null) {
             $intent = 'te_disease_relation';
             [$cypher, $params] = $this->buildPairQuery($intent, $entity, $disease);
             $rows = $this->runNeo4j($cypher, $params);
+            $this->debug('answer:pair_query', ['rows' => count($rows)]);
         } elseif ($entity !== null && $intent !== null) {
             [$cypher, $params] = $this->buildTemplateQuery($intent, $entity);
             $rows = $this->runNeo4j($cypher, $params);
-        }
-
-        if (empty($rows) && $this->config['dashscope_key']) {
-            $plan = $this->planQuestion($question, $language);
-            $entity = $entity ?? ($plan['entity'] ?? null);
-            $intent = $intent ?? ($plan['intent'] ?? null);
-            if ($entity !== null && $intent !== null && $this->isSupportedIntent($intent)) {
-                [$cypher, $params] = $this->buildTemplateQuery($intent, $entity);
-                $rows = $this->runNeo4j($cypher, $params);
-                $mode = 'planned_template_rag';
-            }
-        }
-
-        if (empty($rows) && $this->config['dashscope_key']) {
-            $candidateCypher = $this->generateCypher($question, $language);
-            $validatedCypher = $this->validateReadonlyCypher($candidateCypher);
-            $cypher = $validatedCypher;
-            $rows = $this->runNeo4j($cypher, []);
-            $mode = 'text2cypher_rag';
+            $this->debug('answer:template_query', ['rows' => count($rows)]);
         }
 
         if (empty($rows) && $entity !== null) {
@@ -174,20 +173,21 @@ final class QaService
             $mode = 'neighbor_fallback';
         }
 
-        $rows = $this->prepareRowsForAnswer($rows, $intent);
+        $rows = $this->prepareRowsForAnswer($rows, $intent, $answerStyle);
         $references = $this->extractReferences($rows);
-        $references = $this->prepareReferencesForAnswer($references, $intent);
-        if ($this->config['dashscope_key']) {
-            try {
-                $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
-            } catch (Throwable $e) {
-                $mode .= '+fallback';
-                $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
-            }
-        } else {
+        $references = $this->prepareReferencesForAnswer($references, $intent, $answerStyle);
+        $this->debug('answer:prepared', ['rows' => count($rows), 'refs' => count($references), 'intent' => $intent]);
+        try {
+            $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
+            $mode .= '+llm';
+            $this->debug('answer:llm');
+        } catch (Throwable $e) {
+            $mode .= '+structured_local';
+            $this->debug('answer:structured_local', ['error' => $e->getMessage()]);
             $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle);
         }
         $answer = $this->polishAnswer($answer, $language);
+        $this->debug('answer:done', ['mode' => $mode]);
 
         return [
             'language' => $language,
@@ -231,20 +231,13 @@ final class QaService
     {
         $lower = mb_strtolower($question);
         $aliases = [
-            '阿尔茨海默' => "Alzheimer's disease",
             'alzheimer' => "Alzheimer's disease",
-            '亨廷顿' => "Huntington's Disease",
             'huntington' => "Huntington's Disease",
             'rett' => 'Rett syndrome',
-            '唐氏' => 'Down syndrome',
             'down syndrome' => 'Down syndrome',
-            '自闭症' => 'autism spectrum disorder',
             'autism' => 'autism spectrum disorder',
-            '乳腺癌' => 'breast cancer',
             'breast cancer' => 'breast cancer',
-            '共济失调毛细血管扩张症' => 'ataxia telangiectasia',
             'ataxia telangiectasia' => 'ataxia telangiectasia',
-            '口腔鳞状细胞癌' => 'Oral Squamous Cell Carcinoma',
             'oral squamous cell carcinoma' => 'Oral Squamous Cell Carcinoma',
         ];
         foreach ($aliases as $alias => $disease) {
@@ -252,22 +245,58 @@ final class QaService
                 return $disease;
             }
         }
+        if ($this->containsAny($question, ['阿尔茨海默病', '阿尔兹海默症', '阿兹海默症'])) {
+            return "Alzheimer's disease";
+        }
+        if ($this->containsAny($question, ['亨廷顿病'])) {
+            return "Huntington's Disease";
+        }
+        if ($this->containsAny($question, ['Rett', '雷特综合征', 'Rett综合征'])) {
+            return 'Rett syndrome';
+        }
+        if ($this->containsAny($question, ['唐氏综合征'])) {
+            return 'Down syndrome';
+        }
+        if ($this->containsAny($question, ['自闭症', '自闭症谱系障碍'])) {
+            return 'autism spectrum disorder';
+        }
+        if ($this->containsAny($question, ['乳腺癌'])) {
+            return 'breast cancer';
+        }
+        if ($this->containsAny($question, ['共济失调毛细血管扩张症'])) {
+            return 'ataxia telangiectasia';
+        }
+        if ($this->containsAny($question, ['口腔鳞状细胞癌'])) {
+            return 'Oral Squamous Cell Carcinoma';
+        }
         return null;
     }
 
     private function detectIntent(string $question): ?string
     {
         $lower = mb_strtolower($question);
-        if ($this->containsAny($lower, ['亚家族', '谱系', '关系', 'subfamily', 'lineage', 'relationship'])) {
+        if ($this->containsAny($lower, ['subfamily', 'lineage', 'relationship'])) {
             return 'subfamily';
         }
-        if ($this->containsAny($lower, ['文献', '论文', '证据', 'paper', 'evidence', 'reference'])) {
+        if ($this->containsAny($lower, ['paper', 'evidence', 'reference'])) {
             return 'entity_to_paper';
         }
-        if ($this->containsAny($lower, ['功能', '机制', '作用', 'function', 'mechanism', 'role'])) {
+        if ($this->containsAny($lower, ['function', 'mechanism', 'role'])) {
             return 'te_to_function';
         }
-        if ($this->containsAny($lower, ['疾病', '癌', '病', 'disease', 'cancer', 'disorder'])) {
+        if ($this->containsAny($lower, ['disease', 'cancer', 'disorder'])) {
+            return 'te_to_disease';
+        }
+        if ($this->containsAny($question, ['亚家族', '谱系', '关系'])) {
+            return 'subfamily';
+        }
+        if ($this->containsAny($question, ['文献', '论文', '证据'])) {
+            return 'entity_to_paper';
+        }
+        if ($this->containsAny($question, ['功能', '机制', '作用'])) {
+            return 'te_to_function';
+        }
+        if ($this->containsAny($question, ['疾病', '癌', '病'])) {
             return 'te_to_disease';
         }
         return null;
@@ -286,10 +315,10 @@ final class QaService
     private function isSmallTalk(string $question): bool
     {
         $lower = mb_strtolower(trim($question));
-        $smallTalk = [
-            'hi', 'hello', 'hey', '你好', '您好', '在吗', '嗨',
-            '你是谁', '你能做什么', 'help', '帮助'
-        ];
+        $smallTalk = ['hi', 'hello', 'hey', 'help'];
+        if (preg_match('/^(你好|您好|嗨|在吗|你是谁|你是什么模型|你能做什么|帮助)$/u', trim($question))) {
+            return true;
+        }
         return in_array($lower, $smallTalk, true);
     }
 
@@ -297,19 +326,24 @@ final class QaService
     {
         $normalized = preg_replace('/\s+/u', '', mb_strtolower(trim($question)));
         $zhSmallTalk = [
-            '你好', '您好', '在吗', '嗨', '帮助',
-            '你是谁', '你是什么', '你是什么模型', '你能做什么',
+            '你好', '您好', '嗨', '在吗', '帮助',
+            '你是谁', '你能做什么', '你是什么模型', '你会什么',
         ];
         $enSmallTalk = [
             'hi', 'hello', 'hey', 'help', 'whoareyou', 'whatmodelareyou', 'whatcanyoudo',
         ];
 
         if (in_array($normalized, $zhSmallTalk, true)) {
-            return "你好。我现在可以回答基于本地 TE 图数据库的问题。你可以直接问：\n\n1. LINE-1 相关疾病\n2. LINE-1 相关功能\n3. L1HS 和 LINE-1 是什么关系\n4. 哪些文献支持 LINE-1 与阿尔茨海默病相关";
+            return "你好。我现在可以回答基于本地 TE 知识图谱的问题。你可以直接问：\n\n1. LINE-1 相关疾病\n2. LINE-1 相关功能\n3. L1HS 和 LINE-1 是什么关系\n4. 哪些文献支持 LINE-1 与阿尔茨海默病相关";
         }
 
         if (in_array($normalized, $enSmallTalk, true)) {
-            return "Hello. I can answer questions grounded in the local TE knowledge graph. You can ask:\n\n1. LINE-1 related diseases\n2. LINE-1 related functions\n3. What is the relationship between L1HS and LINE-1?\n4. What papers support the association between LINE-1 and Alzheimer's disease?";
+            return "Hello. I can answer questions grounded in the local TE knowledge graph. You can ask:
+
+1. LINE-1 related diseases
+2. LINE-1 related functions
+3. What is the relationship between L1HS and LINE-1?
+4. What papers support the association between LINE-1 and Alzheimer's disease?";
         }
 
         return null;
@@ -483,158 +517,246 @@ final class QaService
             'answer_style' => $answerStyle,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        if ($language === 'zh') {
-            $langInstruction = $answerStyle === 'detailed'
-                ? "请用中文作答，风格要求准确、学术、完整，允许适度展开，整体效果应明显比简单模式更详细。\n"
-                    . "必须严格基于给定上下文，不能编造，也不要补充上下文以外的事实。\n"
-                    . "输出结构固定为：\n"
-                    . "## 结论\n"
-                    . "## 关键点\n"
-                    . "## 参考文献\n"
-                    . "“结论”部分至少写两段较完整的说明性文字，每段 2 到 4 句，解释实体与目标对象之间的总体关系、可能机制、证据范围和局限。\n"
-                    . "“关键点”部分请写 4 到 6 条，每条尽量写成完整句，优先说明关系类型、机制背景或证据特征，而不是只保留几个词。\n"
-                    . "参考文献列出最关键的 6 到 8 条，格式统一为“标题（PMID: xxxx）”。\n"
-                    . "如果上下文中有明显不像疾病、功能或文献标题的条目，不要写入答案。\n"
-                    . "如果上下文中存在中英混杂实体，正文优先使用中文；参考文献标题保持原文。\n"
-                    . "如果证据不足，请明确写“本地知识库暂无直接证据”。"
-                : "请用中文作答，风格要求准确、学术、简洁，适合课程答辩展示。\n"
-                    . "必须严格基于给定上下文，不能编造，也不要补充上下文以外的事实。\n"
-                    . "输出结构固定为：\n"
-                    . "## 结论\n"
-                    . "## 关键点\n"
-                    . "## 参考文献\n"
-                    . "先用 1 段话直接回答问题，再列出 2 到 4 条关键点，最后列出最关键的 5 到 6 条参考文献。\n"
-                    . "参考文献格式统一为“标题（PMID: xxxx）”。\n"
-                    . "如果上下文中有明显不像疾病、功能或文献标题的条目，不要写入答案。\n"
-                    . "如果上下文中存在中英混杂实体，正文优先使用中文；参考文献标题保持原文。\n"
-                    . "如果证据不足，请明确写“本地知识库暂无直接证据”。";
-        } else {
-            $langInstruction = $answerStyle === 'detailed'
-                ? "Answer in academic English with a noticeably more detailed style than brief mode.\n"
-                    . "Use only the provided context and do not invent facts.\n"
-                    . "Use exactly this structure:\n"
-                    . "## Conclusion\n"
-                    . "## Key Points\n"
-                    . "## References\n"
-                    . "Write at least two fuller explanatory paragraphs in the conclusion, then provide 4 to 6 sentence-level key points, then list 6 to 8 key references as Title (PMID: xxxx).\n"
-                    . "Ignore records that do not look like valid diseases, functions, or paper titles.\n"
-                    . "If evidence is insufficient, explicitly state that the local knowledge graph lacks direct evidence."
-                : "Answer in concise academic English suitable for a project demo.\n"
-                    . "Use only the provided context and do not invent facts.\n"
-                    . "Use exactly this structure:\n"
-                    . "## Conclusion\n"
-                    . "## Key Points\n"
-                    . "## References\n"
-                    . "First answer directly in one short paragraph, then give 2 to 4 key points, then list the most important 5 to 6 references as Title (PMID: xxxx).\n"
-                    . "Ignore records that do not look like valid diseases, functions, or paper titles.\n"
-                    . "If evidence is insufficient, explicitly state that the local knowledge graph lacks direct evidence.";
-        }
+        $template = $this->loadPromptTemplate($language, $answerStyle);
+        $prompt = $this->renderPromptTemplate($template, [
+            'question' => $question,
+            'context' => $context,
+            'language' => $language,
+            'answer_style' => $answerStyle,
+            'intent' => $intent ?? 'unknown',
+            'entity' => $entity ?? '',
+        ]);
 
         return $this->dashscopeChat([
             ['role' => 'system', 'content' => 'You are a bioinformatics knowledge-graph QA assistant.'],
-            ['role' => 'user', 'content' => $langInstruction . "\n\nUser question:\n{$question}\n\nContext:\n{$context}"],
+            ['role' => 'user', 'content' => $prompt],
         ], 0.1);
+    }
+
+    private function loadPromptTemplate(string $language, string $answerStyle): string
+    {
+        $lang = strtolower($language) === 'en' ? 'en' : 'zh';
+        $style = strtolower($answerStyle) === 'detailed' ? 'detailed' : 'simple';
+        $path = __DIR__ . DIRECTORY_SEPARATOR . 'prompts' . DIRECTORY_SEPARATOR . "{$lang}_{$style}.md";
+
+        if (is_file($path)) {
+            $content = file_get_contents($path);
+            if (is_string($content) && trim($content) !== '') {
+                return $content;
+            }
+        }
+
+        if ($lang === 'zh') {
+            return $style === 'detailed'
+                ? "??????????????????????????????????
+
+????????
+## ??
+## ???????
+## ?????
+## ?????
+
+?????
+{{question}}
+
+????
+{{context}}"
+                : "?????????????????
+
+????????
+## ??
+## ???
+## ????
+
+?????
+{{question}}
+
+????
+{{context}}";
+        }
+
+        return $style === 'detailed'
+            ? "Answer in detailed academic English using only the provided context.
+
+Structure:
+## Conclusion
+## Mechanistic Interpretation
+## Evidence and References
+## Limitations
+
+User question:
+{{question}}
+
+Context:
+{{context}}"
+            : "Answer in concise academic English using only the provided context.
+
+Structure:
+## Conclusion
+## Key Points
+## References
+
+User question:
+{{question}}
+
+Context:
+{{context}}";
+    }
+
+    private function renderPromptTemplate(string $template, array $vars): string
+    {
+        $replacements = [];
+        foreach ($vars as $key => $value) {
+            $replacements['{{' . strtoupper($key) . '}}'] = (string)$value;
+            $replacements['{{' . strtolower($key) . '}}'] = (string)$value;
+            $replacements['{{' . $key . '}}'] = (string)$value;
+        }
+        return strtr($template, $replacements);
     }
 
     private function fallbackAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle): string
     {
-        if (empty($rows)) {
-            return $language === 'zh'
-                ? '## 结论' . "\n" . '本地知识库暂无直接证据。' . "\n\n" . '## 关键点' . "\n" . '- 当前未检索到与该问题直接相关的结构化记录。' . "\n" . '- 建议改用更具体的实体名称或关系类型重新提问。' . "\n\n" . '## 参考文献' . "\n" . '暂无。'
-                : 'The local knowledge graph currently lacks direct evidence. Try a more specific entity or question type.';
-        }
-
-        if ($language === 'zh' && $intent === 'subfamily' && isset($rows[0][0])) {
-            $parent = (string)$rows[0][0];
-            $copies = isset($rows[0][1]) ? (string)$rows[0][1] : '';
-            $conclusion = $answerStyle === 'detailed'
-                ? "## 结论\n该问题对应的是谱系或分类关系。根据本地知识图谱，当前实体属于 {$parent} 谱系，这表示它与 LINE-1 总家族之间存在层级归属，而不是疾病关联或功能作用关系。\n\n这一结果主要用于支持亚家族结构展示、谱系浏览以及后续的局部子图分析，因此更适合从分类学和知识组织的角度来理解。"
-                : "## 结论\n该问题对应的是谱系/分类关系。根据本地知识库，当前实体属于 {$parent} 谱系。";
-            return $conclusion . "\n\n## 关键点\n"
-                . "- 当前查询结果显示该实体与 {$parent} 之间存在 `SUBFAMILY_OF` 关系。\n"
-                . ($copies !== '' ? "- 该关系记录中还包含拷贝数信息：{$copies}。\n" : '')
-                . ($answerStyle === 'detailed' ? "- 这类边主要用于支撑亚家族查询、谱系结构可视化以及知识图谱中的层级展示。\n- 它描述的是分类归属关系，而不是疾病、功能或文献证据关系。\n" : '')
-                . "\n## 参考文献\n本地知识库暂无直接文献证据。";
-        }
-
         if ($language === 'zh') {
+            $templateName = empty($rows)
+                ? ('fallback_zh_' . $answerStyle . '_empty.md')
+                : ('fallback_zh_' . $answerStyle . '.md');
+            $templatePath = __DIR__ . DIRECTORY_SEPARATOR . 'prompts' . DIRECTORY_SEPARATOR . $templateName;
+            $template = is_file($templatePath)
+                ? (string) file_get_contents($templatePath)
+                : "## 结论\n本地知识图谱暂无直接证据。";
+
             $items = [];
-            foreach (array_slice($rows, 0, $answerStyle === 'detailed' ? 6 : 5) as $row) {
-                if (is_array($row) && isset($row[0])) {
-                    $target = (string)$row[0];
-                    $predicate = isset($row[1]) ? (string)$row[1] : '相关';
-                    $items[] = $answerStyle === 'detailed'
-                        ? "- 根据本地知识图谱记录，当前查询实体与 {$target} 之间表现为“{$predicate}”关系，这说明两者在已整理的文献证据中存在可追踪的结构化关联。"
-                        : "- {$predicate} {$target}";
+            foreach (array_slice($rows, 0, $answerStyle === 'detailed' ? 8 : 5) as $row) {
+                if (!is_array($row) || !isset($row[0])) {
+                    continue;
+                }
+                $target = $this->extractFallbackTarget($row);
+                $predicate = isset($row[1]) && trim((string)$row[1]) !== '' ? (string) $row[1] : '相关';
+                if ($answerStyle === 'detailed') {
+                    $items[] = '- 当前知识图谱记录显示，查询对象与“' . $target . '”之间存在“' . $predicate . '”关系，可作为进一步解释该问题的结构化证据。';
+                } else {
+                    $items[] = '- ' . $predicate . ' ' . $target;
                 }
             }
-            $refs = [];
-            foreach (array_slice($references, 0, $answerStyle === 'detailed' ? 8 : 6) as $ref) {
-                $title = (string)($ref['title'] ?? '未命名文献');
-                $pmid = implode(',', $ref['pmids'] ?? []);
-                $refs[] = "- {$title}" . ($pmid !== '' ? "（PMID: {$pmid}）" : '');
+            if (empty($items)) {
+                $items[] = $answerStyle === 'detailed'
+                    ? '- 当前未检索到足够的结构化记录，暂时无法对该问题做更深入展开。'
+                    : '- 当前未检索到直接证据。';
             }
-            $conclusion = $answerStyle === 'detailed'
-                ? "## 结论\n基于本地知识库，可以检索到与该问题直接相关的结构化记录。当前结果来自已导入的 Neo4j 图数据库，可用于概括实体与目标对象之间的主要关系。\n\n从现有记录来看，这些关系通常不是孤立事实，而是来自多篇文献整理后的结构化知识，因此详细模式会尽量把主要关系、证据方向和可能含义展开说明。"
-                : "## 结论\n基于本地知识库，可以检索到与该问题直接相关的结构化记录。";
-            return $conclusion . "\n\n## 关键点\n"
-                . implode("\n", $items)
-                . "\n\n## 参考文献\n"
-                . implode("\n", $refs);
+
+            $refs = [];
+            foreach (array_slice($references, 0, $answerStyle === 'detailed' ? 10 : 6) as $ref) {
+                $title = (string) ($ref['title'] ?? '未命名文献');
+                $pmid = implode(',', $ref['pmids'] ?? []);
+                $refs[] = '- ' . $title . ($pmid !== '' ? '（PMID: ' . $pmid . '）' : '');
+            }
+            if (empty($refs)) {
+                $refs[] = '- 当前未检索到可展示的参考文献。';
+            }
+
+            return strtr($template, [
+                '{{items}}' => implode("
+", $items),
+                '{{refs}}' => implode("
+", $refs),
+            ]);
+        }
+
+        if (empty($rows)) {
+            return $answerStyle === 'detailed'
+                ? "## Conclusion
+The local knowledge graph does not currently contain enough structured evidence to support a fully detailed answer.
+
+## Mechanistic Interpretation
+- No directly usable entity-relation records were retrieved for this query.
+- The queried entity may need stronger normalization, or relevant graph relations may still be incomplete.
+- A more specific disease, function, or TE name often improves retrieval quality.
+
+## Evidence and References
+No local evidence records were retrieved for this query, so a full evidence trail cannot be expanded.
+
+## Limitations
+- The answer is constrained by the current coverage of the local knowledge graph.
+- Missing normalization or incomplete relation extraction can reduce retrieval quality."
+                : "## Conclusion
+The local knowledge graph currently lacks direct evidence for this question.
+
+## Key Points
+- No directly relevant structured records were retrieved.
+- Try using a more specific entity or relation type.
+
+## References
+None.";
         }
 
         $items = [];
-        foreach (array_slice($rows, 0, 5) as $row) {
+        foreach (array_slice($rows, 0, $answerStyle === 'detailed' ? 8 : 5) as $row) {
             if (is_array($row) && isset($row[0])) {
-                $target = (string)$row[0];
-                $predicate = isset($row[1]) ? (string)$row[1] : 'related to';
-                $items[] = "- {$predicate} {$target}";
+                $target = $this->extractFallbackTarget($row);
+                $predicate = isset($row[1]) ? (string) $row[1] : 'related to';
+                $items[] = $answerStyle === 'detailed'
+                    ? "- The current graph records indicate a '" . $predicate . "' relation between the queried entity and " . $target . "."
+                    : '- ' . $predicate . ' ' . $target;
             }
         }
         $refs = [];
-        foreach (array_slice($references, 0, 6) as $ref) {
-            $title = (string)($ref['title'] ?? 'Untitled reference');
+        foreach (array_slice($references, 0, $answerStyle === 'detailed' ? 10 : 6) as $ref) {
+            $title = (string) ($ref['title'] ?? 'Untitled reference');
             $pmid = implode(',', $ref['pmids'] ?? []);
-            $refs[] = "- {$title}" . ($pmid !== '' ? " (PMID: {$pmid})" : '');
+            $refs[] = '- ' . $title . ($pmid !== '' ? ' (PMID: ' . $pmid . ')' : '');
         }
-        return "## Conclusion\nRelevant structured records were retrieved from the local knowledge graph.\n\n## Key Points\n"
-            . implode("\n", $items)
-            . "\n\n## References\n"
-            . implode("\n", $refs);
+        if ($answerStyle === 'detailed') {
+            return "## Conclusion
+Relevant structured records were retrieved from the local knowledge graph. The answer below expands the main relations, evidence direction, and likely interpretation supported by the current graph context.
+
+## Mechanistic Interpretation
+"
+                . implode("
+", $items)
+                . "
+
+## Evidence and References
+The following references are the main evidence items currently retained in the local graph:
+"
+                . implode("
+", $refs)
+                . "
+
+## Limitations
+- The answer is limited to structured records already imported into the graph.
+- Missing normalization or incomplete relation extraction may reduce coverage.";
+        }
+
+        return "## Conclusion
+Relevant structured records were retrieved from the local knowledge graph.
+
+## Key Points
+"
+            . implode("
+", $items)
+            . "
+
+## References
+"
+            . implode("
+", $refs);
     }
 
-    private function extractReferences(array $rows): array
+    private function extractFallbackTarget(array $row): string
     {
-        $references = [];
-        foreach ($rows as $row) {
-            foreach ($row as $value) {
-                if (is_array($value)) {
-                    if (isset($value['title'])) {
-                        $key = $value['title'] . '|' . implode(',', $value['pmids'] ?? []);
-                        $references[$key] = ['title' => $value['title'], 'pmids' => $value['pmids'] ?? []];
-                    } elseif (isset($value[0]) && is_array($value[0]) && isset($value[0]['title'])) {
-                        foreach ($value as $item) {
-                            if (is_array($item) && isset($item['title'])) {
-                                $key = $item['title'] . '|' . implode(',', $item['pmids'] ?? []);
-                                $references[$key] = ['title' => $item['title'], 'pmids' => $item['pmids'] ?? []];
-                            }
-                        }
-                    }
-                }
-            }
-            if (isset($row[0]) && isset($row[2]) && is_array($row[2])) {
-                foreach ($row[2] as $item) {
-                    if (is_array($item) && isset($item['title'])) {
-                        $key = $item['title'] . '|' . implode(',', $item['pmids'] ?? []);
-                        $references[$key] = ['title' => $item['title'], 'pmids' => $item['pmids'] ?? []];
-                    }
-                }
-            }
+        if (isset($row[0]) && is_string($row[0]) && !in_array($row[0], ['BIO_RELATION', 'EVIDENCE_RELATION', 'SUBFAMILY_OF'], true)) {
+            return (string) $row[0];
         }
-        return array_values($references);
+        if (isset($row[3]) && is_scalar($row[3])) {
+            return (string) $row[3];
+        }
+        if (isset($row[0])) {
+            return is_scalar($row[0]) ? (string) $row[0] : '未知对象';
+        }
+        return '未知对象';
     }
 
-    private function prepareRowsForAnswer(array $rows, ?string $intent): array
+    private function prepareRowsForAnswer(array $rows, ?string $intent, string $answerStyle = 'simple'): array
     {
         if ($intent === 'te_to_disease' || $intent === 'te_disease_relation' || $intent === 'te_disease_evidence') {
             $rows = array_values(array_filter($rows, function ($row): bool {
@@ -652,10 +774,45 @@ final class QaService
 
         $rows = $this->normalizeRows($rows, $intent);
 
-        return array_slice($rows, 0, 12);
+        $limit = $answerStyle === 'detailed' ? 10 : 4;
+        return array_slice($rows, 0, $limit);
     }
 
-    private function prepareReferencesForAnswer(array $references, ?string $intent): array
+    private function extractReferences(array $rows): array
+    {
+        $references = [];
+        foreach ($rows as $row) {
+            if (!is_array($row) || !isset($row[3]) || !is_array($row[3])) {
+                continue;
+            }
+
+            foreach ($row[3] as $evidence) {
+                if (!is_array($evidence)) {
+                    continue;
+                }
+
+                $title = trim((string)($evidence['title'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+
+                $pmids = array_values(array_unique(array_map('strval', $evidence['pmids'] ?? [])));
+                if (!isset($references[$title])) {
+                    $references[$title] = [
+                        'title' => $title,
+                        'pmids' => $pmids,
+                    ];
+                    continue;
+                }
+
+                $references[$title]['pmids'] = array_values(array_unique(array_merge($references[$title]['pmids'], $pmids)));
+            }
+        }
+
+        return array_values($references);
+    }
+
+    private function prepareReferencesForAnswer(array $references, ?string $intent, string $answerStyle = 'simple'): array
     {
         $filtered = array_values(array_filter($references, function ($ref): bool {
             $title = (string)($ref['title'] ?? '');
@@ -666,7 +823,8 @@ final class QaService
             return count($b['pmids'] ?? []) <=> count($a['pmids'] ?? []);
         });
 
-        return array_slice($filtered, 0, 8);
+        $limit = $answerStyle === 'detailed' ? 6 : 3;
+        return array_slice($filtered, 0, $limit);
     }
 
     private function looksLikePaperTitle(string $title): bool
@@ -694,7 +852,7 @@ final class QaService
         $positive = [
             'disease', 'syndrome', 'cancer', 'carcinoma', 'disorder', 'tumor', 'tumour',
             'leukemia', 'leukaemia', 'lymphoma', 'thalassemia', 'alzheimer', 'huntington',
-            'autism', 'rett', 'rotor', 'ataxia', 'hemophilia', '贫血', '癌', '病', '综合征', '瘤'
+            'autism', 'rett', 'rotor', 'ataxia', 'hemophilia', '??', '?', '?', '???', '?'
         ];
         foreach ($positive as $keyword) {
             if (str_contains($lower, $keyword)) {
@@ -717,7 +875,7 @@ final class QaService
             return false;
         }
         $lower = mb_strtolower($trimmed);
-        $negative = ['disease', 'syndrome', 'cancer', 'carcinoma', 'disorder', '贫血', '癌', '综合征'];
+        $negative = ['disease', 'syndrome', 'cancer', 'carcinoma', 'disorder', '??', '?', '???'];
         foreach ($negative as $keyword) {
             if (str_contains($lower, $keyword)) {
                 return false;
@@ -779,83 +937,16 @@ final class QaService
 
     private function normalizeDisplayLabel(string $label, ?string $intent): string
     {
-        $trimmed = trim($label);
-        if ($trimmed === '') {
-            return $trimmed;
-        }
-
-        $map = [
-            "Alzheimer's disease" => '阿尔茨海默病',
-            'Huntington\'s Disease' => '亨廷顿病',
-            'Down syndrome' => '唐氏综合征',
-            'Rett syndrome' => 'Rett 综合征',
-            'Rett综合征' => 'Rett 综合征',
-            'Rotor syndrome' => 'Rotor 综合征',
-            'ataxia telangiectasia' => '共济失调毛细血管扩张症',
-            'autism spectrum disorder' => '自闭症谱系障碍',
-            'autism spectrum disorders' => '自闭症谱系障碍',
-            'Oral Squamous Cell Carcinoma' => '口腔鳞状细胞癌',
-            'breast cancer' => '乳腺癌',
-            'beta-thalassemia' => 'β-地中海贫血',
-            'Mendelian disease' => '孟德尔遗传病',
-            'IFN-based autoimmune diseases' => '干扰素相关自身免疫性疾病',
-            '3´ transduction' => "3' 转导",
-            "3' transduction" => "3' 转导",
-            "5' and 3' transduction" => "5' 和 3' 转导",
-            "5' UTR activity" => "5' UTR 活性",
-            "A-tail extension" => 'A-tail 扩展',
-        ];
-
-        if (isset($map[$trimmed])) {
-            return $map[$trimmed];
-        }
-
-        if ($intent === 'te_to_disease' || $intent === 'te_disease_relation' || $intent === 'te_disease_evidence') {
-            return str_replace('disease', '病', $trimmed);
-        }
-
-        return $trimmed;
+        return trim($label);
     }
 
     private function polishAnswer(string $answer, string $language): string
     {
-        if ($language !== 'zh') {
-            return $answer;
-        }
+        $answer = preg_replace('/
+{3,}/u', "
 
-        $parts = preg_split('/\n## 参考文献\n/u', $answer, 2);
-        $body = $parts[0] ?? $answer;
-        $references = $parts[1] ?? null;
-
-        $replacements = [
-            "Alzheimer's disease" => '阿尔茨海默病',
-            "Huntington's Disease" => '亨廷顿病',
-            'Down syndrome' => '唐氏综合征',
-            'Rett syndrome' => 'Rett 综合征',
-            'Rett综合征' => 'Rett 综合征',
-            'autism spectrum disorder' => '自闭症谱系障碍',
-            'autism spectrum disorders' => '自闭症谱系障碍',
-            'ataxia telangiectasia' => '共济失调毛细血管扩张症',
-            'breast cancer' => '乳腺癌',
-            'Oral Squamous Cell Carcinoma' => '口腔鳞状细胞癌',
-            'Rotor syndrome' => 'Rotor 综合征',
-            'Mendelian disease' => '孟德尔遗传病',
-            'IFN-based autoimmune diseases' => '干扰素相关自身免疫性疾病',
-            'beta-thalassemia' => 'β-地中海贫血',
-            ' robust ' => ' 高水平 ',
-            'LINE1' => 'LINE-1',
-        ];
-
-        $body = str_replace(array_keys($replacements), array_values($replacements), $body);
-        $body = preg_replace('/\n{3,}/u', "\n\n", $body);
-
-        if ($references !== null) {
-            $references = preg_replace("/([（(]PMID:\s*\d+[)）])\n(?=[^\n])/u", "$1\n", $references);
-            $references = preg_replace('/\n{3,}/u', "\n\n", $references);
-            return trim($body) . "\n\n## 参考文献\n" . trim($references);
-        }
-
-        return trim($body);
+", $answer);
+        return trim((string) $answer);
     }
 
     private function dashscopeChat(array $messages, float $temperature = 0.2): string
@@ -864,10 +955,15 @@ final class QaService
             'model' => $this->config['dashscope_model'],
             'messages' => $messages,
             'temperature' => $temperature,
+            'enable_thinking' => false,
         ];
 
         if (!empty($this->config['llm_relay_url'])) {
-            $relayResponse = $this->postLocalJson($this->config['llm_relay_url'], $payload);
+            $relayResponse = $this->httpJson(
+                $this->config['llm_relay_url'],
+                $payload,
+                ['Content-Type: application/json']
+            );
             if (empty($relayResponse['ok']) || !isset($relayResponse['response'])) {
                 throw new RuntimeException('LLM relay returned an invalid response');
             }
@@ -912,7 +1008,7 @@ final class QaService
             throw new RuntimeException("Local relay socket failed: {$errstr} ({$errno})");
         }
 
-        stream_set_timeout($socket, 90);
+        stream_set_timeout($socket, 20);
         $request =
             "POST {$path} HTTP/1.1\r\n" .
             "Host: {$host}:{$port}\r\n" .
@@ -992,4 +1088,16 @@ final class QaService
         }
         return $decoded;
     }
+
+    private function debug(string $stage, array $data = []): void
+    {
+        $line = '[' . date('Y-m-d H:i:s') . '] ' . $stage;
+        if ($data !== []) {
+            $line .= ' ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        $line .= PHP_EOL;
+        @file_put_contents(__DIR__ . '/qa_debug.log', $line, FILE_APPEND);
+    }
 }
+
+

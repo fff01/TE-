@@ -132,13 +132,27 @@
       if(current) return current.data('type') || 'Unknown';
       return ((demoData.elements.find(x => x.data && x.data.label === name && !x.data.source) || {}).data || {}).type || 'Unknown';
     };
-    function getDesc(name,type,description='',pmid=''){
-      if(descMap[currentLang][name]) return descMap[currentLang][name];
-      if(type==='TE') return currentLang==='zh' ? `${getName(name,type,description,pmid)} ??????????????????????????????` : `${getName(name,type,description,pmid)} is a transposable element node used to connect lineage, function, disease, and literature evidence in the graph.`;
-      if(type==='Function') return currentLang==='zh' ? `${getName(name,type,description,pmid)} ???????/?????` : `${getName(name,type,description,pmid)} is a function or mechanism node in the current graph.`;
-      if(type==='Disease') return currentLang==='zh' ? `${getName(name,type,description,pmid)} ??????????` : `${getName(name,type,description,pmid)} is a disease node in the current graph.`;
-      if(type==='Paper') return currentLang==='zh' ? `??????????????????${pmid ? `?PMID: ${pmid}?` : ''}?` : `This node represents a literature record supporting the current graph knowledge${pmid ? ` (PMID: ${pmid})` : ''}.`;
+    function isBrokenDescription(text=''){
+      const value = String(text || '').trim();
+      if(!value) return true;
+      if(/^\?+$/.test(value)) return true;
+      if((value.match(/\?/g)||[]).length >= 4) return true;
+      if(/[\u9500\u951b\u956f\u95ba\u95c2\u95b8\u95b7\u7487\u9391]/.test(value)) return true;
+      return false;
+    }
+    function buildDefaultDesc(name,type,pmid=''){
+      if(type==='TE') return currentLang==='zh' ? `${getName(name,type,'',pmid)} \u662f\u5f53\u524d\u77e5\u8bc6\u56fe\u8c31\u4e2d\u7684\u8f6c\u5ea7\u5143\u4ef6\u8282\u70b9\uff0c\u7528\u4e8e\u8fde\u63a5\u8c31\u7cfb\u3001\u529f\u80fd\u3001\u75be\u75c5\u548c\u6587\u732e\u8bc1\u636e\u3002` : `${getName(name,type,'',pmid)} is a transposable element node used to connect lineage, function, disease, and literature evidence in the graph.`;
+      if(type==='Function') return currentLang==='zh' ? `${getName(name,type,'',pmid)} \u662f\u5f53\u524d\u77e5\u8bc6\u56fe\u8c31\u4e2d\u7684\u529f\u80fd\u6216\u673a\u5236\u8282\u70b9\u3002` : `${getName(name,type,'',pmid)} is a function or mechanism node in the current graph.`;
+      if(type==='Disease') return currentLang==='zh' ? `${getName(name,type,'',pmid)} \u662f\u5f53\u524d\u77e5\u8bc6\u56fe\u8c31\u4e2d\u7684\u75be\u75c5\u8282\u70b9\u3002` : `${getName(name,type,'',pmid)} is a disease node in the current graph.`;
+      if(type==='Paper') return currentLang==='zh' ? `\u8be5\u8282\u70b9\u8868\u793a\u652f\u6491\u5f53\u524d\u56fe\u8c31\u5173\u7cfb\u7684\u6587\u732e\u8bb0\u5f55${pmid ? `\uff08PMID: ${pmid}\uff09` : ''}\u3002` : `This node represents a literature record supporting the current graph knowledge${pmid ? ` (PMID: ${pmid})` : ''}.`;
       return '';
+    }
+    function getDesc(name,type,description='',pmid=''){
+      const rawDesc = String(description || '').trim();
+      if(rawDesc && !isBrokenDescription(rawDesc)) return rawDesc;
+      const mappedDesc = descMap[currentLang] && descMap[currentLang][name] ? String(descMap[currentLang][name]).trim() : '';
+      if(mappedDesc && !isBrokenDescription(mappedDesc)) return mappedDesc;
+      return buildDefaultDesc(name,type,pmid);
     }
     function buildLayout(){return{name:'cose',fit:true,padding:75,randomize:true,animate:false,nodeDimensionsIncludeLabels:true,componentSpacing:180,nestingFactor:.9,gravity:45,numIter:1800,initialTemp:220,coolingFactor:.96,minTemp:1,idealEdgeLength:edge=>{const rel=edge.data('relation')||''; if(rel==='SUBFAMILY_OF') return 170; if(rel==='EVIDENCE_RELATION') return 240; return 210;},edgeElasticity:edge=>{const rel=edge.data('relation')||''; return rel==='EVIDENCE_RELATION'?40:90;},nodeRepulsion:node=>{const type=node.data('type')||''; return type==='Paper'?GRAPH_TUNING.evidenceNodeRepulsion:(type==='Disease'||type==='Function'?GRAPH_TUNING.diseaseFunctionRepulsion:GRAPH_TUNING.teNodeRepulsion);}}}
     const cy = cytoscape({container:el('cy'),elements:demoData.elements,style:[{selector:'node',style:{'label':e=>getName(e.data('label'),e.data('type'),e.data('description')||'',e.data('pmid')||''),'font-size':'11px','min-zoomed-font-size':9,'text-valign':'center','text-halign':'center','background-color':e=>getTypeColor(e.data('type')),'color':'#0f172a','text-outline-width':3,'text-outline-color':'#fff','width':'label','height':'label','padding':'14px','text-wrap':'wrap','text-max-width':150,'border-width':2,'border-color':'#fff','shape':'round-rectangle'}},{selector:'edge',style:{'width':2,'line-color':'#cbd5e1','target-arrow-color':'#64748b','target-arrow-shape':'triangle','curve-style':'bezier','control-point-step-size':55,'label':e=>{const rel=e.data('relation')||''; return rel==='EVIDENCE_RELATION'?'':getRel(rel)},'font-size':'9px','min-zoomed-font-size':8,'text-rotation':'autorotate','color':'#334155','text-background-color':'rgba(255,255,255,0.92)','text-background-opacity':1,'text-background-padding':'2px','text-outline-width':0}},{selector:'.highlight',style:{'border-width':6,'border-color':'#0f172a','font-weight':'800','overlay-color':'#2563eb','overlay-opacity':0.12,'overlay-padding':'16px','shadow-blur':18,'shadow-color':'#2563eb','shadow-opacity':0.35,'shadow-offset-x':0,'shadow-offset-y':0,'z-index':999}},{selector:'.neighbor',style:{'border-width':4,'border-color':'#60a5fa','overlay-color':'#93c5fd','overlay-opacity':0.03,'overlay-padding':'6px','opacity':GRAPH_TUNING.neighborOpacity,'shadow-blur':4,'shadow-color':'#93c5fd','shadow-opacity':0.08}},{selector:'.dimmed',style:{'opacity':GRAPH_TUNING.dimmedOpacity}},{selector:'.focus-edge',style:{'label':e=>getRel(e.data('relation')),'width':4,'line-color':'#2563eb','target-arrow-color':'#2563eb','font-size':'11px','color':'#0f172a','text-background-color':'rgba(255,255,255,0.98)','text-background-opacity':1,'text-background-padding':'4px','opacity':0.95}},{selector:'.edge-dimmed',style:{'opacity':0.28}}],layout:buildLayout(),wheelSensitivity:.2});
@@ -291,7 +305,77 @@
     function renderBubbleContent(text,sender){if(sender==='user') return escapeHtml(text).replace(/\n/g,'<br>'); if(window.marked){marked.setOptions({breaks:true,gfm:true}); return marked.parse(text);} return text.replace(/\n/g,'<br>');}
     function addMessage(text,sender){const m=document.createElement('div'); m.className=`msg ${sender}`; m.innerHTML=`<div class="avatar"><i class="fas ${sender==='user'?'fa-user':'fa-robot'}"></i></div><div class="bubble">${renderBubbleContent(text,sender)}</div>`; chatMessages.appendChild(m); chatMessages.scrollTop=chatMessages.scrollHeight; return m}
     function makeRef(items){if(!items || items.length===0) return `<div class="ref">${ui[currentLang].noneLocal}</div>`; return `<div class="ref"><strong>${ui[currentLang].ref}:</strong><br>${items.map(i => `${getName(i.name, inferType(i.name), '', (i.pmids||[])[0]||'')}${(i.pmids||[]).length ? ` (PMID: ${(i.pmids||[]).join(', ')})` : ''}`).join('<br>')}</div>`}
-    function answerLocal(q){const modeLabel=currentLang==='zh'?(currentAnswerStyle==='detailed'?'详细模式':'简单模式'):(currentAnswerStyle==='detailed'?'Detailed mode':'Brief mode'); const intro=`<blockquote>${modeLabel}</blockquote>`; q=q.toLowerCase(); const askFunc=q.includes('line-1') && (q.includes('功能')||q.includes('机制')||q.includes('作用')||q.includes('function')||q.includes('mechanism')); const askDis=q.includes('line-1') && (q.includes('疾病')||q.includes('病')||q.includes('disease')||q.includes('cancer')); const askL1hs=q.includes('l1hs') && (q.includes('文献')||q.includes('证据')||q.includes('论文')||q.includes('paper')||q.includes('evidence')); const askL1=q.includes('line-1') && (q.includes('文献')||q.includes('证据')||q.includes('论文')||q.includes('paper')||q.includes('evidence')); if(askFunc){const items=demoData.qa.line1_functions||[]; const limit=currentAnswerStyle==='detailed'?8:5; const s=items.slice(0,limit).map(i => `${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join(currentLang==='zh'?'；':'; '); return `${intro}${ui[currentLang].f}${s || ui[currentLang].no}${makeRef(items.slice(0,limit))}`;} if(askDis){const items=demoData.qa.line1_diseases||[]; const limit=currentAnswerStyle==='detailed'?8:5; const s=items.slice(0,limit).map(i => `${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join(currentLang==='zh'?'；':'; '); return `${intro}${ui[currentLang].d}${s || ui[currentLang].no}${makeRef(items.slice(0,limit))}`;} if(askL1hs) return `${intro}${ui[currentLang].lp}${makeRef(demoData.qa.l1hs_papers||[])}`; if(askL1) return `${intro}${ui[currentLang].pp}${makeRef(demoData.qa.line1_papers||[])}`; return `${intro}${ui[currentLang].fallback}`}
+    function answerLocal(q){
+      const modeLabel=currentLang==='zh'
+        ? (currentAnswerStyle==='detailed'?'详细模式':'简单模式')
+        : (currentAnswerStyle==='detailed'?'Detailed mode':'Brief mode');
+      const intro=`> ${modeLabel}\n\n`;
+      const lower=(q||'').toLowerCase();
+      const asksLine1=lower.includes('line-1') || lower.includes('line1') || lower.includes('l1');
+      const asksFunction=lower.includes('功能') || lower.includes('机制') || lower.includes('function') || lower.includes('mechanism');
+      const asksDisease=lower.includes('疾病') || lower.includes('癌') || lower.includes('病') || lower.includes('disease') || lower.includes('cancer');
+      const asksPaper=lower.includes('文献') || lower.includes('证据') || lower.includes('paper') || lower.includes('evidence');
+      const asksRelation=(lower.includes('关系') || lower.includes('是什么关系') || lower.includes('relationship')) && lower.includes('l1hs');
+
+      const formatRef=(i)=>`- ${getName(i.name, inferType(i.name), '', (i.pmids||[])[0]||'')}${(i.pmids||[]).length ? ` (PMID: ${(i.pmids||[]).join(', ')})` : ''}`;
+      const buildDetailed=(title, items, refs, limitItems=8, limitRefs=8)=>{
+        const bulletLines=(items||[]).slice(0,limitItems).map(i=>`- ${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join('\n') || (currentLang==='zh' ? '- 当前未检索到可展开的本地结构化记录。' : '- No expandable local structured records were found.');
+        const refLines=(refs||[]).slice(0,limitRefs).map(formatRef).join('\n') || (currentLang==='zh' ? '当前暂无本地参考文献。' : 'No local references are currently available.');
+        if(currentLang==='zh'){
+          return `${intro}## 结论\n${title}\n\n## 机制与关系解释\n${bulletLines}\n\n## 证据与文献\n${refLines}\n\n## 局限与说明\n- 当前结果来自本地图谱子图，完整答案仍以后端知识检索为准。\n- 若动态图谱未完全展开，部分关系可能未显示在当前页面。`;
+        }
+        return `${intro}## Conclusion\n${title}\n\n## Mechanistic Interpretation\n${bulletLines}\n\n## Evidence and References\n${refLines}\n\n## Limitations\n- This local answer is based on the demo subgraph rather than the full backend retrieval pipeline.\n- Some relations may remain hidden when the current graph fragment is incomplete.`;
+      };
+      const buildSimple=(lead, items, refs, limitItems=5, limitRefs=5)=>{
+        const body=(items||[]).slice(0,limitItems).map(i=>`${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join(currentLang==='zh'?'；':'; ');
+        const refsHtml=makeRef((refs||[]).slice(0,limitRefs));
+        return `${intro}${lead}${body || ui[currentLang].no}${refsHtml}`;
+      };
+
+      if(asksRelation){
+        const refs=demoData.qa.l1hs_papers || [];
+        if(currentAnswerStyle==='detailed'){
+          return currentLang==='zh'
+            ? `${intro}## 结论\nL1HS 是 LINE-1 谱系中的一个亚家族节点，当前本地图谱把它作为更细粒度的转座子分支来展示。\n\n## 机制与关系解释\n- L1HS 通过 SUBFAMILY_OF 关系连接到 LINE-1。\n- 这种关系属于分类/谱系关系，而不是疾病或功能作用关系。\n- 保留亚家族层有助于区分总家族与具体活跃分支。\n\n## 证据与文献\n${refs.slice(0,6).map(formatRef).join('\n') || '当前暂无本地参考文献。'}\n\n## 局限与说明\n- 当前页面优先展示局部子图，更多邻域需要继续展开。\n- 更完整的证据应以后端 Neo4j 检索和问答结果为准。`
+            : `${intro}## Conclusion\nL1HS is modeled as a subfamily within the LINE-1 lineage.\n\n## Mechanistic Interpretation\n- L1HS is connected to LINE-1 through a SUBFAMILY_OF relation.\n- This is a lineage or classification relation rather than a disease or mechanism relation.\n- Keeping subfamily-level nodes helps distinguish the general family from specific active branches.\n\n## Evidence and References\n${refs.slice(0,6).map(formatRef).join('\n') || 'No local references are currently available.'}\n\n## Limitations\n- The current page emphasizes a local subgraph rather than the full graph.\n- Full evidence should be checked through the backend retrieval pipeline.`;
+        }
+        return `${intro}${currentLang==='zh' ? 'L1HS 与 LINE-1 的关系是亚家族与总家族之间的谱系关系。' : 'L1HS is connected to LINE-1 as a subfamily within the same lineage.'}${makeRef(refs.slice(0,4))}`;
+      }
+
+      if(asksLine1 && asksFunction){
+        const items=demoData.qa.line1_functions || [];
+        return currentAnswerStyle==='detailed'
+          ? buildDetailed(currentLang==='zh' ? '根据当前本地图谱，LINE-1 相关功能主要涉及逆转录转座、序列转导、插入突变及与其他转座元件协同的过程。' : 'According to the current local graph, LINE-1-related functions mainly involve retrotransposition, sequence transduction, insertional mutagenesis, and interactions with other transposable elements.', items, items)
+          : buildSimple(ui[currentLang].f, items, items);
+      }
+
+      if(asksLine1 && asksDisease){
+        const items=demoData.qa.line1_diseases || [];
+        return currentAnswerStyle==='detailed'
+          ? buildDetailed(currentLang==='zh' ? '根据当前本地图谱，LINE-1 与多种神经系统疾病、遗传综合征及肿瘤相关疾病存在结构化关联。' : 'According to the current local graph, LINE-1 shows structured associations with multiple neurological diseases, genetic syndromes, and cancers.', items, items)
+          : buildSimple(ui[currentLang].d, items, items);
+      }
+
+      if(lower.includes('l1hs') && asksPaper){
+        const refs=demoData.qa.l1hs_papers || [];
+        return currentAnswerStyle==='detailed'
+          ? buildDetailed(currentLang==='zh' ? '当前本地图谱已经整理出与 L1HS 相关的文献证据，可用于支撑谱系、功能或疾病关系的解释。':'The current local graph already contains literature evidence associated with L1HS.', refs, refs, 6, 8)
+          : `${intro}${ui[currentLang].lp}${makeRef(refs.slice(0,5))}`;
+      }
+
+      if(asksLine1 && asksPaper){
+        const refs=demoData.qa.line1_papers || [];
+        return currentAnswerStyle==='detailed'
+          ? buildDetailed(currentLang==='zh' ? '当前本地图谱已经整理出与 LINE-1 相关的核心文献，可用于支撑疾病、功能和谱系层面的解释。':'The current local graph already contains core literature evidence associated with LINE-1.', refs, refs, 6, 8)
+          : `${intro}${ui[currentLang].pp}${makeRef(refs.slice(0,5))}`;
+      }
+
+      return currentAnswerStyle==='detailed'
+        ? (currentLang==='zh'
+          ? `${intro}## 结论\n当前本地演示图支持围绕 LINE-1 的疾病、功能、谱系关系与文献证据问答。\n\n## 机制与关系解释\n- 你可以直接询问“LINE-1 相关疾病”“LINE-1 相关功能”。\n- 也可以询问“L1HS 和 LINE-1 是什么关系”。\n- 若需要证据，可继续追问文献支持情况。\n\n## 证据与文献\n当前回答来自本地演示图；更完整答案以后端知识检索与大模型生成结果为准。\n\n## 局限与说明\n- 这是本地回退回答，不代表完整数据库检索结果。\n- 当后端恢复后，详细模式会返回更完整的证据化回答。`
+          : `${intro}## Conclusion\nThe current local demo graph supports questions about LINE-1 diseases, functions, lineage relations, and literature evidence.\n\n## Mechanistic Interpretation\n- You can ask about LINE-1-related diseases or functions.\n- You can also ask how L1HS is related to LINE-1.\n- Literature evidence can be expanded when needed.\n\n## Evidence and References\nThis answer comes from the local demo graph; the full backend retrieval pipeline can provide richer evidence.\n\n## Limitations\n- This is a local fallback answer rather than the full retrieval result.\n- Detailed mode becomes richer when backend retrieval succeeds.`)
+        : `${intro}${ui[currentLang].fallback}`;
+    }
     function formatBackendAnswer(result){const styleLabel=currentLang==='zh'?(result.answer_style==='detailed'?'详细模式':'简单模式'):(result.answer_style==='detailed'?'Detailed mode':'Brief mode'); return `> ${styleLabel}\n\n${result.answer||ui[currentLang].fallback}`;}
     async function answerWithBackend(question){const res=await fetch('api/qa.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,language:currentLang,answer_style:currentAnswerStyle})}); const data=await res.json(); if(!res.ok||!data.ok) throw new Error(data.error||'Backend request failed'); return formatBackendAnswer(data);}
     cy.on('tap','node',async e => {

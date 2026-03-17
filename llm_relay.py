@@ -70,6 +70,7 @@ class RelayHandler(BaseHTTPRequestHandler):
             messages = incoming.get("messages") or []
             temperature = incoming.get("temperature", 0.2)
             model = incoming.get("model") or DASHSCOPE_MODEL
+            enable_thinking = incoming.get("enable_thinking", False)
 
             if not DASHSCOPE_KEY:
                 self._json(500, {"ok": False, "error": "DashScope API key is missing"})
@@ -79,6 +80,7 @@ class RelayHandler(BaseHTTPRequestHandler):
                 "model": model,
                 "messages": messages,
                 "temperature": temperature,
+                "enable_thinking": enable_thinking,
             }, ensure_ascii=False).encode("utf-8")
 
             req = Request(
