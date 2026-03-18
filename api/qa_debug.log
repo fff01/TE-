@@ -18,3 +18,37 @@
 [2026-03-17 13:17:58] answer:prepared {"rows":6,"refs":4,"intent":"te_to_disease","depth":"shallow"}
 [2026-03-17 13:18:17] answer:llm
 [2026-03-17 13:18:17] answer:done {"mode":"template_rag+llm"}
+[2026-03-18 01:52:33] answer:start {"question":"LINE-1 ????","language":"zh","style":"detailed","depth":"deep"}
+[2026-03-18 01:52:33] answer:normalized {"language":"zh","style":"detailed","depth":"deep"}
+[2026-03-18 01:52:33] answer:intent {"entity":"LINE-1","disease":null,"intent":null}
+[2026-03-18 01:52:36] answer:prepared {"rows":3,"refs":0,"intent":null,"depth":"deep"}
+[2026-03-18 01:53:09] answer:llm
+[2026-03-18 01:53:09] answer:done {"mode":"neighbor_fallback+llm"}
+[2026-03-18 01:53:55] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"simple","depth":"deep"}
+[2026-03-18 01:53:55] answer:normalized {"language":"zh","style":"simple","depth":"deep"}
+[2026-03-18 01:53:55] answer:intent {"entity":"LINE-1","disease":null,"intent":"te_to_disease"}
+[2026-03-18 01:53:56] answer:template_query {"rows":15}
+[2026-03-18 01:53:56] answer:prepared {"rows":8,"refs":5,"intent":"te_to_disease","depth":"deep"}
+[2026-03-18 01:54:07] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"simple","depth":"shallow"}
+[2026-03-18 01:54:07] answer:normalized {"language":"zh","style":"simple","depth":"shallow"}
+[2026-03-18 01:54:07] answer:intent {"entity":"LINE-1","disease":null,"intent":"te_to_disease"}
+[2026-03-18 01:54:07] answer:template_query {"rows":15}
+[2026-03-18 01:54:07] answer:prepared {"rows":4,"refs":2,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-18 01:54:10] answer:llm
+[2026-03-18 01:54:10] answer:done {"mode":"template_rag+llm"}
+[2026-03-18 01:54:14] answer:llm
+[2026-03-18 01:54:14] answer:done {"mode":"template_rag+llm"}
+[2026-03-18 01:56:47] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"detailed","depth":"deep"}
+[2026-03-18 01:56:47] answer:normalized {"language":"zh","style":"detailed","depth":"deep"}
+[2026-03-18 01:56:47] answer:intent {"entity":"LINE-1","disease":null,"intent":"te_to_disease"}
+[2026-03-18 01:56:47] answer:template_query {"rows":15}
+[2026-03-18 01:56:47] answer:prepared {"rows":12,"refs":6,"intent":"te_to_disease","depth":"deep"}
+[2026-03-18 01:56:54] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-18 01:56:54] answer:normalized {"language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-18 01:56:54] answer:intent {"entity":"LINE-1","disease":null,"intent":"te_to_disease"}
+[2026-03-18 01:56:54] answer:template_query {"rows":15}
+[2026-03-18 01:56:54] answer:prepared {"rows":6,"refs":4,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-18 01:57:14] answer:llm
+[2026-03-18 01:57:14] answer:done {"mode":"template_rag+llm"}
+[2026-03-18 01:57:17] answer:llm
+[2026-03-18 01:57:17] answer:done {"mode":"template_rag+llm"}

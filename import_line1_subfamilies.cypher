@@ -4,6 +4,7 @@ ON CREATE SET
   family.description = 'LINE-1 family node for linking known LINE-1 subfamilies.',
   family.category = 'family';
 
+WITH family
 UNWIND [
   {name: 'L1HS', copies: 1686},
   {name: 'L1PA2', copies: 5113},
