@@ -45,6 +45,7 @@ if ($config['neo4j_password'] === '') {
 }
 
 $query = trim((string)($_GET['q'] ?? ''));
+
 if ($query === '') {
     $query = 'LINE-1';
 }

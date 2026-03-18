@@ -1,0 +1,2363 @@
+# 术语表漏项清单
+
+这个清单用于补齐中英术语表。优先处理“中文模式下露出英文”和“英文模式下露出中文”的高频节点。
+
+## 中文模式下仍会露出英文：TE
+
+- 非自主L1逆转录转座事件
+- A_I
+- A_II
+- A-type subfamily
+- aL1
+- Alu
+- baboon-specific L1s
+- chicken CR1
+- cool alleles
+- engineered human L1s
+- engineered L1 element
+- FL-L1s
+- full-length (FL) LINE-1
+- G(F) subfamily
+- G<sub>F</sub> subfamily
+- Gf_I
+- highly active RC-L1
+- hot L1s
+- hot LINE-1s
+- human-specific L1s
+- I factor
+- I retrotransposon
+- IAP
+- intact L1
+- L1 ORF1
+- L1 ORF1p
+- L1 retrotransposons
+- L1-preTa
+- L1-Ta
+- L1.2
+- L1.2A
+- L1.2B
+- L1.3
+- L1.4
+- L1(CHM)
+- L1(IGL)
+- L1(RP)
+- L1A102
+- L1beta-thal
+- L1HS
+- L1HS-Ta
+- L1M
+- L1MA1
+- L1MA2
+- L1MA3
+- L1MA4
+- L1MA5
+- L1Md_T
+- L1P
+- L1PA lineage
+- L1PA1
+- L1PA10
+- L1PA11
+- L1PA12
+- L1PA13
+- L1PA13A
+- L1PA14
+- L1PA15
+- L1PA16
+- L1PA17
+- L1PA2
+- L1PA2-L1PA7
+- L1PA3
+- L1PA4
+- L1PA5
+- L1PA6
+- L1PA7
+- L1PA8
+- L1PA8A
+- L1PB1
+- L1PB2
+- L1PB3
+- L1PB4
+- L1Pt
+- L1Pt-1
+- L1Pt-2
+- L1RP
+- L1spa
+- LINE-1
+- LINE-1_Cf
+- LINE-1-FGGY
+- LINE-1(RP)
+- LRE2
+- LRE3
+- mouse L1
+- mouse L1s
+- NMR-L1
+- non-reference RC-L1
+- nonreference full-length LINE-1
+- ORFeus-Hs
+- ORFeus-Mm
+- piggyBac
+- primate-specific L1s
+- RC-L1
+- rc-L1s
+- reference RC-L1
+- retrotransposition-competent L1s
+- RTE
+- SART1
+- SINE
+- SINE R/VNTR/Alu
+- SVA
+- T(F) subfamily
+- T(FC)
+- T(Fspa)
+- T<sub>F</sub> subfamily
+- Tf_I
+- Tf_II
+- Tf_III
+- TRAS1
+- zebrafish LINE-2
+- ZfL2-1
+- ZfL2-2
+- Zorro3
+
+## 中文模式下仍会露出英文：Disease
+
+- 血友病A
+- 血友病B
+- H3 K27M突变型弥漫性中线胶质瘤
+- HBV-associated HCC
+- kinky tail phenotype
+- LSCC
+- METH滥用诱导的记忆缺陷
+- severe diseases
+- sporadic diseases
+
+## 中文模式下仍会露出英文：Function
+
+- 3' poly(A)尾依赖性
+- 3' UTR茎环结构
+- 3' UTR依赖的逆转录转座
+- 5' UTR活性
+- 5' UTR启动子活性
+- 靶基因组DNA缺失
+- 靶向DNA切割
+- 被L1机制识别
+- 病毒RNA逆转录与整合
+- 产生嵌合L1转录本
+- 创建CpG岛
+- 从头L1插入
+- 单链DNA断裂
+- 单顺反子ORF2 mRNA表达
+- 蛋白-DNA相互作用
+- 调节免疫刺激性SINE表达
+- 反式介导的细胞RNA动员
+- 反式mRNA逆转录转座
+- 非编码RNA调控
+- 非参考L1多态性插入
+- 非功能性ORF1p变异体产生
+- 非L1转录本的逆转录转座
+- 非LTR逆转录转座
+- 干扰素（IFN）产生
+- 谷氨酰胺酶C产生增加
+- 核酸内切酶非依赖性LINE-1逆转录转座
+- 核糖核蛋白（RNP）颗粒形成
+- 基因组DNA不稳定性
+- 基因组DNA缺失
+- 基因组DNA损伤
+- 交错DNA双链断裂修复
+- 结合LINE-1 RNP复合体
+- 截短的LINE-1逆转录转座
+- 介导非L1 RNA转座
+- 介导Alu转座
+- 介导mRNA逆转座
+- 介导SINE逆转录转座
+- 介导SINE转座
+- 经典的两击CRC通路
+- 利用切割的poly-T链作为引物
+- 利用DNA修复机制
+- 慢性DNA损伤
+- 内源性L1 mRNA水平
+- 逆转录转座相关DNA损伤
+- 年龄相关的LINE-1拷贝数变化
+- 启动子区CpG甲基化降低
+- 嵌合L1形成
+- 驱动Alu和SVA转座
+- 全基因组DNA甲基化标志物
+- 缺乏RNase H活性
+- 染色体外DNA积累
+- 宿主DNA修复因子
+- 体细胞L1逆转录转座
+- 体细胞RNA基因重组
+- 体细胞TE插入
+- 外源DNA整合
+- 位于高甲基化转录活跃DNA区
+- 无义介导的mRNA降解
+- 细胞质DNA积累
+- 小干扰RNA
+- 形成和运输L1核糖核蛋白颗粒
+- 形成L1核糖核蛋白
+- 序列特异性DNA识别
+- 亚细胞RNA分区
+- 异常mRNA剪接
+- 抑制Alu逆转录转座
+- 抑制L1逆转录转座
+- 抑制LINE-1逆转录转座
+- 抑制LINE-1转座
+- 影响DNA甲基化
+- 诱导DNA损伤
+- 与非编码RNA相关
+- 在G1/S期阻滞细胞中转座
+- A-tail扩展
+- activities of L1 si/piRNAs, mRNAs, ORF1 and ORF2 proteins
+- ADAR1介导的RNA编辑
+- ADAR1抑制LINE-1逆转录转座
+- adjacent genes expression
+- AhR核转位蛋白-1 (ARNT1) 介导的细胞机制
+- ALKBH5抑制L1逆转录转座
+- allele-specific methylation
+- altered chromatin landscapes
+- altering gene activity
+- Alu RNA隔离
+- Alu SINE 逆转录转座
+- Alu/L1逆转录转座
+- Alu逆转录转座
+- Alu转录
+- Alu转座
+- Alu转座动员
+- AMPK激活
+- aneuploidy generation
+- angiogenesis
+- APOBEC3酶催化胞嘧啶脱氨
+- APOBEC3C介导的L1限制
+- APOBEC3F介导的GA→AA突变
+- APOBEC3G介导的GG→AG突变
+- ASP hypomethylation
+- ATM-MRN-SMC S期检查点通路
+- ATM-signaling pathway activation
+- ATM蛋白水平降低
+- bHLH/PAS转录因子依赖的逆转录转座
+- burden
+- cAMP反应元件结合蛋白激活
+- cDNA synthesis
+- cDNA合成
+- cell cycle progression
+- cell non-autonomous effects
+- cell proliferation and invasion
+- cellular self-renewal
+- cGAS-STING pathway activation
+- cGAS-STING通路
+- cGAS-STING通路激活
+- cGAS/STING-mediated DNA sensing
+- chimeric gene formation
+- chromosomal breaks
+- cis preference
+- clonal amplification
+- competition with double-strand break repair
+- copy number variation
+- CpG methylation-mediated repression
+- cytoplasmic RNA granule formation
+- de novo LINE-1 insertion
+- de novo突变
+- decreased copy number
+- deleterious L1 insertions
+- deletions
+- demethylation
+- dGTP依赖的SAMHD1四聚体形成
+- Dicer介导的RNAi沉默
+- DICER依赖性mRNA降解
+- differentiation potential
+- disruption of genetic loci at insertion sites
+- DNA break
+- DNA deamination-independent inhibition
+- DNA deletions
+- DNA IR损伤和ATR介导的细胞反应
+- DNA strand breaks with incomplete retrotransposition
+- DNA-directed polymerization
+- DNA靶向与切割
+- DNA编辑
+- DNA低甲基化
+- DNA第二链切口
+- DNA甲基化
+- DNA甲基化改变
+- DNA甲基化介导的启动子抑制
+- DNA甲基化缺失
+- DNA甲基化抑制
+- DNA结合活性
+- DNA聚合
+- DNA羟甲基化
+- DNA去甲基化
+- DNA识别
+- DNA双链断裂
+- DNA双链断裂形成
+- DNA双链断裂修复
+- DNA损伤
+- DNA损伤反应
+- DNA损伤信号通路激活
+- DNA损伤修复
+- DNA损伤应答
+- DNA脱氨基
+- DNA弯曲
+- DNA修复
+- DNA修复蛋白募集
+- DNA修复活性降低
+- DNA修复机制
+- DNA修复抑制
+- DNA转导
+- dNTPase活性
+- downregulation
+- downregulation of AMPKalpha
+- downregulation of mTORC1 activity
+- dysfunctional metabolism
+- dysregulation of cell energy metabolism and cytokine/chemotaxin transcription
+- dysregulation of retrotransposon activity
+- eIF2α磷酸化
+- eIF3结合
+- eIF4A/eIF4G相互作用减弱
+- EN非依赖性逆转录转座
+- endonuclease independent mechanisms
+- endothelial cell migration
+- endothelial cell proliferation
+- epigenetic changes
+- epigenetic drift
+- epigenetic on/off
+- epigenetic regulation (DNA methylation)
+- epigenetic regulation of gene expression
+- ERK激活
+- ESCRT相互作用
+- exon definition
+- exon-skipping
+- exonization using cryptic splice sites
+- expression of angiogenic factors
+- FOXR2激活
+- G-四链体结构调控
+- G-四链体结构形成
+- G0/G1 cell cycle arrest
+- G到A超突变
+- generating antisense and/or regulatory noncoding RNAs
+- generation of neural diversity
+- genetic heterogeneity
+- genetic variation
+- genome expansion
+- genome stability maintenance
+- genomic alterations
+- germline retrotransposition event
+- germline structural variation
+- germline variation
+- H3K18去乙酰化
+- H3K9me3 deposition
+- H3K9me3去甲基化
+- hA3G寡聚化
+- Hallmark Myc靶标V1
+- harmful mutagenesis
+- HDM2/TP53/RB调控轴失调
+- heritable insertion
+- heritable retrotransposition
+- hnRNPA1促进L1转座
+- homologous recombination
+- host gene downregulation
+- hypomethylation
+- I型干扰素反应
+- I型干扰素诱导
+- IFN-β产生
+- impact neuronal transcriptional expression
+- in vitro retrotransposition activity
+- in vivo fitness
+- increase in apoptosis
+- increased copy number
+- inducing alternative splicing via exon skipping
+- innate immune signaling activation
+- innate immune system activation
+- insertion
+- insertion allele frequency
+- insertion into exons and introns
+- insertion into synapse- and schizophrenia-related genes
+- insertion mutations
+- insertion polymorphism
+- insertional mutation
+- integration into cellular DNA
+- integration into replicating DNA
+- integration site polymorphism
+- interchromosomal translocation
+- interferon signaling activation
+- interferon system activation
+- intragenic insertion
+- intragenic L1 insertion
+- KRAB/KAP1诱导的转录抑制
+- L1 5' UTR m6A簇
+- L1 5'UTR活性
+- L1 cDNA生成
+- L1 hypomethylation
+- L1 insertion
+- L1 mobilization
+- L1 mRNA binding
+- L1 mRNA表达上调
+- L1 ORF1p protein expression
+- L1 ORF1p表达抑制
+- L1 ORF1p与APOBEC3C相互作用
+- L1 ORF2 protein translation
+- L1 ORF2p pausing
+- L1 ORF2p内切酶介导的插入
+- L1 retrotransposition (L1-RTP)
+- L1 ribonucleoprotein complex integrity
+- L1 RNA 3'UTR依赖的蛋白复合物结合
+- L1 RNA表达
+- L1 RNA和核糖核蛋白颗粒完整性丧失
+- L1 RNA与RNA/DNA结合蛋白相互作用
+- L1 RNP formation
+- L1 RNP translocation
+- L1 RNP复合物形成
+- L1 transcription
+- L1 transcription inhibition
+- L1 translation
+- L1 translation inhibition
+- L1-宿主相互作用
+- L1-EN序列特异性切割
+- L1-MET expression increase
+- L1-ORF overexpression
+- L1-ORF1蛋白染色质招募
+- L1-ORF1p核定位
+- L1-RNP形成
+- L1-RTP induction
+- L1编码蛋白表达
+- L1表达
+- L1插入生成
+- L1插入中间体相互重组
+- L1插入中间体与远端DNA断裂重组
+- L1蛋白表达
+- L1蛋白表达抑制
+- L1反义启动子活性
+- L1反义启动子转录
+- L1辅助的Alu逆转录转座
+- L1复制
+- L1核输入
+- L1核酸内切酶切割活性
+- L1核酸内切酶依赖的逆转录转座
+- L1核糖核蛋白（RNP）形成
+- L1核糖核蛋白复合体形成
+- L1活性抑制
+- L1介导的逆转录转座
+- L1介导的逆转录转座机制
+- L1介导的逆转录转座事件
+- L1介导的逆转座
+- L1介导的突变
+- L1内切酶非依赖性逆转录转座
+- L1内切酶活性
+- L1内切酶介导的插入
+- L1内切酶介导的DNA切割
+- L1内切酶切割
+- L1内切酶依赖性逆转录转座
+- L1逆转录
+- L1逆转录酶活性
+- L1逆转录抑制
+- L1逆转录转座
+- L1逆转录转座活性
+- L1逆转录转座诱导
+- L1逆转录转座子活性
+- L1启动子低甲基化
+- L1启动子去甲基化
+- L1启动子转录
+- L1嵌合转录本形成
+- L1去甲基化
+- L1生命周期
+- L1生命周期调控
+- L1失调
+- L1样逆转录转座
+- L1依赖的超凝缩蛋白复合物形成
+- L1移动性
+- L1抑制
+- L1抑制反馈环路
+- L1诱导的损伤
+- L1元件倒位
+- L1元件依赖性逆转录转座
+- L1杂交富集法
+- L1再激活
+- L1整合
+- L1直接插入
+- L1转座驱动的Alu插入
+- L1转座驱动的SVA插入
+- L1Hs 5'UTR反义启动子活性
+- L1Hs逆转录转座
+- L1Hs转录
+- L1ORF1p表达
+- L1ORF1p三聚化
+- L1ORF2p表达
+- L1RNA包装
+- LINE-1 5' UTR启动子活性抑制
+- LINE-1 5'-UTR启动子活性
+- LINE-1 insertion
+- LINE-1 ORF1p and ORF2p expression
+- LINE-1 ORF2p逆转录酶活性
+- LINE-1 polymorphisms
+- LINE-1 reverse transcription
+- LINE-1 RNA generation
+- LINE-1 RNA去帽
+- LINE-1 RNP隔离
+- LINE-1表达
+- LINE-1表达增加
+- LINE-1核糖核蛋白颗粒形成
+- LINE-1激活
+- LINE-1介导的插入
+- LINE-1介导的逆转录转座
+- LINE-1逆转录酶活性
+- LINE-1逆转录转座
+- LINE-1启动子低甲基化
+- LINE-1启动子活性下调
+- LINE-1启动子抑制
+- LINE-1去抑制
+- LINE-1限制活性
+- LINE-1抑制
+- LINE-1转录
+- LINE1 retrotransposition
+- LINE1 RNA共表达
+- LINE1表达上调
+- LINE整合机制
+- local immune evasion
+- m6A modification
+- m6A介导的L1 mRNA降解
+- m6A修饰
+- MAPK激活
+- MAPK信号通路
+- MDA5-induced IFN expression
+- MDA5-mediated RNA sensing
+- MET protein level control
+- methylation
+- METTL3促进L1逆转录转座
+- Mg2+依赖性催化
+- miR-128介导的L1抑制
+- miR-128抑制L1逆转录转座
+- mobilization
+- modulation of cellular plasticity
+- modulation of oncogenic signaling gene expression
+- MOV10/LINE-1相互作用
+- MOV10颗粒形成
+- MOV10抑制逆转录转座
+- mRNA expression
+- mRNA伴侣功能
+- mRNA剪接异常
+- mRNA去稳定化
+- mutation
+- NADPH氧化酶活性缺陷
+- naïve多能性关闭
+- Neddylation
+- Nef蛋白介导的LINE-1抑制
+- negative feedback loop
+- nested insertions
+- neuroinflammation
+- neurological degeneration
+- NF-κB介导的炎症反应基因表达
+- nicking target DNA
+- non-classical insertions
+- non-homologous end-joining repair
+- non-templated base addition
+- nuclear import of LINE-1 RNA
+- nuclear localization
+- oncogenic β-catenin/Wnt signaling
+- ORF1/p40依赖性过程
+- ORF1蛋白表达
+- ORF1蛋白需求
+- ORF1募集至染色质
+- ORF1与ARNT1相互作用
+- ORF1p 增强 Alu 转座
+- ORF1p-LINE-1 RNA相互作用
+- ORF1p-RNA结合
+- ORF1p表达
+- ORF1p表达上调
+- ORF1p功能
+- ORF1p寡聚化
+- ORF1p过表达
+- ORF1p降解
+- ORF1p介导的RNP分布
+- ORF1p磷酸化
+- ORF1p凝聚
+- ORF1p三聚体形成
+- ORF1p细胞内积累
+- ORF1p细胞质灶形成
+- ORF1p与Pin1相互作用
+- ORF1p与RNA退火
+- ORF2 IRES介导的翻译
+- ORF2蛋白功能
+- ORF2蛋白依赖
+- ORF2蛋白C端功能
+- ORF2翻译
+- ORF2与ORF1表达不一致
+- ORF2p RNA结合
+- ORF2p翻译
+- ORF2p功能
+- ORF2p核酸内切酶活性
+- ORF2p降解
+- ORF2p介导的LINE-1 RNP逆转录
+- ORF2p逆转录酶活性
+- ORF2p驱动的Alu逆转录转座
+- ORF2p与Alu RNA结合
+- ORF2p与L1 RNA结合
+- orphan 3' transduction
+- p300降解
+- p38delta MAP激酶诱导
+- p53结合
+- p53介导的凋亡通路激活
+- p53介导的L1抑制
+- PI3K信号通路
+- PIN1胞质定位增加
+- preintegration barrier
+- premature insertion mechanisms
+- premature stop codon creation
+- processivity
+- programmed cell death
+- promoter activity regulation of LINE-1 5'-UTR
+- protein aggregation
+- protein expression
+- protein sequestration
+- providing alternative promoters
+- providing polyadenylation signals
+- R-loop形成
+- rare heritable germline insertion
+- rc-L1s表达
+- readthrough transcription
+- reciprocal translocation
+- recombination
+- recombination events
+- reduced gene expression
+- regulation of gene expression
+- regulation of L1 expression
+- regulation of retrotransposition
+- replication-coupled DNA repair
+- replication-fork restart
+- replication-stress signaling
+- repression of L1 by Mecp2/Mbd2
+- retrotransposition-dependent disease initiation
+- retrotransposition-dependent mechanisms
+- retrotransposition-independent disease initiation
+- retrotransposition-independent mechanisms
+- retrotransposon-mediated mobilization
+- RIG-I-mediated RNA sensing
+- RNA 3'末端多聚腺苷酸化
+- RNA 3'末端尿苷化
+- RNA m6A修饰
+- RNA-DNA杂交体形成
+- RNA:DNA hybrid production
+- RNA靶向干扰
+- RNA伴侣活性
+- RNA包装
+- RNA表达增加
+- RNA二级结构识别
+- RNA干扰
+- RNA和蛋白积累减少
+- RNA加工
+- RNA甲基化
+- RNA剪接
+- RNA降解
+- RNA结合
+- RNA聚合酶II驱动转录
+- RNA来源的附加体产物
+- RNA连接
+- RNA提前多聚腺苷酸化
+- RNA脱帽
+- RNA外切体复合物介导的RNA降解
+- RNA遗传
+- RNA质量控制
+- RNase H2降解LINE-1 RNA
+- RNP复合物组装
+- RNP隔离
+- RNP凝聚物形成
+- RNP形成
+- RNP运输
+- RT burden
+- RTE copy number accumulation
+- RUNX3与L1Hs结合
+- S/G2 phase DNA repair
+- S期逆转录转座
+- self-priming
+- self-replication
+- sequence-specific RNA recognition
+- SINE元件移动
+- siRNA递送
+- smoke-induced hypomethylation of the LINE-1 promoter
+- snRNA加工假基因形成
+- somatic genome variation
+- somatic L1 insertion
+- somatic L1 insertions
+- somatic L1 retrotransposition
+- somatic mobilization
+- somatic mutation
+- somatic retrotransposition events
+- somatic TE mobilization
+- Sox2介导的调控
+- Sp1依赖性基因表达
+- SRP9/14结合
+- staggered DNA break
+- STAT1磷酸化
+- stress granule pathway
+- structural modification of endogenous genes
+- SUMO化
+- suppression of transposable elements
+- SVA反式动员
+- T细胞活性
+- target-site primed reverse transcription
+- TE沉默
+- template switching
+- Tet1-mediated activation of L1
+- TGF-β1信号通路激活
+- TGFβ信号通路激活
+- Toll样受体4信号通路
+- TP53-dependent growth arrest
+- transcriptional control by LINE-1 promoters
+- transcriptional deregulation
+- transcriptional interference
+- transcriptional silencing
+- tumor vascularisation
+- tumor-specific L1 insertion
+- tumorigenesis
+- U6 snRNA逆转录转座
+- U6 snRNA转座
+- U6/L1假基因形成
+- U6/L1嵌合RNA形成
+- upregulation
+- viral-host genome interaction
+- VNTR结构域决定动员效率
+- YY1结合位点介导的DNA甲基化
+- ZAP抗逆转录元件活性
+- ZAP与L1核糖核蛋白颗粒结合
+- β-catenin/Wnt信号通路激活
+- γ-H2AX foci形成
+
+## 中文模式下仍会露出英文：Paper
+
+- [Genomic instability associated with human LINE-1 rétrotransposition].
+- [SLFN14 inhibits LINE-1 transposition activity].
+- [The connection between LINE-1 retrotransposition and human tumorigenesis].
+- A comparative analysis of L1 retrotransposition activities in human genomes suggests an ongoing increase in L1 number despite an evolutionary trend towards lower activity.
+- A comprehensive analysis of chimpanzee (Pan troglodytes)-specific LINE-1 retrotransposons.
+- A comprehensive analysis of recently integrated human Ta L1 elements.
+- A comprehensive analysis of the Baboon-specific full-length LINE-1 retrotransposons.
+- A frequent SNP in TRIM5α strongly enhances the innate immune response against LINE-1 elements.
+- A full-length and potentially active LINE element is integrated polymorphically within the IGL locus in a genomically unstable region of chromosome 22.
+- A hot L1 retrotransposon evades somatic repression and initiates human colorectal cancer.
+- A large genomic deletion in the PDHX gene caused by the retrotranspositional insertion of a full-length LINE-1 element.
+- A mouse model of human L1 retrotransposition.
+- A new exon created by intronic insertion of a rearranged LINE-1 element as the cause of chronic granulomatous disease.
+- A new mechanism to ensure integration during LINE retrotransposition: a suggestion from analyses of the 5' extra nucleotides.
+- A new retrotransposable human L1 element from the LRE2 locus on chromosome 1q produces a chimaeric insertion.
+- A novel active L1 retrotransposon subfamily in the mouse.
+- A novel role of TRIM28 B box domain in L1 retrotransposition and ORF2p-mediated cDNA synthesis.
+- A phylogenetic estimate of canine retrotransposition rates based on genome assembly comparisons.
+- A pilot study of LINE-1 copy number and telomere length with aging in human sperm.
+- A Possible Role for Long Interspersed Nuclear Elements-1 (LINE-1) in Huntington's Disease Progression.
+- A potential new mechanism for pregnancy loss: considering the role of LINE-1 retrotransposons in early spontaneous miscarriage.
+- A potential role for RNA interference in controlling the activity of the human LINE-1 retrotransposon.
+- A potential role for the nucleolus in L1 retrotransposition.
+- A role for endogenous reverse transcriptase in tumorigenesis and as a target in differentiating cancer therapy.
+- A single amino acid substitution in ORF1 dramatically decreases L1 retrotransposition and provides insight into nucleic acid chaperone activity.
+- A study of meiomitosis and novel pathways of genomic instability in cutaneous T-cell lymphomas (CTCL).
+- A systematic analysis of LINE-1 endonuclease-dependent retrotranspositional events causing human genetic disease.
+- A transient assay reveals that cultured human cells can accommodate multiple LINE-1 retrotransposition events.
+- A yeast model for target-primed (non-LTR) retrotransposition.
+- A YY1-binding site is required for accurate human LINE-1 transcription initiation.
+- Aberrantly High Levels of Somatic LINE-1 Expression and Retrotransposition in Human Neurological Disorders.
+- Activation of human long interspersed nuclear element 1 retrotransposition by benzo(a)pyrene, an ubiquitous environmental carcinogen.
+- Activation of individual L1 retrotransposon instances is restricted to cell-type dependent permissive loci.
+- Active human retrotransposons: variation and disease.
+- ADAR1 restricts LINE-1 retrotransposition.
+- Affinity proteomics reveals human host factors implicated in discrete stages of LINE-1 retrotransposition.
+- Aging-associated distinctive DNA methylation changes of LINE-1 retrotransposons in pure cell-free DNA from human blood.
+- All APOBEC3 family proteins differentially inhibit LINE-1 retrotransposition.
+- Allelic heterogeneity in LINE-1 retrotransposition activity.
+- Alu retrotransposition-mediated deletion.
+- Amplification of CFTR exon 9 sequences to multiple locations in the human genome.
+- An Alternative DNA Endonuclease Activity is Associated with the LINE-1 ORF2-encoded Protein.
+- An alternative pathway for Alu retrotransposition suggests a role in DNA double-strand break repair.
+- An antisense promoter in mouse L1 retrotransposon open reading frame-1 initiates expression of diverse fusion transcripts and limits retrotransposition.
+- An important role for RUNX3 in human L1 transcription and retrotransposition.
+- An in silico model of LINE-1-mediated neoplastic evolution.
+- An in vivo assay for the reverse transcriptase of human retrotransposon L1 in Saccharomyces cerevisiae.
+- An Increased Burden of Highly Active Retrotransposition Competent L1s Is Associated with Parkinson's Disease Risk and Progression in the PPMI Cohort.
+- An S/MAR-based L1 retrotransposition cassette mediates sustained levels of insertional mutagenesis without suffering from epigenetic silencing of DNA methylation.
+- An update on post-transcriptional regulation of retrotransposons.
+- Analysis of 5' junctions of human LINE-1 and Alu retrotransposons suggests an alternative model for 5'-end attachment requiring microhomology-mediated end-joining.
+- Analysis of LINE-1 Elements in DNA from Postmortem Brains of Individuals with Schizophrenia.
+- Analysis of LINE-1 Retrotransposition at the Single Nucleus Level.
+- Analysis of LINE1 Retrotransposons in Huntington's Disease.
+- Ancient repeat sequence derived from U6 snRNA in primate genomes.
+- Ancient traces of tailless retropseudogenes in therian genomes.
+- Antagonistic regulation of LINE-1/Alu elements and their repressor APOBEC3B in cellular senescence.
+- APOBEC3 proteins inhibit human LINE-1 retrotransposition.
+- APOBEC3 proteins inhibit LINE-1 retrotransposition in the absence of ORF1p binding.
+- APOBEC3 proteins: major players in intracellular defence against LINE-1-mediated retrotransposition.
+- APOBEC3A deaminates transiently exposed single-strand DNA during LINE-1 retrotransposition.
+- APOBEC3B and APOBEC3F inhibit L1 retrotransposition by a DNA deamination-independent mechanism.
+- APOBEC3DE Inhibits LINE-1 Retrotransposition by Interacting with ORF1p and Influencing LINE Reverse Transcriptase Activity.
+- APOBEC3G oligomerization is associated with the inhibition of both Alu and LINE-1 retrotransposition.
+- Approaches to repurposing reverse transcriptase antivirals in cancer.
+- Arsenic toxicity and epimutagenecity: the new LINEage.
+- Arxes: retrotransposed genes required for adipogenesis.
+- Assessing LINE-1 retrotransposition activity in neuroblastoma cells exposed to extremely low-frequency pulsed magnetic fields.
+- Assessing the combined effect of extremely low-frequency magnetic field exposure and oxidative stress on LINE-1 promoter methylation in human neural cells.
+- Association of nuclear localization of a long interspersed nuclear element-1 protein in breast tumors with poor prognostic outcomes.
+- Ataxia telangiectasia mutated (ATM) modulates long interspersed element-1 (L1) retrotransposition in human neural stem cells.
+- ATLAS: a system to selectively identify human-specific L1 insertions.
+- Author Correction: Pan-cancer analysis of whole genomes identifies driver rearrangements promoted by LINE-1 retrotransposition.
+- Author Correction: Reprogramming triggers endogenous L1 and Alu retrotransposition in human induced pluripotent stem cells.
+- Author Correction: The interferon stimulated gene-encoded protein HELZ2 inhibits human LINE-1 retrotransposition and LINE-1 RNA-mediated type I interferon induction.
+- Autonomous transposons tune their sequences to ensure somatic suppression.
+- Biochemical Basis of APOBEC3 Deoxycytidine Deaminase Activity on Diverse DNA Substrates.
+- Biology of mammalian L1 retrotransposons.
+- BRCA1 and S phase DNA repair pathways restrict LINE-1 retrotransposition in human cells.
+- BST2 Suppresses LINE-1 Retrotransposition by Reducing the Promoter Activity of LINE-1 5' UTR.
+- Cancer cells co-evolve with retrotransposons to mitigate viral mimicry.
+- Canine DUXC: implications for DUX4 retrotransposition and preclinical models of FSHD.
+- Cell division promotes efficient retrotransposition in a stable L1 reporter cell line.
+- Cell divisions are required for L1 retrotransposition.
+- Cell fitness screens reveal a conflict between LINE-1 retrotransposition and DNA replication.
+- Cell lineage analysis in human brain using endogenous retroelements.
+- Cell-host, LINE and environment: Three players in search of a balance.
+- Cellular inhibitors of long interspersed element 1 and Alu retrotransposition.
+- Cellular Localization of Engineered Human LINE-1 RNA and Proteins.
+- Characterization of a mutagenic B1 retrotransposon insertion in the jittery mouse.
+- Characterization of a nondeleterious L1 insertion in an intron of the human factor VIII gene and further evidence of open reading frames in functional L1 elements.
+- Characterization of a synthetic human LINE-1 retrotransposon ORFeus-Hs.
+- Characterization of an active LINE-1 in the naked mole-rat genome.
+- Characterization of Engineered L1 Retrotransposition Events: The Recovery Method.
+- Characterization of L1 retrotransposition with high-throughput dual-luciferase assays.
+- Characterization of LINE-1 ribonucleoprotein particles.
+- Characterization of the murine gene encoding 1-Cys peroxiredoxin and identification of highly homologous genes.
+- Characterizing Complex Nucleic Acid Interactions of LINE1 ORF1p by Single Molecule Force Spectroscopy.
+- Circular retrotransposition products generated by a LINE retrotransposon.
+- Cis-preferential LINE-1 reverse transcriptase activity in ribonucleoprotein particles.
+- Combining Amplification Typing of L1 Active Subfamilies (ATLAS) with High-Throughput Sequencing.
+- Commentary on Some Recent Theses Relevant to Combating Aging: October 2020.
+- Comparative analysis on the expression of L1 loci using various RNA-Seq preparations.
+- Comparative Genomics Reveals LINE-1 Recombination with Diverse RNAs.
+- Complement factor H: sequence analysis of 221 kb of human genomic DNA containing the entire fH, fHR-1 and fHR-3 genes.
+- Comprehensive profiling of L1 retrotransposons in mouse.
+- Comprehensive Scanning Mutagenesis of Human Retrotransposon LINE-1 Identifies Motifs Essential for Function.
+- Concurrent L1 retrotransposition events promote reciprocal translocations in human tumorigenesis.
+- Condensation of LINE-1 is critical for retrotransposition.
+- Condensin I and condensin II proteins form a LINE-1 dependent super condensin complex and cooperate to repress LINE-1.
+- Condensin II and GAIT complexes cooperate to restrict LINE-1 retrotransposition in epithelial cells.
+- Conservation and Innovation of APOBEC3A Restriction Functions during Primate Evolution.
+- Conserved 3' UTR stem-loop structure in L1 and Alu transposons in human genome: possible role in retrotransposition.
+- Contemporary retrotransposition of a novel non-coding gene induces exon-skipping in dystrophin mRNA.
+- Contribution of transposable elements and distal enhancers to evolution of human-specific features of interphase chromatin architecture in embryonic stem cells.
+- Control of chicken CR1 retrotransposons is independent of Dicer-mediated RNA interference pathway.
+- Control of LINE-1 Expression Maintains Genome Integrity in Germline and Early Embryo Development.
+- Copy and paste: the impact of a new non-L1 retroposon on the gonosomal heterochromatin of Microtus agrestis.
+- Correction to 'Mapping the LINE1 ORF1 protein interactome reveals associated inhibitors of human retrotransposition'.
+- Crossing the LINE Toward Genomic Instability: LINE-1 Retrotransposition in Cancer.
+- Crystal structure of the targeting endonuclease of the human LINE-1 retrotransposon.
+- Cycling to Maintain and Improve Fitness: Line-1 Modes of Nuclear Entrance and Retrotransposition.
+- Cyclophilin A retrotransposition into TRIM5 explains owl monkey resistance to HIV-1.
+- Cytoplasmic synthesis of endogenous <i>Alu</i> complementary DNA via reverse transcription and implications in age-related macular degeneration.
+- Database documentation of retrotransposon insertion polymorphisms.
+- De novo LINE-1 retrotransposition in HepG2 cells preferentially targets gene poor regions of chromosome 13.
+- Deamination-independent restriction of LINE-1 retrotransposition by APOBEC3H.
+- Deciphering fact from artifact when using reporter assays to investigate the roles of host factors on L1 retrotransposition.
+- Deciphering lung adenocarcinoma evolution and the role of LINE-1 retrotransposition.
+- Deep sequencing reveals low incidence of endogenous LINE-1 retrotransposition in human induced pluripotent stem cells.
+- Defective modulation of LINE-1 retrotransposition by cancer-associated SAMHD1 mutants.
+- Deletion analysis defines distinct functional domains for protein-protein and nucleic acid interactions in the ORF1 protein of mouse LINE-1.
+- Detection of Retrotransposition Activity of Hot LINE-1s by Long-Distance Inverse PCR.
+- Detection of the LINE-1 retrotransposon RNA-binding protein ORF1p in different anatomical regions of the human brain.
+- Detection of two Alu insertions in the CFTR gene.
+- Determination of L1 retrotransposition kinetics in cultured cells.
+- Deubiquitinase USP37 enhances the anti-HIV-2/SIV ability of the host restriction factor SAMHD1.
+- Development of a monoclonal antibody specific to the endonuclease domain of the human LINE-1 ORF2 protein.
+- Different evolutionary fates of recently integrated human and chimpanzee LINE-1 retrotransposons.
+- Different integration site structures between L1 protein-mediated retrotransposition in cis and retrotransposition in trans.
+- Differential inhibition of LINE1 and LINE2 retrotransposition by vertebrate AID/APOBEC proteins.
+- Differential L1 regulation in pluripotent stem cells of humans and apes.
+- Differential sensitivities of retroviruses to integrase strand transfer inhibitors.
+- Differential stress induction of individual Alu loci: implications for transcription and retrotransposition.
+- Differential virus restriction patterns of rhesus macaque and human APOBEC3A: implications for lentivirus evolution.
+- Discovery and characterization of Alu repeat sequences via precise local read assembly.
+- Discrete subcellular partitioning of human retrotransposon RNAs despite a common mechanism of genome insertion.
+- Distinct mechanisms for trans-mediated mobilization of cellular RNAs by the LINE-1 reverse transcriptase.
+- DNA damage and L1 retrotransposition.
+- DNA polymerization by the reverse transcriptase of the human L1 retrotransposon on its own template in vitro.
+- DNA repair mediated by endonuclease-independent LINE-1 retrotransposition.
+- DNA repair protein Rad18 restricts LINE-1 mobility.
+- Do small RNAs interfere with LINE-1?
+- Drawing a fine line on endogenous retroelement activity.
+- Dynamic and Ongoing De Novo L1 Retrotransposition Contributes to Genome Plasticity and Intrapatient Heterogeneity in Ovarian Cancer.
+- Dynamic Methylation of an L1 Transduction Family during Reprogramming and Neurodifferentiation.
+- Dynamic retrotransposition of ERV-9 LTR and L1 in the beta-globin gene locus during primate evolution.
+- Dynamic silencing of somatic L1 retrotransposon insertions reflects the developmental and cellular contexts of their genomic integration.
+- Effect of heavy metals on silencing of engineered long interspersed element-1 retrotransposon in nondividing neuroblastoma cell line.
+- Effect of reverse transcriptase inhibitors on LINE-1 and Ty1 reverse transcriptase activities and on LINE-1 retrotransposition.
+- Effects of human SAMHD1 polymorphisms on HIV-1 susceptibility.
+- Emergence of primate genes by retrotransposon-mediated sequence transduction.
+- Endogenous APOBEC3B restricts LINE-1 retrotransposition in transformed cells and human embryonic stem cells.
+- Endogenous MOV10 inhibits the retrotransposition of endogenous retroelements but not the replication of exogenous retroviruses.
+- Endogenous retrotransposition activates oncogenic pathways in hepatocellular carcinoma.
+- Endonuclease-independent insertion provides an alternative pathway for L1 retrotransposition in the human genome.
+- Endonuclease-independent LINE-1 retrotransposition at mammalian telomeres.
+- Engineered LINE-1 retrotransposition in nondividing human neurons.
+- Enterovirus Infection Restricts Long Interspersed Element 1 Retrotransposition.
+- Epigenetic control of embryonic renal cell differentiation by L1 retrotransposon.
+- Epigenetic control of retrotransposon expression in human embryonic stem cells.
+- Epigenetic silencing of engineered L1 retrotransposition events in human embryonic carcinoma cells.
+- ERCC1/XPF limits L1 retrotransposition.
+- Establishment of a genome-wide and quantitative protocol for assessment of transcriptional activity at human retrotransposon L1 antisense promoters.
+- Evaluating different DNA binding domains to modulate L1 ORF2p-driven site-specific retrotransposition events in human cells.
+- Evaluating the extent of LINE-1 mobility following exposure to heavy metals in HepG2 cells.
+- Evidence consistent with human L1 retrotransposition in maternal meiosis I.
+- Evolutionary conservation of the functional modularity of primate and murine LINE-1 elements.
+- Evolutionary insights from profiling LINE-1 activity at allelic resolution in a single human genome.
+- Exogenous retroelement integration in sperm and embryos affects preimplantation development.
+- Exon shuffling by L1 retrotransposition.
+- Exposure of hepatocellular carcinoma cells to low-level As₂O₃‎ causes an extra toxicity pathway via L1 retrotransposition ‎induction.
+- Expression of LINE-1 elements is required for preimplantation development and totipotency.
+- Expression of Retroelements in Mammalian Gametes and Embryos.
+- Extensive individual variation in L1 retrotransposition capability contributes to human genetic diversity.
+- Extensive somatic L1 retrotransposition in colorectal tumors.
+- Extensive variation between inbred mouse strains due to endogenous L1 retrotransposition.
+- Extracellular vesicles mediate the horizontal transfer of an active LINE-1 retrotransposon.
+- Factors Regulating the Activity of LINE1 Retrotransposons.
+- Feedback inhibition of L1 and alu retrotransposition through altered double strand break repair kinetics.
+- Footprint of APOBEC3 on the genome of human retroelements.
+- FOXR2 activation is not exclusive of CNS neuroblastoma.
+- Frequency and methylation status of selected retrotransposition competent L1 loci in amyotrophic lateral sclerosis.
+- Frequency of recent retrotransposition events in the human factor IX gene.
+- Frequent human genomic DNA transduction driven by LINE-1 retrotransposition.
+- Frequent retrotransposition of endogenous genes in ERCC2-deficient cells derived from a patient with xeroderma pigmentosum.
+- From the genome's perspective: Bearing somatic retrotransposition to leverage the regulatory potential of L1 RNAs.
+- Full-length human L1 insertions retain the capacity for high frequency retrotransposition in cultured cells.
+- Functional impact of the human mobilome.
+- G-quadruplex structures within the 3' UTR of LINE-1 elements stimulate retrotransposition.
+- Gamma radiation increases endonuclease-dependent L1 retrotransposition in a cultured cell assay.
+- Generation of somatic <i>de novo</i> structural variation as a hallmark of cellular senescence in human lung fibroblasts.
+- Genes, Proteins, and Biological Pathways Preventing Chromothripsis.
+- Genetic and epigenetic variations contributed by Alu retrotransposition.
+- Genetic evidence that the non-homologous end-joining repair pathway is involved in LINE retrotransposition.
+- Genome-wide characterization of human L1 antisense promoter-driven transcripts.
+- Genome-wide de novo L1 Retrotransposition Connects Endonuclease Activity with Replication.
+- Genome-Wide Young L1 Methylation Profiling by bs-ATLAS-seq.
+- Genomic characterization of recent human LINE-1 insertions: evidence supporting random insertion.
+- Genomic deletions created upon LINE-1 retrotransposition.
+- Genomic Indexing by Somatic Gene Recombination of mRNA/ncRNA - Does It Play a Role in Genomic Mosaicism, Memory Formation, and Alzheimer's Disease?
+- Genomic rearrangements by LINE-1 insertion-mediated deletion in the human and chimpanzee lineages.
+- Genomic rearrangements in inherited disease and cancer.
+- Germline Chromothripsis Driven by L1-Mediated Retrotransposition and Alu/Alu Homologous Recombination.
+- Guardian of the Human Genome: Host Defense Mechanisms against LINE-1 Retrotransposition.
+- Heads or tails: L1 insertion-associated 5' homopolymeric sequences.
+- Heavy metals stimulate human LINE-1 retrotransposition.
+- Hepatitis B virus polymerase restricts LINE-1 mobility.
+- Hepatitis C virus infection restricts human LINE-1 retrotransposition in hepatoma cells.
+- Heritable L1 Retrotransposition Events During Development: Understanding Their Origins: Examination of heritable, endogenous L1 retrotransposition in mice opens up exciting new questions and research directions.
+- Heritable L1 retrotransposition in the mouse primordial germline and early embryo.
+- HERV-K and LINE-1 DNA Methylation and Reexpression in Urothelial Carcinoma.
+- HERV-K(HML-2) rec and np9 transcripts not restricted to disease but present in many normal human tissues.
+- High frequency retrotransposition in cultured mammalian cells.
+- High G+C Content of Herpes Simplex Virus DNA: Proposed Role in Protection Against Retrotransposon Insertion.
+- High Levels of Sequence Diversity in the 5' UTRs of Human-Specific L1 Elements.
+- High-molecular-mass APOBEC3G complexes restrict Alu retrotransposition.
+- Higher Rates of Processed Pseudogene Acquisition in Humans and Three Great Apes Revealed by Long-Read Assemblies.
+- Histone Demethylase KDM4B Promotes DNA Damage by Activating Long Interspersed Nuclear Element-1.
+- HIV suppressors against LINE-1: one functions as two.
+- HIV-1 Vpr and p21 restrict LINE-1 mobility.
+- hnRNPL and nucleolin bind LINE-1 RNA and function as host factors to modulate retrotransposition.
+- Hot L1s account for the bulk of retrotransposition in the human population.
+- HPV 5 and 8 E6 expression reduces ATM protein levels and attenuates LINE-1 retrotransposition.
+- Human l1 retrotransposition is associated with genetic instability in vivo.
+- Human L1 retrotransposition: cis preference versus trans complementation.
+- Human L1 retrotransposition: insights and peculiarities learned from a cultured cell retrotransposition assay.
+- Human L1 retrotransposon encodes a conserved endonuclease required for retrotransposition.
+- Human LINE-1 restriction by APOBEC3C is deaminase independent and mediated by an ORF1p interaction that affects LINE reverse transcriptase activity.
+- Human LINE-1 retrotransposition requires a metastable coiled coil and a positively charged N-terminus in L1ORF1p.
+- Human LINE-1 retrotransposon induces DNA damage and apoptosis in cancer cells.
+- Human LINE-1 retrotransposons: impacts on the genome and regulation by host factors.
+- Human Papillomavirus Carcinogenicity and the Need of New Perspectives: Thoughts from a Retrospective Analysis on Human Papillomavirus Outcomes Conducted at the Hospital University of Bari, Apulia, Italy, between 2011 and 2022.
+- Human transposon insertion profiling by sequencing (TIPseq) to map LINE-1 insertions in single cells.
+- Human transposon insertion profiling: Analysis, visualization and identification of somatic LINE-1 insertions in ovarian cancer.
+- Human TRIM5α senses and restricts LINE-1 elements.
+- Hypomethylating agents increase L1 retroelement expression without inducing novel insertions in myeloid malignancies.
+- Hypomethylation of LINE1 retrotransposon in human hepatocellular carcinomas, but not in surrounding liver cirrhosis.
+- Identification and characterization of MGEs and their insertion sites in the <i><i>gorilla</i></i> genome.
+- Identification and characterization of small molecule inhibitors of the LINE-1 retrotransposon endonuclease.
+- Identification and solution structure of a highly conserved C-terminal domain within ORF1p required for retrotransposition of long interspersed nuclear element-1.
+- Identification of a minimal <i>Alu</i> domain required for retrotransposition.
+- Identification of a minimal Alu domain required for retrotransposition.
+- Identification of charged amino acids required for nuclear localization of human L1 ORF1 protein.
+- Identification of epigenetically active L1 promoters in the human brain and their relationship with psychiatric disorders.
+- Identification of L1 ORF2p sequence important to retrotransposition using Bipartile Alu retrotransposition (BAR).
+- Identification of LINE retrotransposons and long non-coding RNAs expressed in the octopus brain.
+- IFI16 Targets the Transcription Factor Sp1 to Suppress HIV-1 Transcription and Latency Reactivation.
+- Immune signatures correlate with L1 retrotransposition in gastrointestinal cancers.
+- Impact of constitutional copy number variants on biological pathway evolution.
+- Impact of retrotransposon protein L1 ORF1p expression on oncogenic pathways in hepatocellular carcinoma: the role of cytoplasmic PIN1 upregulation.
+- In vitro properties of the first ORF protein from mouse LINE-1 support its role in ribonucleoprotein particle formation during retrotransposition.
+- In vitro screening for compounds that enhance human L1 mobilization.
+- Increased l1 retrotransposition in the neuronal genome in schizophrenia.
+- Induction of long interspersed nucleotide element-1 (L1) retrotransposition by 6-formylindolo[3,2-b]carbazole (FICZ), a tryptophan photoproduct.
+- Inheritance of DNA transferred from American trypanosomes to human hosts.
+- Inhibition of LINE-1 and Alu retrotransposition by exosomes encapsidating APOBEC3G and APOBEC3F.
+- Inhibition of LINE-1 Retrotransposition by Capsaicin.
+- Inhibition of LINE-1 retrotransposition represses telomere reprogramming during mouse 2-cell embryo development.
+- Insertion and deletion polymorphisms of the ancient <i>AluS</i> family in the human genome.
+- Insertion of a chimeric retrotransposon sequence in mouse <i>Axin1</i> locus causes metastable kinky tail phenotype.
+- Insertional activity of human Alu and L1 retrotransposons is associated with DNA repair pathways and genome instability in cancer.
+- Insights into LINE-1 reverse transcription guide therapy development.
+- Integrated mechanism for the generation of the 5' junctions of LINE inserts.
+- Integration of SARS-CoV-2 RNA in infected human cells by retrotransposons: an unlikely hypothesis and old viral relationships.
+- Interchromosomal translocation in neural progenitor cells exposed to L1 retrotransposition.
+- Internal priming: an opportunistic pathway for L1 and Alu retrotransposition in hominins.
+- Interplay between RNASEH2 and MOV10 controls LINE-1 retrotransposition.
+- Intragenic L1 Insertion: One Possibility of Brain Disorder.
+- Intrinsic restriction activity by AID/APOBEC family of enzymes against the mobility of retroelements.
+- Intrinsic restriction activity by apolipoprotein B mRNA editing enzyme APOBEC1 against the mobility of autonomous retrotransposons.
+- Inverse changes in L1 retrotransposons between blood and brain in major depressive disorder.
+- Investigation of long interspersed element-1 retrotransposons as potential risk factors for idiopathic temporal lobe epilepsy.
+- Involvement of Conserved Amino Acids in the C-Terminal Region of LINE-1 ORF2p in Retrotransposition.
+- Involvement of retrotransposition of long interspersed nucleotide element-1 in skin tumorigenesis induced by 7,12-dimethylbenz[a]anthracene and 12-O-tetradecanoylphorbol-13-acetate.
+- Ionising irradiation alters the dynamics of human long interspersed nuclear elements 1 (LINE1) retrotransposon.
+- L1 hybridization enrichment: a method for directly accessing de novo L1 insertions in the human germline.
+- L1 insertion intermediates recombine with one another or with DNA breaks to form genome rearrangements.
+- L1 integration in a transgenic mouse model.
+- L1 Mosaicism in Mammals: Extent, Effects, and Evolution.
+- L1 retrotransposition can occur early in human embryonic development.
+- L1 retrotransposition in human neural progenitor cells.
+- L1 Retrotransposition in Neural Progenitor Cells.
+- L1 retrotransposition in neurons is modulated by MeCP2.
+- L1 retrotransposition in nondividing and primary human somatic cells.
+- L1 retrotransposition is a common feature of mammalian hepatocarcinogenesis.
+- L1 retrotransposition is activated by Ten-eleven-translocation protein 1 and repressed by methyl-CpG binding proteins.
+- L1 retrotransposition is suppressed by endogenously encoded small interfering RNAs in human cultured cells.
+- L1 retrotransposition occurs mainly in embryogenesis and creates somatic mosaicism.
+- L1 retrotransposition requires rapid ORF1p oligomerization, a novel coiled coil-dependent property conserved despite extensive remodeling.
+- L1 retrotransposon-mediated stable gene silencing.
+- L1 retrotransposons and somatic mosaicism in the brain.
+- L1 retrotransposons exploit RNA m<sup>6</sup>A modification as an evolutionary driving force.
+- L1 retrotransposons, cancer stem cells and oncogenesis.
+- L1 Retrotransposons: A Potential Endogenous Regulator for Schizophrenia.
+- L1-associated genomic regions are deleted in somatic cells of the healthy human brain.
+- L1-mediated retrotransposition of murine B1 and B2 SINEs recapitulated in cultured cells.
+- L1-ORF1p nucleoprotein can rapidly assume distinct conformations and simultaneously bind more than one nucleic acid.
+- L1Base 2: more retrotransposition-active LINE-1s, more mammalian genomes.
+- Lamivudine (3TC), a Nucleoside Reverse Transcriptase Inhibitor, Prevents the Neuropathological Alterations Present in Mutant Tau Transgenic Mice.
+- Lamivudine modulates the expression of neurological impairment-related genes and LINE-1 retrotransposons in brain tissues of a Down syndrome mouse model.
+- Landscape of somatic retrotransposition in human cancers.
+- Latent infection with Kaposi's sarcoma-associated herpesvirus enhances retrotransposition of long interspersed element-1.
+- LEAP: L1 Element Amplification Protocol.
+- Leptin receptor isoform 219.1: an example of protein evolution by LINE-1-mediated human-specific retrotransposition of a coding SVA element.
+- LINE drive. retrotransposition and genome instability.
+- LINE retrotransposition and host DNA repair machinery.
+- LINE-1 Cargo and Reverse Transcriptase Activity Profiles in Extracellular Vesicles from Lung Cancer Cells and Human Plasma.
+- LINE-1 Cultured Cell Retrotransposition Assay.
+- LINE-1 elements in structural variation and disease.
+- LINE-1 Evasion of Epigenetic Repression in Humans.
+- LINE-1 expression and retrotransposition in Barrett's esophagus and esophageal carcinoma.
+- LINE-1 expression in cancer correlates with p53 mutation, copy number alteration, and S phase checkpoint.
+- LINE-1 hypomethylation characterizes the inflammatory response in coeliac disease associated-intestinal mucosa and small bowel adenocarcinomas.
+- LINE-1 hypomethylation, increased retrotransposition and tumor-specific insertion in upper gastrointestinal cancer.
+- LINE-1 in cancer: multifaceted functions and potential clinical implications.
+- LINE-1 ORF1 protein enhances Alu SINE retrotransposition.
+- LINE-1 ORF1 protein localizes in stress granules with other RNA-binding proteins, including components of RNA interference RNA-induced silencing complex.
+- LINE-1 ORF1p does not determine substrate preference for human/orangutan SVA and gibbon LAVA.
+- LINE-1 ORF2p expression is nearly imperceptible in human cancers.
+- LINE-1 preTa elements in the human genome.
+- LINE-1 protein localization and functional dynamics during the cell cycle.
+- LINE-1 repression in Epstein-Barr virus-associated gastric cancer through viral-host genome interaction.
+- LINE-1 retrotransposable element DNA accumulates in HIV-1-infected cells.
+- LINE-1 retrotransposition activity in human genomes.
+- LINE-1 Retrotransposition Assays in Embryonic Stem Cells.
+- LINE-1 retrotransposition events affect endothelial proliferation and migration.
+- LINE-1 retrotransposition events regulate gene expression after X-ray irradiation.
+- LINE-1 retrotransposition in a mouse TDP-43 model of neurodegeneration marks motor cortex neurons for cell-intrinsic and cell non-autonomous programmed cell death.
+- LINE-1 retrotransposition in human embryonic stem cells.
+- LINE-1 retrotransposition in human neuroblastoma cells is affected by oxidative stress.
+- LINE-1 Retrotransposition Promotes the Development and Progression of Lung Squamous Cell Carcinoma by Disrupting the Tumor-Suppressor Gene FGGY.
+- LINE-1 retrotransposition: impact on genome stability and diversity and human disease.
+- LINE-1 retrotransposon encoded ORF1p expression and promoter methylation in oral squamous cell carcinoma: a pilot study.
+- LINE-1 retrotransposons in healthy and diseased human brain.
+- LINE-1 retrotransposons: modulators of quantity and quality of mammalian gene expression?
+- LINE-1 ribonucleoprotein condensates bind DNA to enable nuclear entry during mitosis.
+- LINE-1 RNA splicing and influences on mammalian gene expression.
+- LINE-1-Induced Retrotransposition Affects Early Preimplantation Embryo DNA Integrity and Pluripotency.
+- LINE-1: creators of neuronal diversity.
+- Line-1: Implications in the etiology of cancer, clinical applications, and pharmacologic targets.
+- LINE-like retrotransposition in Saccharomyces cerevisiae.
+- LINE1 contributes to autoimmunity through both RIG-I- and MDA5-mediated RNA sensing pathways.
+- LINE1 insertion into the NACC2 locus disrupts the HDM2 axis and activates lung oncogenic signaling.
+- LINE1-Mediated Reverse Transcription and Genomic Integration of SARS-CoV-2 mRNA Detected in Virus-Infected but Not in Viral mRNA-Transfected Cells.
+- Lineage specific evolution of the VNTR composite retrotransposon central domain and its role in retrotransposition of gibbon LAVA elements.
+- LINEing germ and embryonic stem cells' silencing of retrotransposons.
+- Links between Human LINE-1 Retrotransposons and Hepatitis Virus-Related Hepatocellular Carcinoma.
+- Links between repeated sequences.
+- Locus specific reduction of L1 expression in the cortices of individuals with amyotrophic lateral sclerosis.
+- Locus-resolution analysis of L1 regulation and retrotransposition potential in mouse embryonic development.
+- Long Interspersed Element Sequencing (L1-Seq): A Method to Identify Somatic LINE-1 Insertions in the Human Genome.
+- Long interspersed element-1 is differentially regulated by food-borne carcinogens via the aryl hydrocarbon receptor.
+- Long INterspersed element-1 mobility as a sensor of environmental stresses.
+- Long interspersed nuclear element 1 methylation in non-small cell lung cancer: implications for diagnosis, prognosis, and therapeutic targeting.
+- Long Interspersed Nuclear Elements 1 (LINE1): The chimeric transcript L1-MET and its involvement in cancer.
+- Long-read assembly of a Great Dane genome highlights the contribution of GC-rich sequence and mobile elements to canine genomes.
+- Long-read sequencing and structural variant characterization in 1,019 samples from the 1000 Genomes Project.
+- Loss of Nexmif results in the expression of phenotypic variability and loss of genomic integrity.
+- Loss of Nuclear TDP-43 Is Associated with Decondensation of LINE Retrotransposons.
+- Lung genotoxicity of benzo(a)pyrene in vivo involves reactivation of LINE-1 retrotransposon and early reprogramming of oncogenic regulatory networks.
+- Machine learning reveals bilateral distribution of somatic L1 insertions in human neurons and glia.
+- Many human L1 elements are capable of retrotransposition.
+- Mapping the LINE1 ORF1 protein interactome reveals associated inhibitors of human retrotransposition.
+- Maximal inhibitory effect of MOV10 on LINE-1 retrotransposition requires both the MOV10/LINE-1 association and granule formation.
+- Mechanism of DNA targeting by human LINE-1.
+- Mercury specifically induces LINE-1 activity in a human neuroblastoma cell line.
+- Meta-analysis of gross insertions causing human genetic disease: novel mutational mechanisms and the role of replication slippage.
+- Methyl-CpG-binding protein 2 represses LINE-1 expression and retrotransposition but not Alu transcription.
+- Methylation of endogenous human retroelements in health and disease.
+- MicroRNA miR-128 represses LINE-1 (L1) retrotransposition by down-regulating the nuclear import factor TNPO1.
+- miR-128 represses L1 retrotransposition by binding directly to L1 RNA.
+- miR-128 Restriction of LINE-1 (L1) Retrotransposition Is Dependent on Targeting hnRNPA1 mRNA.
+- Mobile DNA in cancer. Extensive transduction of nonrepetitive DNA mediated by L1 retrotransposition in cancer genomes.
+- Mobile elements create structural variation: analysis of a complete human genome.
+- Mobility pathways for vertebrate L1, L2, CR1, and RTE clade retrotransposons.
+- Mobilization of LINE-1 retrotransposons is restricted by <i>Tex19.1</i> in mouse embryonic stem cells.
+- Modes of retrotransposition of long interspersed element-1 by environmental factors.
+- Modulation of LINE-1 and Alu/SVA retrotransposition by Aicardi-Goutières syndrome-related SAMHD1.
+- Modulation of LINE-1 Retrotransposition by a Human SAMHD1 Polymorphism.
+- Molecular reconstruction of extinct LINE-1 elements and their interaction with nonautonomous elements.
+- More active human L1 retrotransposons produce longer insertions.
+- MORE-RNAseq: a pipeline for quantifying retrotransposition-capable LINE1 expression based on RNA-seq data.
+- Morphine and Fentanyl Citrate Induce Retrotransposition of Long Interspersed Element-1.
+- MOV10 recruits DCP2 to decap human LINE-1 RNA by forming large cytoplasmic granules with phase separation properties.
+- MOV10 RNA helicase is a potent inhibitor of retrotransposition in cells.
+- mRNA retrotransposition coupled with 5' inversion as a possible source of new genes.
+- Multi-platform framework for mapping somatic retrotransposition in human tissues.
+- Multiple fates of L1 retrotransposition intermediates in cultured human cells.
+- Multiple Mechanisms Contribute To Telomere Maintenance.
+- MxB inhibits long interspersed element type 1 retrotransposition.
+- N<sup>6</sup>-adenosine methylation and the regulatory mechanism on LINE-1.
+- Nanopore Sequencing Enables Comprehensive Transposable Element Epigenomic Profiling.
+- Nef Suppresses LINE-1 Retrotransposition through Two Distinct Mechanisms.
+- Neurotoxic Methamphetamine Doses Increase LINE-1 Expression in the Neurogenic Zones of the Adult Rat Brain.
+- New Understanding of the Relevant Role of LINE-1 Retrotransposition in Human Disease and Immune Modulation.
+- Nickel stimulates L1 retrotransposition by a post-transcriptional mechanism.
+- No evidence of human genome integration of SARS-CoV-2 found by long-read DNA sequencing.
+- Non-LTR retrotransposons and microsatellites: Partners in genomic variation.
+- Northern blotting of endogenous full-length human-specific LINE-1 RNA.
+- Novel Discovery of LINE-1 in a Korean Individual by a Target Enrichment Method.
+- Novel family of human transposable elements formed due to fusion of the first exon of gene MAST2 with retrotransposon SVA.
+- Novel retrotransposon analysis reveals multiple mobility pathways dictated by hosts.
+- Nuclear cGAS restricts L1 retrotransposition by promoting TRIM41-mediated ORF2p ubiquitination and degradation.
+- Nuclear Translocation of S100A9 Triggers Senescence of Human Amnion Fibroblasts by De-Repressing LINE1 Via Heterochromatin Erosion at Parturition.
+- Nucleocytoplasmic shuttling of SAMHD1 is important for LINE-1 suppression.
+- Nucleoside analogue reverse transcriptase inhibitors differentially inhibit human LINE-1 retrotransposition.
+- On the interface of aging, cancer, and neurodegeneration with SIRT6 and L1 retrotransposon protein interaction network.
+- Open Reading Frame 1 Protein of the Human Long Interspersed Nuclear Element 1 Retrotransposon Binds Multiple Equivalents of Lead.
+- Opossum APOBEC1 is a DNA mutator with retrovirus and retroelement restriction activity.
+- Opposing roles of pseudokinases NRBP1 and NRBP2 in regulating L1 retrotransposition.
+- Organization of the bovine alpha 2-fucosyltransferase gene cluster suggests that the Sec1 gene might have been shaped through a nonautonomous L1-retrotransposition event within the same locus.
+- Overexpression of LINE-1 Retrotransposons in Autism Brain.
+- p53 responsive elements in human retrotransposons.
+- p53-mediated regulation of LINE1 retrotransposon-derived R-loops.
+- Pan-cancer analysis of whole genomes identifies driver rearrangements promoted by LINE-1 retrotransposition.
+- Pan-cancer analysis reveals context-dependent roles of LINE-1 ORF1p in immune regulation and copy number alterations.
+- Pan-cancer multi-omic model of LINE-1 activity reveals locus heterogeneity of retrotransposition efficiency.
+- Pathogenic orphan transduction created by a nonreference LINE-1 retrotransposon.
+- Pedigree-based estimation of human mobile element retrotransposition rates.
+- Pharmacological inhibition of neddylation impairs long interspersed element 1 retrotransposition.
+- Phase separation of the LINE-1 ORF1 protein is mediated by the N-terminus and coiled-coil domain.
+- Phosphorylation of ORF1p is required for L1 retrotransposition.
+- PIWIL2 downregulation in colon cancer promotes transposon activity and pro-tumorigenic phenotypes.
+- PML and PML-like exonucleases restrict retrotransposons in jawed vertebrates.
+- Poly(A) binding protein C1 is essential for efficient L1 retrotransposition and affects L1 RNP formation.
+- Poly(ADP-Ribose) Polymerase 2 Recruits Replication Protein A to Sites of LINE-1 Integration to Facilitate Retrotransposition.
+- Polymerization and nucleic acid-binding properties of human L1 ORF1 protein.
+- Positional cloning of the gene for X-linked retinitis pigmentosa 2.
+- Post-Transcriptional Control of LINE-1 Retrotransposition by Cellular Host Factors in Somatic Cells.
+- Post-transcriptional regulation of LINE-1 retrotransposition by AID/APOBEC and ADAR deaminases.
+- Potential for genomic instability associated with retrotranspositionally-incompetent L1 loci.
+- Poxviruses capture host genes by LINE-1 retrotransposition.
+- Primary immunodeficiency caused by an exonized retroposed gene copy inserted in the CYBB gene.
+- Prognostic value of LINE-1 retrotransposon expression and its subcellular localization in breast cancer.
+- Progress in understanding the biology of the human mutagen LINE-1.
+- Promoter binding proteins of an active human L1 retrotransposon.
+- Properties of LINE-1 proteins and repeat element expression in the context of amyotrophic lateral sclerosis.
+- Prostate-specific loss of UXT promotes cancer progression.
+- Proteome Profile of Endogenous Retrotransposon-Associated Complexes in Human Embryonic Stem Cells.
+- Purification of L1-Ribonucleoprotein Particles (L1-RNPs) from Cultured Human Cells.
+- Quantitative Analysis of L1-Retrotransposons in Alzheimer's Disease and Aging.
+- Rad18 suppresses the late step of human immunodeficiency virus type 1 replication.
+- Rapid amplification of a retrotransposon subfamily is evolving the mouse genome.
+- Rates and patterns of great ape retrotransposition.
+- RDA coupled with deep sequencing detects somatic SVA-retrotranspositions and mosaicism in the human brain.
+- Reading between the LINEs: human genomic variation induced by LINE-1 retrotransposition.
+- Reading LINEs within the cocaine addicted brain.
+- Recessive inheritance of population-specific intronic LINE-1 insertion causes a rotor syndrome phenotype.
+- Recognition of 3'-end L1, Alu, processed pseudogenes, and mRNA stem-loops in the human genome using sequence-based and structure-based machine-learning models.
+- Recurrent evolution of an inhibitor of ESCRT-dependent virus budding and LINE-1 retrotransposition in primates.
+- Recurrent inversion polymorphisms in humans associate with genetic instability and genomic disorders.
+- Regulation of L1 expression and retrotransposition by melatonin and its receptor: implications for cancer risk associated with light exposure at night.
+- Regulatory Role of Insulin on Endogenous L1 ORF1 and NEFM Gene Expression through PI3K Signaling Pathway Specifically in Neuroblastoma Cell Line.
+- Replicative Senescence-Associated LINE1 Methylation and LINE1-Alu Expression Levels in Human Endothelial Cells.
+- Reprogramming somatic cells into iPS cells activates LINE-1 retroelement mobility.
+- Reprogramming triggers endogenous L1 and Alu retrotransposition in human induced pluripotent stem cells.
+- Requirements for polyadenylation at the 3' end of LINE-1 elements.
+- Rescuing Alu: recovery of new inserts shows LINE-1 preserves Alu activity through A-tail expansion.
+- Research and application on LINE-1 in diagnosis and treatment of tumorigenesis.
+- Resolving rates of mutation in the brain using single-neuron genomics.
+- Restricting retrotransposons: a review.
+- Restricting retrotransposons: ADAR1 is another guardian of the human genome.
+- Resveratrol blocks retrotransposition of LINE-1 through PPAR α and sirtuin-6.
+- Retroelements in human disease.
+- Retroelements versus APOBEC3 family members: No great escape from the magnificent seven.
+- Retroposed copies of the HMG genes: a window to genome dynamics.
+- Retropseudogenes derived from the human Ro/SS-A autoantigen-associated hY RNAs.
+- RetroSeeker reveals the characteristics, expression, and evolution of a large set of novel retrotransposons.
+- Retrotransposable genetic elements causing neutrophil defects.
+- Retrotransposal integration of mobile genetic elements in human diseases.
+- Retrotransposed genes such as Frat3 in the mouse Chromosome 7C Prader-Willi syndrome region acquire the imprinted status of their insertion site.
+- Retrotransposition and Crystal Structure of an Alu RNP in the Ribosome-Stalling Conformation.
+- Retrotransposition and senescence in mouse heart tissue by viral protein R of human immunodeficiency virus-1.
+- Retrotransposition creates sloping shores: a graded influence of hypomethylated CpG islands on flanking CpG sites.
+- Retrotransposition in tumors and brains.
+- Retrotransposition of long interspersed element 1 induced by methamphetamine or cocaine.
+- Retrotransposition of long interspersed nucleotide element-1 is associated with colitis but not tumors in a murine colitic cancer model.
+- Retrotransposition of marked SVA elements by human L1s in cultured cells.
+- Retrotransposition-Competent Human LINE-1 Induces Apoptosis in Cancer Cells With Intact p53.
+- Retrotransposition-competent L1s are increased in the genomes of individuals with amyotrophic lateral sclerosis.
+- Retrotransposon Activation in the Aged and Alzheimer's Disease Brain Examined by Nanopore Long-read DNA Sequencing.
+- Retrotransposon Capture Sequencing (RC-Seq): A Targeted, High-Throughput Approach to Resolve Somatic L1 Retrotransposition in Humans.
+- Retrotransposon expression and incorporation of cloned human and mouse retroelements in human spermatozoa.
+- Retrotransposon instability dominates the acquired mutation landscape of mouse induced pluripotent stem cells.
+- Retrotransposon Protein L1 ORF1p Expression in Aging Central Nervous System.
+- Retrotransposon RNA expression and evidence for retrotransposition events in human oocytes.
+- Retrotransposon-adenovirus hybrid vectors: efficient delivery and stable integration of transgenes via a two-stage mechanism.
+- Retrotransposon-induced mosaicism in the neural genome.
+- Retrotransposons and Diabetes Mellitus.
+- Retrotransposons as a Source of DNA Damage in Neurodegeneration.
+- Retrotransposons: a new and credible source of inherited and somatically acquired hepatocellular carcinoma mutations.
+- Retrotransposons: mobile and mutagenic from conception to death.
+- Reverse transcriptase encoded by a human transposable element.
+- Reviving a 60 million year old LINE-1 element.
+- Reviving the dead: history and reactivation of an extinct l1.
+- Ribonucleoprotein particle formation is necessary but not sufficient for LINE-1 retrotransposition.
+- RNA ligation precedes the retrotransposition of U6/LINE-1 chimeric RNA.
+- RNA m<sup>6</sup>A modification orchestrates a LINE-1-host interaction that facilitates retrotransposition and contributes to long gene vulnerability.
+- RNA m<sup>6</sup>A modification regulates L1 retrotransposons in human spermatogonial stem cell differentiation in vitro and in vivo.
+- RNA sensor MDA5 suppresses LINE-1 retrotransposition by regulating the promoter activity of LINE-1 5'-UTR.
+- RNA truncation by premature polyadenylation attenuates human mobile element activity.
+- RNase H2-RED carpets the path to eukaryotic RNase H2 functions.
+- RNase H2, mutated in Aicardi-Goutières syndrome, promotes LINE-1 retrotransposition.
+- RNase L restricts the mobility of engineered retrotransposons in cultured human cells.
+- Robust expression of LINE-1 retrotransposon encoded proteins in oral squamous cell carcinoma.
+- Role of long interspersed nuclear element-1 in the regulation of chromatin landscapes and genome dynamics.
+- Roles for retrotransposon insertions in human disease.
+- SAMHD1 Inhibits LINE-1 Retrotransposition by Promoting Stress Granule Formation.
+- SARS-CoV-2-encoded inhibitors of human LINE-1 retrotransposition.
+- Selection against deleterious LINE-1-containing loci in the human lineage.
+- Selection against LINE-1 retrotransposons results principally from their ability to mediate ectopic recombination.
+- Selective inhibition of Alu retrotransposition by APOBEC3G.
+- Selective silencing of euchromatic L1s revealed by genome-wide screens for L1 regulators.
+- Sequence Diversity and Encoded Enzymatic Differences of Monocistronic L1 ORF2 mRNA Variants in the Aged Normal and Alzheimer's Disease Brain.
+- Silencing of LINE-1 retrotransposons is a selective dependency of myeloid leukemia.
+- Similarities between long interspersed element-1 (LINE-1) reverse transcriptase and telomerase.
+- SINE Retrotransposition: Evaluation of Alu Activity and Recovery of De Novo Inserts.
+- Single-neuron sequencing analysis of L1 retrotransposition and somatic mutation in the human brain.
+- SIRT7 mediates L1 elements transcriptional repression and their association with the nuclear lamina.
+- Site-directed spin labeling electron paramagnetic resonance study of the ORF1 protein from a mouse L1 retrotransposon.
+- Site-specific retrotransposition of L1 elements within human alphoid satellite sequences.
+- SLFN11 Restricts LINE-1 Mobility.
+- Sole copy of Z2-type human cytidine deaminase APOBEC3H has inhibitory activity against retrotransposons and HIV-1.
+- Somatic expression of LINE-1 elements in human tissues.
+- Somatic LINE-1 retrotransposition in cortical neurons and non-brain tissues of Rett patients and healthy individuals.
+- Somatic mosaicism in neuronal precursor cells mediated by L1 retrotransposition.
+- Somatic retrotransposition alters the genetic landscape of the human brain.
+- Somatic retrotransposition in the developing rhesus macaque brain.
+- Somatically Acquired LINE-1 Insertions in Normal Esophagus Undergo Clonal Expansion in Esophageal Squamous Cell Carcinoma.
+- SOX-11 regulates LINE-1 retrotransposon activity during neuronal differentiation.
+- Spatial assembly and RNA binding stoichiometry of a LINE-1 protein essential for retrotransposition.
+- Spliced integrated retrotransposed element (SpIRE) formation in the human genome.
+- sRNA/L1 retrotransposition: using siRNAs and miRNAs to expand the applications of the cell culture-based LINE-1 retrotransposition assay.
+- Stable integration of transgenes delivered by a retrotransposon-adenovirus hybrid vector.
+- STING inhibits LINE-1 retrotransposition through sorting ORF1p to lysosomes for degradation.
+- Stress out the LINEs.
+- Striking a balance: regulation of transposable elements by Zfp281 and Mll2 in mouse embryonic stem cells.
+- Structural dissection of sequence recognition and catalytic mechanism of human LINE-1 endonuclease.
+- Structural dynamics of wild type and mutated forms of human L1 endonuclease and insights into its sequence specific nucleic acid binding mechanism: A molecular dynamics study.
+- Structural features of somatic and germline retrotransposition events in humans.
+- Structural insight into dGTP-dependent activation of tetrameric SAMHD1 deoxynucleoside triphosphate triphosphohydrolase.
+- Structural mechanism of LINE-1 target-primed reverse transcription.
+- Structural variation in 1,019 diverse humans based on long-read sequencing.
+- Structures, functions and adaptations of the human LINE-1 ORF2 protein.
+- Study of Transposable Elements and Their Genomic Impact.
+- Subfamily-selective PCR primers for the human LINE1 L1PA lineage.
+- Subfamily-specific differential contribution of individual monomers and the tether sequence to mouse L1 promoter activity.
+- Subfamily-specific quantification of endogenous mouse L1 retrotransposons by droplet digital PCR.
+- SVA elements are nonautonomous retrotransposons that cause disease in humans.
+- Synthesis and Characterization of Specific Reverse Transcriptase Inhibitors for Mammalian LINE-1 Retrotransposons.
+- Tandem UAA repeats at the 3'-end of the transcript are essential for the precise initiation of reverse transcription of the I factor in Drosophila melanogaster.
+- Targeting of human retrotransposon integration is directed by the specificity of the L1 endonuclease for regions of unusual DNA structure.
+- Template and target-site recognition by human LINE-1 in retrotransposition.
+- Testing the retroelement invasion hypothesis for the emergence of the ancestral eukaryotic cell.
+- TET-dependent regulation of retrotransposable elements in mouse embryonic stem cells.
+- The 5' truncation of retrotransposon L1: a process of genome integrity.
+- The aryl hydrocarbon receptor agonist benzo(a)pyrene reactivates LINE-1 in HepG2 cells through canonical TGF-β1 signaling: implications in hepatocellular carcinogenesis.
+- The Broad-Spectrum Antiviral Protein ZAP Restricts Human Retrotransposition.
+- The carboxy-terminal segment of the human LINE-1 ORF2 protein is involved in RNA binding.
+- The controversy of SARS-CoV-2 integration into the human genome.
+- The DEAD box RNA helicase DDX42 is an intrinsic inhibitor of positive-strand RNA viruses.
+- The domesticated transposon protein L1TD1 associates with its ancestor L1 ORF1p to promote LINE-1 retrotransposition.
+- The effects of transpositions of functional <i>I</i> retrotransposons depend on the conditions and dose of parental exposure.
+- The endonuclease domain of the LINE-1 ORF2 protein can tolerate multiple mutations.
+- The Engineered SVA Trans-mobilization Assay.
+- The Flow of the Gibbon LAVA Element Is Facilitated by the LINE-1 Retrotransposition Machinery.
+- The genome-defence gene Tex19.1 suppresses LINE-1 retrotransposons in the placenta and prevents intra-uterine growth retardation in mice.
+- The human LINE-1 retrotransposon creates DNA double-strand breaks.
+- The identification of retro-DNAs in primate genomes as DNA transposons mobilizing via retrotransposition.
+- The Influence of LINE-1 and SINE Retrotransposons on Mammalian Genomes.
+- The innate antiretroviral factor APOBEC3G does not affect human LINE-1 retrotransposition in a cell culture assay.
+- The interferon stimulated gene-encoded protein HELZ2 inhibits human LINE-1 retrotransposition and LINE-1 RNA-mediated type I interferon induction.
+- The L1 retroelement-related p40 protein induces p38delta MAP kinase.
+- The L1 retrotransposition assay: a retrospective and toolkit.
+- The L1 retrotranspositional stimulation by particulate and soluble cadmium exposure is independent of the generation of DNA breaks.
+- The L1-dependant and Pol III transcribed Alu retrotransposon, from its discovery to innate immunity.
+- The L1-ORF1p coiled coil enables formation of a tightly compacted nucleic acid-bound complex that is associated with retrotransposition.
+- The Landscape of L1 Retrotransposons in the Human Genome Is Shaped by Pre-insertion Sequence Biases and Post-insertion Selection.
+- The Microprocessor controls the activity of mammalian retrotransposons.
+- The minimal active human SVA retrotransposon requires only the 5'-hexamer and Alu-like domains.
+- The NF1 gene contains hotspots for L1 endonuclease-dependent de novo insertion.
+- The non-autonomous retrotransposon SVA is trans-mobilized by the human LINE-1 protein machinery.
+- The Nucleotide Excision Repair Pathway Limits L1 Retrotransposition.
+- The oncogenic microRNA miR-222 promotes human LINE-1 retrotransposition.
+- The RNA editing enzyme ADAR2 restricts L1 mobility.
+- The RNA polymerase dictates ORF1 requirement and timing of LINE and SINE retrotransposition.
+- The role of amino-terminal sequences in cellular localization and antiviral activity of APOBEC3B.
+- The Role of Somatic L1 Retrotransposition in Human Cancers.
+- The Simons Genome Diversity Project: A Global Analysis of Mobile Element Diversity.
+- The structures of mouse and human L1 elements reflect their insertion mechanism.
+- The tumor suppressor microRNA let-7 inhibits human LINE-1 retrotransposition.
+- The Zinc-Finger Antiviral Protein ZAP Inhibits LINE and Alu Retrotransposition.
+- Thrombopoietin protects hematopoietic stem cells from retrotransposon-mediated damage by promoting an antiviral response.
+- Tissue-Specific Methylation of Long Interspersed Nucleotide Element-1 of Homo Sapiens (L1Hs) During Human Embryogenesis and Roles in Neural Tube Defects.
+- Tracking an embryonic L1 retrotransposition event.
+- Transcriptional landscape of repetitive elements in normal and cancer human cells.
+- Transcriptional regulation of human-specific SVAF₁ retrotransposons by cis-regulatory MAST2 sequences.
+- Transduction of 3'-flanking sequences is common in L1 retrotransposition.
+- Transduction-specific ATLAS reveals a cohort of highly active L1 retrotransposons in human populations.
+- Transplantation of target site specificity by swapping the endonuclease domains of two LINEs.
+- Transposable Elements and DNA Methylation Create in Embryonic Stem Cells Human-Specific Regulatory Sequences Associated with Distal Enhancers and Noncoding RNAs.
+- Transposable Elements and Their Epigenetic Regulation in Mental Disorders: Current Evidence in the Field.
+- Transposable Elements, Inflammation, and Neurological Disease.
+- Transposable elements, placental development, and oocyte activation: Cellular stress and AMPK links jumping genes with the creation of human life.
+- Transposon insertion profiling by sequencing (TIPseq) identifies novel LINE-1 insertions in human sperm.
+- Trimeric structure and flexibility of the L1ORF1 protein in human L1 retrotransposition.
+- Truncated ORF1 proteins can suppress LINE-1 retrotransposition in trans.
+- Twin priming: a proposed mechanism for the creation of inversions in L1 retrotransposition.
+- Two additional potential retrotransposons isolated from a human L1 subfamily that contains an active retrotransposable element.
+- Type W Human Endogenous Retrovirus (HERV-W) Integrations and Their Mobilization by L1 Machinery: Contribution to the Human Transcriptome and Impact on the Host Physiopathology.
+- U6 snRNA Pseudogenes: Markers of Retrotransposition Dynamics in Mammals.
+- Ubiquitous L1 mosaicism in hippocampal neurons.
+- Unbiased proteomic mapping of the LINE-1 promoter using CRISPR Cas9.
+- Unconventional translation of mammalian LINE-1 retrotransposons.
+- Uncovering the role of LINE-1 in the evolution of lung adenocarcinoma.
+- Upregulated LINE-1 Activity in the Fanconi Anemia Cancer Susceptibility Syndrome Leads to Spontaneous Pro-inflammatory Cytokine Production.
+- Uridylation by TUT4/7 Restricts Retrotransposition of Human LINE-1s.
+- Use of long sequence alignments to study the evolution and regulation of mammalian globin gene clusters.
+- Variable patterns of retrotransposition in different HeLa strains provide mechanistic insights into SINE RNA mobilization processes.
+- Viral protein R of HIV type-1 induces retrotransposition and upregulates glutamate synthesis by the signal transducer and activator of transcription 1 signaling pathway.
+- Viral protein R of human immunodeficiency virus type-1 induces retrotransposition of long interspersed element-1.
+- Vitamin C activates young LINE-1 elements in mouse embryonic stem cells via H3K9me3 demethylation.
+- Where to Draw the LINE-Are Retrotransposable Elements Here to Stay?
+- Whole-genome sequencing reveals principles of brain retrotransposition in neurodevelopmental disorders.
+- Widespread somatic L1 retrotransposition in normal colorectal epithelium.
+- Young LINE-1 transposon 5' UTRs marked by elongation factor ELL3 function as enhancers to regulate naïve pluripotency in embryonic stem cells.
+- ZCCHC3 is a stress granule zinc knuckle protein that strongly suppresses LINE-1 retrotransposition.
+- ZNF689 deficiency promotes intratumor heterogeneity and immunotherapy resistance in triple-negative breast cancer.
+
+## 英文模式下仍会露出中文：TE
+
+- 非自主L1逆转录转座事件
+
+## 英文模式下仍会露出中文：Disease
+
+- 膀胱癌
+- 丙酮酸脱氢酶复合物缺乏症
+- 哺乳动物衰老
+- 不育症
+- 代谢疾病
+- 单基因疾病
+- 导管原位癌
+- 杜氏肌营养不良症
+- 恶性肿瘤
+- 复发性流产
+- 肝内胆管癌
+- 肝硬化
+- 高级别浆液性卵巢癌
+- 高级别胶质瘤
+- 高级别卵巢浆液性癌
+- 宫颈癌
+- 宫内生长迟缓
+- 骨髓增生异常综合征
+- 回肠类癌
+- 肌萎缩侧索硬化
+- 基因组不稳定
+- 基因组疾病
+- 急性髓系白血病
+- 结肠癌
+- 结肠炎
+- 结肠炎相关癌症
+- 浸润性癌
+- 精神疾病
+- 可卡因成瘾
+- 克罗恩病相关小肠腺癌
+- 溃疡性结肠炎
+- 卵巢癌
+- 卵巢肿瘤
+- 慢性粒细胞白血病
+- 慢性肉芽肿病
+- 面肩肱型肌营养不良症
+- 囊性纤维化
+- 脑发育的体细胞突变疾病
+- 年龄相关疾病
+- 尿路上皮癌
+- 帕金森病
+- 胚胎性肿瘤
+- 皮肤肿瘤
+- 前列腺癌
+- 前列腺肿瘤
+- 人类逆转录元件插入诱导的疾病
+- 人类胚胎发育异常
+- 认知任务表现受损
+- 乳糜泻
+- 乳腺癌
+- 三阴性乳腺癌
+- 散发性小肠腺癌
+- 散发性遗传病
+- 上皮癌
+- 上皮肿瘤
+- 上消化道癌症
+- 神经管缺陷
+- 神经母细胞瘤
+- 神经遗传疾病
+- 神经遗传性疾病
+- 生殖系统疾病
+- 食管癌
+- 食管鳞状细胞癌
+- 松果体母细胞瘤
+- 髓系白血病
+- 髓系恶性肿瘤
+- 胎盘功能障碍
+- 糖尿病
+- 头颈癌
+- 胃癌
+- 胃肠道癌症
+- 无精子症
+- 物质使用障碍
+- 小肠腺癌
+- 心理障碍
+- 心血管疾病
+- 心血管系统疾病
+- 炎症性疾病
+- 胰腺癌
+- 胰腺导管腺癌
+- 胰腺神经内分泌肿瘤
+- 遗传病
+- 遗传不稳定性
+- 遗传疾病
+- 遗传性疾病
+- 早产
+- 早期自然流产
+- 着色性干皮病
+- 中枢神经系统神经母细胞瘤
+- 肿瘤
+- 肿瘤发生
+- 肿瘤疾病
+- 子宫内膜肿瘤
+- 子宫平滑肌瘤
+- 自闭症
+- 自发遗传病
+- 自身免疫疾病
+- de novo突变相关疾病
+- H3 K27M突变型弥漫性中线胶质瘤
+- HIV-1感染
+- HPV相关癌症
+- METH滥用诱导的记忆缺陷
+- NF1突变相关疾病
+
+## 英文模式下仍会露出中文：Function
+
+- 3'-末端茎环结构
+- 3'端多聚腺苷酸化
+- 3'端转导
+- 3'末端添加额外胞嘧啶
+- 5'-截短插入
+- 5'-末端连接通路
+- 5'端倒位
+- 5'端额外核苷酸生成
+- 5'端反向插入
+- 5‘端附着
+- 5'端截短插入
+- 5'端截断
+- 5'端连接
+- 5'端整合
+- 5'和3'端转导
+- 5‘截短
+- 5'截断
+- 癌基因高水平扩增
+- 癌基因激活
+- 癌症基因组重塑
+- 靶标引发逆转录
+- 靶标引物逆转录
+- 靶基因表达改变
+- 靶位点复制
+- 靶位点切割
+- 靶位点选择
+- 靶位点引发的逆转录
+- 靶位点引发逆转录
+- 靶位点引物逆转录
+- 靶位点重复
+- 靶向插入
+- 靶向引发逆转录转座
+- 靶向引物逆转录
+- 胞苷脱氨
+- 胞苷脱氨酶介导的调控
+- 胞嘧啶甲基化
+- 胞嘧啶脱氨
+- 胞质定位
+- 表达
+- 表达调控
+- 表达上调
+- 表达异常
+- 表达增加
+- 表观遗传调控改变
+- 表观遗传激活
+- 表观遗传染色质凝聚
+- 表观遗传失调
+- 表观遗传修饰
+- 表观遗传修饰改变
+- 表观遗传抑制解除
+- 表型变异性
+- 病毒基因组整合
+- 病毒模拟
+- 捕获宿主基因
+- 侧翼序列共移动
+- 插入
+- 插入/缺失多态性
+- 插入沉默
+- 插入多态性
+- 插入机制
+- 插入基因
+- 插入介导的缺失
+- 插入位点重排
+- 插入新拷贝
+- 插入长度
+- 差异表达
+- 产生加工假基因
+- 产生无尾逆转录假基因
+- 超级增强子结构域
+- 沉默调控
+- 沉默解除
+- 创建人类特异性调控位点
+- 刺激先天免疫
+- 从头插入
+- 从头整合
+- 促进非自主性转座元件逆转录转座
+- 促炎信号传导
+- 错配修复
+- 错配延伸
+- 大规模重复
+- 大脑特异性遗传镶嵌现象
+- 大脑中的插入活动
+- 大片段基因组缺失
+- 单链核酸结合
+- 单顺反子ORF2 mRNA表达
+- 单体间相互作用
+- 单体增强活性
+- 蛋白隔离
+- 蛋白质-蛋白质相互作用
+- 倒位形成
+- 等位基因异质性
+- 低甲基化
+- 底物偏好性
+- 调节基因表达
+- 调控基因表达
+- 调控元件获取
+- 端粒靶向
+- 端粒共定位
+- 端粒维持
+- 端粒相关插入
+- 端粒重编程
+- 端粒重组机制
+- 短靶位点重复
+- 断裂-融合-桥循环
+- 多聚泛素化与降解
+- 多聚腺苷酸化信号旁路
+- 多能性因子表达异常
+- 多态性插入
+- 多重插入事件
+- 额外核苷酸插入
+- 翻译
+- 翻译调控
+- 翻译后调控
+- 翻译效率增强
+- 反式促进逆转录转座
+- 反式动员
+- 反式互补
+- 反式剪接
+- 反式逆转录转座
+- 反式转座
+- 反式作用介导
+- 反式mRNA逆转录转座
+- 反义转录
+- 泛素化
+- 芳烃受体激活
+- 非插入机制
+- 非常规翻译机制
+- 非等位基因同源重组
+- 非等位同源重组
+- 非功能性ORF1p变异体产生
+- 非同源末端连接
+- 非L1转录本的逆转录转座
+- 分化程序下调
+- 父系偏向性
+- 负反馈环路中断
+- 负选择
+- 负选择（净化选择）
+- 复杂易位
+- 复制
+- 复制性转座
+- 复制应激
+- 高持续合成能力
+- 高通量双荧光素酶检测
+- 高效递送
+- 隔离肿瘤抑制因子
+- 个体间插入多态性
+- 个体间基因组变异
+- 个体特异性指纹
+- 个体转座能力变异
+- 功能蛋白提供
+- 共转录
+- 谷氨酰胺酶C产生增加
+- 罕见或私有生殖系插入
+- 合成暂停
+- 合子基因组激活
+- 核表达
+- 核定位
+- 核苷酸切除修复
+- 核进入
+- 核孔蛋白相互作用
+- 核膜破裂期核进入
+- 核内定位
+- 核仁定位
+- 核输入
+- 核酸伴侣活性
+- 核酸分子伴侣活性
+- 核酸结合
+- 核酸酶活性
+- 核酸内切酶非依赖性逆转录转座
+- 核酸内切酶非依赖性整合
+- 核糖核蛋白复合物形成
+- 核糖核蛋白颗粒形成
+- 核糖体关联
+- 核糖体停滞
+- 核心启动子功能
+- 环境应激反应
+- 患者内肿瘤异质性
+- 活性抑制
+- 活性增强
+- 基因/外显子/调控元件易位
+- 基因表达差异修饰
+- 基因表达干扰
+- 基因表达破坏
+- 基因表达紊乱
+- 基因表达下调
+- 基因表达重编程
+- 基因递送
+- 基因毒性应激
+- 基因复制
+- 基因功能破坏
+- 基因结构改变
+- 基因进化
+- 基因拷贝数变异
+- 基因失活
+- 基因突变
+- 基因完整性破坏
+- 基因形成
+- 基因型变异
+- 基因转换
+- 基因组变异
+- 基因组变异性
+- 基因组不稳定
+- 基因组大片段重复
+- 基因组倒位
+- 基因组低甲基化
+- 基因组调控网络
+- 基因组多态性变异
+- 基因组多样化
+- 基因组分散
+- 基因组功能障碍
+- 基因组结构变异
+- 基因组进化
+- 基因组可塑性
+- 基因组扩张
+- 基因组嵌合
+- 基因组缺失
+- 基因组缺失和重排
+- 基因组损伤
+- 基因组索引
+- 基因组完整性挑战
+- 基因组镶嵌现象
+- 基因组序列偏好性
+- 基因组整合
+- 基因组重排与不稳定性
+- 激活致癌通路
+- 激活致癌转录因子
+- 记忆痕迹固定
+- 加工假基因形成
+- 甲基化改变
+- 假基因化
+- 假基因形成
+- 间充质向上皮细胞转化
+- 间接复制非自主逆转录转座子
+- 剪接缺陷
+- 剪接抑制
+- 剪接整合逆转录元件形成
+- 结构变异
+- 结构变异形成
+- 结构基因组变异
+- 结构依赖性内切酶活性
+- 结构域灵活性调控
+- 结构约束
+- 结合单链核酸
+- 结合关键调控因子
+- 介导Alu转座
+- 介导SINE逆转录转座
+- 介导SINE转座
+- 精子端粒长度调节
+- 精子介导的转座子转移
+- 局部转录激活模型
+- 聚合
+- 开放阅读框
+- 抗病毒基因反应
+- 抗病毒免疫反应
+- 抗病毒免疫激活
+- 拷贝数变异形成
+- 拷贝数改变
+- 可遗传的结构变异
+- 克隆扩增
+- 来源追踪
+- 卵裂异常
+- 卵母细胞激活
+- 孟德尔遗传
+- 免疫毒性级联反应
+- 免疫反应
+- 免疫抑制
+- 免疫治疗抵抗
+- 模板跳跃
+- 模板选择
+- 模板选择机制
+- 模板转换
+- 模板转换机制
+- 模式识别受体感应
+- 内部启动子
+- 内部引物
+- 内部引物事件
+- 内部重排
+- 内切核酸酶非依赖性插入
+- 内切核酸酶非依赖性逆转录转座
+- 内切核酸酶活性
+- 内切核酸酶依赖性插入
+- 内切酶活性
+- 内切酶域功能
+- 内源性从头插入
+- 内源性调控
+- 内源性逆转录转座
+- 内源性诱变
+- 逆转录和整合
+- 逆转录酶保真性
+- 逆转录酶和核酸内切酶活性
+- 逆转录酶抑制剂敏感性
+- 逆转录起始
+- 逆转录起始抑制
+- 逆转录引物
+- 逆转录整合
+- 逆转录转座复合体相互作用
+- 逆转录转座介导的缺失
+- 逆转录转座能力
+- 逆转录转座诱导的突变发生
+- 逆转录转座子插入多态性
+- 逆转录转座子活性抑制
+- 逆转录转座子介导的序列转导
+- 逆转座
+- 年龄相关炎症
+- 尿苷化
+- 胚胎发生基因功能破坏
+- 胚胎发育受损
+- 胚胎期整合
+- 启动子低甲基化
+- 启动子高密度胞嘧啶甲基化
+- 启动子活性
+- 启动子活性降低
+- 启动子甲基化
+- 启动子结合
+- 铅离子结合
+- 嵌合插入
+- 嵌合基因
+- 嵌合体形成
+- 嵌合转录本形成
+- 侵袭能力
+- 驱动突变
+- 去抑制
+- 全能性
+- 全长插入
+- 全长形成
+- 染色体不稳定性
+- 染色体大片区域缺失
+- 染色体倒位
+- 染色体间易位
+- 染色体整合
+- 染色质结构开放
+- 染色质解凝聚
+- 染色质可及性改变
+- 染色质三维折叠
+- 融合转录本表达
+- 上皮-间质转化
+- 神经多样性诱导
+- 神经元基因组个体性
+- 神经元特异性转录
+- 神经元体细胞嵌合
+- 神经元细胞命运影响
+- 生殖潜能降低
+- 生殖系插入
+- 生殖系逆转录转座
+- 生殖系逆转录转座子插入多态性
+- 生殖系突变
+- 寿命变化
+- 书签机制
+- 衰老细胞炎症
+- 衰老相关炎症
+- 衰老样表型
+- 双向转录
+- 双向转录活性
+- 双引物合成
+- 双引物机制
+- 水平基因转移
+- 水平转移
+- 顺式/反式协助逆转录
+- 顺式调控元件提供
+- 顺式动员
+- 顺式活性
+- 顺式逆转录转座
+- 顺式偏好
+- 顺式偏好性
+- 顺式偏好性逆转录
+- 顺式转座
+- 顺式作用
+- 宿主基因表达调控
+- 宿主基因组不稳定
+- 宿主基因组不稳定性
+- 宿主细胞防御机制
+- 宿主限制
+- 宿主限制机制
+- 宿主因子调控
+- 随机插入诱变
+- 拓扑关联结构域
+- 提供逆转录酶
+- 提供新的剪接位点或替代启动子
+- 提供转录因子结合位点
+- 提前多聚腺苷酸化
+- 体细胞插入
+- 体细胞插入突变
+- 体细胞动员
+- 体细胞多态性
+- 体细胞基因重组/逆转录插入
+- 体细胞基因组镶嵌现象
+- 体细胞基因组效应
+- 体细胞拷贝数变异
+- 体细胞突变
+- 体细胞镶嵌
+- 体细胞镶嵌现象
+- 体细胞移动元件插入
+- 体细胞抑制
+- 体细胞抑制逃逸
+- 体细胞与生殖系嵌合
+- 体细胞组织活性
+- 替代性核酸内切酶活性
+- 同源非依赖性修复
+- 同源序列介导的重组
+- 同源重组介导的基因组重排
+- 脱氨基非依赖性抑制
+- 脱氨酶非依赖性抑制
+- 脱氨酶依赖性抑制
+- 外泌体介导的抑制
+- 外显子插入
+- 外显子复制
+- 外显子改组
+- 外显子化
+- 外显子混编
+- 外显子缺失
+- 外显子洗牌
+- 外显子转导
+- 外源逆转录转座子整合
+- 微同源介导的末端连接
+- 微同源介导的修复
+- 微同源末端连接
+- 微同源驱动的单链退火
+- 微同源性
+- 微卫星不稳定性
+- 位点特异性调控
+- 位点特异性逆转录转座
+- 位于高甲基化转录活跃DNA区
+- 稳定基因沉默
+- 稳定整合
+- 稳定转导
+- 细胞毒性
+- 细胞多能性调控
+- 细胞活力降低
+- 细胞类型特异性调控
+- 细胞培养逆转录转座
+- 细胞适应性
+- 细胞衰老
+- 细胞衰老生物标志物
+- 细胞外囊泡介导的传递
+- 细胞外囊泡装载
+- 细胞抑制机制
+- 细胞应激诱导的转座子动员
+- 细胞质表达
+- 细胞质核酸感应通路激活
+- 细胞质焦点定位
+- 细胞质相互作用
+- 细胞质应激颗粒靶向
+- 细胞周期退出
+- 细胞周期依赖的抑制
+- 细胞周期依赖性
+- 细胞周期依赖性活性
+- 先天免疫激活
+- 先天免疫限制
+- 先天免疫信号激活
+- 先天免疫信号通路激活
+- 先天性免疫异常激活
+- 纤维化
+- 限制逆转录转座
+- 腺苷脱氨酶介导的调控
+- 腺嘌呤甲基化
+- 相分离
+- 镶嵌重组
+- 小干扰RNA
+- 小胶质细胞激活
+- 新基因生成
+- 新生插入
+- 新微卫星序列的创建
+- 信号通路调控
+- 形成核糖核蛋白复合体
+- 形成核糖核蛋白颗粒
+- 形成加工假基因
+- 形成紧密压缩的核酸结合复合体
+- 序列动员
+- 序列扩增
+- 序列转导
+- 序列转座动员
+- 亚细胞定位
+- 炎症反应
+- 氧化应激
+- 液-液相分离
+- 胰岛素信号通路
+- 遗传变异
+- 遗传不稳定性
+- 遗传改变
+- 遗传损伤
+- 遗传突变
+- 遗传网络改变
+- 异常表观遗传调控
+- 异常基因表达
+- 异常剪接
+- 异常免疫反应
+- 异染色质化
+- 异染色质转录
+- 异位（非等位）重组
+- 抑制机制
+- 抑制减弱
+- 抑制逆转录酶活性
+- 抑制逆转录转座
+- 抑制Alu逆转录转座
+- 抑制L1逆转录转座
+- 抑制LINE-1逆转录转座
+- 抑制LINE-1转座
+- 印记基因表达异常
+- 应激反应
+- 应激颗粒
+- 应激颗粒定位
+- 影响基因组结构
+- 影响基因组稳定性
+- 影响染色质结构
+- 影响神经元转录表达
+- 有害的逆转录转座事件
+- 有害剪接
+- 有丝分裂期染色体结合
+- 诱变
+- 诱导表达
+- 诱导细胞衰老
+- 诱导DNA损伤
+- 与核纤层关联
+- 与宿主蛋白相互作用
+- 与远端增强子相关
+- 杂合性缺失
+- 再表达/重新激活
+- 在非分裂体细胞中转座
+- 在分化原代体细胞中转座
+- 在核酸上形成紧密堆积的寡聚体
+- 在神经发生中表达
+- 在细胞质灶中共定位
+- 早期胚胎沉默
+- 早期胚胎发育期转座
+- 造血干细胞功能丧失
+- 增强子
+- 增强子功能
+- 增殖增加
+- 长期基因表达
+- 整合
+- 整合靶向
+- 整合过程
+- 整合后选择
+- 整合入宿主基因组
+- 整合位点偏好性
+- 整合位点选择
+- 整合位点招募
+- 植入前发育
+- 致病机制
+- 致病突变
+- 终止/再起始机制
+- 肿瘤基因组可塑性
+- 肿瘤内异质性
+- 肿瘤特异性插入
+- 肿瘤突变负荷
+- 肿瘤抑制功能
+- 肿瘤抑制基因缺失
+- 肿瘤抑制基因失活
+- 种系多态性
+- 种系逆转录转座
+- 重金属暴露影响转座频率
+- 重组
+- 重组机制
+- 转导
+- 转录
+- 转录表达
+- 转录沉默
+- 转录调控
+- 转录调控失调
+- 转录后调控
+- 转录后基因组防御机制
+- 转录后抑制
+- 转录活性
+- 转录基因沉默
+- 转录起始
+- 转录起始位点分布
+- 转录去抑制
+- 转录水平调控
+- 转录相关性
+- 转录延伸缺陷
+- 转录异常
+- 转录因子结合位点
+- 转座/移动
+- 转座动员
+- 转座元件激活
+- 转座子表达上调
+- 滋养层分化
+- 自然遗传变异
+- 自身逆转录转座
+- 自噬
+- 自我转座
+- 自主逆转录转座
+- 自主细胞生长
+- 自主性逆转录转座
+- 自主转录
+- 组蛋白甲基化
+- 组蛋白去乙酰化
+- 组蛋白修饰
+- 组织特异性表达
+- 作为结构元件
+- A-tail扩展
+- ADAR1介导的RNA编辑
+- ADAR1抑制LINE-1逆转录转座
+- AhR核转位蛋白-1 (ARNT1) 介导的细胞机制
+- ALKBH5抑制L1逆转录转座
+- Alu RNA隔离
+- Alu SINE 逆转录转座
+- Alu/L1逆转录转座
+- Alu转录
+- Alu转座动员
+- AMPK激活
+- APOBEC3酶催化胞嘧啶脱氨
+- APOBEC3C介导的L1限制
+- APOBEC3F介导的GA→AA突变
+- APOBEC3G介导的GG→AG突变
+- ATM-MRN-SMC S期检查点通路
+- ATM蛋白水平降低
+- bHLH/PAS转录因子依赖的逆转录转座
+- cAMP反应元件结合蛋白激活
+- cDNA合成
+- cGAS-STING通路
+- cGAS-STING通路激活
+- de novo突变
+- dGTP依赖的SAMHD1四聚体形成
+- Dicer介导的RNAi沉默
+- DICER依赖性mRNA降解
+- DNA IR损伤和ATR介导的细胞反应
+- DNA靶向与切割
+- DNA编辑
+- DNA低甲基化
+- DNA第二链切口
+- DNA甲基化改变
+- DNA甲基化介导的启动子抑制
+- DNA甲基化缺失
+- DNA甲基化抑制
+- DNA结合活性
+- DNA聚合
+- DNA羟甲基化
+- DNA去甲基化
+- DNA双链断裂形成
+- DNA双链断裂修复
+- DNA损伤信号通路激活
+- DNA损伤修复
+- DNA损伤应答
+- DNA脱氨基
+- DNA弯曲
+- DNA修复蛋白募集
+- DNA修复活性降低
+- DNA修复机制
+- DNA修复抑制
+- DNA转导
+- dNTPase活性
+- eIF2α磷酸化
+- eIF3结合
+- eIF4A/eIF4G相互作用减弱
+- EN非依赖性逆转录转座
+- ERK激活
+- ESCRT相互作用
+- FOXR2激活
+- G-四链体结构调控
+- G-四链体结构形成
+- G到A超突变
+- H3K18去乙酰化
+- H3K9me3去甲基化
+- hA3G寡聚化
+- Hallmark Myc靶标V1
+- HDM2/TP53/RB调控轴失调
+- hnRNPA1促进L1转座
+- I型干扰素反应
+- I型干扰素诱导
+- IFN-β产生
+- KRAB/KAP1诱导的转录抑制
+- L1 5' UTR m6A簇
+- L1 5'UTR活性
+- L1 cDNA生成
+- L1 mRNA表达上调
+- L1 ORF1p表达抑制
+- L1 ORF1p与APOBEC3C相互作用
+- L1 ORF2p内切酶介导的插入
+- L1 RNA 3'UTR依赖的蛋白复合物结合
+- L1 RNA表达
+- L1 RNA和核糖核蛋白颗粒完整性丧失
+- L1 RNA与RNA/DNA结合蛋白相互作用
+- L1 RNP复合物形成
+- L1-宿主相互作用
+- L1-EN序列特异性切割
+- L1-ORF1蛋白染色质招募
+- L1-ORF1p核定位
+- L1-RNP形成
+- L1编码蛋白表达
+- L1插入生成
+- L1插入中间体相互重组
+- L1插入中间体与远端DNA断裂重组
+- L1蛋白表达
+- L1蛋白表达抑制
+- L1反义启动子活性
+- L1反义启动子转录
+- L1辅助的Alu逆转录转座
+- L1复制
+- L1核输入
+- L1核酸内切酶切割活性
+- L1核酸内切酶依赖的逆转录转座
+- L1核糖核蛋白（RNP）形成
+- L1核糖核蛋白复合体形成
+- L1活性抑制
+- L1介导的逆转录转座
+- L1介导的逆转录转座机制
+- L1介导的逆转录转座事件
+- L1介导的逆转座
+- L1内切酶非依赖性逆转录转座
+- L1内切酶介导的插入
+- L1内切酶介导的DNA切割
+- L1内切酶切割
+- L1内切酶依赖性逆转录转座
+- L1逆转录
+- L1逆转录酶活性
+- L1逆转录抑制
+- L1逆转录转座活性
+- L1逆转录转座诱导
+- L1逆转录转座子活性
+- L1启动子去甲基化
+- L1启动子转录
+- L1嵌合转录本形成
+- L1去甲基化
+- L1生命周期
+- L1生命周期调控
+- L1失调
+- L1样逆转录转座
+- L1依赖的超凝缩蛋白复合物形成
+- L1移动性
+- L1抑制
+- L1抑制反馈环路
+- L1诱导的损伤
+- L1元件倒位
+- L1元件依赖性逆转录转座
+- L1杂交富集法
+- L1再激活
+- L1整合
+- L1直接插入
+- L1转座驱动的Alu插入
+- L1转座驱动的SVA插入
+- L1Hs 5'UTR反义启动子活性
+- L1Hs逆转录转座
+- L1Hs转录
+- L1ORF1p表达
+- L1ORF1p三聚化
+- L1ORF2p表达
+- L1RNA包装
+- LINE-1 5' UTR启动子活性抑制
+- LINE-1 5'-UTR启动子活性
+- LINE-1 ORF2p逆转录酶活性
+- LINE-1 RNA去帽
+- LINE-1 RNP隔离
+- LINE-1表达
+- LINE-1表达增加
+- LINE-1核糖核蛋白颗粒形成
+- LINE-1激活
+- LINE-1介导的插入
+- LINE-1介导的逆转录转座
+- LINE-1逆转录酶活性
+- LINE-1启动子低甲基化
+- LINE-1启动子活性下调
+- LINE-1启动子抑制
+- LINE-1去抑制
+- LINE-1限制活性
+- LINE-1抑制
+- LINE-1转录
+- LINE1 RNA共表达
+- LINE1表达上调
+- LINE整合机制
+- m6A介导的L1 mRNA降解
+- m6A修饰
+- MAPK激活
+- MAPK信号通路
+- METTL3促进L1逆转录转座
+- Mg2+依赖性催化
+- miR-128介导的L1抑制
+- miR-128抑制L1逆转录转座
+- MOV10/LINE-1相互作用
+- MOV10颗粒形成
+- MOV10抑制逆转录转座
+- mRNA伴侣功能
+- mRNA剪接异常
+- mRNA去稳定化
+- NADPH氧化酶活性缺陷
+- naïve多能性关闭
+- Nef蛋白介导的LINE-1抑制
+- NF-κB介导的炎症反应基因表达
+- ORF1/p40依赖性过程
+- ORF1蛋白表达
+- ORF1蛋白需求
+- ORF1募集至染色质
+- ORF1与ARNT1相互作用
+- ORF1p 增强 Alu 转座
+- ORF1p-LINE-1 RNA相互作用
+- ORF1p-RNA结合
+- ORF1p表达上调
+- ORF1p功能
+- ORF1p寡聚化
+- ORF1p过表达
+- ORF1p降解
+- ORF1p介导的RNP分布
+- ORF1p磷酸化
+- ORF1p凝聚
+- ORF1p三聚体形成
+- ORF1p细胞内积累
+- ORF1p细胞质灶形成
+- ORF1p与Pin1相互作用
+- ORF1p与RNA退火
+- ORF2 IRES介导的翻译
+- ORF2蛋白功能
+- ORF2蛋白依赖
+- ORF2蛋白C端功能
+- ORF2翻译
+- ORF2与ORF1表达不一致
+- ORF2p RNA结合
+- ORF2p翻译
+- ORF2p功能
+- ORF2p核酸内切酶活性
+- ORF2p降解
+- ORF2p介导的LINE-1 RNP逆转录
+- ORF2p逆转录酶活性
+- ORF2p驱动的Alu逆转录转座
+- ORF2p与Alu RNA结合
+- ORF2p与L1 RNA结合
+- p300降解
+- p38delta MAP激酶诱导
+- p53结合
+- p53介导的凋亡通路激活
+- p53介导的L1抑制
+- PI3K信号通路
+- PIN1胞质定位增加
+- R-loop形成
+- rc-L1s表达
+- RNA 3'末端多聚腺苷酸化
+- RNA 3'末端尿苷化
+- RNA m6A修饰
+- RNA-DNA杂交体形成
+- RNA靶向干扰
+- RNA伴侣活性
+- RNA包装
+- RNA表达增加
+- RNA二级结构识别
+- RNA干扰
+- RNA和蛋白积累减少
+- RNA剪接
+- RNA聚合酶II驱动转录
+- RNA来源的附加体产物
+- RNA连接
+- RNA提前多聚腺苷酸化
+- RNA脱帽
+- RNA外切体复合物介导的RNA降解
+- RNA遗传
+- RNA质量控制
+- RNase H2降解LINE-1 RNA
+- RNP复合物组装
+- RNP隔离
+- RNP凝聚物形成
+- RNP形成
+- RNP运输
+- RUNX3与L1Hs结合
+- S期逆转录转座
+- SINE元件移动
+- siRNA递送
+- snRNA加工假基因形成
+- Sox2介导的调控
+- Sp1依赖性基因表达
+- SRP9/14结合
+- STAT1磷酸化
+- SUMO化
+- SVA反式动员
+- T细胞活性
+- TE沉默
+- TGF-β1信号通路激活
+- TGFβ信号通路激活
+- Toll样受体4信号通路
+- U6 snRNA逆转录转座
+- U6 snRNA转座
+- U6/L1假基因形成
+- U6/L1嵌合RNA形成
+- VNTR结构域决定动员效率
+- YY1结合位点介导的DNA甲基化
+- ZAP抗逆转录元件活性
+- ZAP与L1核糖核蛋白颗粒结合
+- β-catenin/Wnt信号通路激活
+- γ-H2AX foci形成
+
+## 英文模式下仍会露出中文：Paper
+
+- 无
+
+## 中文模式缺少关系映射
+
+- 无
+
+## 英文模式缺少关系映射
+
+- 无

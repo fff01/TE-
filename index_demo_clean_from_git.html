@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -62,7 +62,6 @@
           <input id="focus-level" type="range" min="0" max="100" step="10" value="0">
           <span class="focus-value" id="focus-value">0</span>
         </div>
-        <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">固定视图：关</span></button>
         <button id="reset-graph"><i class="fas fa-sync-alt"></i> <span id="reset-text">重置</span></button>
       </div>
       <div id="cy"></div>
@@ -112,9 +111,8 @@
     const initialElements = JSON.parse(JSON.stringify(demoData.elements || []));
     const el = id => document.getElementById(id);
     const nodeDetails = el('node-details'), searchInput = el('node-search'), nav = el('search-results-nav'), prevBtn = el('prev-result'), nextBtn = el('next-result'), resultCounter = el('result-counter'), resultName = el('result-name'), chatMessages = el('chat-messages'), userInput = el('user-question'), sendBtn = el('send-question');
-    let currentLang = 'zh', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false;
-    let terminologyNames = {zh:{}, en:{}}, terminologyNameLookup = {zh:{}, en:{}}, terminologyRelations = {zh:{}, en:{}};
-    const ui = {zh:{pageTitle:'转座元件知识图谱演示',badge:'LINE-1 本地图谱子图',graphTitle:'图谱可视化',qaTitle:'智能问答演示',search:'搜索 LINE-1、L1HS、疾病或功能',reset:'重置',footer:'演示页使用本地导出的 Neo4j 子图数据，不依赖在线接口。',empty:'点击节点或连线查看图谱详情。',orig:'原始名称',deg:'连接数',evi:'证据',none:'当前未列出',noneLocal:'当前没有检索到本地证据。',ph:'输入你的问题',q:'LINE-1 相关疾病',intro:'当前演示页已接入本地图谱子图。你可以提问：<br>“LINE-1 相关功能”<br>“LINE-1 相关疾病”<br>“L1HS 和 LINE-1 是什么关系”<br>“哪些文献支持 LINE-1 与阿尔茨海默病相关”',f:'根据当前本地图谱，LINE-1 主要涉及：',d:'根据当前本地图谱，LINE-1 与以下疾病关系较突出：',lp:'当前图谱已为 L1HS 整理出本地文献证据。',pp:'当前图谱已为 LINE-1 整理出本地文献证据。',fallback:'当前演示页支持围绕 LINE-1 的功能、疾病、谱系关系和文献证据查询。',ref:'证据来源',no:'暂无结果。',focus:'聚焦程度',focusHint:'高聚焦会更像手动滚轮放大',fixedOn:'固定视图：开',fixedOff:'固定视图：关',fixedTip:'固定视图已开启：点击节点或连线仅查看详情，不跳转图谱。'},en:{pageTitle:'TE Knowledge Graph Demo',badge:'LINE-1 Local Subgraph',graphTitle:'Graph View',qaTitle:'QA Demo',search:'Search LINE-1, L1HS, diseases, or functions',reset:'Reset',footer:'This demo uses a locally exported Neo4j subgraph and does not depend on online services.',empty:'Click a node or edge to inspect graph details.',orig:'Original name',deg:'Degree',evi:'Evidence',none:'Not listed',noneLocal:'No local evidence was found.',ph:'Ask a question',q:'LINE-1 related diseases',intro:'This demo is grounded on a local graph subnetwork. You can ask:<br>"LINE-1 related functions"<br>"LINE-1 related diseases"<br>"What is the relationship between L1HS and LINE-1?"<br>"What papers support the association between LINE-1 and Alzheimer\'s disease?"',f:'Based on the current local graph, LINE-1 is mainly involved in: ',d:'Based on the current local graph, LINE-1 is notably associated with: ',lp:'The current graph already includes local literature evidence for L1HS.',pp:'The current graph already includes local literature evidence for LINE-1.',fallback:'This demo currently supports LINE-1-centered questions about functions, diseases, lineage relations, and literature evidence.',ref:'Evidence',no:'No results.',focus:'Focus level',focusHint:'Higher focus behaves more like repeated wheel zoom',fixedOn:'Fixed view: On',fixedOff:'Fixed view: Off',fixedTip:'Fixed view is enabled: clicking nodes or edges only shows details without changing the graph.'}}; 
+    let currentLang = 'zh', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null;
+    const ui = {zh:{pageTitle:'转座元件知识图谱演示',badge:'LINE-1 本地图谱子图',graphTitle:'图谱可视化',qaTitle:'智能问答演示',search:'搜索 LINE-1、L1HS、疾病或功能',reset:'重置',footer:'演示页使用本地导出的 Neo4j 子图数据，不依赖在线接口。',empty:'点击节点或连线查看图谱详情。',orig:'原始名称',deg:'连接数',evi:'证据',none:'当前未列出',noneLocal:'当前没有检索到本地证据。',ph:'输入你的问题',q:'LINE-1 相关疾病',intro:'当前演示页已接入本地图谱子图。你可以提问：<br>“LINE-1 相关功能”<br>“LINE-1 相关疾病”<br>“L1HS 和 LINE-1 是什么关系”<br>“哪些文献支持 LINE-1 与阿尔茨海默病相关”',f:'根据当前本地图谱，LINE-1 主要涉及：',d:'根据当前本地图谱，LINE-1 与以下疾病关系较突出：',lp:'当前图谱已为 L1HS 整理出本地文献证据。',pp:'当前图谱已为 LINE-1 整理出本地文献证据。',fallback:'当前演示页支持围绕 LINE-1 的功能、疾病、谱系关系和文献证据查询。',ref:'证据来源',no:'暂无结果。',focus:'聚焦程度',focusHint:'高聚焦会更像手动滚轮放大'},en:{pageTitle:'TE Knowledge Graph Demo',badge:'LINE-1 Local Subgraph',graphTitle:'Graph View',qaTitle:'QA Demo',search:'Search LINE-1, L1HS, diseases, or functions',reset:'Reset',footer:'This demo uses a locally exported Neo4j subgraph and does not depend on online services.',empty:'Click a node or edge to inspect graph details.',orig:'Original name',deg:'Degree',evi:'Evidence',none:'Not listed',noneLocal:'No local evidence was found.',ph:'Ask a question',q:'LINE-1 related diseases',intro:'This demo is grounded on a local graph subnetwork. You can ask:<br>"LINE-1 related functions"<br>"LINE-1 related diseases"<br>"What is the relationship between L1HS and LINE-1?"<br>"What papers support the association between LINE-1 and Alzheimer\'s disease?"',f:'Based on the current local graph, LINE-1 is mainly involved in: ',d:'Based on the current local graph, LINE-1 is notably associated with: ',lp:'The current graph already includes local literature evidence for L1HS.',pp:'The current graph already includes local literature evidence for LINE-1.',fallback:'This demo currently supports LINE-1-centered questions about functions, diseases, lineage relations, and literature evidence.',ref:'Evidence',no:'No results.',focus:'Focus level',focusHint:'Higher focus behaves more like repeated wheel zoom'}}; 
     const typeLabel = {zh:{TE:'转座元件',Disease:'疾病',Function:'功能/机制',Paper:'文献'},en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
     const relLabel = {zh:{SUBFAMILY_OF:'属于亚家族谱系','与...相关':'与…相关','不导致':'不导致','促进':'促进','介导':'介导','报道':'报道'},en:{SUBFAMILY_OF:'subfamily of','与...相关':'associated with','不导致':'does not cause','促进':'promotes','介导':'mediates','报道':'reports'}};
     const nameMap = {zh:{'Alu/SVA retrotransposition':'Alu/SVA 逆转录转座','brain-specific insertion':'脑特异性插入','L1-mediated retrotransposition':'L1 介导的逆转录转座','ataxia telangiectasia':'共济失调毛细血管扩张症','breast cancer':'乳腺癌','colon cancer':'结肠癌','cutaneous T-cell lymphomas (CTCL)':'皮肤 T 细胞淋巴瘤（CTCL）','epithelial tumors':'上皮性肿瘤',"Alzheimer's disease":'阿尔茨海默病',"Huntington's Disease":'亨廷顿病','Down syndrome':'唐氏综合征','Rett syndrome':'Rett 综合征','Rett综合征':'Rett 综合征','Rotor syndrome':'Rotor 综合征','autism spectrum disorder':'自闭症谱系障碍','autism spectrum disorders':'自闭症谱系障碍','Oral Squamous Cell Carcinoma':'口腔鳞状细胞癌','IFN-based autoimmune diseases':'干扰素相关自身免疫性疾病','Mendelian disease':'孟德尔遗传病','beta-thalassemia':'β-地中海贫血',"3´ transduction":"3' 转导","3' transduction":"3' 转导","5' and 3' transduction":"5' 和 3' 转导","5' UTR activity":"5' UTR 活性","A-tail extension":'A-tail 扩展',"A 20.7 kb deletion within the factor VIII gene associated with LINE-1 element insertion.":'文献：因 LINE-1 插入导致 F8 基因 20.7 kb 缺失',"A 3' Poly(A) Tract Is Required for LINE-1 Retrotransposition.":"文献：LINE-1 逆转录转座需要 3' Poly(A) 序列",'A BBS1 SVA F retrotransposon insertion is a frequent cause of Bardet-Biedl syndrome.':'文献：BBS1 中 SVA F 插入是 Bardet-Biedl 综合征常见致病因素','A comprehensive approach to expression of L1 loci.':'文献：L1 位点表达的综合分析','A conserved role for the ESCRT membrane budding complex in LINE retrotransposition.':'文献：ESCRT 膜出芽复合体在 LINE 逆转录转座中的保守作用','A human genome structural variation sequencing resource reveals insights into mutational mechanisms.':'文献：人类结构变异测序资源揭示突变机制','A LINE-1 component to human aging: do LINE elements exact a longevity cost for evolutionary advantage?':'文献：LINE-1 与人类衰老的关系','Environmental factors affecting transcription of the human L1 retrotransposon. I. Steroid hormone-like agents.':'文献：环境因素对人类 L1 转录的影响：类固醇样物质','Genome-Wide Young L1 Methylation Profiling by bs-ATLAS-seq':'文献：基于 bs-ATLAS-seq 的年轻 L1 全基因组甲基化分析','High-throughput sequencing reveals extensive variation in human-specific L1 content in individual human genomes.':'文献：高通量测序揭示个体基因组中人特异性 L1 含量差异','Identification and characterization of occult human-specific LINE-1 insertions using long-read sequencing technology.':'文献：长读长测序鉴定隐匿性人特异性 LINE-1 插入','LINE1 insertions as a genomic risk factor for schizophrenia: Preliminary evidence from an affected family.':'文献：LINE1 插入可能是精神分裂症的基因组风险因素'},en:{'Alu转座':'Alu retrotransposition','L1介导的突变':'L1-mediated mutation','双链断裂':'double-strand break','异位重组':'ectopic recombination','微卫星产生':'microsatellite generation','插入突变':'insertional mutagenesis','逆转录转座':'retrotransposition','逆转录转座子动员':'retrotransposon mobilization','逆转录转座机制':'retrotransposition mechanism','脑癌':'brain cancer','血癌':'blood cancer','类风湿关节炎':'rheumatoid arthritis','阿尔茨海默病':"Alzheimer's disease",'亨廷顿病':"Huntington's Disease",'唐氏综合征':'Down syndrome','Rett 综合征':'Rett syndrome','Rotor 综合征':'Rotor syndrome','自闭症谱系障碍':'autism spectrum disorder','口腔鳞状细胞癌':'Oral Squamous Cell Carcinoma','共济失调毛细血管扩张症':'ataxia telangiectasia','β-地中海贫血':'beta-thalassemia','孟德尔遗传病':'Mendelian disease','干扰素相关自身免疫性疾病':'IFN-based autoimmune diseases',"3' 转导":"3' transduction","5' 和 3' 转导":"5' and 3' transduction","5' UTR 活性":"5' UTR activity",'A-tail 扩展':'A-tail extension','6-甲酰基吲哚[3,2-b]咔唑 (FICZ) 诱导长散布核元件-1 (L1) 逆转录转座':'FICZ induces LINE-1 retrotransposition'}};
@@ -122,52 +120,16 @@
     const getTypeColor = t => ({TE:'#2563eb',Disease:'#ef4444',Function:'#10b981',Paper:'#f59e0b'}[t] || '#94a3b8');
     function containsChinese(text){return /[\u4e00-\u9fff]/.test(text || '');}
     function getType(type){return (typeLabel[currentLang] && typeLabel[currentLang][type]) || type;}
-    function rebuildTerminologyIndexes(){
-      terminologyNameLookup = {zh:{}, en:{}};
-      ['zh','en'].forEach(lang=>{
-        const source = terminologyNames[lang] || {};
-        Object.keys(source).forEach(key=>{
-          terminologyNameLookup[lang][key] = source[key];
-          terminologyNameLookup[lang][String(key).toLowerCase()] = source[key];
-        });
-      });
-    }
-    function mergeTerminology(payload){
-      if(!payload || typeof payload !== 'object') return;
-      ['zh','en'].forEach(lang=>{
-        terminologyNames[lang] = Object.assign({}, terminologyNames[lang] || {}, payload.names?.[lang] || {});
-        terminologyRelations[lang] = Object.assign({}, terminologyRelations[lang] || {}, payload.relations?.[lang] || {});
-      });
-      rebuildTerminologyIndexes();
-    }
-    async function loadTerminology(){
-      try{
-        const res = await fetch(`terminology/te_terminology.json?v=${Date.now()}`, {cache:'no-store'});
-        if(!res.ok) throw new Error(`HTTP ${res.status}`);
-        const payload = await res.json();
-        mergeTerminology(payload);
-      }catch(err){
-        console.warn('Failed to load terminology table:', err);
-      }
-    }
-    function lookupMappedName(name=''){
-      if(!name) return '';
-      return terminologyNameLookup[currentLang][name] || terminologyNameLookup[currentLang][String(name).toLowerCase()] || nameMap[currentLang][name] || '';
-    }
-    function lookupMappedRelation(rel=''){
-      if(!rel) return '';
-      return terminologyRelations[currentLang][rel] || relLabel[currentLang][rel] || rel;
-    }
-    function getRel(rel){return lookupMappedRelation(rel);}
+    function getRel(rel){return relLabel[currentLang][rel] || rel;}
     function getPaperDisplayName(name, pmid=''){
-      const mapped = lookupMappedName(name);
+      const mapped = nameMap[currentLang][name];
       if(mapped) return mapped;
       if(currentLang==='zh') return pmid ? `文献 PMID:${pmid}` : '文献节点';
       if(containsChinese(name)) return pmid ? `Paper PMID:${pmid}` : 'Paper node';
       return name;
     }
     function getName(name,type,description='',pmid=''){
-      const mapped = lookupMappedName(name);
+      const mapped = nameMap[currentLang][name];
       if(mapped) return mapped;
       if(type==='Paper') return getPaperDisplayName(name, pmid);
       if(currentLang==='en' && containsChinese(name)) return `${getType(type)} node`;
@@ -263,23 +225,9 @@
     function updateFocusUi(){el('focus-label').textContent=ui[currentLang].focus; el('focus-value').textContent=String(focusLevel);}
     function setAnswerStyle(style){currentAnswerStyle=style==='detailed'?'detailed':'simple'; if(currentAnswerStyle==='simple' && currentAnswerDepth==='deep') currentAnswerDepth='shallow'; if(currentAnswerStyle==='detailed' && currentAnswerDepth==='shallow') currentAnswerDepth='deep'; updateAnswerModeUi();}
     function setAnswerDepth(depth){if(['shallow','medium','deep'].includes(depth)) currentAnswerDepth=depth; updateAnswerModeUi();}
-    function updateFixedViewUi(){
-      const btn = el('toggle-fixed-view');
-      const label = el('fixed-view-text');
-      if(label) label.textContent = fixedView ? ui[currentLang].fixedOn : ui[currentLang].fixedOff;
-      if(btn) btn.classList.toggle('active', fixedView);
-    }
-    function setUi(){document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'; el('page-title').textContent=ui[currentLang].pageTitle; el('page-badge').textContent=ui[currentLang].badge; el('graph-title').textContent=ui[currentLang].graphTitle; el('qa-title').textContent=ui[currentLang].qaTitle; el('page-footer').textContent=ui[currentLang].footer; el('reset-text').textContent=ui[currentLang].reset; searchInput.placeholder=ui[currentLang].search; userInput.placeholder=ui[currentLang].ph; if(!userInput.value || userInput.value===ui.zh.q || userInput.value===ui.en.q) userInput.value=ui[currentLang].q; el('lang-zh').classList.toggle('active', currentLang==='zh'); el('lang-en').classList.toggle('active', currentLang==='en'); updateAnswerModeUi(); updateFocusUi(); updateFixedViewUi(); if(searchResults.length===0) nodeDetails.textContent=ui[currentLang].empty; else showNode(searchResults[currentResultIndex]); renderIntro(); cy.style().update(); updateNav();}
+    function setUi(){document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'; el('page-title').textContent=ui[currentLang].pageTitle; el('page-badge').textContent=ui[currentLang].badge; el('graph-title').textContent=ui[currentLang].graphTitle; el('qa-title').textContent=ui[currentLang].qaTitle; el('page-footer').textContent=ui[currentLang].footer; el('reset-text').textContent=ui[currentLang].reset; searchInput.placeholder=ui[currentLang].search; userInput.placeholder=ui[currentLang].ph; if(!userInput.value || userInput.value===ui.zh.q || userInput.value===ui.en.q) userInput.value=ui[currentLang].q; el('lang-zh').classList.toggle('active', currentLang==='zh'); el('lang-en').classList.toggle('active', currentLang==='en'); updateAnswerModeUi(); updateFocusUi(); if(searchResults.length===0) nodeDetails.textContent=ui[currentLang].empty; else showNode(searchResults[currentResultIndex]); renderIntro(); cy.style().update(); updateNav();}
     function showNode(node){const raw=node.data('label'), type=node.data('type') || 'Unknown', description=node.data('description')||'', pmid=node.data('pmid')||''; nodeDetails.innerHTML=`<strong>${getName(raw,type,description,pmid)}</strong> (${getType(type)})<br>${getDesc(raw,type,description,pmid)}<div class="meta">${ui[currentLang].orig}: ${raw}${pmid ? ` | PMID: ${pmid}` : ''} | ${ui[currentLang].deg}: ${node.degree()}</div>`}
-    function showEdge(edge){
-      const s=getName(edge.source().data('label'),edge.source().data('type'),edge.source().data('description')||'',edge.source().data('pmid')||'');
-      const t=getName(edge.target().data('label'),edge.target().data('type'),edge.target().data('description')||'',edge.target().data('pmid')||'');
-      const evidenceText=String(edge.data('evidence')||'').trim();
-      const rawPmids=edge.data('pmids');
-      const pmids=Array.isArray(rawPmids)?rawPmids.filter(Boolean).map(String):[];
-      const ev=evidenceText || (pmids.length ? `PMID: ${pmids.join(', ')}` : ui[currentLang].none);
-      nodeDetails.innerHTML=`<strong>${s}</strong> → ${getRel(edge.data('relation'))} → <strong>${t}</strong><br>${ui[currentLang].evi}: ${ev}`;
-    }
+    function showEdge(edge){const s=getName(edge.source().data('label'),edge.source().data('type'),edge.source().data('description')||'',edge.source().data('pmid')||''), t=getName(edge.target().data('label'),edge.target().data('type'),edge.target().data('description')||'',edge.target().data('pmid')||''), ev=edge.data('evidence') || ui[currentLang].none; nodeDetails.innerHTML=`<strong>${s}</strong> → ${getRel(edge.data('relation'))} → <strong>${t}</strong><br>${ui[currentLang].evi}: ${ev}`;}
     function clearHighlights(){cy.nodes().removeClass('highlight neighbor dimmed'); cy.edges().removeClass('focus-edge edge-dimmed')}
     function getTargetZoom(level){return 1 + (level/10)*GRAPH_TUNING.focusZoomStep}
     function getGraphCenter(){
@@ -467,70 +415,22 @@
         : `> ${styleLabel} · Depth: ${depthLabel}\n\n`;
       return `${prefix}${result.answer||ui[currentLang].fallback}`;
     }
-    function applyAnswerGraph(result, question=''){
-      const graph = result && result.graph_context;
-      if(!graph || !Array.isArray(graph.elements) || graph.elements.length===0) return false;
-      const anchorName = graph.anchor && graph.anchor.name ? graph.anchor.name : (question || '');
-      applyGraphElements(graph.elements, anchorName);
-      searchInput.value = anchorName || '';
-      nodeDetails.textContent = currentLang==='zh'
-        ? '左侧图谱已同步为本次回答使用的局部知识子图。'
-        : 'The graph on the left has been synchronized to the local subgraph used for this answer.';
-      return true;
-    }
-    async function answerWithBackend(question){
-      const res=await fetch('api/qa.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,language:currentLang,answer_style:currentAnswerStyle,answer_depth:currentAnswerDepth})});
-      const data=await res.json();
-      if(!res.ok||!data.ok) throw new Error(data.error||'Backend request failed');
-      return {text: formatBackendAnswer(data), result: data};
-    }
+    async function answerWithBackend(question){const res=await fetch('api/qa.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,language:currentLang,answer_style:currentAnswerStyle,answer_depth:currentAnswerDepth})}); const data=await res.json(); if(!res.ok||!data.ok) throw new Error(data.error||'Backend request failed'); return formatBackendAnswer(data);}
     cy.on('tap','node',async e => {
       const node = e.target;
-      if(fixedView){
-        clearHighlights();
-        showNode(node);
-        return;
-      }
       try{
         await loadDynamicGraph(node.data('pmid') || node.data('label'));
       }catch(_err){
         focus(node);
       }
-    }); cy.on('tap','edge',e => {
-      clearHighlights();
-      const edge=e.target;
-      if(!fixedView){
-        const connected=edge.connectedNodes();
-        const others=cy.nodes().difference(connected);
-        const otherEdges=cy.edges().difference(edge);
-        others.addClass('dimmed');
-        otherEdges.addClass('edge-dimmed');
-        connected.addClass('neighbor');
-        edge.addClass('focus-edge');
-      }
-      showEdge(edge)
-    }); cy.on('tap',e => { if(e.target===cy){clearHighlights(); nodeDetails.textContent=ui[currentLang].empty;} });
+    }); cy.on('tap','edge',e => {clearHighlights(); const edge=e.target; const connected=edge.connectedNodes(); const others=cy.nodes().difference(connected); const otherEdges=cy.edges().difference(edge); others.addClass('dimmed'); otherEdges.addClass('edge-dimmed'); connected.addClass('neighbor'); edge.addClass('focus-edge'); showEdge(edge)}); cy.on('tap',e => { if(e.target===cy){clearHighlights(); nodeDetails.textContent=ui[currentLang].empty;} });
     searchInput.addEventListener('input', handleSearch); searchInput.addEventListener('keydown',async e=>{if(e.key==='Enter'){e.preventDefault(); try{await loadDynamicGraph(searchInput.value.trim());}catch(err){nodeDetails.textContent = err && err.message ? err.message : ui[currentLang].empty;}}}); prevBtn.addEventListener('click',()=>{if(currentResultIndex>0){currentResultIndex-=1; updateNav();}}); nextBtn.addEventListener('click',()=>{if(currentResultIndex<searchResults.length-1){currentResultIndex+=1; updateNav();}}); el('focus-level').addEventListener('input',e=>{focusLevel=Number(e.target.value)||0; updateFocusUi(); if(searchResults.length>0&&searchResults[currentResultIndex]) focus(searchResults[currentResultIndex]);});
     el('reset-graph').addEventListener('click',()=>{restoreInitialGraph();});
-    el('toggle-fixed-view').addEventListener('click',()=>{
-      fixedView = !fixedView;
-      updateFixedViewUi();
-      nodeDetails.textContent = fixedView ? ui[currentLang].fixedTip : ui[currentLang].empty;
-    });
-    sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const backend=await answerWithBackend(q); loading.remove(); addMessage(backend.text,'assistant'); applyAnswerGraph(backend.result, q);}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
+    sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const answer=await answerWithBackend(q); loading.remove(); addMessage(answer,'assistant');}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
     userInput.addEventListener('keypress',e => { if(e.key==='Enter') sendBtn.click(); });
     document.addEventListener('click',e => { if(e.target && e.target.id==='mode-simple') setAnswerStyle('simple'); if(e.target && e.target.id==='mode-detailed') setAnswerStyle('detailed'); if(e.target && e.target.id==='depth-shallow') setAnswerDepth('shallow'); if(e.target && e.target.id==='depth-medium') setAnswerDepth('medium'); if(e.target && e.target.id==='depth-deep') setAnswerDepth('deep'); });
     el('lang-zh').addEventListener('click',()=>{currentLang='zh'; setUi();}); el('lang-en').addEventListener('click',()=>{currentLang='en'; setUi();});
-    cy.on('layoutstop',()=>{refineGraphLayout(); cy.fit(undefined,55);});
-    async function initializePage(){
-      await loadTerminology();
-      repairModeControls();
-      setAnswerStyle('simple');
-      setUi();
-      el('focus-level').value=String(focusLevel);
-      restoreInitialGraph();
-    }
-    initializePage();
+    cy.on('layoutstop',()=>{refineGraphLayout(); cy.fit(undefined,55);}); repairModeControls(); setAnswerStyle('simple'); setUi(); el('focus-level').value=String(focusLevel); restoreInitialGraph();
   </script>
 </body>
 </html>

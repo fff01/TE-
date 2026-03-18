@@ -203,7 +203,253 @@ final class QaService
             'cypher' => $cypher,
             'records' => $rows,
             'references' => $references,
+            'graph_context' => $this->buildGraphContext($rows, $references, $intent, $entity, $question),
             'answer' => $answer,
+        ];
+    }
+
+    private function buildGraphContext(array $rows, array $references, ?string $intent, ?string $entity, string $question): array
+    {
+        $elements = [];
+        $nodeSeen = [];
+        $edgeSeen = [];
+
+        $anchorLabel = $entity ?? $this->guessAnchorFromQuestion($question);
+        $anchorType = $this->inferAnchorType($intent, $anchorLabel);
+        $anchorId = $this->graphNodeId($anchorType, $anchorLabel);
+        $this->addGraphNode($elements, $nodeSeen, $anchorId, $anchorLabel, $anchorType);
+
+        $paperCache = [];
+
+        foreach ($rows as $index => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            [$targetLabel, $targetType, $relation, $evidenceItems, $relationPmids] = $this->normalizeGraphRow($row, $intent);
+            if ($targetLabel === '') {
+                continue;
+            }
+
+            $targetId = $this->graphNodeId($targetType, $targetLabel);
+            $this->addGraphNode($elements, $nodeSeen, $targetId, $targetLabel, $targetType);
+            $edgeId = $this->graphEdgeId($anchorId, $targetId, $relation, $index);
+            $this->addGraphEdge($elements, $edgeSeen, $edgeId, $anchorId, $targetId, $relation, '', $relationPmids);
+
+            foreach ($this->fetchPaperNodesByPmids($relationPmids, $paperCache) as $paper) {
+                $paperId = $this->graphNodeId('Paper', $paper['title'], $paper['pmid']);
+                $this->addGraphNode($elements, $nodeSeen, $paperId, $paper['title'], 'Paper', '', $paper['pmid']);
+                $paperEdgeId = $this->paperSupportEdgeId($paperId, $targetId, $paper['pmid'], $paper['title']);
+                $this->addGraphEdge($elements, $edgeSeen, $paperEdgeId, $paperId, $targetId, 'EVIDENCE_RELATION', '', [$paper['pmid']]);
+            }
+
+            foreach ($evidenceItems as $evidenceIndex => $evidence) {
+                if (!is_array($evidence)) {
+                    continue;
+                }
+                $title = trim((string)($evidence['title'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+                $pmids = array_values(array_unique(array_map('strval', $evidence['pmids'] ?? [])));
+                $paperId = $this->graphNodeId('Paper', $title, $pmids[0] ?? '');
+                $this->addGraphNode($elements, $nodeSeen, $paperId, $title, 'Paper', '', $pmids[0] ?? '');
+                $paperEdgeId = $this->paperSupportEdgeId($paperId, $targetId, $pmids[0] ?? '', $title);
+                $this->addGraphEdge($elements, $edgeSeen, $paperEdgeId, $paperId, $targetId, 'EVIDENCE_RELATION', '', $pmids);
+            }
+        }
+
+        foreach ($references as $refIndex => $ref) {
+            if (!is_array($ref)) {
+                continue;
+            }
+            $title = trim((string)($ref['title'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+            $pmids = array_values(array_unique(array_map('strval', $ref['pmids'] ?? [])));
+            $paperId = $this->graphNodeId('Paper', $title, $pmids[0] ?? '');
+            $this->addGraphNode($elements, $nodeSeen, $paperId, $title, 'Paper', '', $pmids[0] ?? '');
+            $edgeId = $this->graphEdgeId($paperId, $anchorId, 'EVIDENCE_RELATION', 'ref_' . $refIndex);
+            $this->addGraphEdge($elements, $edgeSeen, $edgeId, $paperId, $anchorId, 'EVIDENCE_RELATION', '', $pmids);
+        }
+
+        return [
+            'anchor' => [
+                'name' => $anchorLabel,
+                'type' => $anchorType,
+            ],
+            'elements' => $elements,
+        ];
+    }
+
+    private function fetchPaperNodesByPmids(array $pmids, array &$paperCache): array
+    {
+        $normalized = array_values(array_unique(array_filter(array_map('strval', $pmids), static fn ($v) => trim($v) !== '')));
+        if (empty($normalized)) {
+            return [];
+        }
+
+        $missing = array_values(array_filter($normalized, static fn ($pmid) => !array_key_exists($pmid, $paperCache)));
+        if (!empty($missing)) {
+            $rows = $this->runNeo4j(
+                "MATCH (p:Paper)
+                 WHERE p.pmid IN \$pmids
+                 RETURN p.name AS title, p.pmid AS pmid",
+                ['pmids' => $missing]
+            );
+            foreach ($missing as $pmid) {
+                $paperCache[$pmid] = null;
+            }
+            foreach ($rows as $row) {
+                $title = trim((string)($row[0] ?? ''));
+                $pmid = trim((string)($row[1] ?? ''));
+                if ($title === '' || $pmid === '') {
+                    continue;
+                }
+                $paperCache[$pmid] = [
+                    'title' => $title,
+                    'pmid' => $pmid,
+                ];
+            }
+        }
+
+        $results = [];
+        foreach ($normalized as $pmid) {
+            if (is_array($paperCache[$pmid] ?? null)) {
+                $results[] = $paperCache[$pmid];
+            }
+        }
+        return $results;
+    }
+
+    private function normalizeGraphRow(array $row, ?string $intent): array
+    {
+        $evidenceItems = [];
+        $relationPmids = [];
+        if ($this->looksLikeRelationType((string)($row[0] ?? ''))) {
+            $relationType = (string)($row[0] ?? '');
+            $predicate = trim((string)($row[1] ?? ''));
+            $targetLabels = is_array($row[2] ?? null) ? $row[2] : [];
+            $targetLabel = trim((string)($row[3] ?? ''));
+            $targetType = $this->normalizeGraphType((string)($targetLabels[0] ?? ''));
+            $relation = $predicate !== '' ? $predicate : $relationType;
+            return [$targetLabel, $targetType, $relation, $evidenceItems, $relationPmids];
+        }
+
+        $targetLabel = trim((string)($row[0] ?? ''));
+        $relation = trim((string)($row[1] ?? ''));
+        $relationPmids = array_values(array_unique(array_map('strval', is_array($row[2] ?? null) ? $row[2] : [])));
+        $evidenceItems = is_array($row[3] ?? null) ? $row[3] : [];
+        $targetType = $this->inferTargetTypeFromIntent($intent, $targetLabel);
+
+        return [$targetLabel, $targetType, $relation !== '' ? $relation : 'BIO_RELATION', $evidenceItems, $relationPmids];
+    }
+
+    private function inferAnchorType(?string $intent, string $anchorLabel): string
+    {
+        if ($anchorLabel === '') {
+            return 'TE';
+        }
+        if (str_contains($anchorLabel, 'PMID:')) {
+            return 'Paper';
+        }
+        return match ($intent) {
+            'entity_to_paper', 'te_to_disease', 'te_to_function', 'subfamily', 'te_disease_relation', 'te_disease_evidence' => 'TE',
+            default => 'TE',
+        };
+    }
+
+    private function inferTargetTypeFromIntent(?string $intent, string $targetLabel): string
+    {
+        return match ($intent) {
+            'te_to_disease', 'te_disease_relation', 'te_disease_evidence' => 'Disease',
+            'te_to_function' => 'Function',
+            'entity_to_paper' => 'Paper',
+            'subfamily' => 'TE',
+            default => $this->guessTypeFromLabel($targetLabel),
+        };
+    }
+
+    private function guessTypeFromLabel(string $label): string
+    {
+        if ($this->looksLikePaperTitle($label)) {
+            return 'Paper';
+        }
+        if ($this->looksLikeDiseaseName($label)) {
+            return 'Disease';
+        }
+        if ($this->looksLikeFunctionName($label)) {
+            return 'Function';
+        }
+        return 'TE';
+    }
+
+    private function normalizeGraphType(string $type): string
+    {
+        return in_array($type, ['TE', 'Disease', 'Function', 'Paper'], true) ? $type : 'TE';
+    }
+
+    private function looksLikeRelationType(string $value): bool
+    {
+        return in_array($value, ['BIO_RELATION', 'EVIDENCE_RELATION', 'SUBFAMILY_OF'], true);
+    }
+
+    private function guessAnchorFromQuestion(string $question): string
+    {
+        return $this->normalizeEntity($question) ?? $this->normalizeDisease($question) ?? trim($question);
+    }
+
+    private function graphNodeId(string $type, string $label, string $pmid = ''): string
+    {
+        $raw = $type . '|' . $label . '|' . $pmid;
+        return preg_replace('/[^A-Za-z0-9_:-]/', '_', $raw);
+    }
+
+    private function graphEdgeId(string $source, string $target, string $relation, string|int $suffix): string
+    {
+        $raw = $source . '|' . $relation . '|' . $target . '|' . $suffix;
+        return preg_replace('/[^A-Za-z0-9_:-]/', '_', $raw);
+    }
+
+    private function paperSupportEdgeId(string $paperId, string $targetId, string $pmid = '', string $title = ''): string
+    {
+        $suffix = $pmid !== '' ? 'pmid_' . $pmid : 'title_' . md5($title);
+        return $this->graphEdgeId($paperId, $targetId, 'EVIDENCE_RELATION', $suffix);
+    }
+
+    private function addGraphNode(array &$elements, array &$nodeSeen, string $id, string $label, string $type, string $description = '', string $pmid = ''): void
+    {
+        if (isset($nodeSeen[$id])) {
+            return;
+        }
+        $nodeSeen[$id] = true;
+        $elements[] = [
+            'data' => [
+                'id' => $id,
+                'label' => $label,
+                'type' => $type,
+                'description' => $description,
+                'pmid' => $pmid,
+            ],
+        ];
+    }
+
+    private function addGraphEdge(array &$elements, array &$edgeSeen, string $id, string $source, string $target, string $relation, string $evidence = '', array $pmids = []): void
+    {
+        if ($source === '' || $target === '' || isset($edgeSeen[$id])) {
+            return;
+        }
+        $edgeSeen[$id] = true;
+        $elements[] = [
+            'data' => [
+                'id' => $id,
+                'source' => $source,
+                'target' => $target,
+                'relation' => $relation,
+                'evidence' => $evidence,
+                'pmids' => array_values(array_unique(array_map('strval', $pmids))),
+            ],
         ];
     }
 
