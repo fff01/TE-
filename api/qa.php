@@ -472,10 +472,10 @@ final class QaService
         $lower = mb_strtolower($question);
         $aliases = [
             'l1hs' => 'L1HS',
-            'line-1' => 'LINE-1',
-            'line1' => 'LINE-1',
-            'l1 ' => 'LINE-1',
-            ' l1' => 'LINE-1',
+            'line-1' => 'LINE1',
+            'line1' => 'LINE1',
+            'l1 ' => 'LINE1',
+            ' l1' => 'LINE1',
             'alu' => 'Alu',
             'sva' => 'SVA',
         ];
@@ -639,7 +639,7 @@ final class QaService
                  ORDER BY title LIMIT 15",
                 ['entity' => $entity]
             ],
-            'subfamily' => $entity === 'LINE-1'
+            'subfamily' => $entity === 'LINE1'
                 ? [
                     "MATCH (child:TE)-[r:SUBFAMILY_OF]->(parent:TE {name: \$entity})
                      RETURN child.name AS subfamily, coalesce(r.copies, 0) AS copies

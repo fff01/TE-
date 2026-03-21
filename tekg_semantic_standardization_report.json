@@ -1,0 +1,23 @@
+[
+  {
+    "label": "Disease",
+    "canonical": "Frontotemporal dementia",
+    "drops": [
+      "FTD"
+    ]
+  },
+  {
+    "label": "Disease",
+    "canonical": "Head and neck squamous cell carcinoma",
+    "drops": [
+      "HNSCC"
+    ]
+  },
+  {
+    "label": "Disease",
+    "canonical": "lung squamous cell carcinoma",
+    "drops": [
+      "LSCC"
+    ]
+  }
+]

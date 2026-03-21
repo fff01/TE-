@@ -136,7 +136,7 @@ window.GRAPH_DEMO_DATA = {
       "data": {
         "id": "TE_L1",
         "label": "LINE1",
-        "query_label": "L1",
+        "query_label": "LINE1",
         "type": "TE",
         "description": "L1 lineage node imported from tree.txt. Original label: L1 (LINE1)",
         "tree_original_label": "L1 (LINE1)",

@@ -3,6 +3,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from semantic_aliases import EXTRA_DISEASE_ALIASES, EXTRA_FUNCTION_ALIASES, EXTRA_TE_ALIASES
 
 INPUT_FILE = Path("te_kg2.jsonl")
 NORMALIZED_JSONL = Path("te_kg2_normalized_output.jsonl")
@@ -146,6 +147,10 @@ FUNCTION_ALIASES = {
     "hypomethylation": "hypo-methylation",
     "interchromosomal translocation": "inter-chromosomal translocation",
 }
+
+TE_ALIASES.update(EXTRA_TE_ALIASES)
+DISEASE_ALIASES.update(EXTRA_DISEASE_ALIASES)
+FUNCTION_ALIASES.update(EXTRA_FUNCTION_ALIASES)
 
 
 def normalize_whitespace(text: str) -> str:

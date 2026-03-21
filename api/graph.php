@@ -47,7 +47,7 @@ if ($config['neo4j_password'] === '') {
 $query = trim((string)($_GET['q'] ?? ''));
 
 if ($query === '') {
-    $query = 'LINE-1';
+    $query = 'LINE1';
 }
 
 try {
@@ -385,9 +385,9 @@ CYPHER,
         $trimmed = trim($query);
         $lower = mb_strtolower($trimmed);
         $aliases = [
-            'line1' => 'LINE-1',
-            'line-1' => 'LINE-1',
-            'l1' => 'LINE-1',
+            'line1' => 'LINE1',
+            'line-1' => 'LINE1',
+            'l1' => 'LINE1',
             '阿尔兹海默症' => "Alzheimer's disease",
             '阿兹海默症' => "Alzheimer's disease",
             '阿尔茨海默症' => "Alzheimer's disease",

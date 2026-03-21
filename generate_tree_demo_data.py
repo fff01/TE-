@@ -12,6 +12,10 @@ DISPLAY_LABEL_OVERRIDES = {
     "L1": "LINE1",
 }
 
+QUERY_LABEL_OVERRIDES = {
+    "L1": "LINE1",
+}
+
 CURATED_TREE = {
     "TE": ["Retrotransposon", "DNA Transposon"],
     "Retrotransposon": ["Endogenous Retrovirus", "LINE", "SINE"],
@@ -74,7 +78,7 @@ def build_elements(tree_payload: dict) -> list[dict]:
                 "data": {
                     "id": make_id("TE", name),
                     "label": DISPLAY_LABEL_OVERRIDES.get(name, name),
-                    "query_label": name,
+                    "query_label": QUERY_LABEL_OVERRIDES.get(name, name),
                     "type": "TE",
                     "description": node["description"],
                     "tree_original_label": node["original_label"],
