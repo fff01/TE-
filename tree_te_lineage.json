@@ -1,0 +1,3474 @@
+{
+  "root": "TE",
+  "root_label": "人类转座子",
+  "node_count": 287,
+  "edge_count": 291,
+  "nodes": [
+    {
+      "name": "TE",
+      "original_label": "人类转座子",
+      "depth": 0,
+      "line": 1,
+      "description": "TE root node imported from tree.txt lineage reference."
+    },
+    {
+      "name": "DNA Transposon",
+      "original_label": "DNA Transposon (DNA转座子)",
+      "depth": 1,
+      "line": 241,
+      "description": "DNA Transposon lineage node imported from tree.txt. Original label: DNA Transposon (DNA转座子)"
+    },
+    {
+      "name": "Retrotransposon",
+      "original_label": "Retrotransposon (反转录转座子)",
+      "depth": 1,
+      "line": 2,
+      "description": "Retrotransposon lineage node imported from tree.txt. Original label: Retrotransposon (反转录转座子)"
+    },
+    {
+      "name": "Endogenous Retrovirus",
+      "original_label": "Endogenous Retrovirus (内源性逆转录病毒)",
+      "depth": 2,
+      "line": 3,
+      "description": "Endogenous Retrovirus lineage node imported from tree.txt. Original label: Endogenous Retrovirus (内源性逆转录病毒)"
+    },
+    {
+      "name": "hAT",
+      "original_label": "hAT",
+      "depth": 2,
+      "line": 242,
+      "description": "hAT lineage node imported from tree.txt. Original label: hAT"
+    },
+    {
+      "name": "LINE",
+      "original_label": "LINE (Long Interspersed Nuclear Element)",
+      "depth": 2,
+      "line": 194,
+      "description": "LINE lineage node imported from tree.txt. Original label: LINE (Long Interspersed Nuclear Element)"
+    },
+    {
+      "name": "Mariner/Tc1",
+      "original_label": "Mariner/Tc1",
+      "depth": 2,
+      "line": 286,
+      "description": "Mariner/Tc1 lineage node imported from tree.txt. Original label: Mariner/Tc1"
+    },
+    {
+      "name": "Merlin",
+      "original_label": "Merlin",
+      "depth": 2,
+      "line": 313,
+      "description": "Merlin lineage node imported from tree.txt. Original label: Merlin"
+    },
+    {
+      "name": "piggyBac",
+      "original_label": "piggyBac",
+      "depth": 2,
+      "line": 309,
+      "description": "piggyBac lineage node imported from tree.txt. Original label: piggyBac"
+    },
+    {
+      "name": "SINE",
+      "original_label": "SINE (Short Interspersed Nuclear Element)",
+      "depth": 2,
+      "line": 222,
+      "description": "SINE lineage node imported from tree.txt. Original label: SINE (Short Interspersed Nuclear Element)"
+    },
+    {
+      "name": "Unclassified / Putative",
+      "original_label": "Unclassified / Putative",
+      "depth": 2,
+      "line": 315,
+      "description": "Unclassified / Putative lineage node imported from tree.txt. Original label: Unclassified / Putative"
+    },
+    {
+      "name": "Alu",
+      "original_label": "Alu",
+      "depth": 3,
+      "line": 224,
+      "description": "Alu lineage node imported from tree.txt. Original label: Alu"
+    },
+    {
+      "name": "CHARLIE10",
+      "original_label": "CHARLIE10",
+      "depth": 3,
+      "line": 243,
+      "description": "CHARLIE10 lineage node imported from tree.txt. Original label: CHARLIE10"
+    },
+    {
+      "name": "CHARLIE2A",
+      "original_label": "CHARLIE2A",
+      "depth": 3,
+      "line": 244,
+      "description": "CHARLIE2A lineage node imported from tree.txt. Original label: CHARLIE2A"
+    },
+    {
+      "name": "CHARLIE2B",
+      "original_label": "CHARLIE2B",
+      "depth": 3,
+      "line": 245,
+      "description": "CHARLIE2B lineage node imported from tree.txt. Original label: CHARLIE2B"
+    },
+    {
+      "name": "CHARLIE3",
+      "original_label": "CHARLIE3",
+      "depth": 3,
+      "line": 246,
+      "description": "CHARLIE3 lineage node imported from tree.txt. Original label: CHARLIE3"
+    },
+    {
+      "name": "CHARLIE5",
+      "original_label": "CHARLIE5",
+      "depth": 3,
+      "line": 247,
+      "description": "CHARLIE5 lineage node imported from tree.txt. Original label: CHARLIE5"
+    },
+    {
+      "name": "CHARLIE6",
+      "original_label": "CHARLIE6",
+      "depth": 3,
+      "line": 248,
+      "description": "CHARLIE6 lineage node imported from tree.txt. Original label: CHARLIE6"
+    },
+    {
+      "name": "CHARLIE7",
+      "original_label": "CHARLIE7",
+      "depth": 3,
+      "line": 249,
+      "description": "CHARLIE7 lineage node imported from tree.txt. Original label: CHARLIE7"
+    },
+    {
+      "name": "CHARLIE8",
+      "original_label": "CHARLIE8",
+      "depth": 3,
+      "line": 250,
+      "description": "CHARLIE8 lineage node imported from tree.txt. Original label: CHARLIE8"
+    },
+    {
+      "name": "CHARLIE9",
+      "original_label": "CHARLIE9",
+      "depth": 3,
+      "line": 251,
+      "description": "CHARLIE9 lineage node imported from tree.txt. Original label: CHARLIE9"
+    },
+    {
+      "name": "CHESHIRE",
+      "original_label": "CHESHIRE",
+      "depth": 3,
+      "line": 252,
+      "description": "CHESHIRE lineage node imported from tree.txt. Original label: CHESHIRE"
+    },
+    {
+      "name": "CHESHIRE_A",
+      "original_label": "CHESHIRE_A",
+      "depth": 3,
+      "line": 253,
+      "description": "CHESHIRE_A lineage node imported from tree.txt. Original label: CHESHIRE_A"
+    },
+    {
+      "name": "CHESHIRE_B",
+      "original_label": "CHESHIRE_B",
+      "depth": 3,
+      "line": 254,
+      "description": "CHESHIRE_B lineage node imported from tree.txt. Original label: CHESHIRE_B"
+    },
+    {
+      "name": "CR1",
+      "original_label": "CR1",
+      "depth": 3,
+      "line": 219,
+      "description": "CR1 lineage node imported from tree.txt. Original label: CR1"
+    },
+    {
+      "name": "ERV1",
+      "original_label": "ERV1 (Class I)",
+      "depth": 3,
+      "line": 4,
+      "description": "ERV1 lineage node imported from tree.txt. Original label: ERV1 (Class I)"
+    },
+    {
+      "name": "ERV2",
+      "original_label": "ERV2 (Class II)",
+      "depth": 3,
+      "line": 124,
+      "description": "ERV2 lineage node imported from tree.txt. Original label: ERV2 (Class II)"
+    },
+    {
+      "name": "ERV3",
+      "original_label": "ERV3 (Class III)",
+      "depth": 3,
+      "line": 139,
+      "description": "ERV3 lineage node imported from tree.txt. Original label: ERV3 (Class III)"
+    },
+    {
+      "name": "FORDPREFECT",
+      "original_label": "FORDPREFECT",
+      "depth": 3,
+      "line": 255,
+      "description": "FORDPREFECT lineage node imported from tree.txt. Original label: FORDPREFECT"
+    },
+    {
+      "name": "FORDPREFECT_A",
+      "original_label": "FORDPREFECT_A",
+      "depth": 3,
+      "line": 256,
+      "description": "FORDPREFECT_A lineage node imported from tree.txt. Original label: FORDPREFECT_A"
+    },
+    {
+      "name": "GOLEM_A",
+      "original_label": "GOLEM_A",
+      "depth": 3,
+      "line": 287,
+      "description": "GOLEM_A lineage node imported from tree.txt. Original label: GOLEM_A"
+    },
+    {
+      "name": "GOLEM_C",
+      "original_label": "GOLEM_C",
+      "depth": 3,
+      "line": 288,
+      "description": "GOLEM_C lineage node imported from tree.txt. Original label: GOLEM_C"
+    },
+    {
+      "name": "HSMAR1",
+      "original_label": "HSMAR1",
+      "depth": 3,
+      "line": 289,
+      "description": "HSMAR1 lineage node imported from tree.txt. Original label: HSMAR1"
+    },
+    {
+      "name": "HSMAR2",
+      "original_label": "HSMAR2",
+      "depth": 3,
+      "line": 290,
+      "description": "HSMAR2 lineage node imported from tree.txt. Original label: HSMAR2"
+    },
+    {
+      "name": "HSTC2",
+      "original_label": "HSTC2",
+      "depth": 3,
+      "line": 291,
+      "description": "HSTC2 lineage node imported from tree.txt. Original label: HSTC2"
+    },
+    {
+      "name": "IN25",
+      "original_label": "IN25",
+      "depth": 3,
+      "line": 316,
+      "description": "IN25 lineage node imported from tree.txt. Original label: IN25"
+    },
+    {
+      "name": "KANGA2_A",
+      "original_label": "KANGA2_A",
+      "depth": 3,
+      "line": 292,
+      "description": "KANGA2_A lineage node imported from tree.txt. Original label: KANGA2_A"
+    },
+    {
+      "name": "L1",
+      "original_label": "L1 (LINE1)",
+      "depth": 3,
+      "line": 195,
+      "description": "L1 lineage node imported from tree.txt. Original label: L1 (LINE1)"
+    },
+    {
+      "name": "LOOPER",
+      "original_label": "LOOPER",
+      "depth": 3,
+      "line": 310,
+      "description": "LOOPER lineage node imported from tree.txt. Original label: LOOPER"
+    },
+    {
+      "name": "MADE1",
+      "original_label": "MADE1",
+      "depth": 3,
+      "line": 293,
+      "description": "MADE1 lineage node imported from tree.txt. Original label: MADE1"
+    },
+    {
+      "name": "MARNA",
+      "original_label": "MARNA",
+      "depth": 3,
+      "line": 294,
+      "description": "MARNA lineage node imported from tree.txt. Original label: MARNA"
+    },
+    {
+      "name": "MER103B",
+      "original_label": "MER103B",
+      "depth": 3,
+      "line": 257,
+      "description": "MER103B lineage node imported from tree.txt. Original label: MER103B"
+    },
+    {
+      "name": "MER103C",
+      "original_label": "MER103C",
+      "depth": 3,
+      "line": 258,
+      "description": "MER103C lineage node imported from tree.txt. Original label: MER103C"
+    },
+    {
+      "name": "MER106",
+      "original_label": "MER106 (and subfamily MER106B)",
+      "depth": 3,
+      "line": 259,
+      "description": "MER106 lineage node imported from tree.txt. Original label: MER106 (and subfamily MER106B)"
+    },
+    {
+      "name": "MER107",
+      "original_label": "MER107",
+      "depth": 3,
+      "line": 260,
+      "description": "MER107 lineage node imported from tree.txt. Original label: MER107"
+    },
+    {
+      "name": "MER112",
+      "original_label": "MER112",
+      "depth": 3,
+      "line": 261,
+      "description": "MER112 lineage node imported from tree.txt. Original label: MER112"
+    },
+    {
+      "name": "MER113",
+      "original_label": "MER113 (and subfamily MER113B)",
+      "depth": 3,
+      "line": 262,
+      "description": "MER113 lineage node imported from tree.txt. Original label: MER113 (and subfamily MER113B)"
+    },
+    {
+      "name": "MER117",
+      "original_label": "MER117",
+      "depth": 3,
+      "line": 263,
+      "description": "MER117 lineage node imported from tree.txt. Original label: MER117"
+    },
+    {
+      "name": "MER119",
+      "original_label": "MER119",
+      "depth": 3,
+      "line": 264,
+      "description": "MER119 lineage node imported from tree.txt. Original label: MER119"
+    },
+    {
+      "name": "MER1A",
+      "original_label": "MER1A",
+      "depth": 3,
+      "line": 265,
+      "description": "MER1A lineage node imported from tree.txt. Original label: MER1A"
+    },
+    {
+      "name": "MER1B",
+      "original_label": "MER1B",
+      "depth": 3,
+      "line": 266,
+      "description": "MER1B lineage node imported from tree.txt. Original label: MER1B"
+    },
+    {
+      "name": "MER20",
+      "original_label": "MER20 (and subfamily MER20B)",
+      "depth": 3,
+      "line": 267,
+      "description": "MER20 lineage node imported from tree.txt. Original label: MER20 (and subfamily MER20B)"
+    },
+    {
+      "name": "MER28",
+      "original_label": "MER28",
+      "depth": 3,
+      "line": 295,
+      "description": "MER28 lineage node imported from tree.txt. Original label: MER28"
+    },
+    {
+      "name": "MER30B",
+      "original_label": "MER30B",
+      "depth": 3,
+      "line": 268,
+      "description": "MER30B lineage node imported from tree.txt. Original label: MER30B"
+    },
+    {
+      "name": "MER33",
+      "original_label": "MER33",
+      "depth": 3,
+      "line": 269,
+      "description": "MER33 lineage node imported from tree.txt. Original label: MER33"
+    },
+    {
+      "name": "MER44A",
+      "original_label": "MER44A",
+      "depth": 3,
+      "line": 296,
+      "description": "MER44A lineage node imported from tree.txt. Original label: MER44A"
+    },
+    {
+      "name": "MER44B",
+      "original_label": "MER44B",
+      "depth": 3,
+      "line": 297,
+      "description": "MER44B lineage node imported from tree.txt. Original label: MER44B"
+    },
+    {
+      "name": "MER44C",
+      "original_label": "MER44C",
+      "depth": 3,
+      "line": 298,
+      "description": "MER44C lineage node imported from tree.txt. Original label: MER44C"
+    },
+    {
+      "name": "MER45",
+      "original_label": "MER45 (and subfamilies MER45B, MER45C, MER45R)",
+      "depth": 3,
+      "line": 270,
+      "description": "MER45 lineage node imported from tree.txt. Original label: MER45 (and subfamilies MER45B, MER45C, MER45R)"
+    },
+    {
+      "name": "MER5B",
+      "original_label": "MER5B",
+      "depth": 3,
+      "line": 271,
+      "description": "MER5B lineage node imported from tree.txt. Original label: MER5B"
+    },
+    {
+      "name": "MER63A",
+      "original_label": "MER63A",
+      "depth": 3,
+      "line": 272,
+      "description": "MER63A lineage node imported from tree.txt. Original label: MER63A"
+    },
+    {
+      "name": "MER63B",
+      "original_label": "MER63B",
+      "depth": 3,
+      "line": 273,
+      "description": "MER63B lineage node imported from tree.txt. Original label: MER63B"
+    },
+    {
+      "name": "MER63D",
+      "original_label": "MER63D",
+      "depth": 3,
+      "line": 274,
+      "description": "MER63D lineage node imported from tree.txt. Original label: MER63D"
+    },
+    {
+      "name": "MER69C",
+      "original_label": "MER69C",
+      "depth": 3,
+      "line": 275,
+      "description": "MER69C lineage node imported from tree.txt. Original label: MER69C"
+    },
+    {
+      "name": "MER6B",
+      "original_label": "MER6B",
+      "depth": 3,
+      "line": 299,
+      "description": "MER6B lineage node imported from tree.txt. Original label: MER6B"
+    },
+    {
+      "name": "MER75",
+      "original_label": "MER75",
+      "depth": 3,
+      "line": 311,
+      "description": "MER75 lineage node imported from tree.txt. Original label: MER75"
+    },
+    {
+      "name": "MER75B",
+      "original_label": "MER75B",
+      "depth": 3,
+      "line": 312,
+      "description": "MER75B lineage node imported from tree.txt. Original label: MER75B"
+    },
+    {
+      "name": "MER8",
+      "original_label": "MER8",
+      "depth": 3,
+      "line": 300,
+      "description": "MER8 lineage node imported from tree.txt. Original label: MER8"
+    },
+    {
+      "name": "MER80B",
+      "original_label": "MER80B",
+      "depth": 3,
+      "line": 276,
+      "description": "MER80B lineage node imported from tree.txt. Original label: MER80B"
+    },
+    {
+      "name": "MER81",
+      "original_label": "MER81",
+      "depth": 3,
+      "line": 277,
+      "description": "MER81 lineage node imported from tree.txt. Original label: MER81"
+    },
+    {
+      "name": "MER91A",
+      "original_label": "MER91A",
+      "depth": 3,
+      "line": 278,
+      "description": "MER91A lineage node imported from tree.txt. Original label: MER91A"
+    },
+    {
+      "name": "MER91C",
+      "original_label": "MER91C",
+      "depth": 3,
+      "line": 279,
+      "description": "MER91C lineage node imported from tree.txt. Original label: MER91C"
+    },
+    {
+      "name": "MER94",
+      "original_label": "MER94 (and subfamily MER94B)",
+      "depth": 3,
+      "line": 280,
+      "description": "MER94 lineage node imported from tree.txt. Original label: MER94 (and subfamily MER94B)"
+    },
+    {
+      "name": "MER96",
+      "original_label": "MER96 (and subfamily MER96B)",
+      "depth": 3,
+      "line": 281,
+      "description": "MER96 lineage node imported from tree.txt. Original label: MER96 (and subfamily MER96B)"
+    },
+    {
+      "name": "MER97A",
+      "original_label": "MER97A",
+      "depth": 3,
+      "line": 282,
+      "description": "MER97A lineage node imported from tree.txt. Original label: MER97A"
+    },
+    {
+      "name": "MER97B",
+      "original_label": "MER97B",
+      "depth": 3,
+      "line": 283,
+      "description": "MER97B lineage node imported from tree.txt. Original label: MER97B"
+    },
+    {
+      "name": "MER97C",
+      "original_label": "MER97C",
+      "depth": 3,
+      "line": 284,
+      "description": "MER97C lineage node imported from tree.txt. Original label: MER97C"
+    },
+    {
+      "name": "MER99",
+      "original_label": "MER99",
+      "depth": 3,
+      "line": 317,
+      "description": "MER99 lineage node imported from tree.txt. Original label: MER99"
+    },
+    {
+      "name": "Merlin1_HS",
+      "original_label": "Merlin1_HS",
+      "depth": 3,
+      "line": 314,
+      "description": "Merlin1_HS lineage node imported from tree.txt. Original label: Merlin1_HS"
+    },
+    {
+      "name": "SVA",
+      "original_label": "SVA (Composite Retroposon)",
+      "depth": 3,
+      "line": 232,
+      "description": "SVA lineage node imported from tree.txt. Original label: SVA (Composite Retroposon)"
+    },
+    {
+      "name": "TIGGER1",
+      "original_label": "TIGGER1",
+      "depth": 3,
+      "line": 301,
+      "description": "TIGGER1 lineage node imported from tree.txt. Original label: TIGGER1"
+    },
+    {
+      "name": "TIGGER2",
+      "original_label": "TIGGER2",
+      "depth": 3,
+      "line": 302,
+      "description": "TIGGER2 lineage node imported from tree.txt. Original label: TIGGER2"
+    },
+    {
+      "name": "TIGGER5",
+      "original_label": "TIGGER5",
+      "depth": 3,
+      "line": 303,
+      "description": "TIGGER5 lineage node imported from tree.txt. Original label: TIGGER5"
+    },
+    {
+      "name": "TIGGER6B",
+      "original_label": "TIGGER6B",
+      "depth": 3,
+      "line": 304,
+      "description": "TIGGER6B lineage node imported from tree.txt. Original label: TIGGER6B"
+    },
+    {
+      "name": "TIGGER7",
+      "original_label": "TIGGER7",
+      "depth": 3,
+      "line": 305,
+      "description": "TIGGER7 lineage node imported from tree.txt. Original label: TIGGER7"
+    },
+    {
+      "name": "TIGGER8",
+      "original_label": "TIGGER8",
+      "depth": 3,
+      "line": 306,
+      "description": "TIGGER8 lineage node imported from tree.txt. Original label: TIGGER8"
+    },
+    {
+      "name": "TIGGER9",
+      "original_label": "TIGGER9",
+      "depth": 3,
+      "line": 307,
+      "description": "TIGGER9 lineage node imported from tree.txt. Original label: TIGGER9"
+    },
+    {
+      "name": "ZAPHOD",
+      "original_label": "ZAPHOD",
+      "depth": 3,
+      "line": 285,
+      "description": "ZAPHOD lineage node imported from tree.txt. Original label: ZAPHOD"
+    },
+    {
+      "name": "ZOMBI_A",
+      "original_label": "ZOMBI_A",
+      "depth": 3,
+      "line": 308,
+      "description": "ZOMBI_A lineage node imported from tree.txt. Original label: ZOMBI_A"
+    },
+    {
+      "name": "AluYa5",
+      "original_label": "AluYa5",
+      "depth": 4,
+      "line": 225,
+      "description": "AluYa5 lineage node imported from tree.txt. Original label: AluYa5"
+    },
+    {
+      "name": "AluYb10",
+      "original_label": "AluYb10",
+      "depth": 4,
+      "line": 226,
+      "description": "AluYb10 lineage node imported from tree.txt. Original label: AluYb10"
+    },
+    {
+      "name": "AluYb11",
+      "original_label": "AluYb11",
+      "depth": 4,
+      "line": 227,
+      "description": "AluYb11 lineage node imported from tree.txt. Original label: AluYb11"
+    },
+    {
+      "name": "AluYb8",
+      "original_label": "AluYb8",
+      "depth": 4,
+      "line": 228,
+      "description": "AluYb8 lineage node imported from tree.txt. Original label: AluYb8"
+    },
+    {
+      "name": "AluYb8a1",
+      "original_label": "AluYb8a1",
+      "depth": 4,
+      "line": 229,
+      "description": "AluYb8a1 lineage node imported from tree.txt. Original label: AluYb8a1"
+    },
+    {
+      "name": "AluYb9",
+      "original_label": "AluYb9",
+      "depth": 4,
+      "line": 230,
+      "description": "AluYb9 lineage node imported from tree.txt. Original label: AluYb9"
+    },
+    {
+      "name": "AluYk13",
+      "original_label": "AluYk13",
+      "depth": 4,
+      "line": 231,
+      "description": "AluYk13 lineage node imported from tree.txt. Original label: AluYk13"
+    },
+    {
+      "name": "AmnSINE1_HS",
+      "original_label": "AmnSINE1_HS",
+      "depth": 4,
+      "line": 140,
+      "description": "AmnSINE1_HS lineage node imported from tree.txt. Original label: AmnSINE1_HS"
+    },
+    {
+      "name": "CR1_HS",
+      "original_label": "CR1_HS",
+      "depth": 4,
+      "line": 220,
+      "description": "CR1_HS lineage node imported from tree.txt. Original label: CR1_HS"
+    },
+    {
+      "name": "ERV3-16A3_I",
+      "original_label": "ERV3-16A3_I (ERV3-16A3_LTR)",
+      "depth": 4,
+      "line": 141,
+      "description": "ERV3-16A3_I lineage node imported from tree.txt. Original label: ERV3-16A3_I (ERV3-16A3_LTR)"
+    },
+    {
+      "name": "ERVL",
+      "original_label": "ERVL",
+      "depth": 4,
+      "line": 142,
+      "description": "ERVL lineage node imported from tree.txt. Original label: ERVL"
+    },
+    {
+      "name": "HARLEQUIN",
+      "original_label": "HARLEQUIN",
+      "depth": 4,
+      "line": 5,
+      "description": "HARLEQUIN lineage node imported from tree.txt. Original label: HARLEQUIN"
+    },
+    {
+      "name": "HERV-K14I",
+      "original_label": "HERV-K14I (LTR14A, LTR14B)",
+      "depth": 4,
+      "line": 126,
+      "description": "HERV-K14I lineage node imported from tree.txt. Original label: HERV-K14I (LTR14A, LTR14B)"
+    },
+    {
+      "name": "HERV1_LTR",
+      "original_label": "HERV1_LTR",
+      "depth": 4,
+      "line": 10,
+      "description": "HERV1_LTR lineage node imported from tree.txt. Original label: HERV1_LTR"
+    },
+    {
+      "name": "HERV4_I",
+      "original_label": "HERV4_I (HERV4_LTR)",
+      "depth": 4,
+      "line": 18,
+      "description": "HERV4_I lineage node imported from tree.txt. Original label: HERV4_I (HERV4_LTR)"
+    },
+    {
+      "name": "HERV9",
+      "original_label": "HERV9 (LTR12)",
+      "depth": 4,
+      "line": 21,
+      "description": "HERV9 lineage node imported from tree.txt. Original label: HERV9 (LTR12)"
+    },
+    {
+      "name": "HERVI",
+      "original_label": "HERVI (LTR10)",
+      "depth": 4,
+      "line": 26,
+      "description": "HERVI lineage node imported from tree.txt. Original label: HERVI (LTR10)"
+    },
+    {
+      "name": "HERVL",
+      "original_label": "HERVL",
+      "depth": 4,
+      "line": 147,
+      "description": "HERVL lineage node imported from tree.txt. Original label: HERVL"
+    },
+    {
+      "name": "L1HS",
+      "original_label": "L1HS",
+      "depth": 4,
+      "line": 197,
+      "description": "L1HS lineage node imported from tree.txt. Original label: L1HS"
+    },
+    {
+      "name": "L1M1",
+      "original_label": "L1M1 (and subfamilies L1M1B_5, L1MA1, L1MA2, L1MA3, L1MA4, L1MA4A)",
+      "depth": 4,
+      "line": 198,
+      "description": "L1M1 lineage node imported from tree.txt. Original label: L1M1 (and subfamilies L1M1B_5, L1MA1, L1MA2, L1MA3, L1MA4, L1MA4A)"
+    },
+    {
+      "name": "L1M2",
+      "original_label": "L1M2 (and subfamilies L1M2A1_5, L1M2A_5, L1M2B_5, L1M2C_5, L1M2_5, L1MA5, L1MA5A, L1MA6, L1MA7, L1MA8, L1MA9)",
+      "depth": 4,
+      "line": 199,
+      "description": "L1M2 lineage node imported from tree.txt. Original label: L1M2 (and subfamilies L1M2A1_5, L1M2A_5, L1M2B_5, L1M2C_5, L1M2_5, L1MA5, L1MA5A, L1MA6, L1MA7, L1MA8, L1MA9)"
+    },
+    {
+      "name": "L1M3",
+      "original_label": "L1M3 (and subfamilies L1M3B_5, L1M3C_5, L1MB1, L1MB2, L1MB3, L1MB3_5, L1MB4)",
+      "depth": 4,
+      "line": 200,
+      "description": "L1M3 lineage node imported from tree.txt. Original label: L1M3 (and subfamilies L1M3B_5, L1M3C_5, L1MB1, L1MB2, L1MB3, L1MB3_5, L1MB4)"
+    },
+    {
+      "name": "L1M4",
+      "original_label": "L1M4 (and subfamilies L1MB5, L1MB8, L1MC1, L1MC2, L1MC4, L1MCA_5, L1MCB_5, L1MCC_5, L1MD2)",
+      "depth": 4,
+      "line": 201,
+      "description": "L1M4 lineage node imported from tree.txt. Original label: L1M4 (and subfamilies L1MB5, L1MB8, L1MC1, L1MC2, L1MC4, L1MCA_5, L1MCB_5, L1MCC_5, L1MD2)"
+    },
+    {
+      "name": "L1MD1",
+      "original_label": "L1MD1",
+      "depth": 4,
+      "line": 202,
+      "description": "L1MD1 lineage node imported from tree.txt. Original label: L1MD1"
+    },
+    {
+      "name": "L1MD3",
+      "original_label": "L1MD3",
+      "depth": 4,
+      "line": 203,
+      "description": "L1MD3 lineage node imported from tree.txt. Original label: L1MD3"
+    },
+    {
+      "name": "L1MDB_5",
+      "original_label": "L1MDB_5",
+      "depth": 4,
+      "line": 204,
+      "description": "L1MDB_5 lineage node imported from tree.txt. Original label: L1MDB_5"
+    },
+    {
+      "name": "L1ME",
+      "original_label": "L1ME (and subfamilies L1ME1, L1ME2, L1ME3, L1ME3A, L1ME4A, L1MEA_5, L1MEB_5, L1MED_5, L1MEE_5, L1ME_ORF2)",
+      "depth": 4,
+      "line": 205,
+      "description": "L1ME lineage node imported from tree.txt. Original label: L1ME (and subfamilies L1ME1, L1ME2, L1ME3, L1ME3A, L1ME4A, L1MEA_5, L1MEB_5, L1MED_5, L1MEE_5, L1ME_ORF2)"
+    },
+    {
+      "name": "L1P1",
+      "original_label": "L1P1 (and subfamilies L1PA2, L1PA3, L1PA4)",
+      "depth": 4,
+      "line": 206,
+      "description": "L1P1 lineage node imported from tree.txt. Original label: L1P1 (and subfamilies L1PA2, L1PA3, L1PA4)"
+    },
+    {
+      "name": "L1P2",
+      "original_label": "L1P2 (and subfamilies L1PA5, L1PA6)",
+      "depth": 4,
+      "line": 207,
+      "description": "L1P2 lineage node imported from tree.txt. Original label: L1P2 (and subfamilies L1PA5, L1PA6)"
+    },
+    {
+      "name": "L1P3",
+      "original_label": "L1P3 (and subfamilies L1PA7, L1PA8, L1PREC1)",
+      "depth": 4,
+      "line": 208,
+      "description": "L1P3 lineage node imported from tree.txt. Original label: L1P3 (and subfamilies L1PA7, L1PA8, L1PREC1)"
+    },
+    {
+      "name": "L1P4",
+      "original_label": "L1P4 (and subfamilies L1PA10, L1PA11, L1PA12, L1PA13, L1PA14, L1PA15, L1PA16)",
+      "depth": 4,
+      "line": 209,
+      "description": "L1P4 lineage node imported from tree.txt. Original label: L1P4 (and subfamilies L1PA10, L1PA11, L1PA12, L1PA13, L1PA14, L1PA15, L1PA16)"
+    },
+    {
+      "name": "L1P5",
+      "original_label": "L1P5 (and subfamilies L1PB1, L1PB2, L1PB2c, L1PB3, L1PB4, L1PBA1_5, L1PBA_5, L1PBB_5)",
+      "depth": 4,
+      "line": 210,
+      "description": "L1P5 lineage node imported from tree.txt. Original label: L1P5 (and subfamilies L1PB1, L1PB2, L1PB2c, L1PB3, L1PB4, L1PBA1_5, L1PBA_5, L1PBB_5)"
+    },
+    {
+      "name": "L1PA12_5",
+      "original_label": "L1PA12_5",
+      "depth": 4,
+      "line": 211,
+      "description": "L1PA12_5 lineage node imported from tree.txt. Original label: L1PA12_5"
+    },
+    {
+      "name": "L1PA13_5",
+      "original_label": "L1PA13_5",
+      "depth": 4,
+      "line": 212,
+      "description": "L1PA13_5 lineage node imported from tree.txt. Original label: L1PA13_5"
+    },
+    {
+      "name": "L1PA14_5",
+      "original_label": "L1PA14_5",
+      "depth": 4,
+      "line": 213,
+      "description": "L1PA14_5 lineage node imported from tree.txt. Original label: L1PA14_5"
+    },
+    {
+      "name": "L1PA16_5",
+      "original_label": "L1PA16_5",
+      "depth": 4,
+      "line": 214,
+      "description": "L1PA16_5 lineage node imported from tree.txt. Original label: L1PA16_5"
+    },
+    {
+      "name": "L1PA17_5",
+      "original_label": "L1PA17_5",
+      "depth": 4,
+      "line": 215,
+      "description": "L1PA17_5 lineage node imported from tree.txt. Original label: L1PA17_5"
+    },
+    {
+      "name": "L1PA2",
+      "original_label": "L1 (L1PA2 subfamily)",
+      "depth": 4,
+      "line": 196,
+      "description": "L1PA2 lineage node imported from tree.txt. Original label: L1 (L1PA2 subfamily)"
+    },
+    {
+      "name": "L1PA7_5",
+      "original_label": "L1PA7_5",
+      "depth": 4,
+      "line": 216,
+      "description": "L1PA7_5 lineage node imported from tree.txt. Original label: L1PA7_5"
+    },
+    {
+      "name": "L1PREC2",
+      "original_label": "L1PREC2",
+      "depth": 4,
+      "line": 217,
+      "description": "L1PREC2 lineage node imported from tree.txt. Original label: L1PREC2"
+    },
+    {
+      "name": "L3",
+      "original_label": "L3",
+      "depth": 4,
+      "line": 221,
+      "description": "L3 lineage node imported from tree.txt. Original label: L3"
+    },
+    {
+      "name": "LOR1",
+      "original_label": "LOR1I (LOR1)",
+      "depth": 4,
+      "line": 33,
+      "description": "LOR1 lineage node imported from tree.txt. Original label: LOR1I (LOR1)"
+    },
+    {
+      "name": "LTR06",
+      "original_label": "LTR06",
+      "depth": 4,
+      "line": 34,
+      "description": "LTR06 lineage node imported from tree.txt. Original label: LTR06"
+    },
+    {
+      "name": "LTR1",
+      "original_label": "HUERS-P2 (LTR1)",
+      "depth": 4,
+      "line": 30,
+      "description": "LTR1 lineage node imported from tree.txt. Original label: HUERS-P2 (LTR1)"
+    },
+    {
+      "name": "LTR10",
+      "original_label": "LTR10 (and subfamilies LTR10B, LTR10B2, LTR10C, LTR10D)",
+      "depth": 4,
+      "line": 36,
+      "description": "LTR10 lineage node imported from tree.txt. Original label: LTR10 (and subfamilies LTR10B, LTR10B2, LTR10C, LTR10D)"
+    },
+    {
+      "name": "LTR10F",
+      "original_label": "HERVIP10F (LTR10F)",
+      "depth": 4,
+      "line": 27,
+      "description": "LTR10F lineage node imported from tree.txt. Original label: HERVIP10F (LTR10F)"
+    },
+    {
+      "name": "LTR11",
+      "original_label": "LTR11",
+      "depth": 4,
+      "line": 37,
+      "description": "LTR11 lineage node imported from tree.txt. Original label: LTR11"
+    },
+    {
+      "name": "LTR12",
+      "original_label": "LTR12 (and subfamilies LTR12B, LTR12C, LTR12D, LTR12E)",
+      "depth": 4,
+      "line": 38,
+      "description": "LTR12 lineage node imported from tree.txt. Original label: LTR12 (and subfamilies LTR12B, LTR12C, LTR12D, LTR12E)"
+    },
+    {
+      "name": "LTR13",
+      "original_label": "HERVK13I (LTR13)",
+      "depth": 4,
+      "line": 129,
+      "description": "LTR13 lineage node imported from tree.txt. Original label: HERVK13I (LTR13)"
+    },
+    {
+      "name": "LTR13A",
+      "original_label": "LTR13A",
+      "depth": 4,
+      "line": 132,
+      "description": "LTR13A lineage node imported from tree.txt. Original label: LTR13A"
+    },
+    {
+      "name": "LTR14",
+      "original_label": "LTR14 (and subfamilies LTR14A, LTR14B)",
+      "depth": 4,
+      "line": 133,
+      "description": "LTR14 lineage node imported from tree.txt. Original label: LTR14 (and subfamilies LTR14A, LTR14B)"
+    },
+    {
+      "name": "LTR14C",
+      "original_label": "HERV-K14CI (LTR14C)",
+      "depth": 4,
+      "line": 125,
+      "description": "LTR14C lineage node imported from tree.txt. Original label: HERV-K14CI (LTR14C)"
+    },
+    {
+      "name": "LTR15",
+      "original_label": "HERV15I (LTR15)",
+      "depth": 4,
+      "line": 7,
+      "description": "LTR15 lineage node imported from tree.txt. Original label: HERV15I (LTR15)"
+    },
+    {
+      "name": "LTR16",
+      "original_label": "HERV16 (LTR16)",
+      "depth": 4,
+      "line": 143,
+      "description": "LTR16 lineage node imported from tree.txt. Original label: HERV16 (LTR16)"
+    },
+    {
+      "name": "LTR17",
+      "original_label": "HERV17 (LTR17)",
+      "depth": 4,
+      "line": 8,
+      "description": "LTR17 lineage node imported from tree.txt. Original label: HERV17 (LTR17)"
+    },
+    {
+      "name": "LTR18",
+      "original_label": "HERV18 (LTR18)",
+      "depth": 4,
+      "line": 144,
+      "description": "LTR18 lineage node imported from tree.txt. Original label: HERV18 (LTR18)"
+    },
+    {
+      "name": "LTR19",
+      "original_label": "HERVFH19I (LTR19)",
+      "depth": 4,
+      "line": 23,
+      "description": "LTR19 lineage node imported from tree.txt. Original label: HERVFH19I (LTR19)"
+    },
+    {
+      "name": "LTR19A",
+      "original_label": "HERV19I (LTR19A)",
+      "depth": 4,
+      "line": 9,
+      "description": "LTR19A lineage node imported from tree.txt. Original label: HERV19I (LTR19A)"
+    },
+    {
+      "name": "LTR2",
+      "original_label": "HARLEQUIN_LTR (LTR2)",
+      "depth": 4,
+      "line": 6,
+      "description": "LTR2 lineage node imported from tree.txt. Original label: HARLEQUIN_LTR (LTR2)"
+    },
+    {
+      "name": "LTR20",
+      "original_label": "LTR20 (MER61D)",
+      "depth": 4,
+      "line": 43,
+      "description": "LTR20 lineage node imported from tree.txt. Original label: LTR20 (MER61D)"
+    },
+    {
+      "name": "LTR20B",
+      "original_label": "LTR20B (MER61E)",
+      "depth": 4,
+      "line": 44,
+      "description": "LTR20B lineage node imported from tree.txt. Original label: LTR20B (MER61E)"
+    },
+    {
+      "name": "LTR20C",
+      "original_label": "LTR20C (MER61F)",
+      "depth": 4,
+      "line": 45,
+      "description": "LTR20C lineage node imported from tree.txt. Original label: LTR20C (MER61F)"
+    },
+    {
+      "name": "LTR21",
+      "original_label": "LTR21 (and subfamilies LTR21A, LTR21B, LTR21C)",
+      "depth": 4,
+      "line": 46,
+      "description": "LTR21 lineage node imported from tree.txt. Original label: LTR21 (and subfamilies LTR21A, LTR21B, LTR21C)"
+    },
+    {
+      "name": "LTR22",
+      "original_label": "LTR22 (and subfamilies LTR22A, LTR22B, LTR22B1, LTR22B2, LTR22C2, LTR22E)",
+      "depth": 4,
+      "line": 134,
+      "description": "LTR22 lineage node imported from tree.txt. Original label: LTR22 (and subfamilies LTR22A, LTR22B, LTR22B1, LTR22B2, LTR22C2, LTR22E)"
+    },
+    {
+      "name": "LTR23",
+      "original_label": "LTR23",
+      "depth": 4,
+      "line": 47,
+      "description": "LTR23 lineage node imported from tree.txt. Original label: LTR23"
+    },
+    {
+      "name": "LTR24",
+      "original_label": "LTR24 (and subfamilies LTR24B, LTR24C)",
+      "depth": 4,
+      "line": 48,
+      "description": "LTR24 lineage node imported from tree.txt. Original label: LTR24 (and subfamilies LTR24B, LTR24C)"
+    },
+    {
+      "name": "LTR25",
+      "original_label": "HERVG25 (LTR25)",
+      "depth": 4,
+      "line": 24,
+      "description": "LTR25 lineage node imported from tree.txt. Original label: HERVG25 (LTR25)"
+    },
+    {
+      "name": "LTR26",
+      "original_label": "LTR26 (and subfamilies LTR26C, LTR26D, LTR26E)",
+      "depth": 4,
+      "line": 50,
+      "description": "LTR26 lineage node imported from tree.txt. Original label: LTR26 (and subfamilies LTR26C, LTR26D, LTR26E)"
+    },
+    {
+      "name": "LTR27",
+      "original_label": "LTR27 (and subfamilies LTR27B, LTR27C, LTR27D, LTR27E)",
+      "depth": 4,
+      "line": 51,
+      "description": "LTR27 lineage node imported from tree.txt. Original label: LTR27 (and subfamilies LTR27B, LTR27C, LTR27D, LTR27E)"
+    },
+    {
+      "name": "LTR2752",
+      "original_label": "LTR2752",
+      "depth": 4,
+      "line": 52,
+      "description": "LTR2752 lineage node imported from tree.txt. Original label: LTR2752"
+    },
+    {
+      "name": "LTR28",
+      "original_label": "LTR28 (and subfamilies LTR28B, LTR28C)",
+      "depth": 4,
+      "line": 53,
+      "description": "LTR28 lineage node imported from tree.txt. Original label: LTR28 (and subfamilies LTR28B, LTR28C)"
+    },
+    {
+      "name": "LTR29",
+      "original_label": "LTR29",
+      "depth": 4,
+      "line": 54,
+      "description": "LTR29 lineage node imported from tree.txt. Original label: LTR29"
+    },
+    {
+      "name": "LTR3",
+      "original_label": "HERVK3I (LTR3)",
+      "depth": 4,
+      "line": 130,
+      "description": "LTR3 lineage node imported from tree.txt. Original label: HERVK3I (LTR3)"
+    },
+    {
+      "name": "LTR30",
+      "original_label": "HERV30I (LTR30)",
+      "depth": 4,
+      "line": 11,
+      "description": "LTR30 lineage node imported from tree.txt. Original label: HERV30I (LTR30)"
+    },
+    {
+      "name": "LTR31",
+      "original_label": "LTR31",
+      "depth": 4,
+      "line": 56,
+      "description": "LTR31 lineage node imported from tree.txt. Original label: LTR31"
+    },
+    {
+      "name": "LTR32",
+      "original_label": "LTR32",
+      "depth": 4,
+      "line": 152,
+      "description": "LTR32 lineage node imported from tree.txt. Original label: LTR32"
+    },
+    {
+      "name": "LTR34",
+      "original_label": "LTR34",
+      "depth": 4,
+      "line": 57,
+      "description": "LTR34 lineage node imported from tree.txt. Original label: LTR34"
+    },
+    {
+      "name": "LTR35",
+      "original_label": "HERV35I (LTR35)",
+      "depth": 4,
+      "line": 12,
+      "description": "LTR35 lineage node imported from tree.txt. Original label: HERV35I (LTR35)"
+    },
+    {
+      "name": "LTR36",
+      "original_label": "LTR36",
+      "depth": 4,
+      "line": 59,
+      "description": "LTR36 lineage node imported from tree.txt. Original label: LTR36"
+    },
+    {
+      "name": "LTR37A",
+      "original_label": "LTR37A",
+      "depth": 4,
+      "line": 60,
+      "description": "LTR37A lineage node imported from tree.txt. Original label: LTR37A"
+    },
+    {
+      "name": "LTR37B",
+      "original_label": "LTR37B",
+      "depth": 4,
+      "line": 61,
+      "description": "LTR37B lineage node imported from tree.txt. Original label: LTR37B"
+    },
+    {
+      "name": "LTR38",
+      "original_label": "HERV38I (LTR38)",
+      "depth": 4,
+      "line": 13,
+      "description": "LTR38 lineage node imported from tree.txt. Original label: HERV38I (LTR38)"
+    },
+    {
+      "name": "LTR39",
+      "original_label": "HERV39 (LTR39)",
+      "depth": 4,
+      "line": 14,
+      "description": "LTR39 lineage node imported from tree.txt. Original label: HERV39 (LTR39)"
+    },
+    {
+      "name": "LTR4",
+      "original_label": "HERV3 (LTR4)",
+      "depth": 4,
+      "line": 15,
+      "description": "LTR4 lineage node imported from tree.txt. Original label: HERV3 (LTR4)"
+    },
+    {
+      "name": "LTR40",
+      "original_label": "HERVL_40 (LTR40)",
+      "depth": 4,
+      "line": 149,
+      "description": "LTR40 lineage node imported from tree.txt. Original label: HERVL_40 (LTR40)"
+    },
+    {
+      "name": "LTR41",
+      "original_label": "LTR41 (and subfamilies LTR41B, LTR41C)",
+      "depth": 4,
+      "line": 154,
+      "description": "LTR41 lineage node imported from tree.txt. Original label: LTR41 (and subfamilies LTR41B, LTR41C)"
+    },
+    {
+      "name": "LTR42",
+      "original_label": "LTR42",
+      "depth": 4,
+      "line": 155,
+      "description": "LTR42 lineage node imported from tree.txt. Original label: LTR42"
+    },
+    {
+      "name": "LTR43",
+      "original_label": "LTR43 (and subfamily LTR43B)",
+      "depth": 4,
+      "line": 64,
+      "description": "LTR43 lineage node imported from tree.txt. Original label: LTR43 (and subfamily LTR43B)"
+    },
+    {
+      "name": "LTR44",
+      "original_label": "LTR44",
+      "depth": 4,
+      "line": 65,
+      "description": "LTR44 lineage node imported from tree.txt. Original label: LTR44"
+    },
+    {
+      "name": "LTR45",
+      "original_label": "LTR45 (and subfamilies LTR45B, LTR45C)",
+      "depth": 4,
+      "line": 66,
+      "description": "LTR45 lineage node imported from tree.txt. Original label: LTR45 (and subfamilies LTR45B, LTR45C)"
+    },
+    {
+      "name": "LTR46",
+      "original_label": "HERV46I (LTR46)",
+      "depth": 4,
+      "line": 16,
+      "description": "LTR46 lineage node imported from tree.txt. Original label: HERV46I (LTR46)"
+    },
+    {
+      "name": "LTR47",
+      "original_label": "HERV57I (LTR47)",
+      "depth": 4,
+      "line": 20,
+      "description": "LTR47 lineage node imported from tree.txt. Original label: HERV57I (LTR47)"
+    },
+    {
+      "name": "LTR48",
+      "original_label": "LTR48 (and subfamily LTR48B)",
+      "depth": 4,
+      "line": 68,
+      "description": "LTR48 lineage node imported from tree.txt. Original label: LTR48 (and subfamily LTR48B)"
+    },
+    {
+      "name": "LTR49",
+      "original_label": "HERV49I (LTR49)",
+      "depth": 4,
+      "line": 17,
+      "description": "LTR49 lineage node imported from tree.txt. Original label: HERV49I (LTR49)"
+    },
+    {
+      "name": "LTR5",
+      "original_label": "LTR5 (and subfamily LTR5B)",
+      "depth": 4,
+      "line": 70,
+      "description": "LTR5 lineage node imported from tree.txt. Original label: LTR5 (and subfamily LTR5B)"
+    },
+    {
+      "name": "LTR50",
+      "original_label": "LTR50",
+      "depth": 4,
+      "line": 157,
+      "description": "LTR50 lineage node imported from tree.txt. Original label: LTR50"
+    },
+    {
+      "name": "LTR51",
+      "original_label": "LTR51",
+      "depth": 4,
+      "line": 71,
+      "description": "LTR51 lineage node imported from tree.txt. Original label: LTR51"
+    },
+    {
+      "name": "LTR52",
+      "original_label": "HERV52I (LTR52)",
+      "depth": 4,
+      "line": 19,
+      "description": "LTR52 lineage node imported from tree.txt. Original label: HERV52I (LTR52)"
+    },
+    {
+      "name": "LTR53",
+      "original_label": "LTR53 (and subfamily LTR53B)",
+      "depth": 4,
+      "line": 158,
+      "description": "LTR53 lineage node imported from tree.txt. Original label: LTR53 (and subfamily LTR53B)"
+    },
+    {
+      "name": "LTR55",
+      "original_label": "LTR55",
+      "depth": 4,
+      "line": 159,
+      "description": "LTR55 lineage node imported from tree.txt. Original label: LTR55"
+    },
+    {
+      "name": "LTR57",
+      "original_label": "LTR57",
+      "depth": 4,
+      "line": 160,
+      "description": "LTR57 lineage node imported from tree.txt. Original label: LTR57"
+    },
+    {
+      "name": "LTR58",
+      "original_label": "LTR58",
+      "depth": 4,
+      "line": 72,
+      "description": "LTR58 lineage node imported from tree.txt. Original label: LTR58"
+    },
+    {
+      "name": "LTR59",
+      "original_label": "LTR59",
+      "depth": 4,
+      "line": 73,
+      "description": "LTR59 lineage node imported from tree.txt. Original label: LTR59"
+    },
+    {
+      "name": "LTR6",
+      "original_label": "LTR6 (and subfamilies LTR6A, LTR6B, LTR6C, LTR6D)",
+      "depth": 4,
+      "line": 74,
+      "description": "LTR6 lineage node imported from tree.txt. Original label: LTR6 (and subfamilies LTR6A, LTR6B, LTR6C, LTR6D)"
+    },
+    {
+      "name": "LTR60",
+      "original_label": "LTR60 (and subfamily LTR60B)",
+      "depth": 4,
+      "line": 75,
+      "description": "LTR60 lineage node imported from tree.txt. Original label: LTR60 (and subfamily LTR60B)"
+    },
+    {
+      "name": "LTR61",
+      "original_label": "LTR61",
+      "depth": 4,
+      "line": 76,
+      "description": "LTR61 lineage node imported from tree.txt. Original label: LTR61"
+    },
+    {
+      "name": "LTR62",
+      "original_label": "LTR62",
+      "depth": 4,
+      "line": 161,
+      "description": "LTR62 lineage node imported from tree.txt. Original label: LTR62"
+    },
+    {
+      "name": "LTR64",
+      "original_label": "LTR64",
+      "depth": 4,
+      "line": 77,
+      "description": "LTR64 lineage node imported from tree.txt. Original label: LTR64"
+    },
+    {
+      "name": "LTR65",
+      "original_label": "LTR65",
+      "depth": 4,
+      "line": 78,
+      "description": "LTR65 lineage node imported from tree.txt. Original label: LTR65"
+    },
+    {
+      "name": "LTR66",
+      "original_label": "LTR66",
+      "depth": 4,
+      "line": 162,
+      "description": "LTR66 lineage node imported from tree.txt. Original label: LTR66"
+    },
+    {
+      "name": "LTR69",
+      "original_label": "LTR69",
+      "depth": 4,
+      "line": 163,
+      "description": "LTR69 lineage node imported from tree.txt. Original label: LTR69"
+    },
+    {
+      "name": "LTR7",
+      "original_label": "LTR7 (and subfamilies LTR7A, LTR7B, LTR7C)",
+      "depth": 4,
+      "line": 79,
+      "description": "LTR7 lineage node imported from tree.txt. Original label: LTR7 (and subfamilies LTR7A, LTR7B, LTR7C)"
+    },
+    {
+      "name": "LTR70",
+      "original_label": "LTR70",
+      "depth": 4,
+      "line": 80,
+      "description": "LTR70 lineage node imported from tree.txt. Original label: LTR70"
+    },
+    {
+      "name": "LTR71A",
+      "original_label": "HERVP71A_I (LTR71A)",
+      "depth": 4,
+      "line": 29,
+      "description": "LTR71A lineage node imported from tree.txt. Original label: HERVP71A_I (LTR71A)"
+    },
+    {
+      "name": "LTR71B",
+      "original_label": "LTR71B",
+      "depth": 4,
+      "line": 82,
+      "description": "LTR71B lineage node imported from tree.txt. Original label: LTR71B"
+    },
+    {
+      "name": "LTR72",
+      "original_label": "LTR72 (and subfamily LTR72B)",
+      "depth": 4,
+      "line": 83,
+      "description": "LTR72 lineage node imported from tree.txt. Original label: LTR72 (and subfamily LTR72B)"
+    },
+    {
+      "name": "LTR73",
+      "original_label": "LTR73",
+      "depth": 4,
+      "line": 84,
+      "description": "LTR73 lineage node imported from tree.txt. Original label: LTR73"
+    },
+    {
+      "name": "LTR75",
+      "original_label": "LTR75 (and subfamily LTR75B)",
+      "depth": 4,
+      "line": 164,
+      "description": "LTR75 lineage node imported from tree.txt. Original label: LTR75 (and subfamily LTR75B)"
+    },
+    {
+      "name": "LTR76",
+      "original_label": "LTR76",
+      "depth": 4,
+      "line": 85,
+      "description": "LTR76 lineage node imported from tree.txt. Original label: LTR76"
+    },
+    {
+      "name": "LTR77",
+      "original_label": "LTR77 (and subfamily LTR77B)",
+      "depth": 4,
+      "line": 86,
+      "description": "LTR77 lineage node imported from tree.txt. Original label: LTR77 (and subfamily LTR77B)"
+    },
+    {
+      "name": "LTR78B",
+      "original_label": "LTR78B",
+      "depth": 4,
+      "line": 87,
+      "description": "LTR78B lineage node imported from tree.txt. Original label: LTR78B"
+    },
+    {
+      "name": "LTR8",
+      "original_label": "LTR8 (and subfamilies LTR8A, LTR8B)",
+      "depth": 4,
+      "line": 88,
+      "description": "LTR8 lineage node imported from tree.txt. Original label: LTR8 (and subfamilies LTR8A, LTR8B)"
+    },
+    {
+      "name": "LTR81AB",
+      "original_label": "LTR81AB",
+      "depth": 4,
+      "line": 89,
+      "description": "LTR81AB lineage node imported from tree.txt. Original label: LTR81AB"
+    },
+    {
+      "name": "LTR9",
+      "original_label": "HUERS-P3 (LTR9)",
+      "depth": 4,
+      "line": 31,
+      "description": "LTR9 lineage node imported from tree.txt. Original label: HUERS-P3 (LTR9)"
+    },
+    {
+      "name": "LTR91",
+      "original_label": "LTR91",
+      "depth": 4,
+      "line": 165,
+      "description": "LTR91 lineage node imported from tree.txt. Original label: LTR91"
+    },
+    {
+      "name": "LTR9B",
+      "original_label": "HUERS-P3B (LTR9B)",
+      "depth": 4,
+      "line": 32,
+      "description": "LTR9B lineage node imported from tree.txt. Original label: HUERS-P3B (LTR9B)"
+    },
+    {
+      "name": "MER101",
+      "original_label": "MER101 (and subfamily MER101B)",
+      "depth": 4,
+      "line": 91,
+      "description": "MER101 lineage node imported from tree.txt. Original label: MER101 (and subfamily MER101B)"
+    },
+    {
+      "name": "MER11",
+      "original_label": "HERVK11I (MER11)",
+      "depth": 4,
+      "line": 128,
+      "description": "MER11 lineage node imported from tree.txt. Original label: HERVK11I (MER11)"
+    },
+    {
+      "name": "MER110",
+      "original_label": "MER110 (and subfamily MER110A, MER110I)",
+      "depth": 4,
+      "line": 92,
+      "description": "MER110 lineage node imported from tree.txt. Original label: MER110 (and subfamily MER110A, MER110I)"
+    },
+    {
+      "name": "MER11D",
+      "original_label": "HERVK11DI (MER11D)",
+      "depth": 4,
+      "line": 127,
+      "description": "MER11D lineage node imported from tree.txt. Original label: HERVK11DI (MER11D)"
+    },
+    {
+      "name": "MER21",
+      "original_label": "MER21 (and subfamily MER21A, MER21I)",
+      "depth": 4,
+      "line": 93,
+      "description": "MER21 lineage node imported from tree.txt. Original label: MER21 (and subfamily MER21A, MER21I)"
+    },
+    {
+      "name": "MER31",
+      "original_label": "MER31 (and subfamily MER31B, MER31_I)",
+      "depth": 4,
+      "line": 94,
+      "description": "MER31 lineage node imported from tree.txt. Original label: MER31 (and subfamily MER31B, MER31_I)"
+    },
+    {
+      "name": "MER34",
+      "original_label": "MER34 (and subfamilies MER34B, MER34B_I, MER34C, MER34C2)",
+      "depth": 4,
+      "line": 95,
+      "description": "MER34 lineage node imported from tree.txt. Original label: MER34 (and subfamilies MER34B, MER34B_I, MER34C, MER34C2)"
+    },
+    {
+      "name": "MER39",
+      "original_label": "MER39 (and subfamily MER39B)",
+      "depth": 4,
+      "line": 96,
+      "description": "MER39 lineage node imported from tree.txt. Original label: MER39 (and subfamily MER39B)"
+    },
+    {
+      "name": "MER4",
+      "original_label": "MER4 (and subfamilies MER4A, MER4A1, MER4B, MER4BI, MER4C, MER4CL34, MER4D, MER4D1, MER4E, MER4E1, MER4I)",
+      "depth": 4,
+      "line": 98,
+      "description": "MER4 lineage node imported from tree.txt. Original label: MER4 (and subfamilies MER4A, MER4A1, MER4B, MER4BI, MER4C, MER4CL34, MER4D, MER4D1, MER4E, MER4E1, MER4I)"
+    },
+    {
+      "name": "MER41",
+      "original_label": "MER41 (and subfamilies MER41A, MER41B, MER41C, MER41D, MER41F, MER41G, MER41I)",
+      "depth": 4,
+      "line": 97,
+      "description": "MER41 lineage node imported from tree.txt. Original label: MER41 (and subfamilies MER41A, MER41B, MER41C, MER41D, MER41F, MER41G, MER41I)"
+    },
+    {
+      "name": "MER48",
+      "original_label": "HERVH48I (MER48)",
+      "depth": 4,
+      "line": 25,
+      "description": "MER48 lineage node imported from tree.txt. Original label: HERVH48I (MER48)"
+    },
+    {
+      "name": "MER50",
+      "original_label": "MER50 (and subfamilies MER50B, MER50I)",
+      "depth": 4,
+      "line": 99,
+      "description": "MER50 lineage node imported from tree.txt. Original label: MER50 (and subfamilies MER50B, MER50I)"
+    },
+    {
+      "name": "MER51",
+      "original_label": "MER51 (and subfamilies MER51A, MER51B, MER51C, MER51D, MER51E, MER51I)",
+      "depth": 4,
+      "line": 100,
+      "description": "MER51 lineage node imported from tree.txt. Original label: MER51 (and subfamilies MER51A, MER51B, MER51C, MER51D, MER51E, MER51I)"
+    },
+    {
+      "name": "MER52",
+      "original_label": "MER52 (and subfamilies MER52A, MER52AI, MER52B, MER52C, MER52D)",
+      "depth": 4,
+      "line": 101,
+      "description": "MER52 lineage node imported from tree.txt. Original label: MER52 (and subfamilies MER52A, MER52AI, MER52B, MER52C, MER52D)"
+    },
+    {
+      "name": "MER54",
+      "original_label": "MER54 (and subfamilies MER54A, MER54B)",
+      "depth": 4,
+      "line": 167,
+      "description": "MER54 lineage node imported from tree.txt. Original label: MER54 (and subfamilies MER54A, MER54B)"
+    },
+    {
+      "name": "MER57",
+      "original_label": "MER57 (and subfamilies MER57A1, MER57A_I, MER57B2, MER57F, MER57I)",
+      "depth": 4,
+      "line": 102,
+      "description": "MER57 lineage node imported from tree.txt. Original label: MER57 (and subfamilies MER57A1, MER57A_I, MER57B2, MER57F, MER57I)"
+    },
+    {
+      "name": "MER61",
+      "original_label": "MER61 (and subfamilies MER61A, MER61B, MER61C)",
+      "depth": 4,
+      "line": 103,
+      "description": "MER61 lineage node imported from tree.txt. Original label: MER61 (and subfamilies MER61A, MER61B, MER61C)"
+    },
+    {
+      "name": "MER65",
+      "original_label": "MER65 (and subfamilies MER65B, MER65C, MER65D)",
+      "depth": 4,
+      "line": 104,
+      "description": "MER65 lineage node imported from tree.txt. Original label: MER65 (and subfamilies MER65B, MER65C, MER65D)"
+    },
+    {
+      "name": "MER66",
+      "original_label": "MER66 (and subfamilies MER66A, MER66B, MER66C, MER66D, MER66_I)",
+      "depth": 4,
+      "line": 105,
+      "description": "MER66 lineage node imported from tree.txt. Original label: MER66 (and subfamilies MER66A, MER66B, MER66C, MER66D, MER66_I)"
+    },
+    {
+      "name": "MER67",
+      "original_label": "MER67 (and subfamilies MER67A, MER67B, MER67C, MER67D)",
+      "depth": 4,
+      "line": 106,
+      "description": "MER67 lineage node imported from tree.txt. Original label: MER67 (and subfamilies MER67A, MER67B, MER67C, MER67D)"
+    },
+    {
+      "name": "MER68B",
+      "original_label": "MER68B",
+      "depth": 4,
+      "line": 168,
+      "description": "MER68B lineage node imported from tree.txt. Original label: MER68B"
+    },
+    {
+      "name": "MER68C",
+      "original_label": "MER68C",
+      "depth": 4,
+      "line": 169,
+      "description": "MER68C lineage node imported from tree.txt. Original label: MER68C"
+    },
+    {
+      "name": "MER70A",
+      "original_label": "MER70A",
+      "depth": 4,
+      "line": 170,
+      "description": "MER70A lineage node imported from tree.txt. Original label: MER70A"
+    },
+    {
+      "name": "MER70B",
+      "original_label": "MER70B",
+      "depth": 4,
+      "line": 171,
+      "description": "MER70B lineage node imported from tree.txt. Original label: MER70B"
+    },
+    {
+      "name": "MER70C",
+      "original_label": "MER70C",
+      "depth": 4,
+      "line": 172,
+      "description": "MER70C lineage node imported from tree.txt. Original label: MER70C"
+    },
+    {
+      "name": "MER72",
+      "original_label": "MER72 (and subfamily MER72B)",
+      "depth": 4,
+      "line": 107,
+      "description": "MER72 lineage node imported from tree.txt. Original label: MER72 (and subfamily MER72B)"
+    },
+    {
+      "name": "MER73",
+      "original_label": "MER73",
+      "depth": 4,
+      "line": 173,
+      "description": "MER73 lineage node imported from tree.txt. Original label: MER73"
+    },
+    {
+      "name": "MER74",
+      "original_label": "HERVL74 (MER74)",
+      "depth": 4,
+      "line": 148,
+      "description": "MER74 lineage node imported from tree.txt. Original label: HERVL74 (MER74)"
+    },
+    {
+      "name": "MER74B",
+      "original_label": "MER74B",
+      "depth": 4,
+      "line": 174,
+      "description": "MER74B lineage node imported from tree.txt. Original label: MER74B"
+    },
+    {
+      "name": "MER74C",
+      "original_label": "MER74C",
+      "depth": 4,
+      "line": 175,
+      "description": "MER74C lineage node imported from tree.txt. Original label: MER74C"
+    },
+    {
+      "name": "MER76",
+      "original_label": "MER76",
+      "depth": 4,
+      "line": 176,
+      "description": "MER76 lineage node imported from tree.txt. Original label: MER76"
+    },
+    {
+      "name": "MER77",
+      "original_label": "MER77",
+      "depth": 4,
+      "line": 108,
+      "description": "MER77 lineage node imported from tree.txt. Original label: MER77"
+    },
+    {
+      "name": "MER83",
+      "original_label": "MER83 (and subfamilies MER83A, MER83AI, MER83B, MER83BI, MER83C)",
+      "depth": 4,
+      "line": 109,
+      "description": "MER83 lineage node imported from tree.txt. Original label: MER83 (and subfamilies MER83A, MER83AI, MER83B, MER83BI, MER83C)"
+    },
+    {
+      "name": "MER84",
+      "original_label": "MER84 (and subfamily MER84I)",
+      "depth": 4,
+      "line": 110,
+      "description": "MER84 lineage node imported from tree.txt. Original label: MER84 (and subfamily MER84I)"
+    },
+    {
+      "name": "MER87",
+      "original_label": "MER87 (and subfamily MER87B)",
+      "depth": 4,
+      "line": 111,
+      "description": "MER87 lineage node imported from tree.txt. Original label: MER87 (and subfamily MER87B)"
+    },
+    {
+      "name": "MER88",
+      "original_label": "MER88",
+      "depth": 4,
+      "line": 177,
+      "description": "MER88 lineage node imported from tree.txt. Original label: MER88"
+    },
+    {
+      "name": "MER89",
+      "original_label": "MER89 (and subfamily MER89I)",
+      "depth": 4,
+      "line": 112,
+      "description": "MER89 lineage node imported from tree.txt. Original label: MER89 (and subfamily MER89I)"
+    },
+    {
+      "name": "MER9",
+      "original_label": "HERVK9I (MER9)",
+      "depth": 4,
+      "line": 131,
+      "description": "MER9 lineage node imported from tree.txt. Original label: HERVK9I (MER9)"
+    },
+    {
+      "name": "MER90",
+      "original_label": "MER90",
+      "depth": 4,
+      "line": 113,
+      "description": "MER90 lineage node imported from tree.txt. Original label: MER90"
+    },
+    {
+      "name": "MER92A",
+      "original_label": "MER92A",
+      "depth": 4,
+      "line": 114,
+      "description": "MER92A lineage node imported from tree.txt. Original label: MER92A"
+    },
+    {
+      "name": "MER92B",
+      "original_label": "MER92B",
+      "depth": 4,
+      "line": 115,
+      "description": "MER92B lineage node imported from tree.txt. Original label: MER92B"
+    },
+    {
+      "name": "MER95",
+      "original_label": "MER95",
+      "depth": 4,
+      "line": 116,
+      "description": "MER95 lineage node imported from tree.txt. Original label: MER95"
+    },
+    {
+      "name": "MLT1",
+      "original_label": "MLT1 (MaLR家族)",
+      "depth": 4,
+      "line": 178,
+      "description": "MLT1 lineage node imported from tree.txt. Original label: MLT1 (MaLR家族)"
+    },
+    {
+      "name": "MLT2",
+      "original_label": "MLT2 (HERV-L LTR家族)",
+      "depth": 4,
+      "line": 185,
+      "description": "MLT2 lineage node imported from tree.txt. Original label: MLT2 (HERV-L LTR家族)"
+    },
+    {
+      "name": "MSTB",
+      "original_label": "MSTB",
+      "depth": 4,
+      "line": 190,
+      "description": "MSTB lineage node imported from tree.txt. Original label: MSTB"
+    },
+    {
+      "name": "MSTD",
+      "original_label": "MSTD",
+      "depth": 4,
+      "line": 191,
+      "description": "MSTD lineage node imported from tree.txt. Original label: MSTD"
+    },
+    {
+      "name": "PABL_A",
+      "original_label": "PABL_A (and subfamily PABL_AI)",
+      "depth": 4,
+      "line": 117,
+      "description": "PABL_A lineage node imported from tree.txt. Original label: PABL_A (and subfamily PABL_AI)"
+    },
+    {
+      "name": "PABL_B",
+      "original_label": "PABL_B (and subfamily PABL_BI)",
+      "depth": 4,
+      "line": 118,
+      "description": "PABL_B lineage node imported from tree.txt. Original label: PABL_B (and subfamily PABL_BI)"
+    },
+    {
+      "name": "PRIMA41",
+      "original_label": "PRIMA41",
+      "depth": 4,
+      "line": 119,
+      "description": "PRIMA41 lineage node imported from tree.txt. Original label: PRIMA41"
+    },
+    {
+      "name": "PRIMA4_I",
+      "original_label": "PRIMA4_I (PRIMA4_LTR)",
+      "depth": 4,
+      "line": 120,
+      "description": "PRIMA4_I lineage node imported from tree.txt. Original label: PRIMA4_I (PRIMA4_LTR)"
+    },
+    {
+      "name": "PRIMAX_I",
+      "original_label": "PRIMAX_I",
+      "depth": 4,
+      "line": 121,
+      "description": "PRIMAX_I lineage node imported from tree.txt. Original label: PRIMAX_I"
+    },
+    {
+      "name": "PrimLTR79",
+      "original_label": "PrimLTR79",
+      "depth": 4,
+      "line": 122,
+      "description": "PrimLTR79 lineage node imported from tree.txt. Original label: PrimLTR79"
+    },
+    {
+      "name": "PTR5",
+      "original_label": "PTR5",
+      "depth": 4,
+      "line": 123,
+      "description": "PTR5 lineage node imported from tree.txt. Original label: PTR5"
+    },
+    {
+      "name": "Retroposon-1_HS",
+      "original_label": "Retroposon-1_HS",
+      "depth": 4,
+      "line": 218,
+      "description": "Retroposon-1_HS lineage node imported from tree.txt. Original label: Retroposon-1_HS"
+    },
+    {
+      "name": "SVA_A",
+      "original_label": "SVA_A",
+      "depth": 4,
+      "line": 233,
+      "description": "SVA_A lineage node imported from tree.txt. Original label: SVA_A"
+    },
+    {
+      "name": "SVA_B",
+      "original_label": "SVA_B",
+      "depth": 4,
+      "line": 234,
+      "description": "SVA_B lineage node imported from tree.txt. Original label: SVA_B"
+    },
+    {
+      "name": "SVA_C",
+      "original_label": "SVA_C",
+      "depth": 4,
+      "line": 235,
+      "description": "SVA_C lineage node imported from tree.txt. Original label: SVA_C"
+    },
+    {
+      "name": "SVA_D",
+      "original_label": "SVA_D",
+      "depth": 4,
+      "line": 236,
+      "description": "SVA_D lineage node imported from tree.txt. Original label: SVA_D"
+    },
+    {
+      "name": "SVA_E",
+      "original_label": "SVA_E",
+      "depth": 4,
+      "line": 237,
+      "description": "SVA_E lineage node imported from tree.txt. Original label: SVA_E"
+    },
+    {
+      "name": "SVA_F",
+      "original_label": "SVA_F",
+      "depth": 4,
+      "line": 238,
+      "description": "SVA_F lineage node imported from tree.txt. Original label: SVA_F"
+    },
+    {
+      "name": "THE1",
+      "original_label": "THE1 (and subfamilies THE1A, THE1C, THE1D, THE1_I)",
+      "depth": 4,
+      "line": 192,
+      "description": "THE1 lineage node imported from tree.txt. Original label: THE1 (and subfamilies THE1A, THE1C, THE1D, THE1_I)"
+    },
+    {
+      "name": "THE1BR",
+      "original_label": "THE1BR",
+      "depth": 4,
+      "line": 193,
+      "description": "THE1BR lineage node imported from tree.txt. Original label: THE1BR"
+    },
+    {
+      "name": "MLT1G",
+      "original_label": "MLT1G (and subfamilies MLT1G1, MLT1G2, MLT1G3)",
+      "depth": 5,
+      "line": 179,
+      "description": "MLT1G lineage node imported from tree.txt. Original label: MLT1G (and subfamilies MLT1G1, MLT1G2, MLT1G3)"
+    },
+    {
+      "name": "MLT1H",
+      "original_label": "MLT1H (and subfamilies MLT1H1, MLT1H2)",
+      "depth": 5,
+      "line": 180,
+      "description": "MLT1H lineage node imported from tree.txt. Original label: MLT1H (and subfamilies MLT1H1, MLT1H2)"
+    },
+    {
+      "name": "MLT1I",
+      "original_label": "MLT1I",
+      "depth": 5,
+      "line": 181,
+      "description": "MLT1I lineage node imported from tree.txt. Original label: MLT1I"
+    },
+    {
+      "name": "MLT1K",
+      "original_label": "MLT1K",
+      "depth": 5,
+      "line": 182,
+      "description": "MLT1K lineage node imported from tree.txt. Original label: MLT1K"
+    },
+    {
+      "name": "MLT1L",
+      "original_label": "MLT1L",
+      "depth": 5,
+      "line": 183,
+      "description": "MLT1L lineage node imported from tree.txt. Original label: MLT1L"
+    },
+    {
+      "name": "MLT1N2",
+      "original_label": "MLT1N2",
+      "depth": 5,
+      "line": 184,
+      "description": "MLT1N2 lineage node imported from tree.txt. Original label: MLT1N2"
+    },
+    {
+      "name": "MLT2A1",
+      "original_label": "MLT2A1",
+      "depth": 5,
+      "line": 186,
+      "description": "MLT2A1 lineage node imported from tree.txt. Original label: MLT2A1"
+    },
+    {
+      "name": "MLT2A2",
+      "original_label": "MLT2A2",
+      "depth": 5,
+      "line": 187,
+      "description": "MLT2A2 lineage node imported from tree.txt. Original label: MLT2A2"
+    },
+    {
+      "name": "MLT2C2",
+      "original_label": "MLT2C2",
+      "depth": 5,
+      "line": 188,
+      "description": "MLT2C2 lineage node imported from tree.txt. Original label: MLT2C2"
+    },
+    {
+      "name": "MLT2D",
+      "original_label": "MLT2D",
+      "depth": 5,
+      "line": 189,
+      "description": "MLT2D lineage node imported from tree.txt. Original label: MLT2D"
+    }
+  ],
+  "edges": [
+    {
+      "child": "AluYa5",
+      "parent": "Alu",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AluYb10",
+      "parent": "Alu",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AluYb11",
+      "parent": "Alu",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AluYb8",
+      "parent": "Alu",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AluYb8a1",
+      "parent": "Alu",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AluYb9",
+      "parent": "Alu",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AluYk13",
+      "parent": "Alu",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CR1_HS",
+      "parent": "CR1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L3",
+      "parent": "CR1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "hAT",
+      "parent": "DNA Transposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Mariner/Tc1",
+      "parent": "DNA Transposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Merlin",
+      "parent": "DNA Transposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "piggyBac",
+      "parent": "DNA Transposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Unclassified / Putative",
+      "parent": "DNA Transposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "ERV1",
+      "parent": "Endogenous Retrovirus",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "ERV2",
+      "parent": "Endogenous Retrovirus",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "ERV3",
+      "parent": "Endogenous Retrovirus",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HARLEQUIN",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HERV1_LTR",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HERV4_I",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HERV9",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HERVI",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LOR1",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR06",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR1",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR10",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR10F",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR11",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR12",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR15",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR17",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR19",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR19A",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR2",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR20",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR20B",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR20C",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR21",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR23",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR24",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR25",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR26",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR27",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR2752",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR28",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR29",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR30",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR31",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR34",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR35",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR36",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR37A",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR37B",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR38",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR39",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR4",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR43",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR44",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR45",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR46",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR47",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR48",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR49",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR5",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR51",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR52",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR58",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR59",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR6",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR60",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR61",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR64",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR65",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR7",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR70",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR71A",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR71B",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR72",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR73",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR76",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR77",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR78B",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR8",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR81AB",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR9",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR9B",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER101",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER110",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER21",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER31",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER34",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER39",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER4",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER41",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER48",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER50",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER51",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER52",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER57",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER61",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER65",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER66",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER67",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER72",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER77",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER83",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER84",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER87",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER89",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER90",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER92A",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER92B",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER95",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "PABL_A",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "PABL_B",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "PRIMA41",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "PRIMA4_I",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "PRIMAX_I",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "PrimLTR79",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "PTR5",
+      "parent": "ERV1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HERV-K14I",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR13",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR13A",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR14",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR14C",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR22",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR3",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR5",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER11",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER11D",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER9",
+      "parent": "ERV2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AmnSINE1_HS",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "ERV3-16A3_I",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "ERVL",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HERVL",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR16",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR18",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR32",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR40",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR41",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR42",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR47",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR50",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR52",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR53",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR55",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR57",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR62",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR66",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR69",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR75",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LTR91",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER21",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER54",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER68B",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER68C",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER70A",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER70B",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER70C",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER73",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER74",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER74B",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER74C",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER76",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER88",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT1",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT2",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MSTB",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MSTD",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "THE1",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "THE1BR",
+      "parent": "ERV3",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE10",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE2A",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE2B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE3",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE5",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE6",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE7",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE8",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHARLIE9",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHESHIRE",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHESHIRE_A",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CHESHIRE_B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "FORDPREFECT",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "FORDPREFECT_A",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER103B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER103C",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER106",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER107",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER112",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER113",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER117",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER119",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER1A",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER1B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER20",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER30B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER33",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER45",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER5B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER63A",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER63B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER63D",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER69C",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER80B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER81",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER91A",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER91C",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER94",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER96",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER97A",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER97B",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER97C",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "ZAPHOD",
+      "parent": "hAT",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1HS",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1M1",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1M2",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1M3",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1M4",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1MD1",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1MD3",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1MDB_5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1ME",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1P1",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1P2",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1P3",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1P4",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1P5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PA12_5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PA13_5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PA14_5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PA16_5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PA17_5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PA2",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PA7_5",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1PREC2",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Retroposon-1_HS",
+      "parent": "L1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "CR1",
+      "parent": "LINE",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "L1",
+      "parent": "LINE",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "GOLEM_A",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "GOLEM_C",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HSMAR1",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HSMAR2",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "HSTC2",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "KANGA2_A",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MADE1",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MARNA",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER28",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER44A",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER44B",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER44C",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER6B",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER8",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "TIGGER1",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "TIGGER2",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "TIGGER5",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "TIGGER6B",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "TIGGER7",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "TIGGER8",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "TIGGER9",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "ZOMBI_A",
+      "parent": "Mariner/Tc1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Merlin1_HS",
+      "parent": "Merlin",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT1G",
+      "parent": "MLT1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT1H",
+      "parent": "MLT1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT1I",
+      "parent": "MLT1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT1K",
+      "parent": "MLT1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT1L",
+      "parent": "MLT1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT1N2",
+      "parent": "MLT1",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT2A1",
+      "parent": "MLT2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT2A2",
+      "parent": "MLT2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT2C2",
+      "parent": "MLT2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MLT2D",
+      "parent": "MLT2",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LOOPER",
+      "parent": "piggyBac",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER75",
+      "parent": "piggyBac",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER75B",
+      "parent": "piggyBac",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Endogenous Retrovirus",
+      "parent": "Retrotransposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "LINE",
+      "parent": "Retrotransposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SINE",
+      "parent": "Retrotransposon",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Alu",
+      "parent": "SINE",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "AmnSINE1_HS",
+      "parent": "SINE",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SVA",
+      "parent": "SINE",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SVA_A",
+      "parent": "SVA",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SVA_B",
+      "parent": "SVA",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SVA_C",
+      "parent": "SVA",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SVA_D",
+      "parent": "SVA",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SVA_E",
+      "parent": "SVA",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "SVA_F",
+      "parent": "SVA",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "DNA Transposon",
+      "parent": "TE",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "Retrotransposon",
+      "parent": "TE",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "IN25",
+      "parent": "Unclassified / Putative",
+      "relation": "SUBFAMILY_OF"
+    },
+    {
+      "child": "MER99",
+      "parent": "Unclassified / Putative",
+      "relation": "SUBFAMILY_OF"
+    }
+  ]
+}
