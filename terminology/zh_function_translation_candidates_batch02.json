@@ -1,0 +1,352 @@
+[
+  {
+    "source": "染色体外DNA积累",
+    "display_zh": "染色体外DNA积累",
+    "canonical_en": "Extrachromosomal DNA accumulation",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "宿主DNA修复因子",
+    "display_zh": "宿主DNA修复因子",
+    "canonical_en": "Host DNA repair factors",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "体细胞L1逆转录转座",
+    "display_zh": "体细胞L1逆转录转座",
+    "canonical_en": "Somatic L1 retrotransposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "体细胞RNA基因重组",
+    "display_zh": "体细胞RNA基因重组",
+    "canonical_en": "Somatic RNA gene recombination",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "体细胞TE插入",
+    "display_zh": "体细胞TE插入",
+    "canonical_en": "Somatic TE insertion",
+    "should_translate": false,
+    "note": "TE stands for Transposable Element; kept as abbreviation in English per common usage."
+  },
+  {
+    "source": "外源DNA整合",
+    "display_zh": "外源DNA整合",
+    "canonical_en": "Exogenous DNA integration",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "位于高甲基化转录活跃DNA区",
+    "display_zh": "位于高甲基化转录活跃DNA区",
+    "canonical_en": "Located in hypermethylated transcriptionally active DNA regions",
+    "should_translate": false,
+    "note": "Descriptive phrase translated to natural English."
+  },
+  {
+    "source": "无义介导的mRNA降解",
+    "display_zh": "无义介导的mRNA降解",
+    "canonical_en": "Nonsense-mediated mRNA decay",
+    "should_translate": false,
+    "note": "Standard biomedical term; 'decay' is preferred over 'degradation' in this context."
+  },
+  {
+    "source": "细胞质DNA积累",
+    "display_zh": "细胞质DNA积累",
+    "canonical_en": "Cytoplasmic DNA accumulation",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "小干扰RNA",
+    "display_zh": "小干扰RNA",
+    "canonical_en": "Small interfering RNA",
+    "should_translate": false,
+    "note": "Standard abbreviation siRNA expanded for clarity."
+  },
+  {
+    "source": "形成和运输L1核糖核蛋白颗粒",
+    "display_zh": "形成和运输L1核糖核蛋白颗粒",
+    "canonical_en": "Formation and transport of L1 ribonucleoprotein particles",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "形成L1核糖核蛋白",
+    "display_zh": "形成L1核糖核蛋白",
+    "canonical_en": "Formation of L1 ribonucleoprotein",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "序列特异性DNA识别",
+    "display_zh": "序列特异性DNA识别",
+    "canonical_en": "Sequence-specific DNA recognition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "亚细胞RNA分区",
+    "display_zh": "亚细胞RNA分区",
+    "canonical_en": "Subcellular RNA partitioning",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "异常mRNA剪接",
+    "display_zh": "异常mRNA剪接",
+    "canonical_en": "Aberrant mRNA splicing",
+    "should_translate": false,
+    "note": "'Aberrant' is more precise than 'abnormal' in biomedical contexts."
+  },
+  {
+    "source": "抑制Alu逆转录转座",
+    "display_zh": "抑制Alu逆转录转座",
+    "canonical_en": "Inhibition of Alu retrotransposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "抑制L1逆转录转座",
+    "display_zh": "抑制L1逆转录转座",
+    "canonical_en": "Inhibition of L1 retrotransposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "抑制LINE-1逆转录转座",
+    "display_zh": "抑制LINE-1逆转录转座",
+    "canonical_en": "Inhibition of LINE-1 retrotransposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "抑制LINE-1转座",
+    "display_zh": "抑制LINE-1转座",
+    "canonical_en": "Inhibition of LINE-1 transposition",
+    "should_translate": false,
+    "note": "Distinction made between retrotransposition and general transposition if context implies DNA transposon mechanism, but often used interchangeably for LINE-1."
+  },
+  {
+    "source": "影响DNA甲基化",
+    "display_zh": "影响DNA甲基化",
+    "canonical_en": "Modulation of DNA methylation",
+    "should_translate": false,
+    "note": "'Modulation' or 'Alteration' is more precise than 'Affecting'."
+  },
+  {
+    "source": "诱导DNA损伤",
+    "display_zh": "诱导DNA损伤",
+    "canonical_en": "Induction of DNA damage",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "与非编码RNA相关",
+    "display_zh": "与非编码RNA相关",
+    "canonical_en": "Association with non-coding RNA",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "在G1/S期阻滞细胞中转座",
+    "display_zh": "在G1/S期阻滞细胞中转座",
+    "canonical_en": "Transposition in G1/S-arrested cells",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "A-tail扩展",
+    "display_zh": "A-tail扩展",
+    "canonical_en": "A-tail extension",
+    "should_translate": false,
+    "note": "Mixed Chinese/English term; normalized to full English."
+  },
+  {
+    "source": "activities of L1 si/piRNAs, mRNAs, ORF1 and ORF2 proteins",
+    "display_zh": "L1 si/piRNA、mRNA、ORF1及ORF2蛋白活性",
+    "canonical_en": "Activities of L1 si/piRNAs, mRNAs, ORF1 and ORF2 proteins",
+    "should_translate": true,
+    "note": "English source translated to concise Chinese display name."
+  },
+  {
+    "source": "ADAR1介导的RNA编辑",
+    "display_zh": "ADAR1介导的RNA编辑",
+    "canonical_en": "ADAR1-mediated RNA editing",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "ADAR1抑制LINE-1逆转录转座",
+    "display_zh": "ADAR1抑制LINE-1逆转录转座",
+    "canonical_en": "ADAR1-mediated inhibition of LINE-1 retrotransposition",
+    "should_translate": false,
+    "note": "Refined English to reflect mechanism (mediated inhibition)."
+  },
+  {
+    "source": "adjacent genes expression",
+    "display_zh": "邻近基因表达",
+    "canonical_en": "Adjacent gene expression",
+    "should_translate": true,
+    "note": "English source translated to concise Chinese display name."
+  },
+  {
+    "source": "AhR核转位蛋白-1 (ARNT1) 介导的细胞机制",
+    "display_zh": "AhR核转位蛋白-1 (ARNT1) 介导的细胞机制",
+    "canonical_en": "AhR nuclear translocator-1 (ARNT1)-mediated cellular mechanisms",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "ALKBH5抑制L1逆转录转座",
+    "display_zh": "ALKBH5抑制L1逆转录转座",
+    "canonical_en": "ALKBH5-mediated inhibition of L1 retrotransposition",
+    "should_translate": false,
+    "note": "Refined English to reflect mechanism."
+  },
+  {
+    "source": "allele-specific methylation",
+    "display_zh": "等位基因特异性甲基化",
+    "canonical_en": "Allele-specific methylation",
+    "should_translate": true,
+    "note": "English source translated to concise Chinese display name."
+  },
+  {
+    "source": "altered chromatin landscapes",
+    "display_zh": "染色质景观改变",
+    "canonical_en": "Altered chromatin landscapes",
+    "should_translate": true,
+    "note": "English source translated to concise Chinese display name."
+  },
+  {
+    "source": "altering gene activity",
+    "display_zh": "基因活性改变",
+    "canonical_en": "Alteration of gene activity",
+    "should_translate": true,
+    "note": "English source translated and nominalized for consistency."
+  },
+  {
+    "source": "Alu RNA隔离",
+    "display_zh": "Alu RNA隔离",
+    "canonical_en": "Sequestration of Alu RNA",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "Alu SINE 逆转录转座",
+    "display_zh": "Alu SINE逆转录转座",
+    "canonical_en": "Alu SINE retrotransposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "Alu/L1逆转录转座",
+    "display_zh": "Alu/L1逆转录转座",
+    "canonical_en": "Alu/L1 retrotransposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "Alu逆转录转座",
+    "display_zh": "Alu逆转录转座",
+    "canonical_en": "Alu retrotransposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "Alu转录",
+    "display_zh": "Alu转录",
+    "canonical_en": "Alu transcription",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "Alu转座",
+    "display_zh": "Alu转座",
+    "canonical_en": "Alu transposition",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "Alu转座动员",
+    "display_zh": "Alu转座动员",
+    "canonical_en": "Alu transposition mobilization",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "AMPK激活",
+    "display_zh": "AMPK激活",
+    "canonical_en": "AMPK activation",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "aneuploidy generation",
+    "display_zh": "非整倍体产生",
+    "canonical_en": "Aneuploidy generation",
+    "should_translate": true,
+    "note": "English source translated to concise Chinese display name."
+  },
+  {
+    "source": "angiogenesis",
+    "display_zh": "血管生成",
+    "canonical_en": "Angiogenesis",
+    "should_translate": true,
+    "note": "English source translated to concise Chinese display name."
+  },
+  {
+    "source": "APOBEC3酶催化胞嘧啶脱氨",
+    "display_zh": "APOBEC3酶催化胞嘧啶脱氨",
+    "canonical_en": "APOBEC3 enzyme-catalyzed cytidine deamination",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "APOBEC3C介导的L1限制",
+    "display_zh": "APOBEC3C介导的L1限制",
+    "canonical_en": "APOBEC3C-mediated L1 restriction",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "APOBEC3F介导的GA→AA突变",
+    "display_zh": "APOBEC3F介导的GA→AA突变",
+    "canonical_en": "APOBEC3F-mediated GA-to-AA mutations",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "APOBEC3G介导的GG→AG突变",
+    "display_zh": "APOBEC3G介导的GG→AG突变",
+    "canonical_en": "APOBEC3G-mediated GG-to-AG mutations",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "ASP hypomethylation",
+    "display_zh": "ASP低甲基化",
+    "canonical_en": "ASP hypomethylation",
+    "should_translate": true,
+    "note": "English source translated; ASP likely refers to a specific gene or region contextually."
+  },
+  {
+    "source": "ATM-MRN-SMC S期检查点通路",
+    "display_zh": "ATM-MRN-SMC S期检查点通路",
+    "canonical_en": "ATM-MRN-SMC S-phase checkpoint pathway",
+    "should_translate": false,
+    "note": "Term is already in Chinese; normalized to standard English."
+  },
+  {
+    "source": "ATM-signaling pathway activation",
+    "display_zh": "ATM信号通路激活",
+    "canonical_en": "ATM signaling pathway activation",
+    "should_translate": true,
+    "note": "English source translated to concise Chinese display name."
+  }
+]

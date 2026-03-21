@@ -1,0 +1,137 @@
+{
+  "batch_size": 120,
+  "counts_before": {
+    "Disease": 0,
+    "Function": 2831
+  },
+  "counts_after": {
+    "Disease": 0,
+    "Function": 0
+  },
+  "added_zh": 2831,
+  "updated_zh": 0,
+  "added_en": 2585,
+  "updated_en": 171,
+  "batches": [
+    {
+      "label": "Function",
+      "start": 0,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 120,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 240,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 360,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 480,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 600,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 720,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 840,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 960,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1080,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1200,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1320,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1440,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1560,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1680,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1800,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 1920,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 2040,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 2160,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 2280,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 2400,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 2520,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 2640,
+      "count": 120
+    },
+    {
+      "label": "Function",
+      "start": 2760,
+      "count": 71
+    }
+  ]
+}

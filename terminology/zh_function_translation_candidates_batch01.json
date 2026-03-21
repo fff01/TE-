@@ -1,0 +1,352 @@
+[
+  {
+    "source": "3' poly(A) 尾依赖性",
+    "display_zh": "3' poly(A) 尾依赖性",
+    "canonical_en": "3' poly(A) tail dependence",
+    "should_translate": false,
+    "note": "Standard biomedical term; 'poly(A)' is universally used in Chinese contexts."
+  },
+  {
+    "source": "3' UTR 茎环结构",
+    "display_zh": "3' UTR 茎环结构",
+    "canonical_en": "3' UTR stem-loop structure",
+    "should_translate": false,
+    "note": "Structural biology term; 'UTR' and 'stem-loop' are standard."
+  },
+  {
+    "source": "3' UTR 依赖的逆转录转座",
+    "display_zh": "3' UTR 依赖的逆转录转座",
+    "canonical_en": "3' UTR-dependent retrotransposition",
+    "should_translate": false,
+    "note": "Mechanism description; retains English acronym for precision."
+  },
+  {
+    "source": "5' UTR 活性",
+    "display_zh": "5' UTR 活性",
+    "canonical_en": "5' UTR activity",
+    "should_translate": false,
+    "note": "General functional term."
+  },
+  {
+    "source": "5' UTR 启动子活性",
+    "display_zh": "5' UTR 启动子活性",
+    "canonical_en": "5' UTR promoter activity",
+    "should_translate": false,
+    "note": "Specific regulatory function."
+  },
+  {
+    "source": "靶基因组 DNA 缺失",
+    "display_zh": "靶基因组 DNA 缺失",
+    "canonical_en": "Target genomic DNA deletion",
+    "should_translate": false,
+    "note": "Describes loss of DNA at the integration site."
+  },
+  {
+    "source": "靶向 DNA 切割",
+    "display_zh": "靶向 DNA 切割",
+    "canonical_en": "Targeted DNA cleavage",
+    "should_translate": false,
+    "note": "Enzymatic action description."
+  },
+  {
+    "source": "被 L1 机制识别",
+    "display_zh": "被 L1 机制识别",
+    "canonical_en": "Recognized by L1 machinery",
+    "should_translate": false,
+    "note": "Passive voice construction describing substrate recognition."
+  },
+  {
+    "source": "病毒 RNA 逆转录与整合",
+    "display_zh": "病毒 RNA 逆转录与整合",
+    "canonical_en": "Viral RNA reverse transcription and integration",
+    "should_translate": false,
+    "note": "Process description."
+  },
+  {
+    "source": "产生嵌合 L1 转录本",
+    "display_zh": "产生嵌合 L1 转录本",
+    "canonical_en": "Generation of chimeric L1 transcripts",
+    "should_translate": false,
+    "note": "Outcome of transduction or read-through."
+  },
+  {
+    "source": "创建 CpG 岛",
+    "display_zh": "创建 CpG 岛",
+    "canonical_en": "Creation of CpG islands",
+    "should_translate": false,
+    "note": "Epigenetic feature formation."
+  },
+  {
+    "source": "从头 L1 插入",
+    "display_zh": "从头 L1 插入",
+    "canonical_en": "De novo L1 insertion",
+    "should_translate": false,
+    "note": "'De novo' is standard terminology for new germline or somatic events."
+  },
+  {
+    "source": "单链 DNA 断裂",
+    "display_zh": "单链 DNA 断裂",
+    "canonical_en": "Single-strand DNA break",
+    "should_translate": false,
+    "note": "Specific type of DNA damage."
+  },
+  {
+    "source": "单顺反子 ORF2 mRNA 表达",
+    "display_zh": "单顺反子 ORF2 mRNA 表达",
+    "canonical_en": "Monocistronic ORF2 mRNA expression",
+    "should_translate": false,
+    "note": "Describes specific transcript architecture."
+  },
+  {
+    "source": "蛋白-DNA 相互作用",
+    "display_zh": "蛋白-DNA 相互作用",
+    "canonical_en": "Protein-DNA interaction",
+    "should_translate": false,
+    "note": "General molecular biology term."
+  },
+  {
+    "source": "调节免疫刺激性 SINE 表达",
+    "display_zh": "调节免疫刺激性 SINE 表达",
+    "canonical_en": "Regulation of immunostimulatory SINE expression",
+    "should_translate": false,
+    "note": "Functional regulation involving innate immunity."
+  },
+  {
+    "source": "反式介导的细胞 RNA 动员",
+    "display_zh": "反式介导的细胞 RNA 动员",
+    "canonical_en": "Trans-mediated cellular RNA mobilization",
+    "should_translate": false,
+    "note": "Describes trans-mobilization of non-autonomous RNAs."
+  },
+  {
+    "source": "反式 mRNA 逆转录转座",
+    "display_zh": "反式 mRNA 逆转录转座",
+    "canonical_en": "Trans-mRNA retrotransposition",
+    "should_translate": false,
+    "note": "Process where one element mobilizes another mRNA."
+  },
+  {
+    "source": "非编码 RNA 调控",
+    "display_zh": "非编码 RNA 调控",
+    "canonical_en": "Non-coding RNA regulation",
+    "should_translate": false,
+    "note": "Broad regulatory category."
+  },
+  {
+    "source": "非参考 L1 多态性插入",
+    "display_zh": "非参考 L1 多态性插入",
+    "canonical_en": "Non-reference L1 polymorphic insertion",
+    "should_translate": false,
+    "note": "Genomic variant not present in the reference genome."
+  },
+  {
+    "source": "非功能性 ORF1p 变异体产生",
+    "display_zh": "非功能性 ORF1p 变异体产生",
+    "canonical_en": "Production of non-functional ORF1p variants",
+    "should_translate": false,
+    "note": "Describes defective protein products."
+  },
+  {
+    "source": "非 L1 转录本的逆转录转座",
+    "display_zh": "非 L1 转录本的逆转录转座",
+    "canonical_en": "Retrotransposition of non-L1 transcripts",
+    "should_translate": false,
+    "note": "Trans-mobilization event."
+  },
+  {
+    "source": "非 LTR 逆转录转座",
+    "display_zh": "非 LTR 逆转录转座",
+    "canonical_en": "Non-LTR retrotransposition",
+    "should_translate": false,
+    "note": "Class of retrotransposons."
+  },
+  {
+    "source": "干扰素（IFN）产生",
+    "display_zh": "干扰素 (IFN) 产生",
+    "canonical_en": "Interferon (IFN) production",
+    "should_translate": false,
+    "note": "Immune response outcome."
+  },
+  {
+    "source": "谷氨酰胺酶 C 产生增加",
+    "display_zh": "谷氨酰胺酶 C 产生增加",
+    "canonical_en": "Increased GLS production",
+    "should_translate": false,
+    "note": "GLS refers to Glutaminase; context implies upregulation."
+  },
+  {
+    "source": "核酸内切酶非依赖性 LINE-1 逆转录转座",
+    "display_zh": "核酸内切酶非依赖性 LINE-1 逆转录转座",
+    "canonical_en": "Endonuclease-independent LINE-1 retrotransposition",
+    "should_translate": false,
+    "note": "Alternative integration mechanism (e.g., in repair-deficient contexts)."
+  },
+  {
+    "source": "核糖核蛋白（RNP）颗粒形成",
+    "display_zh": "核糖核蛋白 (RNP) 颗粒形成",
+    "canonical_en": "Ribonucleoprotein (RNP) granule formation",
+    "should_translate": false,
+    "note": "Cellular compartmentalization of L1 machinery."
+  },
+  {
+    "source": "基因组 DNA 不稳定性",
+    "display_zh": "基因组 DNA 不稳定性",
+    "canonical_en": "Genomic DNA instability",
+    "should_translate": false,
+    "note": "General consequence of transposition."
+  },
+  {
+    "source": "基因组 DNA 缺失",
+    "display_zh": "基因组 DNA 缺失",
+    "canonical_en": "Genomic DNA deletion",
+    "should_translate": false,
+    "note": "Large scale or local loss of DNA."
+  },
+  {
+    "source": "基因组 DNA 损伤",
+    "display_zh": "基因组 DNA 损伤",
+    "canonical_en": "Genomic DNA damage",
+    "should_translate": false,
+    "note": "General term for DNA lesions."
+  },
+  {
+    "source": "交错 DNA 双链断裂修复",
+    "display_zh": "交错 DNA 双链断裂修复",
+    "canonical_en": "Staggered DNA double-strand break repair",
+    "should_translate": false,
+    "note": "Refers to repair of the staggered cuts made during integration."
+  },
+  {
+    "source": "结合 LINE-1 RNP 复合体",
+    "display_zh": "结合 LINE-1 RNP 复合体",
+    "canonical_en": "Binding to LINE-1 RNP complex",
+    "should_translate": false,
+    "note": "Molecular interaction."
+  },
+  {
+    "source": "截短的 LINE-1 逆转录转座",
+    "display_zh": "截短的 LINE-1 逆转录转座",
+    "canonical_en": "Truncated LINE-1 retrotransposition",
+    "should_translate": false,
+    "note": "Common outcome due to premature termination."
+  },
+  {
+    "source": "介导非 L1 RNA 转座",
+    "display_zh": "介导非 L1 RNA 转座",
+    "canonical_en": "Mediation of non-L1 RNA transposition",
+    "should_translate": false,
+    "note": "Function of autonomous elements."
+  },
+  {
+    "source": "介导 Alu 转座",
+    "display_zh": "介导 Alu 转座",
+    "canonical_en": "Mediation of Alu transposition",
+    "should_translate": false,
+    "note": "Specific trans-mobilization of Alu elements."
+  },
+  {
+    "source": "介导 mRNA 逆转座",
+    "display_zh": "介导 mRNA 逆转座",
+    "canonical_en": "Mediation of mRNA retroposition",
+    "should_translate": false,
+    "note": "Formation of processed pseudogenes."
+  },
+  {
+    "source": "介导 SINE 逆转录转座",
+    "display_zh": "介导 SINE 逆转录转座",
+    "canonical_en": "Mediation of SINE retrotransposition",
+    "should_translate": false,
+    "note": "General term for SINE mobilization."
+  },
+  {
+    "source": "介导 SINE 转座",
+    "display_zh": "介导 SINE 转座",
+    "canonical_en": "Mediation of SINE transposition",
+    "should_translate": false,
+    "note": "Synonymous with above, often used interchangeably."
+  },
+  {
+    "source": "经典的两击 CRC 通路",
+    "display_zh": "经典的两击 CRC 通路",
+    "canonical_en": "Classic two-hit CRC pathway",
+    "should_translate": false,
+    "note": "CRC likely refers to Colorectal Cancer; 'two-hit' is a specific hypothesis."
+  },
+  {
+    "source": "利用切割的 poly-T 链作为引物",
+    "display_zh": "利用切割的 poly-T 链作为引物",
+    "canonical_en": "Utilization of cleaved poly-T strand as primer",
+    "should_translate": false,
+    "note": "Mechanistic detail of target-primed reverse transcription (TPRT)."
+  },
+  {
+    "source": "利用 DNA 修复机制",
+    "display_zh": "利用 DNA 修复机制",
+    "canonical_en": "Utilization of DNA repair mechanisms",
+    "should_translate": false,
+    "note": "General process description."
+  },
+  {
+    "source": "慢性 DNA 损伤",
+    "display_zh": "慢性 DNA 损伤",
+    "canonical_en": "Chronic DNA damage",
+    "should_translate": false,
+    "note": "Persistent state of DNA lesion."
+  },
+  {
+    "source": "内源性 L1 mRNA 水平",
+    "display_zh": "内源性 L1 mRNA 水平",
+    "canonical_en": "Endogenous L1 mRNA levels",
+    "should_translate": false,
+    "note": "Quantitative measure."
+  },
+  {
+    "source": "逆转录转座相关 DNA 损伤",
+    "display_zh": "逆转录转座相关 DNA 损伤",
+    "canonical_en": "Retrotransposition-associated DNA damage",
+    "should_translate": false,
+    "note": "Causal link between process and damage."
+  },
+  {
+    "source": "年龄相关的 LINE-1 拷贝数变化",
+    "display_zh": "年龄相关的 LINE-1 拷贝数变化",
+    "canonical_en": "Age-associated LINE-1 copy number variation",
+    "should_translate": false,
+    "note": "Demographic correlation."
+  },
+  {
+    "source": "启动子区 CpG 甲基化降低",
+    "display_zh": "启动子区 CpG 甲基化降低",
+    "canonical_en": "Reduced CpG methylation in promoter region",
+    "should_translate": false,
+    "note": "Epigenetic deregulation."
+  },
+  {
+    "source": "嵌合 L1 形成",
+    "display_zh": "嵌合 L1 形成",
+    "canonical_en": "Chimeric L1 formation",
+    "should_translate": false,
+    "note": "Result of transduction or recombination."
+  },
+  {
+    "source": "驱动 Alu 和 SVA 转座",
+    "display_zh": "驱动 Alu 和 SVA 转座",
+    "canonical_en": "Driving Alu and SVA transposition",
+    "should_translate": false,
+    "note": "Active role of L1 in mobilizing other elements."
+  },
+  {
+    "source": "全基因组 DNA 甲基化标志物",
+    "display_zh": "全基因组 DNA 甲基化标志物",
+    "canonical_en": "Genome-wide DNA methylation marker",
+    "should_translate": false,
+    "note": "Biomarker context."
+  },
+  {
+    "source": "缺乏 RNase H 活性",
+    "display_zh": "缺乏 RNase H 活性",
+    "canonical_en": "Lack of RNase H activity",
+    "should_translate": false,
+    "note": "Functional deficiency description."
+  }
+]

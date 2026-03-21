@@ -1,0 +1,352 @@
+[
+  {
+    "source": "RNA:DNA hybrid production",
+    "display_zh": "RNA:DNA 杂合链生成",
+    "canonical_en": "RNA:DNA hybrid formation",
+    "should_translate": false,
+    "note": "Normalized 'production' to 'formation' for standard biochemical terminology."
+  },
+  {
+    "source": "RNA 靶向干扰",
+    "display_zh": "RNA 靶向干扰",
+    "canonical_en": "RNA-targeted interference",
+    "should_translate": false,
+    "note": "Term is already in Chinese; canonical English provided based on literal meaning."
+  },
+  {
+    "source": "RNA 伴侣活性",
+    "display_zh": "RNA 伴侣活性",
+    "canonical_en": "RNA chaperone activity",
+    "should_translate": false,
+    "note": "Standard term for proteins facilitating RNA folding."
+  },
+  {
+    "source": "RNA 包装",
+    "display_zh": "RNA 包装",
+    "canonical_en": "RNA packaging",
+    "should_translate": false,
+    "note": "Refers to encapsidation of RNA into viral particles or RNPs."
+  },
+  {
+    "source": "RNA 表达增加",
+    "display_zh": "RNA 表达上调",
+    "canonical_en": "Increased RNA expression",
+    "should_translate": false,
+    "note": "Refined '增加' to '上调' (upregulation) for more precise biological context."
+  },
+  {
+    "source": "RNA 二级结构识别",
+    "display_zh": "RNA 二级结构识别",
+    "canonical_en": "RNA secondary structure recognition",
+    "should_translate": false,
+    "note": "Direct translation of a specific molecular interaction."
+  },
+  {
+    "source": "RNA 干扰",
+    "display_zh": "RNA 干扰",
+    "canonical_en": "RNA interference",
+    "should_translate": false,
+    "note": "Standard term (RNAi)."
+  },
+  {
+    "source": "RNA 和蛋白积累减少",
+    "display_zh": "RNA 与蛋白积累减少",
+    "canonical_en": "Reduced accumulation of RNA and protein",
+    "should_translate": false,
+    "note": "Descriptive phenotype; '与' used for better flow than '和' in formal contexts."
+  },
+  {
+    "source": "RNA 加工",
+    "display_zh": "RNA 加工",
+    "canonical_en": "RNA processing",
+    "should_translate": false,
+    "note": "General term for post-transcriptional modifications."
+  },
+  {
+    "source": "RNA 甲基化",
+    "display_zh": "RNA 甲基化",
+    "canonical_en": "RNA methylation",
+    "should_translate": false,
+    "note": "Standard epigenetic/modification term."
+  },
+  {
+    "source": "RNA 剪接",
+    "display_zh": "RNA 剪接",
+    "canonical_en": "RNA splicing",
+    "should_translate": false,
+    "note": "Standard term for intron removal."
+  },
+  {
+    "source": "RNA 降解",
+    "display_zh": "RNA 降解",
+    "canonical_en": "RNA degradation",
+    "should_translate": false,
+    "note": "Standard term for RNA breakdown."
+  },
+  {
+    "source": "RNA 结合",
+    "display_zh": "RNA 结合",
+    "canonical_en": "RNA binding",
+    "should_translate": false,
+    "note": "General interaction term."
+  },
+  {
+    "source": "RNA 聚合酶 II 驱动转录",
+    "display_zh": "RNA 聚合酶 II 驱动转录",
+    "canonical_en": "RNA polymerase II-driven transcription",
+    "should_translate": false,
+    "note": "Specific transcriptional mechanism."
+  },
+  {
+    "source": "RNA 来源的附加体产物",
+    "display_zh": "RNA 来源的附加体产物",
+    "canonical_en": "RNA-derived episomal products",
+    "should_translate": false,
+    "note": "Refers to extrachromosomal DNA/RNA elements derived from RNA templates."
+  },
+  {
+    "source": "RNA 连接",
+    "display_zh": "RNA 连接",
+    "canonical_en": "RNA ligation",
+    "should_translate": false,
+    "note": "Enzymatic joining of RNA strands."
+  },
+  {
+    "source": "RNA 提前多聚腺苷酸化",
+    "display_zh": "RNA 提前多聚腺苷酸化",
+    "canonical_en": "Premature RNA polyadenylation",
+    "should_translate": false,
+    "note": "Specific processing error or regulatory event."
+  },
+  {
+    "source": "RNA 脱帽",
+    "display_zh": "RNA 脱帽",
+    "canonical_en": "RNA decapping",
+    "should_translate": false,
+    "note": "Removal of the 5' cap structure."
+  },
+  {
+    "source": "RNA 外切体复合物介导的 RNA 降解",
+    "display_zh": "外切体复合物介导的 RNA 降解",
+    "canonical_en": "Exosome complex-mediated RNA degradation",
+    "should_translate": false,
+    "note": "Removed redundant 'RNA' at the start for conciseness; '外切体' is standard for Exosome."
+  },
+  {
+    "source": "RNA 遗传",
+    "display_zh": "RNA 遗传",
+    "canonical_en": "RNA inheritance",
+    "should_translate": false,
+    "note": "Transmission of RNA molecules across generations or cell divisions."
+  },
+  {
+    "source": "RNA 质量控制",
+    "display_zh": "RNA 质量控制",
+    "canonical_en": "RNA quality control",
+    "should_translate": false,
+    "note": "Cellular mechanisms ensuring RNA integrity."
+  },
+  {
+    "source": "RNase H2 降解 LINE-1 RNA",
+    "display_zh": "RNase H2 降解 LINE-1 RNA",
+    "canonical_en": "RNase H2-mediated degradation of LINE-1 RNA",
+    "should_translate": false,
+    "note": "Clarified mechanism as 'mediated degradation'."
+  },
+  {
+    "source": "RNP 复合物组装",
+    "display_zh": "RNP 复合物组装",
+    "canonical_en": "RNP complex assembly",
+    "should_translate": false,
+    "note": "Formation of Ribonucleoprotein complexes."
+  },
+  {
+    "source": "RNP 隔离",
+    "display_zh": "RNP 隔离",
+    "canonical_en": "RNP sequestration",
+    "should_translate": false,
+    "note": "Sequestration implies compartmentalization away from active sites."
+  },
+  {
+    "source": "RNP 凝聚物形成",
+    "display_zh": "RNP 凝聚物形成",
+    "canonical_en": "RNP condensate formation",
+    "should_translate": false,
+    "note": "Refers to liquid-liquid phase separation phenomena."
+  },
+  {
+    "source": "RNP 形成",
+    "display_zh": "RNP 形成",
+    "canonical_en": "RNP formation",
+    "should_translate": false,
+    "note": "General term for RNP biogenesis."
+  },
+  {
+    "source": "RNP 运输",
+    "display_zh": "RNP 运输",
+    "canonical_en": "RNP transport",
+    "should_translate": false,
+    "note": "Intracellular trafficking of RNPs."
+  },
+  {
+    "source": "RT burden",
+    "display_zh": "逆转录负荷",
+    "canonical_en": "Reverse transcription burden",
+    "should_translate": true,
+    "note": "Expanded abbreviation 'RT' to 'Reverse transcription' for clarity in Chinese."
+  },
+  {
+    "source": "RTE copy number accumulation",
+    "display_zh": "RTE 拷贝数积累",
+    "canonical_en": "RTE copy number accumulation",
+    "should_translate": false,
+    "note": "RTE (Retroposon Transposable Element) kept as acronym; refers to increase in genomic copies."
+  },
+  {
+    "source": "RUNX3 与 L1Hs 结合",
+    "display_zh": "RUNX3 与 L1Hs 结合",
+    "canonical_en": "RUNX3 binding to L1Hs",
+    "should_translate": false,
+    "note": "Specific protein-DNA/element interaction."
+  },
+  {
+    "source": "S/G2 phase DNA repair",
+    "display_zh": "S/G2 期 DNA 修复",
+    "canonical_en": "S/G2 phase DNA repair",
+    "should_translate": false,
+    "note": "Cell cycle-specific repair mechanism."
+  },
+  {
+    "source": "S 期逆转录转座",
+    "display_zh": "S 期逆转录转座",
+    "canonical_en": "S-phase retrotransposition",
+    "should_translate": false,
+    "note": "Retrotransposition occurring specifically during DNA synthesis phase."
+  },
+  {
+    "source": "self-priming",
+    "display_zh": "自引发",
+    "canonical_en": "Self-priming",
+    "should_translate": true,
+    "note": "Mechanism where the 3' end of an RNA serves as a primer for reverse transcription."
+  },
+  {
+    "source": "self-replication",
+    "display_zh": "自我复制",
+    "canonical_en": "Self-replication",
+    "should_translate": true,
+    "note": "Ability of the element to replicate independently within the host."
+  },
+  {
+    "source": "sequence-specific RNA recognition",
+    "display_zh": "序列特异性 RNA 识别",
+    "canonical_en": "Sequence-specific RNA recognition",
+    "should_translate": false,
+    "note": "Binding dependent on specific nucleotide sequences."
+  },
+  {
+    "source": "SINE 元件移动",
+    "display_zh": "SINE 元件移动",
+    "canonical_en": "SINE element mobilization",
+    "should_translate": false,
+    "note": "'Mobilization' is more precise than 'movement' for transposable elements."
+  },
+  {
+    "source": "siRNA 递送",
+    "display_zh": "siRNA 递送",
+    "canonical_en": "siRNA delivery",
+    "should_translate": false,
+    "note": "Introduction of siRNA into cells."
+  },
+  {
+    "source": "smoke-induced hypomethylation of the LINE-1 promoter",
+    "display_zh": "烟雾诱导的 LINE-1 启动子低甲基化",
+    "canonical_en": "Smoke-induced hypomethylation of the LINE-1 promoter",
+    "should_translate": false,
+    "note": "Environmental factor affecting epigenetic status."
+  },
+  {
+    "source": "snRNA 加工假基因形成",
+    "display_zh": "snRNA 加工假基因形成",
+    "canonical_en": "Processed pseudogene formation from snRNA",
+    "should_translate": false,
+    "note": "Formation of pseudogenes derived from small nuclear RNAs."
+  },
+  {
+    "source": "somatic genome variation",
+    "display_zh": "体细胞基因组变异",
+    "canonical_en": "Somatic genome variation",
+    "should_translate": false,
+    "note": "Genetic changes occurring in non-germline cells."
+  },
+  {
+    "source": "somatic L1 insertion",
+    "display_zh": "体细胞 L1 插入",
+    "canonical_en": "Somatic L1 insertion",
+    "should_translate": false,
+    "note": "Single event of L1 integration in somatic tissue."
+  },
+  {
+    "source": "somatic L1 insertions",
+    "display_zh": "体细胞 L1 插入",
+    "canonical_en": "Somatic L1 insertions",
+    "should_translate": false,
+    "note": "Plural form referring to multiple events; Chinese display name remains same as singular."
+  },
+  {
+    "source": "somatic L1 retrotransposition",
+    "display_zh": "体细胞 L1 逆转录转座",
+    "canonical_en": "Somatic L1 retrotransposition",
+    "should_translate": false,
+    "note": "The process of L1 copying and inserting in somatic cells."
+  },
+  {
+    "source": "somatic mobilization",
+    "display_zh": "体细胞动员",
+    "canonical_en": "Somatic mobilization",
+    "should_translate": false,
+    "note": "Activation and movement of TEs in somatic cells."
+  },
+  {
+    "source": "somatic mutation",
+    "display_zh": "体细胞突变",
+    "canonical_en": "Somatic mutation",
+    "should_translate": false,
+    "note": "General term for genetic alterations in somatic cells."
+  },
+  {
+    "source": "somatic retrotransposition events",
+    "display_zh": "体细胞逆转录转座事件",
+    "canonical_en": "Somatic retrotransposition events",
+    "should_translate": false,
+    "note": "Discrete occurrences of retrotransposition in somatic lineages."
+  },
+  {
+    "source": "somatic TE mobilization",
+    "display_zh": "体细胞转座元件动员",
+    "canonical_en": "Somatic TE mobilization",
+    "should_translate": false,
+    "note": "Broad term covering all TE types moving in somatic cells."
+  },
+  {
+    "source": "Sox2 介导的调控",
+    "display_zh": "Sox2 介导的调控",
+    "canonical_en": "Sox2-mediated regulation",
+    "should_translate": false,
+    "note": "Regulatory control exerted by Sox2 transcription factor."
+  },
+  {
+    "source": "Sp1 依赖性基因表达",
+    "display_zh": "Sp1 依赖性基因表达",
+    "canonical_en": "Sp1-dependent gene expression",
+    "should_translate": false,
+    "note": "Gene expression requiring Sp1 transcription factor."
+  },
+  {
+    "source": "SRP9/14 结合",
+    "display_zh": "SRP9/14 结合",
+    "canonical_en": "SRP9/14 binding",
+    "should_translate": false,
+    "note": "Binding of Signal Recognition Particle subunits 9 and 14."
+  }
+]

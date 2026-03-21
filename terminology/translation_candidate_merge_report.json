@@ -1,0 +1,22 @@
+{
+  "files_processed": [
+    "zh_disease_translation_candidates.json",
+    "zh_function_translation_candidates_batch01.json",
+    "zh_function_translation_candidates_batch02.json",
+    "zh_function_translation_candidates_batch03.json",
+    "zh_function_translation_candidates_batch04.json",
+    "zh_function_translation_candidates_batch05.json",
+    "zh_function_translation_candidates_batch06.json",
+    "zh_function_translation_candidates_batch07.json",
+    "zh_function_translation_candidates_batch08.json",
+    "zh_function_translation_candidates_batch09.json",
+    "zh_function_translation_candidates_batch10.json",
+    "zh_function_translation_candidates_batch11.json",
+    "zh_function_translation_candidates_batch12.json"
+  ],
+  "items_processed": 595,
+  "zh_entries_added": 593,
+  "zh_entries_updated": 1,
+  "en_entries_added": 587,
+  "en_entries_updated": 3
+}

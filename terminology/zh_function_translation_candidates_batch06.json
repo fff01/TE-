@@ -1,0 +1,352 @@
+[
+  {
+    "source": "L1 5'UTR 活性",
+    "display_zh": "L1 5'UTR 活性",
+    "canonical_en": "L1 5' UTR activity",
+    "should_translate": false,
+    "note": "Mixed Chinese/English term; normalized English spacing for UTR."
+  },
+  {
+    "source": "L1 cDNA 生成",
+    "display_zh": "L1 cDNA 生成",
+    "canonical_en": "L1 cDNA synthesis",
+    "should_translate": false,
+    "note": "'生成' in this context refers to reverse transcription synthesis."
+  },
+  {
+    "source": "L1 hypomethylation",
+    "display_zh": "L1 低甲基化",
+    "canonical_en": "L1 hypomethylation",
+    "should_translate": true,
+    "note": "Translated to standard Chinese biomedical terminology."
+  },
+  {
+    "source": "L1 insertion",
+    "display_zh": "L1 插入",
+    "canonical_en": "L1 insertion",
+    "should_translate": true,
+    "note": "Standard term for genomic integration event."
+  },
+  {
+    "source": "L1 mobilization",
+    "display_zh": "L1 动员",
+    "canonical_en": "L1 mobilization",
+    "should_translate": true,
+    "note": "Refers to the transposition capability of L1 elements."
+  },
+  {
+    "source": "L1 mRNA binding",
+    "display_zh": "L1 mRNA 结合",
+    "canonical_en": "L1 mRNA binding",
+    "should_translate": false,
+    "note": "Mixed term; kept concise in Chinese display."
+  },
+  {
+    "source": "L1 mRNA 表达上调",
+    "display_zh": "L1 mRNA 表达上调",
+    "canonical_en": "L1 mRNA upregulation",
+    "should_translate": false,
+    "note": "Standard Chinese phrasing for increased expression."
+  },
+  {
+    "source": "L1 ORF1p protein expression",
+    "display_zh": "L1 ORF1p 蛋白表达",
+    "canonical_en": "L1 ORF1p expression",
+    "should_translate": false,
+    "note": "Removed redundant 'protein' in canonical English as 'p' implies protein."
+  },
+  {
+    "source": "L1 ORF1p 表达抑制",
+    "display_zh": "L1 ORF1p 表达抑制",
+    "canonical_en": "L1 ORF1p expression inhibition",
+    "should_translate": false,
+    "note": "Direct translation of suppression mechanism."
+  },
+  {
+    "source": "L1 ORF1p 与 APOBEC3C 相互作用",
+    "display_zh": "L1 ORF1p 与 APOBEC3C 相互作用",
+    "canonical_en": "L1 ORF1p-APOBEC3C interaction",
+    "should_translate": false,
+    "note": "Protein-protein interaction term."
+  },
+  {
+    "source": "L1 ORF2 protein translation",
+    "display_zh": "L1 ORF2 蛋白翻译",
+    "canonical_en": "L1 ORF2p translation",
+    "should_translate": false,
+    "note": "Normalized ORF2 protein to ORF2p for consistency."
+  },
+  {
+    "source": "L1 ORF2p pausing",
+    "display_zh": "L1 ORF2p 暂停",
+    "canonical_en": "L1 ORF2p pausing",
+    "should_translate": true,
+    "note": "Refers to ribosomal or enzymatic pausing during translation/catalysis."
+  },
+  {
+    "source": "L1 ORF2p 内切酶介导的插入",
+    "display_zh": "L1 ORF2p 内切酶介导的插入",
+    "canonical_en": "L1 ORF2p endonuclease-mediated insertion",
+    "should_translate": false,
+    "note": "Describes Target-Primed Reverse Transcription (TPRT) mechanism."
+  },
+  {
+    "source": "L1 retrotransposition (L1-RTP)",
+    "display_zh": "L1 逆转录转座",
+    "canonical_en": "L1 retrotransposition",
+    "should_translate": true,
+    "note": "Expanded abbreviation in display; canonical form excludes parenthetical acronym."
+  },
+  {
+    "source": "L1 ribonucleoprotein complex integrity",
+    "display_zh": "L1 核糖核蛋白复合物完整性",
+    "canonical_en": "L1 RNP complex integrity",
+    "should_translate": true,
+    "note": "Translated full term; canonical uses standard RNP abbreviation."
+  },
+  {
+    "source": "L1 RNA 3'UTR 依赖的蛋白复合物结合",
+    "display_zh": "L1 RNA 3'UTR 依赖的蛋白复合物结合",
+    "canonical_en": "L1 RNA 3' UTR-dependent protein complex binding",
+    "should_translate": false,
+    "note": "Complex descriptive term; maintained accuracy."
+  },
+  {
+    "source": "L1 RNA 表达",
+    "display_zh": "L1 RNA 表达",
+    "canonical_en": "L1 RNA expression",
+    "should_translate": false,
+    "note": "Standard expression term."
+  },
+  {
+    "source": "L1 RNA 和核糖核蛋白颗粒完整性丧失",
+    "display_zh": "L1 RNA 及 RNP 颗粒完整性丧失",
+    "canonical_en": "Loss of L1 RNA and RNP granule integrity",
+    "should_translate": false,
+    "note": "Simplified '核糖核蛋白' to 'RNP' in Chinese display for conciseness."
+  },
+  {
+    "source": "L1 RNA 与 RNA/DNA 结合蛋白相互作用",
+    "display_zh": "L1 RNA 与 RNA/DNA 结合蛋白相互作用",
+    "canonical_en": "L1 RNA interaction with RNA/DNA-binding proteins",
+    "should_translate": false,
+    "note": "Specific interaction type."
+  },
+  {
+    "source": "L1 RNP formation",
+    "display_zh": "L1 RNP 形成",
+    "canonical_en": "L1 RNP formation",
+    "should_translate": false,
+    "note": "Standard assembly term."
+  },
+  {
+    "source": "L1 RNP translocation",
+    "display_zh": "L1 RNP 易位",
+    "canonical_en": "L1 RNP translocation",
+    "should_translate": true,
+    "note": "Cellular transport process."
+  },
+  {
+    "source": "L1 RNP 复合物形成",
+    "display_zh": "L1 RNP 复合物形成",
+    "canonical_en": "L1 RNP complex formation",
+    "should_translate": false,
+    "note": "Synonymous with RNP formation; kept distinct per source."
+  },
+  {
+    "source": "L1 transcription",
+    "display_zh": "L1 转录",
+    "canonical_en": "L1 transcription",
+    "should_translate": true,
+    "note": "Fundamental biological process."
+  },
+  {
+    "source": "L1 transcription inhibition",
+    "display_zh": "L1 转录抑制",
+    "canonical_en": "L1 transcription inhibition",
+    "should_translate": true,
+    "note": "Regulatory mechanism."
+  },
+  {
+    "source": "L1 translation",
+    "display_zh": "L1 翻译",
+    "canonical_en": "L1 translation",
+    "should_translate": true,
+    "note": "Protein synthesis process."
+  },
+  {
+    "source": "L1 translation inhibition",
+    "display_zh": "L1 翻译抑制",
+    "canonical_en": "L1 translation inhibition",
+    "should_translate": true,
+    "note": "Regulatory mechanism."
+  },
+  {
+    "source": "L1-宿主相互作用",
+    "display_zh": "L1-宿主相互作用",
+    "canonical_en": "L1-host interaction",
+    "should_translate": false,
+    "note": "Broad interaction category."
+  },
+  {
+    "source": "L1-EN 序列特异性切割",
+    "display_zh": "L1-EN 序列特异性切割",
+    "canonical_en": "L1 endonuclease sequence-specific cleavage",
+    "should_translate": false,
+    "note": "EN stands for Endonuclease; expanded in canonical English."
+  },
+  {
+    "source": "L1-MET expression increase",
+    "display_zh": "L1-MET 表达增加",
+    "canonical_en": "L1-MET expression increase",
+    "should_translate": true,
+    "note": "MET likely refers to a specific gene or methionine context; kept as acronym."
+  },
+  {
+    "source": "L1-ORF overexpression",
+    "display_zh": "L1-ORF 过表达",
+    "canonical_en": "L1 ORF overexpression",
+    "should_translate": true,
+    "note": "General overexpression of Open Reading Frames."
+  },
+  {
+    "source": "L1-ORF1 蛋白染色质招募",
+    "display_zh": "L1-ORF1 蛋白染色质招募",
+    "canonical_en": "L1 ORF1p chromatin recruitment",
+    "should_translate": false,
+    "note": "Normalized protein name to ORF1p in English."
+  },
+  {
+    "source": "L1-ORF1p 核定位",
+    "display_zh": "L1-ORF1p 核定位",
+    "canonical_en": "L1 ORF1p nuclear localization",
+    "should_translate": false,
+    "note": "Subcellular localization event."
+  },
+  {
+    "source": "L1-RNP 形成",
+    "display_zh": "L1-RNP 形成",
+    "canonical_en": "L1 RNP formation",
+    "should_translate": false,
+    "note": "Duplicate concept with slight formatting difference; normalized."
+  },
+  {
+    "source": "L1-RTP induction",
+    "display_zh": "L1 逆转录转座诱导",
+    "canonical_en": "L1 retrotransposition induction",
+    "should_translate": true,
+    "note": "Expanded RTP to full term in both languages for clarity."
+  },
+  {
+    "source": "L1 编码蛋白表达",
+    "display_zh": "L1 编码蛋白表达",
+    "canonical_en": "L1-encoded protein expression",
+    "should_translate": false,
+    "note": "Refers to proteins translated from L1 mRNA."
+  },
+  {
+    "source": "L1 表达",
+    "display_zh": "L1 表达",
+    "canonical_en": "L1 expression",
+    "should_translate": false,
+    "note": "General term covering transcription and translation."
+  },
+  {
+    "source": "L1 插入生成",
+    "display_zh": "L1 插入生成",
+    "canonical_en": "L1 insertion generation",
+    "should_translate": false,
+    "note": "Refers to the creation of new insertion events."
+  },
+  {
+    "source": "L1 插入中间体相互重组",
+    "display_zh": "L1 插入中间体相互重组",
+    "canonical_en": "Recombination between L1 insertion intermediates",
+    "should_translate": false,
+    "note": "Specific recombination mechanism."
+  },
+  {
+    "source": "L1 插入中间体与远端 DNA 断裂重组",
+    "display_zh": "L1 插入中间体与远端 DNA 断裂重组",
+    "canonical_en": "Recombination of L1 insertion intermediates with distal DNA breaks",
+    "should_translate": false,
+    "note": "Describes trans-recombination events."
+  },
+  {
+    "source": "L1 蛋白表达",
+    "display_zh": "L1 蛋白表达",
+    "canonical_en": "L1 protein expression",
+    "should_translate": false,
+    "note": "General protein expression term."
+  },
+  {
+    "source": "L1 蛋白表达抑制",
+    "display_zh": "L1 蛋白表达抑制",
+    "canonical_en": "L1 protein expression inhibition",
+    "should_translate": false,
+    "note": "Suppression of protein production."
+  },
+  {
+    "source": "L1 反义启动子活性",
+    "display_zh": "L1 反义启动子活性",
+    "canonical_en": "L1 antisense promoter activity",
+    "should_translate": false,
+    "note": "Activity of the promoter on the antisense strand."
+  },
+  {
+    "source": "L1 反义启动子转录",
+    "display_zh": "L1 反义启动子转录",
+    "canonical_en": "L1 antisense promoter transcription",
+    "should_translate": false,
+    "note": "Transcription initiated from the antisense promoter."
+  },
+  {
+    "source": "L1 辅助的 Alu 逆转录转座",
+    "display_zh": "L1 辅助的 Alu 逆转录转座",
+    "canonical_en": "L1-mediated Alu retrotransposition",
+    "should_translate": false,
+    "note": "Alu elements rely on L1 machinery for mobilization."
+  },
+  {
+    "source": "L1 复制",
+    "display_zh": "L1 复制",
+    "canonical_en": "L1 replication",
+    "should_translate": false,
+    "note": "Often used loosely for retrotransposition; canonical term is precise."
+  },
+  {
+    "source": "L1 核输入",
+    "display_zh": "L1 核输入",
+    "canonical_en": "L1 nuclear import",
+    "should_translate": true,
+    "note": "Transport into the nucleus."
+  },
+  {
+    "source": "L1 核酸内切酶切割活性",
+    "display_zh": "L1 核酸内切酶切割活性",
+    "canonical_en": "L1 endonuclease cleavage activity",
+    "should_translate": false,
+    "note": "Enzymatic activity of ORF2p."
+  },
+  {
+    "source": "L1 核酸内切酶依赖的逆转录转座",
+    "display_zh": "L1 核酸内切酶依赖的逆转录转座",
+    "canonical_en": "Endonuclease-dependent L1 retrotransposition",
+    "should_translate": false,
+    "note": "Distinguishes TPRT from endonuclease-independent mechanisms."
+  },
+  {
+    "source": "L1 核糖核蛋白（RNP）形成",
+    "display_zh": "L1 核糖核蛋白 (RNP) 形成",
+    "canonical_en": "L1 RNP formation",
+    "should_translate": false,
+    "note": "Normalized punctuation and acronym usage."
+  },
+  {
+    "source": "L1 核糖核蛋白复合体形成",
+    "display_zh": "L1 核糖核蛋白复合体形成",
+    "canonical_en": "L1 RNP complex formation",
+    "should_translate": false,
+    "note": "Synonymous with RNP formation; '复合体' vs '颗粒' nuance preserved in source."
+  }
+]

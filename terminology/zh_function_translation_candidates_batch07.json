@@ -1,0 +1,352 @@
+[
+  {
+    "source": "L1 活性抑制",
+    "display_zh": "L1 活性抑制",
+    "canonical_en": "L1 activity inhibition",
+    "should_translate": false,
+    "note": "Term is already in natural Chinese; canonical English provided for normalization."
+  },
+  {
+    "source": "L1 介导的逆转录转座",
+    "display_zh": "L1 介导的逆转录转座",
+    "canonical_en": "L1-mediated retrotransposition",
+    "should_translate": false,
+    "note": "Standard biomedical term in Chinese; English normalized to standard nomenclature."
+  },
+  {
+    "source": "L1 介导的逆转录转座机制",
+    "display_zh": "L1 介导的逆转录转座机制",
+    "canonical_en": "mechanism of L1-mediated retrotransposition",
+    "should_translate": false,
+    "note": "Descriptive phrase kept in Chinese; English expanded for clarity."
+  },
+  {
+    "source": "L1 介导的逆转录转座事件",
+    "display_zh": "L1 介导的逆转录转座事件",
+    "canonical_en": "L1-mediated retrotransposition event",
+    "should_translate": false,
+    "note": "Event-specific terminology preserved in Chinese."
+  },
+  {
+    "source": "L1 介导的逆转座",
+    "display_zh": "L1 介导的逆转座",
+    "canonical_en": "L1-mediated retroposition",
+    "should_translate": false,
+    "note": "'逆转座' is a concise variant of '逆转录转座'; mapped to 'retroposition' where context implies non-replicative or general movement, otherwise synonymous with retrotransposition."
+  },
+  {
+    "source": "L1 介导的突变",
+    "display_zh": "L1 介导的突变",
+    "canonical_en": "L1-mediated mutation",
+    "should_translate": false,
+    "note": "Direct mapping maintained."
+  },
+  {
+    "source": "L1 内切酶非依赖性逆转录转座",
+    "display_zh": "L1 内切酶非依赖性逆转录转座",
+    "canonical_en": "endonuclease-independent L1 retrotransposition",
+    "should_translate": false,
+    "note": "Technical specificity preserved."
+  },
+  {
+    "source": "L1 内切酶活性",
+    "display_zh": "L1 内切酶活性",
+    "canonical_en": "L1 endonuclease activity",
+    "should_translate": false,
+    "note": "Standard enzyme activity term."
+  },
+  {
+    "source": "L1 内切酶介导的插入",
+    "display_zh": "L1 内切酶介导的插入",
+    "canonical_en": "L1 endonuclease-mediated insertion",
+    "should_translate": false,
+    "note": "Mechanism-specific term."
+  },
+  {
+    "source": "L1 内切酶介导的 DNA 切割",
+    "display_zh": "L1 内切酶介导的 DNA 切割",
+    "canonical_en": "L1 endonuclease-mediated DNA cleavage",
+    "should_translate": false,
+    "note": "'Cleavage' is preferred over 'cutting' in formal contexts."
+  },
+  {
+    "source": "L1 内切酶切割",
+    "display_zh": "L1 内切酶切割",
+    "canonical_en": "L1 endonuclease cleavage",
+    "should_translate": false,
+    "note": "Concise form of the above."
+  },
+  {
+    "source": "L1 内切酶依赖性逆转录转座",
+    "display_zh": "L1 内切酶依赖性逆转录转座",
+    "canonical_en": "endonuclease-dependent L1 retrotransposition",
+    "should_translate": false,
+    "note": "Contrasts with independent mechanism."
+  },
+  {
+    "source": "L1 逆转录",
+    "display_zh": "L1 逆转录",
+    "canonical_en": "L1 reverse transcription",
+    "should_translate": false,
+    "note": "Core molecular process."
+  },
+  {
+    "source": "L1 逆转录酶活性",
+    "display_zh": "L1 逆转录酶活性",
+    "canonical_en": "L1 reverse transcriptase activity",
+    "should_translate": false,
+    "note": "Enzymatic activity definition."
+  },
+  {
+    "source": "L1 逆转录抑制",
+    "display_zh": "L1 逆转录抑制",
+    "canonical_en": "L1 reverse transcription inhibition",
+    "should_translate": false,
+    "note": "Process-specific inhibition."
+  },
+  {
+    "source": "L1 逆转录转座",
+    "display_zh": "L1 逆转录转座",
+    "canonical_en": "L1 retrotransposition",
+    "should_translate": false,
+    "note": "General term for the transposition mechanism."
+  },
+  {
+    "source": "L1 逆转录转座活性",
+    "display_zh": "L1 逆转录转座活性",
+    "canonical_en": "L1 retrotransposition activity",
+    "should_translate": false,
+    "note": "Quantifiable biological activity."
+  },
+  {
+    "source": "L1 逆转录转座诱导",
+    "display_zh": "L1 逆转录转座诱导",
+    "canonical_en": "induction of L1 retrotransposition",
+    "should_translate": false,
+    "note": "Causal relationship described."
+  },
+  {
+    "source": "L1 逆转录转座子活性",
+    "display_zh": "L1 逆转录转座子活性",
+    "canonical_en": "L1 retrotransposon activity",
+    "should_translate": false,
+    "note": "Refers to the element itself as an active agent."
+  },
+  {
+    "source": "L1 启动子低甲基化",
+    "display_zh": "L1 启动子低甲基化",
+    "canonical_en": "L1 promoter hypomethylation",
+    "should_translate": false,
+    "note": "Epigenetic state description."
+  },
+  {
+    "source": "L1 启动子去甲基化",
+    "display_zh": "L1 启动子去甲基化",
+    "canonical_en": "L1 promoter demethylation",
+    "should_translate": false,
+    "note": "Active epigenetic process."
+  },
+  {
+    "source": "L1 启动子转录",
+    "display_zh": "L1 启动子转录",
+    "canonical_en": "L1 promoter transcription",
+    "should_translate": false,
+    "note": "Transcription initiation from promoter."
+  },
+  {
+    "source": "L1 嵌合转录本形成",
+    "display_zh": "L1 嵌合转录本形成",
+    "canonical_en": "formation of L1 chimeric transcripts",
+    "should_translate": false,
+    "note": "Describes generation of fusion RNAs."
+  },
+  {
+    "source": "L1 去甲基化",
+    "display_zh": "L1 去甲基化",
+    "canonical_en": "L1 demethylation",
+    "should_translate": false,
+    "note": "General demethylation of the element."
+  },
+  {
+    "source": "L1 生命周期",
+    "display_zh": "L1 生命周期",
+    "canonical_en": "L1 life cycle",
+    "should_translate": false,
+    "note": "Broad conceptual term."
+  },
+  {
+    "source": "L1 生命周期调控",
+    "display_zh": "L1 生命周期调控",
+    "canonical_en": "regulation of the L1 life cycle",
+    "should_translate": false,
+    "note": "Control mechanisms of the life cycle."
+  },
+  {
+    "source": "L1 失调",
+    "display_zh": "L1 失调",
+    "canonical_en": "L1 dysregulation",
+    "should_translate": false,
+    "note": "Pathological or abnormal state."
+  },
+  {
+    "source": "L1 样逆转录转座",
+    "display_zh": "L1 样逆转录转座",
+    "canonical_en": "L1-like retrotransposition",
+    "should_translate": false,
+    "note": "Refers to similar mechanisms in other elements."
+  },
+  {
+    "source": "L1 依赖的超凝缩蛋白复合物形成",
+    "display_zh": "L1 依赖的超凝缩蛋白复合物形成",
+    "canonical_en": "L1-dependent condensin complex formation",
+    "should_translate": false,
+    "note": "Specific protein complex interaction; '超凝缩蛋白' maps to condensin."
+  },
+  {
+    "source": "L1 移动性",
+    "display_zh": "L1 移动性",
+    "canonical_en": "L1 mobility",
+    "should_translate": false,
+    "note": "Capability to move within the genome."
+  },
+  {
+    "source": "L1 抑制",
+    "display_zh": "L1 抑制",
+    "canonical_en": "L1 suppression",
+    "should_translate": false,
+    "note": "General term for inhibition."
+  },
+  {
+    "source": "L1 抑制反馈环路",
+    "display_zh": "L1 抑制反馈环路",
+    "canonical_en": "L1 suppression feedback loop",
+    "should_translate": false,
+    "note": "Regulatory circuit description."
+  },
+  {
+    "source": "L1 诱导的损伤",
+    "display_zh": "L1 诱导的损伤",
+    "canonical_en": "L1-induced damage",
+    "should_translate": false,
+    "note": "Consequence of L1 activity."
+  },
+  {
+    "source": "L1 元件倒位",
+    "display_zh": "L1 元件倒位",
+    "canonical_en": "L1 element inversion",
+    "should_translate": false,
+    "note": "Structural genomic variation."
+  },
+  {
+    "source": "L1 元件依赖性逆转录转座",
+    "display_zh": "L1 元件依赖性逆转录转座",
+    "canonical_en": "L1 element-dependent retrotransposition",
+    "should_translate": false,
+    "note": "Emphasizes reliance on the specific element."
+  },
+  {
+    "source": "L1 杂交富集法",
+    "display_zh": "L1 杂交富集法",
+    "canonical_en": "L1 hybridization enrichment method",
+    "should_translate": false,
+    "note": "Laboratory technique description."
+  },
+  {
+    "source": "L1 再激活",
+    "display_zh": "L1 再激活",
+    "canonical_en": "L1 reactivation",
+    "should_translate": false,
+    "note": "Return to active state."
+  },
+  {
+    "source": "L1 整合",
+    "display_zh": "L1 整合",
+    "canonical_en": "L1 integration",
+    "should_translate": false,
+    "note": "Insertion into host genome."
+  },
+  {
+    "source": "L1 直接插入",
+    "display_zh": "L1 直接插入",
+    "canonical_en": "direct L1 insertion",
+    "should_translate": false,
+    "note": "Specific mode of integration."
+  },
+  {
+    "source": "L1 转座驱动的 Alu 插入",
+    "display_zh": "L1 转座驱动的 Alu 插入",
+    "canonical_en": "L1 transposition-driven Alu insertion",
+    "should_translate": false,
+    "note": "Trans-complementation event."
+  },
+  {
+    "source": "L1 转座驱动的 SVA 插入",
+    "display_zh": "L1 转座驱动的 SVA 插入",
+    "canonical_en": "L1 transposition-driven SVA insertion",
+    "should_translate": false,
+    "note": "Trans-complementation event involving SVA elements."
+  },
+  {
+    "source": "L1Hs 5'UTR 反义启动子活性",
+    "display_zh": "L1Hs 5'UTR 反义启动子活性",
+    "canonical_en": "L1Hs 5' UTR antisense promoter activity",
+    "should_translate": false,
+    "note": "Specific human subtype (Hs) and strand orientation."
+  },
+  {
+    "source": "L1Hs 逆转录转座",
+    "display_zh": "L1Hs 逆转录转座",
+    "canonical_en": "L1Hs retrotransposition",
+    "should_translate": false,
+    "note": "Human-specific L1 retrotransposition."
+  },
+  {
+    "source": "L1Hs 转录",
+    "display_zh": "L1Hs 转录",
+    "canonical_en": "L1Hs transcription",
+    "should_translate": false,
+    "note": "Transcription of human-specific L1."
+  },
+  {
+    "source": "L1ORF1p 表达",
+    "display_zh": "L1ORF1p 表达",
+    "canonical_en": "L1 ORF1p expression",
+    "should_translate": false,
+    "note": "Protein expression; added space for readability in English."
+  },
+  {
+    "source": "L1ORF1p 三聚化",
+    "display_zh": "L1ORF1p 三聚化",
+    "canonical_en": "L1 ORF1p trimerization",
+    "should_translate": false,
+    "note": "Protein oligomerization state."
+  },
+  {
+    "source": "L1ORF2p 表达",
+    "display_zh": "L1ORF2p 表达",
+    "canonical_en": "L1 ORF2p expression",
+    "should_translate": false,
+    "note": "Protein expression."
+  },
+  {
+    "source": "L1RNA 包装",
+    "display_zh": "L1RNA 包装",
+    "canonical_en": "L1 RNA packaging",
+    "should_translate": false,
+    "note": "Ribonucleoprotein particle assembly."
+  },
+  {
+    "source": "LINE-1 5' UTR 启动子活性抑制",
+    "display_zh": "LINE-1 5' UTR 启动子活性抑制",
+    "canonical_en": "inhibition of LINE-1 5' UTR promoter activity",
+    "should_translate": false,
+    "note": "Full name 'LINE-1' used in source; kept consistent."
+  },
+  {
+    "source": "LINE-1 5'-UTR 启动子活性",
+    "display_zh": "LINE-1 5'-UTR 启动子活性",
+    "canonical_en": "LINE-1 5' UTR promoter activity",
+    "should_translate": false,
+    "note": "Normalized hyphenation in English."
+  }
+]

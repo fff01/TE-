@@ -1,4 +1,5 @@
 category,key,value
+name_zh,TE,人类转座子
 name_zh,Alu/SVA retrotransposition,Alu/SVA 逆转录转座
 name_zh,brain-specific insertion,脑特异性插入
 name_zh,L1-mediated retrotransposition,L1 介导的逆转录转座
@@ -9,7 +10,6 @@ name_zh,cutaneous T-cell lymphomas (CTCL),皮肤 T 细胞淋巴瘤（CTCL）
 name_zh,epithelial tumors,上皮性肿瘤
 name_zh,Alzheimer's disease,阿尔茨海默病
 name_zh,Huntington's Disease,亨廷顿病
-name_zh,Huntington's disease,亨廷顿病
 name_zh,Down syndrome,唐氏综合征
 name_zh,Rett syndrome,Rett 综合征
 name_zh,Rett综合征,Rett 综合征
@@ -215,6 +215,7 @@ name_zh,cell migration,细胞迁移
 name_zh,retrotransposition activity,逆转录转座活性
 name_zh,retrotransposition inhibition,逆转录转座抑制
 name_zh,insertion mutation,插入突变
+name_en,人类转座子,TE
 name_en,Alu转座,Alu transposition
 name_en,L1介导的突变,L1-mediated mutation
 name_en,双链断裂,double-strand break
@@ -458,23 +459,15 @@ name_en,异常mRNA剪接,aberrant mRNA splicing
 name_en,影响DNA甲基化,affects DNA methylation
 name_en,与非编码RNA相关,associated with noncoding RNA
 name_en,在G1/S期阻滞细胞中转座,retrotransposition in G1/S-arrested cells
-relation_zh,SUBFAMILY_OF,属于亚家族谱系
-relation_zh,EVIDENCE_RELATION,报道
+relation_zh,SUBFAMILY_OF,包含亚家族
 relation_zh,与...相关,与…相关
-relation_zh,与…相关,与…相关
 relation_zh,不导致,不导致
-relation_zh,导致,导致
 relation_zh,促进,促进
-relation_zh,参与,参与
 relation_zh,介导,介导
 relation_zh,报道,报道
-relation_en,SUBFAMILY_OF,subfamily of
-relation_en,EVIDENCE_RELATION,reports
+relation_en,SUBFAMILY_OF,contains subfamily
 relation_en,与...相关,associated with
-relation_en,与…相关,associated with
 relation_en,不导致,does not cause
-relation_en,导致,causes
 relation_en,促进,promotes
-relation_en,参与,participates in
 relation_en,介导,mediates
 relation_en,报道,reports

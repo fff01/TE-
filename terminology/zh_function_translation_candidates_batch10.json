@@ -1,0 +1,352 @@
+[
+  {
+    "source": "ORF2p 降解",
+    "display_zh": "ORF2p 降解",
+    "canonical_en": "ORF2p degradation",
+    "should_translate": false,
+    "note": "Term is already in natural Chinese; ORF2p is a standard protein abbreviation."
+  },
+  {
+    "source": "ORF2p 介导的 LINE-1 RNP 逆转录",
+    "display_zh": "ORF2p 介导的 LINE-1 RNP 逆转录",
+    "canonical_en": "ORF2p-mediated LINE-1 RNP reverse transcription",
+    "should_translate": false,
+    "note": "Accurate Chinese description of the mechanism; RNP stands for ribonucleoprotein."
+  },
+  {
+    "source": "ORF2p 逆转录酶活性",
+    "display_zh": "ORF2p 逆转录酶活性",
+    "canonical_en": "ORF2p reverse transcriptase activity",
+    "should_translate": false,
+    "note": "Standard biomedical terminology in Chinese."
+  },
+  {
+    "source": "ORF2p 驱动的 Alu 逆转录转座",
+    "display_zh": "ORF2p 驱动的 Alu 逆转录转座",
+    "canonical_en": "ORF2p-driven Alu retrotransposition",
+    "should_translate": false,
+    "note": "Precise description of the trans-mobilization mechanism."
+  },
+  {
+    "source": "ORF2p 与 Alu RNA 结合",
+    "display_zh": "ORF2p 与 Alu RNA 结合",
+    "canonical_en": "ORF2p binding to Alu RNA",
+    "should_translate": false,
+    "note": "Describes specific molecular interaction."
+  },
+  {
+    "source": "ORF2p 与 L1 RNA 结合",
+    "display_zh": "ORF2p 与 L1 RNA 结合",
+    "canonical_en": "ORF2p binding to L1 RNA",
+    "should_translate": false,
+    "note": "Describes specific molecular interaction."
+  },
+  {
+    "source": "orphan 3' transduction",
+    "display_zh": "孤立 3' 转导",
+    "canonical_en": "orphan 3' transduction",
+    "should_translate": true,
+    "note": "Refers to transduction events lacking the 5' end of the element; '孤立' captures the 'orphan' nature."
+  },
+  {
+    "source": "p300 降解",
+    "display_zh": "p300 降解",
+    "canonical_en": "p300 degradation",
+    "should_translate": false,
+    "note": "p300 is a standard histone acetyltransferase name."
+  },
+  {
+    "source": "p38delta MAP 激酶诱导",
+    "display_zh": "p38δ MAP 激酶诱导",
+    "canonical_en": "p38δ MAP kinase induction",
+    "should_translate": false,
+    "note": "Normalized delta to symbol δ for conciseness; standard kinase nomenclature."
+  },
+  {
+    "source": "p53 结合",
+    "display_zh": "p53 结合",
+    "canonical_en": "p53 binding",
+    "should_translate": false,
+    "note": "Standard protein-DNA or protein-protein interaction term."
+  },
+  {
+    "source": "p53 介导的凋亡通路激活",
+    "display_zh": "p53 介导的凋亡通路激活",
+    "canonical_en": "p53-mediated apoptotic pathway activation",
+    "should_translate": false,
+    "note": "Accurate description of signaling cascade."
+  },
+  {
+    "source": "p53 介导的 L1 抑制",
+    "display_zh": "p53 介导的 L1 抑制",
+    "canonical_en": "p53-mediated L1 repression",
+    "should_translate": false,
+    "note": "'Repression' is often preferred over 'inhibition' for gene expression contexts, but '抑制' covers both."
+  },
+  {
+    "source": "PI3K 信号通路",
+    "display_zh": "PI3K 信号通路",
+    "canonical_en": "PI3K signaling pathway",
+    "should_translate": false,
+    "note": "Standard pathway name."
+  },
+  {
+    "source": "PIN1 胞质定位增加",
+    "display_zh": "PIN1 胞质定位增加",
+    "canonical_en": "increased PIN1 cytoplasmic localization",
+    "should_translate": false,
+    "note": "Describes change in subcellular distribution."
+  },
+  {
+    "source": "preintegration barrier",
+    "display_zh": "整合前屏障",
+    "canonical_en": "preintegration barrier",
+    "should_translate": true,
+    "note": "Mechanisms preventing retrotransposon integration prior to insertion."
+  },
+  {
+    "source": "premature insertion mechanisms",
+    "display_zh": "过早插入机制",
+    "canonical_en": "premature insertion mechanisms",
+    "should_translate": true,
+    "note": "Refers to target-primed reverse transcription occurring before full complex assembly or transport."
+  },
+  {
+    "source": "premature stop codon creation",
+    "display_zh": "提前终止密码子产生",
+    "canonical_en": "premature stop codon creation",
+    "should_translate": true,
+    "note": "Describes mutation leading to truncated proteins."
+  },
+  {
+    "source": "processivity",
+    "display_zh": "持续合成能力",
+    "canonical_en": "processivity",
+    "should_translate": true,
+    "note": "Enzymatic property describing the number of nucleotides added per binding event."
+  },
+  {
+    "source": "programmed cell death",
+    "display_zh": "程序性细胞死亡",
+    "canonical_en": "programmed cell death",
+    "should_translate": true,
+    "note": "Standard biological term encompassing apoptosis and other forms."
+  },
+  {
+    "source": "promoter activity regulation of LINE-1 5'-UTR",
+    "display_zh": "LINE-1 5'-UTR 启动子活性调控",
+    "canonical_en": "regulation of LINE-1 5'-UTR promoter activity",
+    "should_translate": true,
+    "note": "Reordered for natural Chinese flow while maintaining accuracy."
+  },
+  {
+    "source": "protein aggregation",
+    "display_zh": "蛋白聚集",
+    "canonical_en": "protein aggregation",
+    "should_translate": true,
+    "note": "Common pathological or physiological phenomenon."
+  },
+  {
+    "source": "protein expression",
+    "display_zh": "蛋白表达",
+    "canonical_en": "protein expression",
+    "should_translate": true,
+    "note": "General term for protein synthesis levels."
+  },
+  {
+    "source": "protein sequestration",
+    "display_zh": "蛋白隔离",
+    "canonical_en": "protein sequestration",
+    "should_translate": true,
+    "note": "Refers to trapping of proteins in aggregates or complexes, rendering them non-functional."
+  },
+  {
+    "source": "providing alternative promoters",
+    "display_zh": "提供替代启动子",
+    "canonical_en": "provision of alternative promoters",
+    "should_translate": true,
+    "note": "Describes retrotransposon capability to drive downstream gene expression."
+  },
+  {
+    "source": "providing polyadenylation signals",
+    "display_zh": "提供多聚腺苷酸化信号",
+    "canonical_en": "provision of polyadenylation signals",
+    "should_translate": true,
+    "note": "Describes retrotransposon capability to terminate transcription of upstream genes."
+  },
+  {
+    "source": "R-loop 形成",
+    "display_zh": "R-loop 形成",
+    "canonical_en": "R-loop formation",
+    "should_translate": false,
+    "note": "R-loop is a standard structural biology term kept in English within Chinese text."
+  },
+  {
+    "source": "rare heritable germline insertion",
+    "display_zh": "罕见可遗传生殖系插入",
+    "canonical_en": "rare heritable germline insertion",
+    "should_translate": true,
+    "note": "Specific type of de novo mutation passed to offspring."
+  },
+  {
+    "source": "rc-L1s 表达",
+    "display_zh": "rc-L1s 表达",
+    "canonical_en": "rc-L1 expression",
+    "should_translate": false,
+    "note": "rc-L1 refers to retrotransposition-competent L1; normalized singular form in English."
+  },
+  {
+    "source": "readthrough transcription",
+    "display_zh": "通读转录",
+    "canonical_en": "readthrough transcription",
+    "should_translate": true,
+    "note": "Transcription continuing past the normal termination site."
+  },
+  {
+    "source": "reciprocal translocation",
+    "display_zh": "相互易位",
+    "canonical_en": "reciprocal translocation",
+    "should_translate": true,
+    "note": "Specific chromosomal rearrangement type."
+  },
+  {
+    "source": "recombination",
+    "display_zh": "重组",
+    "canonical_en": "recombination",
+    "should_translate": true,
+    "note": "General genetic term."
+  },
+  {
+    "source": "recombination events",
+    "display_zh": "重组事件",
+    "canonical_en": "recombination events",
+    "should_translate": true,
+    "note": "Plural form indicating multiple occurrences."
+  },
+  {
+    "source": "reduced gene expression",
+    "display_zh": "基因表达降低",
+    "canonical_en": "reduced gene expression",
+    "should_translate": true,
+    "note": "Describes downregulation."
+  },
+  {
+    "source": "regulation of gene expression",
+    "display_zh": "基因表达调控",
+    "canonical_en": "regulation of gene expression",
+    "should_translate": true,
+    "note": "Broad biological process."
+  },
+  {
+    "source": "regulation of L1 expression",
+    "display_zh": "L1 表达调控",
+    "canonical_en": "regulation of L1 expression",
+    "should_translate": true,
+    "note": "Specific to LINE-1 elements."
+  },
+  {
+    "source": "regulation of retrotransposition",
+    "display_zh": "逆转录转座调控",
+    "canonical_en": "regulation of retrotransposition",
+    "should_translate": true,
+    "note": "Control of the mobilization process."
+  },
+  {
+    "source": "replication-coupled DNA repair",
+    "display_zh": "复制偶联 DNA 修复",
+    "canonical_en": "replication-coupled DNA repair",
+    "should_translate": true,
+    "note": "Repair mechanisms occurring during DNA replication."
+  },
+  {
+    "source": "replication-fork restart",
+    "display_zh": "复制叉重启",
+    "canonical_en": "replication fork restart",
+    "should_translate": true,
+    "note": "Resumption of stalled DNA replication."
+  },
+  {
+    "source": "replication-stress signaling",
+    "display_zh": "复制应激信号传导",
+    "canonical_en": "replication stress signaling",
+    "should_translate": true,
+    "note": "Cellular response to impaired DNA replication."
+  },
+  {
+    "source": "repression of L1 by Mecp2/Mbd2",
+    "display_zh": "Mecp2/Mbd2 介导的 L1 抑制",
+    "canonical_en": "repression of L1 by Mecp2/Mbd2",
+    "should_translate": true,
+    "note": "Specific epigenetic silencing mechanism involving methyl-CpG binding proteins."
+  },
+  {
+    "source": "retrotransposition-dependent disease initiation",
+    "display_zh": "逆转录转座依赖性疾病的起始",
+    "canonical_en": "retrotransposition-dependent disease initiation",
+    "should_translate": true,
+    "note": "Disease causation directly linked to new insertions."
+  },
+  {
+    "source": "retrotransposition-dependent mechanisms",
+    "display_zh": "逆转录转座依赖性机制",
+    "canonical_en": "retrotransposition-dependent mechanisms",
+    "should_translate": true,
+    "note": "Biological processes requiring active retrotransposition."
+  },
+  {
+    "source": "retrotransposition-independent disease initiation",
+    "display_zh": "逆转录转座非依赖性疾病的起始",
+    "canonical_en": "retrotransposition-independent disease initiation",
+    "should_translate": true,
+    "note": "Disease caused by retrotransposon sequences without new movement (e.g., via expression)."
+  },
+  {
+    "source": "retrotransposition-independent mechanisms",
+    "display_zh": "逆转录转座非依赖性机制",
+    "canonical_en": "retrotransposition-independent mechanisms",
+    "should_translate": true,
+    "note": "Processes involving retrotransposons that do not require mobilization."
+  },
+  {
+    "source": "retrotransposon-mediated mobilization",
+    "display_zh": "逆转录转座子介导的动员",
+    "canonical_en": "retrotransposon-mediated mobilization",
+    "should_translate": true,
+    "note": "Movement of genetic elements facilitated by retrotransposon machinery."
+  },
+  {
+    "source": "RIG-I-mediated RNA sensing",
+    "display_zh": "RIG-I 介导的 RNA 感应",
+    "canonical_en": "RIG-I-mediated RNA sensing",
+    "should_translate": false,
+    "note": "Innate immune pathway detection mechanism."
+  },
+  {
+    "source": "RNA 3'末端多聚腺苷酸化",
+    "display_zh": "RNA 3'末端多聚腺苷酸化",
+    "canonical_en": "RNA 3' end polyadenylation",
+    "should_translate": false,
+    "note": "Standard post-transcriptional modification term."
+  },
+  {
+    "source": "RNA 3'末端尿苷化",
+    "display_zh": "RNA 3'末端尿苷化",
+    "canonical_en": "RNA 3' end uridylation",
+    "should_translate": false,
+    "note": "Addition of uridine residues to the 3' end."
+  },
+  {
+    "source": "RNA m6A 修饰",
+    "display_zh": "RNA m6A 修饰",
+    "canonical_en": "RNA m6A modification",
+    "should_translate": false,
+    "note": "N6-methyladenosine modification, standard abbreviation used in Chinese."
+  },
+  {
+    "source": "RNA-DNA 杂交体形成",
+    "display_zh": "RNA-DNA 杂交体形成",
+    "canonical_en": "RNA-DNA hybrid formation",
+    "should_translate": false,
+    "note": "Formation of heteroduplex structures."
+  }
+]

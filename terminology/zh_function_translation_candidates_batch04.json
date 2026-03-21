@@ -1,0 +1,352 @@
+[
+  {
+    "source": "DNA 羟甲基化",
+    "display_zh": "DNA 羟甲基化",
+    "canonical_en": "DNA hydroxymethylation",
+    "should_translate": false,
+    "note": "Term is already in standard Chinese; English canonical name provided."
+  },
+  {
+    "source": "DNA 去甲基化",
+    "display_zh": "DNA 去甲基化",
+    "canonical_en": "DNA demethylation",
+    "should_translate": false,
+    "note": "Term is already in standard Chinese; English canonical name provided."
+  },
+  {
+    "source": "DNA 识别",
+    "display_zh": "DNA 识别",
+    "canonical_en": "DNA recognition",
+    "should_translate": false,
+    "note": "General term; context-dependent specificity may vary."
+  },
+  {
+    "source": "DNA 双链断裂",
+    "display_zh": "DNA 双链断裂",
+    "canonical_en": "DNA double-strand break",
+    "should_translate": false,
+    "note": "Standard biomedical term in Chinese; English canonical name provided."
+  },
+  {
+    "source": "DNA 双链断裂形成",
+    "display_zh": "DNA 双链断裂形成",
+    "canonical_en": "Formation of DNA double-strand breaks",
+    "should_translate": false,
+    "note": "Process description; kept concise in Chinese."
+  },
+  {
+    "source": "DNA 双链断裂修复",
+    "display_zh": "DNA 双链断裂修复",
+    "canonical_en": "DNA double-strand break repair",
+    "should_translate": false,
+    "note": "Standard repair mechanism term."
+  },
+  {
+    "source": "DNA 损伤",
+    "display_zh": "DNA 损伤",
+    "canonical_en": "DNA damage",
+    "should_translate": false,
+    "note": "Broad but standard term."
+  },
+  {
+    "source": "DNA 损伤反应",
+    "display_zh": "DNA 损伤反应",
+    "canonical_en": "DNA damage response",
+    "should_translate": false,
+    "note": "Standard pathway term."
+  },
+  {
+    "source": "DNA 损伤信号通路激活",
+    "display_zh": "DNA 损伤信号通路激活",
+    "canonical_en": "Activation of DNA damage signaling pathways",
+    "should_translate": false,
+    "note": "Descriptive process term."
+  },
+  {
+    "source": "DNA 损伤修复",
+    "display_zh": "DNA 损伤修复",
+    "canonical_en": "DNA damage repair",
+    "should_translate": false,
+    "note": "General repair category."
+  },
+  {
+    "source": "DNA 损伤应答",
+    "display_zh": "DNA 损伤应答",
+    "canonical_en": "DNA damage response",
+    "should_translate": false,
+    "note": "Synonym for 'DNA 损伤反应'; both map to DDR."
+  },
+  {
+    "source": "DNA 脱氨基",
+    "display_zh": "DNA 脱氨基",
+    "canonical_en": "DNA deamination",
+    "should_translate": false,
+    "note": "Specific chemical modification."
+  },
+  {
+    "source": "DNA 弯曲",
+    "display_zh": "DNA 弯曲",
+    "canonical_en": "DNA bending",
+    "should_translate": false,
+    "note": "Structural conformation term."
+  },
+  {
+    "source": "DNA 修复",
+    "display_zh": "DNA 修复",
+    "canonical_en": "DNA repair",
+    "should_translate": false,
+    "note": "General overarching term."
+  },
+  {
+    "source": "DNA 修复蛋白募集",
+    "display_zh": "DNA 修复蛋白募集",
+    "canonical_en": "Recruitment of DNA repair proteins",
+    "should_translate": false,
+    "note": "Specific step in repair process."
+  },
+  {
+    "source": "DNA 修复活性降低",
+    "display_zh": "DNA 修复活性降低",
+    "canonical_en": "Reduced DNA repair activity",
+    "should_translate": false,
+    "note": "Phenotypic description."
+  },
+  {
+    "source": "DNA 修复机制",
+    "display_zh": "DNA 修复机制",
+    "canonical_en": "DNA repair mechanisms",
+    "should_translate": false,
+    "note": "Plural concept referring to multiple pathways."
+  },
+  {
+    "source": "DNA 修复抑制",
+    "display_zh": "DNA 修复抑制",
+    "canonical_en": "Inhibition of DNA repair",
+    "should_translate": false,
+    "note": "Regulatory or pathological state."
+  },
+  {
+    "source": "DNA 转导",
+    "display_zh": "DNA 转导",
+    "canonical_en": "DNA transduction",
+    "should_translate": false,
+    "note": "Context needed: viral vector vs. signal transduction involving DNA."
+  },
+  {
+    "source": "dNTPase 活性",
+    "display_zh": "dNTP 酶活性",
+    "canonical_en": "dNTPase activity",
+    "should_translate": true,
+    "note": "Abbreviation expanded slightly for clarity in Chinese display."
+  },
+  {
+    "source": "downregulation",
+    "display_zh": "下调",
+    "canonical_en": "Downregulation",
+    "should_translate": true,
+    "note": "General term; specific target missing in source."
+  },
+  {
+    "source": "downregulation of AMPKalpha",
+    "display_zh": "AMPKα下调",
+    "canonical_en": "Downregulation of AMPKα",
+    "should_translate": true,
+    "note": "Normalized Greek letter usage."
+  },
+  {
+    "source": "downregulation of mTORC1 activity",
+    "display_zh": "mTORC1 活性下调",
+    "canonical_en": "Downregulation of mTORC1 activity",
+    "should_translate": true,
+    "note": "Complex name retained as standard abbreviation."
+  },
+  {
+    "source": "dysfunctional metabolism",
+    "display_zh": "代谢功能障碍",
+    "canonical_en": "Dysfunctional metabolism",
+    "should_translate": true,
+    "note": "Broad pathological state."
+  },
+  {
+    "source": "dysregulation of cell energy metabolism and cytokine/chemotaxin transcription",
+    "display_zh": "细胞能量代谢及细胞因子/趋化因子转录失调",
+    "canonical_en": "Dysregulation of cell energy metabolism and cytokine/chemokine transcription",
+    "should_translate": true,
+    "note": "Corrected 'chemotaxin' to standard 'chemokine' in English canonical form."
+  },
+  {
+    "source": "dysregulation of retrotransposon activity",
+    "display_zh": "逆转录转座子活性失调",
+    "canonical_en": "Dysregulation of retrotransposon activity",
+    "should_translate": true,
+    "note": "Key concept for TE knowledge graph."
+  },
+  {
+    "source": "eIF2α磷酸化",
+    "display_zh": "eIF2α磷酸化",
+    "canonical_en": "Phosphorylation of eIF2α",
+    "should_translate": false,
+    "note": "Mixed notation common in Chinese literature; kept for precision."
+  },
+  {
+    "source": "eIF3 结合",
+    "display_zh": "eIF3 结合",
+    "canonical_en": "eIF3 binding",
+    "should_translate": false,
+    "note": "Protein interaction term."
+  },
+  {
+    "source": "eIF4A/eIF4G 相互作用减弱",
+    "display_zh": "eIF4A/eIF4G 相互作用减弱",
+    "canonical_en": "Weakened eIF4A/eIF4G interaction",
+    "should_translate": false,
+    "note": "Descriptive of complex stability."
+  },
+  {
+    "source": "EN 非依赖性逆转录转座",
+    "display_zh": "内切酶非依赖性逆转录转座",
+    "canonical_en": "Endonuclease-independent retrotransposition",
+    "should_translate": true,
+    "note": "Expanded 'EN' to '内切酶' for clarity in Chinese display."
+  },
+  {
+    "source": "endonuclease independent mechanisms",
+    "display_zh": "内切酶非依赖性机制",
+    "canonical_en": "Endonuclease-independent mechanisms",
+    "should_translate": true,
+    "note": "Hyphen added for grammatical correctness in English."
+  },
+  {
+    "source": "endothelial cell migration",
+    "display_zh": "内皮细胞迁移",
+    "canonical_en": "Endothelial cell migration",
+    "should_translate": true,
+    "note": "Standard cell biology term."
+  },
+  {
+    "source": "endothelial cell proliferation",
+    "display_zh": "内皮细胞增殖",
+    "canonical_en": "Endothelial cell proliferation",
+    "should_translate": true,
+    "note": "Standard cell biology term."
+  },
+  {
+    "source": "epigenetic changes",
+    "display_zh": "表观遗传改变",
+    "canonical_en": "Epigenetic changes",
+    "should_translate": true,
+    "note": "General term covering various modifications."
+  },
+  {
+    "source": "epigenetic drift",
+    "display_zh": "表观遗传漂变",
+    "canonical_en": "Epigenetic drift",
+    "should_translate": true,
+    "note": "Specific phenomenon describing age-related or stochastic changes."
+  },
+  {
+    "source": "epigenetic on/off",
+    "display_zh": "表观遗传开关",
+    "canonical_en": "Epigenetic switching",
+    "should_translate": true,
+    "note": "Colloquial source term normalized to formal concept."
+  },
+  {
+    "source": "epigenetic regulation (DNA methylation)",
+    "display_zh": "表观遗传调控 (DNA 甲基化)",
+    "canonical_en": "Epigenetic regulation via DNA methylation",
+    "should_translate": true,
+    "note": "Clarified relationship in English."
+  },
+  {
+    "source": "epigenetic regulation of gene expression",
+    "display_zh": "基因表达的表观遗传调控",
+    "canonical_en": "Epigenetic regulation of gene expression",
+    "should_translate": true,
+    "note": "Standard functional description."
+  },
+  {
+    "source": "ERK 激活",
+    "display_zh": "ERK 激活",
+    "canonical_en": "ERK activation",
+    "should_translate": false,
+    "note": "Kinase activation event."
+  },
+  {
+    "source": "ESCRT 相互作用",
+    "display_zh": "ESCRT 相互作用",
+    "canonical_en": "ESCRT interaction",
+    "should_translate": false,
+    "note": "Complex machinery interaction."
+  },
+  {
+    "source": "exon definition",
+    "display_zh": "外显子定义",
+    "canonical_en": "Exon definition",
+    "should_translate": true,
+    "note": "Splicing model concept."
+  },
+  {
+    "source": "exon-skipping",
+    "display_zh": "外显子跳跃",
+    "canonical_en": "Exon skipping",
+    "should_translate": true,
+    "note": "Alternative splicing event."
+  },
+  {
+    "source": "exonization using cryptic splice sites",
+    "display_zh": "利用隐蔽剪接位点的外显子化",
+    "canonical_en": "Exonization via cryptic splice sites",
+    "should_translate": true,
+    "note": "Mechanism of new exon creation."
+  },
+  {
+    "source": "expression of angiogenic factors",
+    "display_zh": "血管生成因子表达",
+    "canonical_en": "Expression of angiogenic factors",
+    "should_translate": true,
+    "note": "Physiological or pathological process."
+  },
+  {
+    "source": "FOXR2 激活",
+    "display_zh": "FOXR2 激活",
+    "canonical_en": "FOXR2 activation",
+    "should_translate": false,
+    "note": "Transcription factor activation."
+  },
+  {
+    "source": "G-四链体结构调控",
+    "display_zh": "G-四链体结构调控",
+    "canonical_en": "Regulation of G-quadruplex structures",
+    "should_translate": false,
+    "note": "Non-canonical DNA structure regulation."
+  },
+  {
+    "source": "G-四链体结构形成",
+    "display_zh": "G-四链体结构形成",
+    "canonical_en": "Formation of G-quadruplex structures",
+    "should_translate": false,
+    "note": "Structural folding event."
+  },
+  {
+    "source": "G0/G1 cell cycle arrest",
+    "display_zh": "G0/G1 期细胞周期阻滞",
+    "canonical_en": "G0/G1 cell cycle arrest",
+    "should_translate": true,
+    "note": "Cell cycle checkpoint outcome."
+  },
+  {
+    "source": "G 到 A 超突变",
+    "display_zh": "G 到 A 超突变",
+    "canonical_en": "G-to-A hypermutation",
+    "should_translate": false,
+    "note": "Specific mutation pattern, often APOBEC-mediated."
+  },
+  {
+    "source": "generating antisense and/or regulatory noncoding RNAs",
+    "display_zh": "产生反义和/或调控性非编码 RNA",
+    "canonical_en": "Generation of antisense and/or regulatory noncoding RNAs",
+    "should_translate": true,
+    "note": "Functional output of transcription."
+  }
+]

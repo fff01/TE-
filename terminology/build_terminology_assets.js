@@ -4,7 +4,7 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const indexPath = path.join(root, 'index_demo.html');
-const seedPath = path.join(root, 'neo4j_graph_seed.json');
+const seedPath = path.join(root, 'data', 'processed', 'neo4j_graph_seed.json');
 const jsonOut = path.join(__dirname, 'te_terminology.json');
 const csvOut = path.join(__dirname, 'te_terminology.csv');
 const reportOut = path.join(__dirname, 'missing_terminology_report.md');
@@ -437,8 +437,8 @@ function extractMapBlock(source, marker, nextMarker) {
 }
 
 function evaluateMaps(source) {
-  const relBlock = extractMapBlock(source, 'let relLabel =', 'let nameMap =');
-  const nameBlock = extractMapBlock(source, 'let nameMap =', 'const buildNormalizedNameMap');
+  const relBlock = extractMapBlock(source, 'const relLabel =', 'const nameMap =');
+  const nameBlock = extractMapBlock(source, 'const nameMap =', 'const descMap =');
   const script = `
     ${relBlock}
     ${nameBlock}

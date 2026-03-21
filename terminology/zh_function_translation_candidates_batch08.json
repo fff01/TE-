@@ -1,0 +1,352 @@
+[
+  {
+    "source": "LINE-1 insertion",
+    "display_zh": "LINE-1 插入",
+    "canonical_en": "LINE-1 insertion",
+    "should_translate": false,
+    "note": "Standard term for genomic integration event."
+  },
+  {
+    "source": "LINE-1 ORF1p and ORF2p expression",
+    "display_zh": "LINE-1 ORF1p 与 ORF2p 表达",
+    "canonical_en": "LINE-1 ORF1p and ORF2p expression",
+    "should_translate": false,
+    "note": "Refers to protein products of Open Reading Frames 1 and 2."
+  },
+  {
+    "source": "LINE-1 ORF2p 逆转录酶活性",
+    "display_zh": "LINE-1 ORF2p 逆转录酶活性",
+    "canonical_en": "LINE-1 ORF2p reverse transcriptase activity",
+    "should_translate": true,
+    "note": "Specific enzymatic function of the ORF2 protein."
+  },
+  {
+    "source": "LINE-1 polymorphisms",
+    "display_zh": "LINE-1 多态性",
+    "canonical_en": "LINE-1 polymorphisms",
+    "should_translate": false,
+    "note": "Genetic variations involving LINE-1 elements."
+  },
+  {
+    "source": "LINE-1 reverse transcription",
+    "display_zh": "LINE-1 逆转录",
+    "canonical_en": "LINE-1 reverse transcription",
+    "should_translate": false,
+    "note": "Process of synthesizing DNA from LINE-1 RNA."
+  },
+  {
+    "source": "LINE-1 RNA generation",
+    "display_zh": "LINE-1 RNA 生成",
+    "canonical_en": "LINE-1 RNA generation",
+    "should_translate": false,
+    "note": "Transcription of LINE-1 elements into RNA."
+  },
+  {
+    "source": "LINE-1 RNA 去帽",
+    "display_zh": "LINE-1 RNA 去帽",
+    "canonical_en": "LINE-1 RNA decapping",
+    "should_translate": true,
+    "note": "Removal of the 5' cap structure from LINE-1 RNA."
+  },
+  {
+    "source": "LINE-1 RNP 隔离",
+    "display_zh": "LINE-1 RNP 隔离",
+    "canonical_en": "LINE-1 RNP sequestration",
+    "should_translate": true,
+    "note": "Sequestration of LINE-1 ribonucleoprotein complexes."
+  },
+  {
+    "source": "LINE-1 表达",
+    "display_zh": "LINE-1 表达",
+    "canonical_en": "LINE-1 expression",
+    "should_translate": true,
+    "note": "General term for transcription or translation of LINE-1."
+  },
+  {
+    "source": "LINE-1 表达增加",
+    "display_zh": "LINE-1 表达增加",
+    "canonical_en": "increased LINE-1 expression",
+    "should_translate": true,
+    "note": "Upregulation of LINE-1 levels."
+  },
+  {
+    "source": "LINE-1 核糖核蛋白颗粒形成",
+    "display_zh": "LINE-1 核糖核蛋白颗粒形成",
+    "canonical_en": "LINE-1 RNP granule formation",
+    "should_translate": true,
+    "note": "Assembly of LINE-1 ribonucleoprotein particles."
+  },
+  {
+    "source": "LINE-1 激活",
+    "display_zh": "LINE-1 激活",
+    "canonical_en": "LINE-1 activation",
+    "should_translate": true,
+    "note": "Initiation of LINE-1 transcription or retrotransposition."
+  },
+  {
+    "source": "LINE-1 介导的插入",
+    "display_zh": "LINE-1 介导的插入",
+    "canonical_en": "LINE-1-mediated insertion",
+    "should_translate": true,
+    "note": "Insertion events catalyzed by LINE-1 machinery."
+  },
+  {
+    "source": "LINE-1 介导的逆转录转座",
+    "display_zh": "LINE-1 介导的逆转录转座",
+    "canonical_en": "LINE-1-mediated retrotransposition",
+    "should_translate": true,
+    "note": "Retrotransposition process driven by LINE-1."
+  },
+  {
+    "source": "LINE-1 逆转录酶活性",
+    "display_zh": "LINE-1 逆转录酶活性",
+    "canonical_en": "LINE-1 reverse transcriptase activity",
+    "should_translate": true,
+    "note": "Enzymatic activity associated with LINE-1."
+  },
+  {
+    "source": "LINE-1 逆转录转座",
+    "display_zh": "LINE-1 逆转录转座",
+    "canonical_en": "LINE-1 retrotransposition",
+    "should_translate": true,
+    "note": "Copy-and-paste mechanism of LINE-1 elements."
+  },
+  {
+    "source": "LINE-1 启动子低甲基化",
+    "display_zh": "LINE-1 启动子低甲基化",
+    "canonical_en": "LINE-1 promoter hypomethylation",
+    "should_translate": true,
+    "note": "Epigenetic state leading to potential activation."
+  },
+  {
+    "source": "LINE-1 启动子活性下调",
+    "display_zh": "LINE-1 启动子活性下调",
+    "canonical_en": "downregulated LINE-1 promoter activity",
+    "should_translate": true,
+    "note": "Reduced transcriptional activity of the LINE-1 promoter."
+  },
+  {
+    "source": "LINE-1 启动子抑制",
+    "display_zh": "LINE-1 启动子抑制",
+    "canonical_en": "LINE-1 promoter repression",
+    "should_translate": true,
+    "note": "Suppression of LINE-1 promoter function."
+  },
+  {
+    "source": "LINE-1 去抑制",
+    "display_zh": "LINE-1 去抑制",
+    "canonical_en": "LINE-1 derepression",
+    "should_translate": true,
+    "note": "Relief of silencing mechanisms on LINE-1."
+  },
+  {
+    "source": "LINE-1 限制活性",
+    "display_zh": "LINE-1 限制活性",
+    "canonical_en": "LINE-1 restriction activity",
+    "should_translate": true,
+    "note": "Host factors limiting LINE-1 mobility."
+  },
+  {
+    "source": "LINE-1 抑制",
+    "display_zh": "LINE-1 抑制",
+    "canonical_en": "LINE-1 inhibition",
+    "should_translate": true,
+    "note": "General suppression of LINE-1 activity."
+  },
+  {
+    "source": "LINE-1 转录",
+    "display_zh": "LINE-1 转录",
+    "canonical_en": "LINE-1 transcription",
+    "should_translate": true,
+    "note": "Synthesis of LINE-1 RNA from DNA template."
+  },
+  {
+    "source": "LINE1 retrotransposition",
+    "display_zh": "LINE-1 逆转录转座",
+    "canonical_en": "LINE-1 retrotransposition",
+    "should_translate": false,
+    "note": "Normalized hyphenation for consistency."
+  },
+  {
+    "source": "LINE1 RNA 共表达",
+    "display_zh": "LINE-1 RNA 共表达",
+    "canonical_en": "LINE-1 RNA co-expression",
+    "should_translate": true,
+    "note": "Simultaneous expression of LINE-1 RNA with other genes."
+  },
+  {
+    "source": "LINE1 表达上调",
+    "display_zh": "LINE-1 表达上调",
+    "canonical_en": "upregulated LINE-1 expression",
+    "should_translate": true,
+    "note": "Increased levels of LINE-1 expression."
+  },
+  {
+    "source": "LINE 整合机制",
+    "display_zh": "LINE 整合机制",
+    "canonical_en": "LINE integration mechanism",
+    "should_translate": true,
+    "note": "Mechanism by which LINE elements integrate into the genome."
+  },
+  {
+    "source": "local immune evasion",
+    "display_zh": "局部免疫逃逸",
+    "canonical_en": "local immune evasion",
+    "should_translate": false,
+    "note": "Avoidance of immune detection in a specific tissue context."
+  },
+  {
+    "source": "m6A modification",
+    "display_zh": "m6A 修饰",
+    "canonical_en": "m6A modification",
+    "should_translate": false,
+    "note": "N6-methyladenosine RNA modification."
+  },
+  {
+    "source": "m6A 介导的 L1 mRNA 降解",
+    "display_zh": "m6A 介导的 L1 mRNA 降解",
+    "canonical_en": "m6A-mediated L1 mRNA degradation",
+    "should_translate": true,
+    "note": "Degradation of LINE-1 mRNA via m6A pathway."
+  },
+  {
+    "source": "m6A 修饰",
+    "display_zh": "m6A 修饰",
+    "canonical_en": "m6A modification",
+    "should_translate": true,
+    "note": "Redundant entry; standard term for N6-methyladenosine."
+  },
+  {
+    "source": "MAPK 激活",
+    "display_zh": "MAPK 激活",
+    "canonical_en": "MAPK activation",
+    "should_translate": true,
+    "note": "Activation of Mitogen-Activated Protein Kinase pathway."
+  },
+  {
+    "source": "MAPK 信号通路",
+    "display_zh": "MAPK 信号通路",
+    "canonical_en": "MAPK signaling pathway",
+    "should_translate": true,
+    "note": "Cellular signaling cascade involving MAPKs."
+  },
+  {
+    "source": "MDA5-induced IFN expression",
+    "display_zh": "MDA5 诱导的干扰素表达",
+    "canonical_en": "MDA5-induced interferon expression",
+    "should_translate": false,
+    "note": "Interferon production triggered by MDA5 sensor."
+  },
+  {
+    "source": "MDA5-mediated RNA sensing",
+    "display_zh": "MDA5 介导的 RNA 感知",
+    "canonical_en": "MDA5-mediated RNA sensing",
+    "should_translate": false,
+    "note": "Detection of RNA by Melanoma Differentiation-Associated protein 5."
+  },
+  {
+    "source": "MET protein level control",
+    "display_zh": "MET 蛋白水平调控",
+    "canonical_en": "MET protein level control",
+    "should_translate": false,
+    "note": "Regulation of MET proto-oncogene protein abundance."
+  },
+  {
+    "source": "methylation",
+    "display_zh": "甲基化",
+    "canonical_en": "methylation",
+    "should_translate": false,
+    "note": "General biochemical process; context usually implies DNA methylation in this domain."
+  },
+  {
+    "source": "METTL3 促进 L1 逆转录转座",
+    "display_zh": "METTL3 促进 L1 逆转录转座",
+    "canonical_en": "METTL3-promoted L1 retrotransposition",
+    "should_translate": true,
+    "note": "Enhancement of LINE-1 mobility by METTL3 enzyme."
+  },
+  {
+    "source": "Mg2+ 依赖性催化",
+    "display_zh": "Mg2+ 依赖性催化",
+    "canonical_en": "Mg2+-dependent catalysis",
+    "should_translate": true,
+    "note": "Catalytic activity requiring magnesium ions."
+  },
+  {
+    "source": "miR-128 介导的 L1 抑制",
+    "display_zh": "miR-128 介导的 L1 抑制",
+    "canonical_en": "miR-128-mediated L1 inhibition",
+    "should_translate": true,
+    "note": "Suppression of LINE-1 by microRNA-128."
+  },
+  {
+    "source": "miR-128 抑制 L1 逆转录转座",
+    "display_zh": "miR-128 抑制 L1 逆转录转座",
+    "canonical_en": "miR-128 inhibition of L1 retrotransposition",
+    "should_translate": true,
+    "note": "Specific blocking of retrotransposition by miR-128."
+  },
+  {
+    "source": "mobilization",
+    "display_zh": "动员",
+    "canonical_en": "mobilization",
+    "should_translate": false,
+    "note": "Context implies transposable element mobilization."
+  },
+  {
+    "source": "modulation of cellular plasticity",
+    "display_zh": "细胞可塑性调节",
+    "canonical_en": "modulation of cellular plasticity",
+    "should_translate": false,
+    "note": "Alteration of cell state flexibility."
+  },
+  {
+    "source": "modulation of oncogenic signaling gene expression",
+    "display_zh": "致癌信号基因表达调节",
+    "canonical_en": "modulation of oncogenic signaling gene expression",
+    "should_translate": false,
+    "note": "Regulation of genes involved in cancer signaling pathways."
+  },
+  {
+    "source": "MOV10/LINE-1 相互作用",
+    "display_zh": "MOV10/LINE-1 相互作用",
+    "canonical_en": "MOV10/LINE-1 interaction",
+    "should_translate": true,
+    "note": "Physical or functional interaction between MOV10 and LINE-1."
+  },
+  {
+    "source": "MOV10 颗粒形成",
+    "display_zh": "MOV10 颗粒形成",
+    "canonical_en": "MOV10 granule formation",
+    "should_translate": true,
+    "note": "Assembly of MOV10 into cytoplasmic granules."
+  },
+  {
+    "source": "MOV10 抑制逆转录转座",
+    "display_zh": "MOV10 抑制逆转录转座",
+    "canonical_en": "MOV10 inhibition of retrotransposition",
+    "should_translate": true,
+    "note": "Suppression of retrotransposition by MOV10 helicase."
+  },
+  {
+    "source": "mRNA expression",
+    "display_zh": "mRNA 表达",
+    "canonical_en": "mRNA expression",
+    "should_translate": false,
+    "note": "General term for messenger RNA levels."
+  },
+  {
+    "source": "mRNA 伴侣功能",
+    "display_zh": "mRNA 伴侣功能",
+    "canonical_en": "mRNA chaperone function",
+    "should_translate": true,
+    "note": "Role of proteins in assisting mRNA folding or stability."
+  },
+  {
+    "source": "mRNA 剪接异常",
+    "display_zh": "mRNA 剪接异常",
+    "canonical_en": "aberrant mRNA splicing",
+    "should_translate": true,
+    "note": "Defective or irregular processing of pre-mRNA."
+  }
+]

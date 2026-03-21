@@ -1,0 +1,72 @@
+[
+  {
+    "source": "血友病 A",
+    "display_zh": "血友病 A",
+    "canonical_en": "Hemophilia A",
+    "should_translate": false,
+    "note": "Standard Chinese term for Factor VIII deficiency."
+  },
+  {
+    "source": "血友病 B",
+    "display_zh": "血友病 B",
+    "canonical_en": "Hemophilia B",
+    "should_translate": false,
+    "note": "Standard Chinese term for Factor IX deficiency."
+  },
+  {
+    "source": "H3 K27M 突变型弥漫性中线胶质瘤",
+    "display_zh": "H3 K27M 突变型弥漫性中线胶质瘤",
+    "canonical_en": "Diffuse midline glioma, H3 K27M-mutant",
+    "should_translate": false,
+    "note": "WHO CNS tumor classification entity."
+  },
+  {
+    "source": "HBV-associated HCC",
+    "display_zh": "乙肝相关肝细胞癌",
+    "canonical_en": "HBV-associated hepatocellular carcinoma",
+    "should_translate": true,
+    "note": "Expanded HCC to hepatocellular carcinoma for clarity; HBV retained as standard abbreviation."
+  },
+  {
+    "source": "Huntington's disease",
+    "display_zh": "亨廷顿病",
+    "canonical_en": "Huntington disease",
+    "should_translate": true,
+    "note": "Normalized English name (removed possessive); standard Chinese translation."
+  },
+  {
+    "source": "kinky tail phenotype",
+    "display_zh": "卷尾表型",
+    "canonical_en": "kinky tail phenotype",
+    "should_translate": true,
+    "note": "Descriptive morphological phenotype often associated with transposable element insertions in mice."
+  },
+  {
+    "source": "LSCC",
+    "display_zh": "肺鳞状细胞癌",
+    "canonical_en": "lung squamous cell carcinoma",
+    "should_translate": true,
+    "note": "Expanded abbreviation based on high-confidence biomedical context."
+  },
+  {
+    "source": "METH 滥用诱导的记忆缺陷",
+    "display_zh": "甲基苯丙胺滥用诱导的记忆缺陷",
+    "canonical_en": "methamphetamine abuse-induced memory deficits",
+    "should_translate": true,
+    "note": "Expanded METH to methamphetamine; normalized English phrasing."
+  },
+  {
+    "source": "severe diseases",
+    "display_zh": "严重疾病",
+    "canonical_en": "severe diseases",
+    "should_translate": true,
+    "note": "Broad label kept broad as per instructions."
+  },
+  {
+    "source": "sporadic diseases",
+    "display_zh": "散发性疾病",
+    "canonical_en": "sporadic diseases",
+    "should_translate": true,
+    "note": "Refers to non-familial occurrence; broad label kept broad."
+  }
+]

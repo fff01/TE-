@@ -1,9 +1,10 @@
 {
   "version": 3,
   "generated_from": "index_demo.html",
-  "generated_at": "2026-03-18T14:42:20.711Z",
+  "generated_at": "2026-03-21T14:21:09.711Z",
   "names": {
     "zh": {
+      "TE": "人类转座子",
       "Alu/SVA retrotransposition": "Alu/SVA 逆转录转座",
       "brain-specific insertion": "脑特异性插入",
       "L1-mediated retrotransposition": "L1 介导的逆转录转座",
@@ -14,7 +15,6 @@
       "epithelial tumors": "上皮性肿瘤",
       "Alzheimer's disease": "阿尔茨海默病",
       "Huntington's Disease": "亨廷顿病",
-      "Huntington's disease": "亨廷顿病",
       "Down syndrome": "唐氏综合征",
       "Rett syndrome": "Rett 综合征",
       "Rett综合征": "Rett 综合征",
@@ -222,6 +222,7 @@
       "insertion mutation": "插入突变"
     },
     "en": {
+      "人类转座子": "TE",
       "Alu转座": "Alu transposition",
       "L1介导的突变": "L1-mediated mutation",
       "双链断裂": "double-strand break",
@@ -469,26 +470,18 @@
   },
   "relations": {
     "zh": {
-      "SUBFAMILY_OF": "属于亚家族谱系",
-      "EVIDENCE_RELATION": "报道",
+      "SUBFAMILY_OF": "包含亚家族",
       "与...相关": "与…相关",
-      "与…相关": "与…相关",
       "不导致": "不导致",
-      "导致": "导致",
       "促进": "促进",
-      "参与": "参与",
       "介导": "介导",
       "报道": "报道"
     },
     "en": {
-      "SUBFAMILY_OF": "subfamily of",
-      "EVIDENCE_RELATION": "reports",
+      "SUBFAMILY_OF": "contains subfamily",
       "与...相关": "associated with",
-      "与…相关": "associated with",
       "不导致": "does not cause",
-      "导致": "causes",
       "促进": "promotes",
-      "参与": "participates in",
       "介导": "mediates",
       "报道": "reports"
     }

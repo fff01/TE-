@@ -1,0 +1,247 @@
+[
+  {
+    "source": "staggered DNA break",
+    "display_zh": "交错 DNA 断裂",
+    "canonical_en": "staggered DNA break",
+    "should_translate": false,
+    "note": "Standard technical term; Chinese translation provided for display."
+  },
+  {
+    "source": "STAT1 磷酸化",
+    "display_zh": "STAT1 磷酸化",
+    "canonical_en": "STAT1 phosphorylation",
+    "should_translate": true,
+    "note": "Input is Chinese; normalized English name generated."
+  },
+  {
+    "source": "stress granule pathway",
+    "display_zh": "应激颗粒通路",
+    "canonical_en": "stress granule pathway",
+    "should_translate": false,
+    "note": "Standard technical term; Chinese translation provided for display."
+  },
+  {
+    "source": "structural modification of endogenous genes",
+    "display_zh": "内源基因结构修饰",
+    "canonical_en": "structural modification of endogenous genes",
+    "should_translate": false,
+    "note": "Descriptive phrase; translated for consistency."
+  },
+  {
+    "source": "SUMO 化",
+    "display_zh": "SUMO 化",
+    "canonical_en": "SUMOylation",
+    "should_translate": true,
+    "note": "Input is Chinese; canonical English term is SUMOylation."
+  },
+  {
+    "source": "suppression of transposable elements",
+    "display_zh": "转座元件抑制",
+    "canonical_en": "suppression of transposable elements",
+    "should_translate": false,
+    "note": "Standard biological process; translated for display."
+  },
+  {
+    "source": "SVA 反式动员",
+    "display_zh": "SVA 反式动员",
+    "canonical_en": "SVA trans-mobilization",
+    "should_translate": true,
+    "note": "Input is Chinese; specific TE mechanism."
+  },
+  {
+    "source": "T 细胞活性",
+    "display_zh": "T 细胞活性",
+    "canonical_en": "T cell activity",
+    "should_translate": true,
+    "note": "Input is Chinese; general immunological term."
+  },
+  {
+    "source": "target-site primed reverse transcription",
+    "display_zh": "靶位点引物逆转录",
+    "canonical_en": "target-primed reverse transcription",
+    "should_translate": false,
+    "note": "Corrected canonical form to standard 'target-primed' (TPRT)."
+  },
+  {
+    "source": "TE 沉默",
+    "display_zh": "TE 沉默",
+    "canonical_en": "transposable element silencing",
+    "should_translate": true,
+    "note": "Input uses abbreviation TE; expanded in English for clarity."
+  },
+  {
+    "source": "template switching",
+    "display_zh": "模板转换",
+    "canonical_en": "template switching",
+    "should_translate": false,
+    "note": "Standard molecular mechanism."
+  },
+  {
+    "source": "Tet1-mediated activation of L1",
+    "display_zh": "Tet1 介导的 L1 激活",
+    "canonical_en": "TET1-mediated activation of L1",
+    "should_translate": false,
+    "note": "Normalized gene symbol to uppercase TET1."
+  },
+  {
+    "source": "TGF-β1 信号通路激活",
+    "display_zh": "TGF-β1 信号通路激活",
+    "canonical_en": "TGF-β1 signaling pathway activation",
+    "should_translate": true,
+    "note": "Input is Chinese; specific isoform β1 retained."
+  },
+  {
+    "source": "TGFβ信号通路激活",
+    "display_zh": "TGF-β信号通路激活",
+    "canonical_en": "TGF-β signaling pathway activation",
+    "should_translate": true,
+    "note": "Input is Chinese; generalized to family level TGF-β."
+  },
+  {
+    "source": "Toll 样受体 4 信号通路",
+    "display_zh": "Toll 样受体 4 信号通路",
+    "canonical_en": "Toll-like receptor 4 signaling pathway",
+    "should_translate": true,
+    "note": "Input is Chinese; full English expansion."
+  },
+  {
+    "source": "TP53-dependent growth arrest",
+    "display_zh": "TP53 依赖性生长停滞",
+    "canonical_en": "TP53-dependent growth arrest",
+    "should_translate": false,
+    "note": "Standard cellular response term."
+  },
+  {
+    "source": "transcriptional control by LINE-1 promoters",
+    "display_zh": "LINE-1 启动子转录调控",
+    "canonical_en": "transcriptional control by LINE-1 promoters",
+    "should_translate": false,
+    "note": "Specific regulatory mechanism."
+  },
+  {
+    "source": "transcriptional deregulation",
+    "display_zh": "转录失调",
+    "canonical_en": "transcriptional deregulation",
+    "should_translate": false,
+    "note": "General pathological state."
+  },
+  {
+    "source": "transcriptional interference",
+    "display_zh": "转录干扰",
+    "canonical_en": "transcriptional interference",
+    "should_translate": false,
+    "note": "Specific genetic phenomenon."
+  },
+  {
+    "source": "transcriptional silencing",
+    "display_zh": "转录沉默",
+    "canonical_en": "transcriptional silencing",
+    "should_translate": false,
+    "note": "Epigenetic regulation term."
+  },
+  {
+    "source": "tumor vascularisation",
+    "display_zh": "肿瘤血管生成",
+    "canonical_en": "tumor vascularization",
+    "should_translate": false,
+    "note": "Normalized spelling to US English 'z' for consistency."
+  },
+  {
+    "source": "tumor-specific L1 insertion",
+    "display_zh": "肿瘤特异性 L1 插入",
+    "canonical_en": "tumor-specific L1 insertion",
+    "should_translate": false,
+    "note": "Specific somatic mutation event."
+  },
+  {
+    "source": "tumorigenesis",
+    "display_zh": "肿瘤发生",
+    "canonical_en": "tumorigenesis",
+    "should_translate": false,
+    "note": "Standard oncology term."
+  },
+  {
+    "source": "U6 snRNA 逆转录转座",
+    "display_zh": "U6 snRNA 逆转录转座",
+    "canonical_en": "U6 snRNA retrotransposition",
+    "should_translate": true,
+    "note": "Input is Chinese; specific RNA-mediated event."
+  },
+  {
+    "source": "U6 snRNA 转座",
+    "display_zh": "U6 snRNA 转座",
+    "canonical_en": "U6 snRNA transposition",
+    "should_translate": true,
+    "note": "Input is Chinese; distinguished from retrotransposition if context implies DNA-level, but often used interchangeably in TE context."
+  },
+  {
+    "source": "U6/L1 假基因形成",
+    "display_zh": "U6/L1 假基因形成",
+    "canonical_en": "U6/L1 pseudogene formation",
+    "should_translate": true,
+    "note": "Input is Chinese; chimeric processed pseudogene event."
+  },
+  {
+    "source": "U6/L1 嵌合 RNA 形成",
+    "display_zh": "U6/L1 嵌合 RNA 形成",
+    "canonical_en": "U6/L1 chimeric RNA formation",
+    "should_translate": true,
+    "note": "Input is Chinese; transcriptional read-through or fusion event."
+  },
+  {
+    "source": "upregulation",
+    "display_zh": "上调",
+    "canonical_en": "upregulation",
+    "should_translate": false,
+    "note": "Standard expression change term."
+  },
+  {
+    "source": "viral-host genome interaction",
+    "display_zh": "病毒 - 宿主基因组相互作用",
+    "canonical_en": "viral-host genome interaction",
+    "should_translate": false,
+    "note": "Broad interaction category."
+  },
+  {
+    "source": "VNTR 结构域决定动员效率",
+    "display_zh": "VNTR 结构域决定动员效率",
+    "canonical_en": "VNTR domain-determined mobilization efficiency",
+    "should_translate": true,
+    "note": "Input is Chinese; descriptive mechanistic statement."
+  },
+  {
+    "source": "YY1 结合位点介导的 DNA 甲基化",
+    "display_zh": "YY1 结合位点介导的 DNA 甲基化",
+    "canonical_en": "YY1 binding site-mediated DNA methylation",
+    "should_translate": true,
+    "note": "Input is Chinese; specific epigenetic mechanism."
+  },
+  {
+    "source": "ZAP 抗逆转录元件活性",
+    "display_zh": "ZAP 抗逆转录元件活性",
+    "canonical_en": "ZAP anti-retroelement activity",
+    "should_translate": true,
+    "note": "Input is Chinese; ZAP refers to Zinc-finger Antiviral Protein."
+  },
+  {
+    "source": "ZAP 与 L1 核糖核蛋白颗粒结合",
+    "display_zh": "ZAP 与 L1 核糖核蛋白颗粒结合",
+    "canonical_en": "ZAP binding to L1 ribonucleoprotein particles",
+    "should_translate": true,
+    "note": "Input is Chinese; specific protein-RNP interaction."
+  },
+  {
+    "source": "β-catenin/Wnt 信号通路激活",
+    "display_zh": "β-catenin/Wnt 信号通路激活",
+    "canonical_en": "β-catenin/Wnt signaling pathway activation",
+    "should_translate": true,
+    "note": "Input is Chinese; key developmental and cancer pathway."
+  },
+  {
+    "source": "γ-H2AX foci 形成",
+    "display_zh": "γ-H2AX 灶形成",
+    "canonical_en": "γ-H2AX foci formation",
+    "should_translate": true,
+    "note": "Input mixes Greek/English/Chinese; normalized Chinese display and English canonical."
+  }
+]

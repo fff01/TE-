@@ -1,0 +1,352 @@
+[
+  {
+    "source": "generation of neural diversity",
+    "display_zh": "神经多样性产生",
+    "canonical_en": "generation of neural diversity",
+    "should_translate": false,
+    "note": "Standard biological process term."
+  },
+  {
+    "source": "genetic heterogeneity",
+    "display_zh": "遗传异质性",
+    "canonical_en": "genetic heterogeneity",
+    "should_translate": false,
+    "note": "Established genetic terminology."
+  },
+  {
+    "source": "genetic variation",
+    "display_zh": "遗传变异",
+    "canonical_en": "genetic variation",
+    "should_translate": false,
+    "note": "Broad but standard term."
+  },
+  {
+    "source": "genome expansion",
+    "display_zh": "基因组扩张",
+    "canonical_en": "genome expansion",
+    "should_translate": false,
+    "note": "Refers to increase in genome size, often via TEs."
+  },
+  {
+    "source": "genome stability maintenance",
+    "display_zh": "基因组稳定性维持",
+    "canonical_en": "maintenance of genome stability",
+    "should_translate": true,
+    "note": "Normalized to standard process name."
+  },
+  {
+    "source": "genomic alterations",
+    "display_zh": "基因组改变",
+    "canonical_en": "genomic alterations",
+    "should_translate": false,
+    "note": "General term for changes in genomic structure."
+  },
+  {
+    "source": "germline retrotransposition event",
+    "display_zh": "种系逆转录转座事件",
+    "canonical_en": "germline retrotransposition event",
+    "should_translate": false,
+    "note": "Specific TE mechanism in germ cells."
+  },
+  {
+    "source": "germline structural variation",
+    "display_zh": "种系结构变异",
+    "canonical_en": "germline structural variation",
+    "should_translate": false,
+    "note": "Structural variants inherited through germline."
+  },
+  {
+    "source": "germline variation",
+    "display_zh": "种系变异",
+    "canonical_en": "germline variation",
+    "should_translate": false,
+    "note": "Variations present in germ cells."
+  },
+  {
+    "source": "H3K18 去乙酰化",
+    "display_zh": "H3K18 去乙酰化",
+    "canonical_en": "H3K18 deacetylation",
+    "should_translate": true,
+    "note": "Histone modification; Chinese source normalized to English."
+  },
+  {
+    "source": "H3K9me3 deposition",
+    "display_zh": "H3K9me3 沉积",
+    "canonical_en": "H3K9me3 deposition",
+    "should_translate": false,
+    "note": "Histone mark establishment."
+  },
+  {
+    "source": "H3K9me3 去甲基化",
+    "display_zh": "H3K9me3 去甲基化",
+    "canonical_en": "H3K9me3 demethylation",
+    "should_translate": true,
+    "note": "Removal of methyl groups from H3K9me3."
+  },
+  {
+    "source": "hA3G 寡聚化",
+    "display_zh": "hA3G 寡聚化",
+    "canonical_en": "hA3G oligomerization",
+    "should_translate": true,
+    "note": "Human APOBEC3G protein assembly."
+  },
+  {
+    "source": "Hallmark Myc 靶标 V1",
+    "display_zh": "Hallmark Myc 靶标 V1",
+    "canonical_en": "Hallmark Myc Targets V1",
+    "should_translate": true,
+    "note": "Likely refers to MSigDB gene set; kept as proper noun."
+  },
+  {
+    "source": "harmful mutagenesis",
+    "display_zh": "有害诱变",
+    "canonical_en": "harmful mutagenesis",
+    "should_translate": false,
+    "note": "Mutagenesis leading to deleterious effects."
+  },
+  {
+    "source": "HDM2/TP53/RB 调控轴失调",
+    "display_zh": "HDM2/TP53/RB 调控轴失调",
+    "canonical_en": "dysregulation of the HDM2/TP53/RB axis",
+    "should_translate": true,
+    "note": "Pathway disruption involving key tumor suppressors."
+  },
+  {
+    "source": "heritable insertion",
+    "display_zh": "可遗传插入",
+    "canonical_en": "heritable insertion",
+    "should_translate": false,
+    "note": "Insertion mutation passed to offspring."
+  },
+  {
+    "source": "heritable retrotransposition",
+    "display_zh": "可遗传逆转录转座",
+    "canonical_en": "heritable retrotransposition",
+    "should_translate": false,
+    "note": "Retrotransposition event inherited by progeny."
+  },
+  {
+    "source": "hnRNPA1 促进 L1 转座",
+    "display_zh": "hnRNPA1 促进 L1 转座",
+    "canonical_en": "hnRNPA1-promoted L1 retrotransposition",
+    "should_translate": true,
+    "note": "Specific protein-mediated TE activity."
+  },
+  {
+    "source": "homologous recombination",
+    "display_zh": "同源重组",
+    "canonical_en": "homologous recombination",
+    "should_translate": false,
+    "note": "DNA repair mechanism."
+  },
+  {
+    "source": "host gene downregulation",
+    "display_zh": "宿主基因下调",
+    "canonical_en": "host gene downregulation",
+    "should_translate": false,
+    "note": "Reduced expression of host genes due to insertion."
+  },
+  {
+    "source": "hypomethylation",
+    "display_zh": "低甲基化",
+    "canonical_en": "hypomethylation",
+    "should_translate": false,
+    "note": "Reduced DNA methylation levels."
+  },
+  {
+    "source": "I 型干扰素反应",
+    "display_zh": "I 型干扰素反应",
+    "canonical_en": "type I interferon response",
+    "should_translate": true,
+    "note": "Immune response pathway."
+  },
+  {
+    "source": "I 型干扰素诱导",
+    "display_zh": "I 型干扰素诱导",
+    "canonical_en": "type I interferon induction",
+    "should_translate": true,
+    "note": "Stimulation of type I IFN production."
+  },
+  {
+    "source": "IFN-β产生",
+    "display_zh": "IFN-β产生",
+    "canonical_en": "IFN-beta production",
+    "should_translate": true,
+    "note": "Specific cytokine synthesis."
+  },
+  {
+    "source": "impact neuronal transcriptional expression",
+    "display_zh": "影响神经元转录表达",
+    "canonical_en": "impact on neuronal transcriptional expression",
+    "should_translate": true,
+    "note": "Normalized grammatical structure."
+  },
+  {
+    "source": "in vitro retrotransposition activity",
+    "display_zh": "体外逆转录转座活性",
+    "canonical_en": "in vitro retrotransposition activity",
+    "should_translate": false,
+    "note": "Experimental assay context."
+  },
+  {
+    "source": "in vivo fitness",
+    "display_zh": "体内适应度",
+    "canonical_en": "in vivo fitness",
+    "should_translate": false,
+    "note": "Biological fitness in living organism."
+  },
+  {
+    "source": "increase in apoptosis",
+    "display_zh": "细胞凋亡增加",
+    "canonical_en": "increased apoptosis",
+    "should_translate": true,
+    "note": "Normalized to concise phenotype description."
+  },
+  {
+    "source": "increased copy number",
+    "display_zh": "拷贝数增加",
+    "canonical_en": "increased copy number",
+    "should_translate": false,
+    "note": "Gene or TE copy number gain."
+  },
+  {
+    "source": "inducing alternative splicing via exon skipping",
+    "display_zh": "通过外显子跳跃诱导可变剪接",
+    "canonical_en": "induction of alternative splicing via exon skipping",
+    "should_translate": true,
+    "note": "Specific splicing mechanism."
+  },
+  {
+    "source": "innate immune signaling activation",
+    "display_zh": "先天免疫信号激活",
+    "canonical_en": "activation of innate immune signaling",
+    "should_translate": true,
+    "note": "Normalized process name."
+  },
+  {
+    "source": "innate immune system activation",
+    "display_zh": "先天免疫系统激活",
+    "canonical_en": "activation of the innate immune system",
+    "should_translate": true,
+    "note": "Broader systemic activation."
+  },
+  {
+    "source": "insertion",
+    "display_zh": "插入",
+    "canonical_en": "insertion",
+    "should_translate": false,
+    "note": "General term for TE integration."
+  },
+  {
+    "source": "insertion allele frequency",
+    "display_zh": "插入等位基因频率",
+    "canonical_en": "insertion allele frequency",
+    "should_translate": false,
+    "note": "Population genetics metric."
+  },
+  {
+    "source": "insertion into exons and introns",
+    "display_zh": "插入外显子和内含子",
+    "canonical_en": "insertion into exons and introns",
+    "should_translate": false,
+    "note": "Genomic location specificity."
+  },
+  {
+    "source": "insertion into synapse- and schizophrenia-related genes",
+    "display_zh": "插入突触和精神分裂症相关基因",
+    "canonical_en": "insertion into synapse- and schizophrenia-related genes",
+    "should_translate": false,
+    "note": "Specific disease-associated genomic context."
+  },
+  {
+    "source": "insertion mutations",
+    "display_zh": "插入突变",
+    "canonical_en": "insertion mutations",
+    "should_translate": false,
+    "note": "Mutations caused by insertions."
+  },
+  {
+    "source": "insertion polymorphism",
+    "display_zh": "插入多态性",
+    "canonical_en": "insertion polymorphism",
+    "should_translate": false,
+    "note": "Common variation in population."
+  },
+  {
+    "source": "insertional mutation",
+    "display_zh": "插入性突变",
+    "canonical_en": "insertional mutation",
+    "should_translate": false,
+    "note": "Mutation resulting from insertion event."
+  },
+  {
+    "source": "integration into cellular DNA",
+    "display_zh": "整合入细胞 DNA",
+    "canonical_en": "integration into cellular DNA",
+    "should_translate": false,
+    "note": "TE integration into host genome."
+  },
+  {
+    "source": "integration into replicating DNA",
+    "display_zh": "整合入复制中 DNA",
+    "canonical_en": "integration into replicating DNA",
+    "should_translate": false,
+    "note": "Integration occurring during DNA replication."
+  },
+  {
+    "source": "integration site polymorphism",
+    "display_zh": "整合位点多态性",
+    "canonical_en": "integration site polymorphism",
+    "should_translate": false,
+    "note": "Variation in TE integration locations."
+  },
+  {
+    "source": "interchromosomal translocation",
+    "display_zh": "染色体间易位",
+    "canonical_en": "interchromosomal translocation",
+    "should_translate": false,
+    "note": "Chromosomal rearrangement between non-homologous chromosomes."
+  },
+  {
+    "source": "interferon signaling activation",
+    "display_zh": "干扰素信号激活",
+    "canonical_en": "activation of interferon signaling",
+    "should_translate": true,
+    "note": "General interferon pathway activation."
+  },
+  {
+    "source": "interferon system activation",
+    "display_zh": "干扰素系统激活",
+    "canonical_en": "activation of the interferon system",
+    "should_translate": true,
+    "note": "Broad activation of interferon machinery."
+  },
+  {
+    "source": "intragenic insertion",
+    "display_zh": "基因内插入",
+    "canonical_en": "intragenic insertion",
+    "should_translate": false,
+    "note": "Insertion within a gene boundary."
+  },
+  {
+    "source": "intragenic L1 insertion",
+    "display_zh": "基因内 L1 插入",
+    "canonical_en": "intragenic L1 insertion",
+    "should_translate": false,
+    "note": "LINE-1 specific intragenic insertion."
+  },
+  {
+    "source": "KRAB/KAP1 诱导的转录抑制",
+    "display_zh": "KRAB/KAP1 诱导的转录抑制",
+    "canonical_en": "KRAB/KAP1-induced transcriptional repression",
+    "should_translate": true,
+    "note": "Epigenetic silencing mechanism."
+  },
+  {
+    "source": "L1 5' UTR m6A 簇",
+    "display_zh": "L1 5' UTR m6A 簇",
+    "canonical_en": "L1 5' UTR m6A cluster",
+    "should_translate": true,
+    "note": "Specific RNA modification pattern in LINE-1."
+  }
+]

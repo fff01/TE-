@@ -1,0 +1,352 @@
+[
+  {
+    "source": "mRNA 去稳定化",
+    "display_zh": "mRNA 去稳定化",
+    "canonical_en": "mRNA destabilization",
+    "should_translate": false,
+    "note": "Standard Chinese biomedical term; English normalized."
+  },
+  {
+    "source": "mutation",
+    "display_zh": "突变",
+    "canonical_en": "mutation",
+    "should_translate": true,
+    "note": "Translated to standard Chinese."
+  },
+  {
+    "source": "NADPH 氧化酶活性缺陷",
+    "display_zh": "NADPH 氧化酶活性缺陷",
+    "canonical_en": "NADPH oxidase activity deficiency",
+    "should_translate": false,
+    "note": "Standard Chinese biomedical term; English expanded and normalized."
+  },
+  {
+    "source": "naïve 多能性关闭",
+    "display_zh": "naïve 多能性关闭",
+    "canonical_en": "naïve pluripotency shutdown",
+    "should_translate": false,
+    "note": "Mixed term common in stem cell biology; 'naïve' often retained in Chinese contexts."
+  },
+  {
+    "source": "Neddylation",
+    "display_zh": "类泛素化",
+    "canonical_en": "neddylation",
+    "should_translate": true,
+    "note": "Translated to standard Chinese term for NEDD8 modification."
+  },
+  {
+    "source": "Nef 蛋白介导的 LINE-1 抑制",
+    "display_zh": "Nef 蛋白介导的 LINE-1 抑制",
+    "canonical_en": "Nef-mediated LINE-1 inhibition",
+    "should_translate": false,
+    "note": "Specific mechanism description; English normalized."
+  },
+  {
+    "source": "negative feedback loop",
+    "display_zh": "负反馈回路",
+    "canonical_en": "negative feedback loop",
+    "should_translate": true,
+    "note": "Standard translation."
+  },
+  {
+    "source": "nested insertions",
+    "display_zh": "嵌套插入",
+    "canonical_en": "nested insertions",
+    "should_translate": true,
+    "note": "Describes transposon insertion within another."
+  },
+  {
+    "source": "neuroinflammation",
+    "display_zh": "神经炎症",
+    "canonical_en": "neuroinflammation",
+    "should_translate": true,
+    "note": "Standard translation."
+  },
+  {
+    "source": "neurological degeneration",
+    "display_zh": "神经退行性变",
+    "canonical_en": "neurological degeneration",
+    "should_translate": true,
+    "note": "Standard translation."
+  },
+  {
+    "source": "NF-κB 介导的炎症反应基因表达",
+    "display_zh": "NF-κB 介导的炎症基因表达",
+    "canonical_en": "NF-κB-mediated inflammatory gene expression",
+    "should_translate": false,
+    "note": "Slightly condensed Chinese for flow; English normalized."
+  },
+  {
+    "source": "nicking target DNA",
+    "display_zh": "靶 DNA 切口形成",
+    "canonical_en": "nicking of target DNA",
+    "should_translate": true,
+    "note": "Describes endonuclease action creating a single-strand break."
+  },
+  {
+    "source": "non-classical insertions",
+    "display_zh": "非经典插入",
+    "canonical_en": "non-classical insertions",
+    "should_translate": true,
+    "note": "Refers to atypical transposition events."
+  },
+  {
+    "source": "non-homologous end-joining repair",
+    "display_zh": "非同源末端连接修复",
+    "canonical_en": "non-homologous end joining (NHEJ) repair",
+    "should_translate": true,
+    "note": "Standard DNA repair pathway term."
+  },
+  {
+    "source": "non-templated base addition",
+    "display_zh": "非模板碱基添加",
+    "canonical_en": "non-templated base addition",
+    "should_translate": true,
+    "note": "Describes polymerase activity adding bases without a template."
+  },
+  {
+    "source": "nuclear import of LINE-1 RNA",
+    "display_zh": "LINE-1 RNA 核输入",
+    "canonical_en": "nuclear import of LINE-1 RNA",
+    "should_translate": false,
+    "note": "Concise Chinese phrasing."
+  },
+  {
+    "source": "nuclear localization",
+    "display_zh": "核定位",
+    "canonical_en": "nuclear localization",
+    "should_translate": true,
+    "note": "Standard cell biology term."
+  },
+  {
+    "source": "oncogenic β-catenin/Wnt signaling",
+    "display_zh": "致癌性β-catenin/Wnt 信号通路",
+    "canonical_en": "oncogenic β-catenin/Wnt signaling",
+    "should_translate": false,
+    "note": "Specific pathway activation state."
+  },
+  {
+    "source": "ORF1/p40 依赖性过程",
+    "display_zh": "ORF1/p40 依赖性过程",
+    "canonical_en": "ORF1/p40-dependent process",
+    "should_translate": false,
+    "note": "p40 is an alias for ORF1p; term retained as is."
+  },
+  {
+    "source": "ORF1 蛋白表达",
+    "display_zh": "ORF1 蛋白表达",
+    "canonical_en": "ORF1 protein expression",
+    "should_translate": false,
+    "note": "Standard expression term."
+  },
+  {
+    "source": "ORF1 蛋白需求",
+    "display_zh": "ORF1 蛋白需求",
+    "canonical_en": "requirement for ORF1 protein",
+    "should_translate": false,
+    "note": "Describes dependency."
+  },
+  {
+    "source": "ORF1 募集至染色质",
+    "display_zh": "ORF1 募集至染色质",
+    "canonical_en": "recruitment of ORF1 to chromatin",
+    "should_translate": false,
+    "note": "Describes protein localization mechanism."
+  },
+  {
+    "source": "ORF1 与 ARNT1 相互作用",
+    "display_zh": "ORF1 与 ARNT1 相互作用",
+    "canonical_en": "interaction between ORF1 and ARNT1",
+    "should_translate": false,
+    "note": "Protein-protein interaction."
+  },
+  {
+    "source": "ORF1p 增强 Alu 转座",
+    "display_zh": "ORF1p 增强 Alu 转座",
+    "canonical_en": "ORF1p-enhanced Alu transposition",
+    "should_translate": false,
+    "note": "Describes trans-complementation effect."
+  },
+  {
+    "source": "ORF1p-LINE-1 RNA 相互作用",
+    "display_zh": "ORF1p-LINE-1 RNA 相互作用",
+    "canonical_en": "ORF1p-LINE-1 RNA interaction",
+    "should_translate": false,
+    "note": "Ribonucleoprotein complex formation."
+  },
+  {
+    "source": "ORF1p-RNA 结合",
+    "display_zh": "ORF1p-RNA 结合",
+    "canonical_en": "ORF1p-RNA binding",
+    "should_translate": false,
+    "note": "Molecular function."
+  },
+  {
+    "source": "ORF1p 表达",
+    "display_zh": "ORF1p 表达",
+    "canonical_en": "ORF1p expression",
+    "should_translate": false,
+    "note": "Standard term using protein alias."
+  },
+  {
+    "source": "ORF1p 表达上调",
+    "display_zh": "ORF1p 表达上调",
+    "canonical_en": "upregulation of ORF1p expression",
+    "should_translate": false,
+    "note": "Regulatory change."
+  },
+  {
+    "source": "ORF1p 功能",
+    "display_zh": "ORF1p 功能",
+    "canonical_en": "ORF1p function",
+    "should_translate": false,
+    "note": "General functional category."
+  },
+  {
+    "source": "ORF1p 寡聚化",
+    "display_zh": "ORF1p 寡聚化",
+    "canonical_en": "ORF1p oligomerization",
+    "should_translate": false,
+    "note": "Quaternary structure formation."
+  },
+  {
+    "source": "ORF1p 过表达",
+    "display_zh": "ORF1p 过表达",
+    "canonical_en": "ORF1p overexpression",
+    "should_translate": false,
+    "note": "Experimental or pathological state."
+  },
+  {
+    "source": "ORF1p 降解",
+    "display_zh": "ORF1p 降解",
+    "canonical_en": "ORF1p degradation",
+    "should_translate": false,
+    "note": "Protein turnover process."
+  },
+  {
+    "source": "ORF1p 介导的 RNP 分布",
+    "display_zh": "ORF1p 介导的 RNP 分布",
+    "canonical_en": "ORF1p-mediated RNP distribution",
+    "should_translate": false,
+    "note": "Spatial organization of ribonucleoprotein particles."
+  },
+  {
+    "source": "ORF1p 磷酸化",
+    "display_zh": "ORF1p 磷酸化",
+    "canonical_en": "ORF1p phosphorylation",
+    "should_translate": false,
+    "note": "Post-translational modification."
+  },
+  {
+    "source": "ORF1p 凝聚",
+    "display_zh": "ORF1p 凝聚",
+    "canonical_en": "ORF1p condensation",
+    "should_translate": false,
+    "note": "Phase separation or aggregation phenomenon."
+  },
+  {
+    "source": "ORF1p 三聚体形成",
+    "display_zh": "ORF1p 三聚体形成",
+    "canonical_en": "ORF1p trimer formation",
+    "should_translate": false,
+    "note": "Specific oligomeric state."
+  },
+  {
+    "source": "ORF1p 细胞内积累",
+    "display_zh": "ORF1p 细胞内积累",
+    "canonical_en": "intracellular accumulation of ORF1p",
+    "should_translate": false,
+    "note": "Accumulation phenotype."
+  },
+  {
+    "source": "ORF1p 细胞质灶形成",
+    "display_zh": "ORF1p 细胞质灶形成",
+    "canonical_en": "cytoplasmic focus formation by ORF1p",
+    "should_translate": false,
+    "note": "Formation of cytoplasmic foci/granules."
+  },
+  {
+    "source": "ORF1p 与 Pin1 相互作用",
+    "display_zh": "ORF1p 与 Pin1 相互作用",
+    "canonical_en": "interaction between ORF1p and Pin1",
+    "should_translate": false,
+    "note": "Specific protein interaction."
+  },
+  {
+    "source": "ORF1p 与 RNA 退火",
+    "display_zh": "ORF1p 与 RNA 退火",
+    "canonical_en": "ORF1p-RNA annealing",
+    "should_translate": false,
+    "note": "Chaperone activity facilitating hybridization."
+  },
+  {
+    "source": "ORF2 IRES 介导的翻译",
+    "display_zh": "ORF2 IRES 介导的翻译",
+    "canonical_en": "ORF2 IRES-mediated translation",
+    "should_translate": false,
+    "note": "Cap-independent translation mechanism."
+  },
+  {
+    "source": "ORF2 蛋白功能",
+    "display_zh": "ORF2 蛋白功能",
+    "canonical_en": "ORF2 protein function",
+    "should_translate": false,
+    "note": "General functional category."
+  },
+  {
+    "source": "ORF2 蛋白依赖",
+    "display_zh": "ORF2 蛋白依赖",
+    "canonical_en": "dependence on ORF2 protein",
+    "should_translate": false,
+    "note": "Describes requirement."
+  },
+  {
+    "source": "ORF2 蛋白 C 端功能",
+    "display_zh": "ORF2 蛋白 C 端功能",
+    "canonical_en": "function of the ORF2 protein C-terminus",
+    "should_translate": false,
+    "note": "Domain-specific function."
+  },
+  {
+    "source": "ORF2 翻译",
+    "display_zh": "ORF2 翻译",
+    "canonical_en": "ORF2 translation",
+    "should_translate": false,
+    "note": "Synthesis process."
+  },
+  {
+    "source": "ORF2 与 ORF1 表达不一致",
+    "display_zh": "ORF2 与 ORF1 表达不一致",
+    "canonical_en": "discordant expression of ORF2 and ORF1",
+    "should_translate": false,
+    "note": "Describes differential regulation."
+  },
+  {
+    "source": "ORF2p RNA 结合",
+    "display_zh": "ORF2p RNA 结合",
+    "canonical_en": "ORF2p RNA binding",
+    "should_translate": false,
+    "note": "Molecular function."
+  },
+  {
+    "source": "ORF2p 翻译",
+    "display_zh": "ORF2p 翻译",
+    "canonical_en": "ORF2p translation",
+    "should_translate": false,
+    "note": "Synthesis process using protein alias."
+  },
+  {
+    "source": "ORF2p 功能",
+    "display_zh": "ORF2p 功能",
+    "canonical_en": "ORF2p function",
+    "should_translate": false,
+    "note": "General functional category."
+  },
+  {
+    "source": "ORF2p 核酸内切酶活性",
+    "display_zh": "ORF2p 核酸内切酶活性",
+    "canonical_en": "ORF2p endonuclease activity",
+    "should_translate": false,
+    "note": "Enzymatic function critical for TPRT."
+  }
+]

@@ -1,0 +1,352 @@
+[
+  {
+    "source": "ATM 蛋白水平降低",
+    "display_zh": "ATM 蛋白水平降低",
+    "canonical_en": "decreased ATM protein levels",
+    "should_translate": false,
+    "note": "Source is already in natural Chinese; normalized English provided."
+  },
+  {
+    "source": "bHLH/PAS 转录因子依赖的逆转录转座",
+    "display_zh": "bHLH/PAS 转录因子依赖的逆转录转座",
+    "canonical_en": "bHLH/PAS transcription factor-dependent retrotransposition",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English expanded for clarity."
+  },
+  {
+    "source": "burden",
+    "display_zh": "突变负荷",
+    "canonical_en": "mutational burden",
+    "should_translate": true,
+    "note": "Context implies genetic/TE burden; translated to standard biomedical term."
+  },
+  {
+    "source": "cAMP 反应元件结合蛋白激活",
+    "display_zh": "cAMP 反应元件结合蛋白激活",
+    "canonical_en": "CREB activation",
+    "should_translate": false,
+    "note": "Source is Chinese; canonical English uses standard acronym CREB."
+  },
+  {
+    "source": "cDNA synthesis",
+    "display_zh": "cDNA 合成",
+    "canonical_en": "cDNA synthesis",
+    "should_translate": true,
+    "note": "Standard English term translated to concise Chinese."
+  },
+  {
+    "source": "cDNA 合成",
+    "display_zh": "cDNA 合成",
+    "canonical_en": "cDNA synthesis",
+    "should_translate": false,
+    "note": "Source is already correct Chinese."
+  },
+  {
+    "source": "cell cycle progression",
+    "display_zh": "细胞周期进程",
+    "canonical_en": "cell cycle progression",
+    "should_translate": true,
+    "note": "Standard English term translated."
+  },
+  {
+    "source": "cell non-autonomous effects",
+    "display_zh": "非细胞自主效应",
+    "canonical_en": "cell non-autonomous effects",
+    "should_translate": true,
+    "note": "Standard developmental biology term translated."
+  },
+  {
+    "source": "cell proliferation and invasion",
+    "display_zh": "细胞增殖与侵袭",
+    "canonical_en": "cell proliferation and invasion",
+    "should_translate": true,
+    "note": "Standard oncology term translated."
+  },
+  {
+    "source": "cellular self-renewal",
+    "display_zh": "细胞自我更新",
+    "canonical_en": "cellular self-renewal",
+    "should_translate": true,
+    "note": "Standard stem cell term translated."
+  },
+  {
+    "source": "cGAS-STING pathway activation",
+    "display_zh": "cGAS-STING 通路激活",
+    "canonical_en": "cGAS-STING pathway activation",
+    "should_translate": true,
+    "note": "Standard English term translated to match common Chinese usage."
+  },
+  {
+    "source": "cGAS-STING 通路",
+    "display_zh": "cGAS-STING 通路",
+    "canonical_en": "cGAS-STING pathway",
+    "should_translate": false,
+    "note": "Source is already correct Chinese."
+  },
+  {
+    "source": "cGAS-STING 通路激活",
+    "display_zh": "cGAS-STING 通路激活",
+    "canonical_en": "cGAS-STING pathway activation",
+    "should_translate": false,
+    "note": "Source is already correct Chinese."
+  },
+  {
+    "source": "cGAS/STING-mediated DNA sensing",
+    "display_zh": "cGAS/STING 介导的 DNA 感知",
+    "canonical_en": "cGAS/STING-mediated DNA sensing",
+    "should_translate": true,
+    "note": "Translated to precise Chinese terminology."
+  },
+  {
+    "source": "chimeric gene formation",
+    "display_zh": "嵌合基因形成",
+    "canonical_en": "chimeric gene formation",
+    "should_translate": true,
+    "note": "Standard genetics term translated."
+  },
+  {
+    "source": "chromosomal breaks",
+    "display_zh": "染色体断裂",
+    "canonical_en": "chromosomal breaks",
+    "should_translate": true,
+    "note": "Standard cytogenetics term translated."
+  },
+  {
+    "source": "cis preference",
+    "display_zh": "顺式偏好",
+    "canonical_en": "cis preference",
+    "should_translate": true,
+    "note": "Molecular biology term translated."
+  },
+  {
+    "source": "clonal amplification",
+    "display_zh": "克隆扩增",
+    "canonical_en": "clonal amplification",
+    "should_translate": true,
+    "note": "Standard immunology/oncology term translated."
+  },
+  {
+    "source": "competition with double-strand break repair",
+    "display_zh": "与双链断裂修复的竞争",
+    "canonical_en": "competition with double-strand break repair",
+    "should_translate": true,
+    "note": "Descriptive phrase translated accurately."
+  },
+  {
+    "source": "copy number variation",
+    "display_zh": "拷贝数变异",
+    "canonical_en": "copy number variation",
+    "should_translate": true,
+    "note": "Standard genomics term translated."
+  },
+  {
+    "source": "CpG methylation-mediated repression",
+    "display_zh": "CpG 甲基化介导的抑制",
+    "canonical_en": "CpG methylation-mediated repression",
+    "should_translate": true,
+    "note": "Epigenetic mechanism translated."
+  },
+  {
+    "source": "cytoplasmic RNA granule formation",
+    "display_zh": "胞质 RNA 颗粒形成",
+    "canonical_en": "cytoplasmic RNA granule formation",
+    "should_translate": true,
+    "note": "Cell biology term translated."
+  },
+  {
+    "source": "de novo LINE-1 insertion",
+    "display_zh": "从头 LINE-1 插入",
+    "canonical_en": "de novo LINE-1 insertion",
+    "should_translate": true,
+    "note": "TE-specific term translated; 'de novo' retained as standard prefix."
+  },
+  {
+    "source": "de novo 突变",
+    "display_zh": "从头突变",
+    "canonical_en": "de novo mutation",
+    "should_translate": false,
+    "note": "Source is Chinese; normalized English provided."
+  },
+  {
+    "source": "decreased copy number",
+    "display_zh": "拷贝数减少",
+    "canonical_en": "decreased copy number",
+    "should_translate": true,
+    "note": "Descriptive term translated."
+  },
+  {
+    "source": "deleterious L1 insertions",
+    "display_zh": "有害 L1 插入",
+    "canonical_en": "deleterious L1 insertions",
+    "should_translate": true,
+    "note": "TE impact term translated."
+  },
+  {
+    "source": "deletions",
+    "display_zh": "缺失",
+    "canonical_en": "deletions",
+    "should_translate": true,
+    "note": "General genetic term translated."
+  },
+  {
+    "source": "demethylation",
+    "display_zh": "去甲基化",
+    "canonical_en": "demethylation",
+    "should_translate": true,
+    "note": "Epigenetic term translated."
+  },
+  {
+    "source": "dGTP 依赖的 SAMHD1 四聚体形成",
+    "display_zh": "dGTP 依赖的 SAMHD1 四聚体形成",
+    "canonical_en": "dGTP-dependent SAMHD1 tetramerization",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized to 'tetramerization'."
+  },
+  {
+    "source": "Dicer 介导的 RNAi 沉默",
+    "display_zh": "Dicer 介导的 RNAi 沉默",
+    "canonical_en": "Dicer-mediated RNAi silencing",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  },
+  {
+    "source": "DICER 依赖性 mRNA 降解",
+    "display_zh": "DICER 依赖性 mRNA 降解",
+    "canonical_en": "DICER-dependent mRNA degradation",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  },
+  {
+    "source": "differentiation potential",
+    "display_zh": "分化潜能",
+    "canonical_en": "differentiation potential",
+    "should_translate": true,
+    "note": "Stem cell term translated."
+  },
+  {
+    "source": "disruption of genetic loci at insertion sites",
+    "display_zh": "插入位点遗传基因座的破坏",
+    "canonical_en": "disruption of genetic loci at insertion sites",
+    "should_translate": true,
+    "note": "Descriptive phrase translated."
+  },
+  {
+    "source": "DNA break",
+    "display_zh": "DNA 断裂",
+    "canonical_en": "DNA break",
+    "should_translate": true,
+    "note": "General term translated."
+  },
+  {
+    "source": "DNA deamination-independent inhibition",
+    "display_zh": "非 DNA 脱氨依赖的抑制",
+    "canonical_en": "DNA deamination-independent inhibition",
+    "should_translate": true,
+    "note": "Mechanistic description translated."
+  },
+  {
+    "source": "DNA deletions",
+    "display_zh": "DNA 缺失",
+    "canonical_en": "DNA deletions",
+    "should_translate": true,
+    "note": "Specific genetic term translated."
+  },
+  {
+    "source": "DNA IR 损伤和 ATR 介导的细胞反应",
+    "display_zh": "DNA 电离辐射损伤及 ATR 介导的细胞反应",
+    "canonical_en": "DNA IR damage and ATR-mediated cellular response",
+    "should_translate": false,
+    "note": "Expanded 'IR' to '电离辐射' in Chinese for clarity; English kept as common abbreviation."
+  },
+  {
+    "source": "DNA strand breaks with incomplete retrotransposition",
+    "display_zh": "伴随不完全逆转录转座的 DNA 链断裂",
+    "canonical_en": "DNA strand breaks with incomplete retrotransposition",
+    "should_translate": true,
+    "note": "Complex TE mechanism translated."
+  },
+  {
+    "source": "DNA-directed polymerization",
+    "display_zh": "DNA 指导的聚合",
+    "canonical_en": "DNA-directed polymerization",
+    "should_translate": true,
+    "note": "Biochemical process translated."
+  },
+  {
+    "source": "DNA 靶向与切割",
+    "display_zh": "DNA 靶向与切割",
+    "canonical_en": "DNA targeting and cleavage",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  },
+  {
+    "source": "DNA 编辑",
+    "display_zh": "DNA 编辑",
+    "canonical_en": "DNA editing",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  },
+  {
+    "source": "DNA 低甲基化",
+    "display_zh": "DNA 低甲基化",
+    "canonical_en": "DNA hypomethylation",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized to technical term."
+  },
+  {
+    "source": "DNA 第二链切口",
+    "display_zh": "DNA 第二链切口",
+    "canonical_en": "second-strand DNA nicking",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English rephrased for natural flow."
+  },
+  {
+    "source": "DNA 甲基化",
+    "display_zh": "DNA 甲基化",
+    "canonical_en": "DNA methylation",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  },
+  {
+    "source": "DNA 甲基化改变",
+    "display_zh": "DNA 甲基化改变",
+    "canonical_en": "alterations in DNA methylation",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English phrased naturally."
+  },
+  {
+    "source": "DNA 甲基化介导的启动子抑制",
+    "display_zh": "DNA 甲基化介导的启动子抑制",
+    "canonical_en": "DNA methylation-mediated promoter repression",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  },
+  {
+    "source": "DNA 甲基化缺失",
+    "display_zh": "DNA 甲基化缺失",
+    "canonical_en": "loss of DNA methylation",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English phrased naturally."
+  },
+  {
+    "source": "DNA 甲基化抑制",
+    "display_zh": "DNA 甲基化抑制",
+    "canonical_en": "inhibition of DNA methylation",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English phrased naturally."
+  },
+  {
+    "source": "DNA 结合活性",
+    "display_zh": "DNA 结合活性",
+    "canonical_en": "DNA-binding activity",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  },
+  {
+    "source": "DNA 聚合",
+    "display_zh": "DNA 聚合",
+    "canonical_en": "DNA polymerization",
+    "should_translate": false,
+    "note": "Source is accurate Chinese; English normalized."
+  }
+]
