@@ -470,7 +470,7 @@
   },
   "relations": {
     "zh": {
-      "SUBFAMILY_OF": "包含亚家族",
+      "SUBFAMILY_OF": "包含",
       "与...相关": "与…相关",
       "不导致": "不导致",
       "促进": "促进",
@@ -478,7 +478,7 @@
       "报道": "报道"
     },
     "en": {
-      "SUBFAMILY_OF": "contains subfamily",
+      "SUBFAMILY_OF": "contains",
       "与...相关": "associated with",
       "不导致": "does not cause",
       "促进": "promotes",

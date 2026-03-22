@@ -62,37 +62,36 @@ $navItems = [
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 16px;
     }
     .brand-mark {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
+      width: 86px;
+      height: 64px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #dbeafe, #eef2ff);
-      color: var(--primary);
-      font-size: 12px;
-      font-weight: 700;
-      border: 1px dashed #9eb8e8;
-      overflow: hidden;
+      flex: 0 0 auto;
+      overflow: visible;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
     }
     .brand-mark img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
     .brand-title {
       margin: 0;
-      font-size: 22px;
-      line-height: 1.1;
+      font-size: 24px;
+      line-height: 1.08;
     }
     .brand-subtitle {
-      margin: 2px 0 0;
+      margin: 4px 0 0;
       color: var(--muted);
-      font-size: 12px;
+      font-size: 13px;
     }
     .site-nav {
       display: flex;
@@ -237,11 +236,11 @@ $navItems = [
   <header class="site-header">
     <div class="site-header-inner">
       <div class="brand">
-        <div class="brand-mark" aria-label="站点图标占位">
-          <span>LOGO</span>
+        <div class="brand-mark" aria-label="站点图标">
+          <img src="tekg-logo.png" alt="TE-KG logo">
         </div>
         <div>
-          <h1 class="brand-title">TE-KG：转座元件知识图谱</h1>
+          <h1 class="brand-title">转座元件知识图谱</h1>
           <p class="brand-subtitle">Transposable Elements Knowledge Graph</p>
         </div>
       </div>

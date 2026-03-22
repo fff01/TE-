@@ -7521,7 +7521,7 @@
       "参与": "参与",
       "介导": "介导",
       "报道": "报道",
-      "SUBFAMILY_OF": "包含亚家族"
+      "SUBFAMILY_OF": "包含"
     },
     "en": {
       "导致": "causes",
@@ -7529,7 +7529,7 @@
       "参与": "participates in",
       "介导": "mediates",
       "报道": "reports",
-      "SUBFAMILY_OF": "contains subfamily"
+      "SUBFAMILY_OF": "contains"
     }
   }
 }
