@@ -304,3 +304,10 @@
 [2026-03-22 13:08:31] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
 [2026-03-22 13:08:39] answer:llm
 [2026-03-22 13:08:39] answer:done {"mode":"template_rag+llm"}
+[2026-03-22 13:40:50] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"simple","depth":"shallow"}
+[2026-03-22 13:40:50] answer:normalized {"language":"zh","style":"simple","depth":"shallow"}
+[2026-03-22 13:40:50] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-22 13:40:50] answer:template_query {"rows":15}
+[2026-03-22 13:40:50] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-22 13:41:01] answer:llm
+[2026-03-22 13:41:01] answer:done {"mode":"template_rag+llm"}
