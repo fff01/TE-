@@ -228,3 +228,31 @@
 [2026-03-21 12:50:17] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
 [2026-03-21 12:50:28] answer:llm
 [2026-03-21 12:50:28] answer:done {"mode":"template_rag+llm"}
+[2026-03-22 11:52:06] answer:start {"question":"LINE-1 相关疾病\n\n请严格遵循以下自定义提示词进行回答：\n先说结论","language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-22 11:52:06] answer:normalized {"language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-22 11:52:06] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-22 11:52:07] answer:template_query {"rows":15}
+[2026-03-22 11:52:07] answer:prepared {"rows":6,"refs":4,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-22 11:52:29] answer:llm
+[2026-03-22 11:52:29] answer:done {"mode":"template_rag+llm"}
+[2026-03-22 12:00:16] answer:start {"question":"LINE-1 相关疾病\n\n请严格遵循以下自定义提示词进行回答：\n先说明你是什么模型，再整理信息并回答","language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-22 12:00:16] answer:normalized {"language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-22 12:00:16] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-22 12:00:16] answer:template_query {"rows":15}
+[2026-03-22 12:00:16] answer:prepared {"rows":6,"refs":4,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-22 12:00:43] answer:llm
+[2026-03-22 12:00:43] answer:done {"mode":"template_rag+llm"}
+[2026-03-22 12:03:11] answer:start {"question":"LINE-1 相关疾病\n\n请严格遵循以下自定义提示词进行回答：\n先说明你是什么模型，再自由整理信息","language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-22 12:03:11] answer:normalized {"language":"zh","style":"detailed","depth":"shallow"}
+[2026-03-22 12:03:11] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-22 12:03:11] answer:template_query {"rows":15}
+[2026-03-22 12:03:11] answer:prepared {"rows":6,"refs":4,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-22 12:03:37] answer:llm
+[2026-03-22 12:03:37] answer:done {"mode":"template_rag+llm"}
+[2026-03-22 12:07:51] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"custom","depth":"shallow"}
+[2026-03-22 12:07:51] answer:normalized {"language":"zh","style":"custom","depth":"shallow"}
+[2026-03-22 12:07:51] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-22 12:07:52] answer:template_query {"rows":15}
+[2026-03-22 12:07:52] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-22 12:08:07] answer:llm
+[2026-03-22 12:08:07] answer:done {"mode":"template_rag+llm"}

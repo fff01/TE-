@@ -31,6 +31,16 @@
     .segmented{display:inline-flex;padding:.2rem;border:1px solid #dbeafe;border-radius:999px;background:#eff6ff;gap:.2rem}
     .segmented button{background:transparent;color:#1e3a8a;padding:.45rem .9rem;min-width:76px}
     .segmented button.active{background:#2563eb;color:#fff}
+    .custom-editor{display:none;flex:1;min-height:0;padding:1rem;background:#f7faff}
+    .custom-editor.active{display:flex;flex-direction:column;gap:1rem}
+    .custom-editor-card{flex:1;display:flex;flex-direction:column;min-height:0;background:#fff;border:1px solid #dbe7f3;border-radius:20px;padding:1.2rem 1.25rem;box-shadow:0 6px 20px rgba(15,23,42,.04)}
+    .custom-editor-title{font-size:1.05rem;font-weight:800;color:#1e293b;margin-bottom:.35rem}
+    .custom-editor-help{font-size:.86rem;color:#64748b;line-height:1.7;margin-bottom:.85rem}
+    .custom-editor textarea{flex:1;min-height:240px;border:1px solid #d8e4f0;border-radius:16px;padding:1rem 1.05rem;outline:none;font:inherit;line-height:1.65;resize:none;background:#fbfdff}
+    .custom-editor-actions{display:flex;justify-content:flex-end;gap:.75rem}
+    .custom-editor-actions button{padding:.75rem 1.15rem}
+    .custom-editor-actions .secondary{background:#e7eef7;color:#1e293b}
+    .custom-editor-actions .primary{background:#2563eb;color:#fff}
     .msg{display:flex;gap:.75rem;max-width:92%}.msg.user{align-self:flex-end;flex-direction:row-reverse}.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#dbe7f3;flex-shrink:0}.msg.user .avatar{background:#2563eb;color:#fff}
     .bubble{background:#fff;border-radius:18px;padding:.85rem 1rem;line-height:1.6;box-shadow:0 3px 12px rgba(15,23,42,.05)}.msg.user .bubble{background:#2563eb;color:#fff}
     .bubble p{margin:.2rem 0 .7rem}.bubble p:last-child{margin-bottom:0}.bubble ul,.bubble ol{margin:.35rem 0 .8rem 1.2rem}.bubble li{margin:.18rem 0}.bubble strong{font-weight:700}.bubble h1,.bubble h2,.bubble h3,.bubble h4{font-size:1rem;margin:.4rem 0 .65rem}.bubble code{background:#e2e8f0;padding:.08rem .35rem;border-radius:6px;font-family:Consolas,monospace}.bubble pre{background:#0f172a;color:#e2e8f0;padding:.8rem;border-radius:12px;overflow:auto;margin:.7rem 0}.bubble pre code{background:transparent;padding:0;color:inherit}
@@ -78,6 +88,7 @@
             <div class="segmented" id="style-segmented">
               <button id="mode-simple" class="active" type="button">简单</button>
               <button id="mode-detailed" type="button">详细</button>
+              <button id="mode-custom" type="button">自定义</button>
             </div>
           </div>
           <div class="qa-mode">
@@ -87,6 +98,17 @@
               <button id="depth-medium" type="button">中</button>
               <button id="depth-deep" type="button">深</button>
             </div>
+          </div>
+        </div>
+        <div class="custom-editor" id="custom-editor">
+          <div class="custom-editor-card">
+            <div class="custom-editor-title" id="custom-editor-title">自定义提示词</div>
+            <div class="custom-editor-help" id="custom-editor-help">在这里写下你希望智能问答遵循的语气、结构、重点或限制条件。点击确认后会暂时保存，并在后续提问时优先使用。</div>
+            <textarea id="custom-prompt" placeholder="例如：请用学术但通俗的中文回答；先给结论，再分点说明机制；尽量引用 PMID。"></textarea>
+          </div>
+          <div class="custom-editor-actions">
+            <button id="cancel-custom-prompt" class="secondary" type="button">取消</button>
+            <button id="confirm-custom-prompt" class="primary" type="button">确认</button>
           </div>
         </div>
         <div class="msgs" id="chat-messages"></div>
@@ -112,7 +134,7 @@
     const initialElements = JSON.parse(JSON.stringify(demoData.elements || []));
     const el = id => document.getElementById(id);
     const nodeDetails = el('node-details'), searchInput = el('node-search'), nav = el('search-results-nav'), prevBtn = el('prev-result'), nextBtn = el('next-result'), resultCounter = el('result-counter'), resultName = el('result-name'), chatMessages = el('chat-messages'), userInput = el('user-question'), sendBtn = el('send-question');
-    let currentLang = 'zh', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree';
+    let currentLang = 'zh', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', currentCustomPrompt = '', customPromptDraft = '', customEditorOpen = false, previousAnswerStyleBeforeCustom = 'simple', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree';
     let terminologyNames = {zh:{}, en:{}}, terminologyNameLookup = {zh:{}, en:{}}, terminologyRelations = {zh:{}, en:{}};
     const ui = {zh:{pageTitle:'转座元件知识图谱演示',badge:'LINE-1 本地图谱子图',graphTitle:'图谱可视化',qaTitle:'智能问答演示',search:'搜索 LINE-1、L1HS、疾病或功能',reset:'重置',footer:'演示页使用本地导出的 Neo4j 子图数据，不依赖在线接口。',empty:'点击节点或连线查看图谱详情。',orig:'原始名称',deg:'连接数',evi:'证据',none:'当前未列出',noneLocal:'当前没有检索到本地证据。',ph:'输入你的问题',q:'LINE-1 相关疾病',intro:'当前演示页已接入本地图谱子图。你可以提问：<br>“LINE-1 相关功能”<br>“LINE-1 相关疾病”<br>“L1HS 和 LINE-1 是什么关系”<br>“哪些文献支持 LINE-1 与阿尔茨海默病相关”',f:'根据当前本地图谱，LINE-1 主要涉及：',d:'根据当前本地图谱，LINE-1 与以下疾病关系较突出：',lp:'当前图谱已为 L1HS 整理出本地文献证据。',pp:'当前图谱已为 LINE-1 整理出本地文献证据。',fallback:'当前演示页支持围绕 LINE-1 的功能、疾病、谱系关系和文献证据查询。',ref:'证据来源',no:'暂无结果。',focus:'聚焦程度',focusHint:'高聚焦会更像手动滚轮放大',fixedOn:'固定视图：开',fixedOff:'固定视图：关',fixedTip:'固定视图已开启：点击节点或连线仅查看详情，不跳转图谱。'},en:{pageTitle:'TE Knowledge Graph Demo',badge:'LINE-1 Local Subgraph',graphTitle:'Graph View',qaTitle:'QA Demo',search:'Search LINE-1, L1HS, diseases, or functions',reset:'Reset',footer:'This demo uses a locally exported Neo4j subgraph and does not depend on online services.',empty:'Click a node or edge to inspect graph details.',orig:'Original name',deg:'Degree',evi:'Evidence',none:'Not listed',noneLocal:'No local evidence was found.',ph:'Ask a question',q:'LINE-1 related diseases',intro:'This demo is grounded on a local graph subnetwork. You can ask:<br>"LINE-1 related functions"<br>"LINE-1 related diseases"<br>"What is the relationship between L1HS and LINE-1?"<br>"What papers support the association between LINE-1 and Alzheimer\'s disease?"',f:'Based on the current local graph, LINE-1 is mainly involved in: ',d:'Based on the current local graph, LINE-1 is notably associated with: ',lp:'The current graph already includes local literature evidence for L1HS.',pp:'The current graph already includes local literature evidence for LINE-1.',fallback:'This demo currently supports LINE-1-centered questions about functions, diseases, lineage relations, and literature evidence.',ref:'Evidence',no:'No results.',focus:'Focus level',focusHint:'Higher focus behaves more like repeated wheel zoom',fixedOn:'Fixed view: On',fixedOff:'Fixed view: Off',fixedTip:'Fixed view is enabled: clicking nodes or edges only shows details without changing the graph.'}}; 
     const typeLabel = {zh:{TE:'转座元件',Disease:'疾病',Function:'功能/机制',Paper:'文献'},en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
@@ -372,17 +394,71 @@
       return payload;
     }
     function renderIntro(){chatMessages.innerHTML=''; addMessage(ui[currentLang].intro,'assistant')}
-    function repairModeControls(){const host=document.querySelector('.segmented'); if(host){host.innerHTML='<button id="mode-simple" class="active" type="button">简单</button><button id="mode-detailed" type="button">详细</button>';}}
+    function repairModeControls(){
+      const host=el('style-segmented');
+      if(host){
+        host.innerHTML='<button id="mode-simple" class="active" type="button">简单</button><button id="mode-detailed" type="button">详细</button><button id="mode-custom" type="button">自定义</button>';
+      }
+    }
+    function getCustomEditorElements(){
+      return {
+        editor: el('custom-editor'),
+        title: el('custom-editor-title'),
+        help: el('custom-editor-help'),
+        field: el('custom-prompt'),
+        msgs: el('chat-messages'),
+        inputWrap: document.querySelector('.chat .input')
+      };
+    }
+    function updateCustomPromptEditorUi(){
+      const {editor, title, help, field, msgs, inputWrap} = getCustomEditorElements();
+      if(title) title.textContent = currentLang==='zh' ? '自定义提示词' : 'Custom prompt';
+      if(help) help.textContent = currentLang==='zh'
+        ? '在这里写下你希望智能问答遵循的语气、结构、重点或限制条件。点击确认后会暂时保存，并在后续提问时优先使用。'
+        : 'Write any tone, structure, emphasis, or constraints you want the QA system to follow. Click confirm to save it temporarily for subsequent questions.';
+      if(field){
+        field.placeholder = currentLang==='zh'
+          ? '例如：请用学术但通俗的中文回答；先给结论，再分点说明机制；尽量引用 PMID。'
+          : 'For example: answer in academic but plain English; give the conclusion first; then explain mechanisms in bullets; cite PMID whenever possible.';
+        if(document.activeElement!==field){
+          field.value = customPromptDraft || currentCustomPrompt || '';
+        }
+      }
+      if(editor) editor.classList.toggle('active', customEditorOpen);
+      if(msgs) msgs.style.display = customEditorOpen ? 'none' : 'flex';
+      if(inputWrap) inputWrap.style.display = customEditorOpen ? 'none' : 'flex';
+    }
+    function openCustomPromptEditor(){
+      previousAnswerStyleBeforeCustom = currentAnswerStyle==='custom' ? 'custom' : currentAnswerStyle;
+      customPromptDraft = currentCustomPrompt || '';
+      customEditorOpen = true;
+      updateCustomPromptEditorUi();
+    }
+    function closeCustomPromptEditor({save=false}={}){
+      const field = el('custom-prompt');
+      customPromptDraft = field ? String(field.value || '').trim() : customPromptDraft;
+      if(save){
+        currentCustomPrompt = customPromptDraft;
+        currentAnswerStyle = 'custom';
+      }else if(currentAnswerStyle!=='custom'){
+        currentAnswerStyle = previousAnswerStyleBeforeCustom || 'simple';
+      }
+      customEditorOpen = false;
+      updateCustomPromptEditorUi();
+      updateAnswerModeUi();
+    }
     function updateAnswerModeUi(){
-      const modeSimpleBtn=el('mode-simple'), modeDetailedBtn=el('mode-detailed');
+      const modeSimpleBtn=el('mode-simple'), modeDetailedBtn=el('mode-detailed'), modeCustomBtn=el('mode-custom');
       const depthShallowBtn=el('depth-shallow'), depthMediumBtn=el('depth-medium'), depthDeepBtn=el('depth-deep');
       el('qa-mode-label').textContent=currentLang==='zh'?'回答模式':'Answer mode';
       el('qa-depth-label').textContent=currentLang==='zh'?'回答深度':'Answer depth';
-      if(modeSimpleBtn&&modeDetailedBtn){
+      if(modeSimpleBtn&&modeDetailedBtn&&modeCustomBtn){
         modeSimpleBtn.textContent=currentLang==='zh'?'简单':'Brief';
         modeDetailedBtn.textContent=currentLang==='zh'?'详细':'Detailed';
+        modeCustomBtn.textContent=currentLang==='zh'?'自定义':'Custom';
         modeSimpleBtn.classList.toggle('active', currentAnswerStyle==='simple');
         modeDetailedBtn.classList.toggle('active', currentAnswerStyle==='detailed');
+        modeCustomBtn.classList.toggle('active', currentAnswerStyle==='custom');
       }
       if(depthShallowBtn&&depthMediumBtn&&depthDeepBtn){
         depthShallowBtn.textContent=currentLang==='zh'?'浅':'Shallow';
@@ -392,9 +468,18 @@
         depthMediumBtn.classList.toggle('active', currentAnswerDepth==='medium');
         depthDeepBtn.classList.toggle('active', currentAnswerDepth==='deep');
       }
+      updateCustomPromptEditorUi();
     }
     function updateFocusUi(){el('focus-label').textContent=ui[currentLang].focus; el('focus-value').textContent=String(focusLevel);}
-    function setAnswerStyle(style){currentAnswerStyle=style==='detailed'?'detailed':'simple'; if(currentAnswerStyle==='simple' && currentAnswerDepth==='deep') currentAnswerDepth='shallow'; if(currentAnswerStyle==='detailed' && currentAnswerDepth==='shallow') currentAnswerDepth='deep'; updateAnswerModeUi();}
+    function setAnswerStyle(style){
+      currentAnswerStyle = ['simple','detailed','custom'].includes(style) ? style : 'simple';
+      if(currentAnswerStyle==='simple' && currentAnswerDepth==='deep') currentAnswerDepth='shallow';
+      if(currentAnswerStyle==='detailed' && currentAnswerDepth==='shallow') currentAnswerDepth='deep';
+      if(currentAnswerStyle!=='custom'){
+        customEditorOpen = false;
+      }
+      updateAnswerModeUi();
+    }
     function setAnswerDepth(depth){if(['shallow','medium','deep'].includes(depth)) currentAnswerDepth=depth; updateAnswerModeUi();}
     function updateFixedViewUi(){
       const btn = el('toggle-fixed-view');
@@ -518,10 +603,20 @@
     function renderBubbleContent(text,sender){if(sender==='user') return escapeHtml(text).replace(/\n/g,'<br>'); if(window.marked){marked.setOptions({breaks:true,gfm:true}); return marked.parse(text);} return text.replace(/\n/g,'<br>');}
     function addMessage(text,sender){const m=document.createElement('div'); m.className=`msg ${sender}`; m.innerHTML=`<div class="avatar"><i class="fas ${sender==='user'?'fa-user':'fa-robot'}"></i></div><div class="bubble">${renderBubbleContent(text,sender)}</div>`; chatMessages.appendChild(m); chatMessages.scrollTop=chatMessages.scrollHeight; return m}
     function makeRef(items){if(!items || items.length===0) return `<div class="ref">${ui[currentLang].noneLocal}</div>`; return `<div class="ref"><strong>${ui[currentLang].ref}:</strong><br>${items.map(i => `${getName(i.name, inferType(i.name), '', (i.pmids||[])[0]||'')}${(i.pmids||[]).length ? ` (PMID: ${(i.pmids||[]).join(', ')})` : ''}`).join('<br>')}</div>`}
+    function getCustomPromptValue(){
+      const field = el('custom-prompt');
+      if(customEditorOpen && field) return String(field.value || '').trim();
+      return String(currentCustomPrompt || '').trim();
+    }
+    function buildEffectiveQuestion(question){
+      const customPrompt = getCustomPromptValue();
+      currentCustomPrompt = customPrompt;
+      return question;
+    }
     function answerLocal(q){
       const modeLabel=currentLang==='zh'
-        ? (currentAnswerStyle==='detailed'?'详细模式':'简单模式')
-        : (currentAnswerStyle==='detailed'?'Detailed mode':'Brief mode');
+        ? (currentAnswerStyle==='detailed'?'详细模式':currentAnswerStyle==='custom'?'自定义模式':'简单模式')
+        : (currentAnswerStyle==='detailed'?'Detailed mode':currentAnswerStyle==='custom'?'Custom mode':'Brief mode');
       const depthLabel=currentLang==='zh' ? ({shallow:'浅',medium:'中',deep:'深'}[currentAnswerDepth]||'浅') : ({shallow:'Shallow',medium:'Medium',deep:'Deep'}[currentAnswerDepth]||'Shallow');
       const intro=`> ${modeLabel} · ${currentLang==='zh' ? '回答深度：' : 'Depth: '}${depthLabel}\n\n`;
       const lower=(q||'').toLowerCase();
@@ -591,7 +686,9 @@
         : `${intro}${ui[currentLang].fallback}`;
     }
     function formatBackendAnswer(result){
-      const styleLabel=currentLang==='zh'?(result.answer_style==='detailed'?'详细模式':'简单模式'):(result.answer_style==='detailed'?'Detailed mode':'Brief mode');
+      const styleLabel=currentLang==='zh'
+        ? (currentAnswerStyle==='custom'?'自定义模式':result.answer_style==='detailed'?'详细模式':'简单模式')
+        : (currentAnswerStyle==='custom'?'Custom mode':result.answer_style==='detailed'?'Detailed mode':'Brief mode');
       const depthLabel=currentLang==='zh'
         ? ({shallow:'浅',medium:'中',deep:'深'}[result.answer_depth] || '浅')
         : ({shallow:'Shallow',medium:'Medium',deep:'Deep'}[result.answer_depth] || 'Shallow');
@@ -612,7 +709,10 @@
       return true;
     }
     async function answerWithBackend(question){
-      const res=await fetch('api/qa.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,language:currentLang,answer_style:currentAnswerStyle,answer_depth:currentAnswerDepth})});
+      const effectiveQuestion = buildEffectiveQuestion(question);
+      const customPrompt = currentCustomPrompt;
+      const effectiveStyle = currentAnswerStyle==='custom' ? 'custom' : currentAnswerStyle;
+      const res=await fetch('api/qa.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:effectiveQuestion,language:currentLang,answer_style:effectiveStyle,answer_depth:currentAnswerDepth,custom_prompt:customPrompt})});
       const data=await res.json();
       if(!res.ok||!data.ok) throw new Error(data.error||'Backend request failed');
       return {text: formatBackendAnswer(data), result: data};
@@ -652,7 +752,20 @@
     });
     sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const backend=await answerWithBackend(q); loading.remove(); addMessage(backend.text,'assistant'); applyAnswerGraph(backend.result, q);}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
     userInput.addEventListener('keypress',e => { if(e.key==='Enter') sendBtn.click(); });
-    document.addEventListener('click',e => { if(e.target && e.target.id==='mode-simple') setAnswerStyle('simple'); if(e.target && e.target.id==='mode-detailed') setAnswerStyle('detailed'); if(e.target && e.target.id==='depth-shallow') setAnswerDepth('shallow'); if(e.target && e.target.id==='depth-medium') setAnswerDepth('medium'); if(e.target && e.target.id==='depth-deep') setAnswerDepth('deep'); });
+    document.addEventListener('click',e => {
+      if(!e.target) return;
+      if(e.target.id==='mode-simple') setAnswerStyle('simple');
+      if(e.target.id==='mode-detailed') setAnswerStyle('detailed');
+      if(e.target.id==='mode-custom') openCustomPromptEditor();
+      if(e.target.id==='confirm-custom-prompt') closeCustomPromptEditor({save:true});
+      if(e.target.id==='cancel-custom-prompt'){
+        customPromptDraft = currentCustomPrompt || '';
+        closeCustomPromptEditor({save:false});
+      }
+      if(e.target.id==='depth-shallow') setAnswerDepth('shallow');
+      if(e.target.id==='depth-medium') setAnswerDepth('medium');
+      if(e.target.id==='depth-deep') setAnswerDepth('deep');
+    });
     el('lang-zh').addEventListener('click',()=>{currentLang='zh'; setUi();}); el('lang-en').addEventListener('click',()=>{currentLang='en'; setUi();});
     cy.on('layoutstop',()=>{if(currentGraphKind!=='default-tree') refineGraphLayout(); cy.fit(undefined,55);});
     async function initializePage(){
