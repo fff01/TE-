@@ -166,7 +166,7 @@
     const nodeDetails = el('node-details'), searchInput = el('node-search'), nav = el('search-results-nav'), prevBtn = el('prev-result'), nextBtn = el('next-result'), resultCounter = el('result-counter'), resultName = el('result-name'), chatMessages = el('chat-messages'), userInput = el('user-question'), sendBtn = el('send-question');
     let currentLang = 'zh', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', currentModelProvider = 'qwen', currentCustomPrompt = '', customPromptDraft = '', currentCustomDepth = {rows:12,references:8}, customDepthDraft = {rows:12,references:8}, customEditorOpen = false, customEditorMode = 'prompt', previousAnswerStyleBeforeCustom = 'simple', previousAnswerDepthBeforeCustom = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree';
     let terminologyNames = {zh:{}, en:{}}, terminologyNameLookup = {zh:{}, en:{}}, terminologyRelations = {zh:{}, en:{}};
-    const ui = {zh:{pageTitle:'转座元件知识图谱演示',badge:'LINE-1 本地图谱子图',graphTitle:'图谱可视化',qaTitle:'智能问答演示',search:'搜索 LINE-1、L1HS、疾病或功能',reset:'重置',footer:'演示页使用本地导出的 Neo4j 子图数据，不依赖在线接口。',empty:'点击节点或连线查看图谱详情。',orig:'原始名称',deg:'连接数',evi:'证据',none:'当前未列出',noneLocal:'当前没有检索到本地证据。',ph:'输入你的问题',q:'LINE-1 相关疾病',intro:'当前演示页已接入本地图谱子图。你可以提问：<br>“LINE-1 相关功能”<br>“LINE-1 相关疾病”<br>“L1HS 和 LINE-1 是什么关系”<br>“哪些文献支持 LINE-1 与阿尔茨海默病相关”',f:'根据当前本地图谱，LINE-1 主要涉及：',d:'根据当前本地图谱，LINE-1 与以下疾病关系较突出：',lp:'当前图谱已为 L1HS 整理出本地文献证据。',pp:'当前图谱已为 LINE-1 整理出本地文献证据。',fallback:'当前演示页支持围绕 LINE-1 的功能、疾病、谱系关系和文献证据查询。',ref:'证据来源',no:'暂无结果。',focus:'聚焦程度',focusHint:'高聚焦会更像手动滚轮放大',fixedOn:'固定视图：开',fixedOff:'固定视图：关',fixedTip:'固定视图已开启：点击节点或连线仅查看详情，不跳转图谱。',modelLabel:'回答模型',modelQwen:'Qwen',modelDeepSeek:'DeepSeek',providerPrefix:'当前模型：'},en:{pageTitle:'TE Knowledge Graph Demo',badge:'LINE-1 Local Subgraph',graphTitle:'Graph View',qaTitle:'QA Demo',search:'Search LINE-1, L1HS, diseases, or functions',reset:'Reset',footer:'This demo uses a locally exported Neo4j subgraph and does not depend on online services.',empty:'Click a node or edge to inspect graph details.',orig:'Original name',deg:'Degree',evi:'Evidence',none:'Not listed',noneLocal:'No local evidence was found.',ph:'Ask a question',q:'LINE-1 related diseases',intro:'This demo is grounded on a local graph subnetwork. You can ask:<br>"LINE-1 related functions"<br>"LINE-1 related diseases"<br>"What is the relationship between L1HS and LINE-1?"<br>"What papers support the association between LINE-1 and Alzheimer\'s disease?"',f:'Based on the current local graph, LINE-1 is mainly involved in: ',d:'Based on the current local graph, LINE-1 is notably associated with: ',lp:'The current graph already includes local literature evidence for L1HS.',pp:'The current graph already includes local literature evidence for LINE-1.',fallback:'This demo currently supports LINE-1-centered questions about functions, diseases, lineage relations, and literature evidence.',ref:'Evidence',no:'No results.',focus:'Focus level',focusHint:'Higher focus behaves more like repeated wheel zoom',fixedOn:'Fixed view: On',fixedOff:'Fixed view: Off',fixedTip:'Fixed view is enabled: clicking nodes or edges only shows details without changing the graph.',modelLabel:'Model',modelQwen:'Qwen',modelDeepSeek:'DeepSeek',providerPrefix:'Model: '}}; 
+    let ui = {zh:{},en:{}}; 
     const typeLabel = {zh:{TE:'转座元件',Disease:'疾病',Function:'功能/机制',Paper:'文献'},en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
     const relLabel = {zh:{SUBFAMILY_OF:'包含','与...相关':'与…相关','不导致':'不导致','促进':'促进','介导':'介导','报道':'报道','影响':'影响','执行':'执行','参与':'参与','调控':'调控'},en:{SUBFAMILY_OF:'contains','与...相关':'associated with','不导致':'does not cause','促进':'promotes','介导':'mediates','报道':'reports','影响':'affects','执行':'executes','参与':'participates in','调控':'regulates'}};
     const nameMap = {zh:{},en:{}};
@@ -176,6 +176,7 @@
       zh: {Disease:{}, Function:{}},
       en: {Disease:{}, Function:{}}
     };
+    let localQaTemplates = {zh:{}, en:{}};
     const DISPLAY_NAME_OVERRIDES = {
       zh: {'L1':'LINE1','LINE-1':'LINE1'},
       en: {'L1':'LINE1','LINE-1':'LINE1'}
@@ -252,6 +253,38 @@
         console.warn('Failed to load entity descriptions:', err);
         entityDescMap = {zh:{Disease:{}, Function:{}}, en:{Disease:{}, Function:{}}};
       }
+    }
+    async function loadUiText(){
+      try{
+        const res = await fetch(`data/processed/ui_text.json?v=${Date.now()}`, {cache:'no-store'});
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        ui = {
+          zh: Object.assign({}, payload?.zh || {}),
+          en: Object.assign({}, payload?.en || {})
+        };
+      }catch(err){
+        console.warn('Failed to load UI text:', err);
+        ui = {zh:{}, en:{}};
+      }
+    }
+    async function loadLocalQaTemplates(){
+      try{
+        const res = await fetch(`data/processed/local_qa_templates.json?v=${Date.now()}`, {cache:'no-store'});
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        localQaTemplates = {
+          zh: Object.assign({}, payload?.zh || {}),
+          en: Object.assign({}, payload?.en || {})
+        };
+      }catch(err){
+        console.warn('Failed to load local QA templates:', err);
+        localQaTemplates = {zh:{}, en:{}};
+      }
+    }
+    function getLocalQaTemplate(key, fallback=''){
+      const source = localQaTemplates[currentLang] || {};
+      return source[key] ?? fallback;
     }
     function getDisplayNameKey(name=''){
       if(!name) return '';
@@ -705,6 +738,7 @@
       return question;
     }
     function answerLocal(q){
+      const qaTpl = localQaTemplates[currentLang] || {};
       const modeLabel=currentLang==='zh'
         ? (currentAnswerStyle==='detailed'?'详细模式':currentAnswerStyle==='custom'?'自定义模式':'简单模式')
         : (currentAnswerStyle==='detailed'?'Detailed mode':currentAnswerStyle==='custom'?'Custom mode':'Brief mode');
@@ -723,13 +757,20 @@
       const asksRelation=(lower.includes('关系') || lower.includes('是什么关系') || lower.includes('relationship')) && lower.includes('l1hs');
 
       const formatRef=(i)=>`- ${getName(i.name, inferType(i.name), '', (i.pmids||[])[0]||'')}${(i.pmids||[]).length ? ` (PMID: ${(i.pmids||[]).join(', ')})` : ''}`;
-      const buildDetailed=(title, items, refs, limitItems=8, limitRefs=8)=>{
-        const bulletLines=(items||[]).slice(0,limitItems).map(i=>`- ${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join('\n') || (currentLang==='zh' ? '- 当前未检索到可展开的本地结构化记录。' : '- No expandable local structured records were found.');
-        const refLines=(refs||[]).slice(0,limitRefs).map(formatRef).join('\n') || (currentLang==='zh' ? '当前暂无本地参考文献。' : 'No local references are currently available.');
-        if(currentLang==='zh'){
-          return `${intro}## 结论\n${title}\n\n## 机制与关系解释\n${bulletLines}\n\n## 证据与文献\n${refLines}\n\n## 局限与说明\n- 当前结果来自本地图谱子图，完整答案仍以后端知识检索为准。\n- 若动态图谱未完全展开，部分关系可能未显示在当前页面。`;
-        }
-        return `${intro}## Conclusion\n${title}\n\n## Mechanistic Interpretation\n${bulletLines}\n\n## Evidence and References\n${refLines}\n\n## Limitations\n- This local answer is based on the demo subgraph rather than the full backend retrieval pipeline.\n- Some relations may remain hidden when the current graph fragment is incomplete.`;
+      const sections = qaTpl.detailedSections || {
+        conclusion: currentLang==='zh' ? '结论' : 'Conclusion',
+        mechanism: currentLang==='zh' ? '机制与关系解释' : 'Mechanistic Interpretation',
+        evidence: currentLang==='zh' ? '证据与文献' : 'Evidence and References',
+        limitations: currentLang==='zh' ? '局限与说明' : 'Limitations'
+      };
+      const buildDetailed=(title, items, refs, limitItems=8, limitRefs=8)=>{ 
+        const bulletLines=(items||[]).slice(0,limitItems).map(i=>`- ${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join('\n') || getLocalQaTemplate('detailedEmptyItems', currentLang==='zh' ? '- 当前未检索到可展开的本地结构化记录。' : '- No expandable local structured records were found.');
+        const refLines=(refs||[]).slice(0,limitRefs).map(formatRef).join('\n') || getLocalQaTemplate('detailedNoRefs', currentLang==='zh' ? '当前暂无本地参考文献。' : 'No local references are currently available.');
+        const limitations = (qaTpl.detailedLimitations || [
+          currentLang==='zh' ? '当前结果来自本地图谱子图，完整答案仍以后端知识检索为准。' : 'This local answer is based on the demo subgraph rather than the full backend retrieval pipeline.',
+          currentLang==='zh' ? '若动态图谱未完全展开，部分关系可能未显示在当前页面。' : 'Some relations may remain hidden when the current graph fragment is incomplete.'
+        ]).map(item=>`- ${item}`).join('\n');
+        return `${intro}## ${sections.conclusion}\n${title}\n\n## ${sections.mechanism}\n${bulletLines}\n\n## ${sections.evidence}\n${refLines}\n\n## ${sections.limitations}\n${limitations}`;
       };
       const buildSimple=(lead, items, refs, limitItems=5, limitRefs=5)=>{
         const body=(items||[]).slice(0,limitItems).map(i=>`${getRel(i.predicate)} ${getName(i.name, inferType(i.name))}`).join(currentLang==='zh'?'；':'; ');
@@ -740,46 +781,50 @@
       if(asksRelation){
         const refs=demoData.qa.l1hs_papers || [];
         if(currentAnswerStyle==='detailed'){
-          return currentLang==='zh'
-            ? `${intro}## 结论\nL1HS 是 LINE-1 谱系中的一个更细粒度节点，当前本地图谱把它作为具体分支来展示。\n\n## 机制与关系解释\n- L1HS 通过 SUBFAMILY_OF 关系连接到 LINE-1。\n- 这种关系属于分类或谱系层级关系，而不是疾病或功能作用关系。\n- 保留更细粒度的层级有助于区分总家族与具体活跃分支。\n\n## 证据与文献\n${refs.slice(0,6).map(formatRef).join('\n') || '当前暂无本地参考文献。'}\n\n## 局限与说明\n- 当前页面优先展示局部子图，更多邻域需要继续展开。\n- 更完整的证据应以后端 Neo4j 检索和问答结果为准。`
-            : `${intro}## Conclusion\nL1HS is modeled as a finer-grained node within the LINE-1 lineage.\n\n## Mechanistic Interpretation\n- L1HS is connected to LINE-1 through a SUBFAMILY_OF relation.\n- This is a lineage or classification relation rather than a disease or mechanism relation.\n- Keeping finer-grained hierarchy helps distinguish the broader lineage from specific active branches.\n\n## Evidence and References\n${refs.slice(0,6).map(formatRef).join('\n') || 'No local references are currently available.'}\n\n## Limitations\n- The current page emphasizes a local subgraph rather than the full graph.\n- Full evidence should be checked through the backend retrieval pipeline.`;
+          const relation = qaTpl.relation || {};
+          const bullets = (relation.bullets || []).map(item=>`- ${item}`).join('\n');
+          const refLines = refs.slice(0,6).map(formatRef).join('\n') || getLocalQaTemplate('detailedNoRefs', currentLang==='zh' ? '当前暂无本地参考文献。' : 'No local references are currently available.');
+          const limitations = (relation.limitations || []).map(item=>`- ${item}`).join('\n');
+          return `${intro}## ${sections.conclusion}\n${relation.title || ''}\n\n## ${sections.mechanism}\n${bullets}\n\n## ${sections.evidence}\n${refLines}\n\n## ${sections.limitations}\n${limitations}`;
         }
-        return `${providerLine}${intro}${currentLang==='zh' ? 'L1HS 与 LINE-1 的关系属于同一谱系中的层级关系。' : 'L1HS is connected to LINE-1 through a hierarchical relation within the same lineage.'}${makeRef(refs.slice(0,4))}`;
+        return `${providerLine}${intro}${qaTpl.relation?.simple || (currentLang==='zh' ? 'L1HS 与 LINE-1 的关系属于同一谱系中的层级关系。' : 'L1HS is connected to LINE-1 through a hierarchical relation within the same lineage.')}${makeRef(refs.slice(0,4))}`;
       }
 
       if(asksLine1 && asksFunction){
         const items=demoData.qa.line1_functions || [];
         return currentAnswerStyle==='detailed'
-          ? buildDetailed(currentLang==='zh' ? '根据当前本地图谱，LINE-1 相关功能主要涉及逆转录转座、序列转导、插入突变及与其他转座元件协同的过程。' : 'According to the current local graph, LINE-1-related functions mainly involve retrotransposition, sequence transduction, insertional mutagenesis, and interactions with other transposable elements.', items, items)
+          ? buildDetailed(qaTpl.line1FunctionTitle || (currentLang==='zh' ? '根据当前本地图谱，LINE-1 相关功能主要涉及逆转录转座、序列转导、插入突变及与其他转座元件协同的过程。' : 'According to the current local graph, LINE-1-related functions mainly involve retrotransposition, sequence transduction, insertional mutagenesis, and interactions with other transposable elements.'), items, items)
           : buildSimple(ui[currentLang].f, items, items);
       }
 
       if(asksLine1 && asksDisease){
         const items=demoData.qa.line1_diseases || [];
         return currentAnswerStyle==='detailed'
-          ? buildDetailed(currentLang==='zh' ? '根据当前本地图谱，LINE-1 与多种神经系统疾病、遗传综合征及肿瘤相关疾病存在结构化关联。' : 'According to the current local graph, LINE-1 shows structured associations with multiple neurological diseases, genetic syndromes, and cancers.', items, items)
+          ? buildDetailed(qaTpl.line1DiseaseTitle || (currentLang==='zh' ? '根据当前本地图谱，LINE-1 与多种神经系统疾病、遗传综合征及肿瘤相关疾病存在结构化关联。' : 'According to the current local graph, LINE-1 shows structured associations with multiple neurological diseases, genetic syndromes, and cancers.'), items, items)
           : buildSimple(ui[currentLang].d, items, items);
       }
 
       if(lower.includes('l1hs') && asksPaper){
         const refs=demoData.qa.l1hs_papers || [];
         return currentAnswerStyle==='detailed'
-          ? buildDetailed(currentLang==='zh' ? '当前本地图谱已经整理出与 L1HS 相关的文献证据，可用于支撑谱系、功能或疾病关系的解释。':'The current local graph already contains literature evidence associated with L1HS.', refs, refs, 6, 8)
+          ? buildDetailed(qaTpl.l1hsPaperTitle || (currentLang==='zh' ? '当前本地图谱已经整理出与 L1HS 相关的文献证据，可用于支撑谱系、功能或疾病关系的解释。':'The current local graph already contains literature evidence associated with L1HS.'), refs, refs, 6, 8)
           : `${intro}${ui[currentLang].lp}${makeRef(refs.slice(0,5))}`;
       }
 
       if(asksLine1 && asksPaper){
         const refs=demoData.qa.line1_papers || [];
         return currentAnswerStyle==='detailed'
-          ? buildDetailed(currentLang==='zh' ? '当前本地图谱已经整理出与 LINE-1 相关的核心文献，可用于支撑疾病、功能和谱系层面的解释。':'The current local graph already contains core literature evidence associated with LINE-1.', refs, refs, 6, 8)
+          ? buildDetailed(qaTpl.line1PaperTitle || (currentLang==='zh' ? '当前本地图谱已经整理出与 LINE-1 相关的核心文献，可用于支撑疾病、功能和谱系层面的解释。':'The current local graph already contains core literature evidence associated with LINE-1.'), refs, refs, 6, 8)
           : `${intro}${ui[currentLang].pp}${makeRef(refs.slice(0,5))}`;
       }
 
-      return providerLine + (currentAnswerStyle==='detailed'
-        ? (currentLang==='zh'
-          ? `${intro}## 结论\n当前本地演示图支持围绕 LINE-1 的疾病、功能、谱系关系与文献证据问答。\n\n## 机制与关系解释\n- 你可以直接询问“LINE-1 相关疾病”“LINE-1 相关功能”。\n- 也可以询问“L1HS 和 LINE-1 是什么关系”。\n- 若需要证据，可继续追问文献支持情况。\n\n## 证据与文献\n当前回答来自本地演示图；更完整答案以后端知识检索与大模型生成结果为准。\n\n## 局限与说明\n- 这是本地回退回答，不代表完整数据库检索结果。\n- 当后端恢复后，详细模式会返回更完整的证据化回答。`
-          : `${intro}## Conclusion\nThe current local demo graph supports questions about LINE-1 diseases, functions, lineage relations, and literature evidence.\n\n## Mechanistic Interpretation\n- You can ask about LINE-1-related diseases or functions.\n- You can also ask how L1HS is related to LINE-1.\n- Literature evidence can be expanded when needed.\n\n## Evidence and References\nThis answer comes from the local demo graph; the full backend retrieval pipeline can provide richer evidence.\n\n## Limitations\n- This is a local fallback answer rather than the full retrieval result.\n- Detailed mode becomes richer when backend retrieval succeeds.`)
-        : `${intro}${ui[currentLang].fallback}`);
+      if(currentAnswerStyle==='detailed'){
+        const fallbackDetailed = qaTpl.fallbackDetailed || {};
+        const bullets = (fallbackDetailed.bullets || []).map(item=>`- ${item}`).join('\n');
+        const limitations = (fallbackDetailed.limitations || []).map(item=>`- ${item}`).join('\n');
+        return `${providerLine}${intro}## ${sections.conclusion}\n${fallbackDetailed.title || ui[currentLang].fallback}\n\n## ${sections.mechanism}\n${bullets}\n\n## ${sections.evidence}\n${fallbackDetailed.evidence || ''}\n\n## ${sections.limitations}\n${limitations}`;
+      }
+      return `${providerLine}${intro}${ui[currentLang].fallback}`;
     }
     function formatBackendAnswer(result){
       const effectiveProvider = (result.model_provider || currentModelProvider || 'qwen').toLowerCase() === 'deepseek' ? 'deepseek' : 'qwen';
@@ -880,6 +925,8 @@
     el('lang-zh').addEventListener('click',()=>{currentLang='zh'; setUi();}); el('lang-en').addEventListener('click',()=>{currentLang='en'; setUi();});
     cy.on('layoutstop',()=>{if(currentGraphKind!=='default-tree') refineGraphLayout(); cy.fit(undefined,55);});
     async function initializePage(){
+      await loadUiText();
+      await loadLocalQaTemplates();
       await loadTerminology();
       await loadTeDescriptions();
       await loadEntityDescriptions();
