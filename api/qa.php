@@ -29,6 +29,9 @@ $language = trim((string)($payload['language'] ?? ''));
 $answerStyle = trim((string)($payload['answer_style'] ?? 'simple'));
 $answerDepth = trim((string)($payload['answer_depth'] ?? ''));
 $customPrompt = trim((string)($payload['custom_prompt'] ?? ''));
+$customRows = isset($payload['custom_rows']) ? max(1, (int)$payload['custom_rows']) : 0;
+$customReferences = isset($payload['custom_references']) ? max(1, (int)$payload['custom_references']) : 0;
+$modelProvider = trim((string)($payload['model_provider'] ?? 'qwen'));
 $localConfig = [];
 $localConfigPath = __DIR__ . '/config.local.php';
 if (is_file($localConfigPath)) {
@@ -48,6 +51,9 @@ $config = [
     'dashscope_key' => $localConfig['dashscope_key'] ?? env_value(['DASHSCOPE_API_KEY_BIOLOGY', 'DASHSCOPE_API_KEY']),
     'dashscope_model' => $localConfig['dashscope_model'] ?? env_value(['DASHSCOPE_MODEL_BIOLOGY', 'DASHSCOPE_MODEL'], 'qwen-plus'),
     'dashscope_url' => $localConfig['dashscope_url'] ?? env_value(['DASHSCOPE_API_URL_BIOLOGY', 'DASHSCOPE_API_URL'], 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'),
+    'deepseek_key' => $localConfig['deepseek_key'] ?? env_value(['DEEPSEEK_API_KEY']),
+    'deepseek_model' => $localConfig['deepseek_model'] ?? env_value(['DEEPSEEK_MODEL'], 'deepseek-chat'),
+    'deepseek_url' => $localConfig['deepseek_url'] ?? env_value(['DEEPSEEK_API_URL'], 'https://api.deepseek.com/v1/chat/completions'),
     'ssl_verify' => isset($localConfig['ssl_verify'])
         ? (bool)$localConfig['ssl_verify']
         : filter_var(env_value(['DASHSCOPE_SSL_VERIFY_BIOLOGY', 'DASHSCOPE_SSL_VERIFY'], '0'), FILTER_VALIDATE_BOOLEAN),
@@ -68,7 +74,7 @@ if ($config['neo4j_password'] === '') {
 
 try {
     $service = new QaService($config);
-    $result = $service->answer($question, $language, $answerStyle, $answerDepth, $customPrompt);
+    $result = $service->answer($question, $language, $answerStyle, $answerDepth, $customPrompt, $customRows, $customReferences, $modelProvider);
     echo json_encode(['ok' => true] + $result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     http_response_code(500);
@@ -92,18 +98,30 @@ function env_value(array $names, ?string $default = null): ?string
 final class QaService
 {
     private array $config;
+    private string $activeModelProvider = 'qwen';
 
     public function __construct(array $config)
     {
         $this->config = $config;
     }
 
-    public function answer(string $question, string $language = '', string $answerStyle = 'simple', string $answerDepth = '', string $customPrompt = ''): array
+    public function answer(
+        string $question,
+        string $language = '',
+        string $answerStyle = 'simple',
+        string $answerDepth = '',
+        string $customPrompt = '',
+        int $customRows = 0,
+        int $customReferences = 0,
+        string $modelProvider = 'qwen'
+    ): array
     {
         $this->debug('answer:start', ['question' => $question, 'language' => $language, 'style' => $answerStyle, 'depth' => $answerDepth]);
+        $normalizedProvider = strtolower(trim($modelProvider));
+        $this->activeModelProvider = in_array($normalizedProvider, ['qwen', 'deepseek'], true) ? $normalizedProvider : 'qwen';
         $normalizedStyle = strtolower(trim($answerStyle));
         $answerStyle = in_array($normalizedStyle, ['simple', 'detailed', 'custom'], true) ? $normalizedStyle : 'simple';
-        $answerDepth = $this->normalizeAnswerDepth($answerDepth, $answerStyle);
+        $answerDepth = $this->normalizeAnswerDepth($answerDepth, $answerStyle, $customRows, $customReferences);
         $language = $language !== '' ? $language : $this->detectLanguage($question);
         $this->debug('answer:normalized', ['language' => $language, 'style' => $answerStyle, 'depth' => $answerDepth]);
         $smallTalkAnswer = $this->getSmallTalkAnswer($question, $language);
@@ -179,9 +197,9 @@ final class QaService
             $mode = 'neighbor_fallback';
         }
 
-        $rows = $this->prepareRowsForAnswer($rows, $intent, $answerStyle, $answerDepth);
+        $rows = $this->prepareRowsForAnswer($rows, $intent, $answerStyle, $answerDepth, $customRows);
         $references = $this->extractReferences($rows);
-        $references = $this->prepareReferencesForAnswer($references, $intent, $answerStyle, $answerDepth);
+        $references = $this->prepareReferencesForAnswer($references, $intent, $answerStyle, $answerDepth, $customReferences);
         $this->debug('answer:prepared', ['rows' => count($rows), 'refs' => count($references), 'intent' => $intent, 'depth' => $answerDepth]);
         try {
             $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth, $customPrompt);
@@ -190,7 +208,7 @@ final class QaService
         } catch (Throwable $e) {
             $mode .= '+structured_local';
             $this->debug('answer:structured_local', ['error' => $e->getMessage()]);
-            $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth);
+            $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth, $customRows, $customReferences);
         }
         $answer = $this->polishAnswer($answer, $language);
         $this->debug('answer:done', ['mode' => $mode]);
@@ -205,6 +223,9 @@ final class QaService
             'cypher' => $cypher,
             'records' => $rows,
             'references' => $references,
+            'custom_rows' => $answerDepth === 'custom' ? $customRows : 0,
+            'custom_references' => $answerDepth === 'custom' ? $customReferences : 0,
+            'model_provider' => $this->activeModelProvider,
             'graph_context' => $this->buildGraphContext($rows, $references, $intent, $entity, $question),
             'answer' => $answer,
         ];
@@ -460,11 +481,14 @@ final class QaService
         return preg_match('/[\x{4e00}-\x{9fff}]/u', $question) ? 'zh' : 'en';
     }
 
-    private function normalizeAnswerDepth(string $answerDepth, string $answerStyle): string
+    private function normalizeAnswerDepth(string $answerDepth, string $answerStyle, int $customRows = 0, int $customReferences = 0): string
     {
         $depth = strtolower(trim($answerDepth));
         if (in_array($depth, ['shallow', 'medium', 'deep'], true)) {
             return $depth;
+        }
+        if ($answerStyle === 'custom' || $customRows > 0 || $customReferences > 0) {
+            return 'custom';
         }
         if ($answerStyle === 'custom') {
             return 'shallow';
@@ -893,7 +917,7 @@ Context:
         return strtr($template, $replacements);
     }
 
-    private function fallbackAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle, string $answerDepth): string
+    private function fallbackAnswer(string $question, string $language, array $rows, array $references, ?string $intent, ?string $entity, string $answerStyle, string $answerDepth, int $customRows = 0, int $customReferences = 0): string
     {
         if ($language === 'zh') {
             $templateName = empty($rows)
@@ -905,7 +929,7 @@ Context:
                 : "## 结论\n本地知识图谱暂无直接证据。";
 
             $items = [];
-            foreach (array_slice($rows, 0, $this->fallbackRowLimit($answerStyle, $answerDepth)) as $row) {
+            foreach (array_slice($rows, 0, $this->fallbackRowLimit($answerStyle, $answerDepth, $customRows)) as $row) {
                 if (!is_array($row) || !isset($row[0])) {
                     continue;
                 }
@@ -924,7 +948,7 @@ Context:
             }
 
             $refs = [];
-            foreach (array_slice($references, 0, $this->fallbackReferenceLimit($answerStyle, $answerDepth)) as $ref) {
+            foreach (array_slice($references, 0, $this->fallbackReferenceLimit($answerStyle, $answerDepth, $customReferences)) as $ref) {
                 $title = (string) ($ref['title'] ?? '未命名文献');
                 $pmid = implode(',', $ref['pmids'] ?? []);
                 $refs[] = '- ' . $title . ($pmid !== '' ? '（PMID: ' . $pmid . '）' : '');
@@ -969,7 +993,7 @@ None.";
         }
 
         $items = [];
-        foreach (array_slice($rows, 0, $this->fallbackRowLimit($answerStyle, $answerDepth)) as $row) {
+        foreach (array_slice($rows, 0, $this->fallbackRowLimit($answerStyle, $answerDepth, $customRows)) as $row) {
             if (is_array($row) && isset($row[0])) {
                 $target = $this->extractFallbackTarget($row);
                 $predicate = isset($row[1]) ? (string) $row[1] : 'related to';
@@ -979,7 +1003,7 @@ None.";
             }
         }
         $refs = [];
-        foreach (array_slice($references, 0, $this->fallbackReferenceLimit($answerStyle, $answerDepth)) as $ref) {
+        foreach (array_slice($references, 0, $this->fallbackReferenceLimit($answerStyle, $answerDepth, $customReferences)) as $ref) {
             $title = (string) ($ref['title'] ?? 'Untitled reference');
             $pmid = implode(',', $ref['pmids'] ?? []);
             $refs[] = '- ' . $title . ($pmid !== '' ? ' (PMID: ' . $pmid . ')' : '');
@@ -1035,7 +1059,7 @@ Relevant structured records were retrieved from the local knowledge graph.
         return '未知对象';
     }
 
-    private function prepareRowsForAnswer(array $rows, ?string $intent, string $answerStyle = 'simple', string $answerDepth = 'shallow'): array
+    private function prepareRowsForAnswer(array $rows, ?string $intent, string $answerStyle = 'simple', string $answerDepth = 'shallow', int $customRows = 0): array
     {
         if ($intent === 'te_to_disease' || $intent === 'te_disease_relation' || $intent === 'te_disease_evidence') {
             $rows = array_values(array_filter($rows, function ($row): bool {
@@ -1053,7 +1077,7 @@ Relevant structured records were retrieved from the local knowledge graph.
 
         $rows = $this->normalizeRows($rows, $intent);
 
-        $limit = $this->rowLimit($answerStyle, $answerDepth);
+        $limit = $this->rowLimit($answerStyle, $answerDepth, $customRows);
         return array_slice($rows, 0, $limit);
     }
 
@@ -1091,7 +1115,7 @@ Relevant structured records were retrieved from the local knowledge graph.
         return array_values($references);
     }
 
-    private function prepareReferencesForAnswer(array $references, ?string $intent, string $answerStyle = 'simple', string $answerDepth = 'shallow'): array
+    private function prepareReferencesForAnswer(array $references, ?string $intent, string $answerStyle = 'simple', string $answerDepth = 'shallow', int $customReferences = 0): array
     {
         $filtered = array_values(array_filter($references, function ($ref): bool {
             $title = (string)($ref['title'] ?? '');
@@ -1102,12 +1126,15 @@ Relevant structured records were retrieved from the local knowledge graph.
             return count($b['pmids'] ?? []) <=> count($a['pmids'] ?? []);
         });
 
-        $limit = $this->referenceLimit($answerStyle, $answerDepth);
+        $limit = $this->referenceLimit($answerStyle, $answerDepth, $customReferences);
         return array_slice($filtered, 0, $limit);
     }
 
-    private function rowLimit(string $answerStyle, string $answerDepth): int
+    private function rowLimit(string $answerStyle, string $answerDepth, int $customRows = 0): int
     {
+        if ($answerDepth === 'custom' && $customRows > 0) {
+            return $customRows;
+        }
         return match ($answerDepth) {
             'medium' => $answerStyle === 'detailed' ? 8 : 6,
             'deep' => $answerStyle === 'detailed' ? 12 : 8,
@@ -1115,8 +1142,11 @@ Relevant structured records were retrieved from the local knowledge graph.
         };
     }
 
-    private function referenceLimit(string $answerStyle, string $answerDepth): int
+    private function referenceLimit(string $answerStyle, string $answerDepth, int $customReferences = 0): int
     {
+        if ($answerDepth === 'custom' && $customReferences > 0) {
+            return $customReferences;
+        }
         return match ($answerDepth) {
             'medium' => $answerStyle === 'detailed' ? 6 : 4,
             'deep' => $answerStyle === 'detailed' ? 8 : 5,
@@ -1124,8 +1154,11 @@ Relevant structured records were retrieved from the local knowledge graph.
         };
     }
 
-    private function fallbackRowLimit(string $answerStyle, string $answerDepth): int
+    private function fallbackRowLimit(string $answerStyle, string $answerDepth, int $customRows = 0): int
     {
+        if ($answerDepth === 'custom' && $customRows > 0) {
+            return $customRows;
+        }
         return match ($answerDepth) {
             'medium' => $answerStyle === 'detailed' ? 7 : 5,
             'deep' => $answerStyle === 'detailed' ? 9 : 6,
@@ -1133,8 +1166,11 @@ Relevant structured records were retrieved from the local knowledge graph.
         };
     }
 
-    private function fallbackReferenceLimit(string $answerStyle, string $answerDepth): int
+    private function fallbackReferenceLimit(string $answerStyle, string $answerDepth, int $customReferences = 0): int
     {
+        if ($answerDepth === 'custom' && $customReferences > 0) {
+            return $customReferences;
+        }
         return match ($answerDepth) {
             'medium' => $answerStyle === 'detailed' ? 8 : 5,
             'deep' => $answerStyle === 'detailed' ? 10 : 6,
@@ -1267,8 +1303,13 @@ Relevant structured records were retrieved from the local knowledge graph.
 
     private function dashscopeChat(array $messages, float $temperature = 0.2): string
     {
+        $provider = $this->activeModelProvider === 'deepseek' ? 'deepseek' : 'qwen';
+        $providerModel = $provider === 'deepseek' ? $this->config['deepseek_model'] : $this->config['dashscope_model'];
+        $providerUrl = $provider === 'deepseek' ? $this->config['deepseek_url'] : $this->config['dashscope_url'];
+        $providerKey = $provider === 'deepseek' ? $this->config['deepseek_key'] : $this->config['dashscope_key'];
         $payload = [
-            'model' => $this->config['dashscope_model'],
+            'model' => $providerModel,
+            'provider' => $provider,
             'messages' => $messages,
             'temperature' => $temperature,
             'enable_thinking' => false,
@@ -1286,11 +1327,11 @@ Relevant structured records were retrieved from the local knowledge graph.
             $response = $relayResponse['response'];
         } else {
             $response = $this->httpJson(
-                $this->config['dashscope_url'],
+                $providerUrl,
                 $payload,
                 [
                     'Content-Type: application/json',
-                    'Authorization: Bearer ' . $this->config['dashscope_key'],
+                    'Authorization: Bearer ' . $providerKey,
                 ]
             );
         }

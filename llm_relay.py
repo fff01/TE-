@@ -7,26 +7,36 @@ from urllib.request import Request, build_opener, ProxyHandler, HTTPSHandler
 
 HOST = "127.0.0.1"
 PORT = int(os.getenv("BIOLOGY_LLM_RELAY_PORT", "18087"))
-DASHSCOPE_URL = os.getenv(
-    "DASHSCOPE_API_URL_BIOLOGY",
-    os.getenv("DASHSCOPE_API_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"),
-)
-DASHSCOPE_MODEL = os.getenv(
-    "DASHSCOPE_MODEL_BIOLOGY",
-    os.getenv("DASHSCOPE_MODEL", "qwen3.5-plus"),
-)
-DASHSCOPE_KEY = os.getenv(
-    "DASHSCOPE_API_KEY_BIOLOGY",
-    os.getenv("DASHSCOPE_API_KEY", ""),
-)
 SSL_VERIFY = os.getenv("DASHSCOPE_SSL_VERIFY_BIOLOGY", os.getenv("DASHSCOPE_SSL_VERIFY", "0")).lower() in {
     "1", "true", "yes", "on"
 }
 
+PROVIDERS = {
+    "qwen": {
+        "url": os.getenv(
+            "DASHSCOPE_API_URL_BIOLOGY",
+            os.getenv("DASHSCOPE_API_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"),
+        ),
+        "model": os.getenv(
+            "DASHSCOPE_MODEL_BIOLOGY",
+            os.getenv("DASHSCOPE_MODEL", "qwen3.5-plus"),
+        ),
+        "key": os.getenv(
+            "DASHSCOPE_API_KEY_BIOLOGY",
+            os.getenv("DASHSCOPE_API_KEY", ""),
+        ),
+    },
+    "deepseek": {
+        "url": os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions"),
+        "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+        "key": os.getenv("DEEPSEEK_API_KEY", ""),
+    },
+}
 
-def build_dashscope_opener():
+
+def build_provider_opener(url: str):
     handlers = [ProxyHandler({})]
-    if DASHSCOPE_URL.startswith("https://"):
+    if url.startswith("https://"):
         context = ssl.create_default_context()
         if not SSL_VERIFY:
             context.check_hostname = False
@@ -51,9 +61,15 @@ class RelayHandler(BaseHTTPRequestHandler):
         self._json(200, {
             "ok": True,
             "service": "biology-llm-relay",
-            "dashscope_url": DASHSCOPE_URL,
-            "dashscope_model": DASHSCOPE_MODEL,
-            "dashscope_key_present": bool(DASHSCOPE_KEY),
+            "default_provider": "qwen",
+            "providers": {
+                name: {
+                    "url": cfg["url"],
+                    "model": cfg["model"],
+                    "key_present": bool(cfg["key"]),
+                }
+                for name, cfg in PROVIDERS.items()
+            },
             "ssl_verify": SSL_VERIFY,
             "proxy_bypassed": True,
         })
@@ -69,11 +85,16 @@ class RelayHandler(BaseHTTPRequestHandler):
             incoming = json.loads(raw.decode("utf-8") or "{}")
             messages = incoming.get("messages") or []
             temperature = incoming.get("temperature", 0.2)
-            model = incoming.get("model") or DASHSCOPE_MODEL
+            provider = str(incoming.get("provider") or incoming.get("model_provider") or "qwen").strip().lower()
+            if provider not in PROVIDERS:
+                self._json(400, {"ok": False, "error": f"Unsupported provider: {provider}"})
+                return
+            provider_config = PROVIDERS[provider]
+            model = incoming.get("model") or provider_config["model"]
             enable_thinking = incoming.get("enable_thinking", False)
 
-            if not DASHSCOPE_KEY:
-                self._json(500, {"ok": False, "error": "DashScope API key is missing"})
+            if not provider_config["key"]:
+                self._json(500, {"ok": False, "error": f"{provider} API key is missing"})
                 return
 
             payload = json.dumps({
@@ -84,18 +105,18 @@ class RelayHandler(BaseHTTPRequestHandler):
             }, ensure_ascii=False).encode("utf-8")
 
             req = Request(
-                DASHSCOPE_URL,
+                provider_config["url"],
                 data=payload,
                 headers={
                     "Content-Type": "application/json",
-                    "Authorization": f"Bearer {DASHSCOPE_KEY}",
+                    "Authorization": f"Bearer {provider_config['key']}",
                     "Connection": "close",
                     "Accept": "application/json",
                 },
                 method="POST",
             )
 
-            opener = build_dashscope_opener()
+            opener = build_provider_opener(provider_config["url"])
             with opener.open(req, timeout=90) as resp:
                 content = resp.read().decode("utf-8")
             decoded = json.loads(content)
