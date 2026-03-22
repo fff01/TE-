@@ -297,3 +297,10 @@
 [2026-03-22 13:05:14] answer:prepared {"rows":1,"refs":1,"intent":"te_to_disease","depth":"custom"}
 [2026-03-22 13:05:21] answer:llm
 [2026-03-22 13:05:21] answer:done {"mode":"template_rag+llm"}
+[2026-03-22 13:08:31] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"custom","depth":"shallow"}
+[2026-03-22 13:08:31] answer:normalized {"language":"zh","style":"custom","depth":"shallow"}
+[2026-03-22 13:08:31] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-22 13:08:31] answer:template_query {"rows":15}
+[2026-03-22 13:08:31] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-22 13:08:39] answer:llm
+[2026-03-22 13:08:39] answer:done {"mode":"template_rag+llm"}
