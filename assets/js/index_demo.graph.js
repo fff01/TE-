@@ -1,4 +1,4 @@
-    function buildLayout(kind=currentGraphKind){
+﻿    function buildLayout(kind=currentGraphKind){
       if(kind==='default-tree'){
         return {
           name:'preset',
@@ -56,7 +56,6 @@
       clearHighlights();
       searchResults=[]; currentResultIndex=-1;
       focusLevel=0;
-      el('focus-level').value='0';
       updateFocusUi();
       applyGraphElements(initialElements, 'TE', {graphKind:'default-tree'});
     }
@@ -207,7 +206,17 @@
       }
       updateCustomEditorUi();
     }
-    function updateFocusUi(){el('focus-label').textContent=ui[currentLang].focus; el('focus-value').textContent=String(focusLevel);}
+    function updateFocusUi(){
+      const btn = el('toggle-focus-view');
+      const label = el('focus-view-text');
+      const isLocal = focusLevel===100;
+      if(label){
+        const globalText = ui[currentLang].focusGlobal || (currentLang==='zh' ? '全局' : 'Global');
+        const localText = ui[currentLang].focusLocal || (currentLang==='zh' ? '局部' : 'Local');
+        label.textContent = `${ui[currentLang].focus}：${isLocal ? localText : globalText}`;
+      }
+      if(btn) btn.classList.toggle('active', isLocal);
+    }
     function setAnswerStyle(style){
       currentAnswerStyle = ['simple','detailed','custom'].includes(style) ? style : 'simple';
       if(currentAnswerStyle==='simple' && currentAnswerDepth==='deep') currentAnswerDepth='shallow';
@@ -354,3 +363,4 @@
       currentCustomPrompt = customPrompt;
       return question;
     }
+

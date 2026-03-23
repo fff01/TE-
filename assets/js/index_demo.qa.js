@@ -156,7 +156,7 @@
       }
       showEdge(edge)
     }); cy.on('tap',e => { if(e.target===cy){clearHighlights(); nodeDetails.textContent=ui[currentLang].empty;} });
-    searchInput.addEventListener('input', handleSearch); searchInput.addEventListener('keydown',async e=>{if(e.key==='Enter'){e.preventDefault(); try{await loadDynamicGraph(searchInput.value.trim());}catch(err){nodeDetails.textContent = err && err.message ? err.message : ui[currentLang].empty;}}}); prevBtn.addEventListener('click',()=>{if(currentResultIndex>0){currentResultIndex-=1; updateNav();}}); nextBtn.addEventListener('click',()=>{if(currentResultIndex<searchResults.length-1){currentResultIndex+=1; updateNav();}}); el('focus-level').addEventListener('input',e=>{focusLevel=Number(e.target.value)||0; updateFocusUi(); if(searchResults.length>0&&searchResults[currentResultIndex]) focus(searchResults[currentResultIndex]);});
+    searchInput.addEventListener('input', handleSearch); searchInput.addEventListener('keydown',async e=>{if(e.key==='Enter'){e.preventDefault(); try{await loadDynamicGraph(searchInput.value.trim());}catch(err){nodeDetails.textContent = err && err.message ? err.message : ui[currentLang].empty;}}}); prevBtn.addEventListener('click',()=>{if(currentResultIndex>0){currentResultIndex-=1; updateNav();}}); nextBtn.addEventListener('click',()=>{if(currentResultIndex<searchResults.length-1){currentResultIndex+=1; updateNav();}}); 
     el('reset-graph').addEventListener('click',()=>{restoreInitialGraph();});
     el('toggle-fixed-view').addEventListener('click',()=>{
       fixedView = !fixedView;
@@ -182,6 +182,11 @@
       if(e.target.id==='depth-custom') openCustomDepthEditor();
       if(e.target.id==='model-qwen') setModelProvider('qwen');
       if(e.target.id==='model-deepseek') setModelProvider('deepseek');
+      if(e.target.id==='toggle-focus-view' || e.target.id==='focus-view-text'){
+        focusLevel = focusLevel===100 ? 0 : 100;
+        updateFocusUi();
+        if(searchResults.length>0&&searchResults[currentResultIndex]) focus(searchResults[currentResultIndex]);
+      }
     });
     el('lang-zh').addEventListener('click',()=>{currentLang='zh'; setUi();}); el('lang-en').addEventListener('click',()=>{currentLang='en'; setUi();});
     cy.on('layoutstop',()=>{if(currentGraphKind!=='default-tree') refineGraphLayout(); cy.fit(undefined,55);});
@@ -194,7 +199,7 @@
       repairModeControls();
       setAnswerStyle('simple');
       setUi();
-      el('focus-level').value=String(focusLevel);
+      updateFocusUi();
       restoreInitialGraph();
     }
     initializePage();

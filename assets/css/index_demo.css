@@ -6,10 +6,6 @@
     .panel{background:#fff;border:1px solid #dbe7f3;border-radius:20px;box-shadow:0 10px 30px rgba(15,23,42,.06);overflow:hidden;min-height:0;height:calc(100vh - 122px);display:flex;flex-direction:column}
     .head{display:flex;align-items:center;gap:.75rem;padding:1.1rem 1.25rem;min-height:78px;border-bottom:1px solid #e7eef7}.head h2{font-size:1.3rem}
     .toolbar{display:flex;gap:.75rem;padding:.9rem 1.25rem;border-bottom:1px solid #e7eef7;align-items:center;flex-wrap:wrap}.search{flex:1;min-width:220px;display:flex;align-items:center;gap:.5rem;border:1px solid #d8e4f0;border-radius:999px;padding:.2rem .9rem;background:#f8fbff}.search input{width:100%;border:none;background:transparent;outline:none;padding:.55rem 0}
-    .focus-wrap{display:flex;align-items:center;gap:.65rem;padding:.45rem .85rem;border:1px solid #d8e4f0;border-radius:999px;background:#f8fbff;color:#475569}
-    .focus-wrap label{font-size:.86rem;font-weight:600;white-space:nowrap}
-    .focus-wrap input[type=range]{width:120px}
-    .focus-value{min-width:2.2rem;text-align:center;font-size:.82rem;font-weight:700;color:#1e3a8a}
     button{border:none;border-radius:999px;background:#e7eef7;color:#1e293b;padding:.7rem 1rem;cursor:pointer;font-weight:600}
     #cy{flex:1;min-height:0;background:radial-gradient(circle at top,#fff,#f6faff)}
     .nav{display:none;align-items:center;gap:.8rem;padding:.75rem 1.25rem;border-top:1px solid #e7eef7;background:#f8fbff}.nav button{width:34px;height:34px;padding:0;border-radius:50%}
