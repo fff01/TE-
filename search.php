@@ -1,4 +1,6 @@
-﻿<?php
+<?php
+require_once __DIR__ . '/site_i18n.php';
+$lang = site_lang();
 $pageTitle = '搜索 - TEKG';
 $activePage = 'search';
 
@@ -61,8 +63,32 @@ function tekg_repbase_lookup(string $query): ?array
     return null;
 }
 
-$query = trim((string) ($_GET['q'] ?? ''));
-$type = trim((string) ($_GET['type'] ?? 'all'));
+function tekg_request_scalar(array $source, string $key, string $default = ''): string
+{
+    if (!array_key_exists($key, $source)) {
+        return $default;
+    }
+    $value = $source[$key];
+    if (is_array($value)) {
+        foreach ($value as $item) {
+            if (is_scalar($item)) {
+                return trim((string) $item);
+            }
+        }
+        return $default;
+    }
+    if (!is_scalar($value)) {
+        return $default;
+    }
+    return trim((string) $value);
+}
+
+$query = tekg_request_scalar($_GET, 'q', '');
+$type = tekg_request_scalar($_GET, 'type', 'all');
+$allowedTypes = ['all', 'TE', 'Disease', 'Function', 'Paper'];
+if (!in_array($type, $allowedTypes, true)) {
+    $type = 'all';
+}
 $repbase = tekg_repbase_lookup($query);
 include __DIR__ . '/head.php';
 ?>
@@ -360,7 +386,13 @@ include __DIR__ . '/head.php';
     if (!repbaseEl) return;
     const anchor = payload && payload.anchor ? payload.anchor : null;
     const candidateNames = [];
-    if (anchor && anchor.type === 'TE' && anchor.name) candidateNames.push(anchor.name);
+    if (anchor && anchor.type === 'TE') {
+    // 优先推入后端返回的绝对标准英文名称以供 JSON 字典匹配
+      if (anchor.standard_name) candidateNames.push(anchor.standard_name);
+    // 其次再推入可能被本地化翻译过的常规名称
+      if (anchor.name) candidateNames.push(anchor.name);
+    }
+
     if (query) candidateNames.push(query);
     const uniqueNames = Array.from(new Set(candidateNames.filter(Boolean)));
 
@@ -410,7 +442,20 @@ include __DIR__ . '/head.php';
     }
     resultEl.innerHTML = '正在检索 <strong>' + query.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong> …';
     try {
-      const response = await fetch('api/graph.php?q=' + encodeURIComponent(query));
+      // 构建完整的请求 URL
+      const searchUrl = new URL('api/graph.php', window.location.origin + window.location.pathname);
+      searchUrl.searchParams.set('q', query);
+
+      const typeField = document.querySelector('select[name="type"]');
+      if (typeField && typeField.value !== 'all') {
+        searchUrl.searchParams.set('type', typeField.value);
+      }
+
+      const currentLang = <?= json_encode($lang, JSON_UNESCAPED_UNICODE) ?>;
+      if (currentLang) {
+        searchUrl.searchParams.set('lang', currentLang);
+      }
+      const response = await fetch(searchUrl.toString());
       const payload = await response.json();
       if (!response.ok || !payload.ok) {
         throw new Error(payload.error || '搜索失败');
@@ -441,23 +486,23 @@ include __DIR__ . '/head.php';
     showEdge(evt.target);
   });
 
-    cy.on('tap', function (evt) {
-      if (evt.target === cy) {
-        clearActive();
-        detailEl.innerHTML = '';
-      }
-    });
+  cy.on('tap', function (evt) {
+    if (evt.target === cy) {
+      clearActive();
+      detailEl.innerHTML = '';
+    }
+  });
 
   resetBtn.addEventListener('click', function () {
     queryInput.value = '';
     window.history.replaceState({}, '', 'search.php');
     resultEl.innerHTML = '输入关键词后，这里会显示最佳命中的实体详情。';
-      if (repbaseEl) {
-        repbaseEl.innerHTML = '该区块用于展示当前数据库 TE 能映射到的 Repbase 条目信息，包括标准名、说明、关键词、物种和序列摘要。';
-      }
-      setGraphElements(initialElements, 50);
-      detailEl.innerHTML = '';
-    });
+    if (repbaseEl) {
+      repbaseEl.innerHTML = '该区块用于展示当前数据库 TE 能映射到的 Repbase 条目信息，包括标准名、说明、关键词、物种和序列摘要。';
+    }
+    setGraphElements(initialElements, 50);
+    detailEl.innerHTML = '';
+  });
 
   searchForm.addEventListener('submit', function (evt) {
     const query = queryInput.value.trim();
@@ -469,6 +514,7 @@ include __DIR__ . '/head.php';
     if (typeField) {
       url.searchParams.set('type', typeField.value || 'all');
     }
+    url.searchParams.set('lang', <?= json_encode($lang, JSON_UNESCAPED_UNICODE) ?>);
     window.history.replaceState({}, '', url.toString());
     runSearch(query);
   });

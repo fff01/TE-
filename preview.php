@@ -1,124 +1,117 @@
-﻿<?php
-$pageTitle = '预览 - TEKG';
+<?php
+require_once __DIR__ . '/site_i18n.php';
+$lang = site_lang();
+$pageTitle = site_t(['zh' => '预览 - TEKG', 'en' => 'Preview - TEKG'], $lang);
 $activePage = 'preview';
 include __DIR__ . '/head.php';
 ?>
 <style>
-  .page-shell {
+  .page-shell.preview-shell {
     max-width: none;
-    padding: 6px 10px 10px;
+    padding: 8px 12px 12px;
   }
-  #preview-stage {
-    min-height: calc(100vh - 94px);
+  .preview-stage {
+    min-height: calc(100vh - 116px);
   }
-  #preview-frame {
+  .preview-frame {
     width: 100%;
-    height: calc(100vh - 106px);
-    min-height: calc(100vh - 106px);
+    min-height: calc(100vh - 132px);
     border: none;
-    border-radius: 14px;
+    border-radius: 18px;
     background: #fff;
-    display: block;
+    box-shadow: var(--shadow);
+  }
+  @media (max-width: 860px) {
+    .page-shell.preview-shell {
+      padding: 6px 8px 10px;
+    }
+    .preview-frame {
+      min-height: calc(100vh - 120px);
+      border-radius: 14px;
+    }
   }
 </style>
-<section id="preview-stage">
-  <iframe
-    id="preview-frame"
-    src="index_demo.html"
-    title="TEKG 图谱预览"
-  ></iframe>
-</section>
+</main>
+<main class="page-shell preview-shell">
+  <section class="preview-stage">
+    <iframe
+      id="preview-frame"
+      class="preview-frame"
+      src="index_demo.html"
+      title="<?= htmlspecialchars(site_t(['zh' => '知识图谱预览', 'en' => 'Knowledge graph preview'], $lang), ENT_QUOTES, 'UTF-8') ?>"
+    ></iframe>
+  </section>
+</main>
 <script>
 (function () {
+  const lang = <?= json_encode($lang, JSON_UNESCAPED_UNICODE) ?>;
   const frame = document.getElementById('preview-frame');
+  if (!frame) return;
 
-  function restyleInnerPage() {
-    let doc;
-    try {
-      doc = frame.contentDocument || frame.contentWindow.document;
-    } catch (_err) {
-      return;
+  function moveInnerLanguageSwitch(doc) {
+    const langControl = doc.querySelector('.lang');
+    const graphHead = doc.querySelector('.panel .head');
+    if (!langControl || !graphHead) return;
+    langControl.style.marginLeft = 'auto';
+    if (langControl.parentElement !== graphHead) {
+      graphHead.appendChild(langControl);
     }
-    if (!doc) return;
+  }
 
-    const innerHeader = doc.querySelector('body > header');
-    if (innerHeader) {
-      innerHeader.style.display = 'none';
-    }
-
-    const footer = doc.querySelector('body > footer');
-    if (footer) {
-      footer.style.display = 'none';
-    }
-
-    const body = doc.body;
-    const html = doc.documentElement;
-    if (html) {
-      html.style.height = '100%';
-      html.style.margin = '0';
-    }
-    if (body) {
-      body.style.height = '100%';
-      body.style.minHeight = '100%';
-      body.style.padding = '0';
-      body.style.margin = '0';
-    }
-
+  function hideInnerChrome(doc) {
+    const header = doc.querySelector('header');
+    const footer = doc.querySelector('footer');
+    if (header) header.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    doc.body.style.margin = '0';
+    doc.body.style.minHeight = '100vh';
+    doc.body.style.background = 'linear-gradient(180deg,#eef4fb,#f9fbfe)';
     const main = doc.querySelector('.main');
     if (main) {
-      main.style.padding = '8px';
+      main.style.padding = '10px';
+      main.style.minHeight = '100vh';
+      main.style.height = '100vh';
       main.style.gap = '10px';
-      main.style.minHeight = 'calc(100vh - 16px)';
-      main.style.height = 'calc(100vh - 16px)';
-      main.style.alignItems = 'stretch';
     }
+    doc.documentElement.style.height = '100%';
+    doc.body.style.height = '100%';
+  }
 
+  function stretchPanels(doc) {
     doc.querySelectorAll('.panel').forEach(function (panel) {
-      panel.style.height = '100%';
-      panel.style.minHeight = '0';
+      panel.style.height = 'calc(100vh - 20px)';
+      panel.style.minHeight = 'calc(100vh - 20px)';
     });
-
     const cy = doc.getElementById('cy');
     if (cy) {
       cy.style.minHeight = '0';
       cy.style.height = '100%';
       cy.style.flex = '1';
     }
+  }
 
-    const detail = doc.getElementById('node-details');
-    if (detail) {
-      detail.style.minHeight = '92px';
+  function switchInnerLanguage(doc) {
+    if (lang !== 'en') return;
+    const enButton = doc.getElementById('lang-en');
+    const zhButton = doc.getElementById('lang-zh');
+    if (enButton && zhButton && !enButton.classList.contains('active')) {
+      enButton.click();
     }
+  }
 
-    const graphHead = doc.querySelector('.panel .head');
-    const lang = doc.querySelector('.lang');
-    if (graphHead && lang && !lang.dataset.previewMoved) {
-      lang.dataset.previewMoved = '1';
-      lang.style.marginLeft = 'auto';
-      lang.style.flexShrink = '0';
-      graphHead.appendChild(lang);
-    }
-
-    const pageTitle = doc.getElementById('page-title');
-    if (pageTitle) {
-      pageTitle.textContent = '';
-    }
-
-    const pageBadge = doc.getElementById('page-badge');
-    if (pageBadge) {
-      pageBadge.style.display = 'none';
-    }
-
-    const brandIcon = doc.querySelector('body > header i');
-    if (brandIcon) {
-      brandIcon.style.display = 'none';
-    }
+  function restyleInnerPage() {
+    const doc = frame.contentDocument;
+    if (!doc) return;
+    hideInnerChrome(doc);
+    moveInnerLanguageSwitch(doc);
+    stretchPanels(doc);
+    switchInnerLanguage(doc);
   }
 
   frame.addEventListener('load', function () {
     restyleInnerPage();
-    setTimeout(restyleInnerPage, 200);
-    setTimeout(restyleInnerPage, 800);
+    setTimeout(restyleInnerPage, 300);
+    setTimeout(restyleInnerPage, 900);
   });
 }());
 </script>
