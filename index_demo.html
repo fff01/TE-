@@ -27,6 +27,11 @@
       <div class="toolbar">
         <div class="search"><i class="fas fa-search" style="color:#64748b"></i><input id="node-search" type="text" placeholder="搜索 LINE-1、L1HS、疾病或功能"></div>
         <button id="toggle-focus-view" type="button" title="切换节点点击或搜索时的展示方式"><span id="focus-view-text">聚焦方式：全局</span></button>
+        <div class="stepper-control" id="key-node-level-control" title="控制关键节点自动扩展的层级深度">
+          <button id="decrease-key-node-level" type="button" aria-label="降低关键节点级数">-</button>
+          <span id="key-node-level-text">关键节点级数：1</span>
+          <button id="increase-key-node-level" type="button" aria-label="提高关键节点级数">+</button>
+        </div>
         <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">固定视图：关</span></button>
         <button id="reset-graph"><i class="fas fa-sync-alt"></i> <span id="reset-text">重置</span></button>
       </div>

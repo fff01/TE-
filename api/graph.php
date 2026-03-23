@@ -30,6 +30,8 @@ $config = [
     'neo4j_url' => $localConfig['neo4j_url'] ?? env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg/tx/commit'),
     'neo4j_user' => $localConfig['neo4j_user'] ?? env_value(['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'),
     'neo4j_password' => $localConfig['neo4j_password'] ?? env_value(['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD'], ''),
+    'key_node_threshold' => (int)($localConfig['key_node_threshold'] ?? env_value(['KEY_NODE_THRESHOLD_BIOLOGY', 'KEY_NODE_THRESHOLD'], '15')),
+    'key_node_expand_limit' => (int)($localConfig['key_node_expand_limit'] ?? env_value(['KEY_NODE_EXPAND_LIMIT_BIOLOGY', 'KEY_NODE_EXPAND_LIMIT'], '15')),
 ];
 
 if (!function_exists('curl_init')) {
@@ -45,6 +47,7 @@ if ($config['neo4j_password'] === '') {
 }
 
 $query = trim((string)($_GET['q'] ?? ''));
+$keyLevel = max(1, min(3, (int)($_GET['key_level'] ?? 1)));
 
 if ($query === '') {
     $query = 'LINE1';
@@ -52,7 +55,7 @@ if ($query === '') {
 
 try {
     $service = new GraphService($config);
-    $payload = $service->search($query);
+    $payload = $service->search($query, $keyLevel);
     echo json_encode(['ok' => true] + $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     http_response_code(500);
@@ -79,7 +82,7 @@ final class GraphService
         $this->config = $config;
     }
 
-    public function search(string $query): array
+    public function search(string $query, int $keyLevel = 1): array
     {
         $normalized = $this->normalizeQuery($query);
         $anchor = $this->findAnchorNode($query, $normalized);
@@ -103,6 +106,10 @@ final class GraphService
             $rows = $this->pruneGenericRows($rows, $anchorType);
         }
 
+        if ($keyLevel > 1) {
+            $rows = $this->expandKeyNodeRows((string)$anchor['element_id'], $rows, $keyLevel);
+        }
+
         $elements = $this->buildElements($anchor, $rows);
 
         return [
@@ -113,6 +120,9 @@ final class GraphService
                 'type' => $anchorType,
                 'pmid' => $anchor['pmid'],
             ],
+            'key_level' => $keyLevel,
+            'key_node_threshold' => (int)($this->config['key_node_threshold'] ?? 15),
+            'key_node_expand_limit' => (int)($this->config['key_node_expand_limit'] ?? 15),
             'elements' => $elements,
             'matches' => $anchor['matches'],
         ];
@@ -378,6 +388,140 @@ CYPHER,
         }
 
         return $selected;
+    }
+
+    private function expandKeyNodeRows(string $anchorId, array $rows, int $keyLevel): array
+    {
+        if ($keyLevel <= 1 || empty($rows)) {
+            return $rows;
+        }
+
+        $threshold = max(1, (int)($this->config['key_node_threshold'] ?? 15));
+        $expandLimit = max(1, (int)($this->config['key_node_expand_limit'] ?? 15));
+        $allRows = [];
+        $seenRowKeys = [];
+        $nodeDepths = [$anchorId => 1];
+
+        foreach ($rows as $row) {
+            $rowKey = $this->buildRowKey($row);
+            $seenRowKeys[$rowKey] = true;
+            $allRows[] = $row;
+            $otherId = $this->getOtherNodeId($row, $anchorId);
+            if ($otherId !== null && !isset($nodeDepths[$otherId])) {
+                $nodeDepths[$otherId] = 2;
+            }
+        }
+
+        $frontier = array_keys(array_filter(
+            $nodeDepths,
+            static fn(int $depth): bool => $depth === 2
+        ));
+        $expandedNodeIds = [];
+
+        for ($depth = 2; $depth <= $keyLevel; $depth++) {
+            if (empty($frontier)) {
+                break;
+            }
+
+            $degrees = $this->loadNodeDegrees($frontier);
+            $expandIds = [];
+            foreach ($frontier as $nodeId) {
+                if (($degrees[$nodeId] ?? 0) > $threshold && !isset($expandedNodeIds[$nodeId])) {
+                    $expandIds[] = $nodeId;
+                    $expandedNodeIds[$nodeId] = true;
+                }
+            }
+
+            if (empty($expandIds)) {
+                break;
+            }
+
+            $nextFrontier = [];
+            foreach ($expandIds as $expandId) {
+                $expandedRows = $this->limitExpandedRows($this->loadDirectRows($expandId), $expandLimit);
+                foreach ($expandedRows as $extraRow) {
+                    $rowKey = $this->buildRowKey($extraRow);
+                    if (isset($seenRowKeys[$rowKey])) {
+                        continue;
+                    }
+                    $seenRowKeys[$rowKey] = true;
+                    $allRows[] = $extraRow;
+
+                    $otherId = $this->getOtherNodeId($extraRow, $expandId);
+                    if ($otherId === null || isset($nodeDepths[$otherId])) {
+                        continue;
+                    }
+                    $nodeDepths[$otherId] = $depth + 1;
+                    if ($depth + 1 <= $keyLevel) {
+                        $nextFrontier[] = $otherId;
+                    }
+                }
+            }
+
+            $frontier = array_values(array_unique($nextFrontier));
+        }
+
+        return $allRows;
+    }
+
+    private function limitExpandedRows(array $rows, int $limit): array
+    {
+        $rows = array_values(array_filter($rows, static fn(array $row): bool => !empty($row['target_element_id'])));
+        usort($rows, static function (array $a, array $b): int {
+            $left = count($a['relation_pmids'] ?? []);
+            $right = count($b['relation_pmids'] ?? []);
+            if ($left === $right) {
+                return strcasecmp((string)($a['target_name'] ?? ''), (string)($b['target_name'] ?? ''));
+            }
+            return $right <=> $left;
+        });
+        return array_slice($rows, 0, max(1, $limit));
+    }
+
+    private function loadNodeDegrees(array $elementIds): array
+    {
+        $elementIds = array_values(array_unique(array_filter(array_map('strval', $elementIds))));
+        if (empty($elementIds)) {
+            return [];
+        }
+
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (n)
+WHERE elementId(n) IN $elementIds
+OPTIONAL MATCH (n)--()
+RETURN elementId(n) AS element_id, count(*) AS degree
+CYPHER,
+            ['elementIds' => $elementIds]
+        );
+
+        $degrees = [];
+        foreach ($rows as $row) {
+            $degrees[(string)($row['element_id'] ?? '')] = (int)($row['degree'] ?? 0);
+        }
+        return $degrees;
+    }
+
+    private function buildRowKey(array $row): string
+    {
+        return implode('__', [
+            (string)($row['source_element_id'] ?? ''),
+            (string)($row['relation_type'] ?? ''),
+            (string)($row['target_element_id'] ?? ''),
+        ]);
+    }
+
+    private function getOtherNodeId(array $row, string $knownId): ?string
+    {
+        $sourceId = (string)($row['source_element_id'] ?? '');
+        $targetId = (string)($row['target_element_id'] ?? '');
+        if ($sourceId === $knownId) {
+            return $targetId !== '' ? $targetId : null;
+        }
+        if ($targetId === $knownId) {
+            return $sourceId !== '' ? $sourceId : null;
+        }
+        return null;
     }
 
     private function normalizeQuery(string $query): string

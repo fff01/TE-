@@ -57,12 +57,13 @@
       searchResults=[]; currentResultIndex=-1;
       focusLevel=0;
       updateFocusUi();
+      updateKeyNodeLevelUi();
       applyGraphElements(initialElements, 'TE', {graphKind:'default-tree'});
     }
     async function loadDynamicGraph(query, fallbackToCurrent=false){
       const keyword=(query||'').trim();
       if(!keyword) return;
-      const response = await fetch(`api/graph.php?q=${encodeURIComponent(keyword)}`);
+      const response = await fetch(`api/graph.php?q=${encodeURIComponent(keyword)}&key_level=${encodeURIComponent(String(currentKeyNodeLevel || 1))}`);
       const payload = await response.json();
       if(!response.ok || !payload.ok) throw new Error(payload.error || 'Graph request failed');
       if(!payload.elements || payload.elements.length===0){
@@ -217,6 +218,14 @@
       }
       if(btn) btn.classList.toggle('active', isLocal);
     }
+    function updateKeyNodeLevelUi(){
+      const label = el('key-node-level-text');
+      const decreaseBtn = el('decrease-key-node-level');
+      const increaseBtn = el('increase-key-node-level');
+      if(label) label.textContent = `${ui[currentLang].keyNodeLevel || (currentLang==='zh' ? '关键节点级数' : 'Key-node level')}：${currentKeyNodeLevel}`;
+      if(decreaseBtn) decreaseBtn.disabled = currentKeyNodeLevel <= 1;
+      if(increaseBtn) increaseBtn.disabled = currentKeyNodeLevel >= 3;
+    }
     function setAnswerStyle(style){
       currentAnswerStyle = ['simple','detailed','custom'].includes(style) ? style : 'simple';
       if(currentAnswerStyle==='simple' && currentAnswerDepth==='deep') currentAnswerDepth='shallow';
@@ -237,7 +246,7 @@
       if(label) label.textContent = fixedView ? ui[currentLang].fixedOn : ui[currentLang].fixedOff;
       if(btn) btn.classList.toggle('active', fixedView);
     }
-    function setUi(){document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'; el('page-title').textContent=ui[currentLang].pageTitle; el('page-badge').textContent=ui[currentLang].badge; el('graph-title').textContent=ui[currentLang].graphTitle; el('qa-title').textContent=ui[currentLang].qaTitle; el('page-footer').textContent=ui[currentLang].footer; el('reset-text').textContent=ui[currentLang].reset; searchInput.placeholder=ui[currentLang].search; userInput.placeholder=ui[currentLang].ph; if(!userInput.value || userInput.value===ui.zh.q || userInput.value===ui.en.q) userInput.value=ui[currentLang].q; el('lang-zh').classList.toggle('active', currentLang==='zh'); el('lang-en').classList.toggle('active', currentLang==='en'); updateAnswerModeUi(); updateFocusUi(); updateFixedViewUi(); if(searchResults.length===0) nodeDetails.textContent=ui[currentLang].empty; else showNode(searchResults[currentResultIndex]); renderIntro(); cy.style().update(); updateNav();}
+    function setUi(){document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'; el('page-title').textContent=ui[currentLang].pageTitle; el('page-badge').textContent=ui[currentLang].badge; el('graph-title').textContent=ui[currentLang].graphTitle; el('qa-title').textContent=ui[currentLang].qaTitle; el('page-footer').textContent=ui[currentLang].footer; el('reset-text').textContent=ui[currentLang].reset; searchInput.placeholder=ui[currentLang].search; userInput.placeholder=ui[currentLang].ph; if(!userInput.value || userInput.value===ui.zh.q || userInput.value===ui.en.q) userInput.value=ui[currentLang].q; el('lang-zh').classList.toggle('active', currentLang==='zh'); el('lang-en').classList.toggle('active', currentLang==='en'); updateAnswerModeUi(); updateFocusUi(); updateKeyNodeLevelUi(); updateFixedViewUi(); if(searchResults.length===0) nodeDetails.textContent=ui[currentLang].empty; else showNode(searchResults[currentResultIndex]); renderIntro(); cy.style().update(); updateNav();}
     function showNode(node){const raw=node.data('label'), type=node.data('type') || 'Unknown', description=node.data('description')||'', pmid=node.data('pmid')||''; nodeDetails.innerHTML=`<strong>${getName(raw,type,description,pmid)}</strong> (${getType(type)})<br>${getDesc(raw,type,description,pmid)}<div class="meta">${ui[currentLang].orig}: ${raw}${pmid ? ` | PMID: ${pmid}` : ''} | ${ui[currentLang].deg}: ${node.degree()}</div>`}
     function showEdge(edge){
       const s=getName(edge.source().data('label'),edge.source().data('type'),edge.source().data('description')||'',edge.source().data('pmid')||'');

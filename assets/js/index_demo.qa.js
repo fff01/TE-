@@ -187,6 +187,14 @@
         updateFocusUi();
         if(searchResults.length>0&&searchResults[currentResultIndex]) focus(searchResults[currentResultIndex]);
       }
+      if(e.target.id==='decrease-key-node-level'){
+        currentKeyNodeLevel = Math.max(1, currentKeyNodeLevel - 1);
+        updateKeyNodeLevelUi();
+      }
+      if(e.target.id==='increase-key-node-level'){
+        currentKeyNodeLevel = Math.min(3, currentKeyNodeLevel + 1);
+        updateKeyNodeLevelUi();
+      }
     });
     el('lang-zh').addEventListener('click',()=>{currentLang='zh'; setUi();}); el('lang-en').addEventListener('click',()=>{currentLang='en'; setUi();});
     cy.on('layoutstop',()=>{if(currentGraphKind!=='default-tree') refineGraphLayout(); cy.fit(undefined,55);});
