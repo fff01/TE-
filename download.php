@@ -5,13 +5,13 @@ $activePage = 'download';
 $sections = [
     [
         'title' => '原始数据',
-        'desc' => '保留当前项目中最有代表性的原始数据来源，不包含早期未标准化的 output.jsonl。',
+        'desc' => '本部分提供知识图谱构建过程中使用的核心原始数据来源，包括文献抽取结果、转座子参考数据和谱系参考文本。',
         'items' => [
             [
                 'name' => 'te_kg2.jsonl',
                 'path' => 'data/raw/te_kg2.jsonl',
                 'type' => 'JSONL',
-                'desc' => '队友扩展后的标准化抽取源数据，理论上覆盖第一版 output.jsonl 的内容。',
+                'desc' => '知识图谱构建所使用的主要结构化抽取源数据，包含转座元件、疾病、功能和文献信息。',
             ],
             [
                 'name' => 'TE_Repbase.txt',
@@ -93,7 +93,7 @@ include __DIR__ . '/head.php';
 ?>
 <section class="hero-card">
   <h2 class="page-title">下载</h2>
-  <p class="page-desc">这里集中提供当前数据库项目中最关键的原始数据、处理后数据与术语表文件，便于展示、复现与后续维护。</p>
+  <p class="page-desc">这里集中提供本数据库项目的主要原始数据、处理后数据与术语表资源，便于查阅、下载和复用。</p>
 </section>
 
 <section style="display:grid;gap:22px;">
