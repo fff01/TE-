@@ -50,7 +50,7 @@ include __DIR__ . '/head.php';
         <h3 style="margin:0 0 8px;font-size:24px;"><?= htmlspecialchars($section['title'], ENT_QUOTES, 'UTF-8') ?></h3>
         <p style="margin:0;color:#5e7288;line-height:1.7;"><?= htmlspecialchars($section['desc'], ENT_QUOTES, 'UTF-8') ?></p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(max(280px,calc(100% / 3 - 20px)),1fr));gap:18px;">
         <?php foreach ($section['items'] as $item): ?>
           <article style="border:1px solid #dbe7f3;border-radius:18px;background:linear-gradient(180deg,#ffffff,#f8fbff);padding:18px;display:flex;flex-direction:column;gap:12px;min-height:210px;">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
