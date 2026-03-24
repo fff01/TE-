@@ -19,7 +19,7 @@ if (!function_exists('site_lang')) {
         }
 
         $cookie = strtolower(trim((string) ($_COOKIE['site_lang'] ?? '')));
-        $lang = in_array($cookie, ['zh', 'en'], true) ? $cookie : 'zh';
+        $lang = in_array($cookie, ['zh', 'en'], true) ? $cookie : 'en';
         return $lang;
     }
 }
@@ -28,7 +28,7 @@ if (!function_exists('site_t')) {
     function site_t(array $messages, ?string $lang = null): string
     {
         $lang = $lang ?? site_lang();
-        return (string) ($messages[$lang] ?? $messages['zh'] ?? reset($messages) ?? '');
+        return (string) ($messages[$lang] ?? $messages['en'] ?? $messages['zh'] ?? reset($messages) ?? '');
     }
 }
 
@@ -40,4 +40,3 @@ if (!function_exists('site_url_with_lang')) {
         return $href . $separator . 'lang=' . rawurlencode($lang);
     }
 }
-

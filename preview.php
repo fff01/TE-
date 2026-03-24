@@ -37,7 +37,7 @@ include __DIR__ . '/head.php';
     <iframe
       id="preview-frame"
       class="preview-frame"
-      src="index_demo.html"
+      src="index_demo.html?lang=<?= htmlspecialchars($lang, ENT_QUOTES, 'UTF-8') ?>"
       title="<?= htmlspecialchars(site_t(['zh' => '知识图谱预览', 'en' => 'Knowledge graph preview'], $lang), ENT_QUOTES, 'UTF-8') ?>"
     ></iframe>
   </section>
@@ -48,21 +48,13 @@ include __DIR__ . '/head.php';
   const frame = document.getElementById('preview-frame');
   if (!frame) return;
 
-  function moveInnerLanguageSwitch(doc) {
-    const langControl = doc.querySelector('.lang');
-    const graphHead = doc.querySelector('.panel .head');
-    if (!langControl || !graphHead) return;
-    langControl.style.marginLeft = 'auto';
-    if (langControl.parentElement !== graphHead) {
-      graphHead.appendChild(langControl);
-    }
-  }
-
   function hideInnerChrome(doc) {
     const header = doc.querySelector('header');
     const footer = doc.querySelector('footer');
+    const langControl = doc.querySelector('.lang');
     if (header) header.style.display = 'none';
     if (footer) footer.style.display = 'none';
+    if (langControl) langControl.style.display = 'none';
     doc.body.style.margin = '0';
     doc.body.style.minHeight = '100vh';
     doc.body.style.background = 'linear-gradient(180deg,#eef4fb,#f9fbfe)';
@@ -103,9 +95,16 @@ include __DIR__ . '/head.php';
     const doc = frame.contentDocument;
     if (!doc) return;
     hideInnerChrome(doc);
-    moveInnerLanguageSwitch(doc);
     stretchPanels(doc);
     switchInnerLanguage(doc);
+    const innerWin = frame.contentWindow;
+    const innerCy = innerWin && innerWin.__TEKG_CY ? innerWin.__TEKG_CY : null;
+    if (innerCy) {
+      try {
+        innerCy.resize();
+        innerCy.fit(undefined, 55);
+      } catch (_err) {}
+    }
   }
 
   frame.addEventListener('load', function () {

@@ -9,11 +9,14 @@
       overlapPadding: 28,
       overlapIterations: 14
     };
+    const pageParams = new URLSearchParams(window.location.search);
+    const embedMode = pageParams.get('embed') || '';
+    window.__TEKG_EMBED_MODE = embedMode;
     const demoData = window.GRAPH_DEMO_DATA || {elements:[],qa:{}};
     const initialElements = JSON.parse(JSON.stringify(demoData.elements || []));
     const el = id => document.getElementById(id);
     const nodeDetails = el('node-details'), searchInput = el('node-search'), nav = el('search-results-nav'), prevBtn = el('prev-result'), nextBtn = el('next-result'), resultCounter = el('result-counter'), resultName = el('result-name'), chatMessages = el('chat-messages'), userInput = el('user-question'), sendBtn = el('send-question');
-    let currentLang = 'zh', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', currentModelProvider = 'qwen', currentCustomPrompt = '', customPromptDraft = '', currentCustomDepth = {rows:12,references:8}, customDepthDraft = {rows:12,references:8}, customEditorOpen = false, customEditorMode = 'prompt', previousAnswerStyleBeforeCustom = 'simple', previousAnswerDepthBeforeCustom = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree', currentKeyNodeLevel = 1;
+    let currentLang = pageParams.get('lang') === 'zh' ? 'zh' : 'en', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', currentModelProvider = 'qwen', currentCustomPrompt = '', customPromptDraft = '', currentCustomDepth = {rows:12,references:8}, customDepthDraft = {rows:12,references:8}, customEditorOpen = false, customEditorMode = 'prompt', previousAnswerStyleBeforeCustom = 'simple', previousAnswerDepthBeforeCustom = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree', currentKeyNodeLevel = 1;
     let terminologyNames = {zh:{}, en:{}}, terminologyNameLookup = {zh:{}, en:{}}, terminologyRelations = {zh:{}, en:{}};
     let ui = {zh:{},en:{}}; 
     const typeLabel = {zh:{TE:'转座元件',Disease:'疾病',Function:'功能/机制',Paper:'文献'},en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
@@ -27,10 +30,26 @@
     };
     let localQaTemplates = {zh:{}, en:{}};
     const DISPLAY_NAME_OVERRIDES = {
-      zh: {'L1':'LINE1','LINE-1':'LINE1'},
-      en: {'L1':'LINE1','LINE-1':'LINE1'}
+      zh: {
+        'L1':'LINE1',
+        'LINE-1':'LINE1',
+        'LINE（长散在核元件）':'LINE',
+        'SINE（短散在核元件）':'SINE'
+      },
+      en: {
+        'L1':'LINE1',
+        'LINE-1':'LINE1',
+        '人类转座子':'TE'
+      }
     };
     const getTypeColor = t => ({TE:'#2563eb',Disease:'#ef4444',Function:'#10b981',Paper:'#f59e0b'}[t] || '#94a3b8');
+    function getTreeDepthColor(depth){
+      if(depth <= 0) return '#163a8a';
+      if(depth === 1) return '#1d4ed8';
+      if(depth === 2) return '#2563eb';
+      if(depth === 3) return '#5b8dff';
+      return '#8fb2ff';
+    }
     function containsChinese(text){return /[\u4e00-\u9fff]/.test(text || '');}
     function getType(type){return (typeLabel[currentLang] && typeLabel[currentLang][type]) || type;}
     function rebuildTerminologyIndexes(){
@@ -157,6 +176,7 @@
       return name;
     }
     function getName(name,type,description='',pmid=''){
+      if(currentLang==='zh' && (name === 'LINE' || name === 'SINE')) return name;
       const mapped = lookupMappedName(name);
       if(mapped) return mapped;
       if(type==='Paper') return getPaperDisplayName(name, pmid);

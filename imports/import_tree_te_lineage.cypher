@@ -2643,13 +2643,6 @@ ON CREATE SET
   r.source = 'tree_reference',
   r.tree_reference = true;
 
-MATCH (child:TE {name: "AmnSINE1_HS"})
-MATCH (parent:TE {name: "ERV3"})
-MERGE (child)-[r:SUBFAMILY_OF]->(parent)
-ON CREATE SET
-  r.source = 'tree_reference',
-  r.tree_reference = true;
-
 MATCH (child:TE {name: "ERV3-16A3_I"})
 MATCH (parent:TE {name: "ERV3"})
 MERGE (child)-[r:SUBFAMILY_OF]->(parent)

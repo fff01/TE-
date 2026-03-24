@@ -132,6 +132,19 @@
     }
     cy.on('tap','node',async e => {
       const node = e.target;
+      if(currentGraphKind==='default-tree' && node.data('toggle_node')){
+        if(node.data('toggle_state') === 'expanded'){
+          collapseDefaultTreeBranch(node.data('toggle_parent'));
+        }else{
+          expandDefaultTreeBranch(node.data('toggle_parent'));
+        }
+        return;
+      }
+      if(window.__TEKG_EMBED_MODE === 'home-preview'){
+        clearHighlights();
+        showNode(node);
+        return;
+      }
       if(fixedView){
         clearHighlights();
         showNode(node);
@@ -197,18 +210,28 @@
       }
     });
     el('lang-zh').addEventListener('click',()=>{currentLang='zh'; setUi();}); el('lang-en').addEventListener('click',()=>{currentLang='en'; setUi();});
-    cy.on('layoutstop',()=>{if(currentGraphKind!=='default-tree') refineGraphLayout(); cy.fit(undefined,55);});
+    cy.on('layoutstop',()=>{
+      if(currentGraphKind!=='default-tree'){
+        refineGraphLayout();
+        cy.fit(undefined,55);
+      }
+    });
     async function initializePage(){
-      await loadUiText();
-      await loadLocalQaTemplates();
-      await loadTerminology();
-      await loadTeDescriptions();
-      await loadEntityDescriptions();
-      repairModeControls();
-      setAnswerStyle('simple');
-      setUi();
-      updateFocusUi();
-      restoreInitialGraph();
+      await Promise.allSettled([
+        loadUiText(),
+        loadLocalQaTemplates(),
+        loadTerminology(),
+        loadTeDescriptions(),
+        loadEntityDescriptions()
+      ]);
+      try{
+        repairModeControls();
+        setAnswerStyle('simple');
+        setUi();
+        updateFocusUi();
+      }finally{
+        restoreInitialGraph();
+      }
     }
     initializePage();
   

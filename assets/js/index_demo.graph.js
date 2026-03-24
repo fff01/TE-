@@ -1,4 +1,10 @@
-﻿    function buildLayout(kind=currentGraphKind){
+    const DEFAULT_TREE_COLLAPSE_THRESHOLD = 6;
+    const DEFAULT_TREE_TOGGLE_OFFSET = 92;
+    const DEFAULT_TREE_X_STEP = 300;
+    const DEFAULT_TREE_Y_STEP = 50;
+    const DEFAULT_TREE_ROOT_LEFT_SHIFT = 28;
+    let expandedTreeBranches = new Set();
+    function buildLayout(kind=currentGraphKind){
       if(kind==='default-tree'){
         return {
           name:'preset',
@@ -9,7 +15,135 @@
       }
       return{name:'cose',fit:true,padding:75,randomize:true,animate:false,nodeDimensionsIncludeLabels:true,componentSpacing:180,nestingFactor:.9,gravity:45,numIter:1800,initialTemp:220,coolingFactor:.96,minTemp:1,idealEdgeLength:edge=>{const rel=edge.data('relation')||''; if(rel==='SUBFAMILY_OF') return 170; if(rel==='EVIDENCE_RELATION') return 240; return 210;},edgeElasticity:edge=>{const rel=edge.data('relation')||''; return rel==='EVIDENCE_RELATION'?40:90;},nodeRepulsion:node=>{const type=node.data('type')||''; return type==='Paper'?GRAPH_TUNING.evidenceNodeRepulsion:(type==='Disease'||type==='Function'?GRAPH_TUNING.diseaseFunctionRepulsion:GRAPH_TUNING.teNodeRepulsion);}}
     }
-    const cy = cytoscape({container:el('cy'),elements:demoData.elements,style:[{selector:'node',style:{'label':e=>getName(e.data('label'),e.data('type'),e.data('description')||'',e.data('pmid')||''),'font-size':e=>{const d=e.data('tree_depth'); if(d===0) return '20px'; if(d===1) return '17px'; if(d===2) return '14px'; if(d===3) return '12px'; return '11px';},'min-zoomed-font-size':9,'text-valign':'center','text-halign':'center','background-color':e=>getTypeColor(e.data('type')),'color':'#0f172a','text-outline-width':3,'text-outline-color':'#fff','width':'label','height':'label','padding':e=>{const d=e.data('tree_depth'); if(d===0) return '20px'; if(d===1) return '17px'; if(d===2) return '14px'; if(d===3) return '11px'; return '14px';},'text-wrap':'wrap','text-max-width':150,'border-width':2,'border-color':'#fff','shape':'round-rectangle'}},{selector:'edge',style:{'width':2,'line-color':'#cbd5e1','target-arrow-color':'#64748b','target-arrow-shape':'triangle','curve-style':'bezier','control-point-step-size':55,'label':e=>{const rel=e.data('relation')||''; return rel==='EVIDENCE_RELATION'?'':getRel(rel)},'font-size':'9px','min-zoomed-font-size':8,'text-rotation':'autorotate','color':'#334155','text-background-color':'rgba(255,255,255,0.92)','text-background-opacity':1,'text-background-padding':'2px','text-outline-width':0}},{selector:'.highlight',style:{'border-width':6,'border-color':'#0f172a','font-weight':'800','overlay-color':'#2563eb','overlay-opacity':0.12,'overlay-padding':'16px','shadow-blur':18,'shadow-color':'#2563eb','shadow-opacity':0.35,'shadow-offset-x':0,'shadow-offset-y':0,'z-index':999}},{selector:'.neighbor',style:{'border-width':4,'border-color':'#60a5fa','overlay-color':'#93c5fd','overlay-opacity':0.03,'overlay-padding':'6px','opacity':GRAPH_TUNING.neighborOpacity,'shadow-blur':4,'shadow-color':'#93c5fd','shadow-opacity':0.08}},{selector:'.dimmed',style:{'opacity':GRAPH_TUNING.dimmedOpacity}},{selector:'.focus-edge',style:{'label':e=>getRel(e.data('relation')),'width':4,'line-color':'#2563eb','target-arrow-color':'#2563eb','font-size':'11px','color':'#0f172a','text-background-color':'rgba(255,255,255,0.98)','text-background-opacity':1,'text-background-padding':'4px','opacity':0.95}},{selector:'.edge-dimmed',style:{'opacity':0.28}}],layout:buildLayout(),wheelSensitivity:.2});
+    const defaultTreeSource = (() => {
+      const nodes = new Map();
+      const children = new Map();
+      const edges = new Map();
+      let rootId = null;
+      let leftMargin = -560;
+      for(const item of initialElements){
+        const d = item && item.data ? item.data : null;
+        if(!d || d.source) continue;
+        const clone = JSON.parse(JSON.stringify(item));
+        nodes.set(d.id, clone);
+        if(d.tree_depth === 0 && !rootId){
+          rootId = d.id;
+          leftMargin = clone.position?.x ?? leftMargin;
+        }
+      }
+      for(const item of initialElements){
+        const d = item && item.data ? item.data : null;
+        if(!d || !d.source || !d.target) continue;
+        if(!nodes.has(d.source) || !nodes.has(d.target)) continue;
+        const key = `${d.source}=>${d.target}`;
+        edges.set(key, JSON.parse(JSON.stringify(item)));
+        if(!children.has(d.source)) children.set(d.source, []);
+        children.get(d.source).push(d.target);
+      }
+      for(const [parentId, childIds] of children.entries()){
+        childIds.sort((a, b) => (nodes.get(a)?.position?.y ?? 0) - (nodes.get(b)?.position?.y ?? 0));
+      }
+      return {nodes, children, edges, rootId, leftMargin: leftMargin - DEFAULT_TREE_ROOT_LEFT_SHIFT};
+    })();
+    function collectTreeDescendants(nodeId, bucket = new Set()){
+      const childIds = defaultTreeSource.children.get(nodeId) || [];
+      for(const childId of childIds){
+        if(bucket.has(childId)) continue;
+        bucket.add(childId);
+        collectTreeDescendants(childId, bucket);
+      }
+      return bucket;
+    }
+    function buildCollapsedDefaultTreeElements(){
+      if(!defaultTreeSource.rootId) return JSON.parse(JSON.stringify(initialElements));
+      const visibleEdges = [];
+      const visibleNodes = [];
+      const toggleNodes = [];
+      const toggleParents = [];
+      const positioned = new Map();
+      let nextLeafIndex = 0;
+      const visit = (nodeId, depth) => {
+        const sourceNode = defaultTreeSource.nodes.get(nodeId);
+        if(!sourceNode) return 0;
+        const childIds = defaultTreeSource.children.get(nodeId) || [];
+        const isCollapsible = childIds.length >= DEFAULT_TREE_COLLAPSE_THRESHOLD;
+        const shouldCollapse = isCollapsible && !expandedTreeBranches.has(nodeId);
+        const node = JSON.parse(JSON.stringify(sourceNode));
+        node.position = {
+          x: defaultTreeSource.leftMargin + depth * DEFAULT_TREE_X_STEP,
+          y: 0
+        };
+        let y = 0;
+        if(!childIds.length || shouldCollapse){
+          y = nextLeafIndex * DEFAULT_TREE_Y_STEP;
+          nextLeafIndex += 1;
+        }else{
+          const childYs = [];
+          for(const childId of childIds){
+            const childY = visit(childId, depth + 1);
+            childYs.push(childY);
+            const edge = defaultTreeSource.edges.get(`${nodeId}=>${childId}`);
+            if(edge) visibleEdges.push(JSON.parse(JSON.stringify(edge)));
+          }
+          y = childYs.reduce((sum, value) => sum + value, 0) / childYs.length;
+        }
+        node.position.y = y;
+        positioned.set(nodeId, node);
+        visibleNodes.push(node);
+        if(isCollapsible) toggleParents.push(nodeId);
+        return y;
+      };
+      visit(defaultTreeSource.rootId, 0);
+      if(positioned.size){
+        const ys = Array.from(positioned.values()).map(node => node.position?.y ?? 0);
+        const center = (Math.min(...ys) + Math.max(...ys)) / 2;
+        for(const node of positioned.values()){
+          node.position.y -= center;
+        }
+      }
+      for(const parentId of toggleParents){
+        const parent = positioned.get(parentId);
+        if(!parent) continue;
+        const expanded = expandedTreeBranches.has(parentId);
+        toggleNodes.push({
+          position: {
+            x: (parent.position?.x ?? 0) + DEFAULT_TREE_TOGGLE_OFFSET,
+            y: parent.position?.y ?? 0
+          },
+          data: {
+            id: `TREE_TOGGLE_${parentId}`,
+            label: expanded ? '-' : '+',
+            type: 'TreeToggle',
+            toggle_node: true,
+            toggle_parent: parentId,
+            toggle_state: expanded ? 'expanded' : 'collapsed',
+            tree_depth: parent.data?.tree_depth ?? 0
+          }
+        });
+      }
+      visibleNodes.sort((a, b) => {
+        const ax = a.position?.x ?? 0;
+        const bx = b.position?.x ?? 0;
+        if(ax !== bx) return ax - bx;
+        return (a.position?.y ?? 0) - (b.position?.y ?? 0);
+      });
+      return [...visibleNodes, ...visibleEdges, ...toggleNodes];
+    }
+    function expandDefaultTreeBranch(parentId){
+      if(!parentId) return;
+      expandedTreeBranches.add(parentId);
+      applyGraphElements(initialElements, parentId, {graphKind:'default-tree', treeFocus:'branch'});
+    }
+    function collapseDefaultTreeBranch(parentId){
+      if(!parentId) return;
+      expandedTreeBranches.delete(parentId);
+      for(const descendantId of collectTreeDescendants(parentId)){
+        expandedTreeBranches.delete(descendantId);
+      }
+      applyGraphElements(initialElements, parentId, {graphKind:'default-tree', treeFocus:'branch'});
+    }
+    const cy = cytoscape({container:el('cy'),elements:[],style:[{selector:'node',style:{'label':e=>e.data('toggle_node') ? (e.data('label') || '+') : getName(e.data('label'),e.data('type'),e.data('description')||'',e.data('pmid')||''),'font-size':e=>{const d=e.data('tree_depth'); if(d===0) return '30px'; if(d===1) return '22px'; if(d===2) return '16px'; if(d===3) return '13px'; return '11px';},'min-zoomed-font-size':9,'text-valign':'center','text-halign':'center','background-color':e=>currentGraphKind==='default-tree' && e.data('type')==='TE' ? getTreeDepthColor(e.data('tree_depth') ?? 3) : getTypeColor(e.data('type')),'color':'#0f172a','text-outline-width':3,'text-outline-color':'#fff','width':'label','height':'label','padding':e=>{const d=e.data('tree_depth'); if(d===0) return '28px'; if(d===1) return '20px'; if(d===2) return '14px'; if(d===3) return '10px'; return '8px';},'text-wrap':'wrap','text-max-width':150,'border-width':2,'border-color':'#fff','shape':'round-rectangle'}},{selector:'node[toggle_node]',style:{'label':'data(label)','font-size':'16px','font-weight':'700','text-outline-width':0,'background-color':'#ffffff','color':'#2563eb','width':22,'height':22,'padding':0,'border-width':1.5,'border-color':'#9db8ff','shape':'round-rectangle','corner-radius':'999px','shadow-blur':8,'shadow-color':'rgba(37,99,235,0.16)','shadow-opacity':1}},{selector:'edge',style:{'width':e=>currentGraphKind==='default-tree' ? 2.4 : 2,'line-color':e=>currentGraphKind==='default-tree' ? '#9db8ff' : '#cbd5e1','target-arrow-color':'#64748b','target-arrow-shape':e=>currentGraphKind==='default-tree' ? 'none' : 'triangle','curve-style':e=>currentGraphKind==='default-tree' ? 'taxi' : 'bezier','taxi-direction':'rightward','taxi-turn':e=>currentGraphKind==='default-tree' ? 28 : 0,'label':e=>{const rel=e.data('relation')||''; if(currentGraphKind==='default-tree') return ''; return rel==='EVIDENCE_RELATION'?'':getRel(rel)},'font-size':'9px','min-zoomed-font-size':8,'text-rotation':e=>currentGraphKind==='default-tree' ? 'none' : 'autorotate','color':'#334155','text-background-color':'rgba(255,255,255,0.92)','text-background-opacity':1,'text-background-padding':'2px','text-outline-width':0}},{selector:'.highlight',style:{'border-width':6,'border-color':'#0f172a','font-weight':'800','overlay-color':'#2563eb','overlay-opacity':0.12,'overlay-padding':'16px','shadow-blur':18,'shadow-color':'#2563eb','shadow-opacity':0.35,'shadow-offset-x':0,'shadow-offset-y':0,'z-index':999}},{selector:'.neighbor',style:{'border-width':4,'border-color':'#60a5fa','overlay-color':'#93c5fd','overlay-opacity':0.03,'overlay-padding':'6px','opacity':GRAPH_TUNING.neighborOpacity,'shadow-blur':4,'shadow-color':'#93c5fd','shadow-opacity':0.08}},{selector:'.dimmed',style:{'opacity':GRAPH_TUNING.dimmedOpacity}},{selector:'.focus-edge',style:{'label':e=>currentGraphKind==='default-tree' ? '' : getRel(e.data('relation')),'width':4,'line-color':'#2563eb','target-arrow-color':'#2563eb','target-arrow-shape':e=>currentGraphKind==='default-tree' ? 'none' : 'triangle','curve-style':e=>currentGraphKind==='default-tree' ? 'taxi' : 'bezier','taxi-direction':'rightward','taxi-turn':e=>currentGraphKind==='default-tree' ? 30 : 0,'font-size':'11px','color':'#0f172a','text-background-color':'rgba(255,255,255,0.98)','text-background-opacity':1,'text-background-padding':'4px','opacity':0.95}},{selector:'.edge-dimmed',style:{'opacity':0.28}}],layout:buildLayout(),wheelSensitivity:.2});
+    window.__TEKG_CY = cy;
     function normalizeElementsForGraphKind(elements, graphKind){
       const cloned = JSON.parse(JSON.stringify(elements || []));
       if(graphKind!=='dynamic') return cloned;
@@ -26,28 +160,52 @@
     }
     function applyGraphElements(elements, focusLabel='', options={}){
       currentGraphKind = options.graphKind || (isPureTeTreeElements(elements) ? 'default-tree' : 'dynamic');
+      const renderElements = currentGraphKind==='default-tree' ? buildCollapsedDefaultTreeElements() : elements;
       cy.elements().remove();
-      cy.add(normalizeElementsForGraphKind(elements, currentGraphKind));
+      cy.add(normalizeElementsForGraphKind(renderElements, currentGraphKind));
+      cy.style().update();
       clearHighlights();
       searchResults=[]; currentResultIndex=-1; updateNav();
       const layout = cy.layout(buildLayout(currentGraphKind));
       layout.run();
       setTimeout(()=>{
         if(currentGraphKind!=='default-tree') refineGraphLayout();
-          const target = focusLabel
-            ? cy.nodes().filter(n => n.data('label') === focusLabel || n.data('query_label') === focusLabel || n.id() === focusLabel)[0]
-            : cy.nodes()[0];
-          if(currentGraphKind==='default-tree'){
-            if(target){
-              clearHighlights();
-              target.addClass('highlight');
-              target.neighborhood('node').addClass('neighbor');
-              target.connectedEdges().addClass('focus-edge');
-              showNode(target);
-            } else nodeDetails.textContent=ui[currentLang].empty;
+        const target = focusLabel
+          ? cy.nodes().filter(n => n.data('label') === focusLabel || n.data('query_label') === focusLabel || n.id() === focusLabel)[0]
+          : cy.nodes()[0];
+        if(currentGraphKind==='default-tree'){
+          if(target){
+            clearHighlights();
+            target.addClass('highlight');
+            target.neighborhood('node').addClass('neighbor');
+            target.connectedEdges().addClass('focus-edge');
+            showNode(target);
+            if(options.treeFocus === 'branch'){
+              const branchNodes = [];
+              const stack = [target];
+              const seen = new Set();
+              while(stack.length){
+                const current = stack.pop();
+                if(!current || seen.has(current.id())) continue;
+                seen.add(current.id());
+                branchNodes.push(current);
+                current.outgoers('node').forEach(child => {
+                  if(!child.data('toggle_node')) stack.push(child);
+                });
+              }
+              const branchEles = cy.collection(branchNodes).union(cy.collection(branchNodes).connectedEdges());
+              cy.fit(branchEles, 150);
+              const desiredZoom = Math.max(cy.zoom(), 0.92);
+              cy.animate({center:{eles:target}, zoom:desiredZoom, duration:260});
+            }else{
+              cy.fit(undefined,55);
+            }
+          } else {
+            nodeDetails.textContent=ui[currentLang].empty;
             cy.fit(undefined,55);
-            return;
           }
+          return;
+        }
         if(target) focus(target); else cy.fit(undefined,55);
       }, 320);
     }
@@ -55,6 +213,7 @@
       searchInput.value='';
       clearHighlights();
       searchResults=[]; currentResultIndex=-1;
+      expandedTreeBranches = new Set();
       focusLevel=0;
       updateFocusUi();
       updateKeyNodeLevelUi();
@@ -67,13 +226,12 @@
       const payload = await response.json();
       if(!response.ok || !payload.ok) throw new Error(payload.error || 'Graph request failed');
       if(!payload.elements || payload.elements.length===0){
-        throw new Error(currentLang==='zh' ? '未找到相关节点或文献子图。' : 'No matching graph fragment was found.');
+        throw new Error(currentLang==='zh' ? '?????????????' : 'No matching graph fragment was found.');
       }
       applyGraphElements(payload.elements, payload.anchor && payload.anchor.name ? payload.anchor.name : keyword, {graphKind:'dynamic'});
       searchInput.value = payload.anchor && payload.anchor.name ? payload.anchor.name : keyword;
       return payload;
     }
-    function renderIntro(){chatMessages.innerHTML=''; addMessage(ui[currentLang].intro,'assistant')}
     function repairModeControls(){
       const host=el('style-segmented');
       if(host){
@@ -246,7 +404,7 @@
       if(label) label.textContent = fixedView ? ui[currentLang].fixedOn : ui[currentLang].fixedOff;
       if(btn) btn.classList.toggle('active', fixedView);
     }
-    function setUi(){document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'; el('page-title').textContent=ui[currentLang].pageTitle; el('page-badge').textContent=ui[currentLang].badge; el('graph-title').textContent=ui[currentLang].graphTitle; el('qa-title').textContent=ui[currentLang].qaTitle; el('page-footer').textContent=ui[currentLang].footer; el('reset-text').textContent=ui[currentLang].reset; searchInput.placeholder=ui[currentLang].search; userInput.placeholder=ui[currentLang].ph; if(!userInput.value || userInput.value===ui.zh.q || userInput.value===ui.en.q) userInput.value=ui[currentLang].q; el('lang-zh').classList.toggle('active', currentLang==='zh'); el('lang-en').classList.toggle('active', currentLang==='en'); updateAnswerModeUi(); updateFocusUi(); updateKeyNodeLevelUi(); updateFixedViewUi(); if(searchResults.length===0) nodeDetails.textContent=ui[currentLang].empty; else showNode(searchResults[currentResultIndex]); renderIntro(); cy.style().update(); updateNav();}
+    function setUi(){document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'; el('page-title').textContent=ui[currentLang].pageTitle; el('page-badge').textContent=ui[currentLang].badge; el('graph-title').textContent=ui[currentLang].graphTitle; el('qa-title').textContent=ui[currentLang].qaTitle; el('page-footer').textContent=ui[currentLang].footer; el('reset-text').textContent=ui[currentLang].reset; searchInput.placeholder=ui[currentLang].search; userInput.placeholder=ui[currentLang].ph; if(!userInput.value || userInput.value===ui.zh.q || userInput.value===ui.en.q) userInput.value=ui[currentLang].q; el('lang-zh').classList.toggle('active', currentLang==='zh'); el('lang-en').classList.toggle('active', currentLang==='en'); updateAnswerModeUi(); updateFocusUi(); updateKeyNodeLevelUi(); updateFixedViewUi(); if(searchResults.length===0) nodeDetails.textContent=ui[currentLang].empty; else showNode(searchResults[currentResultIndex]); renderIntro(); cy.style().update(); const highlighted = cy.nodes('.highlight')[0]; if(highlighted) showNode(highlighted); updateNav();}
     function showNode(node){const raw=node.data('label'), type=node.data('type') || 'Unknown', description=node.data('description')||'', pmid=node.data('pmid')||''; nodeDetails.innerHTML=`<strong>${getName(raw,type,description,pmid)}</strong> (${getType(type)})<br>${getDesc(raw,type,description,pmid)}<div class="meta">${ui[currentLang].orig}: ${raw}${pmid ? ` | PMID: ${pmid}` : ''} | ${ui[currentLang].deg}: ${node.degree()}</div>`}
     function showEdge(edge){
       const s=getName(edge.source().data('label'),edge.source().data('type'),edge.source().data('description')||'',edge.source().data('pmid')||'');

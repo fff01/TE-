@@ -103,13 +103,12 @@ include __DIR__ . '/head.php';
     <h3 style="margin:0 0 18px;font-size:24px;padding-bottom:12px;border-bottom:1px solid #e5edf7;">
       <a href="<?= htmlspecialchars(site_url_with_lang('preview.php', $lang), ENT_QUOTES, 'UTF-8') ?>" style="color:inherit;text-decoration:none;"><?= htmlspecialchars(site_t(['zh' => '知识图谱预览', 'en' => 'Knowledge Graph Preview'], $lang), ENT_QUOTES, 'UTF-8') ?></a>
     </h3>
-    <div id="home-preview" style="height:520px;border:1px solid #d8e4f0;border-radius:18px;background:radial-gradient(circle at top,#ffffff,#edf4ff);"></div>
-    <div id="home-preview-detail" style="margin-top:14px;padding:14px 16px;border-radius:16px;background:#f8fbff;border:1px solid #dbe7f3;color:#5e7288;line-height:1.7;min-height:74px;">
-      <?= htmlspecialchars(site_t([
-        'zh' => '点击节点或关系可查看详情；在首页预览中不会跳转到其他图谱页面。',
-        'en' => 'Click nodes or edges to inspect details. The home preview does not jump to another graph page.'
-      ], $lang), ENT_QUOTES, 'UTF-8') ?>
-    </div>
+    <iframe
+      id="home-preview-frame"
+      src="index_demo.html?embed=home-preview&lang=<?= htmlspecialchars($lang, ENT_QUOTES, 'UTF-8') ?>"
+      title="<?= htmlspecialchars(site_t(['zh' => '首页知识图谱预览', 'en' => 'Home knowledge graph preview'], $lang), ENT_QUOTES, 'UTF-8') ?>"
+      style="width:100%;height:520px;border:1px solid #d8e4f0;border-radius:18px;background:radial-gradient(circle at top,#ffffff,#edf4ff);box-shadow:inset 0 1px 0 rgba(255,255,255,.72);"
+    ></iframe>
   </div>
 
   <div style="display:grid;gap:22px;">
@@ -136,115 +135,78 @@ include __DIR__ . '/head.php';
   </div>
 </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
-<script src="graph_demo_data.js"></script>
 <script>
   (function () {
-    const lang = <?= json_encode($lang, JSON_UNESCAPED_UNICODE) ?>;
-    const container = document.getElementById('home-preview');
-    const detail = document.getElementById('home-preview-detail');
-    const demoData = window.GRAPH_DEMO_DATA || { elements: [] };
-    const elements = Array.isArray(demoData.elements) ? demoData.elements : [];
+    const frame = document.getElementById('home-preview-frame');
+    if (!frame) return;
 
-    const colorMap = { TE: '#2563eb', Disease: '#ef4444', Function: '#10b981', Paper: '#f59e0b' };
-    const typeMap = {
-      zh: { TE: '转座元件', Disease: '疾病', Function: '功能/机制', Paper: '文献' },
-      en: { TE: 'TE', Disease: 'Disease', Function: 'Function/Mechanism', Paper: 'Paper' }
-    };
-    const relMap = { zh: { SUBFAMILY_OF: '包含', EVIDENCE_RELATION: '文献支持' }, en: { SUBFAMILY_OF: 'contains', EVIDENCE_RELATION: 'literature support' } };
-    const detailText = {
-      zh: '当前首页预览支持查看节点与关系，但不会跳转到动态图。',
-      en: 'The home preview supports node and edge inspection, but does not jump to another graph page.'
-    };
-    const degreeLabel = { zh: '连接数：', en: 'Degree: ' };
+    function restyleHomePreview() {
+      const doc = frame.contentDocument;
+      if (!doc) return;
+      const innerWin = frame.contentWindow;
+      const innerCy = innerWin && innerWin.__TEKG_CY ? innerWin.__TEKG_CY : null;
+      const header = doc.querySelector('header');
+      const footer = doc.querySelector('footer');
+      const langControl = doc.querySelector('.lang');
+      const rightPanel = doc.querySelector('.main > .panel:last-child');
+      const graphPanel = doc.querySelector('.main > .panel:first-child');
+      const graphHead = graphPanel ? graphPanel.querySelector('.head') : null;
+      const graphTools = graphPanel ? graphPanel.querySelector('.toolbar') : null;
+      const graphDetail = doc.getElementById('node-details');
 
-    const cy = cytoscape({
-      container,
-      elements,
-      wheelSensitivity: 0.2,
-      style: [
-        { selector: 'node', style: {
-          'label': 'data(label)',
-          'font-size': function (ele) {
-            const d = ele.data('tree_depth');
-            if (d === 0) return '20px';
-            if (d === 1) return '17px';
-            if (d === 2) return '14px';
-            if (d === 3) return '12px';
-            return '12px';
-          },
-          'min-zoomed-font-size': 9,
-          'text-valign': 'center',
-          'text-halign': 'center',
-          'background-color': function (ele) { return colorMap[ele.data('type')] || '#94a3b8'; },
-          'color': '#0f172a',
-          'text-outline-width': 3,
-          'text-outline-color': '#fff',
-          'width': 'label',
-          'height': 'label',
-          'padding': function (ele) {
-            const d = ele.data('tree_depth');
-            if (d === 0) return '20px';
-            if (d === 1) return '17px';
-            if (d === 2) return '14px';
-            if (d === 3) return '11px';
-            return '13px';
-          },
-          'text-wrap': 'wrap',
-          'text-max-width': 150,
-          'border-width': 2,
-          'border-color': '#fff',
-          'shape': 'round-rectangle'
-        }},
-        { selector: 'edge', style: {
-          'width': 2.4,
-          'line-color': '#4a6fe3',
-          'target-arrow-color': '#4a6fe3',
-          'target-arrow-shape': 'triangle',
-          'curve-style': 'bezier',
-          'label': function (ele) { return relMap[lang][ele.data('relation')] || ele.data('relation') || ''; },
-          'font-size': '10px',
-          'color': '#334155',
-          'text-background-color': 'rgba(255,255,255,0.92)',
-          'text-background-opacity': 1,
-          'text-background-padding': '2px',
-          'text-rotation': 'autorotate'
-        }},
-        { selector: '.active-node', style: { 'border-width': 5, 'border-color': '#0f172a', 'shadow-blur': 14, 'shadow-color': '#2563eb', 'shadow-opacity': 0.24 }},
-        { selector: '.active-edge', style: { 'width': 4, 'line-color': '#1d4ed8', 'target-arrow-color': '#1d4ed8' }}
-      ],
-      layout: { name: 'preset', fit: true, padding: 40, animate: false }
-    });
-
-    function clearActive() { cy.nodes().removeClass('active-node'); cy.edges().removeClass('active-edge'); }
-    function setDetail(html) { detail.innerHTML = html; }
-
-    cy.on('tap', 'node', function (evt) {
-      const node = evt.target;
-      clearActive();
-      node.addClass('active-node');
-      setDetail('<strong>' + node.data('label') + '</strong>（' + (typeMap[lang][node.data('type')] || node.data('type') || 'node') + '）<br>' + detailText[lang] + '<div style="margin-top:6px;color:#6b7f95;">' + degreeLabel[lang] + node.degree() + '</div>');
-    });
-
-    cy.on('tap', 'edge', function (evt) {
-      const edge = evt.target;
-      clearActive();
-      edge.addClass('active-edge');
-      setDetail('<strong>' + edge.source().data('label') + '</strong> → ' + (relMap[lang][edge.data('relation')] || edge.data('relation') || 'relation') + ' → <strong>' + edge.target().data('label') + '</strong>');
-    });
-
-    cy.on('tap', function (evt) {
-      if (evt.target === cy) {
-        clearActive();
-        setDetail(detailText[lang]);
+      if (header) header.style.display = 'none';
+      if (footer) footer.style.display = 'none';
+      if (langControl) langControl.style.display = 'none';
+      if (rightPanel) rightPanel.style.display = 'none';
+      if (graphTools) graphTools.style.display = 'none';
+      if (graphHead) graphHead.style.display = 'none';
+      if (graphDetail) {
+        graphDetail.style.display = 'block';
+        graphDetail.style.marginTop = '10px';
       }
-    });
 
-    const root = cy.nodes().filter(function (node) { return node.data('tree_depth') === 0; })[0];
-    if (root) {
-      root.addClass('active-node');
-      cy.center(root);
+      doc.documentElement.style.height = '100%';
+      doc.body.style.height = '100%';
+      doc.body.style.margin = '0';
+      doc.body.style.background = 'transparent';
+
+      const main = doc.querySelector('.main');
+      if (main) {
+        main.style.display = 'block';
+        main.style.height = '100%';
+        main.style.minHeight = '100%';
+        main.style.padding = '0';
+        main.style.gap = '0';
+      }
+
+      if (graphPanel) {
+        graphPanel.style.height = '100%';
+        graphPanel.style.minHeight = '100%';
+        graphPanel.style.border = 'none';
+        graphPanel.style.borderRadius = '18px';
+        graphPanel.style.boxShadow = 'none';
+      }
+
+      const cyEl = doc.getElementById('cy');
+      if (cyEl) {
+        cyEl.style.height = '100%';
+        cyEl.style.minHeight = '100%';
+        cyEl.style.flex = '1';
+      }
+
+      if (innerCy) {
+        try {
+          innerCy.resize();
+          innerCy.fit(undefined, 45);
+        } catch (_err) {}
+      }
     }
+
+    frame.addEventListener('load', function () {
+      restyleHomePreview();
+      setTimeout(restyleHomePreview, 250);
+      setTimeout(restyleHomePreview, 800);
+    });
   }());
 </script>
 <?php include __DIR__ . '/foot.php'; ?>

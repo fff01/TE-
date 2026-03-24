@@ -2,7 +2,7 @@
   "root": "TE",
   "root_label": "人类转座子",
   "node_count": 287,
-  "edge_count": 291,
+  "edge_count": 290,
   "nodes": [
     {
       "name": "TE",
@@ -15,7 +15,7 @@
       "name": "DNA Transposon",
       "original_label": "DNA Transposon (DNA转座子)",
       "depth": 1,
-      "line": 241,
+      "line": 240,
       "description": "DNA Transposon lineage node imported from tree.txt. Original label: DNA Transposon (DNA转座子)"
     },
     {
@@ -36,147 +36,154 @@
       "name": "hAT",
       "original_label": "hAT",
       "depth": 2,
-      "line": 242,
+      "line": 241,
       "description": "hAT lineage node imported from tree.txt. Original label: hAT"
     },
     {
       "name": "LINE",
       "original_label": "LINE (Long Interspersed Nuclear Element)",
       "depth": 2,
-      "line": 194,
+      "line": 193,
       "description": "LINE lineage node imported from tree.txt. Original label: LINE (Long Interspersed Nuclear Element)"
     },
     {
       "name": "Mariner/Tc1",
       "original_label": "Mariner/Tc1",
       "depth": 2,
-      "line": 286,
+      "line": 285,
       "description": "Mariner/Tc1 lineage node imported from tree.txt. Original label: Mariner/Tc1"
     },
     {
       "name": "Merlin",
       "original_label": "Merlin",
       "depth": 2,
-      "line": 313,
+      "line": 312,
       "description": "Merlin lineage node imported from tree.txt. Original label: Merlin"
     },
     {
       "name": "piggyBac",
       "original_label": "piggyBac",
       "depth": 2,
-      "line": 309,
+      "line": 308,
       "description": "piggyBac lineage node imported from tree.txt. Original label: piggyBac"
     },
     {
       "name": "SINE",
       "original_label": "SINE (Short Interspersed Nuclear Element)",
       "depth": 2,
-      "line": 222,
+      "line": 221,
       "description": "SINE lineage node imported from tree.txt. Original label: SINE (Short Interspersed Nuclear Element)"
     },
     {
       "name": "Unclassified / Putative",
       "original_label": "Unclassified / Putative",
       "depth": 2,
-      "line": 315,
+      "line": 314,
       "description": "Unclassified / Putative lineage node imported from tree.txt. Original label: Unclassified / Putative"
     },
     {
       "name": "Alu",
       "original_label": "Alu",
       "depth": 3,
-      "line": 224,
+      "line": 223,
       "description": "Alu lineage node imported from tree.txt. Original label: Alu"
+    },
+    {
+      "name": "AmnSINE1_HS",
+      "original_label": "AmnSINE1_HS",
+      "depth": 3,
+      "line": 222,
+      "description": "AmnSINE1_HS lineage node imported from tree.txt. Original label: AmnSINE1_HS"
     },
     {
       "name": "CHARLIE10",
       "original_label": "CHARLIE10",
       "depth": 3,
-      "line": 243,
+      "line": 242,
       "description": "CHARLIE10 lineage node imported from tree.txt. Original label: CHARLIE10"
     },
     {
       "name": "CHARLIE2A",
       "original_label": "CHARLIE2A",
       "depth": 3,
-      "line": 244,
+      "line": 243,
       "description": "CHARLIE2A lineage node imported from tree.txt. Original label: CHARLIE2A"
     },
     {
       "name": "CHARLIE2B",
       "original_label": "CHARLIE2B",
       "depth": 3,
-      "line": 245,
+      "line": 244,
       "description": "CHARLIE2B lineage node imported from tree.txt. Original label: CHARLIE2B"
     },
     {
       "name": "CHARLIE3",
       "original_label": "CHARLIE3",
       "depth": 3,
-      "line": 246,
+      "line": 245,
       "description": "CHARLIE3 lineage node imported from tree.txt. Original label: CHARLIE3"
     },
     {
       "name": "CHARLIE5",
       "original_label": "CHARLIE5",
       "depth": 3,
-      "line": 247,
+      "line": 246,
       "description": "CHARLIE5 lineage node imported from tree.txt. Original label: CHARLIE5"
     },
     {
       "name": "CHARLIE6",
       "original_label": "CHARLIE6",
       "depth": 3,
-      "line": 248,
+      "line": 247,
       "description": "CHARLIE6 lineage node imported from tree.txt. Original label: CHARLIE6"
     },
     {
       "name": "CHARLIE7",
       "original_label": "CHARLIE7",
       "depth": 3,
-      "line": 249,
+      "line": 248,
       "description": "CHARLIE7 lineage node imported from tree.txt. Original label: CHARLIE7"
     },
     {
       "name": "CHARLIE8",
       "original_label": "CHARLIE8",
       "depth": 3,
-      "line": 250,
+      "line": 249,
       "description": "CHARLIE8 lineage node imported from tree.txt. Original label: CHARLIE8"
     },
     {
       "name": "CHARLIE9",
       "original_label": "CHARLIE9",
       "depth": 3,
-      "line": 251,
+      "line": 250,
       "description": "CHARLIE9 lineage node imported from tree.txt. Original label: CHARLIE9"
     },
     {
       "name": "CHESHIRE",
       "original_label": "CHESHIRE",
       "depth": 3,
-      "line": 252,
+      "line": 251,
       "description": "CHESHIRE lineage node imported from tree.txt. Original label: CHESHIRE"
     },
     {
       "name": "CHESHIRE_A",
       "original_label": "CHESHIRE_A",
       "depth": 3,
-      "line": 253,
+      "line": 252,
       "description": "CHESHIRE_A lineage node imported from tree.txt. Original label: CHESHIRE_A"
     },
     {
       "name": "CHESHIRE_B",
       "original_label": "CHESHIRE_B",
       "depth": 3,
-      "line": 254,
+      "line": 253,
       "description": "CHESHIRE_B lineage node imported from tree.txt. Original label: CHESHIRE_B"
     },
     {
       "name": "CR1",
       "original_label": "CR1",
       "depth": 3,
-      "line": 219,
+      "line": 218,
       "description": "CR1 lineage node imported from tree.txt. Original label: CR1"
     },
     {
@@ -204,504 +211,497 @@
       "name": "FORDPREFECT",
       "original_label": "FORDPREFECT",
       "depth": 3,
-      "line": 255,
+      "line": 254,
       "description": "FORDPREFECT lineage node imported from tree.txt. Original label: FORDPREFECT"
     },
     {
       "name": "FORDPREFECT_A",
       "original_label": "FORDPREFECT_A",
       "depth": 3,
-      "line": 256,
+      "line": 255,
       "description": "FORDPREFECT_A lineage node imported from tree.txt. Original label: FORDPREFECT_A"
     },
     {
       "name": "GOLEM_A",
       "original_label": "GOLEM_A",
       "depth": 3,
-      "line": 287,
+      "line": 286,
       "description": "GOLEM_A lineage node imported from tree.txt. Original label: GOLEM_A"
     },
     {
       "name": "GOLEM_C",
       "original_label": "GOLEM_C",
       "depth": 3,
-      "line": 288,
+      "line": 287,
       "description": "GOLEM_C lineage node imported from tree.txt. Original label: GOLEM_C"
     },
     {
       "name": "HSMAR1",
       "original_label": "HSMAR1",
       "depth": 3,
-      "line": 289,
+      "line": 288,
       "description": "HSMAR1 lineage node imported from tree.txt. Original label: HSMAR1"
     },
     {
       "name": "HSMAR2",
       "original_label": "HSMAR2",
       "depth": 3,
-      "line": 290,
+      "line": 289,
       "description": "HSMAR2 lineage node imported from tree.txt. Original label: HSMAR2"
     },
     {
       "name": "HSTC2",
       "original_label": "HSTC2",
       "depth": 3,
-      "line": 291,
+      "line": 290,
       "description": "HSTC2 lineage node imported from tree.txt. Original label: HSTC2"
     },
     {
       "name": "IN25",
       "original_label": "IN25",
       "depth": 3,
-      "line": 316,
+      "line": 315,
       "description": "IN25 lineage node imported from tree.txt. Original label: IN25"
     },
     {
       "name": "KANGA2_A",
       "original_label": "KANGA2_A",
       "depth": 3,
-      "line": 292,
+      "line": 291,
       "description": "KANGA2_A lineage node imported from tree.txt. Original label: KANGA2_A"
     },
     {
       "name": "L1",
       "original_label": "L1 (LINE1)",
       "depth": 3,
-      "line": 195,
+      "line": 194,
       "description": "L1 lineage node imported from tree.txt. Original label: L1 (LINE1)"
     },
     {
       "name": "LOOPER",
       "original_label": "LOOPER",
       "depth": 3,
-      "line": 310,
+      "line": 309,
       "description": "LOOPER lineage node imported from tree.txt. Original label: LOOPER"
     },
     {
       "name": "MADE1",
       "original_label": "MADE1",
       "depth": 3,
-      "line": 293,
+      "line": 292,
       "description": "MADE1 lineage node imported from tree.txt. Original label: MADE1"
     },
     {
       "name": "MARNA",
       "original_label": "MARNA",
       "depth": 3,
-      "line": 294,
+      "line": 293,
       "description": "MARNA lineage node imported from tree.txt. Original label: MARNA"
     },
     {
       "name": "MER103B",
       "original_label": "MER103B",
       "depth": 3,
-      "line": 257,
+      "line": 256,
       "description": "MER103B lineage node imported from tree.txt. Original label: MER103B"
     },
     {
       "name": "MER103C",
       "original_label": "MER103C",
       "depth": 3,
-      "line": 258,
+      "line": 257,
       "description": "MER103C lineage node imported from tree.txt. Original label: MER103C"
     },
     {
       "name": "MER106",
       "original_label": "MER106 (and subfamily MER106B)",
       "depth": 3,
-      "line": 259,
+      "line": 258,
       "description": "MER106 lineage node imported from tree.txt. Original label: MER106 (and subfamily MER106B)"
     },
     {
       "name": "MER107",
       "original_label": "MER107",
       "depth": 3,
-      "line": 260,
+      "line": 259,
       "description": "MER107 lineage node imported from tree.txt. Original label: MER107"
     },
     {
       "name": "MER112",
       "original_label": "MER112",
       "depth": 3,
-      "line": 261,
+      "line": 260,
       "description": "MER112 lineage node imported from tree.txt. Original label: MER112"
     },
     {
       "name": "MER113",
       "original_label": "MER113 (and subfamily MER113B)",
       "depth": 3,
-      "line": 262,
+      "line": 261,
       "description": "MER113 lineage node imported from tree.txt. Original label: MER113 (and subfamily MER113B)"
     },
     {
       "name": "MER117",
       "original_label": "MER117",
       "depth": 3,
-      "line": 263,
+      "line": 262,
       "description": "MER117 lineage node imported from tree.txt. Original label: MER117"
     },
     {
       "name": "MER119",
       "original_label": "MER119",
       "depth": 3,
-      "line": 264,
+      "line": 263,
       "description": "MER119 lineage node imported from tree.txt. Original label: MER119"
     },
     {
       "name": "MER1A",
       "original_label": "MER1A",
       "depth": 3,
-      "line": 265,
+      "line": 264,
       "description": "MER1A lineage node imported from tree.txt. Original label: MER1A"
     },
     {
       "name": "MER1B",
       "original_label": "MER1B",
       "depth": 3,
-      "line": 266,
+      "line": 265,
       "description": "MER1B lineage node imported from tree.txt. Original label: MER1B"
     },
     {
       "name": "MER20",
       "original_label": "MER20 (and subfamily MER20B)",
       "depth": 3,
-      "line": 267,
+      "line": 266,
       "description": "MER20 lineage node imported from tree.txt. Original label: MER20 (and subfamily MER20B)"
     },
     {
       "name": "MER28",
       "original_label": "MER28",
       "depth": 3,
-      "line": 295,
+      "line": 294,
       "description": "MER28 lineage node imported from tree.txt. Original label: MER28"
     },
     {
       "name": "MER30B",
       "original_label": "MER30B",
       "depth": 3,
-      "line": 268,
+      "line": 267,
       "description": "MER30B lineage node imported from tree.txt. Original label: MER30B"
     },
     {
       "name": "MER33",
       "original_label": "MER33",
       "depth": 3,
-      "line": 269,
+      "line": 268,
       "description": "MER33 lineage node imported from tree.txt. Original label: MER33"
     },
     {
       "name": "MER44A",
       "original_label": "MER44A",
       "depth": 3,
-      "line": 296,
+      "line": 295,
       "description": "MER44A lineage node imported from tree.txt. Original label: MER44A"
     },
     {
       "name": "MER44B",
       "original_label": "MER44B",
       "depth": 3,
-      "line": 297,
+      "line": 296,
       "description": "MER44B lineage node imported from tree.txt. Original label: MER44B"
     },
     {
       "name": "MER44C",
       "original_label": "MER44C",
       "depth": 3,
-      "line": 298,
+      "line": 297,
       "description": "MER44C lineage node imported from tree.txt. Original label: MER44C"
     },
     {
       "name": "MER45",
       "original_label": "MER45 (and subfamilies MER45B, MER45C, MER45R)",
       "depth": 3,
-      "line": 270,
+      "line": 269,
       "description": "MER45 lineage node imported from tree.txt. Original label: MER45 (and subfamilies MER45B, MER45C, MER45R)"
     },
     {
       "name": "MER5B",
       "original_label": "MER5B",
       "depth": 3,
-      "line": 271,
+      "line": 270,
       "description": "MER5B lineage node imported from tree.txt. Original label: MER5B"
     },
     {
       "name": "MER63A",
       "original_label": "MER63A",
       "depth": 3,
-      "line": 272,
+      "line": 271,
       "description": "MER63A lineage node imported from tree.txt. Original label: MER63A"
     },
     {
       "name": "MER63B",
       "original_label": "MER63B",
       "depth": 3,
-      "line": 273,
+      "line": 272,
       "description": "MER63B lineage node imported from tree.txt. Original label: MER63B"
     },
     {
       "name": "MER63D",
       "original_label": "MER63D",
       "depth": 3,
-      "line": 274,
+      "line": 273,
       "description": "MER63D lineage node imported from tree.txt. Original label: MER63D"
     },
     {
       "name": "MER69C",
       "original_label": "MER69C",
       "depth": 3,
-      "line": 275,
+      "line": 274,
       "description": "MER69C lineage node imported from tree.txt. Original label: MER69C"
     },
     {
       "name": "MER6B",
       "original_label": "MER6B",
       "depth": 3,
-      "line": 299,
+      "line": 298,
       "description": "MER6B lineage node imported from tree.txt. Original label: MER6B"
     },
     {
       "name": "MER75",
       "original_label": "MER75",
       "depth": 3,
-      "line": 311,
+      "line": 310,
       "description": "MER75 lineage node imported from tree.txt. Original label: MER75"
     },
     {
       "name": "MER75B",
       "original_label": "MER75B",
       "depth": 3,
-      "line": 312,
+      "line": 311,
       "description": "MER75B lineage node imported from tree.txt. Original label: MER75B"
     },
     {
       "name": "MER8",
       "original_label": "MER8",
       "depth": 3,
-      "line": 300,
+      "line": 299,
       "description": "MER8 lineage node imported from tree.txt. Original label: MER8"
     },
     {
       "name": "MER80B",
       "original_label": "MER80B",
       "depth": 3,
-      "line": 276,
+      "line": 275,
       "description": "MER80B lineage node imported from tree.txt. Original label: MER80B"
     },
     {
       "name": "MER81",
       "original_label": "MER81",
       "depth": 3,
-      "line": 277,
+      "line": 276,
       "description": "MER81 lineage node imported from tree.txt. Original label: MER81"
     },
     {
       "name": "MER91A",
       "original_label": "MER91A",
       "depth": 3,
-      "line": 278,
+      "line": 277,
       "description": "MER91A lineage node imported from tree.txt. Original label: MER91A"
     },
     {
       "name": "MER91C",
       "original_label": "MER91C",
       "depth": 3,
-      "line": 279,
+      "line": 278,
       "description": "MER91C lineage node imported from tree.txt. Original label: MER91C"
     },
     {
       "name": "MER94",
       "original_label": "MER94 (and subfamily MER94B)",
       "depth": 3,
-      "line": 280,
+      "line": 279,
       "description": "MER94 lineage node imported from tree.txt. Original label: MER94 (and subfamily MER94B)"
     },
     {
       "name": "MER96",
       "original_label": "MER96 (and subfamily MER96B)",
       "depth": 3,
-      "line": 281,
+      "line": 280,
       "description": "MER96 lineage node imported from tree.txt. Original label: MER96 (and subfamily MER96B)"
     },
     {
       "name": "MER97A",
       "original_label": "MER97A",
       "depth": 3,
-      "line": 282,
+      "line": 281,
       "description": "MER97A lineage node imported from tree.txt. Original label: MER97A"
     },
     {
       "name": "MER97B",
       "original_label": "MER97B",
       "depth": 3,
-      "line": 283,
+      "line": 282,
       "description": "MER97B lineage node imported from tree.txt. Original label: MER97B"
     },
     {
       "name": "MER97C",
       "original_label": "MER97C",
       "depth": 3,
-      "line": 284,
+      "line": 283,
       "description": "MER97C lineage node imported from tree.txt. Original label: MER97C"
     },
     {
       "name": "MER99",
       "original_label": "MER99",
       "depth": 3,
-      "line": 317,
+      "line": 316,
       "description": "MER99 lineage node imported from tree.txt. Original label: MER99"
     },
     {
       "name": "Merlin1_HS",
       "original_label": "Merlin1_HS",
       "depth": 3,
-      "line": 314,
+      "line": 313,
       "description": "Merlin1_HS lineage node imported from tree.txt. Original label: Merlin1_HS"
     },
     {
       "name": "SVA",
       "original_label": "SVA (Composite Retroposon)",
       "depth": 3,
-      "line": 232,
+      "line": 231,
       "description": "SVA lineage node imported from tree.txt. Original label: SVA (Composite Retroposon)"
     },
     {
       "name": "TIGGER1",
       "original_label": "TIGGER1",
       "depth": 3,
-      "line": 301,
+      "line": 300,
       "description": "TIGGER1 lineage node imported from tree.txt. Original label: TIGGER1"
     },
     {
       "name": "TIGGER2",
       "original_label": "TIGGER2",
       "depth": 3,
-      "line": 302,
+      "line": 301,
       "description": "TIGGER2 lineage node imported from tree.txt. Original label: TIGGER2"
     },
     {
       "name": "TIGGER5",
       "original_label": "TIGGER5",
       "depth": 3,
-      "line": 303,
+      "line": 302,
       "description": "TIGGER5 lineage node imported from tree.txt. Original label: TIGGER5"
     },
     {
       "name": "TIGGER6B",
       "original_label": "TIGGER6B",
       "depth": 3,
-      "line": 304,
+      "line": 303,
       "description": "TIGGER6B lineage node imported from tree.txt. Original label: TIGGER6B"
     },
     {
       "name": "TIGGER7",
       "original_label": "TIGGER7",
       "depth": 3,
-      "line": 305,
+      "line": 304,
       "description": "TIGGER7 lineage node imported from tree.txt. Original label: TIGGER7"
     },
     {
       "name": "TIGGER8",
       "original_label": "TIGGER8",
       "depth": 3,
-      "line": 306,
+      "line": 305,
       "description": "TIGGER8 lineage node imported from tree.txt. Original label: TIGGER8"
     },
     {
       "name": "TIGGER9",
       "original_label": "TIGGER9",
       "depth": 3,
-      "line": 307,
+      "line": 306,
       "description": "TIGGER9 lineage node imported from tree.txt. Original label: TIGGER9"
     },
     {
       "name": "ZAPHOD",
       "original_label": "ZAPHOD",
       "depth": 3,
-      "line": 285,
+      "line": 284,
       "description": "ZAPHOD lineage node imported from tree.txt. Original label: ZAPHOD"
     },
     {
       "name": "ZOMBI_A",
       "original_label": "ZOMBI_A",
       "depth": 3,
-      "line": 308,
+      "line": 307,
       "description": "ZOMBI_A lineage node imported from tree.txt. Original label: ZOMBI_A"
     },
     {
       "name": "AluYa5",
       "original_label": "AluYa5",
       "depth": 4,
-      "line": 225,
+      "line": 224,
       "description": "AluYa5 lineage node imported from tree.txt. Original label: AluYa5"
     },
     {
       "name": "AluYb10",
       "original_label": "AluYb10",
       "depth": 4,
-      "line": 226,
+      "line": 225,
       "description": "AluYb10 lineage node imported from tree.txt. Original label: AluYb10"
     },
     {
       "name": "AluYb11",
       "original_label": "AluYb11",
       "depth": 4,
-      "line": 227,
+      "line": 226,
       "description": "AluYb11 lineage node imported from tree.txt. Original label: AluYb11"
     },
     {
       "name": "AluYb8",
       "original_label": "AluYb8",
       "depth": 4,
-      "line": 228,
+      "line": 227,
       "description": "AluYb8 lineage node imported from tree.txt. Original label: AluYb8"
     },
     {
       "name": "AluYb8a1",
       "original_label": "AluYb8a1",
       "depth": 4,
-      "line": 229,
+      "line": 228,
       "description": "AluYb8a1 lineage node imported from tree.txt. Original label: AluYb8a1"
     },
     {
       "name": "AluYb9",
       "original_label": "AluYb9",
       "depth": 4,
-      "line": 230,
+      "line": 229,
       "description": "AluYb9 lineage node imported from tree.txt. Original label: AluYb9"
     },
     {
       "name": "AluYk13",
       "original_label": "AluYk13",
       "depth": 4,
-      "line": 231,
+      "line": 230,
       "description": "AluYk13 lineage node imported from tree.txt. Original label: AluYk13"
-    },
-    {
-      "name": "AmnSINE1_HS",
-      "original_label": "AmnSINE1_HS",
-      "depth": 4,
-      "line": 140,
-      "description": "AmnSINE1_HS lineage node imported from tree.txt. Original label: AmnSINE1_HS"
     },
     {
       "name": "CR1_HS",
       "original_label": "CR1_HS",
       "depth": 4,
-      "line": 220,
+      "line": 219,
       "description": "CR1_HS lineage node imported from tree.txt. Original label: CR1_HS"
     },
     {
       "name": "ERV3-16A3_I",
       "original_label": "ERV3-16A3_I (ERV3-16A3_LTR)",
       "depth": 4,
-      "line": 141,
+      "line": 140,
       "description": "ERV3-16A3_I lineage node imported from tree.txt. Original label: ERV3-16A3_I (ERV3-16A3_LTR)"
     },
     {
       "name": "ERVL",
       "original_label": "ERVL",
       "depth": 4,
-      "line": 142,
+      "line": 141,
       "description": "ERVL lineage node imported from tree.txt. Original label: ERVL"
     },
     {
@@ -750,168 +750,168 @@
       "name": "HERVL",
       "original_label": "HERVL",
       "depth": 4,
-      "line": 147,
+      "line": 146,
       "description": "HERVL lineage node imported from tree.txt. Original label: HERVL"
     },
     {
       "name": "L1HS",
       "original_label": "L1HS",
       "depth": 4,
-      "line": 197,
+      "line": 196,
       "description": "L1HS lineage node imported from tree.txt. Original label: L1HS"
     },
     {
       "name": "L1M1",
       "original_label": "L1M1 (and subfamilies L1M1B_5, L1MA1, L1MA2, L1MA3, L1MA4, L1MA4A)",
       "depth": 4,
-      "line": 198,
+      "line": 197,
       "description": "L1M1 lineage node imported from tree.txt. Original label: L1M1 (and subfamilies L1M1B_5, L1MA1, L1MA2, L1MA3, L1MA4, L1MA4A)"
     },
     {
       "name": "L1M2",
       "original_label": "L1M2 (and subfamilies L1M2A1_5, L1M2A_5, L1M2B_5, L1M2C_5, L1M2_5, L1MA5, L1MA5A, L1MA6, L1MA7, L1MA8, L1MA9)",
       "depth": 4,
-      "line": 199,
+      "line": 198,
       "description": "L1M2 lineage node imported from tree.txt. Original label: L1M2 (and subfamilies L1M2A1_5, L1M2A_5, L1M2B_5, L1M2C_5, L1M2_5, L1MA5, L1MA5A, L1MA6, L1MA7, L1MA8, L1MA9)"
     },
     {
       "name": "L1M3",
       "original_label": "L1M3 (and subfamilies L1M3B_5, L1M3C_5, L1MB1, L1MB2, L1MB3, L1MB3_5, L1MB4)",
       "depth": 4,
-      "line": 200,
+      "line": 199,
       "description": "L1M3 lineage node imported from tree.txt. Original label: L1M3 (and subfamilies L1M3B_5, L1M3C_5, L1MB1, L1MB2, L1MB3, L1MB3_5, L1MB4)"
     },
     {
       "name": "L1M4",
       "original_label": "L1M4 (and subfamilies L1MB5, L1MB8, L1MC1, L1MC2, L1MC4, L1MCA_5, L1MCB_5, L1MCC_5, L1MD2)",
       "depth": 4,
-      "line": 201,
+      "line": 200,
       "description": "L1M4 lineage node imported from tree.txt. Original label: L1M4 (and subfamilies L1MB5, L1MB8, L1MC1, L1MC2, L1MC4, L1MCA_5, L1MCB_5, L1MCC_5, L1MD2)"
     },
     {
       "name": "L1MD1",
       "original_label": "L1MD1",
       "depth": 4,
-      "line": 202,
+      "line": 201,
       "description": "L1MD1 lineage node imported from tree.txt. Original label: L1MD1"
     },
     {
       "name": "L1MD3",
       "original_label": "L1MD3",
       "depth": 4,
-      "line": 203,
+      "line": 202,
       "description": "L1MD3 lineage node imported from tree.txt. Original label: L1MD3"
     },
     {
       "name": "L1MDB_5",
       "original_label": "L1MDB_5",
       "depth": 4,
-      "line": 204,
+      "line": 203,
       "description": "L1MDB_5 lineage node imported from tree.txt. Original label: L1MDB_5"
     },
     {
       "name": "L1ME",
       "original_label": "L1ME (and subfamilies L1ME1, L1ME2, L1ME3, L1ME3A, L1ME4A, L1MEA_5, L1MEB_5, L1MED_5, L1MEE_5, L1ME_ORF2)",
       "depth": 4,
-      "line": 205,
+      "line": 204,
       "description": "L1ME lineage node imported from tree.txt. Original label: L1ME (and subfamilies L1ME1, L1ME2, L1ME3, L1ME3A, L1ME4A, L1MEA_5, L1MEB_5, L1MED_5, L1MEE_5, L1ME_ORF2)"
     },
     {
       "name": "L1P1",
       "original_label": "L1P1 (and subfamilies L1PA2, L1PA3, L1PA4)",
       "depth": 4,
-      "line": 206,
+      "line": 205,
       "description": "L1P1 lineage node imported from tree.txt. Original label: L1P1 (and subfamilies L1PA2, L1PA3, L1PA4)"
     },
     {
       "name": "L1P2",
       "original_label": "L1P2 (and subfamilies L1PA5, L1PA6)",
       "depth": 4,
-      "line": 207,
+      "line": 206,
       "description": "L1P2 lineage node imported from tree.txt. Original label: L1P2 (and subfamilies L1PA5, L1PA6)"
     },
     {
       "name": "L1P3",
       "original_label": "L1P3 (and subfamilies L1PA7, L1PA8, L1PREC1)",
       "depth": 4,
-      "line": 208,
+      "line": 207,
       "description": "L1P3 lineage node imported from tree.txt. Original label: L1P3 (and subfamilies L1PA7, L1PA8, L1PREC1)"
     },
     {
       "name": "L1P4",
       "original_label": "L1P4 (and subfamilies L1PA10, L1PA11, L1PA12, L1PA13, L1PA14, L1PA15, L1PA16)",
       "depth": 4,
-      "line": 209,
+      "line": 208,
       "description": "L1P4 lineage node imported from tree.txt. Original label: L1P4 (and subfamilies L1PA10, L1PA11, L1PA12, L1PA13, L1PA14, L1PA15, L1PA16)"
     },
     {
       "name": "L1P5",
       "original_label": "L1P5 (and subfamilies L1PB1, L1PB2, L1PB2c, L1PB3, L1PB4, L1PBA1_5, L1PBA_5, L1PBB_5)",
       "depth": 4,
-      "line": 210,
+      "line": 209,
       "description": "L1P5 lineage node imported from tree.txt. Original label: L1P5 (and subfamilies L1PB1, L1PB2, L1PB2c, L1PB3, L1PB4, L1PBA1_5, L1PBA_5, L1PBB_5)"
     },
     {
       "name": "L1PA12_5",
       "original_label": "L1PA12_5",
       "depth": 4,
-      "line": 211,
+      "line": 210,
       "description": "L1PA12_5 lineage node imported from tree.txt. Original label: L1PA12_5"
     },
     {
       "name": "L1PA13_5",
       "original_label": "L1PA13_5",
       "depth": 4,
-      "line": 212,
+      "line": 211,
       "description": "L1PA13_5 lineage node imported from tree.txt. Original label: L1PA13_5"
     },
     {
       "name": "L1PA14_5",
       "original_label": "L1PA14_5",
       "depth": 4,
-      "line": 213,
+      "line": 212,
       "description": "L1PA14_5 lineage node imported from tree.txt. Original label: L1PA14_5"
     },
     {
       "name": "L1PA16_5",
       "original_label": "L1PA16_5",
       "depth": 4,
-      "line": 214,
+      "line": 213,
       "description": "L1PA16_5 lineage node imported from tree.txt. Original label: L1PA16_5"
     },
     {
       "name": "L1PA17_5",
       "original_label": "L1PA17_5",
       "depth": 4,
-      "line": 215,
+      "line": 214,
       "description": "L1PA17_5 lineage node imported from tree.txt. Original label: L1PA17_5"
     },
     {
       "name": "L1PA2",
       "original_label": "L1 (L1PA2 subfamily)",
       "depth": 4,
-      "line": 196,
+      "line": 195,
       "description": "L1PA2 lineage node imported from tree.txt. Original label: L1 (L1PA2 subfamily)"
     },
     {
       "name": "L1PA7_5",
       "original_label": "L1PA7_5",
       "depth": 4,
-      "line": 216,
+      "line": 215,
       "description": "L1PA7_5 lineage node imported from tree.txt. Original label: L1PA7_5"
     },
     {
       "name": "L1PREC2",
       "original_label": "L1PREC2",
       "depth": 4,
-      "line": 217,
+      "line": 216,
       "description": "L1PREC2 lineage node imported from tree.txt. Original label: L1PREC2"
     },
     {
       "name": "L3",
       "original_label": "L3",
       "depth": 4,
-      "line": 221,
+      "line": 220,
       "description": "L3 lineage node imported from tree.txt. Original label: L3"
     },
     {
@@ -1002,7 +1002,7 @@
       "name": "LTR16",
       "original_label": "HERV16 (LTR16)",
       "depth": 4,
-      "line": 143,
+      "line": 142,
       "description": "LTR16 lineage node imported from tree.txt. Original label: HERV16 (LTR16)"
     },
     {
@@ -1016,7 +1016,7 @@
       "name": "LTR18",
       "original_label": "HERV18 (LTR18)",
       "depth": 4,
-      "line": 144,
+      "line": 143,
       "description": "LTR18 lineage node imported from tree.txt. Original label: HERV18 (LTR18)"
     },
     {
@@ -1156,7 +1156,7 @@
       "name": "LTR32",
       "original_label": "LTR32",
       "depth": 4,
-      "line": 152,
+      "line": 151,
       "description": "LTR32 lineage node imported from tree.txt. Original label: LTR32"
     },
     {
@@ -1219,21 +1219,21 @@
       "name": "LTR40",
       "original_label": "HERVL_40 (LTR40)",
       "depth": 4,
-      "line": 149,
+      "line": 148,
       "description": "LTR40 lineage node imported from tree.txt. Original label: HERVL_40 (LTR40)"
     },
     {
       "name": "LTR41",
       "original_label": "LTR41 (and subfamilies LTR41B, LTR41C)",
       "depth": 4,
-      "line": 154,
+      "line": 153,
       "description": "LTR41 lineage node imported from tree.txt. Original label: LTR41 (and subfamilies LTR41B, LTR41C)"
     },
     {
       "name": "LTR42",
       "original_label": "LTR42",
       "depth": 4,
-      "line": 155,
+      "line": 154,
       "description": "LTR42 lineage node imported from tree.txt. Original label: LTR42"
     },
     {
@@ -1296,7 +1296,7 @@
       "name": "LTR50",
       "original_label": "LTR50",
       "depth": 4,
-      "line": 157,
+      "line": 156,
       "description": "LTR50 lineage node imported from tree.txt. Original label: LTR50"
     },
     {
@@ -1317,21 +1317,21 @@
       "name": "LTR53",
       "original_label": "LTR53 (and subfamily LTR53B)",
       "depth": 4,
-      "line": 158,
+      "line": 157,
       "description": "LTR53 lineage node imported from tree.txt. Original label: LTR53 (and subfamily LTR53B)"
     },
     {
       "name": "LTR55",
       "original_label": "LTR55",
       "depth": 4,
-      "line": 159,
+      "line": 158,
       "description": "LTR55 lineage node imported from tree.txt. Original label: LTR55"
     },
     {
       "name": "LTR57",
       "original_label": "LTR57",
       "depth": 4,
-      "line": 160,
+      "line": 159,
       "description": "LTR57 lineage node imported from tree.txt. Original label: LTR57"
     },
     {
@@ -1373,7 +1373,7 @@
       "name": "LTR62",
       "original_label": "LTR62",
       "depth": 4,
-      "line": 161,
+      "line": 160,
       "description": "LTR62 lineage node imported from tree.txt. Original label: LTR62"
     },
     {
@@ -1394,14 +1394,14 @@
       "name": "LTR66",
       "original_label": "LTR66",
       "depth": 4,
-      "line": 162,
+      "line": 161,
       "description": "LTR66 lineage node imported from tree.txt. Original label: LTR66"
     },
     {
       "name": "LTR69",
       "original_label": "LTR69",
       "depth": 4,
-      "line": 163,
+      "line": 162,
       "description": "LTR69 lineage node imported from tree.txt. Original label: LTR69"
     },
     {
@@ -1450,7 +1450,7 @@
       "name": "LTR75",
       "original_label": "LTR75 (and subfamily LTR75B)",
       "depth": 4,
-      "line": 164,
+      "line": 163,
       "description": "LTR75 lineage node imported from tree.txt. Original label: LTR75 (and subfamily LTR75B)"
     },
     {
@@ -1499,7 +1499,7 @@
       "name": "LTR91",
       "original_label": "LTR91",
       "depth": 4,
-      "line": 165,
+      "line": 164,
       "description": "LTR91 lineage node imported from tree.txt. Original label: LTR91"
     },
     {
@@ -1611,7 +1611,7 @@
       "name": "MER54",
       "original_label": "MER54 (and subfamilies MER54A, MER54B)",
       "depth": 4,
-      "line": 167,
+      "line": 166,
       "description": "MER54 lineage node imported from tree.txt. Original label: MER54 (and subfamilies MER54A, MER54B)"
     },
     {
@@ -1653,35 +1653,35 @@
       "name": "MER68B",
       "original_label": "MER68B",
       "depth": 4,
-      "line": 168,
+      "line": 167,
       "description": "MER68B lineage node imported from tree.txt. Original label: MER68B"
     },
     {
       "name": "MER68C",
       "original_label": "MER68C",
       "depth": 4,
-      "line": 169,
+      "line": 168,
       "description": "MER68C lineage node imported from tree.txt. Original label: MER68C"
     },
     {
       "name": "MER70A",
       "original_label": "MER70A",
       "depth": 4,
-      "line": 170,
+      "line": 169,
       "description": "MER70A lineage node imported from tree.txt. Original label: MER70A"
     },
     {
       "name": "MER70B",
       "original_label": "MER70B",
       "depth": 4,
-      "line": 171,
+      "line": 170,
       "description": "MER70B lineage node imported from tree.txt. Original label: MER70B"
     },
     {
       "name": "MER70C",
       "original_label": "MER70C",
       "depth": 4,
-      "line": 172,
+      "line": 171,
       "description": "MER70C lineage node imported from tree.txt. Original label: MER70C"
     },
     {
@@ -1695,35 +1695,35 @@
       "name": "MER73",
       "original_label": "MER73",
       "depth": 4,
-      "line": 173,
+      "line": 172,
       "description": "MER73 lineage node imported from tree.txt. Original label: MER73"
     },
     {
       "name": "MER74",
       "original_label": "HERVL74 (MER74)",
       "depth": 4,
-      "line": 148,
+      "line": 147,
       "description": "MER74 lineage node imported from tree.txt. Original label: HERVL74 (MER74)"
     },
     {
       "name": "MER74B",
       "original_label": "MER74B",
       "depth": 4,
-      "line": 174,
+      "line": 173,
       "description": "MER74B lineage node imported from tree.txt. Original label: MER74B"
     },
     {
       "name": "MER74C",
       "original_label": "MER74C",
       "depth": 4,
-      "line": 175,
+      "line": 174,
       "description": "MER74C lineage node imported from tree.txt. Original label: MER74C"
     },
     {
       "name": "MER76",
       "original_label": "MER76",
       "depth": 4,
-      "line": 176,
+      "line": 175,
       "description": "MER76 lineage node imported from tree.txt. Original label: MER76"
     },
     {
@@ -1758,7 +1758,7 @@
       "name": "MER88",
       "original_label": "MER88",
       "depth": 4,
-      "line": 177,
+      "line": 176,
       "description": "MER88 lineage node imported from tree.txt. Original label: MER88"
     },
     {
@@ -1807,28 +1807,28 @@
       "name": "MLT1",
       "original_label": "MLT1 (MaLR家族)",
       "depth": 4,
-      "line": 178,
+      "line": 177,
       "description": "MLT1 lineage node imported from tree.txt. Original label: MLT1 (MaLR家族)"
     },
     {
       "name": "MLT2",
       "original_label": "MLT2 (HERV-L LTR家族)",
       "depth": 4,
-      "line": 185,
+      "line": 184,
       "description": "MLT2 lineage node imported from tree.txt. Original label: MLT2 (HERV-L LTR家族)"
     },
     {
       "name": "MSTB",
       "original_label": "MSTB",
       "depth": 4,
-      "line": 190,
+      "line": 189,
       "description": "MSTB lineage node imported from tree.txt. Original label: MSTB"
     },
     {
       "name": "MSTD",
       "original_label": "MSTD",
       "depth": 4,
-      "line": 191,
+      "line": 190,
       "description": "MSTD lineage node imported from tree.txt. Original label: MSTD"
     },
     {
@@ -1884,133 +1884,133 @@
       "name": "Retroposon-1_HS",
       "original_label": "Retroposon-1_HS",
       "depth": 4,
-      "line": 218,
+      "line": 217,
       "description": "Retroposon-1_HS lineage node imported from tree.txt. Original label: Retroposon-1_HS"
     },
     {
       "name": "SVA_A",
       "original_label": "SVA_A",
       "depth": 4,
-      "line": 233,
+      "line": 232,
       "description": "SVA_A lineage node imported from tree.txt. Original label: SVA_A"
     },
     {
       "name": "SVA_B",
       "original_label": "SVA_B",
       "depth": 4,
-      "line": 234,
+      "line": 233,
       "description": "SVA_B lineage node imported from tree.txt. Original label: SVA_B"
     },
     {
       "name": "SVA_C",
       "original_label": "SVA_C",
       "depth": 4,
-      "line": 235,
+      "line": 234,
       "description": "SVA_C lineage node imported from tree.txt. Original label: SVA_C"
     },
     {
       "name": "SVA_D",
       "original_label": "SVA_D",
       "depth": 4,
-      "line": 236,
+      "line": 235,
       "description": "SVA_D lineage node imported from tree.txt. Original label: SVA_D"
     },
     {
       "name": "SVA_E",
       "original_label": "SVA_E",
       "depth": 4,
-      "line": 237,
+      "line": 236,
       "description": "SVA_E lineage node imported from tree.txt. Original label: SVA_E"
     },
     {
       "name": "SVA_F",
       "original_label": "SVA_F",
       "depth": 4,
-      "line": 238,
+      "line": 237,
       "description": "SVA_F lineage node imported from tree.txt. Original label: SVA_F"
     },
     {
       "name": "THE1",
       "original_label": "THE1 (and subfamilies THE1A, THE1C, THE1D, THE1_I)",
       "depth": 4,
-      "line": 192,
+      "line": 191,
       "description": "THE1 lineage node imported from tree.txt. Original label: THE1 (and subfamilies THE1A, THE1C, THE1D, THE1_I)"
     },
     {
       "name": "THE1BR",
       "original_label": "THE1BR",
       "depth": 4,
-      "line": 193,
+      "line": 192,
       "description": "THE1BR lineage node imported from tree.txt. Original label: THE1BR"
     },
     {
       "name": "MLT1G",
       "original_label": "MLT1G (and subfamilies MLT1G1, MLT1G2, MLT1G3)",
       "depth": 5,
-      "line": 179,
+      "line": 178,
       "description": "MLT1G lineage node imported from tree.txt. Original label: MLT1G (and subfamilies MLT1G1, MLT1G2, MLT1G3)"
     },
     {
       "name": "MLT1H",
       "original_label": "MLT1H (and subfamilies MLT1H1, MLT1H2)",
       "depth": 5,
-      "line": 180,
+      "line": 179,
       "description": "MLT1H lineage node imported from tree.txt. Original label: MLT1H (and subfamilies MLT1H1, MLT1H2)"
     },
     {
       "name": "MLT1I",
       "original_label": "MLT1I",
       "depth": 5,
-      "line": 181,
+      "line": 180,
       "description": "MLT1I lineage node imported from tree.txt. Original label: MLT1I"
     },
     {
       "name": "MLT1K",
       "original_label": "MLT1K",
       "depth": 5,
-      "line": 182,
+      "line": 181,
       "description": "MLT1K lineage node imported from tree.txt. Original label: MLT1K"
     },
     {
       "name": "MLT1L",
       "original_label": "MLT1L",
       "depth": 5,
-      "line": 183,
+      "line": 182,
       "description": "MLT1L lineage node imported from tree.txt. Original label: MLT1L"
     },
     {
       "name": "MLT1N2",
       "original_label": "MLT1N2",
       "depth": 5,
-      "line": 184,
+      "line": 183,
       "description": "MLT1N2 lineage node imported from tree.txt. Original label: MLT1N2"
     },
     {
       "name": "MLT2A1",
       "original_label": "MLT2A1",
       "depth": 5,
-      "line": 186,
+      "line": 185,
       "description": "MLT2A1 lineage node imported from tree.txt. Original label: MLT2A1"
     },
     {
       "name": "MLT2A2",
       "original_label": "MLT2A2",
       "depth": 5,
-      "line": 187,
+      "line": 186,
       "description": "MLT2A2 lineage node imported from tree.txt. Original label: MLT2A2"
     },
     {
       "name": "MLT2C2",
       "original_label": "MLT2C2",
       "depth": 5,
-      "line": 188,
+      "line": 187,
       "description": "MLT2C2 lineage node imported from tree.txt. Original label: MLT2C2"
     },
     {
       "name": "MLT2D",
       "original_label": "MLT2D",
       "depth": 5,
-      "line": 189,
+      "line": 188,
       "description": "MLT2D lineage node imported from tree.txt. Original label: MLT2D"
     }
   ],
@@ -2668,11 +2668,6 @@
     {
       "child": "MER9",
       "parent": "ERV2",
-      "relation": "SUBFAMILY_OF"
-    },
-    {
-      "child": "AmnSINE1_HS",
-      "parent": "ERV3",
       "relation": "SUBFAMILY_OF"
     },
     {

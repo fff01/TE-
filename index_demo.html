@@ -1,9 +1,9 @@
 ﻿<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>转座元件知识图谱演示</title>
+  <title>Transposable Elements Knowledge Graph Demo</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -12,56 +12,56 @@
 <body>
   <header>
     <i class="fas fa-dna" style="font-size:2rem;color:#2563eb"></i>
-    <h1 id="page-title">转座元件知识图谱演示</h1>
+    <h1 id="page-title">Transposable Elements Knowledge Graph Demo</h1>
     <div class="actions">
-      <span class="badge" id="page-badge">LINE-1 本地图谱子图</span>
+      <span class="badge" id="page-badge">LINE-1 local graph subset</span>
       <div class="lang">
-        <button id="lang-zh" class="active">中文</button>
-        <button id="lang-en">English</button>
+        <button id="lang-zh">中文</button>
+        <button id="lang-en" class="active">English</button>
       </div>
     </div>
   </header>
   <div class="main">
     <section class="panel">
-      <div class="head"><h2 id="graph-title">图谱可视化</h2></div>
+      <div class="head"><h2 id="graph-title">Graph Visualization</h2></div>
       <div class="toolbar">
-        <div class="search"><i class="fas fa-search" style="color:#64748b"></i><input id="node-search" type="text" placeholder="搜索 LINE-1、L1HS、疾病或功能"></div>
-        <button id="toggle-focus-view" type="button" title="切换节点点击或搜索时的展示方式"><span id="focus-view-text">聚焦方式：全局</span></button>
-        <div class="stepper-control" id="key-node-level-control" title="控制关键节点自动扩展的层级深度">
-          <button id="decrease-key-node-level" type="button" aria-label="降低关键节点级数">-</button>
-          <span id="key-node-level-text">关键节点级数：1</span>
-          <button id="increase-key-node-level" type="button" aria-label="提高关键节点级数">+</button>
+        <div class="search"><i class="fas fa-search" style="color:#64748b"></i><input id="node-search" type="text" placeholder="Search LINE-1, L1HS, disease, or function"></div>
+        <button id="toggle-focus-view" type="button" title="Toggle how node clicks and searches are focused"><span id="focus-view-text">Focus mode: global</span></button>
+        <div class="stepper-control" id="key-node-level-control" title="Control the recursive expansion depth of key nodes">
+          <button id="decrease-key-node-level" type="button" aria-label="Decrease key-node level">-</button>
+          <span id="key-node-level-text">Key-node level: 1</span>
+          <button id="increase-key-node-level" type="button" aria-label="Increase key-node level">+</button>
         </div>
-        <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">固定视图：关</span></button>
-        <button id="reset-graph"><i class="fas fa-sync-alt"></i> <span id="reset-text">重置</span></button>
+        <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: off</span></button>
+        <button id="reset-graph"><i class="fas fa-sync-alt"></i> <span id="reset-text">Reset</span></button>
       </div>
       <div id="cy"></div>
       <div class="nav" id="search-results-nav"><button id="prev-result"><i class="fas fa-chevron-left"></i></button><span id="result-counter">0/0</span><span id="result-name"></span><button id="next-result"><i class="fas fa-chevron-right"></i></button></div>
-      <div class="detail" id="node-details">点击节点或连线查看图谱详情。</div>
+      <div class="detail" id="node-details">Click a node or edge to inspect graph details.</div>
     </section>
     <section class="panel">
-      <div class="head"><h2 id="qa-title">智能问答演示</h2></div>
+      <div class="head"><h2 id="qa-title">Interactive QA Demo</h2></div>
       <div class="chat">
         <div class="qa-controls">
           <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-mode-label">回答模式</span>
+            <span class="qa-mode-label" id="qa-mode-label">Answer style</span>
             <div class="segmented" id="style-segmented">
-              <button id="mode-simple" class="active" type="button">简单</button>
-              <button id="mode-detailed" type="button">详细</button>
-              <button id="mode-custom" type="button">自定义</button>
+              <button id="mode-simple" class="active" type="button">Brief</button>
+              <button id="mode-detailed" type="button">Detailed</button>
+              <button id="mode-custom" type="button">Custom</button>
             </div>
           </div>
           <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-depth-label">回答深度</span>
+            <span class="qa-mode-label" id="qa-depth-label">Answer depth</span>
             <div class="segmented" id="depth-segmented">
-              <button id="depth-shallow" class="active" type="button">浅</button>
-              <button id="depth-medium" type="button">中</button>
-              <button id="depth-deep" type="button">深</button>
-              <button id="depth-custom" type="button">自定义</button>
+              <button id="depth-shallow" class="active" type="button">Shallow</button>
+              <button id="depth-medium" type="button">Medium</button>
+              <button id="depth-deep" type="button">Deep</button>
+              <button id="depth-custom" type="button">Custom</button>
             </div>
           </div>
           <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-model-label">回答模型</span>
+            <span class="qa-mode-label" id="qa-model-label">Model</span>
             <div class="segmented" id="model-segmented">
               <button id="model-qwen" class="active" type="button">Qwen</button>
               <button id="model-deepseek" type="button">DeepSeek</button>
@@ -70,36 +70,36 @@
         </div>
         <div class="custom-editor" id="custom-editor">
           <div class="custom-editor-card">
-            <div class="custom-editor-title" id="custom-editor-title">自定义提示词</div>
-            <div class="custom-editor-help" id="custom-editor-help">在这里写下你希望智能问答遵循的语气、结构、重点或限制条件。点击确认后会暂时保存，并在后续提问时优先使用。</div>
-            <textarea id="custom-prompt" placeholder="例如：请用学术但通俗的中文回答；先给结论，再分点说明机制；尽量引用 PMID。"></textarea>
+            <div class="custom-editor-title" id="custom-editor-title">Custom prompt</div>
+            <div class="custom-editor-help" id="custom-editor-help">Write the tone, structure, emphasis, or constraints you want the QA model to follow. After confirmation, it will be temporarily saved and used for subsequent questions.</div>
+            <textarea id="custom-prompt" placeholder="For example: Answer in accessible academic English; start with a conclusion; then explain mechanisms in bullet points; cite PMID when possible."></textarea>
             <div class="custom-depth-editor" id="custom-depth-editor">
               <div class="custom-depth-grid">
                 <div class="custom-depth-field">
-                  <label id="custom-rows-label" for="custom-rows">row（关系条数）</label>
+                  <label id="custom-rows-label" for="custom-rows">row (relation count)</label>
                   <input id="custom-rows" type="number" min="1" step="1" value="12">
                 </div>
                 <div class="custom-depth-field">
-                  <label id="custom-references-label" for="custom-references">references（文献条数）</label>
+                  <label id="custom-references-label" for="custom-references">references (paper count)</label>
                   <input id="custom-references" type="number" min="1" step="1" value="8">
                 </div>
               </div>
               <div class="custom-depth-note" id="custom-depth-note">
-                row 表示最多取多少条结构化关系记录，references 表示最多附上多少篇参考文献。建议上界分别不超过 12 和 8，避免回答过长。
+                row controls the maximum number of structured relation records; references controls the maximum number of cited papers. Recommended upper bounds are 12 and 8 to avoid overly long answers.
               </div>
             </div>
           </div>
           <div class="custom-editor-actions">
-            <button id="cancel-custom-editor" class="secondary" type="button">取消</button>
-            <button id="confirm-custom-editor" class="primary" type="button">确认</button>
+            <button id="cancel-custom-editor" class="secondary" type="button">Cancel</button>
+            <button id="confirm-custom-editor" class="primary" type="button">Confirm</button>
           </div>
         </div>
         <div class="msgs" id="chat-messages"></div>
-        <div class="input"><input id="user-question" type="text" value="LINE-1 相关疾病" placeholder="输入你的问题"><button id="send-question"><i class="fas fa-paper-plane"></i></button></div>
+        <div class="input"><input id="user-question" type="text" value="LINE-1 related diseases" placeholder="Ask your question"><button id="send-question"><i class="fas fa-paper-plane"></i></button></div>
       </div>
     </section>
   </div>
-  <footer id="page-footer">演示页使用本地导出的 Neo4j 子图数据，不依赖在线接口。</footer>
+  <footer id="page-footer">This demo uses locally exported Neo4j subgraph data and does not depend on a live online endpoint.</footer>
   <script src="graph_demo_data.js"></script>
   <script src="assets/js/index_demo.data.js"></script>
   <script src="assets/js/index_demo.graph.js"></script>
