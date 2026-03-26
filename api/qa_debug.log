@@ -367,3 +367,24 @@
 [2026-03-24 07:45:21] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
 [2026-03-24 07:45:31] answer:llm
 [2026-03-24 07:45:31] answer:done {"mode":"template_rag+llm"}
+[2026-03-25 13:16:51] answer:start {"question":"LINE-1 related diseases","language":"en","style":"simple","depth":"shallow"}
+[2026-03-25 13:16:51] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-03-25 13:16:51] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-25 13:16:52] answer:template_query {"rows":15}
+[2026-03-25 13:16:52] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-25 13:16:55] answer:structured_local {"error":"HTTP request failed: Failed to connect to 127.0.0.1 port 18087 after 2048 ms: Couldn't connect to server"}
+[2026-03-25 13:16:55] answer:done {"mode":"template_rag+structured_local"}
+[2026-03-25 13:17:08] answer:start {"question":"LINE-1 相关疾病","language":"zh","style":"simple","depth":"shallow"}
+[2026-03-25 13:17:08] answer:normalized {"language":"zh","style":"simple","depth":"shallow"}
+[2026-03-25 13:17:08] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-25 13:17:08] answer:template_query {"rows":15}
+[2026-03-25 13:17:08] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-25 13:17:10] answer:structured_local {"error":"HTTP request failed: Failed to connect to 127.0.0.1 port 18087 after 2022 ms: Couldn't connect to server"}
+[2026-03-25 13:17:10] answer:done {"mode":"template_rag+structured_local"}
+[2026-03-25 13:17:58] answer:start {"question":"LINE-1 related diseases","language":"en","style":"simple","depth":"shallow"}
+[2026-03-25 13:17:58] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-03-25 13:17:58] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-25 13:17:58] answer:template_query {"rows":15}
+[2026-03-25 13:17:58] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-25 13:18:07] answer:llm
+[2026-03-25 13:18:07] answer:done {"mode":"template_rag+llm"}

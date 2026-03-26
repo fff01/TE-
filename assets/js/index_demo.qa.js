@@ -108,7 +108,12 @@
       const graph = result && result.graph_context;
       if(!graph || !Array.isArray(graph.elements) || graph.elements.length===0) return false;
       const anchorName = graph.anchor && graph.anchor.name ? graph.anchor.name : (question || '');
-      applyGraphElements(graph.elements, anchorName, {graphKind:'dynamic'});
+      if(window.__TEKG_RENDERER_MODE === 'g6' && window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.render === 'function'){
+        currentGraphKind='dynamic';
+        window.__TEKG_G6_DYNAMIC_GRAPH.render(graph.elements, anchorName, graph);
+      }else{
+        applyGraphElements(graph.elements, anchorName, {graphKind:'dynamic'});
+      }
       searchInput.value = anchorName || '';
       nodeDetails.textContent = currentLang==='zh'
         ? '左侧图谱已同步为本次回答使用的局部知识子图。'
@@ -230,7 +235,11 @@
         setUi();
         updateFocusUi();
       }finally{
-        restoreInitialGraph();
+        if(window.__TEKG_RENDERER_MODE === 'g6'){
+          window.dispatchEvent(new CustomEvent('tekg:shared-ready'));
+        }else{
+          restoreInitialGraph();
+        }
       }
     }
     initializePage();

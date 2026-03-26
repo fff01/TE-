@@ -217,21 +217,46 @@
       focusLevel=0;
       updateFocusUi();
       updateKeyNodeLevelUi();
+      if(window.__TEKG_RENDERER_MODE === 'g6' && window.__TEKG_G6_DEFAULT_TREE && typeof window.__TEKG_G6_DEFAULT_TREE.render === 'function'){
+        currentGraphKind='default-tree';
+        if(window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.destroy === 'function'){
+          window.__TEKG_G6_DYNAMIC_GRAPH.destroy();
+        }
+        window.__TEKG_G6_DEFAULT_TREE.render();
+        return;
+      }
       applyGraphElements(initialElements, 'TE', {graphKind:'default-tree'});
     }
     async function loadDynamicGraph(query, fallbackToCurrent=false){
       const keyword=(query||'').trim();
-      if(!keyword) return;
-      const response = await fetch(`api/graph.php?q=${encodeURIComponent(keyword)}&key_level=${encodeURIComponent(String(currentKeyNodeLevel || 1))}`);
-      const payload = await response.json();
+      if(!keyword) throw new Error('Empty query');
+      let response;
+      try{
+        response = await fetch(`api/graph.php?q=${encodeURIComponent(keyword)}&key_level=${encodeURIComponent(String(currentKeyNodeLevel || 1))}`);
+      }catch(err){
+        throw new Error(`Request failed: ${err && err.message ? err.message : 'network error'}`);
+      }
+      let payload;
+      try{
+        payload = await response.json();
+      }catch(err){
+        throw new Error(`Invalid graph response: ${err && err.message ? err.message : 'non-JSON response'}`);
+      }
       if(!response.ok || !payload.ok) throw new Error(payload.error || 'Graph request failed');
       if(!payload.elements || payload.elements.length===0){
         throw new Error(currentLang==='zh' ? '?????????????' : 'No matching graph fragment was found.');
       }
-      applyGraphElements(payload.elements, payload.anchor && payload.anchor.name ? payload.anchor.name : keyword, {graphKind:'dynamic'});
-      searchInput.value = payload.anchor && payload.anchor.name ? payload.anchor.name : keyword;
+      const anchorName = payload.anchor && payload.anchor.name ? payload.anchor.name : keyword;
+      if(window.__TEKG_RENDERER_MODE === 'g6' && window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.render === 'function'){
+        currentGraphKind='dynamic';
+        await window.__TEKG_G6_DYNAMIC_GRAPH.render(payload.elements, anchorName, payload);
+      }else{
+        applyGraphElements(payload.elements, anchorName, {graphKind:'dynamic'});
+      }
+      searchInput.value = anchorName;
       return payload;
     }
+    window.__TEKG_LOAD_DYNAMIC_GRAPH = loadDynamicGraph;
     function repairModeControls(){
       const host=el('style-segmented');
       if(host){
@@ -405,8 +430,9 @@
       if(btn) btn.classList.toggle('active', fixedView);
     }
     function setUi(){document.documentElement.lang=currentLang==='zh'?'zh-CN':'en'; el('page-title').textContent=ui[currentLang].pageTitle; el('page-badge').textContent=ui[currentLang].badge; el('graph-title').textContent=ui[currentLang].graphTitle; el('qa-title').textContent=ui[currentLang].qaTitle; el('page-footer').textContent=ui[currentLang].footer; el('reset-text').textContent=ui[currentLang].reset; searchInput.placeholder=ui[currentLang].search; userInput.placeholder=ui[currentLang].ph; if(!userInput.value || userInput.value===ui.zh.q || userInput.value===ui.en.q) userInput.value=ui[currentLang].q; el('lang-zh').classList.toggle('active', currentLang==='zh'); el('lang-en').classList.toggle('active', currentLang==='en'); updateAnswerModeUi(); updateFocusUi(); updateKeyNodeLevelUi(); updateFixedViewUi(); if(searchResults.length===0) nodeDetails.textContent=ui[currentLang].empty; else showNode(searchResults[currentResultIndex]); renderIntro(); cy.style().update(); const highlighted = cy.nodes('.highlight')[0]; if(highlighted) showNode(highlighted); updateNav();}
-    function showNode(node){const raw=node.data('label'), type=node.data('type') || 'Unknown', description=node.data('description')||'', pmid=node.data('pmid')||''; nodeDetails.innerHTML=`<strong>${getName(raw,type,description,pmid)}</strong> (${getType(type)})<br>${getDesc(raw,type,description,pmid)}<div class="meta">${ui[currentLang].orig}: ${raw}${pmid ? ` | PMID: ${pmid}` : ''} | ${ui[currentLang].deg}: ${node.degree()}</div>`}
+    function showNode(node){if(window.__TEKG_RENDERER_MODE==='g6') return; const raw=node.data('label'), type=node.data('type') || 'Unknown', description=node.data('description')||'', pmid=node.data('pmid')||''; nodeDetails.innerHTML=`<strong>${getName(raw,type,description,pmid)}</strong> (${getType(type)})<br>${getDesc(raw,type,description,pmid)}<div class="meta">${ui[currentLang].orig}: ${raw}${pmid ? ` | PMID: ${pmid}` : ''} | ${ui[currentLang].deg}: ${node.degree()}</div>`}
     function showEdge(edge){
+      if(window.__TEKG_RENDERER_MODE==='g6') return;
       const s=getName(edge.source().data('label'),edge.source().data('type'),edge.source().data('description')||'',edge.source().data('pmid')||'');
       const t=getName(edge.target().data('label'),edge.target().data('type'),edge.target().data('description')||'',edge.target().data('pmid')||'');
       const evidenceText=String(edge.data('evidence')||'').trim();
@@ -497,8 +523,8 @@
       pushPaperNodesOutward();
       resolveNodeOverlaps();
     }
-    function focus(node){clearHighlights(); const neighborhood=node.closedNeighborhood(); const others=cy.elements().difference(neighborhood); others.nodes().addClass('dimmed'); others.edges().addClass('edge-dimmed'); node.addClass('highlight'); node.neighborhood('node').addClass('neighbor'); node.connectedEdges().addClass('focus-edge'); showNode(node); if(focusLevel===0){cy.fit(node.closedNeighborhood(),80);} else {const zoom=Math.min(cy.maxZoom(), getTargetZoom(focusLevel)); cy.animate({center:{eles:node},zoom,duration:280});}}
-    function updateNav(){if(searchResults.length===0){nav.style.display='none'; clearHighlights(); return;} const n=searchResults[currentResultIndex]; nav.style.display='flex'; resultCounter.textContent=`${currentResultIndex+1}/${searchResults.length}`; resultName.textContent=`${getName(n.data('label'),n.data('type'),n.data('description')||'',n.data('pmid')||'')} (${getType(n.data('type'))})`; prevBtn.disabled=currentResultIndex===0; nextBtn.disabled=currentResultIndex===searchResults.length-1; focus(n)}
+    function focus(node){if(window.__TEKG_RENDERER_MODE==='g6') return; clearHighlights(); const neighborhood=node.closedNeighborhood(); const others=cy.elements().difference(neighborhood); others.nodes().addClass('dimmed'); others.edges().addClass('edge-dimmed'); node.addClass('highlight'); node.neighborhood('node').addClass('neighbor'); node.connectedEdges().addClass('focus-edge'); showNode(node); if(focusLevel===0){cy.fit(node.closedNeighborhood(),80);} else {const zoom=Math.min(cy.maxZoom(), getTargetZoom(focusLevel)); cy.animate({center:{eles:node},zoom,duration:280});}}
+    function updateNav(){if(window.__TEKG_RENDERER_MODE==='g6'){nav.style.display='none'; return;} if(searchResults.length===0){nav.style.display='none'; clearHighlights(); return;} const n=searchResults[currentResultIndex]; nav.style.display='flex'; resultCounter.textContent=`${currentResultIndex+1}/${searchResults.length}`; resultName.textContent=`${getName(n.data('label'),n.data('type'),n.data('description')||'',n.data('pmid')||'')} (${getType(n.data('type'))})`; prevBtn.disabled=currentResultIndex===0; nextBtn.disabled=currentResultIndex===searchResults.length-1; focus(n)}
     function handleSearch(){
       const keyword=searchInput.value.trim().toLowerCase();
       if(searchDebounceId){clearTimeout(searchDebounceId); searchDebounceId=null;}

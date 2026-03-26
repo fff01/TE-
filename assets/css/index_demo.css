@@ -10,7 +10,8 @@ button{border:none;border-radius:999px;background:#e7eef7;color:#1e293b;padding:
 .stepper-control{display:inline-flex;align-items:center;gap:.45rem;padding:.18rem .25rem;border:1px solid #d8e4f0;border-radius:999px;background:#f8fbff;color:#1e293b;white-space:nowrap}
 .stepper-control button{width:30px;height:30px;padding:0;border-radius:50%;background:#e7eef7;color:#1e293b;font-size:1rem;line-height:1}
 .stepper-control span{min-width:7.6rem;text-align:center;font-size:.92rem;font-weight:700;color:#1e293b}
-#cy{flex:1;min-height:0;background:radial-gradient(circle at top,#fff,#f6faff)}
+#cy,#g6-default-tree-surface{position:relative;flex:1;min-height:0;background:radial-gradient(circle at top,#fff,#f6faff)}
+#g6-default-tree-surface.hidden{display:none}
     .nav{display:none;align-items:center;gap:.8rem;padding:.75rem 1.25rem;border-top:1px solid #e7eef7;background:#f8fbff}.nav button{width:34px;height:34px;padding:0;border-radius:50%}
     .detail{padding:1rem 1.25rem;border-top:1px solid #e7eef7;background:#fbfdff;min-height:108px;font-size:.92rem;line-height:1.6}.meta{color:#64748b;font-size:.84rem;margin-top:.25rem}
     .chat{height:calc(100% - 79px);display:flex;flex-direction:column;min-height:0;flex:1}.msgs{flex:1;padding:1rem;display:flex;flex-direction:column;gap:.9rem;overflow-y:auto;background:#f7faff;min-height:0}
