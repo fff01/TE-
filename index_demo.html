@@ -6,7 +6,6 @@
   <title>Transposable Elements Knowledge Graph Demo</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
-  <script src="https://unpkg.com/@antv/g6@5/dist/g6.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="assets/css/index_demo.css">
 </head>
@@ -37,7 +36,6 @@
         <button id="reset-graph"><i class="fas fa-sync-alt"></i> <span id="reset-text">Reset</span></button>
       </div>
       <div id="cy"></div>
-      <div id="g6-default-tree-surface" class="hidden"></div>
       <div class="nav" id="search-results-nav"><button id="prev-result"><i class="fas fa-chevron-left"></i></button><span id="result-counter">0/0</span><span id="result-name"></span><button id="next-result"><i class="fas fa-chevron-right"></i></button></div>
       <div class="detail" id="node-details">Click a node or edge to inspect graph details.</div>
     </section>
@@ -104,8 +102,6 @@
   <footer id="page-footer">This demo uses locally exported Neo4j subgraph data and does not depend on a live online endpoint.</footer>
   <script src="graph_demo_data.js"></script>
   <script src="assets/js/index_demo.data.js"></script>
-  <script src="assets/js/renderers/g6/default-tree.js"></script>
-  <script src="assets/js/renderers/g6/dynamic-graph.js"></script>
   <script src="assets/js/index_demo.graph.js"></script>
   <script src="assets/js/index_demo.qa.js"></script>
 </body>

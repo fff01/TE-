@@ -1,4 +1,4 @@
-    function answerLocal(q){
+﻿    function answerLocal(q){
       const qaTpl = localQaTemplates[currentLang] || {};
       const modeLabel=currentLang==='zh'
         ? (currentAnswerStyle==='detailed'?'详细模式':currentAnswerStyle==='custom'?'自定义模式':'简单模式')
@@ -104,22 +104,15 @@
         : `> ${ui[currentLang].providerPrefix}${effectiveProvider === 'deepseek' ? ui[currentLang].modelDeepSeek : ui[currentLang].modelQwen}\n> ${styleLabel} · Depth: ${depthLabel}\n\n`;
       return `${prefix}${result.answer||ui[currentLang].fallback}`;
     }
-    async function applyAnswerGraph(result, question=''){
+    function applyAnswerGraph(result, question=''){
       const graph = result && result.graph_context;
       if(!graph || !Array.isArray(graph.elements) || graph.elements.length===0) return false;
       const anchorName = graph.anchor && graph.anchor.name ? graph.anchor.name : (question || '');
-      if(window.__TEKG_RENDERER_MODE === 'g6' && window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.render === 'function'){
-        currentGraphKind='dynamic';
-        await window.__TEKG_G6_DYNAMIC_GRAPH.render(graph.elements, anchorName, graph);
-      }else{
-        applyGraphElements(graph.elements, anchorName, {graphKind:'dynamic'});
-      }
+      applyGraphElements(graph.elements, anchorName, {graphKind:'dynamic'});
       searchInput.value = anchorName || '';
-      if(window.__TEKG_RENDERER_MODE !== 'g6'){
-        nodeDetails.textContent = currentLang==='zh'
-          ? '左侧图谱已同步为本次回答使用的局部知识子图。'
-          : 'The graph on the left has been synchronized to the local subgraph used for this answer.';
-      }
+      nodeDetails.textContent = currentLang==='zh'
+        ? '左侧图谱已同步为本次回答使用的局部知识子图。'
+        : 'The graph on the left has been synchronized to the local subgraph used for this answer.';
       return true;
     }
     async function answerWithBackend(question){
@@ -183,7 +176,7 @@
       updateFixedViewUi();
       nodeDetails.textContent = fixedView ? ui[currentLang].fixedTip : ui[currentLang].empty;
     });
-    sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const backend=await answerWithBackend(q); loading.remove(); addMessage(backend.text,'assistant'); await applyAnswerGraph(backend.result, q);}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
+    sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const backend=await answerWithBackend(q); loading.remove(); addMessage(backend.text,'assistant'); applyAnswerGraph(backend.result, q);}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
     userInput.addEventListener('keypress',e => { if(e.key==='Enter') sendBtn.click(); });
     document.addEventListener('click',e => {
       if(!e.target) return;
@@ -237,11 +230,7 @@
         setUi();
         updateFocusUi();
       }finally{
-        if(window.__TEKG_RENDERER_MODE === 'g6'){
-          window.dispatchEvent(new CustomEvent('tekg:shared-ready'));
-        }else{
-          restoreInitialGraph();
-        }
+        restoreInitialGraph();
       }
     }
     initializePage();

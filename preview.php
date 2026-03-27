@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/site_i18n.php';
 $lang = site_lang();
 $pageTitle = site_t(['zh' => '预览 - TEKG', 'en' => 'Preview - TEKG'], $lang);

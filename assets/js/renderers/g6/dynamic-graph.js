@@ -63,6 +63,11 @@
     clusterNodeStrength: -1600,
     clusterCollideStrength: 1,
   };
+  const FOCUS_TUNING = {
+    duration: 220,
+    zoomDuration: 180,
+    localZoom: 1.04,
+  };
 
   function getEl(id) {
     return document.getElementById(id);
@@ -164,7 +169,8 @@
     return lines.join('\n');
   }
 
-  function buildGraphData(elements) {
+  function buildGraphData(elements, options = {}) {
+    const includePapers = !!options.includePapers;
     const rawNodes = [];
     const rawEdges = [];
 
@@ -176,17 +182,20 @@
     }
 
     const counts = { TE: 0, Disease: 0, Function: 0, Paper: 0 };
-    const nodes = rawNodes
-      .filter((node) => {
-        const type = TYPE_LABEL[node.type] ? node.type : 'TE';
-        return type !== 'Paper';
-      })
-      .map((node) => {
+    const filteredNodes = rawNodes.filter((node) => {
+      const type = TYPE_LABEL[node.type] ? node.type : 'TE';
+      return includePapers || type !== 'Paper';
+    });
+    filteredNodes.forEach((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
       counts[type] = (counts[type] || 0) + 1;
+    });
+    const nodes = filteredNodes.map((node) => {
+      const type = TYPE_LABEL[node.type] ? node.type : 'TE';
+      const comboId = counts[type] > 1 ? `combo-${type}` : undefined;
       return {
         id: node.id,
-        combo: `combo-${type}`,
+        ...(comboId ? { combo: comboId } : {}),
         data: {
           kind: 'node',
           rawLabel: node.label,
@@ -203,8 +212,9 @@
     });
 
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-    const combos = TYPE_ORDER
-      .filter((type) => counts[type] > 0)
+    const comboTypes = TYPE_ORDER.concat(includePapers ? ['Paper'] : []);
+    const combos = comboTypes
+      .filter((type) => counts[type] > 1)
       .map((type) => ({
         id: `combo-${type}`,
         data: {
@@ -344,13 +354,13 @@
     if (fixedModeEnabled) return;
     try {
       await g6DynamicGraph.focusElement(id, {
-        duration: 220,
+        duration: FOCUS_TUNING.duration,
         easing: 'ease-in-out',
       });
       if (typeof focusLevel !== 'undefined' && focusLevel === 100 && typeof g6DynamicGraph.getZoom === 'function' && typeof g6DynamicGraph.zoomTo === 'function') {
         const currentZoom = g6DynamicGraph.getZoom();
-        await g6DynamicGraph.zoomTo(Math.max(currentZoom, 1.12), {
-          duration: 180,
+        await g6DynamicGraph.zoomTo(Math.max(currentZoom, FOCUS_TUNING.localZoom), {
+          duration: FOCUS_TUNING.zoomDuration,
           easing: 'ease-out',
         });
       }
@@ -381,7 +391,9 @@
         return;
       }
 
-      const data = buildGraphData(elements || []);
+      const data = buildGraphData(elements || [], {
+        includePapers: !!payload?.__fromQa,
+      });
       destroyGraph();
       host.innerHTML = '';
 
@@ -596,6 +608,18 @@
         if (!id || typeof graph.getNodeData !== 'function') return;
         const datum = graph.getNodeData(id)?.data || null;
         updateDetailFromDatum(datum);
+        const fixedModeEnabled = typeof fixedView !== 'undefined' && fixedView === true;
+        const query = datum?.pmid || datum?.rawLabel || datum?.label || id;
+        const homePreviewMode = window.__TEKG_EMBED_MODE === 'home-preview';
+        if (!fixedModeEnabled && !homePreviewMode && typeof window.__TEKG_LOAD_DYNAMIC_GRAPH === 'function') {
+          try {
+            await window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
+            return;
+          } catch (_error) {
+            await focusTarget(id);
+            return;
+          }
+        }
         await focusTarget(id);
       });
 
