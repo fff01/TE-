@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEKG G6 Workspace</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/index_demo.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@antv/g6@5/dist/g6.min.js"></script>
+</head>
+<body>
+  <header>
+    <i class="fas fa-dna" style="font-size:2rem;color:#2563eb"></i>
+    <h1 id="page-title">TEKG G6 Workspace</h1>
+    <div class="actions">
+      <span class="badge" id="page-badge">Independent G6 entry</span>
+      <div class="lang">
+        <button id="lang-zh" type="button">中文</button>
+        <button id="lang-en" type="button" class="active">English</button>
+      </div>
+    </div>
+  </header>
+  <div class="main" style="grid-template-columns:minmax(0,1fr);">
+    <section class="panel">
+      <div class="head">
+        <h2 id="graph-title">G6 Graph Workspace</h2>
+      </div>
+      <div class="toolbar">
+        <div class="search">
+          <i class="fas fa-search" style="color:#64748b"></i>
+          <input id="node-search" type="text" placeholder="Search LINE1, L1HS, disease, or function">
+        </div>
+        <button id="toggle-focus-view" type="button"><span id="focus-view-text">Focus mode: Global</span></button>
+        <div class="stepper-control" id="key-node-level-control">
+          <button id="decrease-key-node-level" type="button" aria-label="Decrease key-node level">-</button>
+          <span id="key-node-level-text">Key-node level: 1</span>
+          <button id="increase-key-node-level" type="button" aria-label="Increase key-node level">+</button>
+        </div>
+        <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: Off</span></button>
+        <button id="reset-graph" type="button"><i class="fas fa-sync-alt"></i> <span id="reset-text">Reset</span></button>
+      </div>
+      <div id="cy" style="display:none"></div>
+      <div id="g6-default-tree-surface"></div>
+      <div class="nav" id="search-results-nav" style="display:none">
+        <button id="prev-result" type="button"><i class="fas fa-chevron-left"></i></button>
+        <span id="result-counter">0/0</span>
+        <span id="result-name"></span>
+        <button id="next-result" type="button"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="detail" id="node-details">Preparing G6 workspace...</div>
+    </section>
+  </div>
+  <footer id="page-footer">This page is reserved for independent G6 development and does not touch the default Cyt entry.</footer>
+
+  <script>
+    const __tekgG6Url = new URL(window.location.href);
+    __tekgG6Url.searchParams.set('renderer', 'g6');
+    window.history.replaceState({}, '', __tekgG6Url.toString());
+    window.__TEKG_RENDERER_MODE = 'g6';
+    window.__TEKG_EMBED_MODE = '';
+  </script>
+  <script src="graph_demo_data.js"></script>
+  <script src="assets/js/index_demo.data.js"></script>
+  <script>
+    window.__TEKG_RENDERER_MODE = 'g6';
+    window.__TEKG_EMBED_MODE = '';
+  </script>
+  <script src="assets/js/renderers/g6/default-tree.js"></script>
+  <script src="assets/js/renderers/g6/dynamic-graph.js"></script>
+  <script src="assets/js/renderers/g6/index-g6.bootstrap.js"></script>
+</body>
+</html>
