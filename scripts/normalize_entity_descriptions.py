@@ -203,6 +203,42 @@ def choose_case_canonical_key(keys: list[str]) -> str:
     return min(keys, key=score)
 
 
+def spelling_variant_key(text: str) -> str:
+    text = clean_text(text).lower()
+    replacements = [
+        ("tumours", "tumors"),
+        ("tumour", "tumor"),
+        ("haemophilia", "hemophilia"),
+        ("oesophageal", "esophageal"),
+        ("haematopoietic", "hematopoietic"),
+        ("leukaemia", "leukemia"),
+        ("foetal", "fetal"),
+        ("paediatric", "pediatric"),
+    ]
+    for source, target in replacements:
+        text = text.replace(source, target)
+    return text
+
+
+def choose_spelling_canonical_key(keys: list[str]) -> str:
+    def score(key: str):
+        lower = key.lower()
+        penalties = 0
+        if "tumour" in lower:
+            penalties += 3
+        if "haem" in lower:
+            penalties += 3
+        if "oes" in lower:
+            penalties += 3
+        if "leuka" in lower:
+            penalties += 3
+        if key[:1].islower():
+            penalties += 1
+        return (penalties, len(key), lower)
+
+    return min(keys, key=score)
+
+
 def collapse_case_duplicates(payload: dict):
     merge_count = 0
     chosen_keys = {}
@@ -230,6 +266,35 @@ def collapse_case_duplicates(payload: dict):
                 target[canonical] = prefer_description(target.get(canonical, ""), description, lang)
 
     return collapsed, {"case_merged_entries": merge_count, "chosen_keys": chosen_keys}
+
+
+def collapse_spelling_variants(payload: dict):
+    merge_count = 0
+    chosen_keys = {}
+    collapsed = {"zh": {"Disease": {}, "Function": {}}, "en": {"Disease": {}, "Function": {}}}
+
+    for entity_type in ("Disease", "Function"):
+        en_source = payload.get("en", {}).get(entity_type, {})
+        buckets = defaultdict(list)
+        for key in en_source:
+            buckets[spelling_variant_key(key)].append(key)
+
+        canonical_by_bucket = {
+            bucket_key: choose_spelling_canonical_key(keys)
+            for bucket_key, keys in buckets.items()
+        }
+
+        for lang in ("zh", "en"):
+            source = payload.get(lang, {}).get(entity_type, {})
+            target = collapsed[lang][entity_type]
+            for key, description in source.items():
+                canonical = canonical_by_bucket.get(spelling_variant_key(key), key)
+                chosen_keys[key] = canonical
+                if canonical in target and canonical != key:
+                    merge_count += 1
+                target[canonical] = prefer_description(target.get(canonical, ""), description, lang)
+
+    return collapsed, {"spelling_merged_entries": merge_count, "chosen_keys": chosen_keys}
 
 
 def remap_keys(payload: dict, key_cache: dict):
@@ -327,7 +392,7 @@ def apply_en_description_translations(payload: dict, cache: dict):
     return updated
 
 
-def build_report(before_payload: dict, after_payload: dict, key_stats: dict, translated_en_count: int, case_stats: dict):
+def build_report(before_payload: dict, after_payload: dict, key_stats: dict, translated_en_count: int, case_stats: dict, spelling_stats: dict):
     report = {
         "before": {},
         "after": {},
@@ -343,6 +408,16 @@ def build_report(before_payload: dict, after_payload: dict, key_stats: dict, tra
                 list(
                     (k, v)
                     for k, v in sorted(case_stats["chosen_keys"].items())
+                    if k != v
+                )[:80]
+            ),
+        },
+        "spelling_normalization": {
+            "spelling_merged_entries": spelling_stats["spelling_merged_entries"],
+            "sample_spelling_changes": dict(
+                list(
+                    (k, v)
+                    for k, v in sorted(spelling_stats["chosen_keys"].items())
                     if k != v
                 )[:80]
             ),
@@ -397,9 +472,10 @@ def main():
     translate_en_descriptions(remapped, en_cache, provider, model, batch_size)
     translated_en_count = apply_en_description_translations(remapped, en_cache)
     collapsed, case_stats = collapse_case_duplicates(remapped)
+    spelling_collapsed, spelling_stats = collapse_spelling_variants(collapsed)
 
-    report = build_report(original, collapsed, key_stats, translated_en_count, case_stats)
-    save_json(ENTITY_PATH, collapsed)
+    report = build_report(original, spelling_collapsed, key_stats, translated_en_count, case_stats, spelling_stats)
+    save_json(ENTITY_PATH, spelling_collapsed)
     save_json(REPORT_PATH, report)
 
     print(json.dumps({
@@ -410,6 +486,7 @@ def main():
         "renamed_key_count": len(key_stats["name_changes"]),
         "merged_entries": key_stats["merged_entries"],
         "case_merged_entries": case_stats["case_merged_entries"],
+        "spelling_merged_entries": spelling_stats["spelling_merged_entries"],
         "translated_en_descriptions": translated_en_count,
         "report_path": str(REPORT_PATH),
         "backup_path": str(BACKUP_PATH),

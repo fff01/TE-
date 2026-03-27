@@ -4,10 +4,19 @@
   const G6Lib = window.G6;
   if (!G6Lib) return;
 
-  const { Graph, register, ExtensionCategory, CircleCombo, Badge } = G6Lib;
-  if (!Graph || !register || !ExtensionCategory || !CircleCombo || !Badge) return;
+  const {
+    Graph,
+    register,
+    ExtensionCategory,
+    Rect,
+    CircleCombo,
+    Badge,
+    ConcentricLayout,
+    ForceLayout,
+  } = G6Lib;
+  if (!Graph || !register || !ExtensionCategory || !Rect || !CircleCombo || !Badge || !ConcentricLayout || !ForceLayout) return;
 
-  const TYPE_ORDER = ['TE', 'Disease', 'Function', 'Paper'];
+  const TYPE_ORDER = ['TE', 'Disease', 'Function'];
   const TYPE_LABEL = {
     TE: 'TE',
     Disease: 'Disease',
@@ -32,11 +41,28 @@
     Function: '#bfe9d4',
     Paper: '#ffd89b',
   };
+  const NODE_STROKE = {
+    TE: '#2f63d8',
+    Disease: '#d65b6f',
+    Function: '#2f9d6b',
+    Paper: '#d08c23',
+  };
 
   let g6DynamicGraph = null;
   let isBound = false;
   let registered = false;
   let lastPayload = null;
+
+  const LAYOUT_TUNING = {
+    comboPadding: 108,
+    spacing: 420,
+    nodeSize: 72,
+    minNodeSpacing: 42,
+    clusterGravity: 0.03,
+    clusterLinkDistance: 320,
+    clusterNodeStrength: -1600,
+    clusterCollideStrength: 1,
+  };
 
   function getEl(id) {
     return document.getElementById(id);
@@ -120,6 +146,24 @@
     return map[type] || `This group contains ${nodeCount} nodes.`;
   }
 
+  function wrapNodeLabel(text, maxCharsPerLine = 22) {
+    const raw = String(text || '').trim();
+    if (!raw) return '';
+    const words = raw.split(/\s+/);
+    const lines = [];
+    let current = '';
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (candidate.length <= maxCharsPerLine || !current) current = candidate;
+      else {
+        lines.push(current);
+        current = word;
+      }
+    }
+    if (current) lines.push(current);
+    return lines.join('\n');
+  }
+
   function buildGraphData(elements) {
     const rawNodes = [];
     const rawEdges = [];
@@ -132,7 +176,12 @@
     }
 
     const counts = { TE: 0, Disease: 0, Function: 0, Paper: 0 };
-    const nodes = rawNodes.map((node) => {
+    const nodes = rawNodes
+      .filter((node) => {
+        const type = TYPE_LABEL[node.type] ? node.type : 'TE';
+        return type !== 'Paper';
+      })
+      .map((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
       counts[type] = (counts[type] || 0) + 1;
       return {
@@ -148,7 +197,7 @@
           relationCount: 0,
         },
         style: {
-          size: [Math.max(90, String(getNameSafe(node.label, type, node.description, node.pmid)).length * 10 + 28), 38],
+          size: [Math.max(260, String(getNameSafe(node.label, type, node.description, node.pmid)).length * 20 + 72), 148],
         },
       };
     });
@@ -237,8 +286,49 @@
     }
   }
 
+  class TEKGDynamicNode extends Rect {
+    render(attributes = this.parsedAttributes, container) {
+      const withoutBuiltInLabel = { ...attributes, labelText: '' };
+      super.render(withoutBuiltInLabel, container);
+      this.drawOutlinedLabel(attributes, container);
+    }
+
+    drawOutlinedLabel(attributes, container) {
+      const [width = 260, height = 148] = Array.isArray(attributes.size) ? attributes.size : [260, 148];
+      const text = wrapNodeLabel(attributes.labelText || '', Math.max(16, Math.floor(width / 10)));
+      const x = 0;
+      const y = 0;
+      const fontSize = attributes.labelFontSize || 54;
+      const fontWeight = attributes.labelFontWeight || 700;
+
+      this.upsert(
+        'label-outline',
+        'text',
+        {
+          x,
+          y,
+          text,
+          fontSize,
+          fontWeight,
+          fill: '#111827',
+          stroke: '#ffffff',
+          lineWidth: 14,
+          lineJoin: 'round',
+          lineCap: 'round',
+          textAlign: 'center',
+          textBaseline: 'middle',
+          wordWrap: true,
+          wordWrapWidth: width - 32,
+          pointerEvents: 'none',
+        },
+        container,
+      );
+    }
+  }
+
   function ensureRegistered() {
     if (registered) return;
+    register(ExtensionCategory.NODE, 'tekg-dynamic-node', TEKGDynamicNode);
     register(ExtensionCategory.COMBO, 'circle-combo-with-extra-button', CircleComboWithExtraButton);
     registered = true;
   }
@@ -306,48 +396,133 @@
         data,
         layout: {
           type: 'combo-combined',
-          comboPadding: 16,
+          preventOverlap: true,
+          comboPadding: LAYOUT_TUNING.comboPadding,
+          spacing: LAYOUT_TUNING.spacing,
+          nodeSize: LAYOUT_TUNING.nodeSize,
+          innerLayout: new ConcentricLayout({
+            preventOverlap: true,
+            minNodeSpacing: LAYOUT_TUNING.minNodeSpacing,
+          }),
+          outerLayout: new ForceLayout({
+            preventOverlap: true,
+            gravity: LAYOUT_TUNING.clusterGravity,
+            linkDistance: LAYOUT_TUNING.clusterLinkDistance,
+            nodeStrength: LAYOUT_TUNING.clusterNodeStrength,
+            collideStrength: LAYOUT_TUNING.clusterCollideStrength,
+          }),
         },
         combo: {
           type: 'circle-combo-with-extra-button',
+          animation: {
+            collapse: false,
+            expand: false,
+          },
           style: {
             lineWidth: 1.4,
             stroke: (datum) => COMBO_STROKE[datum.data?.type] || '#d8e4f0',
             fill: (datum) => COMBO_BG[datum.data?.type] || '#f8fbff',
+            fillOpacity: 0.18,
+            shadowColor: (datum) => COMBO_STROKE[datum.data?.type] || '#d8e4f0',
+            shadowBlur: 22,
+            shadowOffsetX: 0,
+            shadowOffsetY: 18,
+            shadowType: 'outer',
+            increasedLineWidthForHitTesting: 28,
+            collapsedSize: 460,
+            collapsedLineWidth: 5.2,
+            collapsedFill: (datum) => {
+              const type = datum.data?.type;
+              const map = {
+                TE: '#3b6fdf',
+                Disease: '#d86a7a',
+                Function: '#3da978',
+                Paper: '#d39a34',
+              };
+              return map[type] || '#64748b';
+            },
+            collapsedFillOpacity: 1,
+            collapsedStroke: (datum) => {
+              const type = datum.data?.type;
+              const map = {
+                TE: '#1d4ed8',
+                Disease: '#b84e60',
+                Function: '#21885c',
+                Paper: '#b57f1d',
+              };
+              return map[type] || '#334155';
+            },
+            collapsedStrokeOpacity: 1,
+            collapsedShadowColor: (datum) => {
+              const type = datum.data?.type;
+              const map = {
+                TE: 'rgba(29, 78, 216, 0.45)',
+                Disease: 'rgba(184, 78, 96, 0.45)',
+                Function: 'rgba(33, 136, 92, 0.45)',
+                Paper: 'rgba(181, 127, 29, 0.45)',
+              };
+              return map[type] || 'rgba(51, 65, 85, 0.45)';
+            },
+            collapsedShadowBlur: 36,
+            collapsedShadowOffsetX: 0,
+            collapsedShadowOffsetY: 28,
+            collapsedShadowType: 'outer',
+            collapsedIncreasedLineWidthForHitTesting: 56,
+            collapsedMarker: false,
             labelText: (datum) => datum.data?.label || datum.id,
             labelFill: '#1f2b46',
             labelFontWeight: 700,
+            labelFontSize: 54,
+            collapsedLabelFill: '#ffffff',
+            collapsedLabelFontWeight: 700,
+            collapsedLabelFontSize: 62,
             labelPlacement: 'top',
             labelMaxWidth: 140,
             collapsed: false,
           },
           state: {
             selected: {
-              stroke: '#2563eb',
-              lineWidth: 2,
+              stroke: (datum) => (datum.style?.collapsed
+                ? (({
+                  TE: '#1d4ed8',
+                  Disease: '#b84e60',
+                  Function: '#21885c',
+                  Paper: '#b57f1d',
+                })[datum.data?.type] || '#334155')
+                : '#2563eb'),
+              lineWidth: (datum) => (datum.style?.collapsed ? 5.2 : 2),
             },
             active: {
-              stroke: '#2563eb',
-              lineWidth: 2,
-            },
-            inactive: {
-              opacity: 0.28,
+              stroke: (datum) => (datum.style?.collapsed
+                ? (({
+                  TE: '#1d4ed8',
+                  Disease: '#b84e60',
+                  Function: '#21885c',
+                  Paper: '#b57f1d',
+                })[datum.data?.type] || '#334155')
+                : '#2563eb'),
+              lineWidth: (datum) => (datum.style?.collapsed ? 5.2 : 2),
             },
           },
         },
         node: {
-          type: 'rect',
+          type: 'tekg-dynamic-node',
           style: {
-            size: (datum) => datum.style?.size || [110, 38],
-            radius: 12,
-            fill: '#ffffff',
-            stroke: (datum) => TYPE_COLORS[datum.data?.type] || '#94a3b8',
-            lineWidth: 1.6,
+            size: (datum) => datum.style?.size || [260, 148],
+            radius: 30,
+            fill: (datum) => TYPE_COLORS[datum.data?.type] || '#94a3b8',
+            stroke: (datum) => NODE_STROKE[datum.data?.type] || TYPE_COLORS[datum.data?.type] || '#94a3b8',
+            lineWidth: 1.2,
             shadowColor: 'rgba(15, 23, 42, 0.08)',
             shadowBlur: 10,
             labelText: (datum) => datum.data?.label || datum.id,
             labelFill: '#1f2b46',
-            labelMaxWidth: 120,
+            labelPlacement: 'center',
+            labelTextAlign: 'center',
+            labelTextBaseline: 'middle',
+            labelFontSize: 54,
+            labelFontWeight: 700,
+            labelBackground: false,
           },
           state: {
             selected: {
@@ -355,13 +530,14 @@
               haloFill: 'rgba(37, 99, 235, 0.12)',
               lineWidth: 2.4,
               stroke: '#2563eb',
+              labelFill: '#1f2b46',
+              labelFontSize: 54,
             },
             active: {
               lineWidth: 2.2,
               stroke: '#2563eb',
-            },
-            inactive: {
-              opacity: 0.3,
+              labelFill: '#1f2b46',
+              labelFontSize: 54,
             },
           },
         },
@@ -371,7 +547,15 @@
             stroke: '#9fb2d8',
             lineWidth: 1.5,
             endArrow: false,
-            labelText: '',
+            labelText: (datum) => datum.data?.relation || '',
+            labelFill: '#475569',
+            labelFontSize: 24,
+            labelFontWeight: 600,
+            labelPlacement: 'center',
+            labelBackground: true,
+            labelBackgroundFill: 'rgba(255,255,255,0.92)',
+            labelBackgroundRadius: 8,
+            labelPadding: [4, 10],
           },
           state: {
             selected: {
@@ -382,20 +566,17 @@
               stroke: '#2563eb',
               lineWidth: 2,
             },
-            inactive: {
-              opacity: 0.18,
-            },
           },
         },
         behaviors: [
           'drag-canvas',
+          'drag-element',
           { type: 'zoom-canvas', sensitivity: 1.14 },
           {
             type: 'click-select',
             degree: 1,
             state: 'selected',
             neighborState: 'active',
-            unselectedState: 'inactive',
           },
           'focus-element',
           {

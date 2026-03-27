@@ -2,32 +2,6 @@
   "before": {
     "zh": {
       "Disease": {
-        "total": 628,
-        "zh_keys": 0,
-        "zh_values": 628
-      },
-      "Function": {
-        "total": 3850,
-        "zh_keys": 0,
-        "zh_values": 3850
-      }
-    },
-    "en": {
-      "Disease": {
-        "total": 628,
-        "zh_keys": 0,
-        "zh_values": 0
-      },
-      "Function": {
-        "total": 3850,
-        "zh_keys": 0,
-        "zh_values": 0
-      }
-    }
-  },
-  "after": {
-    "zh": {
-      "Disease": {
         "total": 590,
         "zh_keys": 0,
         "zh_values": 590
@@ -51,6 +25,32 @@
       }
     }
   },
+  "after": {
+    "zh": {
+      "Disease": {
+        "total": 586,
+        "zh_keys": 0,
+        "zh_values": 586
+      },
+      "Function": {
+        "total": 3690,
+        "zh_keys": 0,
+        "zh_values": 3690
+      }
+    },
+    "en": {
+      "Disease": {
+        "total": 586,
+        "zh_keys": 0,
+        "zh_values": 0
+      },
+      "Function": {
+        "total": 3690,
+        "zh_keys": 0,
+        "zh_values": 0
+      }
+    }
+  },
   "key_normalization": {
     "merged_entries": 0,
     "zh_keys_seen": 0,
@@ -58,88 +58,16 @@
     "sample_name_changes": {}
   },
   "case_normalization": {
-    "case_merged_entries": 312,
-    "sample_case_changes": {
-      "Aberrant Expression": "Aberrant expression",
-      "Alteration of Target Gene Expression": "Alteration of target gene expression",
-      "Altered Gene Expression": "Altered gene expression",
-      "Autonomous Retrotransposition": "autonomous retrotransposition",
-      "Bladder Cancer": "bladder cancer",
-      "Brain-specific Genetic Mosaicism": "Brain-specific genetic mosaicism",
-      "Chimera Formation": "Chimera formation",
-      "Chimeric L1 Formation": "Chimeric L1 formation",
-      "Cis-preferential Reverse Transcription": "Cis-preferential reverse transcription",
-      "Clonal Expansion": "Clonal expansion",
-      "Colitis-Associated Cancer": "colitis-associated cancer",
-      "Colon Cancer": "colon cancer",
-      "Colorectal Cancer": "colorectal cancer",
-      "Complex Translocation": "complex translocation",
-      "CpG Island Creation": "CpG island creation",
-      "Cytidine Deamination": "Cytidine deamination",
-      "Cytosine Methylation": "Cytosine methylation",
-      "Diabetes Mellitus": "diabetes mellitus",
-      "Endogenous Mutagenesis": "Endogenous mutagenesis",
-      "Endogenous Retrotransposition": "Endogenous retrotransposition",
-      "Endonuclease Activity": "endonuclease activity",
-      "Endonuclease-Dependent Insertion": "Endonuclease-dependent insertion",
-      "Endonuclease-Independent Insertion": "Endonuclease-independent insertion",
-      "Endonuclease-Independent Retrotransposition": "Endonuclease-independent retrotransposition",
-      "Enhancer Function": "enhancer function",
-      "Epigenetic Derepression": "epigenetic derepression",
-      "Epigenetic Dysregulation": "epigenetic dysregulation",
-      "Epigenetic Modification": "epigenetic modification",
-      "Epigenetic Regulation": "epigenetic regulation",
-      "Epigenetic Silencing": "epigenetic silencing",
-      "Esophageal Adenocarcinoma": "esophageal adenocarcinoma",
-      "Esophageal Cancer": "esophageal cancer",
-      "Esophageal Squamous Cell Carcinoma": "Esophageal squamous cell carcinoma",
-      "Exon Deletion": "Exon deletion",
-      "Exon Duplication": "Exon duplication",
-      "Exon Insertion": "Exon insertion",
-      "Exon Shuffling": "Exon shuffling",
-      "Exon Transduction": "exon transduction",
-      "Expression Regulation": "Expression regulation",
-      "Extra Nucleotide Insertion": "Extra nucleotide insertion",
-      "Facioscapulohumeral Muscular Dystrophy": "Facioscapulohumeral muscular dystrophy",
-      "Full-Length Insertion": "Full-length insertion",
-      "Gastric Cancer": "gastric cancer",
-      "Gastrointestinal Cancer": "gastrointestinal cancer",
-      "Gene Conversion": "Gene conversion",
-      "Gene Delivery": "Gene delivery",
-      "Gene Downregulation": "Gene downregulation",
-      "Gene Expression Disruption": "Gene expression disruption",
-      "Gene Expression Regulation": "Gene expression regulation",
-      "Gene Expression Reprogramming": "gene expression reprogramming",
-      "Genetic Disease": "genetic disease",
-      "Genetic Instability": "genetic instability",
-      "Genomic Deletion": "Genomic deletion",
-      "Genomic Evolution": "Genomic evolution",
-      "Genomic Expansion": "Genomic expansion",
-      "Genomic Integration": "genomic integration",
-      "Genomic Mosaicism": "Genomic mosaicism",
-      "Genomic Plasticity": "Genomic plasticity",
-      "Genomic Rearrangement": "Genomic rearrangement",
-      "Genomic Structural Variation": "Genomic structural variation",
-      "Genomic Variability": "Genomic variability",
-      "Genomic Variation": "genomic variation",
-      "Hepatocellular Carcinoma": "Hepatocellular carcinoma",
-      "High-Grade Glioma": "High-grade glioma",
-      "High-Grade Ovarian Serous Carcinoma": "high-grade ovarian serous carcinoma",
-      "High-Grade Serous Ovarian Carcinoma": "high-grade serous ovarian carcinoma",
-      "Host Gene Expression Regulation": "Host gene expression regulation",
-      "Immune Activation": "immune activation",
-      "Immune Response": "immune response",
-      "Increased Expression": "increased expression",
-      "Innate Immune Activation": "Innate immune activation",
-      "Innate Immune Restriction": "Innate immune restriction",
-      "Innate Immune Signaling Activation": "innate immune signaling activation",
-      "Insulin Signaling Pathway": "Insulin signaling pathway",
-      "Internal Rearrangement": "Internal rearrangement",
-      "Large-scale Duplication": "large-scale duplication",
-      "Liver Cirrhosis": "Liver cirrhosis",
-      "Lung Adenocarcinoma": "lung adenocarcinoma",
-      "Lung Cancer": "lung cancer",
-      "Myeloid Leukemia": "myeloid leukemia"
+    "case_merged_entries": 0,
+    "sample_case_changes": {}
+  },
+  "spelling_normalization": {
+    "spelling_merged_entries": 4,
+    "sample_spelling_changes": {
+      "Haemophilia A": "Hemophilia A",
+      "Oesophageal adenocarcinoma": "esophageal adenocarcinoma",
+      "colorectal tumours": "colorectal tumors",
+      "testicular germ cell tumours": "testicular germ cell tumors"
     }
   },
   "en_description_translations_applied": 0
