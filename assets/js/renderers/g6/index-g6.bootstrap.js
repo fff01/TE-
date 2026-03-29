@@ -152,6 +152,7 @@
   let searchDebounceId = null;
   let currentResultElements = null;
   let currentResultLabel = '';
+  let currentGraphQuery = '';
   let customEditorMode = 'prompt';
   let customPromptDraft = '';
   let customDepthDraft = { rows: 12, references: 8 };
@@ -287,6 +288,8 @@
       const level = typeof currentKeyNodeLevel !== 'undefined' ? currentKeyNodeLevel : 1;
       els.levelText.textContent = t.keyNodeLevel(level);
     }
+    if (els.levelMinus) els.levelMinus.disabled = (currentKeyNodeLevel || 1) <= 1;
+    if (els.levelPlus) els.levelPlus.disabled = (currentKeyNodeLevel || 1) >= 3;
     if (els.modeLabel) els.modeLabel.textContent = t.modeLabel;
     if (els.modeSimple) els.modeSimple.textContent = t.modeSimple;
     if (els.modeDetailed) els.modeDetailed.textContent = t.modeDetailed;
@@ -325,6 +328,7 @@
     currentGraphKind = 'default-tree';
     currentResultElements = null;
     currentResultLabel = '';
+    currentGraphQuery = '';
     if (window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.destroy === 'function') {
       window.__TEKG_G6_DYNAMIC_GRAPH.destroy();
     }
@@ -354,7 +358,7 @@
     }
     const t = UI_TEXT[getLang()] || UI_TEXT.en;
     setDetail(t.loading);
-    const response = await fetch(`api/graph.php?q=${encodeURIComponent(q)}&level=${encodeURIComponent(typeof currentKeyNodeLevel !== 'undefined' ? currentKeyNodeLevel : 1)}`, {
+    const response = await fetch(`api/graph.php?q=${encodeURIComponent(q)}&key_level=${encodeURIComponent(typeof currentKeyNodeLevel !== 'undefined' ? currentKeyNodeLevel : 1)}`, {
       cache: 'no-store',
     });
     let payload = null;
@@ -370,6 +374,7 @@
       setDetail(t.notFound);
       return null;
     }
+    currentGraphQuery = q;
     return renderGraphPayload(payload, q);
   }
 
@@ -514,15 +519,29 @@
 
   function bindKeyNodeLevel() {
     if (els.levelMinus) {
-      els.levelMinus.addEventListener('click', () => {
+      els.levelMinus.addEventListener('click', async () => {
         currentKeyNodeLevel = Math.max(1, (currentKeyNodeLevel || 1) - 1);
         updateUi();
+        if (currentGraphKind === 'dynamic' && currentGraphQuery) {
+          try {
+            await loadDynamicGraph(currentGraphQuery);
+          } catch (error) {
+            setDetail(error && error.message ? error.message : 'Graph request failed');
+          }
+        }
       });
     }
     if (els.levelPlus) {
-      els.levelPlus.addEventListener('click', () => {
-        currentKeyNodeLevel = Math.min(4, (currentKeyNodeLevel || 1) + 1);
+      els.levelPlus.addEventListener('click', async () => {
+        currentKeyNodeLevel = Math.min(3, (currentKeyNodeLevel || 1) + 1);
         updateUi();
+        if (currentGraphKind === 'dynamic' && currentGraphQuery) {
+          try {
+            await loadDynamicGraph(currentGraphQuery);
+          } catch (error) {
+            setDetail(error && error.message ? error.message : 'Graph request failed');
+          }
+        }
       });
     }
   }
