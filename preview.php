@@ -1,8 +1,12 @@
 ﻿<?php
 require_once __DIR__ . '/site_i18n.php';
 $lang = site_lang();
+$renderer = site_renderer();
 $pageTitle = site_t(['zh' => '预览 - TEKG', 'en' => 'Preview - TEKG'], $lang);
 $activePage = 'preview';
+$previewSrc = $renderer === 'g6'
+    ? 'index_g6.html?embed=preview&lang=' . rawurlencode($lang)
+    : 'index_demo.html?lang=' . rawurlencode($lang);
 include __DIR__ . '/head.php';
 ?>
 <style>
@@ -37,7 +41,7 @@ include __DIR__ . '/head.php';
     <iframe
       id="preview-frame"
       class="preview-frame"
-      src="index_demo.html?lang=<?= htmlspecialchars($lang, ENT_QUOTES, 'UTF-8') ?>"
+      src="<?= htmlspecialchars($previewSrc, ENT_QUOTES, 'UTF-8') ?>"
       title="<?= htmlspecialchars(site_t(['zh' => '知识图谱预览', 'en' => 'Knowledge graph preview'], $lang), ENT_QUOTES, 'UTF-8') ?>"
     ></iframe>
   </section>
@@ -45,8 +49,11 @@ include __DIR__ . '/head.php';
 <script>
 (function () {
   const lang = <?= json_encode($lang, JSON_UNESCAPED_UNICODE) ?>;
+  const renderer = <?= json_encode($renderer, JSON_UNESCAPED_UNICODE) ?>;
   const frame = document.getElementById('preview-frame');
   if (!frame) return;
+
+  if (renderer === 'g6') return;
 
   function hideInnerChrome(doc) {
     const header = doc.querySelector('header');

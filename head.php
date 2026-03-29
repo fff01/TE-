@@ -2,6 +2,7 @@
 require_once __DIR__ . '/site_i18n.php';
 
 $siteLang = site_lang();
+$siteRenderer = site_renderer();
 if (!isset($pageTitle)) {
     $pageTitle = site_t(['zh' => 'TE 数据库', 'en' => 'TE Database'], $siteLang);
 }
@@ -19,10 +20,12 @@ $navItems = [
 
 $currentQueryParams = $_GET;
 unset($currentQueryParams['lang']);
-$baseQuery = http_build_query($currentQueryParams);
+unset($currentQueryParams['renderer']);
 $currentPath = basename((string) ($_SERVER['PHP_SELF'] ?? 'index.php'));
-$zhUrl = $currentPath . ($baseQuery !== '' ? '?' . $baseQuery . '&lang=zh' : '?lang=zh');
-$enUrl = $currentPath . ($baseQuery !== '' ? '?' . $baseQuery . '&lang=en' : '?lang=en');
+$zhUrl = site_url_with_state($currentPath, 'zh', $siteRenderer, $currentQueryParams);
+$enUrl = site_url_with_state($currentPath, 'en', $siteRenderer, $currentQueryParams);
+$cytUrl = site_url_with_state($currentPath, $siteLang, 'cytoscape', $currentQueryParams);
+$g6Url = site_url_with_state($currentPath, $siteLang, 'g6', $currentQueryParams);
 ?>
 <!DOCTYPE html>
 <html lang="<?= $siteLang === 'en' ? 'en' : 'zh-CN' ?>">
@@ -143,6 +146,29 @@ $enUrl = $currentPath . ($baseQuery !== '' ? '?' . $baseQuery . '&lang=en' : '?l
       font-size: 14px;
     }
     .lang-switch a.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+    }
+    .renderer-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 8px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #f7faff;
+    }
+    .renderer-switch a {
+      padding: 8px 14px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .renderer-switch a.active {
       background: var(--primary);
       color: #fff;
       box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
@@ -284,11 +310,15 @@ $enUrl = $currentPath . ($baseQuery !== '' ? '?' . $baseQuery . '&lang=en' : '?l
       </div>
       <nav class="site-nav" aria-label="<?= htmlspecialchars(site_t(['zh' => '主导航', 'en' => 'Main navigation'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
         <?php foreach ($navItems as $key => $item): ?>
-          <a href="<?= htmlspecialchars(site_url_with_lang($item['href'], $siteLang), ENT_QUOTES, 'UTF-8') ?>" class="<?= $activePage === $key ? 'active' : '' ?>"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
+          <a href="<?= htmlspecialchars(site_url_with_state($item['href'], $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>" class="<?= $activePage === $key ? 'active' : '' ?>"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
         <?php endforeach; ?>
         <div class="lang-switch" aria-label="<?= htmlspecialchars(site_t(['zh' => '语言切换', 'en' => 'Language switch'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
           <a href="<?= htmlspecialchars($zhUrl, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteLang === 'zh' ? 'active' : '' ?>">中文</a>
           <a href="<?= htmlspecialchars($enUrl, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteLang === 'en' ? 'active' : '' ?>">English</a>
+        </div>
+        <div class="renderer-switch" aria-label="<?= htmlspecialchars(site_t(['zh' => '渲染器切换', 'en' => 'Renderer switch'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
+          <a href="<?= htmlspecialchars($cytUrl, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteRenderer === 'cytoscape' ? 'active' : '' ?>">Cytoscape</a>
+          <a href="<?= htmlspecialchars($g6Url, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteRenderer === 'g6' ? 'active' : '' ?>">G6</a>
         </div>
       </nav>
     </div>

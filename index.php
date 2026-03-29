@@ -1,6 +1,7 @@
 ﻿<?php
 require_once __DIR__ . '/site_i18n.php';
 $lang = site_lang();
+$renderer = site_renderer();
 $pageTitle = site_t(['zh' => '首页 - TEKG', 'en' => 'Home - TEKG'], $lang);
 $activePage = 'home';
 
@@ -70,6 +71,9 @@ function tekg_home_counts(): array
 }
 
 $counts = tekg_home_counts();
+$homePreviewSrc = $renderer === 'g6'
+    ? 'index_g6.html?embed=home-preview&lang=' . rawurlencode($lang)
+    : 'index_demo.html?embed=home-preview&lang=' . rawurlencode($lang);
 include __DIR__ . '/head.php';
 ?>
 <section class="hero-card" style="background:#2f588f;color:#fff;border-color:#2f588f;box-shadow:none;">
@@ -101,11 +105,11 @@ include __DIR__ . '/head.php';
 <section style="display:grid;grid-template-columns:minmax(0,2fr) minmax(320px,.95fr);gap:24px;align-items:start;">
   <div class="content-card">
     <h3 style="margin:0 0 18px;font-size:24px;padding-bottom:12px;border-bottom:1px solid #e5edf7;">
-      <a href="<?= htmlspecialchars(site_url_with_lang('preview.php', $lang), ENT_QUOTES, 'UTF-8') ?>" style="color:inherit;text-decoration:none;"><?= htmlspecialchars(site_t(['zh' => '知识图谱预览', 'en' => 'Knowledge Graph Preview'], $lang), ENT_QUOTES, 'UTF-8') ?></a>
+      <a href="<?= htmlspecialchars(site_url_with_state('preview.php', $lang, $renderer), ENT_QUOTES, 'UTF-8') ?>" style="color:inherit;text-decoration:none;"><?= htmlspecialchars(site_t(['zh' => '知识图谱预览', 'en' => 'Knowledge Graph Preview'], $lang), ENT_QUOTES, 'UTF-8') ?></a>
     </h3>
     <iframe
       id="home-preview-frame"
-      src="index_demo.html?embed=home-preview&lang=<?= htmlspecialchars($lang, ENT_QUOTES, 'UTF-8') ?>"
+      src="<?= htmlspecialchars($homePreviewSrc, ENT_QUOTES, 'UTF-8') ?>"
       title="<?= htmlspecialchars(site_t(['zh' => '首页知识图谱预览', 'en' => 'Home knowledge graph preview'], $lang), ENT_QUOTES, 'UTF-8') ?>"
       style="width:100%;height:520px;border:1px solid #d8e4f0;border-radius:18px;background:radial-gradient(circle at top,#ffffff,#edf4ff);box-shadow:inset 0 1px 0 rgba(255,255,255,.72);"
     ></iframe>
@@ -126,10 +130,10 @@ include __DIR__ . '/head.php';
       <h3 style="margin:0 0 14px;font-size:22px;padding-bottom:12px;border-bottom:1px solid #e5edf7;"><?= htmlspecialchars(site_t(['zh' => '快速检索示例', 'en' => 'Quick Search Examples'], $lang), ENT_QUOTES, 'UTF-8') ?></h3>
       <p style="margin:0 0 14px;color:#5e7288;line-height:1.7;"><?= htmlspecialchars(site_t(['zh' => '每类提供一个典型入口，点击后将直接跳转到搜索页。', 'en' => 'Each category provides one representative entry that jumps directly to the search page.'], $lang), ENT_QUOTES, 'UTF-8') ?></p>
       <div style="display:flex;flex-wrap:wrap;gap:10px;">
-        <a href="<?= htmlspecialchars(site_url_with_lang('search.php?q=LINE1', $lang), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--te-soft);color:var(--te);font-weight:600;">TE: LINE1</a>
-        <a href="<?= htmlspecialchars(site_url_with_lang('search.php?q=Breast%20cancer', $lang), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--disease-soft);color:var(--disease);font-weight:600;">Disease: Breast cancer</a>
-        <a href="<?= htmlspecialchars(site_url_with_lang('search.php?q=RNA%20polymerase%20III%20transcription', $lang), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--function-soft);color:var(--function);font-weight:600;">Function: RNA polymerase III transcription</a>
-        <a href="<?= htmlspecialchars(site_url_with_lang('search.php?q=39100749', $lang), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--paper-soft);color:var(--paper);font-weight:600;">Paper: PMID 39100749</a>
+        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => 'LINE1']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--te-soft);color:var(--te);font-weight:600;">TE: LINE1</a>
+        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => 'Breast cancer']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--disease-soft);color:var(--disease);font-weight:600;">Disease: Breast cancer</a>
+        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => 'RNA polymerase III transcription']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--function-soft);color:var(--function);font-weight:600;">Function: RNA polymerase III transcription</a>
+        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => '39100749']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--paper-soft);color:var(--paper);font-weight:600;">Paper: PMID 39100749</a>
       </div>
     </section>
   </div>
@@ -137,8 +141,11 @@ include __DIR__ . '/head.php';
 
 <script>
   (function () {
+    const renderer = <?= json_encode($renderer, JSON_UNESCAPED_UNICODE) ?>;
     const frame = document.getElementById('home-preview-frame');
     if (!frame) return;
+
+    if (renderer === 'g6') return;
 
     function restyleHomePreview() {
       const doc = frame.contentDocument;

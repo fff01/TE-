@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/site_i18n.php';
 $lang = site_lang();
+$renderer = site_renderer();
 $pageTitle = site_t(['zh' => '搜索 - TEKG', 'en' => 'Search - TEKG'], $lang);
 $activePage = 'search';
 
@@ -80,6 +81,9 @@ function tekg_request_scalar(array $source, string $key, string $default = ''): 
 $query = tekg_request_scalar($_GET, 'q', '');
 $type = tekg_request_scalar($_GET, 'type', 'all');
 $repbase = tekg_repbase_lookup($query);
+$searchGraphSrc = $renderer === 'g6'
+    ? 'index_g6.html?embed=search-result&lang=' . rawurlencode($lang) . ($query !== '' ? '&q=' . rawurlencode($query) : '')
+    : '';
 include __DIR__ . '/head.php';
 ?>
 <section class="hero-card">
@@ -150,8 +154,21 @@ include __DIR__ . '/head.php';
       <h3 style="margin:0;font-size:22px;"><?= htmlspecialchars(site_t(['zh' => '局部图谱', 'en' => 'Local Graph'], $lang), ENT_QUOTES, 'UTF-8') ?></h3>
       <button id="search-reset" type="button" style="border:none;border-radius:14px;background:#eef4ff;color:#2753b7;padding:10px 16px;font-weight:700;cursor:pointer;"><?= htmlspecialchars(site_t(['zh' => '重置图谱', 'en' => 'Reset Graph'], $lang), ENT_QUOTES, 'UTF-8') ?></button>
     </div>
-    <div id="search-graph" style="flex:1;min-height:580px;border:1px solid #d8e4f0;border-radius:18px;background:radial-gradient(circle at top,#ffffff,#edf4ff);"></div>
-    <div id="search-graph-detail" style="padding:14px 16px;border-radius:16px;background:#f8fbff;border:1px solid #dbe7f3;color:#5e7288;line-height:1.7;min-height:84px;"></div>
+    <?php if ($renderer === 'g6'): ?>
+      <iframe
+        id="search-g6-frame"
+        src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
+        title="<?= htmlspecialchars(site_t(['zh' => '搜索图谱（G6）', 'en' => 'Search graph (G6)'], $lang), ENT_QUOTES, 'UTF-8') ?>"
+        style="flex:1;min-height:640px;border:1px solid #d8e4f0;border-radius:18px;background:radial-gradient(circle at top,#ffffff,#edf4ff);"
+      ></iframe>
+    <?php else: ?>
+      <iframe
+        id="search-cyt-frame"
+        src="<?= htmlspecialchars(site_url_with_state('index_demo.html', $lang, 'cytoscape', ['embed' => 'search-result']), ENT_QUOTES, 'UTF-8') ?>"
+        title="<?= htmlspecialchars(site_t(['zh' => '搜索图谱（Cytoscape）', 'en' => 'Search graph (Cytoscape)'], $lang), ENT_QUOTES, 'UTF-8') ?>"
+        style="flex:1;min-height:640px;border:1px solid #d8e4f0;border-radius:18px;background:radial-gradient(circle at top,#ffffff,#edf4ff);"
+      ></iframe>
+    <?php endif; ?>
   </section>
 </section>
 
@@ -160,6 +177,7 @@ include __DIR__ . '/head.php';
 <script>
 (function () {
   const lang = <?= json_encode($lang, JSON_UNESCAPED_UNICODE) ?>;
+  const renderer = <?= json_encode($renderer, JSON_UNESCAPED_UNICODE) ?>;
   const texts = {
     zh: {
       te: '转座元件', disease: '疾病', function: '功能/机制', paper: '文献',
@@ -190,6 +208,432 @@ include __DIR__ . '/head.php';
       graphDetailEmpty: '', resetState: 'Enter a query to display the best-matched entity here.', searchFailed: 'Search failed: ', degree: 'Degree: '
     }
   }[lang];
+
+  if (renderer === 'g6') {
+    const resultEl = document.getElementById('search-best-match');
+    const repbaseEl = document.getElementById('search-repbase');
+    const resetBtn = document.getElementById('search-reset');
+    const searchForm = document.getElementById('search-form');
+    const queryInput = document.getElementById('search-query');
+    const frame = document.getElementById('search-g6-frame');
+    let repbaseDataPromise = null;
+    const typeField = searchForm ? searchForm.querySelector('select[name="type"]') : null;
+
+    function renderBestMatch(payload) {
+      const anchor = payload.anchor;
+      if (!anchor) {
+        resultEl.innerHTML = texts.noMatch;
+        return;
+      }
+      resultEl.innerHTML = '<div><strong>' + anchor.name + '</strong>（' + (anchor.type || 'node') + '）</div>'
+        + '<div style="margin-top:8px;color:#5e7288;">' + texts.best + '</div>'
+        + (anchor.pmid ? '<div style="margin-top:8px;color:#5e7288;">' + texts.pmid + anchor.pmid + '</div>' : '')
+        + (Array.isArray(payload.matches) && payload.matches.length > 1
+          ? '<div style="margin-top:10px;color:#5e7288;">' + texts.candidates + payload.matches.slice(1, 4).map(function (item) { return item.name; }).join('、') + '</div>'
+          : '');
+    }
+
+    function cleanRepbaseLabel(value) {
+      return String(value || '').replace(/<[^>]+>/g, '').trim().replace(/[.;,]+$/g, '').replace(/\s+/g, ' ');
+    }
+
+    function canonicalizeRepbaseLabel(value) {
+      return cleanRepbaseLabel(value).toLowerCase().replace(/[_\-\s]/g, '');
+    }
+
+    async function loadRepbaseData() {
+      if (!repbaseDataPromise) {
+        repbaseDataPromise = fetch('data/processed/te_repbase_db_matched.json').then(function (res) {
+          if (!res.ok) throw new Error('Repbase data load failed');
+          return res.json();
+        });
+      }
+      return repbaseDataPromise;
+    }
+
+    function renderRepbaseCard(repbase, matchedName) {
+      return [
+        '<div><strong>' + texts.matchName + '</strong>' + matchedName + '</div>',
+        '<div><strong>Repbase ID: </strong>' + (repbase.id || '-') + '</div>',
+        '<div><strong>' + texts.canonicalName + '</strong>' + (repbase.name || repbase.id || '-') + '</div>',
+        '<div><strong>' + texts.description + '</strong>' + (repbase.description || texts.noDescription) + '</div>',
+        '<div><strong>' + texts.keywords + '</strong>' + ((repbase.keywords && repbase.keywords.length) ? repbase.keywords.join(', ') : texts.noKeywords) + '</div>',
+        '<div><strong>' + texts.species + '</strong>' + (repbase.species || texts.noSpecies) + '</div>',
+        '<div><strong>' + texts.sequenceSummary + '</strong>' + ((repbase.sequence_summary && repbase.sequence_summary.raw) ? repbase.sequence_summary.raw : texts.noSequence) + '</div>',
+        '<div><strong>' + texts.referenceCount + '</strong>' + ((repbase.references && repbase.references.length) ? repbase.references.length : 0) + '</div>'
+      ].join('');
+    }
+
+    async function updateRepbaseBlock(query, payload) {
+      if (!repbaseEl) return;
+      const anchor = payload && payload.anchor ? payload.anchor : null;
+      const candidateNames = [];
+      if (anchor && anchor.type === 'TE') {
+        if (anchor.standard_name) candidateNames.push(anchor.standard_name);
+        if (anchor.name) candidateNames.push(anchor.name);
+      }
+      if (query) candidateNames.push(query);
+      const uniqueNames = Array.from(new Set(candidateNames.filter(Boolean)));
+      if (!uniqueNames.length) {
+        repbaseEl.innerHTML = texts.repbaseDefault;
+        return;
+      }
+      try {
+        const repbasePayload = await loadRepbaseData();
+        const entries = repbasePayload.entries || [];
+        const entryById = new Map(entries.map(function (entry) { return [entry.id, entry]; }));
+        let matchedId = null;
+        let matchedName = null;
+        uniqueNames.some(function (name) {
+          const strictKey = cleanRepbaseLabel(name).toLowerCase();
+          const canonicalKey = canonicalizeRepbaseLabel(name);
+          matchedId = (repbasePayload.name_index && repbasePayload.name_index[strictKey]) || (repbasePayload.canonical_index && repbasePayload.canonical_index[canonicalKey]) || null;
+          if (matchedId) {
+            matchedName = name;
+            return true;
+          }
+          return false;
+        });
+        if (!matchedId || !entryById.has(matchedId)) {
+          repbaseEl.innerHTML = texts.repbaseMissing;
+          return;
+        }
+        repbaseEl.innerHTML = renderRepbaseCard(entryById.get(matchedId), matchedName || matchedId);
+      } catch (err) {
+        repbaseEl.innerHTML = texts.repbaseError + (err && err.message ? err.message : 'unknown error');
+      }
+    }
+
+    function setG6Frame(query) {
+      if (!frame) return;
+      const url = new URL('index_g6.html', window.location.href);
+      url.searchParams.set('embed', 'search-result');
+      url.searchParams.set('lang', lang);
+      if (query) {
+        url.searchParams.set('q', query);
+      }
+      frame.src = url.toString();
+    }
+
+    async function runSearch(query) {
+      if (!query) {
+        resultEl.innerHTML = texts.prompt;
+        repbaseEl.innerHTML = texts.repbaseDefault;
+        setG6Frame('');
+        return;
+      }
+      resultEl.innerHTML = texts.searching + ' <strong>' + query.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong> ...';
+      try {
+        const searchUrl = new URL('api/graph.php', window.location.href);
+        searchUrl.searchParams.set('q', query);
+        if (typeField && typeField.value !== 'all') {
+          searchUrl.searchParams.set('type', typeField.value);
+        }
+        searchUrl.searchParams.set('lang', lang);
+        const response = await fetch(searchUrl.toString(), { cache: 'no-store' });
+        const payload = await response.json();
+        if (!response.ok || !payload || payload.ok === false) {
+          throw new Error((payload && payload.error) || 'search failed');
+        }
+        renderBestMatch(payload);
+        await updateRepbaseBlock(query, payload);
+        setG6Frame(query);
+      } catch (err) {
+        resultEl.innerHTML = texts.searchFailed + (err && err.message ? err.message : 'unknown error');
+        repbaseEl.innerHTML = texts.repbaseUnavailable;
+      }
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', function () {
+        queryInput.value = '';
+        if (typeField) typeField.value = 'all';
+        window.history.replaceState({}, '', <?= json_encode(site_url_with_state('search.php', $lang, $renderer), JSON_UNESCAPED_UNICODE) ?>);
+        runSearch('');
+      });
+    }
+
+    if (searchForm) {
+      searchForm.addEventListener('submit', function (evt) {
+        evt.preventDefault();
+        const query = queryInput.value.trim();
+        const url = new URL(window.location.href);
+        if (query) {
+          url.searchParams.set('q', query);
+        } else {
+          url.searchParams.delete('q');
+        }
+        if (typeField) url.searchParams.set('type', typeField.value || 'all');
+        url.searchParams.set('lang', lang);
+        url.searchParams.set('renderer', renderer);
+        window.history.replaceState({}, '', url.toString());
+        runSearch(query);
+      });
+    }
+
+    runSearch(queryInput.value.trim());
+    return;
+  }
+
+  if (renderer === 'cytoscape') {
+    const resultEl = document.getElementById('search-best-match');
+    const repbaseEl = document.getElementById('search-repbase');
+    const resetBtn = document.getElementById('search-reset');
+    const searchForm = document.getElementById('search-form');
+    const queryInput = document.getElementById('search-query');
+    const frame = document.getElementById('search-cyt-frame');
+    let repbaseDataPromise = null;
+    const typeField = searchForm ? searchForm.querySelector('select[name="type"]') : null;
+
+    function renderBestMatch(payload) {
+      const anchor = payload.anchor;
+      if (!anchor) {
+        resultEl.innerHTML = texts.noMatch;
+        return;
+      }
+      resultEl.innerHTML = '<div><strong>' + anchor.name + '</strong>（' + (anchor.type || 'node') + '）</div>'
+        + '<div style="margin-top:8px;color:#5e7288;">' + texts.best + '</div>'
+        + (anchor.pmid ? '<div style="margin-top:8px;color:#5e7288;">' + texts.pmid + anchor.pmid + '</div>' : '')
+        + (Array.isArray(payload.matches) && payload.matches.length > 1
+          ? '<div style="margin-top:10px;color:#5e7288;">' + texts.candidates + payload.matches.slice(1, 4).map(function (item) { return item.name; }).join('、') + '</div>'
+          : '');
+    }
+
+    function cleanRepbaseLabel(value) {
+      return String(value || '').replace(/<[^>]+>/g, '').trim().replace(/[.;,]+$/g, '').replace(/\s+/g, ' ');
+    }
+
+    function canonicalizeRepbaseLabel(value) {
+      return cleanRepbaseLabel(value).toLowerCase().replace(/[_\-\s]/g, '');
+    }
+
+    async function loadRepbaseData() {
+      if (!repbaseDataPromise) {
+        repbaseDataPromise = fetch('data/processed/te_repbase_db_matched.json').then(function (res) {
+          if (!res.ok) throw new Error('Repbase data load failed');
+          return res.json();
+        });
+      }
+      return repbaseDataPromise;
+    }
+
+    function renderRepbaseCard(repbase, matchedName) {
+      return [
+        '<div><strong>' + texts.matchName + '</strong>' + matchedName + '</div>',
+        '<div><strong>Repbase ID: </strong>' + (repbase.id || '-') + '</div>',
+        '<div><strong>' + texts.canonicalName + '</strong>' + (repbase.name || repbase.id || '-') + '</div>',
+        '<div><strong>' + texts.description + '</strong>' + (repbase.description || texts.noDescription) + '</div>',
+        '<div><strong>' + texts.keywords + '</strong>' + ((repbase.keywords && repbase.keywords.length) ? repbase.keywords.join(', ') : texts.noKeywords) + '</div>',
+        '<div><strong>' + texts.species + '</strong>' + (repbase.species || texts.noSpecies) + '</div>',
+        '<div><strong>' + texts.sequenceSummary + '</strong>' + ((repbase.sequence_summary && repbase.sequence_summary.raw) ? repbase.sequence_summary.raw : texts.noSequence) + '</div>',
+        '<div><strong>' + texts.referenceCount + '</strong>' + ((repbase.references && repbase.references.length) ? repbase.references.length : 0) + '</div>'
+      ].join('');
+    }
+
+    async function updateRepbaseBlock(query, payload) {
+      if (!repbaseEl) return;
+      const anchor = payload && payload.anchor ? payload.anchor : null;
+      const candidateNames = [];
+      if (anchor && anchor.type === 'TE') {
+        if (anchor.standard_name) candidateNames.push(anchor.standard_name);
+        if (anchor.name) candidateNames.push(anchor.name);
+      }
+      if (query) candidateNames.push(query);
+      const uniqueNames = Array.from(new Set(candidateNames.filter(Boolean)));
+      if (!uniqueNames.length) {
+        repbaseEl.innerHTML = texts.repbaseDefault;
+        return;
+      }
+      try {
+        const repbasePayload = await loadRepbaseData();
+        const entries = repbasePayload.entries || [];
+        const entryById = new Map(entries.map(function (entry) { return [entry.id, entry]; }));
+        let matchedId = null;
+        let matchedName = null;
+        uniqueNames.some(function (name) {
+          const strictKey = cleanRepbaseLabel(name).toLowerCase();
+          const canonicalKey = canonicalizeRepbaseLabel(name);
+          matchedId = (repbasePayload.name_index && repbasePayload.name_index[strictKey]) || (repbasePayload.canonical_index && repbasePayload.canonical_index[canonicalKey]) || null;
+          if (matchedId) {
+            matchedName = name;
+            return true;
+          }
+          return false;
+        });
+        if (!matchedId || !entryById.has(matchedId)) {
+          repbaseEl.innerHTML = texts.repbaseMissing;
+          return;
+        }
+        repbaseEl.innerHTML = renderRepbaseCard(entryById.get(matchedId), matchedName || matchedId);
+      } catch (err) {
+        repbaseEl.innerHTML = texts.repbaseError + (err && err.message ? err.message : 'unknown error');
+      }
+    }
+
+    function restyleCytFrame() {
+      const doc = frame && frame.contentDocument;
+      if (!doc) return;
+      const innerWin = frame.contentWindow;
+      const innerCy = innerWin && innerWin.__TEKG_CY ? innerWin.__TEKG_CY : null;
+      const header = doc.querySelector('header');
+      const footer = doc.querySelector('footer');
+      const langControl = doc.querySelector('.lang');
+      const rightPanel = doc.querySelector('.main > .panel:last-child');
+      const graphPanel = doc.querySelector('.main > .panel:first-child');
+      const graphHead = graphPanel ? graphPanel.querySelector('.head') : null;
+      const graphTools = graphPanel ? graphPanel.querySelector('.toolbar') : null;
+      const graphDetail = doc.getElementById('node-details');
+
+      if (header) header.style.display = 'none';
+      if (footer) footer.style.display = 'none';
+      if (langControl) langControl.style.display = 'none';
+      if (rightPanel) rightPanel.style.display = 'none';
+      if (graphHead) graphHead.style.display = 'none';
+      if (graphTools) graphTools.style.display = 'none';
+      if (graphDetail) graphDetail.style.display = 'none';
+
+      doc.documentElement.style.height = '100%';
+      doc.body.style.height = '100%';
+      doc.body.style.margin = '0';
+      doc.body.style.background = 'transparent';
+
+      const main = doc.querySelector('.main');
+      if (main) {
+        main.style.display = 'block';
+        main.style.height = '100%';
+        main.style.minHeight = '100%';
+        main.style.padding = '0';
+        main.style.gap = '0';
+      }
+
+      if (graphPanel) {
+        graphPanel.style.height = '100%';
+        graphPanel.style.minHeight = '100%';
+        graphPanel.style.border = 'none';
+        graphPanel.style.borderRadius = '18px';
+        graphPanel.style.boxShadow = 'none';
+      }
+
+      const cyEl = doc.getElementById('cy');
+      if (cyEl) {
+        cyEl.style.height = '100%';
+        cyEl.style.minHeight = '100%';
+        cyEl.style.flex = '1';
+      }
+
+      if (innerCy) {
+        try {
+          innerCy.resize();
+          innerCy.fit(undefined, 55);
+        } catch (_err) {}
+      }
+    }
+
+    function ensureFrameReady() {
+      return new Promise((resolve) => {
+        if (!frame) {
+          resolve();
+          return;
+        }
+        const complete = () => {
+          restyleCytFrame();
+          resolve();
+        };
+        try {
+          const win = frame.contentWindow;
+          if (win && typeof win.__TEKG_LOAD_DYNAMIC_GRAPH === 'function' && win.__TEKG_CY) {
+            complete();
+            return;
+          }
+        } catch (_err) {}
+        frame.addEventListener('load', complete, { once: true });
+      });
+    }
+
+    async function setCytFrameToDefault() {
+      if (!frame) return;
+      const url = new URL('index_demo.html', window.location.href);
+      url.searchParams.set('embed', 'search-result');
+      url.searchParams.set('lang', lang);
+      frame.src = url.toString();
+      await ensureFrameReady();
+    }
+
+    async function setCytFrameToQuery(query) {
+      if (!frame) return;
+      await ensureFrameReady();
+      const innerWin = frame.contentWindow;
+      if (innerWin && typeof innerWin.__TEKG_LOAD_DYNAMIC_GRAPH === 'function') {
+        await innerWin.__TEKG_LOAD_DYNAMIC_GRAPH(query);
+        restyleCytFrame();
+      }
+    }
+
+    async function runSearch(query) {
+      if (!query) {
+        resultEl.innerHTML = texts.prompt;
+        repbaseEl.innerHTML = texts.repbaseDefault;
+        await setCytFrameToDefault();
+        return;
+      }
+      resultEl.innerHTML = texts.searching + ' <strong>' + query.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong> ...';
+      try {
+        const searchUrl = new URL('api/graph.php', window.location.href);
+        searchUrl.searchParams.set('q', query);
+        if (typeField && typeField.value !== 'all') {
+          searchUrl.searchParams.set('type', typeField.value);
+        }
+        searchUrl.searchParams.set('lang', lang);
+        const response = await fetch(searchUrl.toString(), { cache: 'no-store' });
+        const payload = await response.json();
+        if (!response.ok || !payload || payload.ok === false) {
+          throw new Error((payload && payload.error) || 'search failed');
+        }
+        renderBestMatch(payload);
+        await updateRepbaseBlock(query, payload);
+        await setCytFrameToQuery(query);
+      } catch (err) {
+        resultEl.innerHTML = texts.searchFailed + (err && err.message ? err.message : 'unknown error');
+        repbaseEl.innerHTML = texts.repbaseUnavailable;
+      }
+    }
+
+    if (frame) {
+      frame.addEventListener('load', function () {
+        restyleCytFrame();
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', async function () {
+        queryInput.value = '';
+        if (typeField) typeField.value = 'all';
+        window.history.replaceState({}, '', <?= json_encode(site_url_with_state('search.php', $lang, $renderer), JSON_UNESCAPED_UNICODE) ?>);
+        await runSearch('');
+      });
+    }
+
+    if (searchForm) {
+      searchForm.addEventListener('submit', async function (evt) {
+        evt.preventDefault();
+        const query = queryInput.value.trim();
+        const url = new URL(window.location.href);
+        if (query) {
+          url.searchParams.set('q', query);
+        } else {
+          url.searchParams.delete('q');
+        }
+        if (typeField) url.searchParams.set('type', typeField.value || 'all');
+        url.searchParams.set('lang', lang);
+        url.searchParams.set('renderer', renderer);
+        window.history.replaceState({}, '', url.toString());
+        await runSearch(query);
+      });
+    }
+
+    runSearch(queryInput.value.trim());
+    return;
+  }
 
   const initialElements = JSON.parse(JSON.stringify((window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.elements) || []));
   const graphEl = document.getElementById('search-graph');

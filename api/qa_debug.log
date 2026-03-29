@@ -479,3 +479,17 @@
 [2026-03-29 06:05:18] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
 [2026-03-29 06:05:20] answer:structured_local {"error":"HTTP request failed: Failed to connect to 127.0.0.1 port 18087 after 2054 ms: Couldn't connect to server"}
 [2026-03-29 06:05:20] answer:done {"mode":"template_rag+structured_local"}
+[2026-03-29 14:21:04] answer:start {"question":"LINE-1 related diseases","language":"en","style":"simple","depth":"shallow"}
+[2026-03-29 14:21:04] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-03-29 14:21:04] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-29 14:21:04] answer:template_query {"rows":15}
+[2026-03-29 14:21:04] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-29 14:21:06] answer:structured_local {"error":"HTTP request failed: Failed to connect to 127.0.0.1 port 18087 after 2044 ms: Couldn't connect to server"}
+[2026-03-29 14:21:06] answer:done {"mode":"template_rag+structured_local"}
+[2026-03-29 14:21:23] answer:start {"question":"LINE-1 related diseases","language":"en","style":"simple","depth":"shallow"}
+[2026-03-29 14:21:23] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-03-29 14:21:23] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-29 14:21:23] answer:template_query {"rows":15}
+[2026-03-29 14:21:23] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-29 14:21:27] answer:llm
+[2026-03-29 14:21:27] answer:done {"mode":"template_rag+llm"}

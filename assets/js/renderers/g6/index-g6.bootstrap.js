@@ -166,6 +166,8 @@
   let customDepthDraft = { rows: 12, references: 8 };
   let previousAnswerStyleBeforeCustom = 'simple';
   let previousAnswerDepthBeforeCustom = 'shallow';
+  const embedMode = typeof window.__TEKG_EMBED_MODE === 'string' ? window.__TEKG_EMBED_MODE : '';
+  const initialQuery = typeof window.__TEKG_INITIAL_QUERY === 'string' ? window.__TEKG_INITIAL_QUERY.trim() : '';
 
   function getLang() {
     return typeof currentLang === 'string' ? currentLang : 'en';
@@ -210,6 +212,51 @@
 
   function setDetail(text) {
     if (els.detail) els.detail.textContent = text;
+  }
+
+  function applyEmbedModeLayout() {
+    if (!embedMode) return;
+    document.body.classList.add('tekg-g6-embed');
+    document.body.classList.add(`tekg-g6-embed-${embedMode}`);
+
+    const header = document.querySelector('header');
+    const footer = document.getElementById('page-footer');
+    const qaPanel = document.querySelector('.main > .panel:last-child');
+    const graphPanel = document.querySelector('.main > .panel:first-child');
+    const toolbar = graphPanel ? graphPanel.querySelector('.toolbar') : null;
+    const graphHead = graphPanel ? graphPanel.querySelector('.head') : null;
+
+    if (header) header.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    if (qaPanel) qaPanel.style.display = (embedMode === 'home-preview' || embedMode === 'search-result') ? 'none' : '';
+
+    document.documentElement.style.height = '100%';
+    document.body.style.height = '100%';
+    document.body.style.margin = '0';
+    document.body.style.background = 'linear-gradient(180deg,#eef4fb,#f9fbfe)';
+
+    const main = document.querySelector('.main');
+    if (main) {
+      main.style.height = '100%';
+      main.style.minHeight = '100%';
+      if (embedMode === 'home-preview' || embedMode === 'search-result') {
+        main.style.display = 'block';
+        main.style.padding = embedMode === 'search-result' ? '0' : '10px';
+        main.style.gap = '0';
+      } else {
+        main.style.padding = '10px';
+      }
+    }
+
+    if (graphPanel) {
+      graphPanel.style.height = '100%';
+      graphPanel.style.minHeight = '100%';
+    }
+
+    if (embedMode === 'home-preview' || embedMode === 'search-result') {
+      if (toolbar) toolbar.style.display = 'none';
+      if (graphHead) graphHead.style.display = 'none';
+    }
   }
 
   function syncButtons() {
@@ -673,6 +720,7 @@
 
   async function initialize() {
     try {
+      applyEmbedModeLayout();
       await loadSharedResources();
       updateUi();
       bindLang();
@@ -682,8 +730,13 @@
       bindReset();
       bindQaControls();
       window.dispatchEvent(new CustomEvent('tekg:shared-ready'));
-      await renderDefaultTree();
-      setDetail((UI_TEXT[getLang()] || UI_TEXT.en).ready);
+      if (initialQuery) {
+        if (els.search) els.search.value = initialQuery;
+        await loadDynamicGraph(initialQuery);
+      } else {
+        await renderDefaultTree();
+        setDetail((UI_TEXT[getLang()] || UI_TEXT.en).ready);
+      }
     } catch (error) {
       setDetail(error && error.message ? error.message : 'Failed to initialize G6 workspace');
       console.error('Failed to initialize G6 workspace:', error);

@@ -118,16 +118,22 @@
 
   <script>
     const __tekgG6Url = new URL(window.location.href);
-    __tekgG6Url.searchParams.set('renderer', 'g6');
-    window.history.replaceState({}, '', __tekgG6Url.toString());
+    const __tekgEmbedMode = __tekgG6Url.searchParams.get('embed') || '';
+    const __tekgInitialQuery = __tekgG6Url.searchParams.get('q') || '';
+    if (!__tekgEmbedMode) {
+      __tekgG6Url.searchParams.set('renderer', 'g6');
+      window.history.replaceState({}, '', __tekgG6Url.toString());
+    }
     window.__TEKG_RENDERER_MODE = 'g6';
-    window.__TEKG_EMBED_MODE = '';
+    window.__TEKG_EMBED_MODE = __tekgEmbedMode;
+    window.__TEKG_INITIAL_QUERY = __tekgInitialQuery;
   </script>
   <script src="graph_demo_data.js"></script>
   <script src="assets/js/index_demo.data.js"></script>
   <script>
     window.__TEKG_RENDERER_MODE = 'g6';
-    window.__TEKG_EMBED_MODE = '';
+    window.__TEKG_EMBED_MODE = window.__TEKG_EMBED_MODE || '';
+    window.__TEKG_INITIAL_QUERY = window.__TEKG_INITIAL_QUERY || '';
   </script>
   <script src="assets/js/renderers/g6/default-tree.js"></script>
   <script src="assets/js/renderers/g6/dynamic-graph.js"></script>
