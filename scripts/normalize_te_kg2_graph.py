@@ -3,6 +3,7 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
 from semantic_aliases import EXTRA_DISEASE_ALIASES, EXTRA_FUNCTION_ALIASES, EXTRA_TE_ALIASES
 
 INPUT_FILE = Path("data/raw/te_kg2.jsonl")
@@ -151,6 +152,7 @@ FUNCTION_ALIASES = {
 TE_ALIASES.update(EXTRA_TE_ALIASES)
 DISEASE_ALIASES.update(EXTRA_DISEASE_ALIASES)
 FUNCTION_ALIASES.update(EXTRA_FUNCTION_ALIASES)
+DISEASE_CLASS_MAP = build_disease_top_class_map()
 
 
 def normalize_whitespace(text: str) -> str:
@@ -274,9 +276,24 @@ def dedupe_entities(items: list[dict], entity_type: str) -> list[dict]:
         description = normalize_whitespace(item.get("description", ""))
         dedupe_key = canonical_name.casefold()
         if dedupe_key not in deduped:
-            deduped[dedupe_key] = {"name": canonical_name, "description": description}
+            payload = {"name": canonical_name, "description": description}
+            if entity_type == "diseases":
+                disease_class = normalize_whitespace(item.get("disease_class", "")) or lookup_disease_class(
+                    canonical_name,
+                    DISEASE_CLASS_MAP,
+                )
+                if disease_class:
+                    payload["disease_class"] = disease_class
+            deduped[dedupe_key] = payload
         elif not deduped[dedupe_key]["description"] and description:
             deduped[dedupe_key]["description"] = description
+        elif entity_type == "diseases" and not deduped[dedupe_key].get("disease_class"):
+            disease_class = normalize_whitespace(item.get("disease_class", "")) or lookup_disease_class(
+                canonical_name,
+                DISEASE_CLASS_MAP,
+            )
+            if disease_class:
+                deduped[dedupe_key]["disease_class"] = disease_class
     return sorted(deduped.values(), key=lambda x: x["name"].casefold())
 
 

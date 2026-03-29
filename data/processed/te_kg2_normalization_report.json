@@ -1,10 +1,10 @@
 {
   "records": 1843,
   "paper_nodes": 1831,
-  "te_nodes": 124,
-  "disease_nodes": 533,
-  "function_nodes": 3016,
-  "relation_count": 12145,
+  "te_nodes": 123,
+  "disease_nodes": 513,
+  "function_nodes": 2997,
+  "relation_count": 12130,
   "top_relations": [
     [
       "报道",
@@ -16,19 +16,19 @@
     ],
     [
       "介导",
-      701
+      693
     ],
     [
       "导致",
-      697
+      692
     ],
     [
       "促进",
-      400
+      399
     ],
     [
       "执行",
-      285
+      284
     ],
     [
       "影响",

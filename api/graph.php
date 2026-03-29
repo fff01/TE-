@@ -47,7 +47,7 @@ if ($config['neo4j_password'] === '') {
 }
 
 $query = trim((string)($_GET['q'] ?? ''));
-$keyLevel = max(1, min(3, (int)($_GET['key_level'] ?? 1)));
+$keyLevel = max(1, min(5, (int)($_GET['key_level'] ?? 1)));
 
 if ($query === '') {
     $query = 'LINE1';
@@ -76,10 +76,12 @@ function env_value(array $names, ?string $default = null): ?string
 final class GraphService
 {
     private array $config;
+    private array $diseaseNameTranslations = [];
 
     public function __construct(array $config)
     {
         $this->config = $config;
+        $this->diseaseNameTranslations = $this->loadDiseaseNameTranslations();
     }
 
     public function search(string $query, int $keyLevel = 1): array
@@ -140,11 +142,13 @@ RETURN
   n.name AS source_name,
   n.description AS source_description,
   n.pmid AS source_pmid,
+  n.disease_class AS source_disease_class,
   elementId(m) AS target_element_id,
   labels(m) AS target_labels,
   m.name AS target_name,
   m.description AS target_description,
   m.pmid AS target_pmid,
+  m.disease_class AS target_disease_class,
   type(r) AS relation_type,
   coalesce(r.predicate, type(r)) AS relation_label,
   coalesce(r.pmids, []) AS relation_pmids,
@@ -167,11 +171,13 @@ RETURN
   d.name AS source_name,
   d.description AS source_description,
   d.pmid AS source_pmid,
+  d.disease_class AS source_disease_class,
   elementId(te) AS target_element_id,
   labels(te) AS target_labels,
   te.name AS target_name,
   te.description AS target_description,
   te.pmid AS target_pmid,
+  te.disease_class AS target_disease_class,
   type(r1) AS relation_type,
   coalesce(r1.predicate, type(r1)) AS relation_label,
   coalesce(r1.pmids, []) AS relation_pmids,
@@ -195,29 +201,46 @@ CYPHER,
         });
         $rows = array_slice($rows, 0, 8);
 
-        foreach ($rows as &$row) {
-            $teId = (string)$row['target_element_id'];
-            $supportPmids = array_values(array_unique(array_filter(
-                array_map('strval', $row['relation_pmids'] ?? []),
-                static fn(string $pmid): bool => $pmid !== ''
-            )));
-
-            $row['expanded'] = array_merge(
-                array_slice($this->loadTeFunctionRows($teId), 0, 10),
-                array_slice(
-                    $this->loadPaperRowsByPmids(
-                        $supportPmids,
-                        (string)$anchor['element_id'],
-                        (string)$anchor['name']
-                    ),
-                    0,
-                    12
-                )
-            );
+        $teIds = [];
+        $supportPmids = [];
+        foreach ($rows as $row) {
+            $teId = (string)($row['target_element_id'] ?? '');
+            if ($teId !== '') {
+                $teIds[] = $teId;
+            }
+            foreach (($row['relation_pmids'] ?? []) as $pmid) {
+                $pmid = trim((string)$pmid);
+                if ($pmid !== '') {
+                    $supportPmids[$pmid] = true;
+                }
+            }
         }
-        unset($row);
 
-        return $rows;
+        $functionRows = array_slice(
+            $this->loadDiseaseFunctionRows(
+                (string)$anchor['element_id'],
+                (string)$anchor['name'],
+                (string)($anchor['description'] ?? ''),
+                (string)($anchor['pmid'] ?? ''),
+                (string)($anchor['disease_class'] ?? ''),
+                array_values(array_unique($teIds))
+            ),
+            0,
+            12
+        );
+
+        $paperRows = array_slice(
+            $this->loadPaperRowsByPmids(
+                array_keys($supportPmids),
+                (string)$anchor['element_id'],
+                (string)$anchor['name'],
+                (string)($anchor['disease_class'] ?? '')
+            ),
+            0,
+            12
+        );
+
+        return array_merge($rows, $functionRows, $paperRows);
     }
 
     private function buildPaperContextRows(array $anchor): array
@@ -245,11 +268,13 @@ RETURN
   te.name AS source_name,
   te.description AS source_description,
   te.pmid AS source_pmid,
+  te.disease_class AS source_disease_class,
   elementId(f) AS target_element_id,
   labels(f) AS target_labels,
   f.name AS target_name,
   f.description AS target_description,
   f.pmid AS target_pmid,
+  f.disease_class AS target_disease_class,
   type(r) AS relation_type,
   coalesce(r.predicate, type(r)) AS relation_label,
   coalesce(r.pmids, []) AS relation_pmids,
@@ -269,7 +294,63 @@ CYPHER,
         return $rows;
     }
 
-    private function loadPaperRowsByPmids(array $pmids, string $diseaseId, string $diseaseName): array
+    private function loadDiseaseFunctionRows(
+        string $diseaseId,
+        string $diseaseName,
+        string $diseaseDescription,
+        string $diseasePmid,
+        string $diseaseClass,
+        array $teIds
+    ): array {
+        if (empty($teIds)) {
+            return [];
+        }
+
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (d:Disease)-[:BIO_RELATION]-(te:TE)-[r:BIO_RELATION]-(f:Function)
+WHERE elementId(d) = $diseaseId AND elementId(te) IN $teIds
+RETURN
+  $diseaseId AS source_element_id,
+  ['Disease'] AS source_labels,
+  $diseaseName AS source_name,
+  $diseaseDescription AS source_description,
+  $diseasePmid AS source_pmid,
+  $diseaseClass AS source_disease_class,
+  elementId(f) AS target_element_id,
+  labels(f) AS target_labels,
+  f.name AS target_name,
+  f.description AS target_description,
+  f.pmid AS target_pmid,
+  f.disease_class AS target_disease_class,
+  type(r) AS relation_type,
+  coalesce(r.predicate, type(r)) AS relation_label,
+  coalesce(r.pmids, []) AS relation_pmids,
+  coalesce(r.evidence, '') AS relation_evidence
+CYPHER,
+            [
+                'diseaseId' => $diseaseId,
+                'diseaseName' => $diseaseName,
+                'diseaseDescription' => $diseaseDescription,
+                'diseasePmid' => $diseasePmid,
+                'diseaseClass' => $diseaseClass,
+                'teIds' => $teIds,
+            ]
+        );
+
+        usort($rows, static function (array $a, array $b): int {
+            $left = count($a['relation_pmids'] ?? []);
+            $right = count($b['relation_pmids'] ?? []);
+            if ($left === $right) {
+                return strcasecmp((string)($a['target_name'] ?? ''), (string)($b['target_name'] ?? ''));
+            }
+            return $right <=> $left;
+        });
+
+        return $rows;
+    }
+
+    private function loadPaperRowsByPmids(array $pmids, string $diseaseId, string $diseaseName, string $diseaseClass): array
     {
         if (empty($pmids)) {
             return [];
@@ -285,11 +366,13 @@ RETURN
   p.name AS source_name,
   p.description AS source_description,
   p.pmid AS source_pmid,
+  '' AS source_disease_class,
   $diseaseId AS target_element_id,
   ['Disease'] AS target_labels,
   $diseaseName AS target_name,
   '' AS target_description,
   '' AS target_pmid,
+  $diseaseClass AS target_disease_class,
   'EVIDENCE_RELATION' AS relation_type,
   '支持该关联' AS relation_label,
   [p.pmid] AS relation_pmids,
@@ -300,6 +383,7 @@ CYPHER,
                 'pmids' => $pmids,
                 'diseaseId' => $diseaseId,
                 'diseaseName' => $diseaseName,
+                'diseaseClass' => $diseaseClass,
             ]
         );
     }
@@ -316,11 +400,13 @@ RETURN
   $paperName AS source_name,
   '' AS source_description,
   $pmid AS source_pmid,
+  '' AS source_disease_class,
   elementId(d) AS target_element_id,
   labels(d) AS target_labels,
   d.name AS target_name,
   d.description AS target_description,
   d.pmid AS target_pmid,
+  d.disease_class AS target_disease_class,
   'EVIDENCE_RELATION' AS relation_type,
   '支持该关联' AS relation_label,
   [$pmid] AS relation_pmids,
@@ -334,11 +420,13 @@ RETURN
   $paperName AS source_name,
   '' AS source_description,
   $pmid AS source_pmid,
+  '' AS source_disease_class,
   elementId(te) AS target_element_id,
   labels(te) AS target_labels,
   te.name AS target_name,
   te.description AS target_description,
   te.pmid AS target_pmid,
+  te.disease_class AS target_disease_class,
   'EVIDENCE_RELATION' AS relation_type,
   '支持该关联' AS relation_label,
   [$pmid] AS relation_pmids,
@@ -570,7 +658,8 @@ RETURN
   labels(n) AS labels,
   n.name AS name,
   n.description AS description,
-  n.pmid AS pmid
+  n.pmid AS pmid,
+  n.disease_class AS disease_class
 LIMIT 10
 CYPHER,
             ['exact' => $normalized, 'pmid' => $query]
@@ -598,7 +687,8 @@ RETURN
   labels(n) AS labels,
   n.name AS name,
   n.description AS description,
-  n.pmid AS pmid
+  n.pmid AS pmid,
+  n.disease_class AS disease_class
 ORDER BY
   CASE
     WHEN 'TE' IN labels(n) THEN 0
@@ -640,6 +730,7 @@ CYPHER,
             'name' => $anchor['name'],
             'description' => $anchor['description'] ?? '',
             'pmid' => $anchor['pmid'] ?? '',
+            'disease_class' => $anchor['disease_class'] ?? '',
         ]);
 
         foreach ($rows as $row) {
@@ -652,6 +743,7 @@ CYPHER,
                 'name' => $row['source_name'],
                 'description' => $row['source_description'] ?? '',
                 'pmid' => $row['source_pmid'] ?? '',
+                'disease_class' => $row['source_disease_class'] ?? '',
             ]);
             $this->addNode($nodes, [
                 'element_id' => $row['target_element_id'],
@@ -659,6 +751,7 @@ CYPHER,
                 'name' => $row['target_name'],
                 'description' => $row['target_description'] ?? '',
                 'pmid' => $row['target_pmid'] ?? '',
+                'disease_class' => $row['target_disease_class'] ?? '',
             ]);
 
             $edgeId = $row['source_element_id'] . '__' . $row['relation_type'] . '__' . $row['target_element_id'];
@@ -684,6 +777,7 @@ CYPHER,
                     'name' => $extra['source_name'],
                     'description' => $extra['source_description'] ?? '',
                     'pmid' => $extra['source_pmid'] ?? '',
+                    'disease_class' => $extra['source_disease_class'] ?? '',
                 ]);
                 $this->addNode($nodes, [
                     'element_id' => $extra['target_element_id'],
@@ -691,6 +785,7 @@ CYPHER,
                     'name' => $extra['target_name'],
                     'description' => $extra['target_description'] ?? '',
                     'pmid' => $extra['target_pmid'] ?? '',
+                    'disease_class' => $extra['target_disease_class'] ?? '',
                 ]);
                 $extraEdgeId = $extra['source_element_id'] . '__' . $extra['relation_type'] . '__' . $extra['target_element_id'];
                 $edges[$extraEdgeId] = [
@@ -707,6 +802,20 @@ CYPHER,
             }
         }
 
+        $this->collapseDuplicateDiseaseNodes($nodes, $edges);
+
+        $nodeIds = array_keys($nodes);
+        $degrees = $this->loadNodeDegrees($nodeIds);
+        $anchorId = (string)($anchor['element_id'] ?? '');
+        $threshold = max(1, (int)($this->config['key_node_threshold'] ?? 15));
+
+        foreach ($nodes as $id => &$node) {
+            $degree = (int)($degrees[$id] ?? 0);
+            $node['data']['degree'] = $degree;
+            $node['data']['isKeyNode'] = ($id === $anchorId) || ($degree > $threshold);
+        }
+        unset($node);
+
         return array_merge(array_values($nodes), array_values($edges));
     }
 
@@ -720,15 +829,145 @@ CYPHER,
             return;
         }
 
+        $type = $this->normalizeType($row['labels'] ?? []);
+        $label = (string)($row['name'] ?? '');
+        if ($type === 'Disease') {
+            $label = $this->canonicalDiseaseLabel($label);
+        }
+
         $nodes[$id] = [
             'data' => [
                 'id' => $id,
-                'label' => (string)($row['name'] ?? ''),
-                'type' => $this->normalizeType($row['labels'] ?? []),
+                'label' => $label,
+                'rawLabel' => (string)($row['name'] ?? ''),
+                'type' => $type,
                 'description' => (string)($row['description'] ?? ''),
                 'pmid' => (string)($row['pmid'] ?? ''),
+                'disease_class' => (string)($row['disease_class'] ?? ''),
             ],
         ];
+    }
+
+    private function collapseDuplicateDiseaseNodes(array &$nodes, array &$edges): void
+    {
+        $groups = [];
+        foreach ($nodes as $id => $node) {
+            $data = $node['data'] ?? [];
+            if (($data['type'] ?? '') !== 'Disease') {
+                continue;
+            }
+            $label = trim((string)($data['label'] ?? ''));
+            if ($label === '') {
+                continue;
+            }
+            $groups[$label][] = $id;
+        }
+
+        if (empty($groups)) {
+            return;
+        }
+
+        $idRemap = [];
+        foreach ($groups as $label => $ids) {
+            if (count($ids) < 2) {
+                continue;
+            }
+            $keepId = $this->pickPreferredDiseaseNodeId($ids, $nodes, $label);
+            foreach ($ids as $id) {
+                if ($id === $keepId) {
+                    continue;
+                }
+                $idRemap[$id] = $keepId;
+                unset($nodes[$id]);
+            }
+        }
+
+        if (empty($idRemap)) {
+            return;
+        }
+
+        $collapsedEdges = [];
+        foreach ($edges as $edge) {
+            $data = $edge['data'] ?? [];
+            $source = (string)($data['source'] ?? '');
+            $target = (string)($data['target'] ?? '');
+            if (isset($idRemap[$source])) {
+                $data['source'] = $idRemap[$source];
+            }
+            if (isset($idRemap[$target])) {
+                $data['target'] = $idRemap[$target];
+            }
+            if (($data['source'] ?? '') === ($data['target'] ?? '')) {
+                continue;
+            }
+            $collapsedKey = implode('__', [
+                (string)($data['source'] ?? ''),
+                (string)($data['relationType'] ?? ''),
+                (string)($data['target'] ?? ''),
+            ]);
+            if (isset($collapsedEdges[$collapsedKey])) {
+                $existingPmids = $collapsedEdges[$collapsedKey]['data']['pmids'] ?? [];
+                $newPmids = $data['pmids'] ?? [];
+                $collapsedEdges[$collapsedKey]['data']['pmids'] = array_values(array_unique(array_merge($existingPmids, $newPmids)));
+                if (($collapsedEdges[$collapsedKey]['data']['evidence'] ?? '') === '' && ($data['evidence'] ?? '') !== '') {
+                    $collapsedEdges[$collapsedKey]['data']['evidence'] = $data['evidence'];
+                }
+                continue;
+            }
+            $data['id'] = $collapsedKey;
+            $collapsedEdges[$collapsedKey] = ['data' => $data];
+        }
+
+        $edges = $collapsedEdges;
+    }
+
+    private function pickPreferredDiseaseNodeId(array $ids, array $nodes, string $canonicalLabel): string
+    {
+        $preferred = $ids[0];
+        foreach ($ids as $id) {
+            $raw = (string)(($nodes[$id]['data']['rawLabel'] ?? ''));
+            if ($raw === $canonicalLabel && !$this->containsChinese($raw)) {
+                return $id;
+            }
+            if (!$this->containsChinese($raw) && $this->containsChinese((string)($nodes[$preferred]['data']['rawLabel'] ?? ''))) {
+                $preferred = $id;
+            }
+        }
+        return $preferred;
+    }
+
+    private function canonicalDiseaseLabel(string $label): string
+    {
+        return $this->diseaseNameTranslations[$label] ?? $label;
+    }
+
+    private function loadDiseaseNameTranslations(): array
+    {
+        $path = dirname(__DIR__) . '/data/processed/entity_description_key_translation_cache.json';
+        if (!is_file($path)) {
+            return [];
+        }
+        $raw = file_get_contents($path);
+        if ($raw === false || $raw === '') {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $map = [];
+        foreach ($decoded as $source => $target) {
+            if (!is_string($source) || !is_string($target) || trim($source) === '' || trim($target) === '') {
+                continue;
+            }
+            $map[$source] = $target;
+        }
+        return $map;
+    }
+
+    private function containsChinese(string $text): bool
+    {
+        return preg_match('/\p{Han}/u', $text) === 1;
     }
 
     private function normalizeType(array $labels): string

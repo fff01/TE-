@@ -461,143 +461,178 @@
     "diseases": [
       {
         "name": "acquired immunodeficiency syndrome (AIDS)",
-        "description": "获得性免疫缺陷综合征，由人类免疫缺陷病毒（HIV）感染引起的疾病。"
+        "description": "获得性免疫缺陷综合征，由人类免疫缺陷病毒（HIV）感染引起的疾病。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "age-related macular degeneration",
-        "description": "年龄相关性黄斑变性，是一种导致中心视力丧失的视网膜疾病。"
+        "description": "年龄相关性黄斑变性，是一种导致中心视力丧失的视网膜疾病。",
+        "disease_class": "Diseases of the visual system"
       },
       {
         "name": "ageing",
-        "description": "衰老是生物体随时间推移功能逐渐衰退的过程。"
+        "description": "衰老是生物体随时间推移功能逐渐衰退的过程。",
+        "disease_class": "Diseases of the digestive system"
       },
       {
         "name": "Aicardi-Goutières syndrome",
-        "description": "Aicardi-Goutières综合征是一种遗传性自身免疫性疾病，与干扰素信号通路异常相关。"
+        "description": "Aicardi-Goutières综合征是一种遗传性自身免疫性疾病，与干扰素信号通路异常相关。",
+        "disease_class": "Endocrine, nutritional or metabolic diseases"
       },
       {
         "name": "AIDS",
-        "description": "获得性免疫缺陷综合征，由人类免疫缺陷病毒（HIV）感染引起。"
+        "description": "获得性免疫缺陷综合征，由人类免疫缺陷病毒（HIV）感染引起。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "ALS",
-        "description": "肌萎缩侧索硬化症，一种进行性神经退行性疾病，主要影响运动神经元。"
+        "description": "肌萎缩侧索硬化症，一种进行性神经退行性疾病，主要影响运动神经元。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "ALS with other neurological disorder",
-        "description": "伴有其他神经系统疾病的肌萎缩侧索硬化症。"
+        "description": "伴有其他神经系统疾病的肌萎缩侧索硬化症。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "Alzheimer's disease",
-        "description": "阿尔茨海默病，一种与年龄相关的神经退行性疾病。"
+        "description": "阿尔茨海默病，一种与年龄相关的神经退行性疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "Amyotrophic lateral sclerosis",
-        "description": "肌萎缩侧索硬化症，一种致命的神经退行性疾病，涉及运动神经元丧失，病因不明且无已知治愈方法。"
+        "description": "肌萎缩侧索硬化症，一种致命的神经退行性疾病，涉及运动神经元丧失，病因不明且无已知治愈方法。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "Angelman syndrome",
-        "description": "安格曼综合征，一种神经发育障碍，与PWS区域相关的印记基因异常有关。"
+        "description": "安格曼综合征，一种神经发育障碍，与PWS区域相关的印记基因异常有关。",
+        "disease_class": "Developmental anomalies"
       },
       {
         "name": "ataxia telangiectasia",
-        "description": "共济失调毛细血管扩张症，一种由ATM基因突变引起的神经退行性疾病。"
+        "description": "共济失调毛细血管扩张症，一种由ATM基因突变引起的神经退行性疾病。",
+        "disease_class": "Diseases of the immune system"
       },
       {
         "name": "atrophic macular degeneration",
-        "description": "萎缩性黄斑变性，是年龄相关性黄斑变性的主要类型之一。"
+        "description": "萎缩性黄斑变性，是年龄相关性黄斑变性的主要类型之一。",
+        "disease_class": "Diseases of the visual system"
       },
       {
         "name": "autism spectrum disorder",
-        "description": "自闭症谱系障碍，一种神经发育障碍。"
+        "description": "自闭症谱系障碍，一种神经发育障碍。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "autoimmune disorders",
-        "description": "自身免疫性疾病，指免疫系统错误攻击自身组织的疾病。"
+        "description": "自身免疫性疾病，指免疫系统错误攻击自身组织的疾病。",
+        "disease_class": "Diseases of the immune system"
       },
       {
         "name": "autoimmunity",
-        "description": "自身免疫，是免疫系统错误攻击自身正常组织的状态。"
+        "description": "自身免疫，是免疫系统错误攻击自身正常组织的状态。",
+        "disease_class": "Diseases of the immune system"
       },
       {
         "name": "Bardet-Biedl syndrome",
-        "description": "Bardet-Biedl综合征是一种纤毛病，特征包括视网膜色素变性、肥胖、多指畸形、认知障碍和肾衰竭。"
+        "description": "Bardet-Biedl综合征是一种纤毛病，特征包括视网膜色素变性、肥胖、多指畸形、认知障碍和肾衰竭。",
+        "disease_class": "Endocrine, nutritional or metabolic diseases"
       },
       {
         "name": "Barrett's esophagus",
-        "description": "巴雷特食管，是一种食管内层由复层鳞状上皮化生为柱状上皮的常见疾病。"
+        "description": "巴雷特食管，是一种食管内层由复层鳞状上皮化生为柱状上皮的常见疾病。",
+        "disease_class": "Diseases of the digestive system"
       },
       {
         "name": "beta-thalassemia",
-        "description": "β-地中海贫血，一种由β-珠蛋白基因突变引起的遗传性血液疾病。"
+        "description": "β-地中海贫血，一种由β-珠蛋白基因突变引起的遗传性血液疾病。",
+        "disease_class": "Diseases of the blood or blood-forming organs"
       },
       {
         "name": "bipolar disorder",
-        "description": "双相情感障碍，是一种以情绪在躁狂和抑郁之间反复波动为特征的精神疾病。"
+        "description": "双相情感障碍，是一种以情绪在躁狂和抑郁之间反复波动为特征的精神疾病。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "brain disorders",
-        "description": "脑部疾病，指摘要中提到的各种脑部疾病。"
+        "description": "脑部疾病，指摘要中提到的各种脑部疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "breast cancer",
-        "description": "乳腺癌是一种发生在乳腺组织的恶性肿瘤。"
+        "description": "乳腺癌是一种发生在乳腺组织的恶性肿瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "C9orf72 gene-mutated ALS",
-        "description": "携带C9orf72基因突变的肌萎缩侧索硬化症患者亚型。"
+        "description": "携带C9orf72基因突变的肌萎缩侧索硬化症患者亚型。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "cancers",
-        "description": "癌症是一类以细胞异常增殖和扩散为特征的疾病。"
+        "description": "癌症是一类以细胞异常增殖和扩散为特征的疾病。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "carcinogenesis",
-        "description": "癌症发生的过程，可能涉及逆转录转座子插入对癌基因或抑癌基因的干扰。"
+        "description": "癌症发生的过程，可能涉及逆转录转座子插入对癌基因或抑癌基因的干扰。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "carcinoma",
-        "description": "癌，一种恶性肿瘤，在本文中特指由PhIP诱导的乳腺肿瘤。"
+        "description": "癌，一种恶性肿瘤，在本文中特指由PhIP诱导的乳腺肿瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "Chagas disease",
-        "description": "由克氏锥虫感染引起的寄生虫病，也称为恰加斯病。"
+        "description": "由克氏锥虫感染引起的寄生虫病，也称为恰加斯病。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "choroideremia",
-        "description": "一种X连锁的进行性眼病，由CHM基因突变引起。"
+        "description": "一种X连锁的进行性眼病，由CHM基因突变引起。",
+        "disease_class": "Diseases of the visual system"
       },
       {
         "name": "Chromothripsis",
-        "description": "染色体碎裂是一种复杂的基因组重排现象，由多个局部DNA双链断裂引起。"
+        "description": "染色体碎裂是一种复杂的基因组重排现象，由多个局部DNA双链断裂引起。",
+        "disease_class": "Developmental anomalies"
       },
       {
         "name": "chronic human illness",
-        "description": "慢性人类疾病是长期持续或反复发作的疾病。"
+        "description": "慢性人类疾病是长期持续或反复发作的疾病。",
+        "disease_class": "others"
       },
       {
         "name": "chronic inflammation",
-        "description": "慢性炎症，一种持续性的炎症反应状态。"
+        "description": "慢性炎症，一种持续性的炎症反应状态。",
+        "disease_class": "Diseases of the respiratory system"
       },
       {
         "name": "colon cancer",
-        "description": "结肠癌。"
+        "description": "结肠癌。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "colorectal cancer",
-        "description": "结直肠癌，研究发现体细胞逆转录转座可能在其病因学中发挥作用。"
+        "description": "结直肠癌，研究发现体细胞逆转录转座可能在其病因学中发挥作用。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "colorectal cancers",
-        "description": "结直肠癌，一种消化道恶性肿瘤。"
+        "description": "结直肠癌，一种消化道恶性肿瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "colorectal tumourigenesis",
-        "description": "结直肠肿瘤发生过程。"
+        "description": "结直肠肿瘤发生过程。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "cutaneous T-cell lymphomas (CTCL)",
-        "description": "皮肤T细胞淋巴瘤是一种影响皮肤T淋巴细胞的癌症。"
+        "description": "皮肤T细胞淋巴瘤是一种影响皮肤T淋巴细胞的癌症。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "de novo突变相关疾病",
@@ -605,47 +640,58 @@
       },
       {
         "name": "disease",
-        "description": "摘要中提及LINE-1及其相关转座子的活性会导致疾病。"
+        "description": "摘要中提及LINE-1及其相关转座子的活性会导致疾病。",
+        "disease_class": "Diseases of the musculoskeletal system or connective tissue"
       },
       {
         "name": "Down syndrome",
-        "description": "唐氏综合征，一种由21号染色体三体引起的神经发育疾病，导致智力障碍。"
+        "description": "唐氏综合征，一种由21号染色体三体引起的神经发育疾病，导致智力障碍。",
+        "disease_class": "Diseases of the skin"
       },
       {
         "name": "Duchenne muscular dystrophy",
-        "description": "杜氏肌营养不良症是一种由抗肌萎缩蛋白基因突变引起的X连锁隐性遗传性肌肉疾病。"
+        "description": "杜氏肌营养不良症是一种由抗肌萎缩蛋白基因突变引起的X连锁隐性遗传性肌肉疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "EBV-associated gastric cancer",
-        "description": "EBV相关胃癌，与EB病毒感染相关的胃癌亚型。"
+        "description": "EBV相关胃癌，与EB病毒感染相关的胃癌亚型。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "epithelial tumors",
-        "description": "上皮细胞来源的肿瘤，LINE-1在其中高度活跃。"
+        "description": "上皮细胞来源的肿瘤，LINE-1在其中高度活跃。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "esophageal adenocarcinoma",
-        "description": "食管腺癌，是巴雷特食管患者易患的一种食管恶性肿瘤。"
+        "description": "食管腺癌，是巴雷特食管患者易患的一种食管恶性肿瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "familial ALS",
-        "description": "家族性肌萎缩侧索硬化症。"
+        "description": "家族性肌萎缩侧索硬化症。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "Fanconi Anemia",
-        "description": "范可尼贫血，一种以癌症易感性升高和促炎细胞因子产生为特征的遗传性疾病。"
+        "description": "范可尼贫血，一种以癌症易感性升高和促炎细胞因子产生为特征的遗传性疾病。",
+        "disease_class": "Diseases of the blood or blood-forming organs"
       },
       {
         "name": "frontotemporal lobar degeneration",
-        "description": "一组与额叶和颞叶变性相关的疾病，导致行为、语言和执行功能进行性恶化。"
+        "description": "一组与额叶和颞叶变性相关的疾病，导致行为、语言和执行功能进行性恶化。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "FTD",
-        "description": "额颞叶痴呆，一种以额叶和颞叶变性为特征的神经退行性疾病。"
+        "description": "额颞叶痴呆，一种以额叶和颞叶变性为特征的神经退行性疾病。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "geographic atrophy",
-        "description": "地图样萎缩，是年龄相关性黄斑变性的一种不可治疗的萎缩类型。"
+        "description": "地图样萎缩，是年龄相关性黄斑变性的一种不可治疗的萎缩类型。",
+        "disease_class": "Diseases of the visual system"
       },
       {
         "name": "H3 K27M突变型弥漫性中线胶质瘤",
@@ -653,27 +699,33 @@
       },
       {
         "name": "HBV-associated HCC",
-        "description": "乙型肝炎病毒相关的肝细胞癌。"
+        "description": "乙型肝炎病毒相关的肝细胞癌。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "heart disease",
-        "description": "心脏病是一类影响心脏结构和功能的疾病。"
+        "description": "心脏病是一类影响心脏结构和功能的疾病。",
+        "disease_class": "Diseases of the circulatory system"
       },
       {
         "name": "hemimegalencephaly",
-        "description": "一种大脑发育畸形，表现为一侧大脑半球异常增大。"
+        "description": "一种大脑发育畸形，表现为一侧大脑半球异常增大。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "Hepatitis B virus infection",
-        "description": "乙型肝炎病毒感染，由乙型肝炎病毒引起。"
+        "description": "乙型肝炎病毒感染，由乙型肝炎病毒引起。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "Hepatitis C virus infection",
-        "description": "丙型肝炎病毒感染是由丙型肝炎病毒引起的肝脏感染。"
+        "description": "丙型肝炎病毒感染是由丙型肝炎病毒引起的肝脏感染。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "hepatocellular carcinoma",
-        "description": "肝细胞癌，一种原发性肝癌。"
+        "description": "肝细胞癌，一种原发性肝癌。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "HIV-1感染",
@@ -681,11 +733,13 @@
       },
       {
         "name": "HIV-associated neurocognitive disorder (HAND)",
-        "description": "HIV相关神经认知障碍，是HIV感染患者中常见的一组神经系统并发症。"
+        "description": "HIV相关神经认知障碍，是HIV感染患者中常见的一组神经系统并发症。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "HNSCC",
-        "description": "头颈部鳞状细胞癌，是摘要中提到的与ORF1p表达相关的癌症类型之一。"
+        "description": "头颈部鳞状细胞癌，是摘要中提到的与ORF1p表达相关的癌症类型之一。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "HPV相关癌症",
@@ -693,95 +747,118 @@
       },
       {
         "name": "human cancers",
-        "description": "人类癌症，许多类型的人类癌症以LINE-1启动子低甲基化、转录、ORF1p蛋白表达和体细胞逆转录转座为特征。"
+        "description": "人类癌症，许多类型的人类癌症以LINE-1启动子低甲基化、转录、ORF1p蛋白表达和体细胞逆转录转座为特征。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "human disease",
-        "description": "人类疾病，文中特指由逆转录转座子插入引起的约五十种不同类型的疾病。"
+        "description": "人类疾病，文中特指由逆转录转座子插入引起的约五十种不同类型的疾病。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "human diseases",
-        "description": "摘要中提及的与L1/Alu插入相关的多种人类疾病。"
+        "description": "摘要中提及的与L1/Alu插入相关的多种人类疾病。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "human genetic disorders",
-        "description": "人类遗传性疾病，指由遗传物质改变导致的疾病。"
+        "description": "人类遗传性疾病，指由遗传物质改变导致的疾病。",
+        "disease_class": "others"
       },
       {
         "name": "human pathogenesis",
-        "description": "人类疾病发生，指与LINE-1转座子异常活动相关的病理过程。"
+        "description": "人类疾病发生，指与LINE-1转座子异常活动相关的病理过程。",
+        "disease_class": "others"
       },
       {
         "name": "Huntington's disease",
-        "description": "亨廷顿病，一种由HTT基因中CAG重复序列异常扩增引起的常染色体显性遗传神经退行性疾病。"
+        "description": "亨廷顿病，一种由HTT基因中CAG重复序列异常扩增引起的常染色体显性遗传神经退行性疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "idiopathic temporal lobe epilepsy",
-        "description": "特发性颞叶癫痫，一种原因不明的局灶性癫痫。"
+        "description": "特发性颞叶癫痫，一种原因不明的局灶性癫痫。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "IFN-based autoimmune diseases",
-        "description": "基于干扰素的自身免疫性疾病，其分子基础可能与LINE-1触发的免疫激活有关。"
+        "description": "基于干扰素的自身免疫性疾病，其分子基础可能与LINE-1触发的免疫激活有关。",
+        "disease_class": "Diseases of the immune system"
       },
       {
         "name": "inflammation",
-        "description": "炎症，是机体对损伤或感染的一种复杂生物反应。"
+        "description": "炎症，是机体对损伤或感染的一种复杂生物反应。",
+        "disease_class": "Diseases of the musculoskeletal system or connective tissue"
       },
       {
         "name": "Kaposi's sarcoma",
-        "description": "卡波西肉瘤，一种与卡波西肉瘤相关疱疹病毒（KSHV）感染相关的肿瘤。"
+        "description": "卡波西肉瘤，一种与卡波西肉瘤相关疱疹病毒（KSHV）感染相关的肿瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "kinky tail phenotype",
-        "description": "kinky tail phenotype（卷尾表型）是本研究在小鼠中观察到的一种由Axin1基因异常引起的尾部弯曲的形态学表型。"
+        "description": "kinky tail phenotype（卷尾表型）是本研究在小鼠中观察到的一种由Axin1基因异常引起的尾部弯曲的形态学表型。",
+        "disease_class": "Endocrine, nutritional or metabolic diseases"
       },
       {
         "name": "late-onset AD",
-        "description": "晚发性阿尔茨海默病是阿尔茨海默病的主要类型。"
+        "description": "晚发性阿尔茨海默病是阿尔茨海默病的主要类型。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "leukemia",
-        "description": "白血病是一类起源于造血系统的恶性血液肿瘤。"
+        "description": "白血病是一类起源于造血系统的恶性血液肿瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "Li-Fraumeni Syndrome",
-        "description": "一种遗传性癌症易感综合征，由TP53基因的致病性或可能致病性变异引起。"
+        "description": "一种遗传性癌症易感综合征，由TP53基因的致病性或可能致病性变异引起。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "LSCC",
-        "description": "肺鳞状细胞癌，是摘要中提到的与ORF1p表达相关的癌症类型之一。"
+        "description": "肺鳞状细胞癌，是摘要中提到的与ORF1p表达相关的癌症类型之一。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "lung adenocarcinoma",
-        "description": "肺腺癌，非小细胞肺癌的一种主要亚型。"
+        "description": "肺腺癌，非小细胞肺癌的一种主要亚型。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "lung cancer",
-        "description": "肺癌，一种起源于肺部组织的恶性肿瘤。"
+        "description": "肺癌，一种起源于肺部组织的恶性肿瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "lung squamous cell carcinoma",
-        "description": "肺鳞状细胞癌，是肺癌的一种主要亚型。"
+        "description": "肺鳞状细胞癌，是肺癌的一种主要亚型。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "major depression",
-        "description": "重度抑郁症，是一种以持续的情绪低落、兴趣丧失为核心症状的情感障碍。"
+        "description": "重度抑郁症，是一种以持续的情绪低落、兴趣丧失为核心症状的情感障碍。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "major depression disorder",
-        "description": "重度抑郁症，一种情绪障碍。"
+        "description": "重度抑郁症，一种情绪障碍。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "major depressive disorder",
-        "description": "重度抑郁症，一种常见的精神障碍。"
+        "description": "重度抑郁症，一种常见的精神障碍。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "Mendelian disease",
-        "description": "孟德尔遗传病，可由LINE-1诱导的插入突变引起。"
+        "description": "孟德尔遗传病，可由LINE-1诱导的插入突变引起。",
+        "disease_class": "Diseases of the immune system"
       },
       {
         "name": "mental disorders",
-        "description": "精神障碍，在摘要中提及可能与神经元中新的LINE-1插入导致的独特转录组有关。"
+        "description": "精神障碍，在摘要中提及可能与神经元中新的LINE-1插入导致的独特转录组有关。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "METH滥用诱导的记忆缺陷",
@@ -789,47 +866,58 @@
       },
       {
         "name": "mood disorders",
-        "description": "心境障碍，是一类以情绪紊乱为主要特征的精神疾病，包括抑郁症和双相情感障碍等。"
+        "description": "心境障碍，是一类以情绪紊乱为主要特征的精神疾病，包括抑郁症和双相情感障碍等。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "muscular dystrophy",
-        "description": "肌营养不良症，一组以进行性肌肉无力和退化为特征的遗传性疾病。"
+        "description": "肌营养不良症，一组以进行性肌肉无力和退化为特征的遗传性疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "neurodegenerative conditions",
-        "description": "摘要中推测可能与逆转录转座子现象相关的神经退行性疾病。"
+        "description": "摘要中推测可能与逆转录转座子现象相关的神经退行性疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "neurodegenerative diseases",
-        "description": "神经退行性疾病，一类以神经元功能进行性丧失为特征的疾病。"
+        "description": "神经退行性疾病，一类以神经元功能进行性丧失为特征的疾病。",
+        "disease_class": "Endocrine, nutritional or metabolic diseases"
       },
       {
         "name": "neurodevelopmental diseases",
-        "description": "神经发育疾病，一类在神经系统发育过程中出现的障碍。"
+        "description": "神经发育疾病，一类在神经系统发育过程中出现的障碍。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "neurodevelopmental disorders",
-        "description": "摘要中研究的多种神经发育障碍的总称，包括Rett综合征、结节性硬化症、共济失调-毛细血管扩张症和自闭症。"
+        "description": "摘要中研究的多种神经发育障碍的总称，包括Rett综合征、结节性硬化症、共济失调-毛细血管扩张症和自闭症。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "neurological and psychiatric diseases",
-        "description": "神经系统和精神疾病，其患者大脑中的L1活性与对照组相比存在差异。"
+        "description": "神经系统和精神疾病，其患者大脑中的L1活性与对照组相比存在差异。",
+        "disease_class": "others"
       },
       {
         "name": "neurological conditions",
-        "description": "神经系统疾病，L1活性与多种此类疾病相关。"
+        "description": "神经系统疾病，L1活性与多种此类疾病相关。",
+        "disease_class": "Diseases of the skin"
       },
       {
         "name": "neurological disease",
-        "description": "神经系统疾病，摘要中提及L1介导的体细胞嵌合可能驱动此类疾病。"
+        "description": "神经系统疾病，摘要中提及L1介导的体细胞嵌合可能驱动此类疾病。",
+        "disease_class": "Diseases of the immune system"
       },
       {
         "name": "neuropsychiatric conditions",
-        "description": "摘要中推测可能与逆转录转座子现象相关的神经精神疾病。"
+        "description": "摘要中推测可能与逆转录转座子现象相关的神经精神疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "neuropsychiatric disorders",
-        "description": "神经精神疾病是一类影响大脑功能和行为的疾病。"
+        "description": "神经精神疾病是一类影响大脑功能和行为的疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "NF1突变相关疾病",
@@ -837,87 +925,108 @@
       },
       {
         "name": "non-small cell lung cancer",
-        "description": "非小细胞肺癌，一种常见的肺癌类型。"
+        "description": "非小细胞肺癌，一种常见的肺癌类型。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "normal aging",
-        "description": "与年龄增长相关的生理和认知功能的自然衰退过程。"
+        "description": "与年龄增长相关的生理和认知功能的自然衰退过程。",
+        "disease_class": "others"
       },
       {
         "name": "Oral squamous cell carcinoma",
-        "description": "口腔鳞状细胞癌，在印度因烟草过度使用而高发。"
+        "description": "口腔鳞状细胞癌，在印度因烟草过度使用而高发。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "post-traumatic stress disorder",
-        "description": "创伤后应激障碍，一种焦虑障碍。"
+        "description": "创伤后应激障碍，一种焦虑障碍。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "Prader-Willi syndrome (PWS)",
-        "description": "普拉德-威利综合征，一种因父源染色体15q11-q13区域印记基因功能丧失导致的遗传性疾病。"
+        "description": "普拉德-威利综合征，一种因父源染色体15q11-q13区域印记基因功能丧失导致的遗传性疾病。",
+        "disease_class": "Developmental anomalies"
       },
       {
         "name": "primary effusion lymphoma",
-        "description": "原发性渗出性淋巴瘤，一种与卡波西肉瘤相关疱疹病毒（KSHV）感染相关的淋巴瘤。"
+        "description": "原发性渗出性淋巴瘤，一种与卡波西肉瘤相关疱疹病毒（KSHV）感染相关的淋巴瘤。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "retinitis pigmentosa-2",
-        "description": "视网膜色素变性2型，一种由RP2基因突变引起的遗传性视网膜疾病。"
+        "description": "视网膜色素变性2型，一种由RP2基因突变引起的遗传性视网膜疾病。",
+        "disease_class": "Diseases of the visual system"
       },
       {
         "name": "Rett syndrome",
-        "description": "Rett综合征，一种由MeCP2基因突变引起的神经发育疾病。"
+        "description": "Rett综合征，一种由MeCP2基因突变引起的神经发育疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "Rotor syndrome",
-        "description": "一种良性的隐性遗传病，表现为结合性高胆红素血症，由SLCO1B1和SLCO1B3基因纯合失活引起。"
+        "description": "一种良性的隐性遗传病，表现为结合性高胆红素血症，由SLCO1B1和SLCO1B3基因纯合失活引起。",
+        "disease_class": "Endocrine, nutritional or metabolic diseases"
       },
       {
         "name": "schizophrenia",
-        "description": "精神分裂症，一种严重的精神障碍，以思维、感知、情感和行为紊乱为特征。"
+        "description": "精神分裂症，一种严重的精神障碍，以思维、感知、情感和行为紊乱为特征。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "seizures/epilepsy",
-        "description": "癫痫发作/癫痫。"
+        "description": "癫痫发作/癫痫。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "severe diseases",
-        "description": "摘要中提及的由LINE-1逆转录转座导致的各种严重疾病。"
+        "description": "摘要中提及的由LINE-1逆转录转座导致的各种严重疾病。",
+        "disease_class": "Diseases of the genitourinary system"
       },
       {
         "name": "sporadic ALS",
-        "description": "散发性肌萎缩侧索硬化症，指没有明确家族遗传史的ALS病例。"
+        "description": "散发性肌萎缩侧索硬化症，指没有明确家族遗传史的ALS病例。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "sporadic diseases",
-        "description": "散发性疾病，由LINE-1插入新基因位点引起。"
+        "description": "散发性疾病，由LINE-1插入新基因位点引起。",
+        "disease_class": "Certain infectious or parasitic diseases"
       },
       {
         "name": "stroke",
-        "description": "中风是由于脑部血液供应中断导致的脑组织损伤。"
+        "description": "中风是由于脑部血液供应中断导致的脑组织损伤。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "substance abuse disorders",
-        "description": "涉及物质使用导致临床显著损害或痛苦的一系列疾病。"
+        "description": "涉及物质使用导致临床显著损害或痛苦的一系列疾病。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "tauopathies",
-        "description": "摘要中提到的以tau蛋白病理为特征的神经退行性疾病，包括阿尔茨海默病等。"
+        "description": "摘要中提到的以tau蛋白病理为特征的神经退行性疾病，包括阿尔茨海默病等。",
+        "disease_class": "Mental, behavioural or neurodevelopmental disorders"
       },
       {
         "name": "TLE",
-        "description": "颞叶癫痫的缩写。"
+        "description": "颞叶癫痫的缩写。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "tuberous sclerosis",
-        "description": "摘要中提到的神经发育障碍之一。"
+        "description": "摘要中提到的神经发育障碍之一。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "UCEC",
-        "description": "子宫内膜癌，是摘要中提到的与ORF1p表达相关的癌症类型之一。"
+        "description": "子宫内膜癌，是摘要中提到的与ORF1p表达相关的癌症类型之一。",
+        "disease_class": "Neoplasms"
       },
       {
         "name": "X-linked retinitis pigmentosa",
-        "description": "X连锁视网膜色素变性，是一种遗传性视网膜退行性疾病。"
+        "description": "X连锁视网膜色素变性，是一种遗传性视网膜退行性疾病。",
+        "disease_class": "Diseases of the visual system"
       },
       {
         "name": "三阴性乳腺癌",
@@ -1077,7 +1186,8 @@
       },
       {
         "name": "帕金森病",
-        "description": "帕金森病，一种神经退行性疾病。"
+        "description": "帕金森病，一种神经退行性疾病。",
+        "disease_class": "Diseases of the nervous system"
       },
       {
         "name": "年龄相关疾病",

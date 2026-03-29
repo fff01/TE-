@@ -3,6 +3,7 @@ import re
 import csv
 from pathlib import Path
 
+from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
 
 INPUT_FILE = Path("data/raw/output.jsonl")
 CSV_FILE = Path("data/raw/LINE1_pubmed_data.csv")
@@ -121,6 +122,8 @@ DISEASE_CANONICAL_OVERRIDES = {
     "aicardigoutièressyndromeags": "Aicardi-Goutières syndrome",
 }
 
+DISEASE_CLASS_MAP = build_disease_top_class_map()
+
 
 def normalize_whitespace(text: str) -> str:
     text = text.replace("\u2010", "-").replace("\u2011", "-").replace("\u2012", "-")
@@ -193,9 +196,24 @@ def dedupe_entities(items: list[dict], entity_type: str) -> list[dict]:
         description = normalize_whitespace(item.get("description", ""))
         key = canonical_name.casefold()
         if key not in deduped:
-            deduped[key] = {"name": canonical_name, "description": description}
+            payload = {"name": canonical_name, "description": description}
+            if entity_type == "diseases":
+                disease_class = normalize_whitespace(item.get("disease_class", "")) or lookup_disease_class(
+                    canonical_name,
+                    DISEASE_CLASS_MAP,
+                )
+                if disease_class:
+                    payload["disease_class"] = disease_class
+            deduped[key] = payload
         elif not deduped[key]["description"] and description:
             deduped[key]["description"] = description
+        elif entity_type == "diseases" and not deduped[key].get("disease_class"):
+            disease_class = normalize_whitespace(item.get("disease_class", "")) or lookup_disease_class(
+                canonical_name,
+                DISEASE_CLASS_MAP,
+            )
+            if disease_class:
+                deduped[key]["disease_class"] = disease_class
     return sorted(deduped.values(), key=lambda x: x["name"].casefold())
 
 

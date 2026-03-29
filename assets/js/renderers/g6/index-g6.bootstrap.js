@@ -22,6 +22,8 @@
     search: document.getElementById('node-search'),
     focusBtn: document.getElementById('toggle-focus-view'),
     focusText: document.getElementById('focus-view-text'),
+    nonKeyBtn: document.getElementById('toggle-non-key-nodes'),
+    nonKeyText: document.getElementById('non-key-nodes-text'),
     fixedBtn: document.getElementById('toggle-fixed-view'),
     fixedText: document.getElementById('fixed-view-text'),
     resetBtn: document.getElementById('reset-graph'),
@@ -70,6 +72,8 @@
       questionPlaceholder: 'Ask your question',
       focusGlobal: 'Focus mode: Global',
       focusLocal: 'Focus mode: Local',
+      hideNonKeyOn: 'Hide non-key nodes: On',
+      hideNonKeyOff: 'Hide non-key nodes: Off',
       fixedOn: 'Fixed view: On',
       fixedOff: 'Fixed view: Off',
       reset: 'Reset',
@@ -113,6 +117,8 @@
       questionPlaceholder: 'Ask your question',
       focusGlobal: 'Focus mode: Global',
       focusLocal: 'Focus mode: Local',
+      hideNonKeyOn: 'Hide non-key nodes: On',
+      hideNonKeyOff: 'Hide non-key nodes: Off',
       fixedOn: 'Fixed view: On',
       fixedOff: 'Fixed view: Off',
       reset: 'Reset',
@@ -152,7 +158,9 @@
   let searchDebounceId = null;
   let currentResultElements = null;
   let currentResultLabel = '';
+  let currentResultPayload = null;
   let currentGraphQuery = '';
+  let currentHideNonKeyNodes = false;
   let customEditorMode = 'prompt';
   let customPromptDraft = '';
   let customDepthDraft = { rows: 12, references: 8 };
@@ -278,6 +286,9 @@
         ? t.focusLocal
         : t.focusGlobal;
     }
+    if (els.nonKeyText) {
+      els.nonKeyText.textContent = currentHideNonKeyNodes ? t.hideNonKeyOn : t.hideNonKeyOff;
+    }
     if (els.fixedText) {
       els.fixedText.textContent = typeof fixedView !== 'undefined' && fixedView === true
         ? t.fixedOn
@@ -289,7 +300,7 @@
       els.levelText.textContent = t.keyNodeLevel(level);
     }
     if (els.levelMinus) els.levelMinus.disabled = (currentKeyNodeLevel || 1) <= 1;
-    if (els.levelPlus) els.levelPlus.disabled = (currentKeyNodeLevel || 1) >= 3;
+    if (els.levelPlus) els.levelPlus.disabled = (currentKeyNodeLevel || 1) >= 5;
     if (els.modeLabel) els.modeLabel.textContent = t.modeLabel;
     if (els.modeSimple) els.modeSimple.textContent = t.modeSimple;
     if (els.modeDetailed) els.modeDetailed.textContent = t.modeDetailed;
@@ -328,6 +339,7 @@
     currentGraphKind = 'default-tree';
     currentResultElements = null;
     currentResultLabel = '';
+    currentResultPayload = null;
     currentGraphQuery = '';
     if (window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.destroy === 'function') {
       window.__TEKG_G6_DYNAMIC_GRAPH.destroy();
@@ -343,8 +355,11 @@
     currentGraphKind = 'dynamic';
     currentResultElements = payload.elements;
     currentResultLabel = payload.anchor?.name || fallbackQuery || '';
+    currentResultPayload = payload;
     if (window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.render === 'function') {
-      await window.__TEKG_G6_DYNAMIC_GRAPH.render(payload.elements, currentResultLabel, payload);
+      await window.__TEKG_G6_DYNAMIC_GRAPH.render(payload.elements, currentResultLabel, payload, {
+        hideNonKeyNodes: currentHideNonKeyNodes,
+      });
     }
     updateUi();
     return payload;
@@ -509,6 +524,17 @@
         updateUi();
       });
     }
+    if (els.nonKeyBtn) {
+      els.nonKeyBtn.addEventListener('click', async () => {
+        currentHideNonKeyNodes = !currentHideNonKeyNodes;
+        updateUi();
+        if (currentGraphKind === 'dynamic' && currentResultElements && window.__TEKG_G6_DYNAMIC_GRAPH?.rerender) {
+          await window.__TEKG_G6_DYNAMIC_GRAPH.rerender({
+            hideNonKeyNodes: currentHideNonKeyNodes,
+          });
+        }
+      });
+    }
     if (els.fixedBtn) {
       els.fixedBtn.addEventListener('click', () => {
         fixedView = !fixedView;
@@ -533,7 +559,7 @@
     }
     if (els.levelPlus) {
       els.levelPlus.addEventListener('click', async () => {
-        currentKeyNodeLevel = Math.min(3, (currentKeyNodeLevel || 1) + 1);
+        currentKeyNodeLevel = Math.min(5, (currentKeyNodeLevel || 1) + 1);
         updateUi();
         if (currentGraphKind === 'dynamic' && currentGraphQuery) {
           try {
@@ -550,6 +576,7 @@
     if (!els.resetBtn) return;
     els.resetBtn.addEventListener('click', async () => {
       if (els.search) els.search.value = '';
+      currentHideNonKeyNodes = false;
       await renderDefaultTree();
       setDetail((UI_TEXT[getLang()] || UI_TEXT.en).fallback);
     });

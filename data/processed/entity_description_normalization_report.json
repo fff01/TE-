@@ -2,9 +2,9 @@
   "before": {
     "zh": {
       "Disease": {
-        "total": 590,
+        "total": 569,
         "zh_keys": 0,
-        "zh_values": 590
+        "zh_values": 569
       },
       "Function": {
         "total": 3690,
@@ -14,7 +14,7 @@
     },
     "en": {
       "Disease": {
-        "total": 590,
+        "total": 569,
         "zh_keys": 0,
         "zh_values": 0
       },
@@ -28,9 +28,9 @@
   "after": {
     "zh": {
       "Disease": {
-        "total": 586,
+        "total": 566,
         "zh_keys": 0,
-        "zh_values": 586
+        "zh_values": 566
       },
       "Function": {
         "total": 3690,
@@ -40,7 +40,7 @@
     },
     "en": {
       "Disease": {
-        "total": 586,
+        "total": 566,
         "zh_keys": 0,
         "zh_values": 0
       },
@@ -52,23 +52,22 @@
     }
   },
   "key_normalization": {
-    "merged_entries": 0,
+    "merged_entries": 6,
     "zh_keys_seen": 0,
-    "renamed_key_count": 0,
-    "sample_name_changes": {}
+    "renamed_key_count": 3,
+    "sample_name_changes": {
+      "Genetic Instability": "genomic instability",
+      "HIV-1 infection": "HIV infection",
+      "psychiatric diseases": "psychiatric disorders"
+    }
   },
   "case_normalization": {
     "case_merged_entries": 0,
     "sample_case_changes": {}
   },
   "spelling_normalization": {
-    "spelling_merged_entries": 4,
-    "sample_spelling_changes": {
-      "Haemophilia A": "Hemophilia A",
-      "Oesophageal adenocarcinoma": "esophageal adenocarcinoma",
-      "colorectal tumours": "colorectal tumors",
-      "testicular germ cell tumours": "testicular germ cell tumors"
-    }
+    "spelling_merged_entries": 0,
+    "sample_spelling_changes": {}
   },
   "en_description_translations_applied": 0
 }

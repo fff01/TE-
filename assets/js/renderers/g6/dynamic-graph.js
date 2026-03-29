@@ -68,6 +68,11 @@
     zoomDuration: 180,
     localZoom: 1.04,
   };
+  const RADIAL_TUNING = {
+    nodeSpacing: 200,
+    nodeSize: 380,
+    maxLevelDiff: 0.25,
+  };
   const NODE_SIZE_TUNING = {
     minWidth: 260,
     minHeight: 148,
@@ -161,6 +166,22 @@
     return map[type] || `This group contains ${nodeCount} nodes.`;
   }
 
+  function buildDiseaseComboLabel(diseaseClass) {
+    return String(diseaseClass || 'Disease');
+  }
+
+  function buildComboKey(type, diseaseClass = '') {
+    if (type === 'Disease') {
+      const cls = String(diseaseClass || '').trim() || 'Disease';
+      return `Disease::${cls}`;
+    }
+    return type;
+  }
+
+  function comboKeyToId(comboKey) {
+    return `combo-${String(comboKey).replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}`;
+  }
+
   function wrapNodeLabel(text, maxCharsPerLine = 22) {
     const raw = String(text || '').trim();
     if (!raw) return '';
@@ -183,6 +204,13 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function getNodeDiameter(node) {
+    const size = node?.style?.size;
+    if (Array.isArray(size)) return Math.max(...size);
+    if (typeof size === 'number') return size;
+    return RADIAL_TUNING.nodeSize;
+  }
+
   function getNodeSize(label, relationCount) {
     const safeLabel = String(label || '');
     const count = Math.max(0, Number(relationCount) || 0);
@@ -203,8 +231,35 @@
     return [width, height];
   }
 
+  function seedPeripheralPositions(nodes, centerId, width, height) {
+    if (!Array.isArray(nodes) || nodes.length === 0) return;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const outerNodes = nodes.filter((node) => node.id !== centerId);
+    const startAngle = Math.random() * Math.PI * 2;
+    const step = outerNodes.length > 0 ? (Math.PI * 2) / outerNodes.length : 0;
+
+    nodes.forEach((node) => {
+      if (node.id === centerId) {
+        node.x = centerX;
+        node.y = centerY;
+      }
+    });
+
+    outerNodes.forEach((node, index) => {
+      const shell = Math.floor(index / 6);
+      const angleJitter = (Math.random() - 0.5) * (step * 0.45);
+      const radialJitter = (Math.random() - 0.5) * RADIAL_TUNING.seedJitter;
+      const angle = startAngle + index * step + angleJitter;
+      const radius = RADIAL_TUNING.seedBaseRadius + shell * RADIAL_TUNING.seedRadiusStep + radialJitter;
+      node.x = centerX + Math.cos(angle) * radius;
+      node.y = centerY + Math.sin(angle) * radius;
+    });
+  }
+
   function buildGraphData(elements, options = {}) {
     const includePapers = !!options.includePapers;
+    const hideNonKeyNodes = !!options.hideNonKeyNodes;
     const rawNodes = [];
     const rawEdges = [];
 
@@ -215,21 +270,29 @@
       else rawNodes.push(data);
     }
 
+    const hasKeyNodeMetadata = rawNodes.some((node) => typeof node.isKeyNode === 'boolean');
     const counts = { TE: 0, Disease: 0, Function: 0, Paper: 0 };
+    const comboCounts = new Map();
     const filteredNodes = rawNodes.filter((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
-      return includePapers || type !== 'Paper';
+      const keepPaper = includePapers || type !== 'Paper';
+      const keepKey = !hideNonKeyNodes || !hasKeyNodeMetadata || node.isKeyNode === true;
+      return keepPaper && keepKey;
     });
     filteredNodes.forEach((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
       counts[type] = (counts[type] || 0) + 1;
+      const comboKey = buildComboKey(type, node.disease_class || node.diseaseClass || '');
+      comboCounts.set(comboKey, (comboCounts.get(comboKey) || 0) + 1);
     });
     const comboTypes = TYPE_ORDER.concat(includePapers ? ['Paper'] : []);
-    const eligibleComboTypes = comboTypes.filter((type) => counts[type] > 1);
-    const useCombos = eligibleComboTypes.length > 1;
+    const eligibleComboKeys = Array.from(comboCounts.keys()).filter((comboKey) => (comboCounts.get(comboKey) || 0) > 1);
+    const useCombos = eligibleComboKeys.length > 1;
     const nodes = filteredNodes.map((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
-      const comboId = useCombos && counts[type] > 1 ? `combo-${type}` : undefined;
+      const diseaseClass = String(node.disease_class || node.diseaseClass || '');
+      const comboKey = buildComboKey(type, diseaseClass);
+      const comboId = useCombos && (comboCounts.get(comboKey) || 0) > 1 ? comboKeyToId(comboKey) : undefined;
       return {
         id: node.id,
         ...(comboId ? { combo: comboId } : {}),
@@ -238,6 +301,7 @@
           rawLabel: node.label,
           label: getNameSafe(node.label, type, node.description, node.pmid),
           type,
+          diseaseClass,
           description: node.description || '',
           pmid: node.pmid || '',
           relationCount: 0,
@@ -249,22 +313,29 @@
     });
 
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-    const combos = comboTypes
-      .filter((type) => counts[type] > 1)
-      .filter(() => useCombos)
-      .map((type) => ({
-        id: `combo-${type}`,
-        data: {
-          kind: 'combo',
-          type,
-          label: TYPE_LABEL[type],
-          description: buildComboDescription(type, counts[type]),
-        },
-        style: {
-          labelText: TYPE_LABEL[type],
-          collapsed: false,
-        },
-      }));
+    const combos = useCombos
+      ? eligibleComboKeys.map((comboKey) => {
+        const [type, diseaseClass = ''] = comboKey.split('::');
+        const nodeCount = comboCounts.get(comboKey) || 0;
+        const label = type === 'Disease' ? buildDiseaseComboLabel(diseaseClass) : TYPE_LABEL[type];
+        return {
+          id: comboKeyToId(comboKey),
+          data: {
+            kind: 'combo',
+            type,
+            diseaseClass,
+            label,
+            description: type === 'Disease'
+              ? `This group contains ${nodeCount} disease nodes in ${label}.`
+              : buildComboDescription(type, nodeCount),
+          },
+          style: {
+            labelText: label,
+            collapsed: false,
+          },
+        };
+      })
+      : [];
 
     const edges = rawEdges
       .filter((edge) => nodeMap.has(edge.source) && nodeMap.has(edge.target))
@@ -410,13 +481,13 @@
     }
   }
 
-  async function renderDynamicGraph(elements, focusLabel = '', payload = null) {
+  async function renderDynamicGraph(elements, focusLabel = '', payload = null, options = {}) {
     const detailEl = getEl('node-details');
     try {
       ensureRegistered();
       setRendererVisibility();
       currentGraphKind = 'dynamic';
-      lastPayload = { elements: JSON.parse(JSON.stringify(elements || [])), focusLabel, payload };
+      lastPayload = { elements: JSON.parse(JSON.stringify(elements || [])), focusLabel, payload, options: { ...options } };
       if (window.__TEKG_G6_DEFAULT_TREE && typeof window.__TEKG_G6_DEFAULT_TREE.destroy === 'function') {
         window.__TEKG_G6_DEFAULT_TREE.destroy();
       }
@@ -434,9 +505,25 @@
 
       const data = buildGraphData(elements || [], {
         includePapers: !!payload?.__fromQa,
+        hideNonKeyNodes: !!options.hideNonKeyNodes,
       });
       destroyGraph();
       host.innerHTML = '';
+
+      const focusNode = focusLabel
+        ? data.nodes.find((node) => node.data?.rawLabel === focusLabel || node.data?.label === focusLabel || node.id === focusLabel)
+        : null;
+
+      if (!data.useCombos && data.nodes.length > 0) {
+        const centerId = focusNode?.id || data.nodes[0]?.id || null;
+        data.nodes.forEach((node) => {
+          const isCenter = node.id === centerId;
+          const relationCount = Number(node.data?.relationCount || 0);
+          node.data.layoutWeight = isCenter
+            ? 1000000
+            : relationCount * 0.01 + Math.random() * 0.001;
+        });
+      }
 
       const layout = data.useCombos
         ? {
@@ -457,13 +544,17 @@
               collideStrength: LAYOUT_TUNING.clusterCollideStrength,
             }),
           }
-        : new ForceLayout({
+        : {
+            type: 'concentric',
             preventOverlap: true,
-            gravity: 0.06,
-            linkDistance: 220,
-            nodeStrength: -1200,
-            collideStrength: 0.9,
-          });
+            nodeSize: RADIAL_TUNING.nodeSize,
+            nodeSpacing: RADIAL_TUNING.nodeSpacing,
+            sortBy: 'layoutWeight',
+            maxLevelDiff: RADIAL_TUNING.maxLevelDiff,
+            equidistant: true,
+            startAngle: Math.random() * Math.PI * 2,
+            clockwise: Math.random() > 0.5,
+          };
 
       const graph = new Graph({
         container: host,
@@ -471,7 +562,7 @@
         height,
         autoResize: true,
         autoFit: 'view',
-        padding: 48,
+        padding: 112,
         animation: false,
         data,
         layout,
@@ -689,9 +780,7 @@
         await focusTarget(id);
       });
 
-      const targetNode = focusLabel
-        ? data.nodes.find((node) => node.data?.rawLabel === focusLabel || node.data?.label === focusLabel || node.id === focusLabel)
-        : null;
+      const targetNode = focusNode;
       if (targetNode) {
         updateDetailFromDatum(targetNode.data);
         await focusTarget(targetNode.id);
@@ -704,9 +793,14 @@
     }
   }
 
-  function rerenderLast() {
+  function rerenderLast(overrideOptions = {}) {
     if (!lastPayload) return;
-    renderDynamicGraph(lastPayload.elements, lastPayload.focusLabel, lastPayload.payload);
+    renderDynamicGraph(
+      lastPayload.elements,
+      lastPayload.focusLabel,
+      lastPayload.payload,
+      Object.assign({}, lastPayload.options || {}, overrideOptions || {}),
+    );
   }
 
   function bindTriggers() {

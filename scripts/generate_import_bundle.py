@@ -37,19 +37,23 @@ def build_nodes_block(group_name: str, label: str, items: list[dict]) -> str:
         )
     else:
         for item in items:
-            payload_lines.append(
+            payload = (
                 "  {name: "
                 + cypher_string(item.get("name", ""))
                 + ", description: "
                 + cypher_string(item.get("description", ""))
-                + "}"
             )
+            if group_name == "diseases":
+                payload += ", disease_class: " + cypher_string(item.get("disease_class", ""))
+            payload += "}"
+            payload_lines.append(payload)
         lines.append(",\n".join(payload_lines))
         lines.append(f"] AS row\nMERGE (n:{label} {{name: row.name}})")
-        lines.append(
-            "ON CREATE SET n.description = row.description, "
-            + f"n.source_group = {cypher_string(group_name)};"
-        )
+        lines.append("SET n.description = row.description, " + f"n.source_group = {cypher_string(group_name)}")
+        if group_name == "diseases":
+            lines[-1] += ", n.disease_class = row.disease_class;"
+        else:
+            lines[-1] += ";"
     lines.append("")
     return "\n".join(lines)
 
