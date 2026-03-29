@@ -68,6 +68,16 @@
     zoomDuration: 180,
     localZoom: 1.04,
   };
+  const NODE_SIZE_TUNING = {
+    minWidth: 260,
+    minHeight: 148,
+    maxWidth: 520,
+    maxHeight: 280,
+    widthPerChar: 20,
+    widthPadding: 72,
+    widthPerRelation: 14,
+    heightPerRelation: 9,
+  };
 
   function getEl(id) {
     return document.getElementById(id);
@@ -169,6 +179,30 @@
     return lines.join('\n');
   }
 
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function getNodeSize(label, relationCount) {
+    const safeLabel = String(label || '');
+    const count = Math.max(0, Number(relationCount) || 0);
+    const baseWidth = Math.max(
+      NODE_SIZE_TUNING.minWidth,
+      safeLabel.length * NODE_SIZE_TUNING.widthPerChar + NODE_SIZE_TUNING.widthPadding,
+    );
+    const width = clamp(
+      Math.round(baseWidth + count * NODE_SIZE_TUNING.widthPerRelation),
+      NODE_SIZE_TUNING.minWidth,
+      NODE_SIZE_TUNING.maxWidth,
+    );
+    const height = clamp(
+      Math.round(NODE_SIZE_TUNING.minHeight + count * NODE_SIZE_TUNING.heightPerRelation),
+      NODE_SIZE_TUNING.minHeight,
+      NODE_SIZE_TUNING.maxHeight,
+    );
+    return [width, height];
+  }
+
   function buildGraphData(elements, options = {}) {
     const includePapers = !!options.includePapers;
     const rawNodes = [];
@@ -209,7 +243,7 @@
           relationCount: 0,
         },
         style: {
-          size: [Math.max(260, String(getNameSafe(node.label, type, node.description, node.pmid)).length * 20 + 72), 148],
+          size: [NODE_SIZE_TUNING.minWidth, NODE_SIZE_TUNING.minHeight],
         },
       };
     });
@@ -252,6 +286,10 @@
           },
         };
       });
+
+    nodes.forEach((node) => {
+      node.style.size = getNodeSize(node.data.label, node.data.relationCount);
+    });
 
     return { nodes, edges, combos, useCombos };
   }
