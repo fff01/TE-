@@ -21,7 +21,7 @@
       </div>
     </div>
   </header>
-  <div class="main" style="grid-template-columns:minmax(0,1fr);">
+  <div class="main">
     <section class="panel">
       <div class="head">
         <h2 id="graph-title">G6 Graph Workspace</h2>
@@ -49,6 +49,68 @@
         <button id="next-result" type="button"><i class="fas fa-chevron-right"></i></button>
       </div>
       <div class="detail" id="node-details">Preparing G6 workspace...</div>
+    </section>
+    <section class="panel">
+      <div class="head"><h2 id="qa-title">Interactive QA Demo</h2></div>
+      <div class="chat">
+        <div class="qa-controls">
+          <div class="qa-mode">
+            <span class="qa-mode-label" id="qa-mode-label">Answer style</span>
+            <div class="segmented" id="style-segmented">
+              <button id="mode-simple" class="active" type="button">Brief</button>
+              <button id="mode-detailed" type="button">Detailed</button>
+              <button id="mode-custom" type="button">Custom</button>
+            </div>
+          </div>
+          <div class="qa-mode">
+            <span class="qa-mode-label" id="qa-depth-label">Answer depth</span>
+            <div class="segmented" id="depth-segmented">
+              <button id="depth-shallow" class="active" type="button">Shallow</button>
+              <button id="depth-medium" type="button">Medium</button>
+              <button id="depth-deep" type="button">Deep</button>
+              <button id="depth-custom" type="button">Custom</button>
+            </div>
+          </div>
+          <div class="qa-mode">
+            <span class="qa-mode-label" id="qa-model-label">Model</span>
+            <div class="segmented" id="model-segmented">
+              <button id="model-qwen" class="active" type="button">Qwen</button>
+              <button id="model-deepseek" type="button">DeepSeek</button>
+            </div>
+          </div>
+        </div>
+        <div class="custom-editor" id="custom-editor">
+          <div class="custom-editor-card">
+            <div class="custom-editor-title" id="custom-editor-title">Custom prompt</div>
+            <div class="custom-editor-help" id="custom-editor-help">Write the tone, structure, emphasis, or constraints you want the QA model to follow. After confirmation, it will be temporarily saved and used for subsequent questions.</div>
+            <textarea id="custom-prompt" placeholder="For example: Answer in accessible academic English; start with a conclusion; then explain mechanisms in bullet points; cite PMID when possible."></textarea>
+            <div class="custom-depth-editor" id="custom-depth-editor">
+              <div class="custom-depth-grid">
+                <div class="custom-depth-field">
+                  <label id="custom-rows-label" for="custom-rows">row (relation count)</label>
+                  <input id="custom-rows" type="number" min="1" step="1" value="12">
+                </div>
+                <div class="custom-depth-field">
+                  <label id="custom-references-label" for="custom-references">references (paper count)</label>
+                  <input id="custom-references" type="number" min="1" step="1" value="8">
+                </div>
+              </div>
+              <div class="custom-depth-note" id="custom-depth-note">
+                row controls the maximum number of structured relation records; references controls the maximum number of cited papers. Recommended upper bounds are 12 and 8 to avoid overly long answers.
+              </div>
+            </div>
+          </div>
+          <div class="custom-editor-actions">
+            <button id="cancel-custom-editor" class="secondary" type="button">Cancel</button>
+            <button id="confirm-custom-editor" class="primary" type="button">Confirm</button>
+          </div>
+        </div>
+        <div class="msgs" id="chat-messages"></div>
+        <div class="input">
+          <input id="user-question" type="text" value="LINE-1 related diseases" placeholder="Ask your question">
+          <button id="send-question" type="button"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
     </section>
   </div>
   <footer id="page-footer">This page is reserved for independent G6 development and does not touch the default Cyt entry.</footer>

@@ -190,9 +190,12 @@
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
       counts[type] = (counts[type] || 0) + 1;
     });
+    const comboTypes = TYPE_ORDER.concat(includePapers ? ['Paper'] : []);
+    const eligibleComboTypes = comboTypes.filter((type) => counts[type] > 1);
+    const useCombos = eligibleComboTypes.length > 1;
     const nodes = filteredNodes.map((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
-      const comboId = counts[type] > 1 ? `combo-${type}` : undefined;
+      const comboId = useCombos && counts[type] > 1 ? `combo-${type}` : undefined;
       return {
         id: node.id,
         ...(comboId ? { combo: comboId } : {}),
@@ -212,9 +215,9 @@
     });
 
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-    const comboTypes = TYPE_ORDER.concat(includePapers ? ['Paper'] : []);
     const combos = comboTypes
       .filter((type) => counts[type] > 1)
+      .filter(() => useCombos)
       .map((type) => ({
         id: `combo-${type}`,
         data: {
@@ -250,7 +253,7 @@
         };
       });
 
-    return { nodes, edges, combos };
+    return { nodes, edges, combos, useCombos };
   }
 
   class CircleComboWithExtraButton extends CircleCombo {
@@ -397,6 +400,33 @@
       destroyGraph();
       host.innerHTML = '';
 
+      const layout = data.useCombos
+        ? {
+            type: 'combo-combined',
+            preventOverlap: true,
+            comboPadding: LAYOUT_TUNING.comboPadding,
+            spacing: LAYOUT_TUNING.spacing,
+            nodeSize: LAYOUT_TUNING.nodeSize,
+            innerLayout: new ConcentricLayout({
+              preventOverlap: true,
+              minNodeSpacing: LAYOUT_TUNING.minNodeSpacing,
+            }),
+            outerLayout: new ForceLayout({
+              preventOverlap: true,
+              gravity: LAYOUT_TUNING.clusterGravity,
+              linkDistance: LAYOUT_TUNING.clusterLinkDistance,
+              nodeStrength: LAYOUT_TUNING.clusterNodeStrength,
+              collideStrength: LAYOUT_TUNING.clusterCollideStrength,
+            }),
+          }
+        : new ForceLayout({
+            preventOverlap: true,
+            gravity: 0.06,
+            linkDistance: 220,
+            nodeStrength: -1200,
+            collideStrength: 0.9,
+          });
+
       const graph = new Graph({
         container: host,
         width,
@@ -406,24 +436,7 @@
         padding: 48,
         animation: false,
         data,
-        layout: {
-          type: 'combo-combined',
-          preventOverlap: true,
-          comboPadding: LAYOUT_TUNING.comboPadding,
-          spacing: LAYOUT_TUNING.spacing,
-          nodeSize: LAYOUT_TUNING.nodeSize,
-          innerLayout: new ConcentricLayout({
-            preventOverlap: true,
-            minNodeSpacing: LAYOUT_TUNING.minNodeSpacing,
-          }),
-          outerLayout: new ForceLayout({
-            preventOverlap: true,
-            gravity: LAYOUT_TUNING.clusterGravity,
-            linkDistance: LAYOUT_TUNING.clusterLinkDistance,
-            nodeStrength: LAYOUT_TUNING.clusterNodeStrength,
-            collideStrength: LAYOUT_TUNING.clusterCollideStrength,
-          }),
-        },
+        layout,
         combo: {
           type: 'circle-combo-with-extra-button',
           animation: {

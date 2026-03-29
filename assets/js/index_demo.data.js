@@ -23,6 +23,54 @@
     let ui = {zh:{},en:{}}; 
     const typeLabel = {zh:{TE:'转座元件',Disease:'疾病',Function:'功能/机制',Paper:'文献'},en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
     const relLabel = {zh:{SUBFAMILY_OF:'包含','与...相关':'与…相关','不导致':'不导致','促进':'促进','介导':'介导','报道':'报道','影响':'影响','执行':'执行','参与':'参与','调控':'调控'},en:{SUBFAMILY_OF:'contains','与...相关':'associated with','不导致':'does not cause','促进':'promotes','介导':'mediates','报道':'reports','影响':'affects','执行':'executes','参与':'participates in','调控':'regulates'}};
+    Object.assign(relLabel.zh, {
+      '导致': '导致',
+      '利用': '利用',
+      '抑制': '抑制',
+      '触发': '触发',
+      '诱导': '诱导',
+      '增加风险': '增加风险',
+      '调节': '调节',
+      '促成': '促成',
+      '发生': '发生',
+      '激活': '激活',
+      '破坏': '破坏',
+      '产生': '产生',
+      '充当': '充当',
+      '使能': '使能',
+      '解释': '解释',
+      '提供': '提供',
+      '易感': '易感',
+      '被调控': '被调控',
+      '改变': '改变',
+      '缺失': '缺失',
+      '表现为': '表现为',
+      '表征': '表征'
+    });
+    Object.assign(relLabel.en, {
+      '导致': 'leads to',
+      '利用': 'uses',
+      '抑制': 'inhibits',
+      '触发': 'triggers',
+      '诱导': 'induces',
+      '增加风险': 'increases risk of',
+      '调节': 'modulates',
+      '促成': 'facilitates',
+      '发生': 'occurs in',
+      '激活': 'activates',
+      '破坏': 'disrupts',
+      '产生': 'produces',
+      '充当': 'acts as',
+      '使能': 'enables',
+      '解释': 'explains',
+      '提供': 'provides',
+      '易感': 'predisposes to',
+      '被调控': 'is regulated by',
+      '改变': 'alters',
+      '缺失': 'lacks',
+      '表现为': 'manifests as',
+      '表征': 'characterizes'
+    });
     const nameMap = {zh:{},en:{}};
     const descMap = {zh:{},en:{}};
     let teDescMap = {zh:{}, en:{}};
