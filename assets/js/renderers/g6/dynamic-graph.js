@@ -11,10 +11,8 @@
     Rect,
     CircleCombo,
     Badge,
-    ConcentricLayout,
-    ForceLayout,
   } = G6Lib;
-  if (!Graph || !register || !ExtensionCategory || !Rect || !CircleCombo || !Badge || !ConcentricLayout || !ForceLayout) return;
+  if (!Graph || !register || !ExtensionCategory || !Rect || !CircleCombo || !Badge) return;
 
   const TYPE_ORDER = ['TE', 'Disease', 'Function'];
   const TYPE_LABEL = {
@@ -53,35 +51,36 @@
   let registered = false;
   let lastPayload = null;
 
-  const LAYOUT_TUNING = {
-    comboPadding: 108,
-    spacing: 420,
-    nodeSize: 72,
-    minNodeSpacing: 42,
-    clusterGravity: 0.03,
-    clusterLinkDistance: 320,
-    clusterNodeStrength: -1600,
-    clusterCollideStrength: 1,
-  };
   const FOCUS_TUNING = {
     duration: 220,
     zoomDuration: 180,
-    localZoom: 1.04,
+    localZoom: 1.08,
   };
-  const RADIAL_TUNING = {
-    nodeSpacing: 200,
-    nodeSize: 380,
-    maxLevelDiff: 0.25,
+  const DISPLAY_TUNING = {
+    viewportPadding: 72,
+    maxCharsPerLine: 24,
+    maxLabelLines: 2,
+  };
+  const FORCE_LAYOUT_TUNING = {
+    iterations: 700,
+    velocityDecay: 0.42,
+    alphaDecay: 0.03,
+    linkGapSameCombo: 220,
+    linkGapCrossCombo: 420,
+    collidePadding: 56,
+    manyBodyBaseStrength: -3600,
+    manyBodyScale: 6,
+    centerStrength: 0.04,
   };
   const NODE_SIZE_TUNING = {
     minWidth: 260,
     minHeight: 148,
-    maxWidth: 520,
+    maxWidth: 760,
     maxHeight: 280,
     widthPerChar: 20,
     widthPadding: 72,
-    widthPerRelation: 14,
-    heightPerRelation: 9,
+    widthPerRelation: 18,
+    heightPerRelation: 12,
   };
 
   function getEl(id) {
@@ -175,16 +174,16 @@
       const cls = String(diseaseClass || '').trim() || 'Disease';
       return `Disease::${cls}`;
     }
-    return type;
+    return null;
   }
 
   function comboKeyToId(comboKey) {
     return `combo-${String(comboKey).replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}`;
   }
 
-  function wrapNodeLabel(text, maxCharsPerLine = 22) {
+  function wrapTextLines(text, maxCharsPerLine = 22) {
     const raw = String(text || '').trim();
-    if (!raw) return '';
+    if (!raw) return [];
     const words = raw.split(/\s+/);
     const lines = [];
     let current = '';
@@ -197,26 +196,39 @@
       }
     }
     if (current) lines.push(current);
-    return lines.join('\n');
+    return lines;
+  }
+
+  function wrapNodeLabel(text, maxCharsPerLine = 22) {
+    return wrapTextLines(text, maxCharsPerLine).join('\n');
+  }
+
+  function fitLabelLines(text, maxLines = 2) {
+    const raw = String(text || '').trim();
+    if (!raw) return { lines: [''], longestLineLength: 0 };
+
+    let bestLines = wrapTextLines(raw, DISPLAY_TUNING.maxCharsPerLine);
+    for (let charsPerLine = 14; charsPerLine <= 48; charsPerLine += 2) {
+      const lines = wrapTextLines(raw, charsPerLine);
+      bestLines = lines;
+      if (lines.length <= maxLines) break;
+    }
+
+    const longestLineLength = bestLines.reduce((max, line) => Math.max(max, String(line).length), 0);
+    return { lines: bestLines.slice(0, maxLines), longestLineLength };
   }
 
   function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
 
-  function getNodeDiameter(node) {
-    const size = node?.style?.size;
-    if (Array.isArray(size)) return Math.max(...size);
-    if (typeof size === 'number') return size;
-    return RADIAL_TUNING.nodeSize;
-  }
-
   function getNodeSize(label, relationCount) {
     const safeLabel = String(label || '');
     const count = Math.max(0, Number(relationCount) || 0);
+    const { lines, longestLineLength } = fitLabelLines(safeLabel, DISPLAY_TUNING.maxLabelLines);
     const baseWidth = Math.max(
       NODE_SIZE_TUNING.minWidth,
-      safeLabel.length * NODE_SIZE_TUNING.widthPerChar + NODE_SIZE_TUNING.widthPadding,
+      longestLineLength * NODE_SIZE_TUNING.widthPerChar + NODE_SIZE_TUNING.widthPadding,
     );
     const width = clamp(
       Math.round(baseWidth + count * NODE_SIZE_TUNING.widthPerRelation),
@@ -224,37 +236,50 @@
       NODE_SIZE_TUNING.maxWidth,
     );
     const height = clamp(
-      Math.round(NODE_SIZE_TUNING.minHeight + count * NODE_SIZE_TUNING.heightPerRelation),
+      Math.round(
+        NODE_SIZE_TUNING.minHeight
+        + Math.max(0, lines.length - 1) * 44
+        + count * NODE_SIZE_TUNING.heightPerRelation,
+      ),
       NODE_SIZE_TUNING.minHeight,
       NODE_SIZE_TUNING.maxHeight,
     );
-    return [width, height];
+    const diameter = clamp(
+      Math.round(Math.max(width, height * 1.15)),
+      NODE_SIZE_TUNING.minHeight,
+      NODE_SIZE_TUNING.maxWidth,
+    );
+    return {
+      size: diameter,
+      displayLabel: lines.join('\n'),
+    };
   }
 
-  function seedPeripheralPositions(nodes, centerId, width, height) {
-    if (!Array.isArray(nodes) || nodes.length === 0) return;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const outerNodes = nodes.filter((node) => node.id !== centerId);
-    const startAngle = Math.random() * Math.PI * 2;
-    const step = outerNodes.length > 0 ? (Math.PI * 2) / outerNodes.length : 0;
+  function getNodeDimensions(node) {
+    const rawSize = node?.style?.size ?? node?.size ?? null;
+    if (typeof rawSize === 'number') {
+      return { width: rawSize, height: rawSize };
+    }
+    const [width = NODE_SIZE_TUNING.minWidth, height = NODE_SIZE_TUNING.minHeight] = Array.isArray(rawSize)
+      ? rawSize
+      : [NODE_SIZE_TUNING.minWidth, NODE_SIZE_TUNING.minHeight];
+    return { width, height };
+  }
 
-    nodes.forEach((node) => {
-      if (node.id === centerId) {
-        node.x = centerX;
-        node.y = centerY;
-      }
-    });
+  function getNodeCollisionRadius(node) {
+    const { width, height } = getNodeDimensions(node);
+    const halfDiagonal = Math.sqrt(width * width + height * height) / 2;
+    return halfDiagonal + FORCE_LAYOUT_TUNING.collidePadding;
+  }
 
-    outerNodes.forEach((node, index) => {
-      const shell = Math.floor(index / 6);
-      const angleJitter = (Math.random() - 0.5) * (step * 0.45);
-      const radialJitter = (Math.random() - 0.5) * RADIAL_TUNING.seedJitter;
-      const angle = startAngle + index * step + angleJitter;
-      const radius = RADIAL_TUNING.seedBaseRadius + shell * RADIAL_TUNING.seedRadiusStep + radialJitter;
-      node.x = centerX + Math.cos(angle) * radius;
-      node.y = centerY + Math.sin(angle) * radius;
-    });
+  function resolveLayoutNodeRef(ref, nodeMap) {
+    if (!ref) return null;
+    if (typeof ref === 'string' || typeof ref === 'number') return nodeMap.get(String(ref)) || nodeMap.get(ref) || null;
+    if (typeof ref === 'object') {
+      if (ref.id && nodeMap.has(ref.id)) return nodeMap.get(ref.id);
+      return ref;
+    }
+    return null;
   }
 
   function buildGraphData(elements, options = {}) {
@@ -283,16 +308,17 @@
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
       counts[type] = (counts[type] || 0) + 1;
       const comboKey = buildComboKey(type, node.disease_class || node.diseaseClass || '');
-      comboCounts.set(comboKey, (comboCounts.get(comboKey) || 0) + 1);
+      if (comboKey) {
+        comboCounts.set(comboKey, (comboCounts.get(comboKey) || 0) + 1);
+      }
     });
-    const comboTypes = TYPE_ORDER.concat(includePapers ? ['Paper'] : []);
     const eligibleComboKeys = Array.from(comboCounts.keys()).filter((comboKey) => (comboCounts.get(comboKey) || 0) > 1);
-    const useCombos = eligibleComboKeys.length > 1;
+    const useCombos = eligibleComboKeys.length > 0;
     const nodes = filteredNodes.map((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
       const diseaseClass = String(node.disease_class || node.diseaseClass || '');
       const comboKey = buildComboKey(type, diseaseClass);
-      const comboId = useCombos && (comboCounts.get(comboKey) || 0) > 1 ? comboKeyToId(comboKey) : undefined;
+      const comboId = comboKey && useCombos && (comboCounts.get(comboKey) || 0) > 1 ? comboKeyToId(comboKey) : undefined;
       return {
         id: node.id,
         ...(comboId ? { combo: comboId } : {}),
@@ -300,6 +326,7 @@
           kind: 'node',
           rawLabel: node.label,
           label: getNameSafe(node.label, type, node.description, node.pmid),
+          displayLabel: getNameSafe(node.label, type, node.description, node.pmid),
           type,
           diseaseClass,
           description: node.description || '',
@@ -307,7 +334,7 @@
           relationCount: 0,
         },
         style: {
-          size: [NODE_SIZE_TUNING.minWidth, NODE_SIZE_TUNING.minHeight],
+          size: NODE_SIZE_TUNING.minHeight,
         },
       };
     });
@@ -359,7 +386,9 @@
       });
 
     nodes.forEach((node) => {
-      node.style.size = getNodeSize(node.data.label, node.data.relationCount);
+      const sized = getNodeSize(node.data.label, node.data.relationCount);
+      node.style.size = sized.size;
+      node.data.displayLabel = sized.displayLabel;
     });
 
     return { nodes, edges, combos, useCombos };
@@ -416,8 +445,13 @@
     }
 
     drawOutlinedLabel(attributes, container) {
-      const [width = 260, height = 148] = Array.isArray(attributes.size) ? attributes.size : [260, 148];
-      const text = wrapNodeLabel(attributes.labelText || '', Math.max(16, Math.floor(width / 10)));
+      const [width = 260, height = 148] = Array.isArray(attributes.size)
+        ? attributes.size
+        : [attributes.size || 260, attributes.size || 260];
+      const sourceText = String(attributes.labelText || '');
+      const text = sourceText.includes('\n')
+        ? sourceText
+        : wrapNodeLabel(sourceText, Math.max(16, Math.floor(width / 12)));
       const x = 0;
       const y = 0;
       const fontSize = attributes.labelFontSize || 54;
@@ -514,47 +548,8 @@
         ? data.nodes.find((node) => node.data?.rawLabel === focusLabel || node.data?.label === focusLabel || node.id === focusLabel)
         : null;
 
-      if (!data.useCombos && data.nodes.length > 0) {
-        const centerId = focusNode?.id || data.nodes[0]?.id || null;
-        data.nodes.forEach((node) => {
-          const isCenter = node.id === centerId;
-          const relationCount = Number(node.data?.relationCount || 0);
-          node.data.layoutWeight = isCenter
-            ? 1000000
-            : relationCount * 0.01 + Math.random() * 0.001;
-        });
-      }
-
-      const layout = data.useCombos
-        ? {
-            type: 'combo-combined',
-            preventOverlap: true,
-            comboPadding: LAYOUT_TUNING.comboPadding,
-            spacing: LAYOUT_TUNING.spacing,
-            nodeSize: LAYOUT_TUNING.nodeSize,
-            innerLayout: new ConcentricLayout({
-              preventOverlap: true,
-              minNodeSpacing: LAYOUT_TUNING.minNodeSpacing,
-            }),
-            outerLayout: new ForceLayout({
-              preventOverlap: true,
-              gravity: LAYOUT_TUNING.clusterGravity,
-              linkDistance: LAYOUT_TUNING.clusterLinkDistance,
-              nodeStrength: LAYOUT_TUNING.clusterNodeStrength,
-              collideStrength: LAYOUT_TUNING.clusterCollideStrength,
-            }),
-          }
-        : {
-            type: 'concentric',
-            preventOverlap: true,
-            nodeSize: RADIAL_TUNING.nodeSize,
-            nodeSpacing: RADIAL_TUNING.nodeSpacing,
-            sortBy: 'layoutWeight',
-            maxLevelDiff: RADIAL_TUNING.maxLevelDiff,
-            equidistant: true,
-            startAngle: Math.random() * Math.PI * 2,
-            clockwise: Math.random() > 0.5,
-          };
+      const centerId = focusNode?.id || data.nodes[0]?.id || null;
+      const layoutNodeMap = new Map(data.nodes.map((node) => [node.id, node]));
 
       const graph = new Graph({
         container: host,
@@ -562,10 +557,51 @@
         height,
         autoResize: true,
         autoFit: 'view',
-        padding: 112,
+        padding: DISPLAY_TUNING.viewportPadding,
         animation: false,
         data,
-        layout,
+        layout: {
+          type: 'd3-force',
+          iterations: FORCE_LAYOUT_TUNING.iterations,
+          alpha: 1,
+          alphaMin: 0.001,
+          alphaDecay: FORCE_LAYOUT_TUNING.alphaDecay,
+          velocityDecay: FORCE_LAYOUT_TUNING.velocityDecay,
+          nodeSize: (node) => getNodeCollisionRadius(node) * 2,
+          link: {
+            distance: (edge) => {
+              const source = resolveLayoutNodeRef(edge.source, layoutNodeMap);
+              const target = resolveLayoutNodeRef(edge.target, layoutNodeMap);
+              const sourceRadius = getNodeCollisionRadius(source);
+              const targetRadius = getNodeCollisionRadius(target);
+              const sameCombo = !!source?.combo && source.combo === target?.combo;
+              const gap = sameCombo ? FORCE_LAYOUT_TUNING.linkGapSameCombo : FORCE_LAYOUT_TUNING.linkGapCrossCombo;
+              return sourceRadius + targetRadius + gap;
+            },
+            strength: (edge) => {
+              const source = resolveLayoutNodeRef(edge.source, layoutNodeMap);
+              const target = resolveLayoutNodeRef(edge.target, layoutNodeMap);
+              return source?.combo && source.combo === target?.combo ? 0.08 : 0.04;
+            },
+          },
+          manyBody: {
+            strength: (node) => {
+              const radius = getNodeCollisionRadius(node);
+              return FORCE_LAYOUT_TUNING.manyBodyBaseStrength - radius * FORCE_LAYOUT_TUNING.manyBodyScale;
+            },
+            distanceMax: Math.max(width, height) * 2.4,
+          },
+          collide: {
+            radius: (node) => getNodeCollisionRadius(node),
+            strength: 1,
+            iterations: 4,
+          },
+          center: {
+            x: width / 2,
+            y: height / 2,
+            strength: FORCE_LAYOUT_TUNING.centerStrength,
+          },
+        },
         combo: {
           type: 'circle-combo-with-extra-button',
           animation: {
@@ -660,23 +696,27 @@
           },
         },
         node: {
-          type: 'tekg-dynamic-node',
+          type: 'circle',
           style: {
-            size: (datum) => datum.style?.size || [260, 148],
-            radius: 30,
+            size: (datum) => datum.style?.size || NODE_SIZE_TUNING.minHeight,
             fill: (datum) => TYPE_COLORS[datum.data?.type] || '#94a3b8',
             stroke: (datum) => NODE_STROKE[datum.data?.type] || TYPE_COLORS[datum.data?.type] || '#94a3b8',
             lineWidth: 1.2,
             shadowColor: 'rgba(15, 23, 42, 0.08)',
             shadowBlur: 10,
-            labelText: (datum) => datum.data?.label || datum.id,
+            labelText: (datum) => datum.data?.displayLabel || datum.data?.label || datum.id,
             labelFill: '#1f2b46',
             labelPlacement: 'center',
             labelTextAlign: 'center',
             labelTextBaseline: 'middle',
             labelFontSize: 54,
             labelFontWeight: 700,
-            labelBackground: false,
+            labelBackground: true,
+            labelBackgroundFill: 'rgba(255,255,255,0.92)',
+            labelBackgroundStroke: '#ffffff',
+            labelBackgroundLineWidth: 8,
+            labelBackgroundRadius: 18,
+            labelPadding: [6, 14],
           },
           state: {
             selected: {
@@ -724,7 +764,7 @@
         },
         behaviors: [
           'drag-canvas',
-          'drag-element',
+          'drag-element-force',
           { type: 'zoom-canvas', sensitivity: 1.14 },
           {
             type: 'click-select',
@@ -732,7 +772,6 @@
             state: 'selected',
             neighborState: 'active',
           },
-          'focus-element',
           {
             type: 'collapse-expand',
             trigger: 'dblclick',
@@ -783,7 +822,6 @@
       const targetNode = focusNode;
       if (targetNode) {
         updateDetailFromDatum(targetNode.data);
-        await focusTarget(targetNode.id);
       }
     } catch (error) {
       if (detailEl) {
