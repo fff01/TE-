@@ -105,7 +105,7 @@
       const directChildrenCount = (teLineageChildren.get(name) || []).length;
       const databaseDegree = Math.max(0, Number(teDatabaseDegrees.get(name)) || 0);
       const nonChildEdgeCount = Math.max(0, databaseDegree - directChildrenCount);
-      const weightedSignal = Math.max(1, descendantCount * 0.25 + nonChildEdgeCount * 0.75);
+      const weightedSignal = Math.max(1, descendantCount * 0.35 + nonChildEdgeCount * 0.65);
       baseScores.set(name, Math.sqrt(weightedSignal));
     }
 
@@ -124,8 +124,10 @@
       if (maxChildScore <= 0) continue;
       const currentScore = Math.max(1, Number(adjustedScores.get(name)) || 1);
       const descendantCount = teLineageDescendants.get(name) || 0;
-      const marginFactor = 0.1 + Math.min(0.35, children.length * 0.03 + Math.log2(descendantCount + 1) * 0.03);
-      adjustedScores.set(name, Math.max(currentScore, maxChildScore * (1 + marginFactor)));
+      const structuralBonus = 2.6 + Math.min(7.0, children.length * 0.4 + Math.log2(descendantCount + 1) * 0.84);
+      const inverseSizeBoost = Math.max(1.2, 5.6 / Math.max(1, currentScore));
+      const additiveBonus = structuralBonus * inverseSizeBoost;
+      adjustedScores.set(name, Math.max(currentScore, maxChildScore + additiveBonus));
     }
 
     const line1TargetRadius = degreeToSize(teDatabaseDegrees.get('L1') || teDatabaseDegrees.get('LINE1') || 1) / 2;
@@ -192,7 +194,7 @@
     }
 
     const compressedRadius = Math.sqrt(sumRadius * maxRadius);
-    const boundedRadius = Math.min(maxRadius * 2, compressedRadius);
+    const boundedRadius = Math.min(maxRadius * 1.25, compressedRadius);
     return boundedRadius * 2;
   }
 
