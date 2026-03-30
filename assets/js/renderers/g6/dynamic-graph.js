@@ -62,15 +62,14 @@
     maxLabelLines: 2,
   };
   const FORCE_LAYOUT_TUNING = {
-    iterations: 700,
-    velocityDecay: 0.42,
-    alphaDecay: 0.03,
-    linkGapSameCombo: 220,
-    linkGapCrossCombo: 420,
-    collidePadding: 56,
-    manyBodyBaseStrength: -3600,
-    manyBodyScale: 6,
-    centerStrength: 0.04,
+    iterations: 600,
+    velocityDecay: 0.28,
+    alphaDecay: 0.035,
+    linkGapSameCombo: 28,
+    linkGapCrossCombo: 72,
+    collidePadding: 14,
+    manyBodyBaseStrength: -220,
+    manyBodyScale: 1.8,
   };
   const NODE_SIZE_TUNING = {
     minWidth: 260,
@@ -268,8 +267,8 @@
 
   function getNodeCollisionRadius(node) {
     const { width, height } = getNodeDimensions(node);
-    const halfDiagonal = Math.sqrt(width * width + height * height) / 2;
-    return halfDiagonal + FORCE_LAYOUT_TUNING.collidePadding;
+    const diameter = Math.max(width, height);
+    return diameter / 2 + FORCE_LAYOUT_TUNING.collidePadding;
   }
 
   function resolveLayoutNodeRef(ref, nodeMap) {
@@ -321,6 +320,7 @@
       const comboId = comboKey && useCombos && (comboCounts.get(comboKey) || 0) > 1 ? comboKeyToId(comboKey) : undefined;
       return {
         id: node.id,
+        size: NODE_SIZE_TUNING.minHeight,
         ...(comboId ? { combo: comboId } : {}),
         data: {
           kind: 'node',
@@ -331,6 +331,7 @@
           diseaseClass,
           description: node.description || '',
           pmid: node.pmid || '',
+          databaseDegree: Math.max(0, Number(node.degree) || 0),
           relationCount: 0,
         },
         style: {
@@ -386,9 +387,11 @@
       });
 
     nodes.forEach((node) => {
-      const sized = getNodeSize(node.data.label, node.data.relationCount);
+      const effectiveDegree = Math.max(node.data.relationCount, node.data.databaseDegree || 0);
+      const sized = getNodeSize(node.data.label, effectiveDegree);
       node.style.size = sized.size;
-      node.data.displayLabel = sized.displayLabel;
+      node.size = sized.size;
+      node.data.displayLabel = effectiveDegree <= 1 ? '' : sized.displayLabel;
     });
 
     return { nodes, edges, combos, useCombos };
@@ -556,7 +559,12 @@
         width,
         height,
         autoResize: true,
-        autoFit: 'view',
+        autoFit: {
+          type: 'view',
+          options: {
+            when: 'overflow',
+          },
+        },
         padding: DISPLAY_TUNING.viewportPadding,
         animation: false,
         data,
@@ -567,7 +575,10 @@
           alphaMin: 0.001,
           alphaDecay: FORCE_LAYOUT_TUNING.alphaDecay,
           velocityDecay: FORCE_LAYOUT_TUNING.velocityDecay,
-          nodeSize: (node) => getNodeCollisionRadius(node) * 2,
+          nodeSize: (node) => {
+            const resolved = resolveLayoutNodeRef(node, layoutNodeMap) || node;
+            return getNodeCollisionRadius(resolved) * 2;
+          },
           link: {
             distance: (edge) => {
               const source = resolveLayoutNodeRef(edge.source, layoutNodeMap);
@@ -581,25 +592,25 @@
             strength: (edge) => {
               const source = resolveLayoutNodeRef(edge.source, layoutNodeMap);
               const target = resolveLayoutNodeRef(edge.target, layoutNodeMap);
-              return source?.combo && source.combo === target?.combo ? 0.08 : 0.04;
+              return source?.combo && source.combo === target?.combo ? 0.22 : 0.12;
             },
+            iterations: 3,
           },
           manyBody: {
             strength: (node) => {
-              const radius = getNodeCollisionRadius(node);
+              const resolved = resolveLayoutNodeRef(node, layoutNodeMap) || node;
+              const radius = getNodeCollisionRadius(resolved);
               return FORCE_LAYOUT_TUNING.manyBodyBaseStrength - radius * FORCE_LAYOUT_TUNING.manyBodyScale;
             },
-            distanceMax: Math.max(width, height) * 2.4,
+            distanceMax: Math.max(width, height) * 1.4,
           },
           collide: {
-            radius: (node) => getNodeCollisionRadius(node),
+            radius: (node) => {
+              const resolved = resolveLayoutNodeRef(node, layoutNodeMap) || node;
+              return getNodeCollisionRadius(resolved);
+            },
             strength: 1,
-            iterations: 4,
-          },
-          center: {
-            x: width / 2,
-            y: height / 2,
-            strength: FORCE_LAYOUT_TUNING.centerStrength,
+            iterations: 8,
           },
         },
         combo: {
@@ -704,19 +715,19 @@
             lineWidth: 1.2,
             shadowColor: 'rgba(15, 23, 42, 0.08)',
             shadowBlur: 10,
-            labelText: (datum) => datum.data?.displayLabel || datum.data?.label || datum.id,
+            labelText: (datum) => datum.data?.displayLabel || '',
             labelFill: '#1f2b46',
             labelPlacement: 'center',
             labelTextAlign: 'center',
             labelTextBaseline: 'middle',
             labelFontSize: 54,
             labelFontWeight: 700,
-            labelBackground: true,
+            labelBackground: (datum) => Boolean(datum.data?.displayLabel),
             labelBackgroundFill: 'rgba(255,255,255,0.92)',
             labelBackgroundStroke: '#ffffff',
             labelBackgroundLineWidth: 8,
             labelBackgroundRadius: 18,
-            labelPadding: [6, 14],
+            labelPadding: (datum) => (datum.data?.displayLabel ? [6, 14] : [0, 0]),
           },
           state: {
             selected: {
@@ -764,7 +775,11 @@
         },
         behaviors: [
           'drag-canvas',
-          'drag-element-force',
+          {
+            type: 'drag-element-force',
+            trigger: [],
+            enable: (event) => event.targetType === 'node',
+          },
           { type: 'zoom-canvas', sensitivity: 1.14 },
           {
             type: 'click-select',
