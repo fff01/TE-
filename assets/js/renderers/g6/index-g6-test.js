@@ -169,6 +169,29 @@
     return Math.max(8, Math.min(16, estimated));
   }
 
+  function secondaryShouldShowLabel(node) {
+    const nodeType = String(node?.nodeType || '');
+    if (nodeType === 'DiseaseClass') return true;
+    if (nodeType === 'Function') {
+      return Math.max(0, Number(node?.size) || 0) >= 34;
+    }
+    return false;
+  }
+
+  function secondaryLabelText(node) {
+    const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
+    if (!raw) return '';
+    return fitLabelToCircle(raw, Math.max(16, Number(node?.size) || 16));
+  }
+
+  function secondaryLabelFontSize(node) {
+    const text = secondaryLabelText(node);
+    const diameter = Math.max(16, Number(node?.size) || 16);
+    if (!text) return 10;
+    const estimated = (diameter - 8) / Math.max(3, text.length * 0.7);
+    return Math.max(7, Math.min(12, estimated));
+  }
+
   function interpolateHexColor(startHex, endHex, t) {
     const start = hexToRgb(startHex);
     const end = hexToRgb(endHex);
@@ -522,13 +545,26 @@
             fill: (d) => d.fillColor || TYPE_COLORS[d.nodeType] || '#94a3b8',
             stroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#111111',
             lineWidth: 2,
-            labelText: (d) =>
-              d.nodeType === 'TE' && teShouldShowLabel(d)
-                  ? (d.displayLabel || d.rawLabel || '')
-                  : '',
+            labelText: (d) => {
+              if (d.nodeType === 'TE' && teShouldShowLabel(d)) {
+                return d.displayLabel || d.rawLabel || '';
+              }
+              if (secondaryShouldShowLabel(d)) {
+                return secondaryLabelText(d);
+              }
+              return '';
+            },
             labelPlacement: 'center',
             labelFill: '#111111',
-            labelFontSize: (d) => (d.nodeType === 'TE' && teShouldShowLabel(d) ? teLabelFontSize(d) : 16),
+            labelFontSize: (d) => {
+              if (d.nodeType === 'TE' && teShouldShowLabel(d)) {
+                return teLabelFontSize(d);
+              }
+              if (secondaryShouldShowLabel(d)) {
+                return secondaryLabelFontSize(d);
+              }
+              return 10;
+            },
             labelFontWeight: 700,
             labelStroke: '#ffffff',
             labelLineWidth: 3,
