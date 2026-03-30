@@ -5,7 +5,7 @@ $renderer = site_renderer();
 $pageTitle = site_t(['zh' => '预览 - TEKG', 'en' => 'Preview - TEKG'], $lang);
 $activePage = 'preview';
 $previewSrc = $renderer === 'g6'
-    ? 'index_g6.html?embed=preview&lang=' . rawurlencode($lang)
+    ? 'index_g6.html?embed=preview&renderer=g6&lang=' . rawurlencode($lang)
     : 'index_demo.html?lang=' . rawurlencode($lang);
 include __DIR__ . '/head.php';
 ?>
@@ -52,8 +52,6 @@ include __DIR__ . '/head.php';
   const renderer = <?= json_encode($renderer, JSON_UNESCAPED_UNICODE) ?>;
   const frame = document.getElementById('preview-frame');
   if (!frame) return;
-
-  if (renderer === 'g6') return;
 
   function hideInnerChrome(doc) {
     const header = doc.querySelector('header');

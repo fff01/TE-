@@ -8,6 +8,37 @@
   <link rel="stylesheet" href="assets/css/index_demo.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@antv/g6@5/dist/g6.min.js"></script>
+  <style>
+    .g6-surface-stack {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      background: radial-gradient(circle at top, #fff, #f6faff);
+    }
+
+    .g6-surface-stack #g6-default-tree-surface,
+    .g6-surface-stack #g6-dynamic-surface {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .g6-surface-stack #g6-dynamic-surface {
+      display: none;
+    }
+
+    body.tekg-g6-preview-ready .main {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.tekg-g6-preview-ready .main > .panel:last-child,
+    body.tekg-g6-preview-ready .focus-legacy,
+    body.tekg-g6-preview-ready .non-key-legacy {
+      display: none !important;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -31,18 +62,25 @@
           <i class="fas fa-search" style="color:#64748b"></i>
           <input id="node-search" type="text" placeholder="Search LINE1, L1HS, disease, or function">
         </div>
-        <button id="toggle-focus-view" type="button"><span id="focus-view-text">Focus mode: Global</span></button>
+        <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
+          <span id="focus-view-text">Focus mode: Global</span>
+        </button>
         <div class="stepper-control" id="key-node-level-control">
           <button id="decrease-key-node-level" type="button" aria-label="Decrease key-node level">-</button>
           <span id="key-node-level-text">Key-node level: 1</span>
           <button id="increase-key-node-level" type="button" aria-label="Increase key-node level">+</button>
         </div>
-        <button id="toggle-non-key-nodes" type="button"><span id="non-key-nodes-text">Hide non-key nodes: Off</span></button>
+        <button id="toggle-non-key-nodes" class="non-key-legacy" type="button" style="display:none">
+          <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
+        </button>
         <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: Off</span></button>
         <button id="reset-graph" type="button"><i class="fas fa-sync-alt"></i> <span id="reset-text">Reset</span></button>
       </div>
-      <div id="cy" style="display:none"></div>
-      <div id="g6-default-tree-surface"></div>
+      <div class="g6-surface-stack">
+        <div id="cy" style="display:none"></div>
+        <div id="g6-default-tree-surface"></div>
+        <div id="g6-dynamic-surface"></div>
+      </div>
       <div class="nav" id="search-results-nav" style="display:none">
         <button id="prev-result" type="button"><i class="fas fa-chevron-left"></i></button>
         <span id="result-counter">0/0</span>
@@ -56,71 +94,23 @@
       <div class="chat">
         <div class="qa-controls">
           <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-mode-label">Answer style</span>
-            <div class="segmented" id="style-segmented">
-              <button id="mode-simple" class="active" type="button">Brief</button>
-              <button id="mode-detailed" type="button">Detailed</button>
-              <button id="mode-custom" type="button">Custom</button>
-            </div>
-          </div>
-          <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-depth-label">Answer depth</span>
-            <div class="segmented" id="depth-segmented">
-              <button id="depth-shallow" class="active" type="button">Shallow</button>
-              <button id="depth-medium" type="button">Medium</button>
-              <button id="depth-deep" type="button">Deep</button>
-              <button id="depth-custom" type="button">Custom</button>
-            </div>
-          </div>
-          <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-model-label">Model</span>
-            <div class="segmented" id="model-segmented">
-              <button id="model-qwen" class="active" type="button">Qwen</button>
-              <button id="model-deepseek" type="button">DeepSeek</button>
-            </div>
-          </div>
-        </div>
-        <div class="custom-editor" id="custom-editor">
-          <div class="custom-editor-card">
-            <div class="custom-editor-title" id="custom-editor-title">Custom prompt</div>
-            <div class="custom-editor-help" id="custom-editor-help">Write the tone, structure, emphasis, or constraints you want the QA model to follow. After confirmation, it will be temporarily saved and used for subsequent questions.</div>
-            <textarea id="custom-prompt" placeholder="For example: Answer in accessible academic English; start with a conclusion; then explain mechanisms in bullet points; cite PMID when possible."></textarea>
-            <div class="custom-depth-editor" id="custom-depth-editor">
-              <div class="custom-depth-grid">
-                <div class="custom-depth-field">
-                  <label id="custom-rows-label" for="custom-rows">row (relation count)</label>
-                  <input id="custom-rows" type="number" min="1" step="1" value="12">
-                </div>
-                <div class="custom-depth-field">
-                  <label id="custom-references-label" for="custom-references">references (paper count)</label>
-                  <input id="custom-references" type="number" min="1" step="1" value="8">
-                </div>
-              </div>
-              <div class="custom-depth-note" id="custom-depth-note">
-                row controls the maximum number of structured relation records; references controls the maximum number of cited papers. Recommended upper bounds are 12 and 8 to avoid overly long answers.
-              </div>
-            </div>
-          </div>
-          <div class="custom-editor-actions">
-            <button id="cancel-custom-editor" class="secondary" type="button">Cancel</button>
-            <button id="confirm-custom-editor" class="primary" type="button">Confirm</button>
+            <span class="qa-mode-label">QA is temporarily disabled in G6 mode.</span>
           </div>
         </div>
         <div class="msgs" id="chat-messages"></div>
         <div class="input">
-          <input id="user-question" type="text" value="LINE-1 related diseases" placeholder="Ask your question">
-          <button id="send-question" type="button"><i class="fas fa-paper-plane"></i></button>
+          <input type="text" value="" placeholder="QA will return later" disabled>
+          <button type="button" disabled><i class="fas fa-paper-plane"></i></button>
         </div>
       </div>
     </section>
   </div>
-  <footer id="page-footer">This page is reserved for independent G6 development and does not touch the default Cyt entry.</footer>
 
   <script>
     const __tekgG6Url = new URL(window.location.href);
     const __tekgEmbedMode = __tekgG6Url.searchParams.get('embed') || '';
     const __tekgInitialQuery = __tekgG6Url.searchParams.get('q') || '';
-    if (!__tekgEmbedMode) {
+    if (__tekgG6Url.searchParams.get('renderer') !== 'g6') {
       __tekgG6Url.searchParams.set('renderer', 'g6');
       window.history.replaceState({}, '', __tekgG6Url.toString());
     }
@@ -130,13 +120,8 @@
   </script>
   <script src="graph_demo_data.js"></script>
   <script src="assets/js/index_demo.data.js"></script>
-  <script>
-    window.__TEKG_RENDERER_MODE = 'g6';
-    window.__TEKG_EMBED_MODE = window.__TEKG_EMBED_MODE || '';
-    window.__TEKG_INITIAL_QUERY = window.__TEKG_INITIAL_QUERY || '';
-  </script>
   <script src="assets/js/renderers/g6/default-tree.js"></script>
-  <script src="assets/js/renderers/g6/dynamic-graph.js"></script>
+  <script src="assets/js/renderers/g6/index-g6-runtime.js"></script>
   <script src="assets/js/renderers/g6/index-g6.bootstrap.js"></script>
 </body>
 </html>
