@@ -445,7 +445,7 @@ CYPHER,
     {
         $rows = array_values(array_filter($rows, static fn(array $row): bool => !empty($row['target_element_id'])));
         $limits = [
-            'TE' => ['TE' => 14, 'Disease' => 10, 'Function' => 12, 'Paper' => 16],
+            'TE' => ['TE' => 14, 'Disease' => 18, 'Function' => 10, 'Paper' => 16],
             'Function' => ['TE' => 10, 'Paper' => 10],
             'Paper' => ['TE' => 10, 'Disease' => 8, 'Function' => 8],
             'Unknown' => ['TE' => 8, 'Disease' => 8, 'Function' => 8, 'Paper' => 8],

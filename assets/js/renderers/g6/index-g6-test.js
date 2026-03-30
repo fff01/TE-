@@ -35,6 +35,12 @@
   let nameTranslations = {};
   let teDescriptions = { en: {} };
   let entityDescriptions = { en: { Disease: {}, Function: {} } };
+  let teLineageDepths = new Map();
+  let teLineageChildren = new Map();
+  let teLineageDescendants = new Map();
+  let teDatabaseDegrees = new Map();
+  let teFixedRadii = new Map();
+  const TE_MIN_RADIUS = 12.5;
 
   function setStatus(text) {
     if (status) status.textContent = text;
@@ -80,6 +86,99 @@
     return Math.max(10, Math.min(64, 10 + Math.log2(safeDegree + 1) * 7.5));
   }
 
+  function canonicalTeLineageName(name) {
+    const raw = String(name || '').trim();
+    if (!raw) return raw;
+    if (raw === 'LINE1' || raw === 'LINE-1') return 'L1';
+    return raw;
+  }
+
+  function computeTeVisualMetrics() {
+    teFixedRadii = new Map();
+    if (!teLineageDepths.size) return;
+
+    const lineageNames = new Set([...teLineageDepths.keys(), ...teDatabaseDegrees.keys()]);
+    const baseScores = new Map();
+
+    for (const name of lineageNames) {
+      const descendantCount = teLineageDescendants.get(name) || 0;
+      const directChildrenCount = (teLineageChildren.get(name) || []).length;
+      const databaseDegree = Math.max(0, Number(teDatabaseDegrees.get(name)) || 0);
+      const nonChildEdgeCount = Math.max(0, databaseDegree - directChildrenCount);
+      const weightedSignal = Math.max(1, descendantCount * 0.25 + nonChildEdgeCount * 0.75);
+      baseScores.set(name, Math.sqrt(weightedSignal));
+    }
+
+    const adjustedScores = new Map(
+      [...lineageNames].map((name) => [name, Math.max(1, Number(baseScores.get(name)) || 1)])
+    );
+
+    const namesByDepthDesc = [...lineageNames].sort(
+      (left, right) => (teLineageDepths.get(right) || 0) - (teLineageDepths.get(left) || 0)
+    );
+
+    for (const name of namesByDepthDesc) {
+      const children = teLineageChildren.get(name) || [];
+      if (!children.length) continue;
+      const maxChildScore = Math.max(...children.map((child) => Math.max(0, Number(adjustedScores.get(child)) || 0)));
+      if (maxChildScore <= 0) continue;
+      const currentScore = Math.max(1, Number(adjustedScores.get(name)) || 1);
+      const descendantCount = teLineageDescendants.get(name) || 0;
+      const marginFactor = 0.1 + Math.min(0.35, children.length * 0.03 + Math.log2(descendantCount + 1) * 0.03);
+      adjustedScores.set(name, Math.max(currentScore, maxChildScore * (1 + marginFactor)));
+    }
+
+    const line1TargetRadius = degreeToSize(teDatabaseDegrees.get('L1') || teDatabaseDegrees.get('LINE1') || 1) / 2;
+    const line1AdjustedScore = Math.max(1, Number(adjustedScores.get('L1')) || 1);
+    const scaleCoefficient = line1TargetRadius / line1AdjustedScore;
+
+    for (const name of lineageNames) {
+      teFixedRadii.set(name, Math.max(TE_MIN_RADIUS, (adjustedScores.get(name) || 1) * scaleCoefficient));
+    }
+  }
+
+  function teFillColorForName(name) {
+    const canonicalName = canonicalTeLineageName(name);
+    const depth = teLineageDepths.get(canonicalName);
+    const depths = [...teLineageDepths.values()].filter((value) => Number.isFinite(value));
+    const minDepth = depths.length ? Math.min(...depths) : 0;
+    const maxDepth = depths.length ? Math.max(...depths) : 1;
+    const span = Math.max(1, maxDepth - minDepth);
+    const normalizedDepth = Math.max(0, Math.min(1, (((Number.isFinite(depth) ? depth : maxDepth) - minDepth) / span)));
+    return interpolateHexColor('#18357d', '#8fb0ff', normalizedDepth);
+  }
+
+  function teRadiusForName(name, fallbackDegree) {
+    const canonicalName = canonicalTeLineageName(name);
+    return teFixedRadii.get(canonicalName) || degreeToSize(fallbackDegree) / 2;
+  }
+
+  function teShouldShowLabel(node) {
+    const canonicalName = canonicalTeLineageName(node?.rawLabel || node?.displayLabel);
+    const depth = teLineageDepths.get(canonicalName);
+    return (Number.isFinite(depth) && depth <= 2) || (Math.max(0, Number(node?.databaseDegree) || 0) > 10);
+  }
+
+  function teLabelFontSize(node) {
+    const text = String(node?.displayLabel || node?.rawLabel || '').trim();
+    const diameter = Math.max(16, Number(node?.size) || 16);
+    if (!text) return 12;
+    const estimated = (diameter - 10) / Math.max(3, text.length * 0.62);
+    return Math.max(8, Math.min(16, estimated));
+  }
+
+  function interpolateHexColor(startHex, endHex, t) {
+    const start = hexToRgb(startHex);
+    const end = hexToRgb(endHex);
+    const clamped = Math.max(0, Math.min(1, Number(t) || 0));
+    const mix = (from, to) => Math.round(from + (to - from) * clamped);
+    return `rgb(${mix(start.r, end.r)}, ${mix(start.g, end.g)}, ${mix(start.b, end.b)})`;
+  }
+
+  function darkenHexColor(hex, amount) {
+    return interpolateHexColor(hex, '#0f172a', amount);
+  }
+
   function diseaseClassDiameterFromMembers(memberNodes) {
     const members = Array.isArray(memberNodes) ? memberNodes.filter(Boolean) : [];
     if (members.length === 0) return 56;
@@ -117,7 +216,16 @@
   }
 
   function hexToRgb(hex) {
-    const value = String(hex || '').replace('#', '');
+    const raw = String(hex || '').trim();
+    const rgbMatch = raw.match(/^rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\s*\)$/i);
+    if (rgbMatch) {
+      return {
+        r: Number(rgbMatch[1]),
+        g: Number(rgbMatch[2]),
+        b: Number(rgbMatch[3]),
+      };
+    }
+    const value = raw.replace('#', '');
     if (value.length !== 6) return { r: 148, g: 163, b: 184 };
     return {
       r: parseInt(value.slice(0, 2), 16),
@@ -146,10 +254,12 @@
   }
 
   async function loadEnglishResources() {
-    const [nameRes, teDescRes, entityDescRes] = await Promise.allSettled([
+    const [nameRes, teDescRes, entityDescRes, teLineageRes, teMetricsRes] = await Promise.allSettled([
       fetch('data/processed/entity_description_key_translation_cache.json', { credentials: 'same-origin' }),
       fetch('data/processed/te_descriptions.json', { credentials: 'same-origin' }),
       fetch('data/processed/entity_descriptions.json', { credentials: 'same-origin' }),
+      fetch('data/processed/tree_te_lineage.json', { credentials: 'same-origin' }),
+      fetch('api/te_metrics.php', { credentials: 'same-origin' }),
     ]);
 
     if (nameRes.status === 'fulfilled' && nameRes.value.ok) {
@@ -170,6 +280,45 @@
         },
       };
     }
+
+    if (teLineageRes.status === 'fulfilled' && teLineageRes.value.ok) {
+      const payload = await teLineageRes.value.json();
+      teLineageDepths = new Map(
+        (payload?.nodes || []).map((node) => [String(node?.name || '').trim(), Math.max(0, Number(node?.depth) || 0)])
+      );
+
+      teLineageChildren = new Map();
+      for (const edge of payload?.edges || []) {
+        const parent = String(edge?.parent || '').trim();
+        const child = String(edge?.child || '').trim();
+        if (!parent || !child) continue;
+        if (!teLineageChildren.has(parent)) teLineageChildren.set(parent, []);
+        teLineageChildren.get(parent).push(child);
+      }
+
+      teLineageDescendants = new Map();
+      const countDescendants = (name) => {
+        if (teLineageDescendants.has(name)) return teLineageDescendants.get(name);
+        const children = teLineageChildren.get(name) || [];
+        let total = 0;
+        for (const child of children) total += 1 + countDescendants(child);
+        teLineageDescendants.set(name, total);
+        return total;
+      };
+
+      for (const name of teLineageDepths.keys()) {
+        countDescendants(name);
+      }
+    }
+
+    if (teMetricsRes.status === 'fulfilled' && teMetricsRes.value.ok) {
+      const payload = await teMetricsRes.value.json();
+      teDatabaseDegrees = new Map(
+        Object.entries(payload?.metrics || {}).map(([name, degree]) => [canonicalTeLineageName(name), Math.max(0, Number(degree) || 0)])
+      );
+    }
+
+    computeTeVisualMetrics();
   }
 
   function translateName(rawLabel, type) {
@@ -222,6 +371,8 @@
         diseaseClass: String(data.disease_class || ''),
         team: buildTeam(data),
         queryLabel: String(data.rawLabel || data.label || data.id),
+        fillColor: TYPE_COLORS[data.type || 'TE'] || '#94a3b8',
+        strokeColor: TYPE_STROKES[data.type || 'TE'] || '#111111',
       };
 
       nodes.push(node);
@@ -232,6 +383,15 @@
         if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
         diseaseMembers.get(diseaseClass).push(node);
       }
+    }
+
+    const teNodes = nodes.filter((node) => node.nodeType === 'TE');
+    for (const node of teNodes) {
+      const canonicalName = canonicalTeLineageName(node.rawLabel || node.displayLabel);
+      const fixedRadius = teRadiusForName(canonicalName, node.databaseDegree);
+      node.size = fixedRadius * 2;
+      node.fillColor = teFillColorForName(canonicalName);
+      node.strokeColor = darkenHexColor(node.fillColor, 0.28);
     }
 
     for (const [diseaseClass, members] of diseaseMembers.entries()) {
@@ -309,16 +469,16 @@
         node: {
           style: {
             size: (d) => d.size,
-            fill: (d) => TYPE_COLORS[d.nodeType] || '#94a3b8',
-            stroke: (d) => TYPE_STROKES[d.nodeType] || '#111111',
+            fill: (d) => d.fillColor || TYPE_COLORS[d.nodeType] || '#94a3b8',
+            stroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#111111',
             lineWidth: 2,
             labelText: (d) =>
-              d.nodeType === 'TE' && (d.databaseDegree || 0) > 10
-                  ? fitLabelToCircle(d.displayLabel || d.rawLabel, d.size)
+              d.nodeType === 'TE' && teShouldShowLabel(d)
+                  ? (d.displayLabel || d.rawLabel || '')
                   : '',
             labelPlacement: 'center',
             labelFill: '#111111',
-            labelFontSize: 16,
+            labelFontSize: (d) => (d.nodeType === 'TE' && teShouldShowLabel(d) ? teLabelFontSize(d) : 16),
             labelFontWeight: 700,
             labelStroke: '#ffffff',
             labelLineWidth: 3,
