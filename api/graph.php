@@ -47,7 +47,7 @@ if ($config['neo4j_password'] === '') {
 }
 
 $query = trim((string)($_GET['q'] ?? ''));
-$keyLevel = max(1, min(5, (int)($_GET['key_level'] ?? 1)));
+$keyLevel = max(1, min(10, (int)($_GET['key_level'] ?? 1)));
 
 if ($query === '') {
     $query = 'LINE1';
