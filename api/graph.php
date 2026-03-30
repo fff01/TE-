@@ -445,7 +445,7 @@ CYPHER,
     {
         $rows = array_values(array_filter($rows, static fn(array $row): bool => !empty($row['target_element_id'])));
         $limits = [
-            'TE' => ['TE' => 14, 'Disease' => 18, 'Function' => 10, 'Paper' => 16],
+            'TE' => ['TE' => 14, 'Disease' => 18, 'Function' => 6, 'Paper' => 16],
             'Function' => ['TE' => 10, 'Paper' => 10],
             'Paper' => ['TE' => 10, 'Disease' => 8, 'Function' => 8],
             'Unknown' => ['TE' => 8, 'Disease' => 8, 'Function' => 8, 'Paper' => 8],
@@ -489,6 +489,7 @@ CYPHER,
         $allRows = [];
         $seenRowKeys = [];
         $nodeDepths = [$anchorId => 1];
+        $lineagePassNodeIds = [];
 
         foreach ($rows as $row) {
             $rowKey = $this->buildRowKey($row);
@@ -497,6 +498,9 @@ CYPHER,
             $otherId = $this->getOtherNodeId($row, $anchorId);
             if ($otherId !== null && !isset($nodeDepths[$otherId])) {
                 $nodeDepths[$otherId] = 2;
+            }
+            if ($otherId !== null && $this->isTeLineageRow($row)) {
+                $lineagePassNodeIds[$otherId] = true;
             }
         }
 
@@ -514,7 +518,8 @@ CYPHER,
             $degrees = $this->loadNodeDegrees($frontier);
             $expandIds = [];
             foreach ($frontier as $nodeId) {
-                if (($degrees[$nodeId] ?? 0) > $threshold && !isset($expandedNodeIds[$nodeId])) {
+                $shouldExpand = (($degrees[$nodeId] ?? 0) > $threshold) || isset($lineagePassNodeIds[$nodeId]);
+                if ($shouldExpand && !isset($expandedNodeIds[$nodeId])) {
                     $expandIds[] = $nodeId;
                     $expandedNodeIds[$nodeId] = true;
                 }
@@ -526,7 +531,9 @@ CYPHER,
 
             $nextFrontier = [];
             foreach ($expandIds as $expandId) {
-                $expandedRows = $this->limitExpandedRows($this->loadDirectRows($expandId), $expandLimit);
+                $directRows = $this->loadDirectRows($expandId);
+                $expandedType = $this->detectExpandedNodeType($directRows);
+                $expandedRows = $this->limitExpandedRowsByType($directRows, $expandedType, $expandLimit);
                 foreach ($expandedRows as $extraRow) {
                     $rowKey = $this->buildRowKey($extraRow);
                     if (isset($seenRowKeys[$rowKey])) {
@@ -540,6 +547,9 @@ CYPHER,
                         continue;
                     }
                     $nodeDepths[$otherId] = $depth + 1;
+                    if ($this->isTeLineageRow($extraRow)) {
+                        $lineagePassNodeIds[$otherId] = true;
+                    }
                     if ($depth + 1 <= $keyLevel) {
                         $nextFrontier[] = $otherId;
                     }
@@ -550,6 +560,75 @@ CYPHER,
         }
 
         return $allRows;
+    }
+
+    private function detectExpandedNodeType(array $rows): string
+    {
+        foreach ($rows as $row) {
+            $labels = $row['source_labels'] ?? [];
+            if (is_array($labels) && !empty($labels)) {
+                return $this->normalizeType($labels);
+            }
+        }
+        return 'Unknown';
+    }
+
+    private function isTeLineageRow(array $row): bool
+    {
+        if ((string)($row['relation_type'] ?? '') !== 'SUBFAMILY_OF') {
+            return false;
+        }
+        return $this->normalizeType($row['source_labels'] ?? []) === 'TE'
+            && $this->normalizeType($row['target_labels'] ?? []) === 'TE';
+    }
+
+    private function limitExpandedRowsByType(array $rows, string $anchorType, int $fallbackLimit): array
+    {
+        $rows = array_values(array_filter($rows, static fn(array $row): bool => !empty($row['target_element_id'])));
+        if (empty($rows)) {
+            return [];
+        }
+
+        $limits = [
+            'TE' => ['TE' => 10, 'Disease' => 50, 'Function' => 6, 'Paper' => 8],
+            'Disease' => ['TE' => 8, 'Disease' => 6, 'Function' => 12, 'Paper' => 10],
+            'Function' => ['TE' => 10, 'Disease' => 12, 'Function' => 8, 'Paper' => 8],
+            'Paper' => ['TE' => 8, 'Disease' => 8, 'Function' => 8, 'Paper' => 0],
+            'Unknown' => [],
+        ];
+
+        if (!isset($limits[$anchorType]) || empty($limits[$anchorType])) {
+            return $this->limitExpandedRows($rows, $fallbackLimit);
+        }
+
+        $selected = [];
+        $buckets = [];
+        foreach ($rows as $row) {
+            $targetType = $this->normalizeType($row['target_labels'] ?? []);
+            if (!array_key_exists($targetType, $limits[$anchorType])) {
+                continue;
+            }
+            $typeLimit = (int)$limits[$anchorType][$targetType];
+            if ($typeLimit <= 0) {
+                continue;
+            }
+            $buckets[$targetType] ??= [];
+            $buckets[$targetType][] = $row;
+        }
+
+        foreach ($buckets as $targetType => $bucketRows) {
+            usort($bucketRows, static function (array $a, array $b): int {
+                $left = count($a['relation_pmids'] ?? []);
+                $right = count($b['relation_pmids'] ?? []);
+                if ($left === $right) {
+                    return strcasecmp((string)($a['target_name'] ?? ''), (string)($b['target_name'] ?? ''));
+                }
+                return $right <=> $left;
+            });
+            $selected = array_merge($selected, array_slice($bucketRows, 0, (int)$limits[$anchorType][$targetType]));
+        }
+
+        return $selected;
     }
 
     private function limitExpandedRows(array $rows, int $limit): array

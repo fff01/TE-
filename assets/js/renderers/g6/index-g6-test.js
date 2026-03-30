@@ -354,13 +354,14 @@
     const nodes = [];
     const edges = [];
     const allowedNodeIds = new Set();
-    const diseaseMembers = new Map();
+    let anchorNodeId = '';
 
     for (const item of elements || []) {
       const data = item && item.data ? item.data : null;
       if (!data) continue;
       if (data.source && data.target) continue;
       if ((data.type || 'TE') === 'Paper') continue;
+      if (!anchorNodeId) anchorNodeId = String(data.id || '');
 
       const node = {
         id: data.id,
@@ -379,12 +380,6 @@
 
       nodes.push(node);
       allowedNodeIds.add(node.id);
-
-      if (node.nodeType === 'Disease') {
-        const diseaseClass = node.diseaseClass || 'Disease';
-        if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
-        diseaseMembers.get(diseaseClass).push(node);
-      }
     }
 
     const teNodes = nodes.filter((node) => node.nodeType === 'TE');
@@ -394,6 +389,61 @@
       node.size = fixedRadius * 2;
       node.fillColor = teFillColorForName(canonicalName);
       node.strokeColor = darkenHexColor(node.fillColor, 0.28);
+    }
+
+    const baseEdges = [];
+    for (const item of elements || []) {
+      const data = item && item.data ? item.data : null;
+      if (!data || !data.source || !data.target) continue;
+      if (!allowedNodeIds.has(data.source) || !allowedNodeIds.has(data.target)) continue;
+      baseEdges.push({
+        source: data.source,
+        target: data.target,
+      });
+    }
+
+    const connectedNodeIds = new Set();
+    for (const edge of baseEdges) {
+      connectedNodeIds.add(edge.source);
+      connectedNodeIds.add(edge.target);
+    }
+
+    const nonIsolatedNodes = nodes.filter((node) => connectedNodeIds.has(node.id));
+    const adjacency = new Map();
+    for (const node of nonIsolatedNodes) {
+      adjacency.set(node.id, []);
+    }
+    for (const edge of baseEdges) {
+      if (!adjacency.has(edge.source) || !adjacency.has(edge.target)) continue;
+      adjacency.get(edge.source).push(edge.target);
+      adjacency.get(edge.target).push(edge.source);
+    }
+
+    const mainComponentNodeIds = new Set();
+    const traversalStartId = adjacency.has(anchorNodeId)
+      ? anchorNodeId
+      : (nonIsolatedNodes[0]?.id || '');
+    if (traversalStartId) {
+      const queue = [traversalStartId];
+      mainComponentNodeIds.add(traversalStartId);
+      while (queue.length) {
+        const currentId = queue.shift();
+        for (const neighborId of adjacency.get(currentId) || []) {
+          if (mainComponentNodeIds.has(neighborId)) continue;
+          mainComponentNodeIds.add(neighborId);
+          queue.push(neighborId);
+        }
+      }
+    }
+
+    const visibleNodes = nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id));
+    const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+    const diseaseMembers = new Map();
+    for (const node of visibleNodes) {
+      if (node.nodeType !== 'Disease') continue;
+      const diseaseClass = node.diseaseClass || 'Disease';
+      if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
+      diseaseMembers.get(diseaseClass).push(node);
     }
 
     for (const [diseaseClass, members] of diseaseMembers.entries()) {
@@ -411,17 +461,15 @@
         team: `Disease::${diseaseClass}`,
         queryLabel: '',
       };
-      nodes.push(classNode);
-      allowedNodeIds.add(classNodeId);
+      visibleNodes.push(classNode);
+      visibleNodeIds.add(classNodeId);
     }
 
-    for (const item of elements || []) {
-      const data = item && item.data ? item.data : null;
-      if (!data || !data.source || !data.target) continue;
-      if (!allowedNodeIds.has(data.source) || !allowedNodeIds.has(data.target)) continue;
+    for (const edge of baseEdges) {
+      if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) continue;
       edges.push({
-        source: data.source,
-        target: data.target,
+        source: edge.source,
+        target: edge.target,
       });
     }
 
@@ -436,7 +484,7 @@
       }
     }
 
-    return { nodes, edges };
+    return { nodes: visibleNodes, edges };
   }
 
   function resolveNode(edgeSide, nodes) {
