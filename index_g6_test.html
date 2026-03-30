@@ -87,10 +87,29 @@
       font-size: 14px;
     }
 
+    .detail {
+      margin: 0 20px 18px;
+      padding: 14px 16px;
+      border: 1px solid #e6edf7;
+      border-radius: 16px;
+      background: #fbfcff;
+      color: #44556f;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 86px;
+    }
+
+    .detail strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #1f2b46;
+      font-size: 16px;
+    }
+
     #container {
       width: 100%;
-      height: calc(100vh - 190px);
-      min-height: 620px;
+      height: calc(100vh - 300px);
+      min-height: 520px;
       border-top: 1px solid #e6edf7;
       border-radius: 0 0 20px 20px;
       overflow: hidden;
@@ -111,6 +130,7 @@
         <button id="load-btn" type="button">Load One-Hop Graph</button>
       </div>
       <div class="status" id="status">Ready.</div>
+      <div class="detail" id="detail"><strong>No node selected</strong>Click a node to inspect its name and description.</div>
       <div id="container"></div>
     </section>
   </div>
