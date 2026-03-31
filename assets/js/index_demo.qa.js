@@ -234,4 +234,10 @@
       }
     }
     initializePage();
+
+    function renderIntro(){
+      if(!chatMessages) return;
+      chatMessages.innerHTML = '';
+      addMessage((ui[currentLang] && ui[currentLang].intro) || 'This demo is grounded on a local graph subnetwork. Ask a question to begin.', 'assistant');
+    }
   

@@ -9,6 +9,12 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@antv/g6@5/dist/g6.min.js"></script>
   <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
     .g6-surface-stack {
       position: relative;
       flex: 1;
@@ -40,6 +46,50 @@
     .focus-legacy,
     body.tekg-g6-preview-ready .non-key-legacy {
       display: none !important;
+    }
+
+    body.tekg-g6-compact-embed {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    body.tekg-g6-compact-embed > header,
+    body.tekg-g6-compact-embed .main > .panel:last-child,
+    body.tekg-g6-compact-embed .panel > .head,
+    body.tekg-g6-compact-embed .panel > .toolbar,
+    body.tekg-g6-compact-embed .panel > .nav,
+    body.tekg-g6-compact-embed .panel > .detail {
+      display: none !important;
+    }
+
+    body.tekg-g6-compact-embed .main {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+    }
+
+    body.tekg-g6-compact-embed .main > .panel:first-child {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    body.tekg-g6-compact-embed .g6-surface-stack {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      background: radial-gradient(circle at top, #ffffff 0%, #f6faff 100%);
     }
   </style>
 </head>
@@ -160,13 +210,18 @@
     const __tekgG6Url = new URL(window.location.href);
     const __tekgEmbedMode = __tekgG6Url.searchParams.get('embed') || '';
     const __tekgInitialQuery = __tekgG6Url.searchParams.get('q') || '';
+    const __tekgCompactEmbed = __tekgEmbedMode === 'home-preview' || __tekgEmbedMode === 'search-result';
     if (__tekgG6Url.searchParams.get('renderer') !== 'g6') {
       __tekgG6Url.searchParams.set('renderer', 'g6');
       window.history.replaceState({}, '', __tekgG6Url.toString());
     }
+    if (__tekgCompactEmbed) {
+      document.body.classList.add('tekg-g6-compact-embed');
+    }
     window.__TEKG_RENDERER_MODE = 'g6';
     window.__TEKG_EMBED_MODE = __tekgEmbedMode;
     window.__TEKG_INITIAL_QUERY = __tekgInitialQuery;
+    window.__TEKG_COMPACT_EMBED = __tekgCompactEmbed;
     window.__TEKG_G6_BOOTSTRAP_OWN_TREE = true;
   </script>
   <script src="graph_demo_data.js"></script>

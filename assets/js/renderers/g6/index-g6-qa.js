@@ -1,16 +1,14 @@
 (function () {
   if (window.__TEKG_RENDERER_MODE !== 'g6') return;
 
-  const nodeDetails = document.getElementById('node-details');
   const chatMessages = document.getElementById('chat-messages');
   const userInput = document.getElementById('user-question');
   const sendBtn = document.getElementById('send-question');
+  const nodeDetails = document.getElementById('node-details');
 
   if (!chatMessages || !userInput || !sendBtn) return;
 
-  function byId(id) {
-    return document.getElementById(id);
-  }
+  const byId = (id) => document.getElementById(id);
 
   function getBridge() {
     return window.__TEKG_G6_BRIDGE || null;
@@ -18,9 +16,7 @@
 
   function getGraphState() {
     const bridge = getBridge();
-    if (bridge && typeof bridge.getState === 'function') {
-      return bridge.getState() || {};
-    }
+    if (bridge && typeof bridge.getState === 'function') return bridge.getState() || {};
     return {
       mode: bridge && typeof bridge.getMode === 'function' ? bridge.getMode() : 'tree',
       query: bridge && typeof bridge.getCurrentQuery === 'function' ? bridge.getCurrentQuery() : '',
@@ -30,22 +26,52 @@
     };
   }
 
-  function uiText() {
+  function qaText() {
     if (typeof ui === 'object' && ui && ui[currentLang]) return ui[currentLang];
     return {
       qaTitle: 'Interactive QA Demo',
       ph: 'Ask your question',
       q: 'LINE-1 related diseases',
-      intro: 'Ask about the current graph, and the answer will reuse the same backend QA pipeline as the Cytoscape page.',
+      intro: 'This demo is grounded on a local graph subnetwork. You can ask about the current graph context.',
       providerPrefix: 'Model: ',
       modelLabel: 'Model',
       modelQwen: 'Qwen',
       modelDeepSeek: 'DeepSeek',
       fallback: 'No answer is available right now.',
-      fixedOn: 'Fixed view: On',
-      fixedOff: 'Fixed view: Off',
-      empty: 'Click a node or edge to inspect graph details.',
+      empty: 'Click a node in the graph to inspect its details.',
     };
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = String(value || '');
+    return div.innerHTML;
+  }
+
+  function renderBubbleContent(content, sender) {
+    const raw = String(content || '');
+    if (sender === 'user') return escapeHtml(raw).replace(/\n/g, '<br>');
+    if (window.marked && typeof window.marked.parse === 'function') {
+      window.marked.setOptions({ breaks: true, gfm: true });
+      return window.marked.parse(raw);
+    }
+    return escapeHtml(raw).replace(/\n/g, '<br>');
+  }
+
+  function addMessage(content, sender) {
+    const item = document.createElement('div');
+    item.className = `msg ${sender}`;
+    item.innerHTML =
+      `<div class="avatar"><i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'}"></i></div>` +
+      `<div class="bubble">${renderBubbleContent(content, sender)}</div>`;
+    chatMessages.appendChild(item);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return item;
+  }
+
+  function renderIntro() {
+    chatMessages.innerHTML = '';
+    addMessage(qaText().intro || 'This demo is grounded on a local graph subnetwork. You can ask about the current graph context.', 'assistant');
   }
 
   function getCustomEditorElements() {
@@ -82,36 +108,30 @@
     } = getCustomEditorElements();
 
     const isPromptMode = customEditorMode === 'prompt';
-    if (title) title.textContent = isPromptMode
-      ? (currentLang === 'zh' ? '自定义提示词' : 'Custom prompt')
-      : (currentLang === 'zh' ? '自定义回答深度' : 'Custom answer depth');
-    if (help) help.textContent = isPromptMode
-      ? (currentLang === 'zh'
-        ? '在这里写下你希望智能问答遵循的语气、结构、重点或限制条件。点击确认后会暂时保存，并在后续提问时优先使用。'
-        : 'Write any tone, structure, emphasis, or constraints you want the QA system to follow. Click confirm to save it temporarily for subsequent questions.')
-      : (currentLang === 'zh'
-        ? '在这里设置回答深度的自定义参数。row 表示最多取多少条结构化关系记录，references 表示最多附上多少篇参考文献。'
-        : 'Set custom answer-depth parameters here. Row means the maximum number of structured relation records, and references means the maximum number of cited references.');
+
+    if (title) title.textContent = isPromptMode ? 'Custom prompt' : 'Custom answer depth';
+    if (help) {
+      help.textContent = isPromptMode
+        ? 'Write any tone, structure, emphasis, or constraints you want the QA system to follow.'
+        : 'Set custom answer-depth parameters here. Row means the maximum relation count, and references means the maximum number of cited papers.';
+    }
 
     if (promptField) {
       promptField.style.display = isPromptMode ? 'block' : 'none';
-      promptField.placeholder = currentLang === 'zh'
-        ? '例如：请用学术但通俗的中文回答；先给结论，再分点说明机制；尽量引用 PMID。'
-        : 'For example: answer in academic but plain English; give the conclusion first; then explain mechanisms in bullets; cite PMID whenever possible.';
+      promptField.placeholder = 'For example: give the conclusion first, then explain mechanisms in bullet points, and cite PMID whenever possible.';
       if (document.activeElement !== promptField) {
         promptField.value = customPromptDraft || currentCustomPrompt || '';
       }
     }
 
     if (depthWrap) depthWrap.classList.toggle('active', !isPromptMode);
-    if (rowsLabel) rowsLabel.textContent = currentLang === 'zh' ? 'row（关系条数）' : 'row (relation limit)';
-    if (referencesLabel) referencesLabel.textContent = currentLang === 'zh' ? 'references（文献条数）' : 'references (reference limit)';
-    if (depthNote) depthNote.textContent = currentLang === 'zh'
-      ? 'row 表示最多取多少条结构化关系记录，references 表示最多附上多少篇参考文献。建议上界分别不超过 12 和 8，避免回答过长。'
-      : 'Row means the maximum number of structured relation records, and references means the maximum number of cited references. Recommended upper bounds are 12 and 8 to avoid overly long answers.';
+    if (rowsLabel) rowsLabel.textContent = 'row (relation count)';
+    if (referencesLabel) referencesLabel.textContent = 'references (paper count)';
+    if (depthNote) depthNote.textContent = 'Recommended upper bounds are 12 for row and 8 for references.';
 
     if (rowsField && document.activeElement !== rowsField) rowsField.value = String(customDepthDraft.rows ?? currentCustomDepth.rows ?? 12);
     if (referencesField && document.activeElement !== referencesField) referencesField.value = String(customDepthDraft.references ?? currentCustomDepth.references ?? 8);
+
     if (editor) editor.classList.toggle('active', customEditorOpen);
     if (msgs) msgs.style.display = customEditorOpen ? 'none' : 'flex';
     if (inputWrap) inputWrap.style.display = customEditorOpen ? 'none' : 'flex';
@@ -127,27 +147,27 @@
     const depthCustomBtn = byId('depth-custom');
     const modelQwenBtn = byId('model-qwen');
     const modelDeepSeekBtn = byId('model-deepseek');
-    const t = uiText();
+    const t = qaText();
 
     if (byId('qa-title')) byId('qa-title').textContent = t.qaTitle || 'Interactive QA Demo';
-    if (byId('qa-mode-label')) byId('qa-mode-label').textContent = currentLang === 'zh' ? '回答模式' : 'Answer mode';
-    if (byId('qa-depth-label')) byId('qa-depth-label').textContent = currentLang === 'zh' ? '回答深度' : 'Answer depth';
+    if (byId('qa-mode-label')) byId('qa-mode-label').textContent = 'Answer mode';
+    if (byId('qa-depth-label')) byId('qa-depth-label').textContent = 'Answer depth';
     if (byId('qa-model-label')) byId('qa-model-label').textContent = t.modelLabel || 'Model';
 
     if (modeSimpleBtn && modeDetailedBtn && modeCustomBtn) {
-      modeSimpleBtn.textContent = currentLang === 'zh' ? '简单' : 'Brief';
-      modeDetailedBtn.textContent = currentLang === 'zh' ? '详细' : 'Detailed';
-      modeCustomBtn.textContent = currentLang === 'zh' ? '自定义' : 'Custom';
+      modeSimpleBtn.textContent = 'Brief';
+      modeDetailedBtn.textContent = 'Detailed';
+      modeCustomBtn.textContent = 'Custom';
       modeSimpleBtn.classList.toggle('active', currentAnswerStyle === 'simple');
       modeDetailedBtn.classList.toggle('active', currentAnswerStyle === 'detailed');
       modeCustomBtn.classList.toggle('active', currentAnswerStyle === 'custom');
     }
 
     if (depthShallowBtn && depthMediumBtn && depthDeepBtn && depthCustomBtn) {
-      depthShallowBtn.textContent = currentLang === 'zh' ? '浅' : 'Shallow';
-      depthMediumBtn.textContent = currentLang === 'zh' ? '中' : 'Medium';
-      depthDeepBtn.textContent = currentLang === 'zh' ? '深' : 'Deep';
-      depthCustomBtn.textContent = currentLang === 'zh' ? '自定义' : 'Custom';
+      depthShallowBtn.textContent = 'Shallow';
+      depthMediumBtn.textContent = 'Medium';
+      depthDeepBtn.textContent = 'Deep';
+      depthCustomBtn.textContent = 'Custom';
       depthShallowBtn.classList.toggle('active', currentAnswerDepth === 'shallow');
       depthMediumBtn.classList.toggle('active', currentAnswerDepth === 'medium');
       depthDeepBtn.classList.toggle('active', currentAnswerDepth === 'deep');
@@ -184,8 +204,8 @@
     updateCustomEditorUi();
   }
 
-  function closeCustomEditor(options) {
-    const save = options && options.save === true;
+  function closeCustomEditor(options = {}) {
+    const save = options.save === true;
     const promptField = byId('custom-prompt');
     const rowsField = byId('custom-rows');
     const referencesField = byId('custom-references');
@@ -234,85 +254,51 @@
     updateAnswerModeUi();
   }
 
-  function renderBubbleContent(text, sender) {
-    const raw = String(text || '');
-    if (sender === 'user') return escapeHtml(raw).replace(/\n/g, '<br>');
-    if (window.marked && typeof window.marked.parse === 'function') {
-      return window.marked.parse(raw);
-    }
-    return escapeHtml(raw).replace(/\n/g, '<br>');
-  }
-
-  function addMessage(text, sender) {
-    const item = document.createElement('div');
-    item.className = `msg ${sender}`;
-    item.innerHTML =
-      `<div class="avatar"><i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'}"></i></div>` +
-      `<div class="bubble">${renderBubbleContent(text, sender)}</div>`;
-    chatMessages.appendChild(item);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-    return item;
-  }
-
-  function renderIntro() {
-    chatMessages.innerHTML = '';
-    addMessage(uiText().intro || 'Ask about the current graph, and the answer will reuse the same backend QA pipeline as the Cytoscape page.', 'assistant');
-  }
-
   function formatNodeLabel(node) {
-    if (!node) return currentLang === 'zh' ? '无' : 'None';
-    return String(node.displayLabel || node.rawLabel || node.label || node.id || '').trim() || (currentLang === 'zh' ? '无' : 'None');
+    if (!node) return 'None';
+    return String(node.displayLabel || node.rawLabel || node.label || node.id || '').trim() || 'None';
   }
 
   function buildEffectiveQuestion(question) {
     const state = getGraphState();
-    const modeLabel = state.mode === 'dynamic'
-      ? (currentLang === 'zh' ? '动态图' : 'Dynamic graph')
-      : (currentLang === 'zh' ? '分类树' : 'Tree');
-    const lines = [
+    const modeLabel = state.mode === 'dynamic' ? 'Dynamic graph' : 'Tree';
+
+    return [
       String(question || '').trim(),
       '',
-      currentLang === 'zh' ? '[当前 G6 图谱上下文]' : '[Current G6 graph context]',
-      `${currentLang === 'zh' ? '模式' : 'Mode'}: ${modeLabel}`,
-      `${currentLang === 'zh' ? '中心节点' : 'Center node'}: ${state.query ? String(state.query).trim() : (currentLang === 'zh' ? '无' : 'None')}`,
-      `${currentLang === 'zh' ? '选中节点' : 'Selected node'}: ${formatNodeLabel(state.selectedNode)}`,
-      `${currentLang === 'zh' ? '关键节点层数' : 'Key-node level'}: ${state.keyNodeLevel || 1}`,
-      `${currentLang === 'zh' ? '固定视图' : 'Fixed view'}: ${state.fixedView ? (currentLang === 'zh' ? '开' : 'On') : (currentLang === 'zh' ? '关' : 'Off')}`,
-    ];
-    return lines.join('\n');
+      '[Current G6 graph context]',
+      `Mode: ${modeLabel}`,
+      `Center node: ${state.query ? String(state.query).trim() : 'None'}`,
+      `Selected node: ${formatNodeLabel(state.selectedNode)}`,
+      `Key-node level: ${state.keyNodeLevel || 1}`,
+      `Fixed view: ${state.fixedView ? 'On' : 'Off'}`,
+    ].join('\n');
   }
 
   function formatBackendAnswer(result) {
-    const t = uiText();
-    const effectiveProvider = (result.model_provider || currentModelProvider || 'qwen').toLowerCase() === 'deepseek' ? 'deepseek' : 'qwen';
-    const styleLabel = currentLang === 'zh'
-      ? (currentAnswerStyle === 'custom' ? '自定义模式' : result.answer_style === 'detailed' ? '详细模式' : '简单模式')
-      : (currentAnswerStyle === 'custom' ? 'Custom mode' : result.answer_style === 'detailed' ? 'Detailed mode' : 'Brief mode');
+    const provider = (result.model_provider || currentModelProvider || 'qwen').toLowerCase() === 'deepseek' ? 'deepseek' : 'qwen';
+    const styleLabel = currentAnswerStyle === 'custom'
+      ? 'Custom mode'
+      : result.answer_style === 'detailed'
+        ? 'Detailed mode'
+        : 'Brief mode';
     const depthLabel = result.answer_depth === 'custom'
-      ? (currentLang === 'zh'
-        ? `自定义（row=${result.custom_rows || currentCustomDepth.rows}，references=${result.custom_references || currentCustomDepth.references}）`
-        : `Custom (row=${result.custom_rows || currentCustomDepth.rows}, references=${result.custom_references || currentCustomDepth.references})`)
-      : (currentLang === 'zh'
-        ? ({ shallow: '浅', medium: '中', deep: '深' }[result.answer_depth] || '浅')
-        : ({ shallow: 'Shallow', medium: 'Medium', deep: 'Deep' }[result.answer_depth] || 'Shallow'));
-
-    const prefix = currentLang === 'zh'
-      ? `> ${(t.providerPrefix || '模型：')}${effectiveProvider === 'deepseek' ? (t.modelDeepSeek || 'DeepSeek') : (t.modelQwen || 'Qwen')}\n> ${styleLabel} · 回答深度：${depthLabel}\n\n`
-      : `> ${(t.providerPrefix || 'Model: ')}${effectiveProvider === 'deepseek' ? (t.modelDeepSeek || 'DeepSeek') : (t.modelQwen || 'Qwen')}\n> ${styleLabel} · Depth: ${depthLabel}\n\n`;
+      ? `Custom (row=${result.custom_rows || currentCustomDepth.rows}, references=${result.custom_references || currentCustomDepth.references})`
+      : ({ shallow: 'Shallow', medium: 'Medium', deep: 'Deep' }[result.answer_depth] || 'Shallow');
+    const t = qaText();
+    const prefix = `> ${(t.providerPrefix || 'Model: ')}${provider === 'deepseek' ? t.modelDeepSeek : t.modelQwen}\n> ${styleLabel} · Depth: ${depthLabel}\n\n`;
     return `${prefix}${result.answer || t.fallback || 'No answer is available right now.'}`;
   }
 
   function buildFallbackAnswer(question, error) {
     const state = getGraphState();
     const lines = [
-      currentLang === 'zh'
-        ? '后端暂时不可用，下面先保留当前图谱上下文，方便继续排查：'
-        : 'Backend is temporarily unavailable. Here is the current graph context for reference:',
+      'Backend is temporarily unavailable. Here is the current graph context for reference:',
       '',
-      `- ${currentLang === 'zh' ? '中心节点' : 'Center node'}: ${state.query ? String(state.query).trim() : (currentLang === 'zh' ? '无' : 'None')}`,
-      `- ${currentLang === 'zh' ? '选中节点' : 'Selected node'}: ${formatNodeLabel(state.selectedNode)}`,
-      `- ${currentLang === 'zh' ? '关键节点层数' : 'Key-node level'}: ${state.keyNodeLevel || 1}`,
-      `- ${currentLang === 'zh' ? '固定视图' : 'Fixed view'}: ${state.fixedView ? (currentLang === 'zh' ? '开' : 'On') : (currentLang === 'zh' ? '关' : 'Off')}`,
+      `- Center node: ${state.query ? String(state.query).trim() : 'None'}`,
+      `- Selected node: ${formatNodeLabel(state.selectedNode)}`,
+      `- Key-node level: ${state.keyNodeLevel || 1}`,
+      `- Fixed view: ${state.fixedView ? 'On' : 'Off'}`,
       '',
       `> ${String(question || '').trim()}`,
     ];
@@ -321,12 +307,10 @@
   }
 
   async function answerWithBackend(question) {
-    const effectiveQuestion = buildEffectiveQuestion(question);
-    const effectiveStyle = currentAnswerStyle === 'custom' ? 'custom' : currentAnswerStyle;
     const payload = {
-      question: effectiveQuestion,
+      question: buildEffectiveQuestion(question),
       language: currentLang,
-      answer_style: effectiveStyle,
+      answer_style: currentAnswerStyle === 'custom' ? 'custom' : currentAnswerStyle,
       answer_depth: currentAnswerDepth,
       custom_prompt: currentCustomPrompt || '',
       model_provider: currentModelProvider,
@@ -355,11 +339,7 @@
     addMessage(question, 'user');
     userInput.value = '';
 
-    const loadingText = currentLang === 'zh'
-      ? '正在检索图数据库并生成回答…'
-      : 'Retrieving graph evidence and generating the answer…';
-    const loadingNode = addMessage(loadingText, 'assistant');
-
+    const loadingNode = addMessage('Retrieving graph evidence and generating the answer…', 'assistant');
     try {
       const backend = await answerWithBackend(question);
       loadingNode.remove();
@@ -395,29 +375,23 @@
       if (event.target.id === 'model-deepseek') setModelProvider('deepseek');
     });
 
-    window.addEventListener('tekg:g6-state-change', () => {
-      updateAnswerModeUi();
-    });
+    window.addEventListener('tekg:g6-state-change', updateAnswerModeUi);
   }
 
   async function initializeQa() {
-    if (typeof loadUiText === 'function' || typeof loadLocalQaTemplates === 'function') {
-      await Promise.allSettled([
-        typeof loadUiText === 'function' ? loadUiText() : Promise.resolve(),
-        typeof loadLocalQaTemplates === 'function' ? loadLocalQaTemplates() : Promise.resolve(),
-      ]);
-    }
+    await Promise.allSettled([
+      typeof loadUiText === 'function' ? loadUiText() : Promise.resolve(),
+      typeof loadLocalQaTemplates === 'function' ? loadLocalQaTemplates() : Promise.resolve(),
+    ]);
 
-    if (!userInput.value) {
-      userInput.value = uiText().q || 'LINE-1 related diseases';
-    }
+    if (!userInput.value) userInput.value = qaText().q || 'LINE-1 related diseases';
 
     bindEvents();
     updateAnswerModeUi();
     renderIntro();
 
     if (nodeDetails && !String(nodeDetails.textContent || '').trim()) {
-      nodeDetails.textContent = uiText().empty || 'Click a node or edge to inspect graph details.';
+      nodeDetails.textContent = qaText().empty || 'Click a node in the graph to inspect its details.';
     }
   }
 
