@@ -35,6 +35,7 @@
       keyNodeLevel: (level) => `Key-node level: ${level}`,
       treeDetail:
         '<strong>No node selected</strong>Click a TE node to inspect it, then click again to enter the dynamic graph.',
+      loadingDetail: (query) => `<strong>Loading graph</strong>Preparing the dynamic graph for ${escapeHtml(query)}.`,
       graphError: (message) => `Failed: ${message || 'unknown error'}`,
     },
     zh: {
@@ -48,13 +49,15 @@
       keyNodeLevel: (level) => `\u5173\u952e\u8282\u70b9\u5c42\u6570\uff1a${level}`,
       treeDetail:
         '<strong>\u5c1a\u672a\u9009\u4e2d\u8282\u70b9</strong>\u70b9\u51fb\u4e00\u4e2a TE \u8282\u70b9\u67e5\u770b\u8be6\u60c5\uff0c\u518d\u6b21\u70b9\u51fb\u53ef\u8fdb\u5165\u52a8\u6001\u56fe\u3002',
+      loadingDetail: (query) => `<strong>\u6b63\u5728\u52a0\u8f7d\u52a8\u6001\u56fe</strong>\u6b63\u5728\u4e3a ${escapeHtml(query)} \u51c6\u5907 G6 \u52a8\u6001\u56fe\u3002`,
       graphError: (message) => `\u5931\u8d25\uff1a${message || '\u672a\u77e5\u9519\u8bef'}`,
     },
   };
 
   let currentMode = 'tree';
-  let currentGraphQuery = initialQuery;
-  let runtimeInitPromise = null;
+  let currentGraphQuery = '';
+  let dynamicFrame = null;
+  let dynamicBridgePromise = null;
 
   window.currentLang = params.get('lang') === 'zh' ? 'zh' : 'en';
   window.fixedView = false;
@@ -64,6 +67,15 @@
     window.cy = { nodes: () => [] };
   }
 
+  function escapeHtml(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function textSet() {
     return UI[window.currentLang] || UI.en;
   }
@@ -71,6 +83,17 @@
   function setDetail(html) {
     if (els.detail) {
       els.detail.innerHTML = html || '';
+    }
+  }
+
+  function buildDetail(title, description) {
+    return `<strong>${escapeHtml(title || '')}</strong>${escapeHtml(description || '')}`;
+  }
+
+  function applyPageMode() {
+    document.body.classList.add('tekg-g6-preview-ready');
+    if (embedMode === 'preview' && els.main) {
+      els.main.style.gridTemplateColumns = 'minmax(0,1fr)';
     }
   }
 
@@ -96,11 +119,14 @@
     window.history.replaceState({}, '', next.toString());
   }
 
-  function applyPageMode() {
-    document.body.classList.add('tekg-g6-preview-ready');
-    if (embedMode === 'preview' && els.main) {
-      els.main.style.gridTemplateColumns = 'minmax(0,1fr)';
-    }
+  function showTreeSurface() {
+    if (els.treeSurface) els.treeSurface.style.display = 'block';
+    if (els.dynamicSurface) els.dynamicSurface.style.display = 'none';
+  }
+
+  function showDynamicSurface() {
+    if (els.treeSurface) els.treeSurface.style.display = 'none';
+    if (els.dynamicSurface) els.dynamicSurface.style.display = 'block';
   }
 
   async function loadSharedResources() {
@@ -115,14 +141,67 @@
     } catch (_error) {}
   }
 
-  function showTreeSurface() {
-    if (els.treeSurface) els.treeSurface.style.display = 'block';
-    if (els.dynamicSurface) els.dynamicSurface.style.display = 'none';
+  function buildDynamicFrameSrc() {
+    const url = new URL('index_g6_embed.html', window.location.href);
+    url.searchParams.set('renderer', 'g6');
+    url.searchParams.set('lang', window.currentLang);
+    url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
+    url.searchParams.set('fixed', window.fixedView ? '1' : '0');
+    return url.toString();
   }
 
-  function showDynamicSurface() {
-    if (els.treeSurface) els.treeSurface.style.display = 'none';
-    if (els.dynamicSurface) els.dynamicSurface.style.display = 'block';
+  function waitForEmbedBridge(frame, maxAttempts = 60, delayMs = 50) {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const check = () => {
+        attempts += 1;
+        try {
+          const bridge = frame.contentWindow && frame.contentWindow.__TEKG_G6_EMBED;
+          if (bridge && typeof bridge.loadGraph === 'function') {
+            resolve(bridge);
+            return;
+          }
+        } catch (_error) {}
+        if (attempts >= maxAttempts) {
+          reject(new Error('G6 embed bridge is not available'));
+          return;
+        }
+        window.setTimeout(check, delayMs);
+      };
+      check();
+    });
+  }
+
+  function ensureDynamicFrame() {
+    if (dynamicBridgePromise) return dynamicBridgePromise;
+
+    if (!dynamicFrame) {
+      dynamicFrame = document.createElement('iframe');
+      dynamicFrame.id = 'g6-dynamic-frame';
+      dynamicFrame.title = 'TEKG G6 dynamic graph';
+      dynamicFrame.setAttribute('scrolling', 'no');
+      dynamicFrame.src = buildDynamicFrameSrc();
+      if (els.dynamicSurface) {
+        els.dynamicSurface.innerHTML = '';
+        els.dynamicSurface.appendChild(dynamicFrame);
+      }
+    }
+
+    dynamicBridgePromise = waitForEmbedBridge(dynamicFrame).catch((error) => {
+      dynamicBridgePromise = null;
+      throw error;
+    });
+
+    return dynamicBridgePromise;
+  }
+
+  async function syncEmbedControls() {
+    const bridge = await ensureDynamicFrame();
+    await bridge.setLanguage(window.currentLang);
+    await bridge.setFixedView(window.fixedView);
+    await bridge.setKeyNodeLevel(window.currentKeyNodeLevel);
+    await bridge.resize();
+    return bridge;
   }
 
   async function renderDefaultTree() {
@@ -130,43 +209,11 @@
     currentGraphQuery = '';
     showTreeSurface();
 
-    if (window.__TEKG_G6_RUNTIME && typeof window.__TEKG_G6_RUNTIME.destroy === 'function') {
-      window.__TEKG_G6_RUNTIME.destroy();
-    }
-
     if (window.__TEKG_G6_DEFAULT_TREE && typeof window.__TEKG_G6_DEFAULT_TREE.render === 'function') {
       await window.__TEKG_G6_DEFAULT_TREE.render();
     }
 
     setDetail(textSet().treeDetail);
-  }
-
-  function ensureRuntimeInitialized() {
-    if (runtimeInitPromise) return runtimeInitPromise;
-
-    if (!window.__TEKG_G6_RUNTIME || typeof window.__TEKG_G6_RUNTIME.init !== 'function') {
-      return Promise.reject(new Error('G6 runtime is not available'));
-    }
-
-    runtimeInitPromise = Promise.resolve(
-      window.__TEKG_G6_RUNTIME.init({
-        containerId: 'g6-dynamic-surface',
-        queryInputId: 'node-search',
-        levelMinusId: 'decrease-key-node-level',
-        levelDisplayId: 'key-node-level-text',
-        levelPlusId: 'increase-key-node-level',
-        fixedBtnId: 'toggle-fixed-view',
-        detailId: 'node-details',
-        fixedView: window.fixedView,
-        keyNodeLevel: window.currentKeyNodeLevel,
-        initialQuery,
-      })
-    ).catch((error) => {
-      runtimeInitPromise = null;
-      throw error;
-    });
-
-    return runtimeInitPromise;
   }
 
   async function loadDynamicGraph(query) {
@@ -178,21 +225,12 @@
 
     currentMode = 'dynamic';
     currentGraphQuery = q;
-
     showDynamicSurface();
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-
     if (els.searchInput) els.searchInput.value = q;
+    setDetail(textSet().loadingDetail(q));
 
-    await ensureRuntimeInitialized();
-
-    if (!window.__TEKG_G6_RUNTIME || typeof window.__TEKG_G6_RUNTIME.loadGraph !== 'function') {
-      throw new Error('G6 runtime is not available');
-    }
-
-    window.__TEKG_G6_RUNTIME.setFixedView(window.fixedView);
-    window.__TEKG_G6_RUNTIME.setKeyNodeLevel(window.currentKeyNodeLevel);
-    return window.__TEKG_G6_RUNTIME.loadGraph(q);
+    const bridge = await syncEmbedControls();
+    return bridge.loadGraph(q);
   }
 
   function bindEvents() {
@@ -216,10 +254,12 @@
     if (els.fixedBtn) {
       els.fixedBtn.addEventListener('click', () => {
         window.fixedView = !window.fixedView;
-        if (window.__TEKG_G6_RUNTIME) {
-          window.__TEKG_G6_RUNTIME.setFixedView(window.fixedView);
-        }
         updateButtons();
+        if (currentMode === 'dynamic') {
+          syncEmbedControls().catch((error) => {
+            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+          });
+        }
       });
     }
 
@@ -227,9 +267,6 @@
       els.levelMinus.addEventListener('click', () => {
         if (window.currentKeyNodeLevel <= 1) return;
         window.currentKeyNodeLevel -= 1;
-        if (window.__TEKG_G6_RUNTIME) {
-          window.__TEKG_G6_RUNTIME.setKeyNodeLevel(window.currentKeyNodeLevel);
-        }
         updateButtons();
         if (currentMode === 'dynamic' && currentGraphQuery) {
           loadDynamicGraph(currentGraphQuery).catch((error) => {
@@ -243,9 +280,6 @@
       els.levelPlus.addEventListener('click', () => {
         if (window.currentKeyNodeLevel >= 10) return;
         window.currentKeyNodeLevel += 1;
-        if (window.__TEKG_G6_RUNTIME) {
-          window.__TEKG_G6_RUNTIME.setKeyNodeLevel(window.currentKeyNodeLevel);
-        }
         updateButtons();
         if (currentMode === 'dynamic' && currentGraphQuery) {
           loadDynamicGraph(currentGraphQuery).catch((error) => {
@@ -290,8 +324,63 @@
     }
   }
 
+  window.__TEKG_G6_GRAPH_HOST = {
+    setDetail(title, description) {
+      if (currentMode !== 'dynamic') return;
+      setDetail(buildDetail(title, description));
+    },
+    setStatus(_text) {},
+    setMode(mode, query) {
+      if (mode === 'dynamic') {
+        currentMode = 'dynamic';
+        currentGraphQuery = String(query || currentGraphQuery || '').trim();
+      }
+    },
+    onReady() {},
+    onNodeSelect(_node) {},
+  };
+
   window.__TEKG_LOAD_DYNAMIC_GRAPH = loadDynamicGraph;
   window.__TEKG_G6_SHOW_TREE = renderDefaultTree;
+  window.__TEKG_G6_BRIDGE = {
+    loadGraph(query) {
+      return loadDynamicGraph(query);
+    },
+    showTree() {
+      return renderDefaultTree();
+    },
+    reset() {
+      return renderDefaultTree();
+    },
+    setKeyNodeLevel(level) {
+      window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(level) || 1));
+      updateButtons();
+      if (currentMode === 'dynamic' && currentGraphQuery) {
+        return loadDynamicGraph(currentGraphQuery);
+      }
+      return Promise.resolve();
+    },
+    setFixedView(next) {
+      window.fixedView = !!next;
+      updateButtons();
+      if (currentMode === 'dynamic') {
+        return syncEmbedControls().then(() => window.fixedView);
+      }
+      return Promise.resolve(window.fixedView);
+    },
+    getFixedView() {
+      return !!window.fixedView;
+    },
+    getKeyNodeLevel() {
+      return window.currentKeyNodeLevel;
+    },
+    getMode() {
+      return currentMode;
+    },
+    getCurrentQuery() {
+      return currentGraphQuery;
+    },
+  };
 
   Promise.resolve()
     .then(applyPageMode)
