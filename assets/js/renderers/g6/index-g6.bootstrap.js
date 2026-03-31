@@ -56,6 +56,7 @@
 
   let currentMode = 'tree';
   let currentGraphQuery = '';
+  let currentSelectedNode = null;
   let dynamicFrame = null;
   let dynamicBridgePromise = null;
 
@@ -86,15 +87,31 @@
     }
   }
 
+  function snapshotState() {
+    return {
+      mode: currentMode,
+      query: currentGraphQuery,
+      fixedView: !!window.fixedView,
+      keyNodeLevel: window.currentKeyNodeLevel,
+      selectedNode: currentSelectedNode,
+      lang: window.currentLang,
+    };
+  }
+
+  function notifyStateChange() {
+    try {
+      window.dispatchEvent(new CustomEvent('tekg:g6-state-change', {
+        detail: snapshotState(),
+      }));
+    } catch (_error) {}
+  }
+
   function buildDetail(title, description) {
     return `<strong>${escapeHtml(title || '')}</strong>${escapeHtml(description || '')}`;
   }
 
   function applyPageMode() {
     document.body.classList.add('tekg-g6-preview-ready');
-    if (embedMode === 'preview' && els.main) {
-      els.main.style.gridTemplateColumns = 'minmax(0,1fr)';
-    }
   }
 
   function updateButtons() {
@@ -225,6 +242,7 @@
   async function renderDefaultTree() {
     currentMode = 'tree';
     currentGraphQuery = '';
+    currentSelectedNode = null;
     showTreeSurface();
 
     if (window.__TEKG_G6_DEFAULT_TREE && typeof window.__TEKG_G6_DEFAULT_TREE.render === 'function') {
@@ -232,6 +250,7 @@
     }
 
     setDetail(textSet().treeDetail);
+    notifyStateChange();
   }
 
   async function loadDynamicGraph(query) {
@@ -243,9 +262,11 @@
 
     currentMode = 'dynamic';
     currentGraphQuery = q;
+    currentSelectedNode = null;
     showDynamicSurface();
     if (els.searchInput) els.searchInput.value = q;
     setDetail(textSet().loadingDetail(q));
+    notifyStateChange();
 
     await waitForDynamicSurfaceSize();
     ensureDynamicFrame(q);
@@ -274,6 +295,7 @@
       els.fixedBtn.addEventListener('click', () => {
         window.fixedView = !window.fixedView;
         updateButtons();
+        notifyStateChange();
         if (currentMode === 'dynamic') {
           syncEmbedControls().catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
@@ -287,6 +309,7 @@
         if (window.currentKeyNodeLevel <= 1) return;
         window.currentKeyNodeLevel -= 1;
         updateButtons();
+        notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
           loadDynamicGraph(currentGraphQuery).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
@@ -300,6 +323,7 @@
         if (window.currentKeyNodeLevel >= 10) return;
         window.currentKeyNodeLevel += 1;
         updateButtons();
+        notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
           loadDynamicGraph(currentGraphQuery).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
@@ -313,6 +337,7 @@
         window.currentLang = 'zh';
         syncLangParam();
         updateButtons();
+        notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
           loadDynamicGraph(currentGraphQuery).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
@@ -330,6 +355,7 @@
         window.currentLang = 'en';
         syncLangParam();
         updateButtons();
+        notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
           loadDynamicGraph(currentGraphQuery).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
@@ -353,10 +379,14 @@
       if (mode === 'dynamic') {
         currentMode = 'dynamic';
         currentGraphQuery = String(query || currentGraphQuery || '').trim();
+        notifyStateChange();
       }
     },
     onReady() {},
-    onNodeSelect(_node) {},
+    onNodeSelect(node) {
+      currentSelectedNode = node || null;
+      notifyStateChange();
+    },
   };
 
   window.__TEKG_LOAD_DYNAMIC_GRAPH = loadDynamicGraph;
@@ -398,6 +428,12 @@
     },
     getCurrentQuery() {
       return currentGraphQuery;
+    },
+    getSelectedNode() {
+      return currentSelectedNode;
+    },
+    getState() {
+      return snapshotState();
     },
   };
 
