@@ -589,10 +589,10 @@
               const source = resolveNode(edge.source, data.nodes);
               const target = resolveNode(edge.target, data.nodes);
               if (!source || !target) return 80;
-              if (source.nodeType === 'DiseaseClass' || target.nodeType === 'DiseaseClass') return 56;
-              if (source.team === target.team) return 48;
-              if (source.nodeType === 'Disease' || target.nodeType === 'Disease') return 170;
-              return 110;
+              if (source.nodeType === 'DiseaseClass' || target.nodeType === 'DiseaseClass') return 120;
+              if (source.team === target.team) return 96;
+              if (source.nodeType === 'Disease' || target.nodeType === 'Disease') return 300;
+              return 220;
             },
             strength: (edge) => {
               const source = resolveNode(edge.source, data.nodes);
@@ -607,14 +607,19 @@
           manyBody: {
             strength: (node) => {
               const size = typeof node.size === 'number' ? node.size : 16;
-              if (node.nodeType === 'DiseaseClass') return -(90 + size * 2.4);
-              return -(55 + size * 1.8);
+              if (node.nodeType === 'DiseaseClass') return -(240 + size * 4.6);
+              return -(170 + size * 3.8);
             },
           },
           collide: {
-            radius: (node) => node.size / 2 + 10,
+            radius: (node) => {
+              if (node.nodeType === 'DiseaseClass') return node.size / 2 + 46;
+              if (node.nodeType === 'TE') return node.size / 2 + 38;
+              if (node.nodeType === 'Disease') return node.size / 2 + 34;
+              return node.size / 2 + 30;
+            },
             strength: 1,
-            iterations: 6,
+            iterations: 16,
           },
         },
         behaviors: [
