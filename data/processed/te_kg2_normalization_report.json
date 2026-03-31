@@ -2,33 +2,33 @@
   "records": 1843,
   "paper_nodes": 1831,
   "te_nodes": 123,
-  "disease_nodes": 513,
-  "function_nodes": 2997,
-  "relation_count": 12130,
+  "disease_nodes": 504,
+  "function_nodes": 3031,
+  "relation_count": 12034,
   "top_relations": [
     [
       "reports",
-      6903
+      6891
     ],
     [
       "participates in",
-      2127
-    ],
-    [
-      "mediates",
-      693
+      2099
     ],
     [
       "leads to",
-      692
+      686
+    ],
+    [
+      "mediates",
+      671
     ],
     [
       "promotes",
-      399
+      391
     ],
     [
       "performs",
-      284
+      269
     ],
     [
       "affects",
@@ -36,11 +36,11 @@
     ],
     [
       "regulates",
-      223
+      222
     ],
     [
       "utilizes",
-      190
+      187
     ],
     [
       "suppresses",
@@ -56,7 +56,7 @@
     ],
     [
       "increases risk",
-      25
+      24
     ],
     [
       "modulates",
@@ -86,5 +86,8 @@
       "disrupts",
       2
     ]
-  ]
+  ],
+  "missing_relation_endpoint_count": 0,
+  "missing_relation_endpoint_samples": [],
+  "top_missing_relation_endpoints": []
 }

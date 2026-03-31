@@ -115,13 +115,13 @@ final class GraphService
 
         $anchorType = $requestedType === 'DiseaseClass' ? 'DiseaseClass' : $this->normalizeType($anchor['labels']);
         if ($anchorType === 'DiseaseClass') {
-            $rows = [];
+            $rows = $this->buildDiseaseClassContextRows($anchor);
         } elseif ($anchorType === 'Disease') {
             $rows = $this->buildDiseaseContextRows($anchor);
         } elseif ($anchorType === 'Paper') {
             $rows = $this->buildPaperContextRows($anchor);
         } else {
-            $rows = $this->loadDirectRows($anchor['element_id']);
+            $rows = $this->loadDirectRowsForAnchor($anchor);
             $rows = $this->pruneGenericRows($rows, $anchorType);
         }
 
@@ -129,6 +129,7 @@ final class GraphService
             $rows = $this->expandKeyNodeRows((string)$anchor['element_id'], $rows, $keyLevel);
         }
 
+        $rows = $this->canonicalizeAnchorRows($rows, $anchor);
         $elements = $this->buildElements($anchor, $rows);
 
         return [
@@ -228,6 +229,136 @@ CYPHER,
         );
     }
 
+    private function loadDirectRowsForAnchor(array $anchor): array
+    {
+        $allRows = [];
+        foreach ($this->getTeAliasNodesForAnchor($anchor) as $aliasNode) {
+            foreach ($this->loadDirectRows((string)($aliasNode['element_id'] ?? '')) as $row) {
+                $allRows[] = $this->remapAliasRowToAnchor($row, $aliasNode, $anchor);
+            }
+        }
+
+        return $allRows;
+    }
+
+    private function findExactTeNodeByName(string $name): ?array
+    {
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (n:TE)
+WHERE toLower(coalesce(n.name, '')) = toLower($name)
+RETURN
+  elementId(n) AS element_id,
+  labels(n) AS labels,
+  n.name AS name,
+  n.description AS description,
+  n.pmid AS pmid,
+  n.disease_class AS disease_class
+LIMIT 1
+CYPHER,
+            ['name' => $name]
+        );
+
+        return $rows[0] ?? null;
+    }
+
+    private function getTeAliasNodesForAnchor(array $anchor): array
+    {
+        $anchorId = (string)($anchor['element_id'] ?? '');
+        if ($this->normalizeType($anchor['labels'] ?? []) !== 'TE' || $anchorId === '') {
+            return [$anchor];
+        }
+
+        $anchorName = trim((string)($anchor['name'] ?? ''));
+        if ($anchorName !== 'LINE1') {
+            return [$anchor];
+        }
+
+        $aliases = [$anchor];
+        foreach (['LINE-1', 'L1'] as $aliasName) {
+            $aliasNode = $this->findExactTeNodeByName($aliasName);
+            if ($aliasNode === null) {
+                continue;
+            }
+
+            if ((string)($aliasNode['element_id'] ?? '') === $anchorId) {
+                continue;
+            }
+
+            $aliases[] = $aliasNode;
+        }
+
+        return $aliases;
+    }
+
+    private function remapAliasRowToAnchor(array $row, array $aliasNode, array $anchor): array
+    {
+        $lineageId = (string)($aliasNode['element_id'] ?? '');
+        $anchorId = (string)($anchor['element_id'] ?? '');
+
+        if ($lineageId === '' || $lineageId === $anchorId) {
+            return $row;
+        }
+
+        if ((string)($row['source_element_id'] ?? '') === $lineageId) {
+            $row['source_element_id'] = $anchorId;
+            $row['source_labels'] = $anchor['labels'] ?? ['TE'];
+            $row['source_name'] = $anchor['name'] ?? 'LINE1';
+            $row['source_description'] = $anchor['description'] ?? '';
+            $row['source_pmid'] = $anchor['pmid'] ?? '';
+            $row['source_disease_class'] = $anchor['disease_class'] ?? '';
+        }
+
+        if ((string)($row['target_element_id'] ?? '') === $lineageId) {
+            $row['target_element_id'] = $anchorId;
+            $row['target_labels'] = $anchor['labels'] ?? ['TE'];
+            $row['target_name'] = $anchor['name'] ?? 'LINE1';
+            $row['target_description'] = $anchor['description'] ?? '';
+            $row['target_pmid'] = $anchor['pmid'] ?? '';
+            $row['target_disease_class'] = $anchor['disease_class'] ?? '';
+        }
+
+        return $row;
+    }
+
+    private function canonicalizeAnchorRows(array $rows, array $anchor): array
+    {
+        $anchorId = (string)($anchor['element_id'] ?? '');
+        $anchorName = trim((string)($anchor['name'] ?? ''));
+        if ($anchorId === '' || $anchorName !== 'LINE1' || $this->normalizeType($anchor['labels'] ?? []) !== 'TE') {
+            return $rows;
+        }
+
+        $aliasNodes = array_values(array_filter(
+            $this->getTeAliasNodesForAnchor($anchor),
+            static fn(array $aliasNode): bool => (string)($aliasNode['element_id'] ?? '') !== $anchorId
+        ));
+        if (empty($aliasNodes)) {
+            return $rows;
+        }
+
+        $canonicalRows = [];
+        $seenRowKeys = [];
+        foreach ($rows as $row) {
+            foreach ($aliasNodes as $aliasNode) {
+                $row = $this->remapAliasRowToAnchor($row, $aliasNode, $anchor);
+            }
+
+            if ((string)($row['source_element_id'] ?? '') === (string)($row['target_element_id'] ?? '')) {
+                continue;
+            }
+
+            $rowKey = $this->buildRowKey($row);
+            if (isset($seenRowKeys[$rowKey])) {
+                continue;
+            }
+            $seenRowKeys[$rowKey] = true;
+            $canonicalRows[] = $row;
+        }
+
+        return $canonicalRows;
+    }
+
     private function loadDiseaseTeRows(string $anchorId): array
     {
         return $this->runNeo4j(
@@ -311,6 +442,129 @@ CYPHER,
         );
 
         return array_merge($rows, $functionRows, $paperRows);
+    }
+
+    private function loadDiseaseClassDiseaseRows(string $classAnchorId, string $className, string $classDescription): array
+    {
+        return $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (d:Disease)
+WHERE trim(coalesce(d.disease_class, '')) <> ''
+  AND toLower(trim(d.disease_class)) = toLower($className)
+OPTIONAL MATCH (d)-[r:BIO_RELATION]-(:TE)
+WITH d, count(r) AS te_degree
+RETURN
+  $classAnchorId AS source_element_id,
+  ['DiseaseClass'] AS source_labels,
+  $className AS source_name,
+  $classDescription AS source_description,
+  '' AS source_pmid,
+  $className AS source_disease_class,
+  elementId(d) AS target_element_id,
+  labels(d) AS target_labels,
+  d.name AS target_name,
+  d.description AS target_description,
+  d.pmid AS target_pmid,
+  d.disease_class AS target_disease_class,
+  'DISEASE_CLASS_RELATION' AS relation_type,
+  'includes disease' AS relation_label,
+  [] AS relation_pmids,
+  '' AS relation_evidence
+ORDER BY te_degree DESC, toLower(coalesce(d.name, ''))
+CYPHER,
+            [
+                'classAnchorId' => $classAnchorId,
+                'className' => $className,
+                'classDescription' => $classDescription,
+            ]
+        );
+    }
+
+    private function buildDiseaseClassContextRows(array $anchor): array
+    {
+        $classAnchorId = (string)($anchor['element_id'] ?? '');
+        $className = (string)($anchor['name'] ?? '');
+        $classDescription = (string)($anchor['description'] ?? '');
+
+        $diseaseRows = array_slice(
+            $this->loadDiseaseClassDiseaseRows($classAnchorId, $className, $classDescription),
+            0,
+            12
+        );
+
+        $allRows = $diseaseRows;
+        foreach ($diseaseRows as $diseaseRow) {
+            $diseaseId = (string)($diseaseRow['target_element_id'] ?? '');
+            if ($diseaseId === '') {
+                continue;
+            }
+
+            $diseaseName = (string)($diseaseRow['target_name'] ?? '');
+            $diseaseDescription = (string)($diseaseRow['target_description'] ?? '');
+            $diseasePmid = (string)($diseaseRow['target_pmid'] ?? '');
+            $diseaseClass = (string)($diseaseRow['target_disease_class'] ?? '');
+
+            $teRows = array_slice($this->loadDiseaseTeRows($diseaseId), 0, 4);
+            $allRows = array_merge($allRows, $teRows);
+
+            $teIds = [];
+            $supportPmids = [];
+            foreach ($teRows as $teRow) {
+                $teId = (string)($teRow['target_element_id'] ?? '');
+                if ($teId !== '') {
+                    $teIds[] = $teId;
+                }
+                foreach (($teRow['relation_pmids'] ?? []) as $pmid) {
+                    $pmid = trim((string)$pmid);
+                    if ($pmid !== '') {
+                        $supportPmids[$pmid] = true;
+                    }
+                }
+            }
+
+            if (!empty($teIds)) {
+                $functionRows = array_slice(
+                    $this->loadDiseaseFunctionRows(
+                        $diseaseId,
+                        $diseaseName,
+                        $diseaseDescription,
+                        $diseasePmid,
+                        $diseaseClass,
+                        array_values(array_unique($teIds))
+                    ),
+                    0,
+                    4
+                );
+                $allRows = array_merge($allRows, $functionRows);
+            }
+
+            if (!empty($supportPmids)) {
+                $paperRows = array_slice(
+                    $this->loadPaperRowsByPmids(
+                        array_keys($supportPmids),
+                        $diseaseId,
+                        $diseaseName,
+                        $diseaseClass
+                    ),
+                    0,
+                    4
+                );
+                $allRows = array_merge($allRows, $paperRows);
+            }
+        }
+
+        $deduped = [];
+        $seenRowKeys = [];
+        foreach ($allRows as $row) {
+            $rowKey = $this->buildRowKey($row);
+            if (isset($seenRowKeys[$rowKey])) {
+                continue;
+            }
+            $seenRowKeys[$rowKey] = true;
+            $deduped[] = $row;
+        }
+
+        return $deduped;
     }
 
     private function buildPaperContextRows(array $anchor): array

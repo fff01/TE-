@@ -4,6 +4,8 @@
   const params = new URLSearchParams(window.location.search);
   const embedMode = typeof window.__TEKG_EMBED_MODE === 'string' ? window.__TEKG_EMBED_MODE : '';
   const initialQuery = String(window.__TEKG_INITIAL_QUERY || '').trim();
+  const initialQueryType = String(params.get('type') || '').trim().toLowerCase();
+  const initialClassQuery = String(params.get('class') || '').trim();
 
   const els = {
     zhBtn: document.getElementById('lang-zh'),
@@ -56,6 +58,8 @@
 
   let currentMode = 'tree';
   let currentGraphQuery = '';
+  let currentGraphQueryType = '';
+  let currentGraphClassQuery = '';
   let currentSelectedNode = null;
   let dynamicFrame = null;
   let dynamicBridgePromise = null;
@@ -91,6 +95,8 @@
     return {
       mode: currentMode,
       query: currentGraphQuery,
+      queryType: currentGraphQueryType,
+      classQuery: currentGraphClassQuery,
       fixedView: !!window.fixedView,
       keyNodeLevel: window.currentKeyNodeLevel,
       selectedNode: currentSelectedNode,
@@ -108,6 +114,59 @@
 
   function buildDetail(title, description) {
     return `<strong>${escapeHtml(title || '')}</strong>${escapeHtml(description || '')}`;
+  }
+
+  function normalizeQueryType(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'disease_class' || normalized === 'diseaseclass') return 'disease_class';
+    return '';
+  }
+
+  function buildCurrentGraphRequest() {
+    if (currentGraphQueryType === 'disease_class') {
+      const classQuery = String(currentGraphClassQuery || currentGraphQuery || '').trim();
+      return {
+        query: classQuery,
+        queryType: 'disease_class',
+        classQuery,
+      };
+    }
+    return {
+      query: String(currentGraphQuery || '').trim(),
+      queryType: '',
+      classQuery: '',
+    };
+  }
+
+  function normalizeGraphRequest(requestLike) {
+    if (requestLike && typeof requestLike === 'object' && !Array.isArray(requestLike)) {
+      const queryType = normalizeQueryType(requestLike.type || requestLike.queryType);
+      const classQuery = String(requestLike.classQuery || requestLike.class || '').trim();
+      const query = String(requestLike.query || requestLike.q || classQuery || '').trim();
+      if (queryType === 'disease_class') {
+        const normalizedClassQuery = classQuery || query;
+        return {
+          query: normalizedClassQuery,
+          queryType,
+          classQuery: normalizedClassQuery,
+        };
+      }
+      return {
+        query,
+        queryType: '',
+        classQuery: '',
+      };
+    }
+
+    if (typeof requestLike === 'string') {
+      return {
+        query: String(requestLike || '').trim(),
+        queryType: '',
+        classQuery: '',
+      };
+    }
+
+    return buildCurrentGraphRequest();
   }
 
   function applyPageMode() {
@@ -179,18 +238,23 @@
     } catch (_error) {}
   }
 
-  function buildDynamicFrameSrc(queryOverride = currentGraphQuery) {
+  function buildDynamicFrameSrc(requestLike = buildCurrentGraphRequest()) {
+    const request = normalizeGraphRequest(requestLike);
     const url = new URL('index_g6_embed.html', window.location.href);
     url.searchParams.set('renderer', 'g6');
     url.searchParams.set('lang', window.currentLang);
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
-    const query = String(queryOverride || '').trim();
+    const query = String(request.query || '').trim();
     if (query) {
       url.searchParams.set('q', query);
     } else {
       url.searchParams.delete('q');
     }
+    if (request.queryType) url.searchParams.set('type', request.queryType);
+    else url.searchParams.delete('type');
+    if (request.queryType === 'disease_class' && request.classQuery) url.searchParams.set('class', request.classQuery);
+    else url.searchParams.delete('class');
     return url.toString();
   }
 
@@ -216,8 +280,8 @@
     });
   }
 
-  function ensureDynamicFrame(queryOverride = currentGraphQuery) {
-    const nextSrc = buildDynamicFrameSrc(queryOverride);
+  function ensureDynamicFrame(requestLike = buildCurrentGraphRequest()) {
+    const nextSrc = buildDynamicFrameSrc(requestLike);
 
     if (!dynamicFrame) {
       dynamicFrame = document.createElement('iframe');
@@ -242,6 +306,8 @@
   async function renderDefaultTree() {
     currentMode = 'tree';
     currentGraphQuery = '';
+    currentGraphQueryType = '';
+    currentGraphClassQuery = '';
     currentSelectedNode = null;
     showTreeSurface();
 
@@ -253,8 +319,9 @@
     notifyStateChange();
   }
 
-  async function loadDynamicGraph(query) {
-    const q = String(query || '').trim();
+  async function loadDynamicGraph(requestLike) {
+    const request = normalizeGraphRequest(requestLike);
+    const q = String(request.query || '').trim();
     if (!q) {
       await renderDefaultTree();
       return null;
@@ -262,6 +329,8 @@
 
     currentMode = 'dynamic';
     currentGraphQuery = q;
+    currentGraphQueryType = request.queryType || '';
+    currentGraphClassQuery = currentGraphQueryType === 'disease_class' ? String(request.classQuery || q).trim() : '';
     currentSelectedNode = null;
     showDynamicSurface();
     if (els.searchInput) els.searchInput.value = q;
@@ -269,7 +338,7 @@
     notifyStateChange();
 
     await waitForDynamicSurfaceSize();
-    ensureDynamicFrame(q);
+    ensureDynamicFrame(request);
     return Promise.resolve();
   }
 
@@ -297,7 +366,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic') {
-          syncEmbedControls().catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
         }
@@ -311,7 +380,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(currentGraphQuery).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
         }
@@ -325,7 +394,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(currentGraphQuery).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
         }
@@ -339,7 +408,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(currentGraphQuery).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
           return;
@@ -357,7 +426,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(currentGraphQuery).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
           return;
@@ -379,10 +448,15 @@
       setDetail(html || '');
     },
     setStatus(_text) {},
-    setMode(mode, query) {
+    setMode(mode, payload) {
       if (mode === 'dynamic') {
+        const request = normalizeGraphRequest(payload);
         currentMode = 'dynamic';
-        currentGraphQuery = String(query || currentGraphQuery || '').trim();
+        currentGraphQuery = String(request.query || currentGraphQuery || '').trim();
+        currentGraphQueryType = request.queryType || '';
+        currentGraphClassQuery = currentGraphQueryType === 'disease_class'
+          ? String(request.classQuery || currentGraphQuery || '').trim()
+          : '';
         notifyStateChange();
       }
     },
@@ -409,7 +483,7 @@
       window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(level) || 1));
       updateButtons();
       if (currentMode === 'dynamic' && currentGraphQuery) {
-        return loadDynamicGraph(currentGraphQuery);
+        return loadDynamicGraph(buildCurrentGraphRequest());
       }
       return Promise.resolve();
     },
@@ -417,7 +491,7 @@
       window.fixedView = !!next;
       updateButtons();
       if (currentMode === 'dynamic') {
-        return loadDynamicGraph(currentGraphQuery).then(() => window.fixedView);
+        return loadDynamicGraph(buildCurrentGraphRequest()).then(() => window.fixedView);
       }
       return Promise.resolve(window.fixedView);
     },
@@ -432,6 +506,9 @@
     },
     getCurrentQuery() {
       return currentGraphQuery;
+    },
+    getCurrentRequest() {
+      return buildCurrentGraphRequest();
     },
     getSelectedNode() {
       return currentSelectedNode;
@@ -448,7 +525,11 @@
       bindEvents();
 
       if (initialQuery) {
-        return loadSharedResources().then(() => loadDynamicGraph(initialQuery));
+        return loadSharedResources().then(() => loadDynamicGraph({
+          query: initialQuery,
+          queryType: initialQueryType,
+          classQuery: initialClassQuery || initialQuery,
+        }));
       }
 
       renderDefaultTree().catch((error) => {

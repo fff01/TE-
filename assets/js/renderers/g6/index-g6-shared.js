@@ -128,6 +128,12 @@
     return /[\u4e00-\u9fff]/.test(String(text || ''));
   }
 
+  function normalizeQueryType(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'disease_class' || normalized === 'diseaseclass') return 'disease_class';
+    return '';
+  }
+
   function normalizeTranslationMap(raw) {
     return raw && typeof raw === 'object' ? raw : {};
   }
@@ -183,7 +189,16 @@
     let fixedView = !!options.initialFixedView;
     let currentKeyNodeLevel = Math.max(1, Math.min(10, Number(options.initialKeyNodeLevel) || 1));
     let currentQuery = String(options.initialQuery || '').trim();
+    let currentQueryType = normalizeQueryType(options.initialQueryType);
+    let currentClassQuery = String(options.initialClassQuery || '').trim();
     let currentLang = options.initialLang === 'zh' ? 'zh' : 'en';
+
+    if (currentQueryType === 'disease_class') {
+      if (!currentClassQuery) currentClassQuery = currentQuery;
+      if (!currentQuery) currentQuery = currentClassQuery;
+    } else {
+      currentClassQuery = '';
+    }
 
     let nameTranslations = {};
     let teDescriptions = { en: {} };
@@ -205,6 +220,64 @@
       setQueryUi: typeof options.setQueryUi === 'function' ? options.setQueryUi : noop,
       syncRouteState: typeof options.syncRouteState === 'function' ? options.syncRouteState : noop,
     };
+
+    function buildCurrentRequest() {
+      if (currentQueryType === 'disease_class') {
+        const classQuery = String(currentClassQuery || currentQuery || '').trim();
+        return {
+          query: classQuery,
+          queryType: 'disease_class',
+          classQuery,
+        };
+      }
+      return {
+        query: String(currentQuery || '').trim(),
+        queryType: '',
+        classQuery: '',
+      };
+    }
+
+    function normalizeGraphRequest(requestLike) {
+      if (requestLike && typeof requestLike === 'object' && !Array.isArray(requestLike)) {
+        const queryType = normalizeQueryType(requestLike.type || requestLike.queryType);
+        const classQuery = String(requestLike.classQuery || requestLike.class || '').trim();
+        const query = String(requestLike.query || requestLike.q || classQuery || '').trim();
+        if (queryType === 'disease_class') {
+          const normalizedClassQuery = classQuery || query;
+          return {
+            query: normalizedClassQuery,
+            queryType,
+            classQuery: normalizedClassQuery,
+          };
+        }
+        return {
+          query,
+          queryType: '',
+          classQuery: '',
+        };
+      }
+
+      if (typeof requestLike === 'string') {
+        return {
+          query: String(requestLike || '').trim(),
+          queryType: '',
+          classQuery: '',
+        };
+      }
+
+      const uiQuery = typeof options.getQuery === 'function' ? String(options.getQuery() || '').trim() : '';
+      if (currentQueryType === 'disease_class') {
+        const preserveClassGraph = !uiQuery || uiQuery === currentQuery || uiQuery === currentClassQuery;
+        if (preserveClassGraph) return buildCurrentRequest();
+      }
+
+      const query = String(uiQuery || currentQuery || 'LINE1').trim() || 'LINE1';
+      return {
+        query,
+        queryType: '',
+        classQuery: '',
+      };
+    }
 
     function computeTeVisualMetrics() {
       teFixedRadii = new Map();
@@ -477,6 +550,8 @@
           diseaseClass: String(data.disease_class || ''),
           team: buildTeam(data),
           queryLabel: String(data.rawLabel || data.label || data.id),
+          queryType: (data.type || 'TE') === 'DiseaseClass' ? 'disease_class' : '',
+          classQuery: (data.type || 'TE') === 'DiseaseClass' ? String(data.rawLabel || data.label || data.id) : '',
           fillColor: TYPE_COLORS[data.type || 'TE'] || '#94a3b8',
           strokeColor: TYPE_STROKES[data.type || 'TE'] || '#111111',
         };
@@ -563,7 +638,9 @@
           description: `Disease class node for ${diseaseClass}. Connected to ${count} disease node${count === 1 ? '' : 's'} in the current graph.`,
           diseaseClass,
           team: `Disease::${diseaseClass}`,
-          queryLabel: '',
+          queryLabel: diseaseClass,
+          queryType: 'disease_class',
+          classQuery: diseaseClass,
         };
         visibleNodes.push(classNode);
         visibleNodeIds.add(classNodeId);
@@ -629,18 +706,26 @@
       });
     }
 
-    async function loadGraph(forcedQuery) {
-      const uiQuery = typeof options.getQuery === 'function' ? options.getQuery() : '';
-      const query = String(forcedQuery || uiQuery || currentQuery || 'LINE1').trim() || 'LINE1';
+    async function loadGraph(requestLike) {
+      const request = normalizeGraphRequest(requestLike);
+      const query = String(request.query || '').trim() || 'LINE1';
       currentQuery = query;
+      currentQueryType = request.queryType || '';
+      currentClassQuery = currentQueryType === 'disease_class' ? String(request.classQuery || query).trim() : '';
       hooks.setQueryUi(query);
       hooks.syncRouteState({
         query,
+        queryType: currentQueryType,
+        classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
         lang: currentLang,
       });
-      hooks.setMode('dynamic', query);
+      hooks.setMode('dynamic', {
+        query,
+        queryType: currentQueryType,
+        classQuery: currentClassQuery,
+      });
       hooks.setStatus(`Loading graph for ${query} (key-node level ${currentKeyNodeLevel}) ...`);
 
       try {
@@ -653,7 +738,15 @@
           container.style.height = `${metrics.height}px`;
         }
 
-        const response = await fetch(`api/graph.php?q=${encodeURIComponent(query)}&key_level=${currentKeyNodeLevel}`, {
+        const endpoint = new URL('api/graph.php', window.location.href);
+        endpoint.searchParams.set('q', query);
+        endpoint.searchParams.set('key_level', String(currentKeyNodeLevel));
+        if (currentQueryType === 'disease_class') {
+          endpoint.searchParams.set('type', 'disease_class');
+          endpoint.searchParams.set('class', currentClassQuery || query);
+        }
+
+        const response = await fetch(endpoint.toString(), {
           credentials: 'same-origin',
         });
         if (!response.ok) {
@@ -767,7 +860,18 @@
           if (!node) return;
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
-          if (!fixedView && node.nodeType !== 'DiseaseClass' && node.queryLabel) {
+          if (!fixedView && node.nodeType === 'DiseaseClass') {
+            const classQuery = String(node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel || '').trim();
+            if (classQuery) {
+              loadGraph({
+                query: classQuery,
+                queryType: 'disease_class',
+                classQuery,
+              });
+            }
+            return;
+          }
+          if (!fixedView && node.queryLabel) {
             loadGraph(node.queryLabel);
           }
         });
@@ -811,6 +915,8 @@
       fixedView = !!next;
       hooks.syncRouteState({
         query: currentQuery,
+        queryType: currentQueryType,
+        classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
         lang: currentLang,
@@ -822,24 +928,28 @@
       currentKeyNodeLevel = Math.max(1, Math.min(10, Number(level) || 1));
       hooks.syncRouteState({
         query: currentQuery,
+        queryType: currentQueryType,
+        classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
         lang: currentLang,
       });
       if (!currentQuery) return Promise.resolve();
-      return loadGraph(currentQuery);
+      return loadGraph(buildCurrentRequest());
     }
 
     function setLanguage(lang) {
       currentLang = lang === 'zh' ? 'zh' : 'en';
       hooks.syncRouteState({
         query: currentQuery,
+        queryType: currentQueryType,
+        classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
         lang: currentLang,
       });
       if (!currentQuery) return Promise.resolve();
-      return loadGraph(currentQuery);
+      return loadGraph(buildCurrentRequest());
     }
 
     function init() {
@@ -862,6 +972,7 @@
       setKeyNodeLevel,
       setLanguage,
       getCurrentQuery: () => currentQuery,
+      getCurrentRequest: () => buildCurrentRequest(),
       getFixedView: () => fixedView,
       getKeyNodeLevel: () => currentKeyNodeLevel,
       escapeHtml,

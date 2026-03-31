@@ -31,6 +31,8 @@
   const runner = shared.createRunner({
     container,
     initialQuery: String(url.searchParams.get('q') || queryInput?.value || 'LINE1').trim() || 'LINE1',
+    initialQueryType: String(url.searchParams.get('type') || '').trim(),
+    initialClassQuery: String(url.searchParams.get('class') || '').trim(),
     initialKeyNodeLevel: Math.max(1, Math.min(10, Number(url.searchParams.get('key_level')) || 1)),
     initialFixedView: url.searchParams.get('fixed') === '1',
     initialLang: url.searchParams.get('lang') === 'zh' ? 'zh' : 'en',
@@ -38,10 +40,14 @@
     setQueryUi: (query) => {
       if (queryInput) queryInput.value = query;
     },
-    syncRouteState: ({ query, keyNodeLevel, fixedView, lang }) => {
+    syncRouteState: ({ query, queryType, classQuery, keyNodeLevel, fixedView, lang }) => {
       const next = new URL(window.location.href);
       if (query) next.searchParams.set('q', query);
       else next.searchParams.delete('q');
+      if (queryType) next.searchParams.set('type', queryType);
+      else next.searchParams.delete('type');
+      if (queryType === 'disease_class' && classQuery) next.searchParams.set('class', classQuery);
+      else next.searchParams.delete('class');
       next.searchParams.set('key_level', String(keyNodeLevel));
       next.searchParams.set('fixed', fixedView ? '1' : '0');
       next.searchParams.set('lang', lang === 'zh' ? 'zh' : 'en');
@@ -103,6 +109,6 @@
 
   refreshControls();
   runner.init().finally(() => {
-    runner.loadGraph(runner.getCurrentQuery() || 'LINE1').catch(() => {});
+    runner.loadGraph(runner.getCurrentRequest ? runner.getCurrentRequest() : (runner.getCurrentQuery() || 'LINE1')).catch(() => {});
   });
 }());

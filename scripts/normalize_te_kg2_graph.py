@@ -360,14 +360,104 @@ def dedupe_entities(items: list[dict], entity_type: str) -> list[dict]:
 
 
 def infer_entity_type(name: str, entities: dict) -> str:
-    key = normalize_key(name)
+    raw = normalize_whitespace(name)
+    if not raw:
+        return "functions"
+
     for entity_type, items in entities.items():
+        canonical_name = canonicalize_entity(entity_type, raw)
+        canonical_key = normalize_key(canonical_name)
+        canonical_compare_key = normalize_compare_key(canonical_name)
         for item in items:
-            if normalize_key(item["name"]) == key:
+            item_name = item["name"]
+            if normalize_key(item_name) == canonical_key or normalize_compare_key(item_name) == canonical_compare_key:
                 return entity_type
-    if infer_line1_subfamily(name):
+
+    te_canonical = canonicalize_entity("transposons", raw)
+    if te_canonical and normalize_key(te_canonical) != normalize_key(raw):
+        return "transposons"
+    if infer_line1_subfamily(raw):
         return "transposons"
     return "functions"
+
+
+def ensure_entity_present(normalized_entities: dict, entity_type: str, canonical_name: str) -> None:
+    canonical_name = normalize_whitespace(canonical_name)
+    if not canonical_name:
+        return
+
+    bucket = normalized_entities.setdefault(entity_type, [])
+    wanted_key = normalize_key(canonical_name)
+    for item in bucket:
+        if normalize_key(item.get("name", "")) == wanted_key:
+            return
+
+    payload = {"name": canonical_name, "description": ""}
+    if entity_type == "diseases":
+        disease_class = lookup_disease_class(canonical_name, DISEASE_CLASS_MAP)
+        if disease_class:
+            payload["disease_class"] = disease_class
+    bucket.append(payload)
+
+
+def resolve_entity_name(entity_type: str, raw_name: str, entities: dict) -> str:
+    canonical_name = canonicalize_entity(entity_type, raw_name)
+    if not canonical_name:
+        return ""
+
+    bucket = entities.get(entity_type, []) or []
+    canonical_key = normalize_key(canonical_name)
+    canonical_compare_key = normalize_compare_key(canonical_name)
+    for item in bucket:
+        item_name = item.get("name", "")
+        if normalize_key(item_name) == canonical_key or normalize_compare_key(item_name) == canonical_compare_key:
+            return item_name
+
+    return canonical_name
+
+
+def entity_identity_key(entity_type: str, name: str) -> str:
+    canonical_name = canonicalize_entity(entity_type, name)
+    key = normalize_compare_key(canonical_name or name)
+    if key:
+        return key
+    return normalize_key(canonical_name or name)
+
+
+def register_bucket_node(bucket: dict, entity_type: str, item: dict) -> None:
+    key = entity_identity_key(entity_type, item["name"])
+    if key not in bucket:
+        bucket[key] = dict(item)
+        return
+
+    existing = bucket[key]
+    if not existing.get("description") and item.get("description"):
+        existing["description"] = item["description"]
+    if entity_type == "diseases" and not existing.get("disease_class") and item.get("disease_class"):
+        existing["disease_class"] = item["disease_class"]
+
+
+def build_node_indexes(node_buckets: dict) -> dict[str, dict[str, str]]:
+    indexes: dict[str, dict[str, str]] = {}
+    for entity_type, bucket in node_buckets.items():
+        index: dict[str, str] = {}
+        for item in bucket.values():
+            name = item["name"]
+            index[normalize_key(name)] = name
+            compare_key = normalize_compare_key(name)
+            if compare_key:
+                index[compare_key] = name
+        indexes[entity_type] = index
+    return indexes
+
+
+def resolve_seed_node_name(entity_type: str, raw_name: str, indexes: dict[str, dict[str, str]]) -> str:
+    canonical_name = canonicalize_entity(entity_type, raw_name)
+    index = indexes.get(entity_type, {})
+    for key in (normalize_key(canonical_name), normalize_compare_key(canonical_name)):
+        if key and key in index:
+            return index[key]
+    return canonical_name
 
 
 def normalize_record(record: dict) -> dict:
@@ -383,18 +473,24 @@ def normalize_record(record: dict) -> dict:
     for rel in record.get("relations", []) or []:
         source_type = infer_entity_type(rel.get("source", ""), normalized_entities)
         target_type = infer_entity_type(rel.get("target", ""), normalized_entities)
-        source = canonicalize_entity(source_type, rel.get("source", ""))
-        target = canonicalize_entity(target_type, rel.get("target", ""))
+        source = resolve_entity_name(source_type, rel.get("source", ""), normalized_entities)
+        target = resolve_entity_name(target_type, rel.get("target", ""), normalized_entities)
         relation = canonicalize_relation(rel.get("relation", ""))
         description = normalize_whitespace(rel.get("description", ""))
         if not source or not target or not relation:
             continue
+
+        ensure_entity_present(normalized_entities, source_type, source)
+        ensure_entity_present(normalized_entities, target_type, target)
+
         dedupe_key = (source.casefold(), relation.casefold(), target.casefold())
         if dedupe_key not in relation_seen:
             relation_seen[dedupe_key] = {
                 "source": source,
+                "source_type": source_type,
                 "relation": relation,
                 "target": target,
+                "target_type": target_type,
                 "description": description,
             }
         elif not relation_seen[dedupe_key]["description"] and description:
@@ -436,17 +532,24 @@ def build_graph_seed(records: list[dict]) -> dict:
 
         for entity_type in ("transposons", "diseases", "functions"):
             for item in record["entities"].get(entity_type, []):
-                key = item["name"].casefold()
-                if key not in node_buckets[entity_type]:
-                    node_buckets[entity_type][key] = dict(item)
+                register_bucket_node(node_buckets[entity_type], entity_type, item)
 
+    node_indexes = build_node_indexes(node_buckets)
+
+    for record in records:
+        pmid = record.get("pmid", "")
         for rel in record.get("relations", []):
-            key = (rel["source"].casefold(), rel["relation"].casefold(), rel["target"].casefold())
+            source_type = rel.get("source_type") or infer_entity_type(rel["source"], record["entities"])
+            target_type = rel.get("target_type") or infer_entity_type(rel["target"], record["entities"])
+            source = resolve_seed_node_name(source_type, rel["source"], node_indexes)
+            target = resolve_seed_node_name(target_type, rel["target"], node_indexes)
+
+            key = (source.casefold(), rel["relation"].casefold(), target.casefold())
             if key not in relation_buckets:
                 relation_buckets[key] = {
-                    "source": rel["source"],
+                    "source": source,
                     "relation": rel["relation"],
-                    "target": rel["target"],
+                    "target": target,
                     "description": rel.get("description", ""),
                     "pmids": [],
                 }
@@ -471,7 +574,40 @@ def build_graph_seed(records: list[dict]) -> dict:
     }
 
 
-def build_report(records: list[dict], graph_seed: dict) -> dict:
+def validate_graph_seed(graph_seed: dict) -> dict:
+    node_names = {item["name"] for items in graph_seed["nodes"].values() for item in items}
+    missing_samples = []
+    missing_count = 0
+    missing_counter = Counter()
+
+    for rel in graph_seed["relations"]:
+        missing_fields = []
+        if rel["source"] not in node_names:
+            missing_fields.append("source")
+            missing_counter[f"source:{rel['source']}"] += 1
+        if rel["target"] not in node_names:
+            missing_fields.append("target")
+            missing_counter[f"target:{rel['target']}"] += 1
+        if not missing_fields:
+            continue
+
+        missing_count += 1
+        if len(missing_samples) < 20:
+            missing_samples.append({
+                "missing": missing_fields,
+                "source": rel["source"],
+                "relation": rel["relation"],
+                "target": rel["target"],
+            })
+
+    return {
+        "missing_relation_endpoint_count": missing_count,
+        "missing_relation_endpoint_samples": missing_samples,
+        "top_missing_relation_endpoints": missing_counter.most_common(30),
+    }
+
+
+def build_report(records: list[dict], graph_seed: dict, validation: dict) -> dict:
     relation_counter = Counter()
     node_counts = {group: len(items) for group, items in graph_seed["nodes"].items()}
     for rel in graph_seed["relations"]:
@@ -484,6 +620,7 @@ def build_report(records: list[dict], graph_seed: dict) -> dict:
         "function_nodes": node_counts["functions"],
         "relation_count": len(graph_seed["relations"]),
         "top_relations": relation_counter.most_common(20),
+        **validation,
     }
 
 
@@ -503,8 +640,14 @@ def main() -> None:
     with GRAPH_SEED_JSON.open("w", encoding="utf-8") as handle:
         json.dump(graph_seed, handle, ensure_ascii=False, indent=2)
 
-    report = build_report(normalized_records, graph_seed)
+    validation = validate_graph_seed(graph_seed)
+    report = build_report(normalized_records, graph_seed, validation)
     REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    if validation["missing_relation_endpoint_count"] > 0:
+        raise RuntimeError(
+            f"Graph seed validation failed: {validation['missing_relation_endpoint_count']} relation endpoints are missing corresponding nodes."
+        )
 
     print(f"Normalized records: {len(normalized_records)}")
     print(f"Wrote: {NORMALIZED_JSONL}")

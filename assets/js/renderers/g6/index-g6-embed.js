@@ -50,11 +50,17 @@
     initialFixedView: params.get('fixed') === '1',
     initialKeyNodeLevel: Math.max(1, Math.min(10, Number(params.get('key_level')) || 1)),
     initialQuery: String(params.get('q') || '').trim(),
+    initialQueryType: String(params.get('type') || '').trim(),
+    initialClassQuery: String(params.get('class') || '').trim(),
     initialLang: params.get('lang') === 'zh' ? 'zh' : 'en',
-    syncRouteState: ({ query, keyNodeLevel, fixedView, lang }) => {
+    syncRouteState: ({ query, queryType, classQuery, keyNodeLevel, fixedView, lang }) => {
       const next = new URLSearchParams(window.location.search);
       if (query) next.set('q', query);
       else next.delete('q');
+      if (queryType) next.set('type', queryType);
+      else next.delete('type');
+      if (queryType === 'disease_class' && classQuery) next.set('class', classQuery);
+      else next.delete('class');
       next.set('key_level', String(keyNodeLevel));
       next.set('fixed', fixedView ? '1' : '0');
       next.set('lang', lang === 'zh' ? 'zh' : 'en');
@@ -100,7 +106,7 @@
 
   runner.init().finally(() => {
     if (runner.getCurrentQuery()) {
-      runner.loadGraph(runner.getCurrentQuery()).catch(() => {});
+      runner.loadGraph(runner.getCurrentRequest ? runner.getCurrentRequest() : runner.getCurrentQuery()).catch(() => {});
     }
   });
 }());
