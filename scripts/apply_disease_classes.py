@@ -1,14 +1,13 @@
 import json
+import sys
 from pathlib import Path
 
 from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RAW_FILES = [
-    ROOT / "data" / "raw" / "te_kg2.jsonl",
-    ROOT / "data" / "raw" / "output.jsonl",
-]
+PRIMARY_RAW_FILE = ROOT / "data" / "raw" / "te_kg2.jsonl"
+LEGACY_RAW_FILE = ROOT / "data" / "archive" / "legacy" / "raw" / "output.jsonl"
 REPORT_JSON = ROOT / "data" / "processed" / "disease_top_class_apply_report.json"
 
 
@@ -63,9 +62,15 @@ def annotate_jsonl(path: Path, class_map: dict[str, str]) -> dict:
 
 def main() -> None:
     class_map = build_disease_top_class_map()
-    reports = [annotate_jsonl(path, class_map) for path in RAW_FILES if path.exists()]
+    include_legacy = "--include-legacy-output-jsonl" in sys.argv
+    raw_files = [PRIMARY_RAW_FILE]
+    if include_legacy:
+        raw_files.append(LEGACY_RAW_FILE)
+
+    reports = [annotate_jsonl(path, class_map) for path in raw_files if path.exists()]
     payload = {
         "class_map_entries": len(class_map),
+        "legacy_output_jsonl_included": include_legacy,
         "files": reports,
     }
     REPORT_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

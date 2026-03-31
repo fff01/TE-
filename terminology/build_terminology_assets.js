@@ -4,7 +4,7 @@ const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
 const indexPath = path.join(root, 'index_demo.html');
-const seedPath = path.join(root, 'data', 'processed', 'neo4j_graph_seed.json');
+const seedPath = path.join(root, 'data', 'processed', 'te_kg2_graph_seed.json');
 const jsonOut = path.join(__dirname, 'te_terminology.json');
 const csvOut = path.join(__dirname, 'te_terminology.csv');
 const reportOut = path.join(__dirname, 'missing_terminology_report.md');

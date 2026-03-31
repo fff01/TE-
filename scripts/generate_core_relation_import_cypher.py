@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 
-INPUT_FILE = Path("neo4j_graph_seed.json")
+INPUT_FILE = Path("data/processed/te_kg2_graph_seed.json")
 OUTPUT_FILE = Path("imports/import_core_relations.cypher")
 
 LABEL_MAP = {
@@ -67,7 +67,7 @@ def main():
             te_to_disease.append(rel)
 
     blocks = [
-        "// Generated from neo4j_graph_seed.json",
+        "// Generated from data/processed/te_kg2_graph_seed.json",
         "// Import core biological relations first.",
         "// Relationship type is kept stable as BIO_RELATION; original verb is stored in r.predicate.",
         "",

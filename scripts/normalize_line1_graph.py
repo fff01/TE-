@@ -1,15 +1,17 @@
 import json
 import re
 import csv
+import sys
 from pathlib import Path
 
 from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
 
-INPUT_FILE = Path("data/raw/output.jsonl")
-CSV_FILE = Path("data/raw/LINE1_pubmed_data.csv")
-NORMALIZED_JSONL = Path("data/processed/normalized_output.jsonl")
-GRAPH_SEED_JSON = Path("data/processed/neo4j_graph_seed.json")
-LINEAGE_CSV = Path("data/processed/line1_subfamily_relations.csv")
+ROOT = Path(__file__).resolve().parents[1]
+INPUT_FILE = ROOT / "data" / "archive" / "legacy" / "raw" / "output.jsonl"
+CSV_FILE = ROOT / "data" / "raw" / "LINE1_pubmed_data.csv"
+NORMALIZED_JSONL = ROOT / "data" / "archive" / "legacy" / "processed" / "normalized_output.jsonl"
+GRAPH_SEED_JSON = ROOT / "data" / "archive" / "legacy" / "processed" / "neo4j_graph_seed.json"
+LINEAGE_CSV = ROOT / "data" / "archive" / "legacy" / "processed" / "line1_subfamily_relations.csv"
 
 
 LINEAGE_REFERENCE = {
@@ -40,6 +42,16 @@ LINEAGE_REFERENCE = {
     "L1MA4": {"parent": "LINE-1", "copies": 10943},
     "L1MA5": {"parent": "LINE-1", "copies": 4580},
 }
+
+
+def ensure_legacy_mode_enabled() -> None:
+    if "--legacy-output-jsonl" in sys.argv:
+        return
+    raise SystemExit(
+        "normalize_line1_graph.py is now treated as a legacy pipeline. "
+        "If you intentionally want to process data/archive/legacy/raw/output.jsonl, rerun with "
+        "--legacy-output-jsonl. For the active pipeline, use scripts/normalize_te_kg2_graph.py instead."
+    )
 
 
 ENTITY_ALIASES = {
@@ -395,6 +407,8 @@ def build_graph_seed(records: list[dict], paper_metadata: dict[str, dict]) -> di
 
 
 def main() -> None:
+    ensure_legacy_mode_enabled()
+
     if not INPUT_FILE.exists():
         raise FileNotFoundError(f"Missing input file: {INPUT_FILE}")
 

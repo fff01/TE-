@@ -14,7 +14,9 @@ to keep the working directory cleaner.
 
 ## Notes
 
-- Runtime files such as `index_demo.html`, `graph_demo_data.js`, `api/`, `llm_relay.py`,
-  and database import scripts are still kept in the project root for now.
-- This is the first low-risk cleanup pass only. Data files, generators, and import scripts
-  have not been moved yet.
+- Runtime files such as `index_demo.html`, `assets/data/graph_demo_data.js`, and `api/` are still kept
+  in the project root.
+- Auxiliary scripts that used to be scattered in the root have started to move into
+  `scripts/`, including the local relay and ad-hoc data helpers.
+- This cleanup is still incremental. Frontend runtime code and page entry files have not
+  been reorganized yet.

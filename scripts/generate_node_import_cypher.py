@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 
-INPUT_FILE = Path("neo4j_graph_seed.json")
+INPUT_FILE = Path("data/processed/te_kg2_graph_seed.json")
 OUTPUT_FILE = Path("imports/import_graph_nodes.cypher")
 
 
@@ -66,7 +66,7 @@ def main() -> None:
     node_groups = seed["nodes"]
 
     blocks = [
-        "// Generated from neo4j_graph_seed.json",
+        "// Generated from data/processed/te_kg2_graph_seed.json",
         "// Import deduplicated entity nodes before importing relations.",
         "",
     ]

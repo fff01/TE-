@@ -33,6 +33,7 @@ $g6Url = site_url_with_state($currentPath, $siteLang, 'g6', $currentQueryParams)
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
       --bg: #f5f8fc;
@@ -301,7 +302,7 @@ $g6Url = site_url_with_state($currentPath, $siteLang, 'g6', $currentQueryParams)
     <div class="site-header-inner">
       <div class="brand">
         <div class="brand-mark" aria-label="<?= htmlspecialchars(site_t(['zh' => '站点图标', 'en' => 'Site logo'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
-          <img src="tekg-logo.png" alt="TE-KG logo">
+          <img src="assets/img/brand/tekg-logo.png" alt="TE-KG logo">
         </div>
         <div>
           <h1 class="brand-title"><?= htmlspecialchars(site_t(['zh' => '转座元件知识图谱', 'en' => 'Transposable Elements Knowledge Graph'], $siteLang), ENT_QUOTES, 'UTF-8') ?></h1>

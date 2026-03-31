@@ -3,8 +3,10 @@ import re
 from pathlib import Path
 
 
-TREE_JSON = Path("data/processed/tree_te_lineage.json")
-DEMO_JS = Path("graph_demo_data.js")
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+TREE_JSON = PROJECT_ROOT / "data" / "processed" / "tree_te_lineage.json"
+DEMO_JS = PROJECT_ROOT / "assets" / "data" / "graph_demo_data.js"
 
 
 DISPLAY_LABEL_OVERRIDES = {

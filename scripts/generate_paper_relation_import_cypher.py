@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 
-INPUT_FILE = Path("neo4j_graph_seed.json")
+INPUT_FILE = Path("data/processed/te_kg2_graph_seed.json")
 OUTPUT_FILE = Path("imports/import_paper_relations.cypher")
 
 LABEL_MAP = {
@@ -93,7 +93,7 @@ def main():
             paper_to_function.append(rel)
 
     blocks = [
-        "// Generated from neo4j_graph_seed.json",
+        "// Generated from data/processed/te_kg2_graph_seed.json",
         "// Import evidence relations from Paper nodes to entity nodes.",
         "",
         build_block("Import Paper -> TE relations", "TE", paper_to_te, paper_title_to_pmids),

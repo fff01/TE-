@@ -7,83 +7,83 @@
   "relation_count": 12130,
   "top_relations": [
     [
-      "报道",
+      "reports",
       6903
     ],
     [
-      "参与",
+      "participates in",
       2127
     ],
     [
-      "介导",
+      "mediates",
       693
     ],
     [
-      "导致",
+      "leads to",
       692
     ],
     [
-      "促进",
+      "promotes",
       399
     ],
     [
-      "执行",
+      "performs",
       284
     ],
     [
-      "影响",
+      "affects",
       256
     ],
     [
-      "调控",
+      "regulates",
       223
     ],
     [
-      "利用",
+      "utilizes",
       190
     ],
     [
-      "抑制",
+      "suppresses",
       164
     ],
     [
-      "触发",
+      "triggers",
       51
     ],
     [
-      "诱导",
+      "induces",
       36
     ],
     [
-      "增加风险",
+      "increases risk",
       25
     ],
     [
-      "调节",
+      "modulates",
       21
     ],
     [
-      "促成",
+      "contributes to",
       19
     ],
     [
-      "发生",
+      "undergoes",
       10
     ],
     [
-      "激活",
+      "activates",
       5
     ],
     [
-      "解释",
+      "explains",
       2
     ],
     [
-      "使能",
+      "enables",
       2
     ],
     [
-      "破坏",
+      "disrupts",
       2
     ]
   ]

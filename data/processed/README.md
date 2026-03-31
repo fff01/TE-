@@ -215,3 +215,24 @@
 
 - 如果要检查 TE 树：
   - 查看 `tree_te_lineage.json` 与 `tree_te_lineage.csv`
+
+## Legacy / primary pipeline note
+
+- `normalized_output.jsonl` should now be treated as a legacy processed artifact derived from `output.jsonl`.
+- `te_kg2_normalized_output.jsonl` is the primary processed JSONL for the current active pipeline.
+- New development should prefer the `te_kg2` branch first and only touch the older `output.jsonl` branch when maintaining backward compatibility.
+
+---
+
+## Current archive note (2026-03-31)
+
+The following legacy LINE1-focused artifacts have been moved out of the active `data/processed/` folder and archived under `data/archive/legacy/processed/`:
+
+- `normalized_output.jsonl`
+- `neo4j_graph_seed.json`
+- `line1_subfamily_relations.csv`
+
+The active default pipeline now uses:
+
+- `te_kg2_normalized_output.jsonl`
+- `te_kg2_graph_seed.json`

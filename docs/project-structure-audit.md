@@ -37,7 +37,7 @@
 - `index_g6.html`
 - `index_g6_embed.html`
 - `index_g6_test.html`
-- `graph_demo_data.js`
+- `assets/data/graph_demo_data.js`
 
 ### 说明
 
@@ -85,27 +85,33 @@
 
 ---
 
-## 三、参考资料 / 历史资料区（适合在第 3 步整理）
+## 三、参考资料 / 历史资料区（第 3 步已完成第一轮整理）
 
-这些目录更像参考、归档、资料或阶段性工作区，不是网站运行主链：
+这些目录更像参考、归档、资料或阶段性工作区，不是网站运行主链。
 
-- `G6/`
+### 已迁移到 `reference/` 的目录
+
+- `reference/g6-official/`
   - 本地官方 G6 文档 / 示例参考区
-- `archive/`
+- `reference/archive/`
   - 历史归档内容
+- `reference/latex-report/`
+  - LaTeX 报告与图文材料
+- `reference/presentation-materials/`
+  - 展示材料 / 答辩辅助文件
+
+### 当前继续原地保留的目录
+
 - `docs/`
-  - 项目说明、开发文档、规则
-- `latex/`
-  - 非网站主运行逻辑
-- `展示/`
-  - 展示材料/辅助文件
+  - 仍属于活跃开发文档区，暂不移动
 - `tmp_icd11_csv/`
-  - ICD-11 处理中间文件区
+  - 仍被脚本直接引用，暂不移动
 
 ### 当前建议
 
-- 第 1 步不动。
-- 第 3 步再考虑是否集中归档到统一的 `reference/`、`workspace/` 或 `archive/` 结构下。
+- 当前已经完成第一轮归档。
+- `docs/` 与 `tmp_icd11_csv/` 继续原地保留，是为了避免影响当前开发与脚本链路。
+- 后续如果要继续整理，可再评估是否为 `tmp_icd11_csv/` 建立更稳定的工作区路径。
 
 ---
 
@@ -143,11 +149,11 @@
 
 ### C. 参考 / 归档区
 
-- `G6/`
-- `archive/`
+- `reference/g6-official/`
+- `reference/archive/`
+- `reference/latex-report/`
+- `reference/presentation-materials/`
 - `docs/`
-- `latex/`
-- `展示/`
 - `tmp_icd11_csv/`
 
 ### D. 临时 / 调试区
@@ -171,7 +177,7 @@
 - `assets/js/renderers/g6/index-g6.bootstrap.js`
 - `task.md`
 - `api/qa_debug.log`
-- 未跟踪目录：`G6/`
+- 新建立的参考区：`reference/`
 
 ---
 
@@ -191,7 +197,14 @@
 ### 第 3 步
 
 - 再整理参考资料与历史目录
-- 例如 `G6/`、`archive/`、`tmp_icd11_csv/`
+- 当前已经完成：
+  - `G6/` -> `reference/g6-official/`
+  - `archive/` -> `reference/archive/`
+  - `latex/` -> `reference/latex-report/`
+  - `展示/` -> `reference/presentation-materials/`
+- 暂未移动：
+  - `docs/`
+  - `tmp_icd11_csv/`
 
 ### 第 4 步
 
@@ -206,7 +219,25 @@
 
 - 网站运行主线已经比较明确。
 - G6 代码已经形成自己的主开发区。
-- 参考资料与历史资料已经可以看出边界，但还不适合立刻移动。
+- 参考资料与历史资料已经完成第一轮归档。
 - 临时文件可以作为下一步的低风险清理对象。
+- 静态品牌资源已经开始归位：
+  - `tekg-logo.png` -> `assets/img/brand/tekg-logo.png`
 
 因此，**第 1 步已经完成：我们现在已经有一份可执行的结构盘点基线，可以在不伤站的前提下进入第 2 步。**
+
+---
+
+## 九、脚本与散落工作文件整理进度
+
+当前已经完成一轮顶层脚本收口，以下文件已从项目根目录移动到 `scripts/`：
+
+- `disease_classify.py` -> `scripts/disease_classify.py`
+- `icd11_top_classes.xlsx` -> `scripts/icd11_top_classes.xlsx`
+- `llm_relay.py` -> `scripts/llm_relay.py`
+- `start_llm_relay.bat` -> `scripts/start_llm_relay.bat`
+
+其中：
+
+- `disease_classify.py` 已改成基于脚本自身目录写出 `icd11_top_classes.xlsx`，不再依赖运行时当前工作目录。
+- `llm_relay.py` 与 `start_llm_relay.bat` 仍然保持同目录关系，因此原启动方式逻辑不变。

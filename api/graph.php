@@ -47,7 +47,13 @@ if ($config['neo4j_password'] === '') {
 }
 
 $query = trim((string)($_GET['q'] ?? ''));
+$queryType = trim((string)($_GET['type'] ?? ''));
+$classQuery = trim((string)($_GET['class'] ?? ''));
 $keyLevel = max(1, min(10, (int)($_GET['key_level'] ?? 1)));
+
+if ($query === '' && strcasecmp($queryType, 'disease_class') === 0 && $classQuery !== '') {
+    $query = $classQuery;
+}
 
 if ($query === '') {
     $query = 'LINE1';
@@ -55,7 +61,7 @@ if ($query === '') {
 
 try {
     $service = new GraphService($config);
-    $payload = $service->search($query, $keyLevel);
+    $payload = $service->search($query, $keyLevel, $queryType, $classQuery);
     echo json_encode(['ok' => true] + $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     http_response_code(500);
@@ -84,22 +90,33 @@ final class GraphService
         $this->diseaseNameTranslations = $this->loadDiseaseNameTranslations();
     }
 
-    public function search(string $query, int $keyLevel = 1): array
+    public function search(string $query, int $keyLevel = 1, string $queryType = '', string $classQuery = ''): array
     {
         $normalized = $this->normalizeQuery($query);
-        $anchor = $this->findAnchorNode($query, $normalized);
+        $requestedType = $this->normalizeRequestedType($queryType);
+        $requestedClass = trim($classQuery) !== '' ? trim($classQuery) : $normalized;
+
+        if ($requestedType === 'DiseaseClass') {
+            $anchor = $this->findDiseaseClassAnchor($requestedClass);
+        } else {
+            $anchor = $this->findAnchorNode($query, $normalized);
+        }
+
         if ($anchor === null) {
             return [
                 'query' => $query,
                 'normalized_query' => $normalized,
+                'requested_type' => $requestedType,
                 'anchor' => null,
                 'elements' => [],
                 'matches' => [],
             ];
         }
 
-        $anchorType = $this->normalizeType($anchor['labels']);
-        if ($anchorType === 'Disease') {
+        $anchorType = $requestedType === 'DiseaseClass' ? 'DiseaseClass' : $this->normalizeType($anchor['labels']);
+        if ($anchorType === 'DiseaseClass') {
+            $rows = [];
+        } elseif ($anchorType === 'Disease') {
             $rows = $this->buildDiseaseContextRows($anchor);
         } elseif ($anchorType === 'Paper') {
             $rows = $this->buildPaperContextRows($anchor);
@@ -117,6 +134,7 @@ final class GraphService
         return [
             'query' => $query,
             'normalized_query' => $normalized,
+            'requested_type' => $requestedType,
             'anchor' => [
                 'name' => $anchor['name'],
                 'type' => $anchorType,
@@ -127,6 +145,58 @@ final class GraphService
             'key_node_expand_limit' => (int)($this->config['key_node_expand_limit'] ?? 15),
             'elements' => $elements,
             'matches' => $anchor['matches'],
+        ];
+    }
+
+    private function normalizeRequestedType(string $queryType): string
+    {
+        $normalized = mb_strtolower(trim($queryType));
+        return match ($normalized) {
+            'disease_class', 'diseaseclass' => 'DiseaseClass',
+            default => '',
+        };
+    }
+
+    private function findDiseaseClassAnchor(string $className): ?array
+    {
+        $className = trim($className);
+        if ($className === '') {
+            return null;
+        }
+
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (d:Disease)
+WHERE trim(coalesce(d.disease_class, '')) <> ''
+  AND toLower(trim(d.disease_class)) = toLower($className)
+RETURN trim(d.disease_class) AS disease_class, count(*) AS disease_count
+ORDER BY disease_count DESC
+LIMIT 1
+CYPHER,
+            ['className' => $className]
+        );
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        $canonicalClass = trim((string)($rows[0]['disease_class'] ?? ''));
+        if ($canonicalClass === '') {
+            return null;
+        }
+
+        return [
+            'element_id' => 'disease_class::' . mb_strtolower($canonicalClass),
+            'labels' => ['DiseaseClass'],
+            'name' => $canonicalClass,
+            'description' => 'Disease class node synthesized from disease_class grouping.',
+            'pmid' => '',
+            'disease_class' => $canonicalClass,
+            'matches' => [[
+                'name' => $canonicalClass,
+                'type' => 'DiseaseClass',
+                'pmid' => '',
+            ]],
         ];
     }
 
@@ -374,7 +444,7 @@ RETURN
   '' AS target_pmid,
   $diseaseClass AS target_disease_class,
   'EVIDENCE_RELATION' AS relation_type,
-  '支持该关联' AS relation_label,
+  'supports this association' AS relation_label,
   [p.pmid] AS relation_pmids,
   '' AS relation_evidence
 ORDER BY p.pmid
@@ -408,7 +478,7 @@ RETURN
   d.pmid AS target_pmid,
   d.disease_class AS target_disease_class,
   'EVIDENCE_RELATION' AS relation_type,
-  '支持该关联' AS relation_label,
+  'supports this association' AS relation_label,
   [$pmid] AS relation_pmids,
   '' AS relation_evidence
 UNION
@@ -428,7 +498,7 @@ RETURN
   te.pmid AS target_pmid,
   te.disease_class AS target_disease_class,
   'EVIDENCE_RELATION' AS relation_type,
-  '支持该关联' AS relation_label,
+  'supports this association' AS relation_label,
   [$pmid] AS relation_pmids,
   '' AS relation_evidence
 LIMIT 16
@@ -696,6 +766,7 @@ CYPHER,
         $trimmed = trim($query);
         $lower = mb_strtolower($trimmed);
         $aliases = [
+            'te' => 'TE',
             'line1' => 'LINE1',
             'line-1' => 'LINE1',
             'l1' => 'LINE1',
@@ -723,6 +794,22 @@ CYPHER,
         ];
 
         return $aliases[$lower] ?? $trimmed;
+    }
+
+    private function shouldAllowFuzzySearch(string $normalized): bool
+    {
+        $trimmed = trim($normalized);
+        if ($trimmed === '') {
+            return false;
+        }
+
+        // Very short queries like "TE" are too ambiguous for CONTAINS matching
+        // and tend to anchor on unrelated entities such as "teratoma".
+        if (mb_strlen($trimmed) < 3) {
+            return false;
+        }
+
+        return true;
     }
 
     private function findAnchorNode(string $query, string $normalized): ?array
@@ -755,6 +842,10 @@ CYPHER,
                 $exact
             );
             return $primary;
+        }
+
+        if (!$this->shouldAllowFuzzySearch($normalized)) {
+            return null;
         }
 
         $fuzzy = $this->runNeo4j(

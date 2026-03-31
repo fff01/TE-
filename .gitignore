@@ -3,3 +3,5 @@ assignment_pdf_extract.txt
 大作业.pdf
 __pycache__/
 *.pyc
+api/qa_debug.log
+_tmp_search_js_check.js

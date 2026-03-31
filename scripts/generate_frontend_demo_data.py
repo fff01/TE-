@@ -2,8 +2,10 @@ import json
 from pathlib import Path
 
 
-INPUT_FILE = Path("neo4j_graph_seed.json")
-OUTPUT_FILE = Path("graph_demo_data.js")
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parent
+INPUT_FILE = PROJECT_ROOT / "data" / "processed" / "te_kg2_graph_seed.json"
+OUTPUT_FILE = PROJECT_ROOT / "assets" / "data" / "graph_demo_data.js"
 
 
 def build_index(seed):

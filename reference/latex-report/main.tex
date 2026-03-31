@@ -1,0 +1,77 @@
+\documentclass[a4paper,12pt,fontset=fandol]{ctexart}
+
+\usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{listings}
+
+\onehalfspacing
+\setlength{\headheight}{15pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{生物学数据库及实验大作业实验报告}
+\rhead{转座元件知识图谱与智能问答系统}
+\cfoot{\thepage}
+
+\titleformat{\section}{\large\bfseries}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.8em}{}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue
+}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  showstringspaces=false
+}
+
+\newcommand{\placeholder}[1]{
+  \noindent\colorbox{gray!15}{\parbox{\dimexpr\linewidth-2\fboxsep}{
+  \textbf{待补充：} #1}}
+}
+
+\newcommand{\figplaceholder}[2]{
+  \begin{figure}[H]
+    \centering
+    \fbox{\rule{0pt}{5cm}\rule{0.85\linewidth}{0pt}}
+    \caption{#1}
+    \label{#2}
+  \end{figure}
+}
+
+\title{\textbf{\Huge 生物学数据库及实验大作业实验报告}\\[0.8em]
+\Large 转座元件（TE）知识图谱与智能问答系统构建}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{fancy}
+
+\input{00_project_info/basic_info.tex}
+\input{01_overview/overview.tex}
+\input{02_text_mining/text_mining.tex}
+\input{03_neo4j_schema/neo4j_schema.tex}
+\input{04_visualization/visualization.tex}
+\input{05_rag_qa/rag_qa.tex}
+\input{06_teamwork_and_delivery/teamwork_and_delivery.tex}
+
+\end{document}

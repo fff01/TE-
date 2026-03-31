@@ -1,0 +1,125 @@
+﻿\section{图数据库搭建模块}
+
+\subsection{图数据库选型}
+
+本项目选择 Neo4j 作为核心图数据库，而不是仅使用传统关系型数据库。原因在于，本项目的核心数据并不是简单的二维表记录，而是由大量实体及其关系共同构成的知识网络。例如，转座元件与疾病之间存在关联关系，转座元件与生物学功能之间存在调控或参与关系，文献节点又为这些关系提供证据来源；此外，LINE-1 及其亚家族之间还存在层级关系。这些信息天然适合用图结构表示。
+
+如果仅采用 MySQL 等关系型数据库，则需要设计多张实体表和关系表，并在查询时大量使用 JOIN 操作。对于“某个转座元件与哪些疾病相关”“哪些文献支持 LINE-1 与某疾病的关联”“L1HS 与 LINE-1 之间是什么关系”这类问题，图数据库能够以更直观的路径形式组织数据，并支持更自然的模式匹配查询。因此，本项目采用 Neo4j 作为知识图谱主存储，将关系型数据库仅保留为可选的辅助组件，而不作为主要知识存储层。
+
+\subsection{Schema 设计}
+
+根据项目需求，我们将知识图谱中的核心对象抽象为四类主要节点：转座元件节点、疾病节点、生物学功能节点和文献节点。所有节点均以名称或主键属性作为识别依据，以支持去重、归一化和后续检索。
+
+\subsubsection*{节点标签设计}
+
+\begin{table}[H]
+  \centering
+  \caption{节点设计}
+  \begin{tabular}{p{2.5cm} p{5cm} p{6cm}}
+    \toprule
+    节点类型 & 主要属性 & 说明 \\
+    \midrule
+    TE & name, category, description, source\_group & 表示转座元件及其亚家族，例如 LINE-1、L1HS、Alu 等 \\
+    Disease & name, source\_group & 表示疾病实体，例如阿尔茨海默病、乳腺癌等 \\
+    Function & name, source\_group & 表示生物学过程或功能实体，例如逆转录转座、DNA damage 等 \\
+    Paper & name, pmid, source\_group & 表示文献证据节点，通常以论文标题和 PMID 标识 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+在实际实现中，节点导入采用“名称唯一”的策略。对于 TE、Disease、Function 三类实体，均以 `name` 作为主要去重键；对于 Paper 节点，优先保留 PMID 与标题信息，以便后续在问答模块和可视化模块中进行证据溯源。
+
+\subsubsection*{关系类型设计}
+
+\begin{table}[H]
+  \centering
+  \caption{关系设计}
+  \begin{tabular}{p{3cm} p{4cm} p{6cm}}
+    \toprule
+    关系类型 & 示例 & 说明 \\
+    \midrule
+    SUBFAMILY\_OF & L1HS $\rightarrow$ LINE-1 & 表示亚家族与总家族之间的层级关系 \\
+    BIO\_RELATION & LINE-1 $\rightarrow$ 阿尔茨海默病 & 表示转座元件与疾病或功能之间的生物学关联，具体谓词写入关系属性 \\
+    EVIDENCE\_RELATION & Paper $\rightarrow$ TE/Disease/Function & 表示文献对实体或知识项的支持关系 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+其中，\texttt{SUBFAMILY\_OF} 是本项目中非常重要的一类结构化关系。队友提供了 LINE-1 谱系中的多个亚家族信息，因此系统在知识图谱中专门补充了 \texttt{L1HS}、\texttt{L1PA2}、\texttt{L1PB1}、\texttt{L1MA1} 等节点，并通过 \texttt{SUBFAMILY\_OF} 将其统一连接到 \texttt{LINE-1}。这一设计使知识图谱不仅能表达功能和疾病关系，还能表达转座元件内部的谱系结构。
+
+\texttt{BIO\_RELATION} 用于统一存储 TE 与 Disease、Function 之间的生物学关系。考虑到原始文献抽取结果中的关系词较多，若直接将所有谓词都建成独立的边类型，会造成边类型碎片化，不利于后续查询和维护。因此，系统将这类边统一表示为 \texttt{BIO\_RELATION}，而将具体谓词写入关系属性 \texttt{predicate}，同时保留 PMID 集合作为证据引用。
+
+\texttt{EVIDENCE\_RELATION} 则用于文献溯源。它连接文献节点与 TE、Disease、Function 等实体节点，使系统在回答问题时不仅能给出结论，还能返回来源文献。
+
+\subsubsection*{关系属性设计}
+
+本项目中较重要的关系属性包括：
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{predicate}：表示具体生物学关系词，如“促进”“相关”“导致”“参与”等；
+  \item \texttt{pmids}：记录支持该关系或实体的 PMID 列表；
+  \item \texttt{copies}：用于 \texttt{SUBFAMILY\_OF} 关系中，记录亚家族拷贝数；
+  \item \texttt{source}：用于标记关系来源，如谱系参考或抽取结果。
+\end{itemize}
+
+这种设计兼顾了结构统一性和语义细节。在图数据库中，边类型保持简洁，而具体语义和证据保存在关系属性中，有利于问答模块进行检索增强生成。
+
+\subsection{数据规模统计}
+
+在完成节点导入、亚家族层级关系补充、生物学关系构建以及文献证据关联后，当前知识图谱已经形成较完整的数据规模。考虑到系统中存在少量非核心或未归入四类主标签的辅助节点，本文重点统计四类核心节点以及三类主要关系，结果如表所示。
+
+\begin{table}[H]
+  \centering
+  \caption{知识图谱数据规模统计}
+  \begin{tabular}{p{6cm} p{4cm}}
+    \toprule
+    统计项 & 数量 \\
+    \midrule
+    核心节点总数（TE + Disease + Function + Paper） & 2234 \\
+    TE 节点数 & 114 \\
+    Disease 节点数 & 247 \\
+    Function 节点数 & 1253 \\
+    Paper 节点数 & 620 \\
+    关系总数 & 2793 \\
+    SUBFAMILY\_OF 关系数 & 26 \\
+    BIO\_RELATION 关系数 & 778 \\
+    EVIDENCE\_RELATION 关系数 & 1989 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+从统计结果可以看出，当前图谱以功能节点和文献证据关系为主体。这与项目数据来源特点一致：一方面，摘要抽取会产生较多功能与机制类实体；另一方面，系统设计中强调文献溯源，因此 Paper 与实体之间的证据连接数量较高。相比之下，TE 节点数量较少，但其在图中承担了核心枢纽作用，负责连接亚家族、疾病、功能及文献证据。
+
+\subsection{数据导入与查询}
+
+本项目的数据导入主要分为四步：
+\begin{enumerate}[leftmargin=2em]
+  \item 导入 TE、Disease、Function、Paper 四类节点；
+  \item 导入 LINE-1 与其亚家族之间的 \texttt{SUBFAMILY\_OF} 关系；
+  \item 导入 TE 与 Disease、Function 之间的 \texttt{BIO\_RELATION}；
+  \item 导入 Paper 与实体之间的 \texttt{EVIDENCE\_RELATION}，用于证据溯源。
+\end{enumerate}
+
+在实现层面，系统首先通过 Python 脚本对原始抽取结果进行去重与规范化，例如统一 `LINE-1 / LINE1 / L1` 的写法，并补充亚家族层级关系。清洗后的数据再被转换为 Cypher 导入脚本，批量导入 Neo4j。为了避免重复插入节点或关系，导入时统一使用 `MERGE` 而非简单 `CREATE`。
+
+当前项目中与图数据库相关的关键脚本和导入文件包括：
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{normalize\_line1\_graph.py}：对抽取结果做去重与规范化；
+  \item \texttt{import\_graph\_node\_names.cypher}：导入节点；
+  \item \texttt{import\_line1\_subfamilies.cypher}：导入 LINE-1 亚家族层级关系；
+  \item \texttt{import\_core\_relations.cypher}：导入 TE 与 Disease/Function 的核心关系；
+  \item \texttt{import\_paper\_relations.cypher}：导入文献证据关系。
+\end{itemize}
+
+在查询层面，Neo4j 使用 Cypher 语言进行图模式匹配。例如：
+
+\begin{itemize}[leftmargin=2em]
+  \item 查询某个 TE 的亚家族：
+  \texttt{MATCH (a:TE)-[:SUBFAMILY\_OF]->(b:TE \{name:'LINE-1'\}) RETURN a,b}
+  \item 查询某个 TE 相关的疾病：
+  \texttt{MATCH (a:TE)-[r:BIO\_RELATION]->(b:Disease) RETURN a,r,b}
+  \item 查询支持某一关系的文献证据：
+  \texttt{MATCH (p:Paper)-[r:EVIDENCE\_RELATION]->(t:TE) RETURN p,r,t}
+\end{itemize}
+
+这一图数据库设计为后续两个模块提供了直接支撑：前端可视化模块通过图谱节点和边进行展示，智能问答模块则通过 Cypher 检索相关子图路径，并将检索到的结构化知识作为大模型生成回答的上下文。

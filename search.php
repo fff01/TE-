@@ -173,7 +173,7 @@ include __DIR__ . '/head.php';
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
-<script src="graph_demo_data.js"></script>
+<script src="assets/data/graph_demo_data.js"></script>
 <script>
 (function () {
   const lang = <?= json_encode($lang, JSON_UNESCAPED_UNICODE) ?>;
