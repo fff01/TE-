@@ -374,6 +374,10 @@
       if (currentMode !== 'dynamic') return;
       setDetail(buildDetail(title, description));
     },
+    setDetailHtml(html) {
+      if (currentMode !== 'dynamic') return;
+      setDetail(html || '');
+    },
     setStatus(_text) {},
     setMode(mode, query) {
       if (mode === 'dynamic') {

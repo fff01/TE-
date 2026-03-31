@@ -521,3 +521,16 @@
 [2026-03-31 05:22:49] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
 [2026-03-31 05:22:53] answer:llm
 [2026-03-31 05:22:53] answer:done {"mode":"template_rag+llm"}
+[2026-03-31 06:33:15] answer:start {"question":"LINE-1 related diseases\n\n[Current G6 graph context]\nMode: Dynamic graph\nCenter node: LINE1\nSelected node: None\nKey-node level: 1\nFixed view: On","language":"en","style":"simple","depth":"shallow"}
+[2026-03-31 06:33:15] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-03-31 06:33:15] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-03-31 06:33:15] answer:template_query {"rows":15}
+[2026-03-31 06:33:15] answer:prepared {"rows":4,"refs":3,"intent":"te_to_disease","depth":"shallow"}
+[2026-03-31 06:33:18] answer:llm
+[2026-03-31 06:33:18] answer:done {"mode":"template_rag+llm"}
+[2026-03-31 06:40:58] answer:start {"question":"哪一类疾病与转座子元件关联度最高？","language":"zh","style":"simple","depth":"deep"}
+[2026-03-31 06:40:58] answer:normalized {"language":"zh","style":"simple","depth":"deep"}
+[2026-03-31 06:40:58] answer:intent {"entity":null,"disease":null,"intent":"te_to_disease"}
+[2026-03-31 06:40:58] answer:prepared {"rows":0,"refs":0,"intent":"te_to_disease","depth":"deep"}
+[2026-03-31 06:41:04] answer:llm
+[2026-03-31 06:41:04] answer:done {"mode":"template_rag+llm"}

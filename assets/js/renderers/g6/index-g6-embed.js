@@ -20,6 +20,11 @@
     if (host && typeof host.setDetail === 'function') host.setDetail(title, description);
   }
 
+  function pushDetailHtml(html) {
+    const host = getHost();
+    if (host && typeof host.setDetailHtml === 'function') host.setDetailHtml(html);
+  }
+
   function pushStatus(text) {
     const host = getHost();
     if (host && typeof host.setStatus === 'function') host.setStatus(text);
@@ -57,6 +62,7 @@
     },
     setStatus: pushStatus,
     setDetail: pushDetail,
+    setDetailHtml: pushDetailHtml,
     setMode: pushMode,
     onSelection: pushSelection,
     onReady: pushReady,

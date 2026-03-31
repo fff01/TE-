@@ -23,6 +23,44 @@
     Paper: '#b77a16',
   };
 
+  const RELATION_LABELS_EN = {
+    SUBFAMILY_OF: 'contains',
+    EVIDENCE_RELATION: 'literature support',
+    BIO_RELATION: 'related to',
+    '与…相关': 'associated with',
+    '与...相关': 'associated with',
+    '相关': 'associated with',
+    '促进': 'promotes',
+    '介导': 'mediates',
+    '报道': 'reports',
+    '影响': 'affects',
+    '执行': 'executes',
+    '参与': 'participates in',
+    '调控': 'regulates',
+    '导致': 'leads to',
+    '利用': 'uses',
+    '抑制': 'inhibits',
+    '触发': 'triggers',
+    '诱导': 'induces',
+    '增加风险': 'increases risk of',
+    '调节': 'modulates',
+    '促成': 'facilitates',
+    '发生': 'occurs in',
+    '激活': 'activates',
+    '破坏': 'disrupts',
+    '产生': 'produces',
+    '充当': 'acts as',
+    '使能': 'enables',
+    '解释': 'explains',
+    '提供': 'provides',
+    '易感': 'predisposes to',
+    '被调控': 'is regulated by',
+    '改变': 'alters',
+    '缺失': 'lacks',
+    '表现为': 'manifests as',
+    '表征': 'characterizes',
+  };
+
   const TE_MIN_RADIUS = 12.5;
 
   function noop() {}
@@ -160,6 +198,7 @@
     const hooks = {
       setStatus: typeof options.setStatus === 'function' ? options.setStatus : noop,
       setDetail: typeof options.setDetail === 'function' ? options.setDetail : noop,
+      setDetailHtml: typeof options.setDetailHtml === 'function' ? options.setDetailHtml : noop,
       setMode: typeof options.setMode === 'function' ? options.setMode : noop,
       onSelection: typeof options.onSelection === 'function' ? options.onSelection : noop,
       onReady: typeof options.onReady === 'function' ? options.onReady : noop,
@@ -371,6 +410,49 @@
       return description || '';
     }
 
+    function relationLabelForEdge(edge) {
+      if (edge?.synthetic) return 'classified as';
+      const rawRelation = String(edge?.relation || '').trim();
+      const rawType = String(edge?.relationType || '').trim();
+      const raw = rawRelation || rawType;
+      if (!raw) return 'related to';
+      if (currentLang === 'en') {
+        return RELATION_LABELS_EN[raw] || raw;
+      }
+      return raw;
+    }
+
+    function formatEvidence(edge) {
+      const evidence = String(edge?.evidence || '').trim();
+      const pmids = Array.isArray(edge?.pmids)
+        ? edge.pmids.map((pmid) => String(pmid || '').trim()).filter(Boolean)
+        : [];
+
+      if (pmids.length) {
+        return `PMID: ${pmids.join(', ')}`;
+      }
+      if (evidence) {
+        return evidence;
+      }
+      return 'Not listed.';
+    }
+
+    function buildEdgeDetailHtml(edge, nodes) {
+      const source = resolveNode(edge?.source, nodes);
+      const target = resolveNode(edge?.target, nodes);
+      const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
+      const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
+      const relation = relationLabelForEdge(edge);
+      const evidence = formatEvidence(edge);
+
+      return [
+        `<strong>${escapeHtml(sourceLabel)}</strong>`,
+        `&nbsp;&rarr;&nbsp;${escapeHtml(relation)}&nbsp;&rarr;&nbsp;`,
+        `<strong>${escapeHtml(targetLabel)}</strong>`,
+        `<div style="margin-top:8px;color:#475569;line-height:1.6;"><strong>Evidence:</strong> ${escapeHtml(evidence)}</div>`,
+      ].join('');
+    }
+
     function buildGraphData(elements) {
       const nodes = [];
       const edges = [];
@@ -418,8 +500,13 @@
         if (!data || !data.source || !data.target) continue;
         if (!allowedNodeIds.has(data.source) || !allowedNodeIds.has(data.target)) continue;
         baseEdges.push({
+          id: String(data.id || `${data.source}__${data.relationType || data.relation || 'relation'}__${data.target}`),
           source: data.source,
           target: data.target,
+          relation: String(data.relation || '').trim(),
+          relationType: String(data.relationType || '').trim(),
+          evidence: String(data.evidence || '').trim(),
+          pmids: Array.isArray(data.pmids) ? data.pmids : [],
         });
       }
 
@@ -484,16 +571,29 @@
 
       for (const edge of baseEdges) {
         if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) continue;
-        edges.push({ source: edge.source, target: edge.target });
+        edges.push({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          relation: edge.relation,
+          relationType: edge.relationType,
+          evidence: edge.evidence,
+          pmids: edge.pmids,
+        });
       }
 
       for (const [diseaseClass, members] of diseaseMembers.entries()) {
         const classNodeId = `disease-class::${diseaseClass}`;
         for (const member of members) {
           edges.push({
+            id: `${classNodeId}__DISEASE_CLASSIFICATION__${member.id}`,
             source: classNodeId,
             target: member.id,
             synthetic: true,
+            relation: 'classified as',
+            relationType: 'DISEASE_CLASSIFICATION',
+            evidence: '',
+            pmids: [],
           });
         }
       }
@@ -659,6 +759,8 @@
 
         await graph.render();
         graph.off?.('node:click');
+        graph.off?.('edge:click');
+        graph.off?.('canvas:click');
         graph.on('node:click', (event) => {
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
@@ -669,9 +771,20 @@
             loadGraph(node.queryLabel);
           }
         });
+        graph.on('edge:click', (event) => {
+          const edgeId = event?.target?.id;
+          const edge = data.edges.find((item) => item.id === edgeId);
+          if (!edge) return;
+          hooks.onSelection(null);
+          hooks.setDetailHtml(buildEdgeDetailHtml(edge, data.nodes));
+        });
+        graph.on('canvas:click', () => {
+          hooks.onSelection(null);
+          hooks.setDetail('No node selected', 'Click a node or edge to inspect graph details.');
+        });
 
         hooks.onSelection(null);
-        hooks.setDetail('No node selected', 'Click a node to inspect its name and description.');
+        hooks.setDetail('No node selected', 'Click a node or edge to inspect graph details.');
         hooks.setStatus(`Loaded ${data.nodes.length} nodes and ${data.edges.length} edges for ${query} at key-node level ${currentKeyNodeLevel}.`);
         return payload;
       } catch (error) {

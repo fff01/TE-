@@ -22,6 +22,11 @@
     detail.innerHTML = `<strong>${shared.escapeHtml(title)}</strong>${shared.escapeHtml(description || 'No description.')}`;
   }
 
+  function setDetailHtml(html) {
+    if (!detail) return;
+    detail.innerHTML = html || '';
+  }
+
   const url = new URL(window.location.href);
   const runner = shared.createRunner({
     container,
@@ -44,6 +49,7 @@
     },
     setStatus,
     setDetail,
+    setDetailHtml,
   });
 
   function updateFixedButton() {
