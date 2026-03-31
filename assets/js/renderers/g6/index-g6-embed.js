@@ -535,6 +535,41 @@
     return nodes.find((node) => node.id === edgeSide) || null;
   }
 
+  function getContainerMetrics() {
+    const docEl = document.documentElement;
+    const width = Math.max(
+      container.clientWidth || 0,
+      docEl ? docEl.clientWidth || 0 : 0,
+      window.innerWidth || 0,
+    );
+    const height = Math.max(
+      container.clientHeight || 0,
+      docEl ? docEl.clientHeight || 0 : 0,
+      window.innerHeight || 0,
+    );
+    return { width, height };
+  }
+
+  function waitForContainerSize(maxAttempts = 60, delayMs = 50) {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const check = () => {
+        attempts += 1;
+        const { width, height } = getContainerMetrics();
+        if (width > 24 && height > 24) {
+          resolve({ width, height });
+          return;
+        }
+        if (attempts >= maxAttempts) {
+          reject(new Error('G6 container has no size yet.'));
+          return;
+        }
+        window.setTimeout(check, delayMs);
+      };
+      check();
+    });
+  }
+
   async function loadGraph(forcedQuery) {
     const query = String(forcedQuery || currentQuery || params.get('q') || 'LINE1').trim() || 'LINE1';
     currentQuery = query;
@@ -549,6 +584,13 @@
 
     try {
       await ensureResources();
+        const metrics = await waitForContainerSize();
+        if ((container.clientWidth || 0) < 25 && metrics.width > 0) {
+          container.style.width = `${metrics.width}px`;
+        }
+        if ((container.clientHeight || 0) < 25 && metrics.height > 0) {
+          container.style.height = `${metrics.height}px`;
+        }
 
       const response = await fetch(`api/graph.php?q=${encodeURIComponent(query)}&key_level=${currentKeyNodeLevel}`, {
         credentials: 'same-origin',
@@ -687,6 +729,13 @@
   }
 
   function resize() {
+    const metrics = getContainerMetrics();
+    if ((container.clientWidth || 0) < 25 && metrics.width > 0) {
+      container.style.width = `${metrics.width}px`;
+    }
+    if ((container.clientHeight || 0) < 25 && metrics.height > 0) {
+      container.style.height = `${metrics.height}px`;
+    }
     if (graph && typeof graph.resize === 'function') {
       graph.resize();
     }

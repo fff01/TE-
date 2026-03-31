@@ -691,15 +691,18 @@
     });
 
     window.addEventListener('tekg:shared-ready', () => {
+      if (window.__TEKG_G6_BOOTSTRAP_OWN_TREE) return;
       renderDefaultTree();
     });
 
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      setTimeout(renderDefaultTree, 0);
-    } else {
-      window.addEventListener('DOMContentLoaded', () => setTimeout(renderDefaultTree, 0), { once: true });
+      if (!window.__TEKG_G6_BOOTSTRAP_OWN_TREE) {
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+          setTimeout(renderDefaultTree, 0);
+        } else {
+          window.addEventListener('DOMContentLoaded', () => setTimeout(renderDefaultTree, 0), { once: true });
+        }
+      }
     }
-  }
 
   bindTriggers();
   window.__TEKG_G6_DEFAULT_TREE = {

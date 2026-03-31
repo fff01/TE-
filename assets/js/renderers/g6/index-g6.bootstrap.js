@@ -129,6 +129,27 @@
     if (els.dynamicSurface) els.dynamicSurface.style.display = 'block';
   }
 
+  function waitForDynamicSurfaceSize(maxAttempts = 60, delayMs = 50) {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const check = () => {
+        attempts += 1;
+        const width = els.dynamicSurface ? (els.dynamicSurface.clientWidth || 0) : 0;
+        const height = els.dynamicSurface ? (els.dynamicSurface.clientHeight || 0) : 0;
+        if (width > 24 && height > 24) {
+          resolve({ width, height });
+          return;
+        }
+        if (attempts >= maxAttempts) {
+          reject(new Error('Dynamic graph surface has no size yet.'));
+          return;
+        }
+        window.setTimeout(check, delayMs);
+      };
+      check();
+    });
+  }
+
   async function loadSharedResources() {
     const tasks = [];
     if (typeof loadTerminology === 'function') tasks.push(loadTerminology());
@@ -141,12 +162,18 @@
     } catch (_error) {}
   }
 
-  function buildDynamicFrameSrc() {
+  function buildDynamicFrameSrc(queryOverride = currentGraphQuery) {
     const url = new URL('index_g6_embed.html', window.location.href);
     url.searchParams.set('renderer', 'g6');
     url.searchParams.set('lang', window.currentLang);
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
+    const query = String(queryOverride || '').trim();
+    if (query) {
+      url.searchParams.set('q', query);
+    } else {
+      url.searchParams.delete('q');
+    }
     return url.toString();
   }
 
@@ -172,36 +199,27 @@
     });
   }
 
-  function ensureDynamicFrame() {
-    if (dynamicBridgePromise) return dynamicBridgePromise;
+  function ensureDynamicFrame(queryOverride = currentGraphQuery) {
+    const nextSrc = buildDynamicFrameSrc(queryOverride);
 
     if (!dynamicFrame) {
       dynamicFrame = document.createElement('iframe');
       dynamicFrame.id = 'g6-dynamic-frame';
       dynamicFrame.title = 'TEKG G6 dynamic graph';
       dynamicFrame.setAttribute('scrolling', 'no');
-      dynamicFrame.src = buildDynamicFrameSrc();
       if (els.dynamicSurface) {
         els.dynamicSurface.innerHTML = '';
         els.dynamicSurface.appendChild(dynamicFrame);
       }
     }
 
-    dynamicBridgePromise = waitForEmbedBridge(dynamicFrame).catch((error) => {
+    const currentSrc = dynamicFrame.getAttribute('src') || '';
+    if (currentSrc !== nextSrc) {
       dynamicBridgePromise = null;
-      throw error;
-    });
+      dynamicFrame.src = nextSrc;
+    }
 
-    return dynamicBridgePromise;
-  }
-
-  async function syncEmbedControls() {
-    const bridge = await ensureDynamicFrame();
-    await bridge.setLanguage(window.currentLang);
-    await bridge.setFixedView(window.fixedView);
-    await bridge.setKeyNodeLevel(window.currentKeyNodeLevel);
-    await bridge.resize();
-    return bridge;
+    return dynamicFrame;
   }
 
   async function renderDefaultTree() {
@@ -229,8 +247,9 @@
     if (els.searchInput) els.searchInput.value = q;
     setDetail(textSet().loadingDetail(q));
 
-    const bridge = await syncEmbedControls();
-    return bridge.loadGraph(q);
+    await waitForDynamicSurfaceSize();
+    ensureDynamicFrame(q);
+    return Promise.resolve();
   }
 
   function bindEvents() {
@@ -364,7 +383,7 @@
       window.fixedView = !!next;
       updateButtons();
       if (currentMode === 'dynamic') {
-        return syncEmbedControls().then(() => window.fixedView);
+        return loadDynamicGraph(currentGraphQuery).then(() => window.fixedView);
       }
       return Promise.resolve(window.fixedView);
     },
