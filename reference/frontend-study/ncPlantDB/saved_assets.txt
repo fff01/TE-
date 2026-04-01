@@ -1,0 +1,12 @@
+https://bis.zju.edu.cn/ncPlantDB/static/css/bootstrap.min.css
+https://bis.zju.edu.cn/ncPlantDB/static/css/LineIcons.2.0.css
+https://bis.zju.edu.cn/ncPlantDB/static/css/animate.css
+https://bis.zju.edu.cn/ncPlantDB/static/css/glightbox.min.css
+https://bis.zju.edu.cn/ncPlantDB/static/css/main.css
+https://bis.zju.edu.cn/ncPlantDB/static/plugins/swiper/swiper-bundle.min.css
+https://bis.zju.edu.cn/ncPlantDB/static/images/logo/logo-white.png
+https://bis.zju.edu.cn/ncPlantDB/static/images/pipeline.png
+https://bis.zju.edu.cn/ncPlantDB/static/images/plants/ath.jpg
+https://bis.zju.edu.cn/ncPlantDB/static/images/plants/zma.jpg
+https://bis.zju.edu.cn/ncPlantDB/static/images/plants/osa.jpg
+https://bis.zju.edu.cn/ncPlantDB/static/images/plants/mtr.jpg

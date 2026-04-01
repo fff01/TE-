@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <title>AthRiboNC - Home</title>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/athribonc/static/favicon.ico">
+<link href="/athribonc/static/styles/bootstrap.min.css" rel="stylesheet">
+<link href="/athribonc/static/styles/font/bootstrap-icons.css" rel="stylesheet">
+<script src="/athribonc/static/scripts/jquery-3.6.4.slim.min.js"></script>
+<script src="/athribonc/static/scripts/bootstrap.bundle.min.js"></script>
+<style>
+  .navbar, .footer {
+    background-color: rgb(23,76,65);
+  }
+  .card {
+    border: 1.5px solid rgb(23,76,65,0.3);
+  } 
+  .btn-search {
+    background-color:rgb(171,205,169);
+ }
+</style>
+</head>
+<body>
+<nav class="navbar fixed-top navbar-expand-lg navbar-dark">
+      <div class="container-fluid">
+			<a class="navbar-brand" href="/athribonc"><i class="bi bi-flower2"></i><b>AthRiboNC</b></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link active" href="/athribonc">Home</a></li>
+                    <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" id="browseDropdown" role="button"
+                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Browse</a>
+                    <div class="dropdown-menu" aria-labelledby="browseDropdown">
+                        <a class="dropdown-item" href="/athribonc/browse/gene">Gene</a>
+                        <a class="dropdown-item" href="/athribonc/browse/sORF">sORF</a>
+                        <a class="dropdown-item" href="/athribonc/browse/sample">Sample</a>
+                    </div>
+                     </li>
+                    <li class="nav-item"><a class="nav-link" href="/athribonc/co-expression">Co-Expression</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/athribonc/blast">Blast</a></li>
+					<li class="nav-item"><a class="nav-link" href="/athribonc/download">Download</a></li>
+					<li class="nav-item"><a class="nav-link" href="/athribonc/contact">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    <form class="d-flex ms-auto my-2 my-lg-0" id="Search">
+    <input class="form-control mr-sm-2" type="search" placeholder="Search" id="Input">
+    <button style="margin-left: 10px;" class="btn btn-outline-success my-2 my-sm-0 btn-search" type="submit"><i class="bi bi-search"></i></button>
+</form>
+</nav>
+<div style="margin-top: 70px;">
+
+<style>
+  a{
+    text-decoration: none;
+    color: inherit;
+  }
+  .card {
+        width: 85%;
+        margin: auto;
+    }
+  .card-head, .card-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+<div class="container mt-4" style="max-width: 80%; margin: auto;">
+  <div class="row">
+    <div class="col">
+      <img src="/athribonc/static/image/home.jpg" style="width:100%; height: 100%; object-fit: contain;">
+    </div>
+    <div class="col">
+      <div style="display: flex; justify-content: center; align-items: center; height: 100%;" class="card p-3 mb-3 h-100">
+        <p style="font-size:1.25em">Many non-coding RNAs contain numerous sORFs with coding potential, and non-coding peptides play subtle biological functions.
+          The coding ability of non-coding RNAs originating from many animals has been verified, but related research is not abundant
+          within plants. <span style="color: darkblue;"><b>AthRiboNC</b></span>, based on Ribo-seq data, uncovers the coding potential of various ncRNAs in the model organism
+          <i>Arabidopsis thaliana</i>, including lncRNA, miRNA and circRNA. In addition, <span style="color: darkblue;"><b>AthRiboNC</b></span> provides downstream analysis of the ncRNA
+          coding potential expression in <i>Arabidopsis thaliana</i>, including coding potential specificity under different treatments,
+          co-expression network analysis, module enrichment analysis, and module topology networks.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="container mt-4" style="max-width: 80%; margin: auto;">
+  <div class="row">
+    <div class="col">
+      <a href="/athribonc/browse/gene">
+      <div class="card">
+      <div class="card-head"><img src="/athribonc/static/image/DNA.jpg" style="width:80%;"></div>
+      <div class="card-body"><h4><b>Gene</b></h4></div>
+      </div></a></div>
+    <div class="col">
+      <a href="/athribonc/browse/sORF">
+      <div class="card">
+      <div class="card-head"><img src="/athribonc/static/image/orf.jpg" style="width:80%;"></div>
+      <div class="card-body"><h4><b>sORF</b></h4></div>
+      </div></a></div>
+    <div class="col">
+      <a href="/athribonc/browse/sample">
+      <div class="card">
+      <div class="card-head"><img src="/athribonc/static/image/sample.jpg" style="width:80%;"></div>
+      <div class="card-body"><h4><b>Sample</b></h4></div>
+      </div></a></div>
+    <div class="col">
+      <a href="/athribonc/co-expression">
+      <div class="card">
+      <div class="card-head"><img src="/athribonc/static/image/net.jpg" style="width:80%;"></div>
+      <div class="card-body"><h4><b>Co-exp</b></h4></div>
+      </div></a></div>
+    <div class="col">
+      <a href="/athribonc/blast">
+      <div class="card">
+      <div class="card-head"><img src="/athribonc/static/image/blast.jpg" style="width:80%;"></div>
+      <div class="card-body"><h4><b>Blast</b></h4></div>
+      </div></a></div>
+    <div class="col">
+      <a href="/athribonc/download">
+      <div class="card">
+      <div class="card-head"><img src="/athribonc/static/image/file.jpg" style="width:80%;"></div>
+      <div class="card-body"><h4><b>Download</b></h4></div>
+      </div></a></div>
+  </div>
+  <br>
+</div>
+<script src="/athribonc/static/scripts/echarts.min.js"></script>
+<div style="display: flex; max-width: 80%;margin: auto;">
+<div id="chart1" style="width: 600px;height:600px;"></div>
+<div id="chart2" style="width: 600px;height:600px;"></div>
+</div>
+<script>
+  var chart1 = echarts.init(document.getElementById('chart1'));
+
+  var option = {
+      title: {
+          text: 'ncRNAs with coding potential in {italic|Arabidopsis thaliana}',
+          left: 'center',
+          top: '10%',
+          textStyle: {
+            fontSize: 17,
+            rich: {
+                italic: {
+                    fontSize: 17,
+                    color: '#333',
+                    fontStyle: 'italic',
+                    fontWeight: 'bold'
+                }
+            }
+        }
+      },
+      tooltip: {
+          trigger: 'item'
+      },
+      legend: {
+          orient: 'vertical',
+          left: 'left',
+          top: 'middle' 
+      },
+      series: [
+          {
+              name: 'ncRNA type',
+              type: 'pie',
+              radius: '50%',
+              data: [
+                  { value: 2743, name: 'lncRNA' },
+                  { value: 255, name: 'miRNA' },
+                  { value: 1871, name: 'circRNA' }
+              ],
+              emphasis: {
+                  itemStyle: {
+                      shadowBlur: 10,
+                      shadowOffsetX: 0,
+                      shadowColor: 'rgba(0, 0, 0, 0.5)'
+                  }
+              }
+          }
+      ]
+  };
+
+  chart1.setOption(option);
+</script>
+<script>
+  var chart2 = echarts.init(document.getElementById('chart2'));
+
+  var option = {
+      title: {
+          text: 'sORFs with coding potential identified in {italic|Arabidopsis thaliana}',
+          left: 'center',
+          top: '10%',
+          textStyle: {
+            fontSize: 17,
+            rich: {
+                italic: {
+                    fontSize: 17,
+                    color: '#333',
+                    fontStyle: 'italic',
+                    fontWeight: 'bold'
+                }
+            }
+        }
+      },
+      tooltip: {
+          trigger: 'item'
+      },
+      legend: {
+          orient: 'vertical',
+          left: 'left',
+          top: 'middle' 
+      },
+      series: [
+          {
+              name: 'tool',
+              type: 'pie',
+              radius: '50%',
+              data: [
+                  { value: 31928, name: 'ORFfinder' },
+                  { value: 8234, name: 'Ribo-TISH' }
+              ],
+              emphasis: {
+                  itemStyle: {
+                      shadowBlur: 10,
+                      shadowOffsetX: 0,
+                      shadowColor: 'rgba(0, 0, 0, 0.5)'
+                  }
+              }
+          }
+      ]
+  };
+
+  chart2.setOption(option);
+</script>
+
+  </div>
+<script>
+$(document).ready(function(){
+    $("#Search").on('submit', function(e) {
+        e.preventDefault();
+        var query = $("#Input").val();
+        window.location.href = "/athribonc/search/" + encodeURI(query);
+    });
+});
+</script>
+<style>
+    body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+</style>
+</body>
+<footer class="footer mt-auto py-3" style="text-align: center;">
+  <div class="container">
+    <span class="text-light">Copyright &copy; 2024 Zhejiang University, Ming Chen's Lab.</span>
+  </div>
+</footer>
+</html>
