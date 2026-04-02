@@ -231,6 +231,15 @@
         updateFocusUi();
       }finally{
         restoreInitialGraph();
+        const initialQuery = String(pageParams.get('q') || '').trim();
+        if(initialQuery && embedMode !== 'home-preview' && embedMode !== 'qa-overlay'){
+          searchInput.value = initialQuery;
+          try{
+            await loadDynamicGraph(initialQuery);
+          }catch(err){
+            nodeDetails.textContent = err && err.message ? err.message : ui[currentLang].empty;
+          }
+        }
       }
     }
     initializePage();

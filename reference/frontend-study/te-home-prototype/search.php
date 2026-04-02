@@ -85,8 +85,14 @@ $query = tekg_request_scalar_proto($_GET, 'q', '');
 $type = tekg_request_scalar_proto($_GET, 'type', 'all');
 $repbase = tekg_repbase_lookup_proto($query);
 $searchGraphSrc = $siteRenderer === 'g6'
-    ? '/TE-/index_g6.html?embed=search-result&lang=' . rawurlencode($siteLang) . ($query !== '' ? '&q=' . rawurlencode($query) : '')
-    : '';
+    ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
+        'embed' => 'search-result',
+        'q' => $query !== '' ? $query : null,
+      ], static fn ($value) => $value !== null && $value !== ''))
+    : site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', array_filter([
+        'embed' => 'search-result',
+        'q' => $query !== '' ? $query : null,
+      ], static fn ($value) => $value !== null && $value !== ''));
 
 require __DIR__ . '/head.php';
 ?>
@@ -357,7 +363,7 @@ require __DIR__ . '/head.php';
                 <button class="query-btn is-primary" type="submit">Search</button>
                 <button class="query-btn" id="search-reset" type="button">Reset</button>
                 <button class="query-btn" id="search-example" type="button">Example</button>
-                <span class="example-note">Example query: LINE1</span>
+                <span class="example-note">Example query: L1HS</span>
               </div>
             </form>
           </section>
@@ -413,7 +419,7 @@ require __DIR__ . '/head.php';
                 <div class="graph-frame">
                   <iframe
                     id="search-cyt-frame"
-                    src="<?= htmlspecialchars(site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'search-result']), ENT_QUOTES, 'UTF-8') ?>"
+                    src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
                     title="Search graph (Cytoscape)"
                   ></iframe>
                 </div>
@@ -569,67 +575,39 @@ require __DIR__ . '/head.php';
               : '');
         }
 
+        const g6BaseSrc = <?= json_encode(site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
+        const cytBaseSrc = <?= json_encode(site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
+
         function setG6Frame(query) {
           const frame = document.getElementById('search-g6-frame');
           if (!frame) return;
-          const url = new URL('/TE-/index_g6.html', window.location.origin);
-          url.searchParams.set('embed', 'search-result');
-          url.searchParams.set('lang', lang);
+          const url = new URL(g6BaseSrc, window.location.origin);
           if (query) {
             url.searchParams.set('q', query);
           }
           frame.src = url.toString();
         }
 
-        function restyleCytFrame() {
+        function setCytFrame(query) {
           const frame = document.getElementById('search-cyt-frame');
-          const doc = frame && frame.contentDocument;
-          if (!doc) return;
-
-          const header = doc.querySelector('header');
-          const footer = doc.querySelector('footer');
-          const langControl = doc.querySelector('.lang');
-          const rightPanel = doc.querySelector('.main > .panel:last-child');
-          const graphPanel = doc.querySelector('.main > .panel:first-child');
-          const graphHead = graphPanel ? graphPanel.querySelector('.head') : null;
-          const graphTools = graphPanel ? graphPanel.querySelector('.toolbar') : null;
-          const graphDetail = doc.getElementById('node-details');
-
-          if (header) header.style.display = 'none';
-          if (footer) footer.style.display = 'none';
-          if (langControl) langControl.style.display = 'none';
-          if (rightPanel) rightPanel.style.display = 'none';
-          if (graphHead) graphHead.style.display = 'none';
-          if (graphTools) graphTools.style.display = 'none';
-          if (graphDetail) graphDetail.style.display = 'none';
-
-          doc.documentElement.style.height = '100%';
-          doc.body.style.height = '100%';
-          doc.body.style.margin = '0';
-          doc.body.style.background = 'transparent';
-
-          const main = doc.querySelector('.main');
-          if (main) {
-            main.style.display = 'block';
-            main.style.height = '100%';
-            main.style.minHeight = '100%';
-            main.style.padding = '0';
-            main.style.gap = '0';
+          if (!frame) return;
+          const url = new URL(cytBaseSrc, window.location.origin);
+          if (query) {
+            url.searchParams.set('q', query);
           }
+          frame.src = url.toString();
+        }
 
-          if (graphPanel) {
-            graphPanel.style.height = '100%';
-            graphPanel.style.minHeight = '100%';
-            graphPanel.style.border = 'none';
-            graphPanel.style.borderRadius = '10px';
-            graphPanel.style.boxShadow = 'none';
-          }
-
-          const cyEl = doc.getElementById('cy');
-          if (cyEl) {
-            cyEl.style.height = '100%';
-            cyEl.style.minHeight = '100%';
-          }
+        function resizeCytFrame() {
+          const frame = document.getElementById('search-cyt-frame');
+          if (!frame) return;
+          try {
+            const cy = frame.contentWindow && frame.contentWindow.__TEKG_CY ? frame.contentWindow.__TEKG_CY : null;
+            if (cy) {
+              cy.resize();
+              cy.fit(undefined, 55);
+            }
+          } catch (_error) {}
         }
 
         async function runSearch(query) {
@@ -657,6 +635,8 @@ require __DIR__ . '/head.php';
             await updateRepbaseBlock(query, payload);
             if (renderer === 'g6') {
               setG6Frame(query);
+            } else {
+              setCytFrame(query);
             }
           } catch (err) {
             resultEl.innerHTML = texts.searchFailed + (err && err.message ? err.message : 'unknown error');
@@ -666,7 +646,7 @@ require __DIR__ . '/head.php';
 
         if (exampleBtn) {
           exampleBtn.addEventListener('click', function () {
-            queryInput.value = 'LINE1';
+            queryInput.value = 'L1HS';
             searchForm.requestSubmit();
           });
         }
@@ -690,9 +670,7 @@ require __DIR__ . '/head.php';
             if (renderer === 'g6') {
               setG6Frame('');
             } else {
-              const frame = document.getElementById('search-cyt-frame');
-              if (!frame) return;
-              frame.src = <?= json_encode(site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
+              setCytFrame('');
             }
           });
         }
@@ -717,7 +695,10 @@ require __DIR__ . '/head.php';
 
         const cytFrame = document.getElementById('search-cyt-frame');
         if (cytFrame) {
-          cytFrame.addEventListener('load', restyleCytFrame);
+          cytFrame.addEventListener('load', () => {
+            setTimeout(resizeCytFrame, 120);
+            setTimeout(resizeCytFrame, 420);
+          });
         }
 
         runSearch(queryInput.value.trim());

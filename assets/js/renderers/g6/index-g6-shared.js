@@ -86,6 +86,13 @@
     return raw;
   }
 
+  function getDisplayNameOverride(name) {
+    const raw = String(name || '').trim();
+    if (!raw) return raw;
+    if (raw === 'L1' || raw === 'LINE-1') return 'LINE1';
+    return raw;
+  }
+
   function interpolateHexColor(startHex, endHex, t) {
     const start = hexToRgb(startHex);
     const end = hexToRgb(endHex);
@@ -459,7 +466,7 @@
       const raw = String(rawLabel || '').trim();
       if (!raw) return '';
       if (currentLang !== 'en') return raw;
-      if (!containsChinese(raw)) return raw;
+      if (!containsChinese(raw)) return getDisplayNameOverride(raw);
       return nameTranslations[raw] || raw;
     }
 

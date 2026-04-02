@@ -45,4 +45,128 @@ button{border:none;border-radius:999px;background:#e7eef7;color:#1e293b;padding:
     .input{display:flex;gap:.75rem;padding:1.1rem 1rem 1.2rem;border-top:1px solid #e7eef7;background:#fbfdff;min-height:96px;align-items:center;flex-shrink:0}.input input{flex:1;border:1px solid #d8e4f0;border-radius:999px;padding:1rem 1.15rem;outline:none;font-size:1rem;min-height:56px}.input button{width:56px;height:56px;border-radius:50%;background:#2563eb;color:#fff;padding:0}
     footer{padding:.8rem;text-align:center;color:#64748b;font-size:.85rem}
     @media (max-width:960px){.main{grid-template-columns:1fr}.panel{height:auto;min-height:560px}#cy{min-height:520px}header{align-items:flex-start;flex-wrap:wrap}.actions{margin-left:0;width:100%;justify-content:space-between}}
+
+    html.tekg-embed,
+    html.tekg-embed body{
+      height:100%;
+      min-height:100%;
+    }
+
+    html.tekg-embed body{
+      overflow:hidden;
+    }
+
+    html.tekg-embed-home-preview header,
+    html.tekg-embed-home-preview footer,
+    html.tekg-embed-search-result header,
+    html.tekg-embed-search-result footer,
+    html.tekg-embed-preview-graphonly header,
+    html.tekg-embed-preview-graphonly footer,
+    html.tekg-embed-qa-overlay header,
+    html.tekg-embed-qa-overlay footer{
+      display:none;
+    }
+
+    html.tekg-embed-home-preview .lang,
+    html.tekg-embed-search-result .lang,
+    html.tekg-embed-preview-graphonly .lang,
+    html.tekg-embed-qa-overlay .lang{
+      display:none;
+    }
+
+    html.tekg-embed-home-preview .main > .panel:last-child,
+    html.tekg-embed-search-result .main > .panel:last-child,
+    html.tekg-embed-preview-graphonly .main > .panel:last-child{
+      display:none;
+    }
+
+    html.tekg-embed-home-preview .main,
+    html.tekg-embed-search-result .main,
+    html.tekg-embed-preview-graphonly .main{
+      display:block;
+      height:100%;
+      min-height:100%;
+      padding:0;
+      gap:0;
+    }
+
+    html.tekg-embed-home-preview .panel,
+    html.tekg-embed-search-result .panel,
+    html.tekg-embed-preview-graphonly .panel{
+      height:100%;
+      min-height:100%;
+      border:none;
+      border-radius:0;
+      box-shadow:none;
+      background:transparent;
+    }
+
+    html.tekg-embed-home-preview .head,
+    html.tekg-embed-home-preview .toolbar,
+    html.tekg-embed-home-preview .nav,
+    html.tekg-embed-home-preview .detail,
+    html.tekg-embed-search-result .head,
+    html.tekg-embed-search-result .toolbar,
+    html.tekg-embed-search-result .nav,
+    html.tekg-embed-search-result .detail{
+      display:none !important;
+    }
+
+    html.tekg-embed-home-preview #cy,
+    html.tekg-embed-search-result #cy,
+    html.tekg-embed-preview-graphonly #cy{
+      height:100%;
+      min-height:100%;
+      background:transparent;
+    }
+
+    html.tekg-embed-search-result .main > .panel:first-child,
+    html.tekg-embed-search-result #cy{
+      background:transparent !important;
+    }
+
+    html.tekg-embed-preview-graphonly .main > .panel:first-child{
+      background:#fff;
+    }
+
+    html.tekg-embed-preview-graphonly .head{
+      display:none !important;
+    }
+
+    html.tekg-embed-preview-graphonly .head,
+    html.tekg-embed-preview-graphonly .toolbar,
+    html.tekg-embed-preview-graphonly .nav,
+    html.tekg-embed-preview-graphonly .detail{
+      display:flex;
+    }
+
+    html.tekg-embed-preview-graphonly .detail{
+      display:block;
+    }
+
+    html.tekg-embed-qa-overlay .main{
+      display:block;
+      height:100%;
+      min-height:100%;
+      padding:0;
+      gap:0;
+    }
+
+    html.tekg-embed-qa-overlay .main > .panel:first-child{
+      display:none;
+    }
+
+    html.tekg-embed-qa-overlay .main > .panel:last-child{
+      width:100%;
+      height:100%;
+      min-height:100%;
+      border:none;
+      border-radius:0;
+      box-shadow:none;
+      background:#fff;
+    }
+
+    html.tekg-embed-qa-overlay .chat{
+      height:calc(100% - 79px);
+    }
   

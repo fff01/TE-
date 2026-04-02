@@ -14,8 +14,8 @@ if ($siteRenderer === 'g6') {
     $graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'preview-graphonly']));
     $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'qa-overlay']));
 } else {
-    $graphSrc = site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', $queryParams);
-    $qaSrc = site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', $queryParams);
+    $graphSrc = site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', array_merge($queryParams, ['embed' => 'preview-graphonly']));
+    $qaSrc = site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', array_merge($queryParams, ['embed' => 'qa-overlay']));
 }
 ?>
       <style>
@@ -171,100 +171,15 @@ if ($siteRenderer === 'g6') {
           let dragState = null;
           let movedDuringDrag = false;
 
-          function restyleCytGraphFrame() {
-            const doc = graphFrame.contentDocument;
-            if (!doc) return;
-
-            const headerEl = doc.querySelector('header');
-            const footerEl = doc.querySelector('footer');
-            const langControl = doc.querySelector('.lang');
-            const rightPanel = doc.querySelector('.main > .panel:last-child');
-            const graphPanel = doc.querySelector('.main > .panel:first-child');
-            const cyEl = doc.getElementById('cy');
-
-            if (headerEl) headerEl.style.display = 'none';
-            if (footerEl) footerEl.style.display = 'none';
-            if (langControl) langControl.style.display = 'none';
-            if (rightPanel) rightPanel.style.display = 'none';
-
-            doc.documentElement.style.height = '100%';
-            doc.body.style.height = '100%';
-            doc.body.style.margin = '0';
-            doc.body.style.background = '#f3f8ff';
-
-            const main = doc.querySelector('.main');
-            if (main) {
-              main.style.display = 'block';
-              main.style.height = '100vh';
-              main.style.minHeight = '100vh';
-              main.style.padding = '10px';
-              main.style.gap = '0';
-            }
-
-            if (graphPanel) {
-              graphPanel.style.height = 'calc(100vh - 20px)';
-              graphPanel.style.minHeight = 'calc(100vh - 20px)';
-            }
-
-            if (cyEl) {
-              cyEl.style.height = '100%';
-              cyEl.style.minHeight = '0';
-              cyEl.style.flex = '1';
-            }
-
+          function resizeEmbeddedCytFrame(frame, padding = 55) {
+            if (!frame) return;
             try {
-              const cy = graphFrame.contentWindow && graphFrame.contentWindow.__TEKG_CY ? graphFrame.contentWindow.__TEKG_CY : null;
+              const cy = frame.contentWindow && frame.contentWindow.__TEKG_CY ? frame.contentWindow.__TEKG_CY : null;
               if (cy) {
                 cy.resize();
-                cy.fit(undefined, 55);
+                cy.fit(undefined, padding);
               }
             } catch (_error) {}
-          }
-
-          function restyleCytQaFrame() {
-            const doc = qaFrame.contentDocument;
-            if (!doc) return;
-
-            const headerEl = doc.querySelector('header');
-            const footerEl = doc.querySelector('footer');
-            const langControl = doc.querySelector('.lang');
-            const leftPanel = doc.querySelector('.main > .panel:first-child');
-            const rightPanel = doc.querySelector('.main > .panel:last-child');
-
-            if (headerEl) headerEl.style.display = 'none';
-            if (footerEl) footerEl.style.display = 'none';
-            if (langControl) langControl.style.display = 'none';
-            if (leftPanel) leftPanel.style.display = 'none';
-
-            doc.documentElement.style.height = '100%';
-            doc.body.style.height = '100%';
-            doc.body.style.margin = '0';
-            doc.body.style.background = '#ffffff';
-
-            const main = doc.querySelector('.main');
-            if (main) {
-              main.style.display = 'block';
-              main.style.height = '100vh';
-              main.style.minHeight = '100vh';
-              main.style.padding = '0';
-              main.style.gap = '0';
-            }
-
-            if (rightPanel) {
-              rightPanel.style.display = 'block';
-              rightPanel.style.width = '100%';
-              rightPanel.style.height = '100vh';
-              rightPanel.style.minHeight = '100vh';
-              rightPanel.style.margin = '0';
-              rightPanel.style.border = 'none';
-              rightPanel.style.borderRadius = '0';
-              rightPanel.style.boxShadow = 'none';
-            }
-
-            const chat = doc.querySelector('.chat');
-            if (chat) {
-              chat.style.height = 'calc(100vh - 79px)';
-            }
           }
 
           const fabPosition = {
@@ -372,8 +287,8 @@ if ($siteRenderer === 'g6') {
               setTimeout(bindGraphRelay, 250);
               setTimeout(relayStateToQa, 450);
             } else {
-              setTimeout(restyleCytGraphFrame, 180);
-              setTimeout(restyleCytGraphFrame, 700);
+              setTimeout(() => resizeEmbeddedCytFrame(graphFrame, 55), 120);
+              setTimeout(() => resizeEmbeddedCytFrame(graphFrame, 55), 420);
             }
           });
 
@@ -381,8 +296,7 @@ if ($siteRenderer === 'g6') {
             if (rendererMode === 'g6') {
               setTimeout(relayStateToQa, 250);
             } else {
-              setTimeout(restyleCytQaFrame, 180);
-              setTimeout(restyleCytQaFrame, 700);
+              setTimeout(() => resizeEmbeddedCytFrame(qaFrame, 30), 120);
             }
           });
 

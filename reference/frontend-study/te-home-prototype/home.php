@@ -31,7 +31,9 @@ $quickLinks = [
     ['title' => 'About', 'href' => site_url_with_state('/TE-/reference/frontend-study/te-home-prototype/about.php', $siteLang, $siteRenderer), 'icon' => 'about'],
 ];
 
-$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'home-preview']);
+$treeEmbedUrl = $siteRenderer === 'g6'
+    ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'home-preview'])
+    : site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'home-preview']);
 ?>
       <style>
         .hero-area {
@@ -79,39 +81,40 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['emb
           background: #fff;
           border-radius: 8px;
           box-shadow: 0 6px 24px rgba(34, 68, 120, 0.12);
-          padding: 18px;
+          padding: 0;
+          overflow: hidden;
         }
 
         .hero-figure-frame {
-          border-radius: 6px;
-          border: 1px solid #dbe7f8;
-          background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
           min-height: 520px;
-          padding: 28px;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          background: transparent;
         }
 
         .figure-canvas {
-          border-radius: 24px;
-          background: #dcebff;
-          border: 1px solid #caddfb;
-          padding: 14px;
-          min-height: 380px;
+          min-height: 520px;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          background: transparent;
         }
 
         .tree-frame {
           width: 100%;
           height: 100%;
-          min-height: 350px;
-          border-radius: 18px;
+          min-height: 520px;
+          border-radius: 8px;
           overflow: hidden;
-          background: rgba(255,255,255,0.72);
-          border: 1px solid rgba(255,255,255,0.55);
+          background: #ffffff;
+          border: none;
         }
 
         .tree-frame iframe {
           width: 100%;
           height: 100%;
-          min-height: 350px;
+          min-height: 520px;
           border: 0;
           display: block;
         }
