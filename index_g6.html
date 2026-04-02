@@ -91,6 +91,86 @@
       min-height: 100%;
       background: radial-gradient(circle at top, #ffffff 0%, #f6faff 100%);
     }
+
+    body.tekg-g6-preview-graphonly {
+      margin: 0;
+      overflow: hidden;
+      background: #f6faff;
+    }
+
+    body.tekg-g6-preview-graphonly > header,
+    body.tekg-g6-preview-graphonly .main > .panel:last-child {
+      display: none !important;
+    }
+
+    body.tekg-g6-preview-graphonly .main {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+    }
+
+    body.tekg-g6-preview-graphonly .main > .panel:first-child {
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: #fff;
+    }
+
+    body.tekg-g6-preview-graphonly .g6-surface-stack {
+      flex: 1;
+      min-height: 0;
+    }
+
+    body.tekg-g6-preview-graphonly .detail {
+      min-height: 160px;
+      height: 160px;
+      max-height: 160px;
+      flex: 0 0 160px;
+    }
+
+    body.tekg-g6-qa-overlay {
+      margin: 0;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    body.tekg-g6-qa-overlay > header,
+    body.tekg-g6-qa-overlay .main > .panel:first-child {
+      display: none !important;
+    }
+
+    body.tekg-g6-qa-overlay .main {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+    }
+
+    body.tekg-g6-qa-overlay .main > .panel:last-child {
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: #fff;
+    }
+
+    body.tekg-g6-qa-overlay .chat {
+      height: calc(100vh - 79px);
+    }
   </style>
 </head>
 <body>
@@ -211,12 +291,20 @@
     const __tekgEmbedMode = __tekgG6Url.searchParams.get('embed') || '';
     const __tekgInitialQuery = __tekgG6Url.searchParams.get('q') || '';
     const __tekgCompactEmbed = __tekgEmbedMode === 'home-preview' || __tekgEmbedMode === 'search-result';
+    const __tekgGraphOnlyEmbed = __tekgEmbedMode === 'preview-graphonly';
+    const __tekgQaOverlayEmbed = __tekgEmbedMode === 'qa-overlay';
     if (__tekgG6Url.searchParams.get('renderer') !== 'g6') {
       __tekgG6Url.searchParams.set('renderer', 'g6');
       window.history.replaceState({}, '', __tekgG6Url.toString());
     }
     if (__tekgCompactEmbed) {
       document.body.classList.add('tekg-g6-compact-embed');
+    }
+    if (__tekgGraphOnlyEmbed) {
+      document.body.classList.add('tekg-g6-preview-graphonly');
+    }
+    if (__tekgQaOverlayEmbed) {
+      document.body.classList.add('tekg-g6-qa-overlay');
     }
     window.__TEKG_RENDERER_MODE = 'g6';
     window.__TEKG_EMBED_MODE = __tekgEmbedMode;
