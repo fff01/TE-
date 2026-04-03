@@ -1,71 +1,471 @@
-﻿<?php
-require_once __DIR__ . '/site_i18n.php';
-$lang = site_lang();
-$pageTitle = site_t(['zh' => '下载 - TEKG', 'en' => 'Download - TEKG'], $lang);
+<?php
+$pageTitle = 'TE-KG Download';
 $activePage = 'download';
+$protoCurrentPath = '/TE-/download.php';
+$protoSubtitle = 'Public graph datasets currently exposed through the site';
+require __DIR__ . '/head.php';
 
-$sections = [
+$downloadItems = [
     [
-        'title' => site_t(['zh' => '原始数据', 'en' => 'Raw Data'], $lang),
-        'desc' => site_t(['zh' => '本部分提供知识图谱构建过程中使用的核心原始数据来源，包括文献抽取结果、转座元件参考数据和谱系参考文本。', 'en' => 'This section provides the core raw data sources used during graph construction, including literature extraction results, transposable element reference data, and lineage reference text.'], $lang),
-        'items' => [
-            ['name' => 'te_kg2.jsonl', 'path' => 'data/raw/te_kg2.jsonl', 'type' => 'JSONL', 'desc' => site_t(['zh' => '知识图谱构建使用的主要结构化抽取源数据，包含转座元件、疾病、功能和文献信息。', 'en' => 'The primary structured extraction source used for graph construction, including transposable elements, diseases, functions, and literature information.'], $lang)],
-            ['name' => 'TE_Repbase.txt', 'path' => 'data/raw/TE_Repbase.txt', 'type' => 'TXT', 'desc' => site_t(['zh' => '从 Repbase 获取的人类转座元件参考文件，可用于 TE 定义、别名与家族信息。', 'en' => 'Human transposable element reference file obtained from Repbase, useful for TE definitions, aliases, and family information.'], $lang)],
-            ['name' => 'tree.txt', 'path' => 'data/raw/tree.txt', 'type' => 'TXT', 'desc' => site_t(['zh' => '基于数据库文件生成的 TE 家族树状参考文本，用于谱系结构整理。', 'en' => 'Reference text describing a TE family tree generated from database files, used for lineage organization.'], $lang)],
-        ],
+        'dataset' => 'Graph seed',
+        'filename' => 'te_kg2_graph_seed.json',
+        'path' => '/TE-/data/processed/te_kg2_graph_seed.json',
+        'format' => 'JSON',
+        'used_in' => 'Database import and graph preview',
+        'description' => 'Canonical TE, disease, function, and paper nodes together with the core graph relations used by the current public graph.',
     ],
     [
-        'title' => site_t(['zh' => '处理后数据', 'en' => 'Processed Data'], $lang),
-        'desc' => site_t(['zh' => '面向图数据库构建与展示使用的标准化结果和结构化产物。', 'en' => 'Normalized outputs and structured artifacts prepared for graph database construction and presentation.'], $lang),
-        'items' => [
-            ['name' => 'te_kg2_normalized_output.jsonl', 'path' => 'data/processed/te_kg2_normalized_output.jsonl', 'type' => 'JSONL', 'desc' => site_t(['zh' => '对 te_kg2 进行标准化和清洗后的结构化输出。', 'en' => 'Structured output after normalization and cleaning of te_kg2.'], $lang)],
-            ['name' => 'te_kg2_graph_seed.json', 'path' => 'data/processed/te_kg2_graph_seed.json', 'type' => 'JSON', 'desc' => site_t(['zh' => '用于图数据库导入的图谱种子文件。', 'en' => 'Graph seed file used for graph database import.'], $lang)],
-            ['name' => 'tree_te_lineage.json', 'path' => 'data/processed/tree_te_lineage.json', 'type' => 'JSON', 'desc' => site_t(['zh' => '根据清洗后的 tree.txt 生成的 TE 谱系结构数据。', 'en' => 'TE lineage structure data generated from the cleaned tree.txt.'], $lang)],
-            ['name' => 'tree_te_lineage.csv', 'path' => 'data/processed/tree_te_lineage.csv', 'type' => 'CSV', 'desc' => site_t(['zh' => 'TE 树状谱系的表格化导出版本，便于人工查看。', 'en' => 'Tabular export of the TE lineage tree for manual inspection.'], $lang)],
-            ['name' => 'te_kg2_normalization_report.json', 'path' => 'data/processed/te_kg2_normalization_report.json', 'type' => 'JSON', 'desc' => site_t(['zh' => 'te_kg2 标准化过程的统计报告。', 'en' => 'Statistical report of the te_kg2 normalization process.'], $lang)],
-        ],
+        'dataset' => 'Normalized graph extraction',
+        'filename' => 'te_kg2_normalized_output.jsonl',
+        'path' => '/TE-/data/processed/te_kg2_normalized_output.jsonl',
+        'format' => 'JSONL',
+        'used_in' => 'Database build pipeline',
+        'description' => 'Normalized relation extraction result used as the upstream structured source for the current graph seed.',
     ],
     [
-        'title' => site_t(['zh' => '术语表与标准化资源', 'en' => 'Terminology and Standardization Resources'], $lang),
-        'desc' => site_t(['zh' => '面向中英映射、术语维护和界面展示使用的词表文件。', 'en' => 'Terminology files used for bilingual mapping, terminology maintenance, and interface presentation.'], $lang),
-        'items' => [
-            ['name' => 'te_terminology.json', 'path' => 'terminology/te_terminology.json', 'type' => 'JSON', 'desc' => site_t(['zh' => '主术语表文件，包含节点名称与关系词的中英文映射。', 'en' => 'Main terminology file containing bilingual mappings for node names and relation labels.'], $lang)],
-            ['name' => 'te_terminology.csv', 'path' => 'terminology/te_terminology.csv', 'type' => 'CSV', 'desc' => site_t(['zh' => '术语表的表格版本，便于人工维护与审阅。', 'en' => 'Spreadsheet-style version of the terminology table for manual maintenance and review.'], $lang)],
-            ['name' => 'te_terminology_overrides.json', 'path' => 'terminology/te_terminology_overrides.json', 'type' => 'JSON', 'desc' => site_t(['zh' => '运行时优先覆盖的术语补丁文件，用于保存新增或修正后的映射。', 'en' => 'Runtime override file that stores newly added or corrected terminology mappings.'], $lang)],
-        ],
+        'dataset' => 'TE lineage tree',
+        'filename' => 'tree_te_lineage.json',
+        'path' => '/TE-/data/processed/tree_te_lineage.json',
+        'format' => 'JSON',
+        'used_in' => 'Tree preview and lineage expansion',
+        'description' => 'Structured TE lineage tree used in the public classification tree and lineage-aware graph expansion.',
+    ],
+    [
+        'dataset' => 'TE lineage table',
+        'filename' => 'tree_te_lineage.csv',
+        'path' => '/TE-/data/processed/tree_te_lineage.csv',
+        'format' => 'CSV',
+        'used_in' => 'Manual inspection of lineage data',
+        'description' => 'Tabular export of the TE lineage hierarchy corresponding to the public lineage JSON asset.',
     ],
 ];
-
-include __DIR__ . '/head.php';
 ?>
-<section class="hero-card">
-  <h2 class="page-title"><?= htmlspecialchars(site_t(['zh' => '下载', 'en' => 'Download'], $lang), ENT_QUOTES, 'UTF-8') ?></h2>
-  <p class="page-desc"><?= htmlspecialchars(site_t(['zh' => '这里集中提供本数据库项目的主要原始数据、处理后数据与术语表资源，便于查阅、下载和复用。', 'en' => 'This page provides the main raw data, processed data, and terminology resources of the project for browsing, downloading, and reuse.'], $lang), ENT_QUOTES, 'UTF-8') ?></p>
-</section>
+      <style>
+        .download-shell {
+          background: #f5f9ff;
+          min-height: calc(100vh - 82px);
+          padding: 34px 0 54px;
+        }
 
-<section style="display:grid;gap:22px;">
-  <?php foreach ($sections as $section): ?>
-    <section class="content-card">
-      <div style="margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #e5edf7;">
-        <h3 style="margin:0 0 8px;font-size:24px;"><?= htmlspecialchars($section['title'], ENT_QUOTES, 'UTF-8') ?></h3>
-        <p style="margin:0;color:#5e7288;line-height:1.7;"><?= htmlspecialchars($section['desc'], ENT_QUOTES, 'UTF-8') ?></p>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(max(280px,calc(100% / 3 - 20px)),1fr));gap:18px;">
-        <?php foreach ($section['items'] as $item): ?>
-          <article style="border:1px solid #dbe7f3;border-radius:18px;background:linear-gradient(180deg,#ffffff,#f8fbff);padding:18px;display:flex;flex-direction:column;gap:12px;min-height:210px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-              <strong style="font-size:18px;color:#19324d;"><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-              <span style="display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;background:#eef4ff;color:#2753b7;font-size:12px;font-weight:700;"><?= htmlspecialchars($item['type'], ENT_QUOTES, 'UTF-8') ?></span>
+        .proto-container {
+          max-width: 1320px;
+          margin: 0 auto;
+          padding: 0 28px;
+        }
+
+        .download-page-title {
+          margin: 0 0 22px;
+          font-size: 52px;
+          font-weight: 700;
+          color: #8a93a3;
+          line-height: 1.1;
+        }
+
+        .download-crumbs {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 38px;
+          font-size: 16px;
+          color: #70809a;
+        }
+
+        .download-crumbs a {
+          color: #2f63b9;
+          font-weight: 500;
+        }
+
+        .download-panel {
+          background: #ffffff;
+          border: 1px solid #dbe7f8;
+          border-radius: 10px;
+          box-shadow: 0 10px 28px rgba(26, 60, 112, 0.08);
+          padding: 30px 26px 18px;
+        }
+
+        .download-panel h2 {
+          margin: 0;
+          font-size: 28px;
+          color: #7b8597;
+          font-weight: 700;
+        }
+
+        .download-divider {
+          height: 1px;
+          background: #e2e8f2;
+          margin: 20px 0 22px;
+        }
+
+        .download-tools {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 14px;
+          flex-wrap: wrap;
+        }
+
+        .download-tools-left,
+        .download-tools-right {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #7b8597;
+          font-size: 15px;
+        }
+
+        .download-select,
+        .download-search {
+          min-height: 46px;
+          border: 1px solid #dce5f3;
+          border-radius: 8px;
+          background: #ffffff;
+          padding: 0 14px;
+          font-size: 15px;
+          color: #193458;
+          outline: none;
+        }
+
+        .download-search {
+          min-width: 280px;
+        }
+
+        .download-table-wrap {
+          overflow-x: auto;
+        }
+
+        .download-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 980px;
+        }
+
+        .download-table thead th {
+          padding: 16px 12px;
+          text-align: left;
+          font-size: 16px;
+          font-weight: 700;
+          color: #2d5f1f;
+          border-bottom: 2px solid #1f2937;
+        }
+
+        .download-table tbody td {
+          padding: 18px 12px;
+          border-bottom: 1px solid #dde6f3;
+          color: #193458;
+          font-size: 15px;
+          vertical-align: top;
+          line-height: 1.6;
+        }
+
+        .download-table td.dataset-cell {
+          width: 31%;
+        }
+
+        .download-table td.dataset-cell em {
+          font-style: italic;
+          color: #17345c;
+        }
+
+        .dataset-toggle {
+          border: 0;
+          background: transparent;
+          padding: 0;
+          margin: 0;
+          font: inherit;
+          color: inherit;
+          cursor: pointer;
+          text-align: left;
+          width: 100%;
+        }
+
+        .dataset-title-line {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .dataset-caret {
+          width: 18px;
+          height: 18px;
+          flex: 0 0 18px;
+          transition: transform 0.22s ease;
+          color: #5877aa;
+        }
+
+        .dataset-row.is-open .dataset-caret {
+          transform: rotate(90deg);
+        }
+
+        .dataset-description {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.26s ease;
+          color: #76859b;
+          font-size: 13px;
+          padding-left: 28px;
+        }
+
+        .dataset-row.is-open .dataset-description {
+          max-height: 140px;
+          margin-top: 8px;
+        }
+
+        .dataset-description-inner {
+          padding-top: 4px;
+          line-height: 1.65;
+        }
+
+        .download-table a.file-link {
+          color: #5f8f3d;
+          font-weight: 500;
+          word-break: break-word;
+        }
+
+        .download-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding-top: 18px;
+          flex-wrap: wrap;
+          color: #7b8597;
+          font-size: 15px;
+        }
+
+        .download-pagination {
+          display: inline-flex;
+          border: 1px solid #dce5f3;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #ffffff;
+        }
+
+        .download-page-btn {
+          min-width: 42px;
+          height: 42px;
+          border: 0;
+          border-right: 1px solid #dce5f3;
+          background: #ffffff;
+          color: #31588f;
+          cursor: pointer;
+          font-size: 16px;
+        }
+
+        .download-page-btn:last-child {
+          border-right: 0;
+        }
+
+        .download-page-btn.is-active {
+          background: #2f63b9;
+          color: #ffffff;
+        }
+
+        .download-empty {
+          padding: 28px 10px 10px;
+          color: #7b8597;
+          font-size: 15px;
+        }
+
+        @media (max-width: 720px) {
+          .proto-container {
+            padding: 0 18px;
+          }
+
+          .download-panel {
+            padding-left: 18px;
+            padding-right: 18px;
+          }
+
+          .download-page-title {
+            font-size: 40px;
+          }
+
+          .download-search {
+            min-width: 220px;
+          }
+        }
+      </style>
+
+      <section class="download-shell">
+        <div class="proto-container">
+          <h1 class="download-page-title">Download</h1>
+          <div class="download-crumbs">
+            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php'), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <span>/</span>
+            <span>Download</span>
+          </div>
+
+          <section class="download-panel">
+            <h2>Public graph datasets</h2>
+            <div class="download-divider"></div>
+
+            <div class="download-tools">
+              <div class="download-tools-left">
+                <select id="download-page-size" class="download-select" aria-label="Entries per page">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                </select>
+                <span>entries per page</span>
+              </div>
+              <div class="download-tools-right">
+                <label for="download-search">Search:</label>
+                <input id="download-search" class="download-search" type="text" placeholder="Dataset, filename, or usage">
+              </div>
             </div>
-            <p style="margin:0;color:#5e7288;line-height:1.75;flex:1;"><?= htmlspecialchars($item['desc'], ENT_QUOTES, 'UTF-8') ?></p>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-              <span style="font-size:13px;color:#7b8da3;word-break:break-all;"><?= htmlspecialchars($item['path'], ENT_QUOTES, 'UTF-8') ?></span>
-              <a href="<?= htmlspecialchars($item['path'], ENT_QUOTES, 'UTF-8') ?>" download style="white-space:nowrap;padding:10px 16px;border-radius:14px;background:#2563eb;color:#fff;font-weight:700;"><?= htmlspecialchars(site_t(['zh' => '下载', 'en' => 'Download'], $lang), ENT_QUOTES, 'UTF-8') ?></a>
+
+            <div class="download-table-wrap">
+              <table class="download-table">
+                <thead>
+                  <tr>
+                    <th>Dataset</th>
+                    <th>File</th>
+                    <th>Used in</th>
+                    <th>Format</th>
+                  </tr>
+                </thead>
+                <tbody id="download-table-body"></tbody>
+              </table>
+              <div id="download-empty" class="download-empty" hidden>No datasets match the current filter.</div>
             </div>
-          </article>
-        <?php endforeach; ?>
-      </div>
-    </section>
-  <?php endforeach; ?>
-</section>
-<?php include __DIR__ . '/foot.php'; ?>
+
+            <div class="download-footer">
+              <div id="download-summary">Showing 0 to 0 of 0 entries</div>
+              <div id="download-pagination" class="download-pagination"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <script>
+        (() => {
+          const header = document.getElementById('protoHeader');
+          function syncHeader() {
+            if (!header) return;
+            header.classList.toggle('is-scrolled', window.scrollY > 12);
+          }
+          window.addEventListener('scroll', syncHeader, { passive: true });
+          syncHeader();
+        })();
+      </script>
+
+      <script>
+        (() => {
+          const rows = <?= json_encode($downloadItems, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+          const body = document.getElementById('download-table-body');
+          const summary = document.getElementById('download-summary');
+          const pagination = document.getElementById('download-pagination');
+          const searchInput = document.getElementById('download-search');
+          const sizeSelect = document.getElementById('download-page-size');
+          const emptyState = document.getElementById('download-empty');
+
+          let currentPage = 1;
+
+          function filteredRows() {
+            const query = (searchInput.value || '').trim().toLowerCase();
+            if (!query) return rows;
+            return rows.filter((row) => {
+              return [
+                row.dataset,
+                row.filename,
+                row.used_in,
+                row.format,
+                row.description
+              ].some((value) => String(value || '').toLowerCase().includes(query));
+            });
+          }
+
+          function renderPagination(totalPages) {
+            pagination.innerHTML = '';
+            if (totalPages <= 1) return;
+
+            const makeButton = (label, page, active = false) => {
+              const button = document.createElement('button');
+              button.type = 'button';
+              button.className = 'download-page-btn' + (active ? ' is-active' : '');
+              button.textContent = label;
+              button.addEventListener('click', () => {
+                currentPage = page;
+                render();
+              });
+              return button;
+            };
+
+            pagination.appendChild(makeButton('‹', Math.max(1, currentPage - 1), false));
+            for (let page = 1; page <= totalPages; page += 1) {
+              pagination.appendChild(makeButton(String(page), page, page === currentPage));
+            }
+            pagination.appendChild(makeButton('›', Math.min(totalPages, currentPage + 1), false));
+          }
+
+          function render() {
+            const pageSize = Number(sizeSelect.value || 10);
+            const items = filteredRows();
+            const total = items.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            currentPage = Math.min(currentPage, totalPages);
+            const start = total === 0 ? 0 : (currentPage - 1) * pageSize;
+            const pageItems = items.slice(start, start + pageSize);
+
+            body.innerHTML = '';
+            emptyState.hidden = pageItems.length !== 0;
+
+            pageItems.forEach((row) => {
+              const tr = document.createElement('tr');
+              tr.className = 'dataset-row';
+              tr.innerHTML = `
+                <td class="dataset-cell">
+                  <button class="dataset-toggle" type="button" aria-expanded="false">
+                    <span class="dataset-title-line">
+                      <svg class="dataset-caret" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5.2 2.8 10.4 8l-5.2 5.2-.9-.9L8.6 8 4.3 3.7z"/></svg>
+                      <em>${row.dataset}</em>
+                    </span>
+                  </button>
+                  <div class="dataset-description">
+                    <div class="dataset-description-inner">${row.description}</div>
+                  </div>
+                </td>
+                <td><a class="file-link" href="${row.path}" download>${row.filename}</a></td>
+                <td>${row.used_in}</td>
+                <td>${row.format}</td>
+              `;
+              const toggle = tr.querySelector('.dataset-toggle');
+              toggle.addEventListener('click', () => {
+                const isOpen = tr.classList.contains('is-open');
+                body.querySelectorAll('.dataset-row').forEach((rowEl) => {
+                  rowEl.classList.remove('is-open');
+                  const btn = rowEl.querySelector('.dataset-toggle');
+                  if (btn) btn.setAttribute('aria-expanded', 'false');
+                });
+                if (!isOpen) {
+                  tr.classList.add('is-open');
+                  toggle.setAttribute('aria-expanded', 'true');
+                }
+              });
+              body.appendChild(tr);
+            });
+
+            const shownFrom = total === 0 ? 0 : start + 1;
+            const shownTo = total === 0 ? 0 : start + pageItems.length;
+            summary.textContent = `Showing ${shownFrom} to ${shownTo} of ${total} entries`;
+            renderPagination(totalPages);
+          }
+
+          searchInput.addEventListener('input', () => {
+            currentPage = 1;
+            render();
+          });
+
+          sizeSelect.addEventListener('change', () => {
+            currentPage = 1;
+            render();
+          });
+
+          render();
+        })();
+      </script>
+    </main>
+  </div>
+</body>
+</html>

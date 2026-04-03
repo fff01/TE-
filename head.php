@@ -3,325 +3,273 @@ require_once __DIR__ . '/site_i18n.php';
 
 $siteLang = site_lang();
 $siteRenderer = site_renderer();
-if (!isset($pageTitle)) {
-    $pageTitle = site_t(['zh' => 'TE 数据库', 'en' => 'TE Database'], $siteLang);
-}
-if (!isset($activePage)) {
-    $activePage = '';
-}
+$activePage = $activePage ?? 'home';
+$pageTitle = $pageTitle ?? 'TE-KG';
+$protoBasePath = '/TE-';
+$protoCurrentPath = $protoCurrentPath ?? ($protoBasePath . '/index.php');
+$protoSubtitle = $protoSubtitle ?? 'Transposable Elements Knowledge Graph';
 
 $navItems = [
-    'home' => ['label' => site_t(['zh' => '首页', 'en' => 'Home'], $siteLang), 'href' => 'index.php'],
-    'preview' => ['label' => site_t(['zh' => '预览', 'en' => 'Preview'], $siteLang), 'href' => 'preview.php'],
-    'search' => ['label' => site_t(['zh' => '搜索', 'en' => 'Search'], $siteLang), 'href' => 'search.php'],
-    'download' => ['label' => site_t(['zh' => '下载', 'en' => 'Download'], $siteLang), 'href' => 'download.php'],
-    'about' => ['label' => site_t(['zh' => '关于', 'en' => 'About'], $siteLang), 'href' => 'about.php'],
+    'home' => ['label' => 'Home', 'href' => $protoBasePath . '/index.php'],
+    'preview' => ['label' => 'Preview', 'href' => $protoBasePath . '/preview.php'],
+    'search' => ['label' => 'Search', 'href' => $protoBasePath . '/search.php'],
+    'download' => ['label' => 'Download', 'href' => $protoBasePath . '/download.php'],
+    'about' => ['label' => 'About', 'href' => $protoBasePath . '/about.php'],
 ];
 
 $currentQueryParams = $_GET;
-unset($currentQueryParams['lang']);
-unset($currentQueryParams['renderer']);
-$currentPath = basename((string) ($_SERVER['PHP_SELF'] ?? 'index.php'));
-$zhUrl = site_url_with_state($currentPath, 'zh', $siteRenderer, $currentQueryParams);
-$enUrl = site_url_with_state($currentPath, 'en', $siteRenderer, $currentQueryParams);
-$cytUrl = site_url_with_state($currentPath, $siteLang, 'cytoscape', $currentQueryParams);
-$g6Url = site_url_with_state($currentPath, $siteLang, 'g6', $currentQueryParams);
+unset($currentQueryParams['lang'], $currentQueryParams['renderer']);
+$zhUrl = site_url_with_state($protoCurrentPath, 'zh', $siteRenderer, $currentQueryParams);
+$enUrl = site_url_with_state($protoCurrentPath, 'en', $siteRenderer, $currentQueryParams);
+$cytUrl = site_url_with_state($protoCurrentPath, $siteLang, 'cytoscape', $currentQueryParams);
+$g6Url = site_url_with_state($protoCurrentPath, $siteLang, 'g6', $currentQueryParams);
 ?>
 <!DOCTYPE html>
-<html lang="<?= $siteLang === 'en' ? 'en' : 'zh-CN' ?>">
+<html lang="<?= $siteLang === 'zh' ? 'zh-CN' : 'en' ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
-      --bg: #f5f8fc;
-      --panel: #ffffff;
-      --border: #d9e5f3;
-      --text: #19324d;
-      --muted: #5e7288;
-      --primary: #2563eb;
-      --primary-soft: #e8f0ff;
-      --te: #2563eb;
-      --te-soft: #e8f0ff;
-      --disease: #ef4444;
-      --disease-soft: #fee2e2;
-      --function: #10b981;
-      --function-soft: #d1fae5;
-      --paper: #f59e0b;
-      --paper-soft: #fef3c7;
-      --shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+      --header-blue: #2f63b9;
+      --header-blue-strong: #214b8d;
+      --header-line: #d9e5f7;
+      --header-text: #18345f;
+      --header-muted: #61789f;
     }
+
     * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
-      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-      background: linear-gradient(180deg, #eef4fb, #f8fbff);
-      color: var(--text);
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: var(--header-text);
+      background: #ffffff;
     }
-    a { color: inherit; text-decoration: none; }
-    .site-header {
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .proto-shell {
+      min-height: 100vh;
+    }
+
+    .proto-header {
       position: sticky;
       top: 0;
-      z-index: 20;
-      background: rgba(255,255,255,0.94);
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(10px);
+      z-index: 100;
+      background: var(--header-blue);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      transition: background-color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
     }
-    .site-header-inner {
-      max-width: none;
-      margin: 0;
-      padding: 18px 24px 18px 36px;
+
+    .proto-header.is-scrolled {
+      background: #ffffff;
+      border-bottom-color: var(--header-line);
+      box-shadow: 0 6px 18px rgba(19, 53, 102, 0.08);
+    }
+
+    .proto-header-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 28px;
+      min-height: 82px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
+      gap: 18px;
     }
-    .brand {
+
+    .proto-brand {
       display: flex;
       align-items: center;
       gap: 16px;
+      min-width: 0;
     }
-    .brand-mark {
-      width: 86px;
-      height: 64px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex: 0 0 auto;
-      overflow: visible;
-      background: transparent;
-      border: none;
-      border-radius: 0;
-      box-shadow: none;
-    }
-    .brand-mark img {
-      width: 100%;
-      height: 100%;
+
+    .proto-brand-logo {
+      width: 92px;
+      height: 46px;
       object-fit: contain;
-      display: block;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
     }
-    .brand-title {
+
+    .proto-brand-title {
       margin: 0;
-      font-size: 24px;
-      line-height: 1.08;
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      transition: color 0.22s ease;
     }
-    .brand-subtitle {
+
+    .proto-brand-subtitle {
       margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.76);
+      transition: color 0.22s ease;
     }
-    .site-nav {
+
+    .proto-header.is-scrolled .proto-brand-title {
+      color: var(--header-blue-strong);
+    }
+
+    .proto-header.is-scrolled .proto-brand-subtitle {
+      color: var(--header-muted);
+    }
+
+    .proto-header-right {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 16px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
     }
-    .site-nav a {
+
+    .proto-nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+    }
+
+    .proto-nav-link {
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.94);
+      transition: color 0.22s ease, opacity 0.22s ease;
+    }
+
+    .proto-nav-link.is-active {
+      text-decoration: underline;
+      text-underline-offset: 5px;
+      text-decoration-thickness: 2px;
+    }
+
+    .proto-header.is-scrolled .proto-nav-link {
+      color: var(--header-blue-strong);
+    }
+
+    .proto-control-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .proto-control-group.is-hidden {
+      display: none;
+    }
+
+    .proto-control {
+      min-width: 84px;
       padding: 10px 16px;
       border-radius: 999px;
-      color: var(--muted);
-      font-weight: 600;
-    }
-    .site-nav a.active {
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
-    }
-    .lang-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: 8px;
-      padding: 4px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: #f7faff;
-    }
-    .lang-switch a {
-      padding: 8px 14px;
-      border-radius: 999px;
-      color: var(--muted);
-      font-weight: 700;
-      font-size: 14px;
-    }
-    .lang-switch a.active {
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
-    }
-    .renderer-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-left: 8px;
-      padding: 4px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: #f7faff;
-    }
-    .renderer-switch a {
-      padding: 8px 14px;
-      border-radius: 999px;
-      color: var(--muted);
-      font-weight: 700;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-    .renderer-switch a.active {
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
-    }
-    .page-shell {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 28px 24px 48px 8px;
-    }
-    .hero-card, .content-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-    }
-    .hero-card {
-      padding: 28px;
-      margin-bottom: 24px;
-    }
-    .content-card {
-      padding: 24px;
-    }
-    .page-title {
-      margin: 0 0 8px;
-      font-size: 28px;
-    }
-    .page-desc {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-    .placeholder-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 18px;
-    }
-    .placeholder {
-      min-height: 180px;
-      border: 1px dashed #b8c8de;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #f8fbff, #eef4fb);
-      padding: 18px;
-    }
-    .placeholder h3 {
-      margin: 0 0 8px;
-      font-size: 18px;
-    }
-    .placeholder p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-    }
-    .about-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.95fr);
-      gap: 20px;
-      align-items: start;
-    }
-    .about-stack {
-      display: grid;
-      gap: 18px;
-    }
-    .section-card {
-      background: linear-gradient(180deg, #fbfdff, #f5f9ff);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 22px 22px 20px;
-    }
-    .section-card h3 {
-      margin: 0 0 10px;
-      font-size: 20px;
-    }
-    .section-card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-    .section-card ul {
-      margin: 10px 0 0;
-      padding-left: 18px;
-      color: var(--muted);
-      line-height: 1.8;
-    }
-    .mini-stat {
-      display: grid;
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .mini-stat-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 10px 0;
-      border-bottom: 1px solid #e7eef8;
-      color: var(--muted);
-    }
-    .mini-stat-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-    .mini-stat-row strong {
-      color: var(--text);
-    }
-    .note-box {
-      margin-top: 12px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      background: #eef5ff;
-      color: var(--muted);
-      line-height: 1.7;
-      border: 1px solid #d7e5fb;
-    }
-    .site-footer {
-      max-width: 1280px;
-      margin: 0 auto 28px;
-      padding: 0 24px 0 8px;
-      color: var(--muted);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.94);
       font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      transition: all 0.22s ease;
     }
-    @media (max-width: 860px) {
-      .site-header-inner { flex-direction: column; align-items: flex-start; }
-      .site-nav { width: 100%; }
-      .page-shell { padding-left: 8px; }
-      .about-grid { grid-template-columns: 1fr; }
+
+    .proto-control.is-active {
+      background: #ffffff;
+      color: var(--header-blue-strong);
+      border-color: #ffffff;
+    }
+
+    .proto-header.is-scrolled .proto-control {
+      border-color: #d4e1f6;
+      color: var(--header-blue-strong);
+      background: #ffffff;
+    }
+
+    .proto-header.is-scrolled .proto-control.is-active {
+      background: var(--header-blue);
+      border-color: var(--header-blue);
+      color: #ffffff;
+    }
+
+    .proto-main {
+      display: block;
+    }
+
+    @media (max-width: 1120px) {
+      .proto-header-inner {
+        align-items: flex-start;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        min-height: auto;
+        flex-direction: column;
+      }
+
+      .proto-header-right {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .proto-nav {
+        flex-wrap: wrap;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .proto-header-inner {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .proto-brand {
+        align-items: flex-start;
+      }
+
+      .proto-brand-logo {
+        width: 84px;
+        height: 42px;
+      }
     }
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="site-header-inner">
-      <div class="brand">
-        <div class="brand-mark" aria-label="<?= htmlspecialchars(site_t(['zh' => '站点图标', 'en' => 'Site logo'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
-          <img src="assets/img/brand/tekg-logo.png" alt="TE-KG logo">
+  <div class="proto-shell">
+    <header class="proto-header" id="protoHeader">
+      <div class="proto-header-inner">
+        <div class="proto-brand">
+          <img class="proto-brand-logo" src="/TE-/assets/img/brand/tekg-logo.png" alt="TE-KG logo">
+          <div>
+            <h1 class="proto-brand-title">Transposable Elements Knowledge Graph</h1>
+            <p class="proto-brand-subtitle"><?= htmlspecialchars($protoSubtitle, ENT_QUOTES, 'UTF-8') ?></p>
+          </div>
         </div>
-        <div>
-          <h1 class="brand-title"><?= htmlspecialchars(site_t(['zh' => '转座元件知识图谱', 'en' => 'Transposable Elements Knowledge Graph'], $siteLang), ENT_QUOTES, 'UTF-8') ?></h1>
-          <p class="brand-subtitle">Transposable Elements Knowledge Graph</p>
+
+        <div class="proto-header-right">
+          <nav class="proto-nav" aria-label="Primary">
+            <?php foreach ($navItems as $key => $item): ?>
+              <a class="proto-nav-link<?= $activePage === $key ? ' is-active' : '' ?>" href="<?= htmlspecialchars(site_url_with_state($item['href'], $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
+            <?php endforeach; ?>
+          </nav>
+
+          <div class="proto-control-group is-hidden" aria-label="Language switch">
+            <a class="proto-control<?= $siteLang === 'zh' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($zhUrl, ENT_QUOTES, 'UTF-8') ?>">中文</a>
+            <a class="proto-control<?= $siteLang === 'en' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($enUrl, ENT_QUOTES, 'UTF-8') ?>">English</a>
+          </div>
+
+          <div class="proto-control-group" aria-label="Renderer switch">
+            <a class="proto-control<?= $siteRenderer === 'cytoscape' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($cytUrl, ENT_QUOTES, 'UTF-8') ?>">Cytoscape</a>
+            <a class="proto-control<?= $siteRenderer === 'g6' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($g6Url, ENT_QUOTES, 'UTF-8') ?>">G6</a>
+          </div>
         </div>
       </div>
-      <nav class="site-nav" aria-label="<?= htmlspecialchars(site_t(['zh' => '主导航', 'en' => 'Main navigation'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
-        <?php foreach ($navItems as $key => $item): ?>
-          <a href="<?= htmlspecialchars(site_url_with_state($item['href'], $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>" class="<?= $activePage === $key ? 'active' : '' ?>"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
-        <?php endforeach; ?>
-        <div class="lang-switch" aria-label="<?= htmlspecialchars(site_t(['zh' => '语言切换', 'en' => 'Language switch'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
-          <a href="<?= htmlspecialchars($zhUrl, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteLang === 'zh' ? 'active' : '' ?>">中文</a>
-          <a href="<?= htmlspecialchars($enUrl, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteLang === 'en' ? 'active' : '' ?>">English</a>
-        </div>
-        <div class="renderer-switch" aria-label="<?= htmlspecialchars(site_t(['zh' => '渲染器切换', 'en' => 'Renderer switch'], $siteLang), ENT_QUOTES, 'UTF-8') ?>">
-          <a href="<?= htmlspecialchars($cytUrl, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteRenderer === 'cytoscape' ? 'active' : '' ?>">Cytoscape</a>
-          <a href="<?= htmlspecialchars($g6Url, ENT_QUOTES, 'UTF-8') ?>" class="<?= $siteRenderer === 'g6' ? 'active' : '' ?>">G6</a>
-        </div>
-      </nav>
-    </div>
-  </header>
-  <main class="page-shell">
+    </header>
+    <main class="proto-main">

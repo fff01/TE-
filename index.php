@@ -1,219 +1,457 @@
-﻿<?php
-require_once __DIR__ . '/site_i18n.php';
-$lang = site_lang();
-$renderer = site_renderer();
-$pageTitle = site_t(['zh' => '首页 - TEKG', 'en' => 'Home - TEKG'], $lang);
+<?php
+$pageTitle = 'TE-KG Home';
 $activePage = 'home';
+$protoCurrentPath = '/TE-/index.php';
+$protoSubtitle = 'A transposable-element knowledge graph for exploration and discovery';
+require __DIR__ . '/head.php';
 
-function tekg_home_counts(): array
-{
-    $fallback = [
-        'TE' => '—',
-        'Disease' => '—',
-        'Function' => '—',
-        'Paper' => '—',
-    ];
+$seedPath = __DIR__ . '/data/processed/te_kg2_graph_seed.json';
+$seed = json_decode((string) file_get_contents($seedPath), true);
+$nodeBuckets = $seed['nodes'] ?? [];
+$datasetCounts = [
+    'TE' => count($nodeBuckets['transposons'] ?? []),
+    'Disease' => count($nodeBuckets['diseases'] ?? []),
+    'Function' => count($nodeBuckets['functions'] ?? []),
+    'Paper' => count($nodeBuckets['papers'] ?? []),
+];
 
-    $configPath = __DIR__ . '/api/config.local.php';
-    if (!is_file($configPath)) {
-        return $fallback;
-    }
+$caseStudies = [
+    'TE' => ['LINE1', 'L1HS', 'Alu', 'HERV-K'],
+    'Disease' => ["Alzheimer's disease", 'breast cancer', 'lung cancer', 'Frontotemporal dementia'],
+    'Function' => ['retrotransposition', 'genomic instability', 'innate immune response', 'DNA damage'],
+    'Paper' => ['PMID: 40600062', 'PMID: 41000934', 'PMID: 40707718', 'PMID: 41473303'],
+];
 
-    $config = include $configPath;
-    $url = $config['neo4j_url'] ?? '';
-    $user = $config['neo4j_user'] ?? '';
-    $password = $config['neo4j_password'] ?? '';
-    if ($url === '' || $user === '') {
-        return $fallback;
-    }
+$overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into graph preview, search, download, and project information.';
 
-    $payload = [
-        'statements' => [[
-            'statement' => "MATCH (n) RETURN sum(CASE WHEN 'TE' IN labels(n) THEN 1 ELSE 0 END) AS te_count, sum(CASE WHEN 'Disease' IN labels(n) THEN 1 ELSE 0 END) AS disease_count, sum(CASE WHEN 'Function' IN labels(n) THEN 1 ELSE 0 END) AS function_count, sum(CASE WHEN 'Paper' IN labels(n) THEN 1 ELSE 0 END) AS paper_count",
-        ]],
-    ];
+$quickLinks = [
+    ['title' => 'Preview', 'href' => site_url_with_state('/TE-/preview.php', $siteLang, $siteRenderer), 'icon' => 'preview'],
+    ['title' => 'Search', 'href' => site_url_with_state('/TE-/search.php', $siteLang, $siteRenderer), 'icon' => 'search'],
+    ['title' => 'Download', 'href' => site_url_with_state('/TE-/download.php', $siteLang, $siteRenderer), 'icon' => 'download'],
+    ['title' => 'About', 'href' => site_url_with_state('/TE-/about.php', $siteLang, $siteRenderer), 'icon' => 'about'],
+];
 
-    $ch = curl_init($url);
-    if ($ch === false) {
-        return $fallback;
-    }
-
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-        CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-        CURLOPT_USERPWD => $user . ':' . $password,
-        CURLOPT_TIMEOUT => 10,
-    ]);
-
-    $response = curl_exec($ch);
-    $errno = curl_errno($ch);
-    $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($errno !== 0 || $status < 200 || $status >= 300 || !$response) {
-        return $fallback;
-    }
-
-    $decoded = json_decode($response, true);
-    $row = $decoded['results'][0]['data'][0]['row'] ?? null;
-    if (!is_array($row) || count($row) < 4) {
-        return $fallback;
-    }
-
-    return [
-        'TE' => number_format((int) $row[0]),
-        'Disease' => number_format((int) $row[1]),
-        'Function' => number_format((int) $row[2]),
-        'Paper' => number_format((int) $row[3]),
-    ];
-}
-
-$counts = tekg_home_counts();
-$homePreviewSrc = $renderer === 'g6'
-    ? 'index_g6.html?embed=home-preview&lang=' . rawurlencode($lang)
-    : 'index_demo.html?embed=home-preview&lang=' . rawurlencode($lang);
-include __DIR__ . '/head.php';
+$treeEmbedUrl = $siteRenderer === 'g6'
+    ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'home-preview'])
+    : site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'home-preview']);
 ?>
-<section class="hero-card" style="background:#2f588f;color:#fff;border-color:#2f588f;box-shadow:none;">
-  <div style="max-width:820px;margin:0 auto;text-align:center;">
-    <h2 class="page-title" style="color:#fff;margin-bottom:14px;"><?= htmlspecialchars(site_t([
-      'zh' => '浏览与检索转座元件知识图谱数据库',
-      'en' => 'Explore and Search the Transposable Elements Knowledge Graph'
-    ], $lang), ENT_QUOTES, 'UTF-8') ?></h2>
-    <p class="page-desc" style="color:#dbe7fb;line-height:1.9;">
-      <?= htmlspecialchars(site_t([
-        'zh' => '本数据库用于组织转座元件（TE）、疾病、功能机制与文献证据之间的结构化关联，当前支持 TE 树预览、图谱浏览、智能问答、实体检索与数据下载。',
-        'en' => 'This database organizes structured relationships among transposable elements (TEs), diseases, functions/mechanisms, and literature evidence. It currently supports TE tree preview, graph exploration, QA, entity search, and data download.'
-      ], $lang), ENT_QUOTES, 'UTF-8') ?>
-    </p>
-    <form action="search.php" method="GET" style="margin-top:28px;display:flex;max-width:860px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 16px 32px rgba(10,30,60,.22);">
-      <select name="type" style="width:170px;border:none;border-right:1px solid #d9e5f3;padding:0 18px;background:#f7faff;color:#28425f;font-size:15px;outline:none;">
-        <option value="all"><?= htmlspecialchars(site_t(['zh' => '所有数据类型', 'en' => 'All types'], $lang), ENT_QUOTES, 'UTF-8') ?></option>
-        <option value="TE">TE</option>
-        <option value="Disease">Disease</option>
-        <option value="Function">Function</option>
-        <option value="Paper">Paper</option>
-      </select>
-      <input type="text" name="q" placeholder="<?= htmlspecialchars(site_t(['zh' => '输入标识符或关键词进行搜索...', 'en' => 'Search by identifier or keyword...'], $lang), ENT_QUOTES, 'UTF-8') ?>" style="flex:1;border:none;padding:0 18px;font-size:16px;min-height:74px;outline:none;color:#19324d;">
-      <button type="submit" style="min-width:132px;border:none;background:#3b67f2;color:#fff;font-size:20px;font-weight:700;cursor:pointer;"><?= htmlspecialchars(site_t(['zh' => '搜索', 'en' => 'Search'], $lang), ENT_QUOTES, 'UTF-8') ?></button>
-    </form>
+      <style>
+        .hero-area {
+          background: #f4f9ff;
+          padding: 54px 0 70px;
+        }
+
+        .proto-container {
+          max-width: 1320px;
+          margin: 0 auto;
+          padding: 0 28px;
+        }
+
+        .hero-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(560px, 1fr);
+          gap: 34px;
+          align-items: center;
+        }
+
+        .hero-content h1 {
+          margin: 0 0 20px;
+          font-size: 58px;
+          line-height: 1.08;
+          color: #163f86;
+          font-weight: 800;
+        }
+
+        .hero-content p {
+          margin: 0;
+          color: #526d96;
+          font-size: 15px;
+          line-height: 2.0;
+          text-align: justify;
+        }
+
+        .hero-content .learn-more {
+          margin-top: 20px;
+          color: #2f63b9;
+          font-size: 15px;
+          font-weight: 600;
+        }
+
+        .hero-figure {
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 6px 24px rgba(34, 68, 120, 0.12);
+          padding: 0;
+          overflow: hidden;
+        }
+
+        .hero-figure-frame {
+          min-height: 520px;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          background: transparent;
+        }
+
+        .figure-canvas {
+          min-height: 520px;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          background: transparent;
+        }
+
+        .tree-frame {
+          width: 100%;
+          height: 100%;
+          min-height: 520px;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #ffffff;
+          border: none;
+        }
+
+        .tree-frame iframe {
+          width: 100%;
+          height: 100%;
+          min-height: 520px;
+          border: 0;
+          display: block;
+        }
+
+        .status-section {
+          padding: 54px 0 26px;
+          background: #fff;
+        }
+
+        .section-title {
+          text-align: center;
+          margin-bottom: 46px;
+        }
+
+        .section-title h3 {
+          margin: 0;
+          font-size: 15px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #214b8d;
+          letter-spacing: 0.04em;
+        }
+
+        .status-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 24px;
+          align-items: start;
+        }
+
+        .status-item {
+          text-align: center;
+        }
+
+        .status-trigger {
+          border: 0;
+          background: transparent;
+          padding: 0;
+          width: 100%;
+          cursor: pointer;
+          color: inherit;
+        }
+
+        .status-badge {
+          width: 188px;
+          height: 188px;
+          margin: 0 auto 14px;
+          border-radius: 50%;
+          background: linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%);
+          border: 8px solid #f8fbff;
+          box-shadow: 0 4px 14px rgba(30, 74, 142, 0.12);
+          display: grid;
+          align-content: center;
+          justify-items: center;
+          gap: 8px;
+        }
+
+        .status-item[data-status-item="TE"] .status-badge {
+          background: linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%);
+          box-shadow: 0 4px 14px rgba(30, 74, 142, 0.12);
+        }
+
+        .status-item[data-status-item="Disease"] .status-badge {
+          background: linear-gradient(180deg, #ffeef2 0%, #ffd9e5 100%);
+          box-shadow: 0 4px 14px rgba(170, 61, 103, 0.12);
+        }
+
+        .status-item[data-status-item="Function"] .status-badge {
+          background: linear-gradient(180deg, #eef9ef 0%, #d8f0db 100%);
+          box-shadow: 0 4px 14px rgba(58, 126, 73, 0.12);
+        }
+
+        .status-item[data-status-item="Paper"] .status-badge {
+          background: linear-gradient(180deg, #fff4e8 0%, #ffe2c3 100%);
+          box-shadow: 0 4px 14px rgba(176, 116, 46, 0.12);
+        }
+
+        .status-count {
+          font-size: 38px;
+          line-height: 1;
+          font-weight: 800;
+          color: #214b8d;
+        }
+
+        .status-name {
+          font-size: 18px;
+          font-weight: 700;
+          color: #214b8d;
+        }
+
+        .status-panel {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.26s ease;
+          margin-top: 18px;
+        }
+
+        .status-item.is-open .status-panel {
+          max-height: 260px;
+        }
+
+        .status-panel-inner {
+          background: #f6faff;
+          border: 1px solid #d9e6fb;
+          border-radius: 10px;
+          padding: 14px;
+          text-align: left;
+        }
+
+        .status-panel-inner h4 {
+          margin: 0 0 10px;
+          font-size: 14px;
+          color: #214b8d;
+          font-weight: 700;
+        }
+
+        .status-panel-list {
+          display: grid;
+          gap: 8px;
+        }
+
+        .status-panel-link {
+          display: block;
+          background: #fff;
+          border: 1px solid #d9e6fb;
+          border-radius: 8px;
+          padding: 10px 12px;
+          color: #355f9e;
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1.4;
+        }
+
+        .links-section {
+          padding: 34px 0 70px;
+          background: #fff;
+        }
+
+        .link-grid {
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 18px;
+        }
+
+        .link-card {
+          background: #fff;
+          border: 2px solid #d7e2f3;
+          border-radius: 10px;
+          padding: 22px 18px 18px;
+          min-height: 248px;
+          box-shadow: none;
+          text-align: center;
+        }
+
+        .link-card:hover {
+          border-color: #aac2e8;
+        }
+
+        .link-card-icon {
+          width: 112px;
+          height: 112px;
+          margin: 0 auto 16px;
+          color: #27558f;
+        }
+
+        .link-card-icon svg {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
+
+        .link-card h4 {
+          margin: 0;
+          color: #214b8d;
+          font-size: 22px;
+          font-weight: 700;
+        }
+
+        @media (max-width: 1200px) {
+          .hero-row {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 992px) {
+          .status-grid,
+          .link-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .hero-content h1 {
+            font-size: 44px;
+          }
+        }
+
+        @media (max-width: 680px) {
+          .proto-container {
+            padding: 0 18px;
+          }
+
+          .status-grid,
+          .link-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .hero-content h1 {
+            font-size: 34px;
+          }
+
+          .status-badge {
+            width: 160px;
+            height: 160px;
+          }
+        }
+      </style>
+
+      <section class="hero-area">
+        <div class="proto-container">
+          <div class="hero-row">
+            <div class="hero-content">
+              <h1>Overview</h1>
+              <p><?= htmlspecialchars($overviewCopy, ENT_QUOTES, 'UTF-8') ?></p>
+              <a class="learn-more" href="<?= htmlspecialchars(site_url_with_state('/TE-/about.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Learn More...</a>
+            </div>
+            <div class="hero-figure">
+              <div class="hero-figure-frame">
+              <div class="figure-canvas">
+                <div class="tree-frame">
+                  <iframe src="<?= htmlspecialchars($treeEmbedUrl, ENT_QUOTES, 'UTF-8') ?>" title="TE classification tree" loading="lazy"></iframe>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="status-section">
+        <div class="proto-container">
+          <div class="section-title">
+            <h3>Dataset Status</h3>
+          </div>
+          <div class="status-grid">
+            <?php foreach ($datasetCounts as $key => $count): ?>
+              <div class="status-item" data-status-item="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>">
+                <button class="status-trigger" type="button" data-status-trigger="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false">
+                  <div class="status-badge">
+                    <div class="status-count"><?= number_format($count) ?></div>
+                    <div class="status-name"><?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?></div>
+                  </div>
+                </button>
+                <div class="status-panel">
+                  <div class="status-panel-inner">
+                    <h4><?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?> case studies</h4>
+                    <div class="status-panel-list">
+                      <?php foreach ($caseStudies[$key] as $item): ?>
+                        <a class="status-panel-link" href="javascript:void(0)"><?= htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?></a>
+                      <?php endforeach; ?>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </section>
+
+      <section class="links-section">
+        <div class="proto-container">
+          <div class="section-title">
+            <h3>Quick Links</h3>
+          </div>
+          <div class="link-grid">
+            <?php foreach ($quickLinks as $item): ?>
+              <a class="link-card" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>">
+                <div class="link-card-icon">
+                  <?php if ($item['icon'] === 'preview'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M10 14h44v36H10z"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M18 24h28M18 32h18M18 40h22"/><circle cx="47" cy="37" r="8" fill="none" stroke="currentColor" stroke-width="3.2"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="m53 43 5 5"/></svg>
+                  <?php elseif ($item['icon'] === 'search'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="28" cy="28" r="14" fill="none" stroke="currentColor" stroke-width="3.4"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" d="m39 39 13 13"/><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M22 28h12M28 22v12"/></svg>
+                  <?php elseif ($item['icon'] === 'download'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" d="M16 50h32a6 6 0 0 0 6-6V20l-10-10H16a6 6 0 0 0-6 6v28a6 6 0 0 0 6 6Z"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" d="M32 24v16"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" d="m25 34 7 7 7-7"/></svg>
+                  <?php else: ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="3.2"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M18 50c2-9 8-14 14-14s12 5 14 14"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M16 18h-6M54 18h-6M32 6V0"/></svg>
+                  <?php endif; ?>
+                </div>
+                <h4><?= htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') ?></h4>
+              </a>
+            <?php endforeach; ?>
+          </div>
+        </div>
+      </section>
+
+      <script>
+        (() => {
+          const header = document.getElementById('protoHeader');
+          const triggers = Array.from(document.querySelectorAll('[data-status-trigger]'));
+          const items = Array.from(document.querySelectorAll('[data-status-item]'));
+
+          function syncHeader() {
+            if (window.scrollY > 12) {
+              header.classList.add('is-scrolled');
+            } else {
+              header.classList.remove('is-scrolled');
+            }
+          }
+
+          function toggleItem(name) {
+            items.forEach((item) => {
+              const isTarget = item.dataset.statusItem === name;
+              const shouldOpen = isTarget && !item.classList.contains('is-open');
+              item.classList.toggle('is-open', shouldOpen);
+            });
+            triggers.forEach((trigger) => {
+              const expanded = trigger.dataset.statusTrigger === name && !trigger.closest('[data-status-item]').classList.contains('is-open') ? 'true' : 'false';
+              trigger.setAttribute('aria-expanded', expanded);
+            });
+          }
+
+          triggers.forEach((trigger) => {
+            trigger.addEventListener('click', () => {
+              const item = trigger.closest('[data-status-item]');
+              const wasOpen = item.classList.contains('is-open');
+              items.forEach((entry) => entry.classList.remove('is-open'));
+              triggers.forEach((entry) => entry.setAttribute('aria-expanded', 'false'));
+              if (!wasOpen) {
+                item.classList.add('is-open');
+                trigger.setAttribute('aria-expanded', 'true');
+              }
+            });
+          });
+
+          window.addEventListener('scroll', syncHeader, { passive: true });
+          syncHeader();
+        })();
+      </script>
+    </main>
   </div>
-</section>
-
-<section style="display:grid;grid-template-columns:minmax(0,2fr) minmax(320px,.95fr);gap:24px;align-items:start;">
-  <div class="content-card">
-    <h3 style="margin:0 0 18px;font-size:24px;padding-bottom:12px;border-bottom:1px solid #e5edf7;">
-      <a href="<?= htmlspecialchars(site_url_with_state('preview.php', $lang, $renderer), ENT_QUOTES, 'UTF-8') ?>" style="color:inherit;text-decoration:none;"><?= htmlspecialchars(site_t(['zh' => '知识图谱预览', 'en' => 'Knowledge Graph Preview'], $lang), ENT_QUOTES, 'UTF-8') ?></a>
-    </h3>
-    <iframe
-      id="home-preview-frame"
-      src="<?= htmlspecialchars($homePreviewSrc, ENT_QUOTES, 'UTF-8') ?>"
-      title="<?= htmlspecialchars(site_t(['zh' => '首页知识图谱预览', 'en' => 'Home knowledge graph preview'], $lang), ENT_QUOTES, 'UTF-8') ?>"
-      style="width:100%;height:520px;border:1px solid #d8e4f0;border-radius:18px;background:radial-gradient(circle at top,#ffffff,#edf4ff);box-shadow:inset 0 1px 0 rgba(255,255,255,.72);"
-    ></iframe>
-  </div>
-
-  <div style="display:grid;gap:22px;">
-    <section class="content-card">
-      <h3 style="margin:0 0 14px;font-size:22px;padding-bottom:12px;border-bottom:1px solid #e5edf7;"><?= htmlspecialchars(site_t(['zh' => '数据集状态', 'en' => 'Dataset Status'], $lang), ENT_QUOTES, 'UTF-8') ?></h3>
-      <div style="display:grid;gap:14px;font-size:16px;">
-        <div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:#111827;"><?= htmlspecialchars(site_t(['zh' => 'TE 节点：', 'en' => 'TE nodes:'], $lang), ENT_QUOTES, 'UTF-8') ?></span><strong style="color:var(--te);"><?= htmlspecialchars((string) $counts['TE'], ENT_QUOTES, 'UTF-8') ?></strong></div>
-        <div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:#111827;"><?= htmlspecialchars(site_t(['zh' => 'Disease 节点：', 'en' => 'Disease nodes:'], $lang), ENT_QUOTES, 'UTF-8') ?></span><strong style="color:var(--disease);"><?= htmlspecialchars((string) $counts['Disease'], ENT_QUOTES, 'UTF-8') ?></strong></div>
-        <div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:#111827;"><?= htmlspecialchars(site_t(['zh' => 'Function 节点：', 'en' => 'Function nodes:'], $lang), ENT_QUOTES, 'UTF-8') ?></span><strong style="color:var(--function);"><?= htmlspecialchars((string) $counts['Function'], ENT_QUOTES, 'UTF-8') ?></strong></div>
-        <div style="display:flex;justify-content:space-between;gap:12px;"><span style="color:#111827;"><?= htmlspecialchars(site_t(['zh' => 'Paper 节点：', 'en' => 'Paper nodes:'], $lang), ENT_QUOTES, 'UTF-8') ?></span><strong style="color:var(--paper);"><?= htmlspecialchars((string) $counts['Paper'], ENT_QUOTES, 'UTF-8') ?></strong></div>
-      </div>
-    </section>
-
-    <section class="content-card">
-      <h3 style="margin:0 0 14px;font-size:22px;padding-bottom:12px;border-bottom:1px solid #e5edf7;"><?= htmlspecialchars(site_t(['zh' => '快速检索示例', 'en' => 'Quick Search Examples'], $lang), ENT_QUOTES, 'UTF-8') ?></h3>
-      <p style="margin:0 0 14px;color:#5e7288;line-height:1.7;"><?= htmlspecialchars(site_t(['zh' => '每类提供一个典型入口，点击后将直接跳转到搜索页。', 'en' => 'Each category provides one representative entry that jumps directly to the search page.'], $lang), ENT_QUOTES, 'UTF-8') ?></p>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;">
-        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => 'LINE1']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--te-soft);color:var(--te);font-weight:600;">TE: LINE1</a>
-        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => 'Breast cancer']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--disease-soft);color:var(--disease);font-weight:600;">Disease: Breast cancer</a>
-        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => 'RNA polymerase III transcription']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--function-soft);color:var(--function);font-weight:600;">Function: RNA polymerase III transcription</a>
-        <a href="<?= htmlspecialchars(site_url_with_state('search.php', $lang, $renderer, ['q' => '39100749']), ENT_QUOTES, 'UTF-8') ?>" style="padding:8px 14px;border-radius:999px;background:var(--paper-soft);color:var(--paper);font-weight:600;">Paper: PMID 39100749</a>
-      </div>
-    </section>
-  </div>
-</section>
-
-<script>
-  (function () {
-    const renderer = <?= json_encode($renderer, JSON_UNESCAPED_UNICODE) ?>;
-    const frame = document.getElementById('home-preview-frame');
-    if (!frame) return;
-
-    if (renderer === 'g6') return;
-
-    function restyleHomePreview() {
-      const doc = frame.contentDocument;
-      if (!doc) return;
-      const innerWin = frame.contentWindow;
-      const innerCy = innerWin && innerWin.__TEKG_CY ? innerWin.__TEKG_CY : null;
-      const header = doc.querySelector('header');
-      const footer = doc.querySelector('footer');
-      const langControl = doc.querySelector('.lang');
-      const rightPanel = doc.querySelector('.main > .panel:last-child');
-      const graphPanel = doc.querySelector('.main > .panel:first-child');
-      const graphHead = graphPanel ? graphPanel.querySelector('.head') : null;
-      const graphTools = graphPanel ? graphPanel.querySelector('.toolbar') : null;
-      const graphDetail = doc.getElementById('node-details');
-
-      if (header) header.style.display = 'none';
-      if (footer) footer.style.display = 'none';
-      if (langControl) langControl.style.display = 'none';
-      if (rightPanel) rightPanel.style.display = 'none';
-      if (graphTools) graphTools.style.display = 'none';
-      if (graphHead) graphHead.style.display = 'none';
-      if (graphDetail) {
-        graphDetail.style.display = 'block';
-        graphDetail.style.marginTop = '10px';
-      }
-
-      doc.documentElement.style.height = '100%';
-      doc.body.style.height = '100%';
-      doc.body.style.margin = '0';
-      doc.body.style.background = 'transparent';
-
-      const main = doc.querySelector('.main');
-      if (main) {
-        main.style.display = 'block';
-        main.style.height = '100%';
-        main.style.minHeight = '100%';
-        main.style.padding = '0';
-        main.style.gap = '0';
-      }
-
-      if (graphPanel) {
-        graphPanel.style.height = '100%';
-        graphPanel.style.minHeight = '100%';
-        graphPanel.style.border = 'none';
-        graphPanel.style.borderRadius = '18px';
-        graphPanel.style.boxShadow = 'none';
-      }
-
-      const cyEl = doc.getElementById('cy');
-      if (cyEl) {
-        cyEl.style.height = '100%';
-        cyEl.style.minHeight = '100%';
-        cyEl.style.flex = '1';
-      }
-
-      if (innerCy) {
-        try {
-          innerCy.resize();
-          innerCy.fit(undefined, 45);
-        } catch (_err) {}
-      }
-    }
-
-    frame.addEventListener('load', function () {
-      restyleHomePreview();
-      setTimeout(restyleHomePreview, 250);
-      setTimeout(restyleHomePreview, 800);
-    });
-  }());
-</script>
-<?php include __DIR__ . '/foot.php'; ?>
+</body>
+</html>
