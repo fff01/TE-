@@ -117,6 +117,87 @@ Evidence: PMID: 11007163, 23540693, 23665280, 27242996, 27293999, 29643204, 3071
 - 团簇 / 社区分析
 - 更正式的 centrality 指标
 
+### 如果要实现“QA 反向驱动动态图”，建议按这几步改
+
+当前先采用最稳的范围约束：
+- 只驱动动态图
+- 不驱动默认树
+- 统一采用预设状态：
+  - `key-node level = 1`
+  - `fixed view = on`
+  - `renderer` 保持当前页面已有模式
+- QA 只负责返回一个“结构化子图结果”，前端按固定规则渲染
+
+#### 第 1 步：先固定 QA 的输出格式
+- 目标是让 QA 不返回自由文本动作，而是返回稳定结构，例如：
+  - `query`
+  - `nodes`
+  - `edges`
+  - `evidence`
+- 第一版不要求 QA 决定页面状态，只要求它明确：
+  - 当前问题围绕哪个实体
+  - 用了哪些边
+  - 左侧应该展示哪些节点和边
+- 主要涉及：
+  - `api/qa.php`
+  - 本地 QA 模板 / prompt 资源
+
+#### 第 2 步：前端让左侧动态图支持“回答后同步”
+- 左侧始终是同一个 G6 动态图区，不再引入新的用户感知模式
+- 当 QA 回答完成后：
+  - 左侧直接同步为 AI 实际使用到的边和这些边两端的节点
+- 这一步不要改默认树逻辑，只在现有动态图容器里切换数据内容
+- 主要涉及：
+  - `assets/js/renderers/g6/index-g6-shared.js`
+  - `assets/js/renderers/g6/index-g6-runtime.js`
+  - `assets/js/renderers/g6/index-g6-qa.js`
+
+#### 第 3 步：把 QA 回答中的结构化边送进左侧图
+- 当 QA 返回结构化结果后：
+  - 左侧不再重新猜测 query
+  - 直接按 QA 给出的 nodes / edges 同步当前动态图
+- 这一版不做复杂布局分支，统一沿用当前动态图布局参数
+- 主要涉及：
+  - `assets/js/renderers/g6/index-g6-qa.js`
+  - `assets/js/renderers/g6/index-g6-shared.js`
+
+#### 第 4 步：加“回到普通图”的退路
+- QA 驱动图谱后，用户需要能一键回到普通 query 图
+- 这一步很重要，否则用户容易被困在当前回答对应的图里
+- 第一版建议提供：
+  - `Back to graph`
+  - 或 `Restore query graph`
+- 主要涉及：
+  - `assets/js/renderers/g6/index-g6.bootstrap.js`
+  - `assets/js/renderers/g6/index-g6-qa.js`
+
+#### 第 5 步：最后再补文献联动
+- 当回答后同步图稳定后，再把回答里引用的 PMID 和左侧边证据联动起来
+- 这一层可以晚一点做，不要和“先把子图驱动起来”绑在一起
+- 主要涉及：
+  - `api/qa.php`
+  - `assets/js/renderers/g6/index-g6-qa.js`
+  - `assets/js/renderers/g6/index-g6-shared.js`
+
+### 这条功能为什么现在可以做
+- 范围已经明确收紧：
+  - 只驱动动态图
+  - 不改树
+  - 状态固定
+- 这样它就不再是“任意控制整页”，而是“把 QA 识别到的边和节点渲染成一张固定规则的局部图”
+- 在这个范围内，它和 Cyt 的实现思路已经很接近
+
+### 第一版完成标准
+- 用户提问，例如：
+  - “与 LINE1 相关的疾病”
+- QA 能返回结构化结果
+- 左侧 G6 动态图切换成：
+  - 中心对象为 `LINE1`
+  - 只展示 QA 使用到的边和两端节点
+  - `key-node level = 1`
+  - `fixed view = on`
+- 用户可以一键回到普通 query 图
+
 ---
 
 ## 3. 点击边显示关系和证据

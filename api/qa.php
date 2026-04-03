@@ -213,6 +213,8 @@ final class QaService
         $answer = $this->polishAnswer($answer, $language);
         $this->debug('answer:done', ['mode' => $mode]);
 
+        $graphContext = $this->buildGraphContext($rows, $references, $intent, $entity, $question);
+
         return [
             'language' => $language,
             'answer_style' => $answerStyle,
@@ -226,8 +228,73 @@ final class QaService
             'custom_rows' => $answerDepth === 'custom' ? $customRows : 0,
             'custom_references' => $answerDepth === 'custom' ? $customReferences : 0,
             'model_provider' => $this->activeModelProvider,
-            'graph_context' => $this->buildGraphContext($rows, $references, $intent, $entity, $question),
+            'graph_context' => $graphContext,
+            'graph_action' => $this->buildGraphAction($graphContext, $intent, $entity, $question),
             'answer' => $answer,
+        ];
+    }
+
+    private function buildGraphAction(array $graphContext, ?string $intent, ?string $entity, string $question): array
+    {
+        $anchor = is_array($graphContext['anchor'] ?? null) ? $graphContext['anchor'] : [];
+        $elements = is_array($graphContext['elements'] ?? null) ? $graphContext['elements'] : [];
+
+        $nodes = [];
+        $edges = [];
+        $evidence = [];
+
+        foreach ($elements as $element) {
+            $data = is_array($element['data'] ?? null) ? $element['data'] : [];
+            if (isset($data['source'], $data['target'])) {
+                $edge = [
+                    'id' => (string)($data['id'] ?? ''),
+                    'source' => (string)($data['source'] ?? ''),
+                    'target' => (string)($data['target'] ?? ''),
+                    'relation' => (string)($data['relation'] ?? ''),
+                    'evidence' => (string)($data['evidence'] ?? ''),
+                    'pmids' => array_values(array_unique(array_map('strval', is_array($data['pmids'] ?? null) ? $data['pmids'] : []))),
+                ];
+                $edges[] = $edge;
+                if ($edge['relation'] === 'EVIDENCE_RELATION' || !empty($edge['pmids']) || $edge['evidence'] !== '') {
+                    $evidence[] = $edge;
+                }
+                continue;
+            }
+
+            $nodes[] = [
+                'id' => (string)($data['id'] ?? ''),
+                'label' => (string)($data['label'] ?? ''),
+                'type' => (string)($data['type'] ?? 'TE'),
+                'description' => (string)($data['description'] ?? ''),
+                'pmid' => (string)($data['pmid'] ?? ''),
+            ];
+        }
+
+        $query = trim((string)($anchor['name'] ?? ''));
+        if ($query === '') {
+            $query = $entity ?? $this->guessAnchorFromQuestion($question);
+        }
+
+        return [
+            'version' => 1,
+            'enabled' => !empty($nodes) && !empty($edges),
+            'type' => 'render_subgraph',
+            'target' => 'dynamic_graph',
+            'query' => $query,
+            'intent' => $intent,
+            'preset_state' => [
+                'key_node_level' => 1,
+                'fixed_view' => true,
+            ],
+            'anchor' => [
+                'name' => (string)($anchor['name'] ?? $query),
+                'type' => (string)($anchor['type'] ?? 'TE'),
+            ],
+            'subgraph' => [
+                'nodes' => $nodes,
+                'edges' => $edges,
+                'evidence_edges' => $evidence,
+            ],
         ];
     }
 

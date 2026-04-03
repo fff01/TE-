@@ -368,6 +368,7 @@
       if (nodeType === 'Function') {
         return Math.max(0, Number(node?.size) || 0) >= 34;
       }
+      if (nodeType === 'Paper') return !!node?.alwaysShowLabel;
       return false;
     }
 
@@ -533,7 +534,10 @@
       ].join('');
     }
 
-    function buildGraphData(elements) {
+    function buildGraphData(elements, options = {}) {
+      const includePaperNodes = options.includePaperNodes === true;
+      const synthesizeDiseaseClasses = options.synthesizeDiseaseClasses !== false;
+      const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
       const nodes = [];
       const edges = [];
       const allowedNodeIds = new Set();
@@ -543,12 +547,14 @@
         const data = item && item.data ? item.data : null;
         if (!data) continue;
         if (data.source && data.target) continue;
-        if ((data.type || 'TE') === 'Paper') continue;
+        if (!includePaperNodes && (data.type || 'TE') === 'Paper') continue;
         if (!anchorNodeId) anchorNodeId = String(data.id || '');
 
         const node = {
           id: data.id,
-          size: degreeToSize(data.degree),
+          size: (data.type || 'TE') === 'Paper'
+            ? Math.max(28, degreeToSize(data.degree))
+            : degreeToSize(data.degree),
           nodeType: data.type || 'TE',
           rawLabel: data.rawLabel || data.label || data.id,
           displayLabel: translateName(data.label || data.rawLabel || data.id),
@@ -561,6 +567,7 @@
           classQuery: (data.type || 'TE') === 'DiseaseClass' ? String(data.rawLabel || data.label || data.id) : '',
           fillColor: TYPE_COLORS[data.type || 'TE'] || '#94a3b8',
           strokeColor: TYPE_STROKES[data.type || 'TE'] || '#111111',
+          alwaysShowLabel: includePaperNodes && (data.type || 'TE') === 'Paper',
         };
 
         nodes.push(node);
@@ -622,35 +629,39 @@
         }
       }
 
-      const visibleNodes = nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id));
+      const visibleNodes = restrictToAnchorComponent
+        ? nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id))
+        : [...nonIsolatedNodes];
       const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
       const diseaseMembers = new Map();
-      for (const node of visibleNodes) {
-        if (node.nodeType !== 'Disease') continue;
-        const diseaseClass = node.diseaseClass || 'Disease';
-        if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
-        diseaseMembers.get(diseaseClass).push(node);
-      }
+      if (synthesizeDiseaseClasses) {
+        for (const node of visibleNodes) {
+          if (node.nodeType !== 'Disease') continue;
+          const diseaseClass = node.diseaseClass || 'Disease';
+          if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
+          diseaseMembers.get(diseaseClass).push(node);
+        }
 
-      for (const [diseaseClass, members] of diseaseMembers.entries()) {
-        const count = members.length;
-        const classNodeId = `disease-class::${diseaseClass}`;
-        const classNode = {
-          id: classNodeId,
-          size: diseaseClassDiameterFromMembers(members),
-          nodeType: 'DiseaseClass',
-          rawLabel: diseaseClass,
-          displayLabel: diseaseClass,
-          databaseDegree: count,
-          description: `Disease class node for ${diseaseClass}. Connected to ${count} disease node${count === 1 ? '' : 's'} in the current graph.`,
-          diseaseClass,
-          team: `Disease::${diseaseClass}`,
-          queryLabel: diseaseClass,
-          queryType: 'disease_class',
-          classQuery: diseaseClass,
-        };
-        visibleNodes.push(classNode);
-        visibleNodeIds.add(classNodeId);
+        for (const [diseaseClass, members] of diseaseMembers.entries()) {
+          const count = members.length;
+          const classNodeId = `disease-class::${diseaseClass}`;
+          const classNode = {
+            id: classNodeId,
+            size: diseaseClassDiameterFromMembers(members),
+            nodeType: 'DiseaseClass',
+            rawLabel: diseaseClass,
+            displayLabel: diseaseClass,
+            databaseDegree: count,
+            description: `Disease class node for ${diseaseClass}. Connected to ${count} disease node${count === 1 ? '' : 's'} in the current graph.`,
+            diseaseClass,
+            team: `Disease::${diseaseClass}`,
+            queryLabel: diseaseClass,
+            queryType: 'disease_class',
+            classQuery: diseaseClass,
+          };
+          visibleNodes.push(classNode);
+          visibleNodeIds.add(classNodeId);
+        }
       }
 
       for (const edge of baseEdges) {
@@ -666,19 +677,21 @@
         });
       }
 
-      for (const [diseaseClass, members] of diseaseMembers.entries()) {
-        const classNodeId = `disease-class::${diseaseClass}`;
-        for (const member of members) {
-          edges.push({
-            id: `${classNodeId}__DISEASE_CLASSIFICATION__${member.id}`,
-            source: classNodeId,
-            target: member.id,
-            synthetic: true,
-            relation: 'classified as',
-            relationType: 'DISEASE_CLASSIFICATION',
-            evidence: '',
-            pmids: [],
-          });
+      if (synthesizeDiseaseClasses) {
+        for (const [diseaseClass, members] of diseaseMembers.entries()) {
+          const classNodeId = `disease-class::${diseaseClass}`;
+          for (const member of members) {
+            edges.push({
+              id: `${classNodeId}__DISEASE_CLASSIFICATION__${member.id}`,
+              source: classNodeId,
+              target: member.id,
+              synthetic: true,
+              relation: 'classified as',
+              relationType: 'DISEASE_CLASSIFICATION',
+              evidence: '',
+              pmids: [],
+            });
+          }
         }
       }
 
@@ -713,9 +726,10 @@
       });
     }
 
-    async function loadGraph(requestLike) {
+    async function renderElements(elements, requestLike, options = {}) {
       const request = normalizeGraphRequest(requestLike);
-      const query = String(request.query || '').trim() || 'LINE1';
+      const query = String(request.query || currentQuery || '').trim() || 'LINE1';
+      const sourceLabel = options.sourceLabel === 'qa' ? 'qa' : 'query';
       currentQuery = query;
       currentQueryType = request.queryType || '';
       currentClassQuery = currentQueryType === 'disease_class' ? String(request.classQuery || query).trim() : '';
@@ -732,8 +746,15 @@
         query,
         queryType: currentQueryType,
         classQuery: currentClassQuery,
+        source: sourceLabel,
       });
-      hooks.setStatus(`Loading graph for ${query} (key-node level ${currentKeyNodeLevel}) ...`);
+      if (!options.skipInitialStatus) {
+        hooks.setStatus(
+          sourceLabel === 'qa'
+            ? `Synchronizing answer graph for ${query} ...`
+            : `Rendering graph for ${query} (key-node level ${currentKeyNodeLevel}) ...`,
+        );
+      }
 
       try {
         await ensureResources();
@@ -745,23 +766,8 @@
           container.style.height = `${metrics.height}px`;
         }
 
-        const endpoint = new URL('api/graph.php', window.location.href);
-        endpoint.searchParams.set('q', query);
-        endpoint.searchParams.set('key_level', String(currentKeyNodeLevel));
-        if (currentQueryType === 'disease_class') {
-          endpoint.searchParams.set('type', 'disease_class');
-          endpoint.searchParams.set('class', currentClassQuery || query);
-        }
-
-        const response = await fetch(endpoint.toString(), {
-          credentials: 'same-origin',
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const payload = await response.json();
-        const data = buildGraphData(payload.elements || []);
+        const payloadElements = Array.isArray(elements) ? elements : [];
+        const data = buildGraphData(payloadElements, options.graphDataOptions || {});
 
         if (graph && typeof graph.destroy === 'function') {
           graph.destroy();
@@ -896,7 +902,45 @@
 
         hooks.onSelection(null);
         hooks.setDetail('No node selected', 'Click a node or edge to inspect graph details.');
-        hooks.setStatus(`Loaded ${data.nodes.length} nodes and ${data.edges.length} edges for ${query} at key-node level ${currentKeyNodeLevel}.`);
+        hooks.setStatus(
+          sourceLabel === 'qa'
+            ? `Loaded ${data.nodes.length} nodes and ${data.edges.length} edges from the current QA answer.`
+            : `Loaded ${data.nodes.length} nodes and ${data.edges.length} edges for ${query} at key-node level ${currentKeyNodeLevel}.`,
+        );
+        return { elements: payloadElements };
+      } catch (error) {
+        hooks.setStatus(`Failed: ${error && error.message ? error.message : 'unknown error'}`);
+        console.error('G6 graph failed:', error);
+        throw error;
+      }
+    }
+
+    async function loadGraph(requestLike) {
+      const request = normalizeGraphRequest(requestLike);
+      const query = String(request.query || '').trim() || 'LINE1';
+      hooks.setStatus(`Loading graph for ${query} (key-node level ${currentKeyNodeLevel}) ...`);
+
+      try {
+        const endpoint = new URL('api/graph.php', window.location.href);
+        endpoint.searchParams.set('q', query);
+        endpoint.searchParams.set('key_level', String(currentKeyNodeLevel));
+        if (request.queryType === 'disease_class') {
+          endpoint.searchParams.set('type', 'disease_class');
+          endpoint.searchParams.set('class', request.classQuery || query);
+        }
+
+        const response = await fetch(endpoint.toString(), {
+          credentials: 'same-origin',
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const payload = await response.json();
+        await renderElements(payload.elements || [], request, {
+          sourceLabel: 'query',
+          skipInitialStatus: true,
+        });
         return payload;
       } catch (error) {
         hooks.setStatus(`Failed: ${error && error.message ? error.message : 'unknown error'}`);
@@ -974,6 +1018,7 @@
       init,
       ensureResources,
       loadGraph,
+      renderElements,
       resize,
       setFixedView,
       setKeyNodeLevel,

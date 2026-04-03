@@ -78,6 +78,9 @@
     loadGraph(query) {
       return runner.loadGraph(query);
     },
+    renderElements(elements, requestLike, options = {}) {
+      return runner.renderElements(elements, requestLike, options);
+    },
     setFixedView(next) {
       return runner.setFixedView(next);
     },

@@ -332,6 +332,18 @@
     return { text: formatBackendAnswer(data), result: data };
   }
 
+  async function applyAnswerGraph(result, question = '') {
+    const bridge = getBridge();
+    if (!bridge || typeof bridge.applyAnswerGraph !== 'function') return false;
+
+    try {
+      return await bridge.applyAnswerGraph(result, question);
+    } catch (error) {
+      console.warn('Failed to synchronize G6 answer graph:', error);
+      return false;
+    }
+  }
+
   async function handleSend() {
     const question = String(userInput.value || '').trim();
     if (!question) return;
@@ -344,6 +356,7 @@
       const backend = await answerWithBackend(question);
       loadingNode.remove();
       addMessage(backend.text, 'assistant');
+      await applyAnswerGraph(backend.result, question);
     } catch (error) {
       loadingNode.remove();
       addMessage(buildFallbackAnswer(question, error), 'assistant');

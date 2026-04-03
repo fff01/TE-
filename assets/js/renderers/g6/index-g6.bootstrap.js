@@ -15,13 +15,19 @@
     graphTitle: document.getElementById('graph-title'),
     searchInput: document.getElementById('node-search'),
     fixedBtn: document.getElementById('toggle-fixed-view'),
+    fixedText: document.getElementById('fixed-view-text'),
+    backBtn: document.getElementById('back-graph'),
+    backText: document.getElementById('back-text'),
     resetBtn: document.getElementById('reset-graph'),
+    resetText: document.getElementById('reset-text'),
     levelMinus: document.getElementById('decrease-key-node-level'),
     levelPlus: document.getElementById('increase-key-node-level'),
     levelText: document.getElementById('key-node-level-text'),
     detail: document.getElementById('node-details'),
     treeSurface: document.getElementById('g6-default-tree-surface'),
     dynamicSurface: document.getElementById('g6-dynamic-surface'),
+    graphLoader: document.getElementById('graph-preloader'),
+    graphLoaderLabel: document.getElementById('graph-preloader-label'),
     main: document.querySelector('.main'),
   };
 
@@ -33,11 +39,13 @@
       searchPlaceholder: 'Search LINE1, L1HS, disease, or function',
       fixedOn: 'Fixed view: On',
       fixedOff: 'Fixed view: Off',
+      back: 'Back',
       reset: 'Reset',
       keyNodeLevel: (level) => `Key-node level: ${level}`,
       treeDetail:
         '<strong>No node selected</strong>Click a TE node to inspect it, then click again to enter the dynamic graph.',
-      loadingDetail: (query) => `<strong>Loading graph</strong>Preparing the dynamic graph for ${escapeHtml(query)}.`,
+      loadingDetail: (query) => buildLoadingDetailHtml(`Preparing the dynamic graph for ${escapeHtml(query)}.`),
+      loadingOverlay: (query) => `Preparing ${escapeHtml(query)} ...`,
       graphError: (message) => `Failed: ${message || 'unknown error'}`,
     },
     zh: {
@@ -47,20 +55,25 @@
       searchPlaceholder: '\u641c\u7d22 LINE1\u3001L1HS\u3001\u75be\u75c5\u6216\u529f\u80fd',
       fixedOn: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5f00',
       fixedOff: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5173',
+      back: '\u8fd4\u56de',
       reset: '\u91cd\u7f6e',
       keyNodeLevel: (level) => `\u5173\u952e\u8282\u70b9\u5c42\u6570\uff1a${level}`,
       treeDetail:
         '<strong>\u5c1a\u672a\u9009\u4e2d\u8282\u70b9</strong>\u70b9\u51fb\u4e00\u4e2a TE \u8282\u70b9\u67e5\u770b\u8be6\u60c5\uff0c\u518d\u6b21\u70b9\u51fb\u53ef\u8fdb\u5165\u52a8\u6001\u56fe\u3002',
-      loadingDetail: (query) => `<strong>\u6b63\u5728\u52a0\u8f7d\u52a8\u6001\u56fe</strong>\u6b63\u5728\u4e3a ${escapeHtml(query)} \u51c6\u5907 G6 \u52a8\u6001\u56fe\u3002`,
+      loadingDetail: (query) => buildLoadingDetailHtml(`\u6b63\u5728\u4e3a ${escapeHtml(query)} \u51c6\u5907 G6 \u52a8\u6001\u56fe\u3002`),
+      loadingOverlay: (query) => `\u6b63\u5728\u51c6\u5907 ${escapeHtml(query)} ...`,
       graphError: (message) => `\u5931\u8d25\uff1a${message || '\u672a\u77e5\u9519\u8bef'}`,
     },
   };
 
   let currentMode = 'tree';
+  let currentGraphSource = 'tree';
   let currentGraphQuery = '';
   let currentGraphQueryType = '';
   let currentGraphClassQuery = '';
   let currentSelectedNode = null;
+  let currentAnswerGraphElements = [];
+  let graphHistory = [];
   let dynamicFrame = null;
   let dynamicBridgePromise = null;
 
@@ -81,6 +94,18 @@
       .replace(/'/g, '&#39;');
   }
 
+  function buildLoadingDetailHtml(label) {
+    return [
+      '<div class="detail-loading">',
+      '  <div class="detail-loading-icon" aria-hidden="true">',
+      '    <span></span>',
+      '    <span></span>',
+      '  </div>',
+      `  <div class="detail-loading-label">${label || 'Loading graph...'}</div>`,
+      '</div>',
+    ].join('');
+  }
+
   function textSet() {
     return UI[window.currentLang] || UI.en;
   }
@@ -91,9 +116,19 @@
     }
   }
 
+  function setGraphLoading(visible, label = '') {
+    if (!els.graphLoader) return;
+    els.graphLoader.classList.remove('is-visible');
+    els.graphLoader.setAttribute('aria-hidden', 'true');
+    if (els.graphLoaderLabel) {
+      els.graphLoaderLabel.textContent = label || 'Loading graph...';
+    }
+  }
+
   function snapshotState() {
     return {
       mode: currentMode,
+      source: currentGraphSource,
       query: currentGraphQuery,
       queryType: currentGraphQueryType,
       classQuery: currentGraphClassQuery,
@@ -101,6 +136,7 @@
       keyNodeLevel: window.currentKeyNodeLevel,
       selectedNode: currentSelectedNode,
       lang: window.currentLang,
+      historyDepth: graphHistory.length,
     };
   }
 
@@ -114,6 +150,80 @@
 
   function buildDetail(title, description) {
     return `<strong>${escapeHtml(title || '')}</strong>${escapeHtml(description || '')}`;
+  }
+
+  function buildQaDetail() {
+    return buildDetail(
+      'QA graph synchronized',
+      'The graph now shows the nodes and edges used in the current answer.',
+    );
+  }
+
+  function cloneAnswerElements(elements) {
+    return JSON.parse(JSON.stringify(Array.isArray(elements) ? elements : []));
+  }
+
+  function stateSignature(state) {
+    if (!state || typeof state !== 'object') return 'none';
+    if (state.kind === 'tree') return 'tree';
+    if (state.kind === 'query') {
+      return [
+        'query',
+        state.query || '',
+        state.queryType || '',
+        state.classQuery || '',
+        String(state.keyNodeLevel || 1),
+        state.fixedView ? '1' : '0',
+      ].join('|');
+    }
+    if (state.kind === 'answer') {
+      return [
+        'answer',
+        state.query || '',
+        String(state.keyNodeLevel || 1),
+        state.fixedView ? '1' : '0',
+        String((state.elements || []).length),
+      ].join('|');
+    }
+    return 'unknown';
+  }
+
+  function captureCurrentGraphState() {
+    if (currentMode === 'tree') {
+      return { kind: 'tree' };
+    }
+
+    if (currentGraphSource === 'answer') {
+      return {
+        kind: 'answer',
+        query: currentGraphQuery,
+        keyNodeLevel: window.currentKeyNodeLevel,
+        fixedView: !!window.fixedView,
+        elements: cloneAnswerElements(currentAnswerGraphElements),
+      };
+    }
+
+    return {
+      kind: 'query',
+      query: currentGraphQuery,
+      queryType: currentGraphQueryType,
+      classQuery: currentGraphClassQuery,
+      keyNodeLevel: window.currentKeyNodeLevel,
+      fixedView: !!window.fixedView,
+    };
+  }
+
+  function pushCurrentStateToHistory() {
+    const snapshot = captureCurrentGraphState();
+    const nextSignature = stateSignature(snapshot);
+    const lastSignature = graphHistory.length ? stateSignature(graphHistory[graphHistory.length - 1]) : '';
+    if (nextSignature === lastSignature) return;
+    graphHistory.push(snapshot);
+  }
+
+  function updateBackButton() {
+    if (!els.backBtn) return;
+    els.backBtn.disabled = graphHistory.length === 0;
   }
 
   function normalizeQueryType(value) {
@@ -181,11 +291,13 @@
     if (els.badge) els.badge.textContent = t.badge;
     if (els.graphTitle) els.graphTitle.textContent = t.graphTitle;
     if (els.searchInput) els.searchInput.placeholder = t.searchPlaceholder;
-    if (els.fixedBtn) els.fixedBtn.textContent = window.fixedView ? t.fixedOn : t.fixedOff;
-    if (els.resetBtn) els.resetBtn.textContent = t.reset;
+    if (els.fixedText) els.fixedText.textContent = window.fixedView ? t.fixedOn : t.fixedOff;
+    if (els.backText) els.backText.textContent = t.back || 'Back';
+    if (els.resetText) els.resetText.textContent = t.reset;
     if (els.levelText) els.levelText.textContent = t.keyNodeLevel(window.currentKeyNodeLevel);
     if (els.levelMinus) els.levelMinus.disabled = window.currentKeyNodeLevel <= 1;
     if (els.levelPlus) els.levelPlus.disabled = window.currentKeyNodeLevel >= 10;
+    updateBackButton();
   }
 
   function syncLangParam() {
@@ -303,43 +415,236 @@
     return dynamicFrame;
   }
 
-  async function renderDefaultTree() {
+  function convertGraphActionSubgraphToElements(graphAction) {
+    const elements = [];
+    const subgraph = graphAction && typeof graphAction === 'object' ? graphAction.subgraph || {} : {};
+    const nodes = Array.isArray(subgraph.nodes) ? subgraph.nodes : [];
+    const edges = Array.isArray(subgraph.edges) ? subgraph.edges : [];
+
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object') continue;
+      elements.push({
+        data: {
+          id: String(node.id || ''),
+          label: String(node.label || node.id || ''),
+          rawLabel: String(node.label || node.id || ''),
+          type: String(node.type || 'TE'),
+          description: String(node.description || ''),
+          pmid: String(node.pmid || ''),
+        },
+      });
+    }
+
+    for (const edge of edges) {
+      if (!edge || typeof edge !== 'object') continue;
+      elements.push({
+        data: {
+          id: String(edge.id || `${edge.source || ''}__${edge.relation || 'relation'}__${edge.target || ''}`),
+          source: String(edge.source || ''),
+          target: String(edge.target || ''),
+          relation: String(edge.relation || ''),
+          relationType: String(edge.relation || ''),
+          evidence: String(edge.evidence || ''),
+          pmids: Array.isArray(edge.pmids) ? edge.pmids : [],
+        },
+      });
+    }
+
+    return elements;
+  }
+
+  function extractAnswerGraphElements(result) {
+    const graphContextElements = result && result.graph_context && Array.isArray(result.graph_context.elements)
+      ? result.graph_context.elements
+      : [];
+    if (graphContextElements.length) return graphContextElements;
+
+    const graphAction = result && result.graph_action && typeof result.graph_action === 'object'
+      ? result.graph_action
+      : null;
+    if (!graphAction) return [];
+
+    return convertGraphActionSubgraphToElements(graphAction);
+  }
+
+  async function renderAnswerGraphElements(elements, query, options = {}) {
+    const pushHistory = options.pushHistory !== false;
+    if (pushHistory) pushCurrentStateToHistory();
+
+    currentMode = 'dynamic';
+    currentGraphSource = 'answer';
+    currentGraphQuery = String(query || currentGraphQuery || '').trim() || 'LINE1';
+    currentGraphQueryType = '';
+    currentGraphClassQuery = '';
+    currentSelectedNode = null;
+    currentAnswerGraphElements = cloneAnswerElements(elements);
+
+    showDynamicSurface();
+    if (els.searchInput) els.searchInput.value = currentGraphQuery;
+    updateButtons();
+    setDetail(buildQaDetail());
+    notifyStateChange();
+    setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery));
+
+    try {
+      await waitForDynamicSurfaceSize();
+
+      const frame = dynamicFrame || ensureDynamicFrame({ query: '' });
+      if (!dynamicBridgePromise) {
+        dynamicBridgePromise = waitForEmbedBridge(frame);
+      }
+
+      const bridge = await dynamicBridgePromise;
+      if (!bridge || typeof bridge.renderElements !== 'function') {
+        throw new Error('G6 embed bridge cannot render QA elements');
+      }
+
+      await bridge.renderElements(elements, { query: currentGraphQuery }, {
+        sourceLabel: 'qa',
+        graphDataOptions: {
+          includePaperNodes: true,
+          synthesizeDiseaseClasses: false,
+          restrictToAnchorComponent: false,
+        },
+      });
+
+      setDetail(buildQaDetail());
+      notifyStateChange();
+      return true;
+    } finally {
+      setGraphLoading(false);
+    }
+  }
+
+  async function applyAnswerGraph(result, options = {}) {
+    const graphAction = result && result.graph_action && typeof result.graph_action === 'object'
+      ? result.graph_action
+      : null;
+    if (!graphAction || graphAction.enabled !== true) return false;
+
+    const elements = extractAnswerGraphElements(result);
+    if (!elements.length) return false;
+
+    const preset = graphAction.preset_state && typeof graphAction.preset_state === 'object'
+      ? graphAction.preset_state
+      : {};
+    const query = String(graphAction.query || graphAction.anchor?.name || currentGraphQuery || '').trim() || 'LINE1';
+
+    if (options.pushHistory !== false) {
+      pushCurrentStateToHistory();
+    }
+    window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(preset.key_node_level) || 1));
+    window.fixedView = preset.fixed_view !== false;
+    updateButtons();
+    return renderAnswerGraphElements(elements, query, { ...options, pushHistory: false });
+  }
+
+  async function restoreGraphState(state) {
+    if (!state || typeof state !== 'object') return false;
+
+    if (state.kind === 'tree') {
+      return renderDefaultTree({ pushHistory: false });
+    }
+
+    if (state.kind === 'query') {
+      window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(state.keyNodeLevel) || 1));
+      window.fixedView = !!state.fixedView;
+      updateButtons();
+      return loadDynamicGraph({
+        query: state.query,
+        queryType: state.queryType,
+        classQuery: state.classQuery,
+      }, { pushHistory: false });
+    }
+
+    if (state.kind === 'answer') {
+      window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(state.keyNodeLevel) || 1));
+      window.fixedView = !!state.fixedView;
+      updateButtons();
+      return renderAnswerGraphElements(state.elements || [], state.query || 'LINE1', { pushHistory: false });
+    }
+
+    return false;
+  }
+
+  async function goBackGraph() {
+    if (!graphHistory.length) return false;
+    const previousState = graphHistory.pop();
+    updateButtons();
+    return restoreGraphState(previousState);
+  }
+
+  async function renderDefaultTree(options = {}) {
+    if (options.pushHistory === true && currentMode !== 'tree') {
+      pushCurrentStateToHistory();
+    }
     currentMode = 'tree';
+    currentGraphSource = 'tree';
     currentGraphQuery = '';
     currentGraphQueryType = '';
     currentGraphClassQuery = '';
     currentSelectedNode = null;
+    currentAnswerGraphElements = [];
     showTreeSurface();
+    updateButtons();
+    setGraphLoading(true, textSet().loadingOverlay('tree'));
 
-    if (window.__TEKG_G6_DEFAULT_TREE && typeof window.__TEKG_G6_DEFAULT_TREE.render === 'function') {
-      await window.__TEKG_G6_DEFAULT_TREE.render();
+    try {
+      if (window.__TEKG_G6_DEFAULT_TREE && typeof window.__TEKG_G6_DEFAULT_TREE.render === 'function') {
+        await window.__TEKG_G6_DEFAULT_TREE.render();
+      }
+    } finally {
+      setGraphLoading(false);
     }
 
     setDetail(textSet().treeDetail);
     notifyStateChange();
   }
 
-  async function loadDynamicGraph(requestLike) {
+  async function loadDynamicGraph(requestLike, options = {}) {
     const request = normalizeGraphRequest(requestLike);
     const q = String(request.query || '').trim();
     if (!q) {
-      await renderDefaultTree();
+      await renderDefaultTree(options);
       return null;
     }
 
+    if (options.pushHistory !== false) {
+      pushCurrentStateToHistory();
+    }
+
     currentMode = 'dynamic';
+    currentGraphSource = 'query';
     currentGraphQuery = q;
     currentGraphQueryType = request.queryType || '';
     currentGraphClassQuery = currentGraphQueryType === 'disease_class' ? String(request.classQuery || q).trim() : '';
     currentSelectedNode = null;
+    currentAnswerGraphElements = [];
     showDynamicSurface();
     if (els.searchInput) els.searchInput.value = q;
+    updateButtons();
     setDetail(textSet().loadingDetail(q));
     notifyStateChange();
+    setGraphLoading(true, textSet().loadingOverlay(q));
 
-    await waitForDynamicSurfaceSize();
-    ensureDynamicFrame(request);
-    return Promise.resolve();
+    try {
+      await waitForDynamicSurfaceSize();
+      const frame = ensureDynamicFrame(request);
+      if (!dynamicBridgePromise) {
+        dynamicBridgePromise = waitForEmbedBridge(frame);
+      }
+
+      const bridge = await dynamicBridgePromise;
+      if (!bridge || typeof bridge.loadGraph !== 'function') {
+        throw new Error('G6 embed bridge cannot load graph requests');
+      }
+
+      await bridge.loadGraph(request);
+      notifyStateChange();
+      return true;
+    } finally {
+      setGraphLoading(false);
+    }
   }
 
   function bindEvents() {
@@ -354,7 +659,15 @@
 
     if (els.resetBtn) {
       els.resetBtn.addEventListener('click', () => {
-        renderDefaultTree().catch((error) => {
+        renderDefaultTree({ pushHistory: true }).catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+    }
+
+    if (els.backBtn) {
+      els.backBtn.addEventListener('click', () => {
+        goBackGraph().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
       });
@@ -366,7 +679,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic') {
-          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
         }
@@ -380,7 +693,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
         }
@@ -394,7 +707,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
         }
@@ -408,7 +721,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
           return;
@@ -426,7 +739,7 @@
         updateButtons();
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest()).catch((error) => {
+          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
           return;
@@ -441,27 +754,48 @@
   window.__TEKG_G6_GRAPH_HOST = {
     setDetail(title, description) {
       if (currentMode !== 'dynamic') return;
+      setGraphLoading(false);
       setDetail(buildDetail(title, description));
     },
     setDetailHtml(html) {
       if (currentMode !== 'dynamic') return;
+      setGraphLoading(false);
       setDetail(html || '');
     },
     setStatus(_text) {},
     setMode(mode, payload) {
       if (mode === 'dynamic') {
         const request = normalizeGraphRequest(payload);
-        currentMode = 'dynamic';
-        currentGraphQuery = String(request.query || currentGraphQuery || '').trim();
-        currentGraphQueryType = request.queryType || '';
-        currentGraphClassQuery = currentGraphQueryType === 'disease_class'
-          ? String(request.classQuery || currentGraphQuery || '').trim()
+        const nextQuery = String(request.query || '').trim();
+        const nextQueryType = request.queryType || '';
+        const nextClassQuery = nextQueryType === 'disease_class'
+          ? String(request.classQuery || nextQuery || '').trim()
           : '';
+        const nextSource = payload && payload.source === 'qa' ? 'answer' : 'query';
+
+        const hasGraphState = currentMode === 'dynamic' && !!String(currentGraphQuery || '').trim();
+        const queryChanged =
+          String(currentGraphQuery || '').trim() !== nextQuery ||
+          String(currentGraphQueryType || '') !== nextQueryType ||
+          String(currentGraphClassQuery || '') !== nextClassQuery ||
+          String(currentGraphSource || '') !== nextSource;
+
+        if (hasGraphState && queryChanged) {
+          pushCurrentStateToHistory();
+          updateBackButton();
+        }
+
+        currentMode = 'dynamic';
+        currentGraphSource = nextSource;
+        currentGraphQuery = nextQuery || String(currentGraphQuery || '').trim();
+        currentGraphQueryType = nextQueryType;
+        currentGraphClassQuery = nextClassQuery;
         notifyStateChange();
       }
     },
     onReady() {},
     onNodeSelect(node) {
+      setGraphLoading(false);
       currentSelectedNode = node || null;
       notifyStateChange();
     },
@@ -473,6 +807,15 @@
     loadGraph(query) {
       return loadDynamicGraph(query);
     },
+    applyAnswerGraph(result) {
+      return applyAnswerGraph(result);
+    },
+    goBack() {
+      return goBackGraph();
+    },
+    canGoBack() {
+      return graphHistory.length > 0;
+    },
     showTree() {
       return renderDefaultTree();
     },
@@ -483,7 +826,7 @@
       window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(level) || 1));
       updateButtons();
       if (currentMode === 'dynamic' && currentGraphQuery) {
-        return loadDynamicGraph(buildCurrentGraphRequest());
+        return loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false });
       }
       return Promise.resolve();
     },
@@ -491,7 +834,7 @@
       window.fixedView = !!next;
       updateButtons();
       if (currentMode === 'dynamic') {
-        return loadDynamicGraph(buildCurrentGraphRequest()).then(() => window.fixedView);
+        return loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).then(() => window.fixedView);
       }
       return Promise.resolve(window.fixedView);
     },
@@ -529,7 +872,7 @@
           query: initialQuery,
           queryType: initialQueryType,
           classQuery: initialClassQuery || initialQuery,
-        }));
+        }, { pushHistory: false }));
       }
 
       renderDefaultTree().catch((error) => {
