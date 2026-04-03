@@ -104,6 +104,70 @@
         : `> ${ui[currentLang].providerPrefix}${effectiveProvider === 'deepseek' ? ui[currentLang].modelDeepSeek : ui[currentLang].modelQwen}\n> ${styleLabel} · Depth: ${depthLabel}\n\n`;
       return `${prefix}${result.answer||ui[currentLang].fallback}`;
     }
+    function escapeRegex(value){
+      return String(value||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    }
+    function buildHighlightLabels(result){
+      const graph = result && result.graph_context;
+      const anchor = graph && graph.anchor ? {
+        label: String(graph.anchor.name || '').trim(),
+        type: String(graph.anchor.type || 'TE').trim() || 'TE'
+      } : null;
+      const usedNodes = Array.isArray(graph && graph.used_nodes) ? graph.used_nodes : [];
+      const labels = new Map();
+      if(anchor && anchor.label && anchor.type !== 'Paper') labels.set(anchor.label.toLowerCase(), anchor);
+      usedNodes.forEach(node => {
+        const label = String((node && (node.label || node.name)) || '').trim();
+        const type = String((node && node.type) || 'TE').trim() || 'TE';
+        if(!label || label.length < 3 || type === 'Paper') return;
+        const key = label.toLowerCase();
+        if(!labels.has(key)) labels.set(key, { label, type });
+      });
+      return Array.from(labels.values()).sort((a,b)=>b.label.length-a.label.length);
+    }
+    function shouldSkipHighlight(node){
+      const parent = node && node.parentElement;
+      if(!parent) return false;
+      return !!parent.closest('code, pre, a, .node-ref');
+    }
+    function highlightNodeLabelsInBubble(bubble, labels){
+      if(!bubble || !Array.isArray(labels) || labels.length===0) return;
+      const typeByLabel = new Map(labels.map(item => [String(item.label || '').toLowerCase(), item.type || 'TE']));
+      const pattern = labels.map(item => escapeRegex(item.label)).join('|');
+      if(!pattern) return;
+      const regex = new RegExp(`(${pattern})`,'gi');
+      const walker = document.createTreeWalker(bubble, NodeFilter.SHOW_TEXT);
+      const textNodes = [];
+      let current = walker.nextNode();
+      while(current){
+        if(!shouldSkipHighlight(current) && regex.test(current.nodeValue || '')){
+          textNodes.push(current);
+        }
+        regex.lastIndex = 0;
+        current = walker.nextNode();
+      }
+      textNodes.forEach(textNode => {
+        const value = textNode.nodeValue || '';
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+        value.replace(regex, (match, _capture, offset) => {
+          if(offset > lastIndex){
+            fragment.appendChild(document.createTextNode(value.slice(lastIndex, offset)));
+          }
+          const span = document.createElement('span');
+          const type = String(typeByLabel.get(String(match || '').toLowerCase()) || 'TE').toLowerCase();
+          span.className = `node-ref node-ref-${type}`;
+          span.textContent = match;
+          fragment.appendChild(span);
+          lastIndex = offset + match.length;
+          return match;
+        });
+        if(lastIndex < value.length){
+          fragment.appendChild(document.createTextNode(value.slice(lastIndex)));
+        }
+        textNode.parentNode.replaceChild(fragment, textNode);
+      });
+    }
     function applyAnswerGraph(result, question=''){
       const graph = result && result.graph_context;
       if(!graph || !Array.isArray(graph.elements) || graph.elements.length===0) return false;
@@ -115,11 +179,28 @@
         : 'The graph on the left has been synchronized to the local subgraph used for this answer.';
       return true;
     }
+    function buildCurrentGraphElements(){
+      return cy.elements().map(ele => ({data: JSON.parse(JSON.stringify(ele.data() || {}))}));
+    }
     async function answerWithBackend(question){
       const effectiveQuestion = buildEffectiveQuestion(question);
       const customPrompt = currentCustomPrompt;
       const effectiveStyle = currentAnswerStyle==='custom' ? 'custom' : currentAnswerStyle;
-      const payload = {question:effectiveQuestion,language:currentLang,answer_style:effectiveStyle,answer_depth:currentAnswerDepth,custom_prompt:customPrompt};
+      const payload = {
+        question:effectiveQuestion,
+        question_raw:String(question||'').trim(),
+        language:currentLang,
+        answer_style:effectiveStyle,
+        answer_depth:currentAnswerDepth,
+        custom_prompt:customPrompt,
+        graph_state:{
+          mode: currentGraphKind==='default-tree' ? 'tree' : 'dynamic',
+          query: String(searchInput && searchInput.value || '').trim(),
+          fixedView: !!fixedView,
+          keyNodeLevel: Number(currentKeyNodeLevel || 1) || 1,
+          currentElements: buildCurrentGraphElements(),
+        }
+      };
       payload.model_provider = currentModelProvider;
       if(currentAnswerDepth==='custom'){
         payload.custom_rows = currentCustomDepth.rows;
@@ -176,7 +257,7 @@
       updateFixedViewUi();
       nodeDetails.textContent = fixedView ? ui[currentLang].fixedTip : ui[currentLang].empty;
     });
-    sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const backend=await answerWithBackend(q); loading.remove(); addMessage(backend.text,'assistant'); applyAnswerGraph(backend.result, q);}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
+    sendBtn.addEventListener('click',async()=>{const q=userInput.value.trim(); if(!q) return; addMessage(q,'user'); userInput.value=''; const loading=addMessage(currentLang==='zh'?'正在检索图数据库并生成回答…':'Retrieving graph evidence and generating the answer…','assistant'); try{const backend=await answerWithBackend(q); loading.remove(); const answerNode = addMessage(backend.text,'assistant'); highlightNodeLabelsInBubble(answerNode.querySelector('.bubble'), buildHighlightLabels(backend.result)); applyAnswerGraph(backend.result, q);}catch(err){loading.remove(); const prefix=currentLang==='zh'?'后端暂未连通，当前已回退到本地规则回答。<div class="ref">':'Backend unavailable. The UI has fallen back to local rule-based answering.<div class="ref">'; const suffix=`${err && err.message ? err.message : 'unknown error'}</div>`; setTimeout(()=>addMessage(prefix + suffix + answerLocal(q),'assistant'),120);}});
     userInput.addEventListener('keypress',e => { if(e.key==='Enter') sendBtn.click(); });
     document.addEventListener('click',e => {
       if(!e.target) return;

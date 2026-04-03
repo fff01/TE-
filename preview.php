@@ -184,7 +184,7 @@ if ($siteRenderer === 'g6') {
 
           const fabPosition = {
             x: Math.max(16, window.innerWidth - 104),
-            y: Math.max(96, window.innerHeight - 116),
+            y: Math.max(96, window.innerHeight - 176),
           };
 
           function updateFabPosition() {
@@ -240,6 +240,34 @@ if ($siteRenderer === 'g6') {
               },
               getSelectedNode() {
                 return getGraphState().selectedNode || null;
+              },
+              loadGraph(request) {
+                const bridge = getGraphBridge();
+                if (!bridge || typeof bridge.loadGraph !== 'function') {
+                  return Promise.resolve(false);
+                }
+                return bridge.loadGraph(request);
+              },
+              applyAnswerGraph(result) {
+                const bridge = getGraphBridge();
+                if (!bridge || typeof bridge.applyAnswerGraph !== 'function') {
+                  return Promise.resolve(false);
+                }
+                return bridge.applyAnswerGraph(result);
+              },
+              goBackGraph() {
+                const bridge = getGraphBridge();
+                if (!bridge || typeof bridge.goBackGraph !== 'function') {
+                  return Promise.resolve(false);
+                }
+                return bridge.goBackGraph();
+              },
+              renderDefaultTree() {
+                const bridge = getGraphBridge();
+                if (!bridge || typeof bridge.renderDefaultTree !== 'function') {
+                  return Promise.resolve(false);
+                }
+                return bridge.renderDefaultTree();
               },
             };
           }

@@ -58,13 +58,85 @@
     return escapeHtml(raw).replace(/\n/g, '<br>');
   }
 
-  function addMessage(content, sender) {
+  function escapeRegex(value) {
+    return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function buildHighlightLabels(result) {
+    const graphContext = result && typeof result === 'object' ? result.graph_context : null;
+    const anchor = graphContext && graphContext.anchor ? {
+      label: String(graphContext.anchor.name || '').trim(),
+      type: String(graphContext.anchor.type || 'TE').trim() || 'TE',
+    } : null;
+    const usedNodes = Array.isArray(graphContext && graphContext.used_nodes) ? graphContext.used_nodes : [];
+    const labels = new Map();
+    if (anchor && anchor.label && anchor.type !== 'Paper') labels.set(anchor.label.toLowerCase(), anchor);
+    usedNodes.forEach((node) => {
+      const label = String((node && (node.label || node.name)) || '').trim();
+      const type = String((node && node.type) || 'TE').trim() || 'TE';
+      if (!label || label.length < 3 || type === 'Paper') return;
+      const key = label.toLowerCase();
+      if (!labels.has(key)) labels.set(key, { label, type });
+    });
+    return Array.from(labels.values()).sort((a, b) => b.label.length - a.label.length);
+  }
+
+  function shouldSkipHighlight(node) {
+    const parent = node && node.parentElement;
+    if (!parent) return false;
+    return !!parent.closest('code, pre, a, .node-ref');
+  }
+
+  function highlightNodeLabelsInBubble(bubble, labels) {
+    if (!bubble || !Array.isArray(labels) || labels.length === 0) return;
+    const typeByLabel = new Map(labels.map((item) => [String(item.label || '').toLowerCase(), item.type || 'TE']));
+    const pattern = labels.map((item) => escapeRegex(item.label)).join('|');
+    if (!pattern) return;
+    const regex = new RegExp(`(${pattern})`, 'gi');
+    const walker = document.createTreeWalker(bubble, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let current = walker.nextNode();
+    while (current) {
+      if (!shouldSkipHighlight(current) && regex.test(current.nodeValue || '')) {
+        textNodes.push(current);
+      }
+      regex.lastIndex = 0;
+      current = walker.nextNode();
+    }
+
+    textNodes.forEach((textNode) => {
+      const value = textNode.nodeValue || '';
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      value.replace(regex, (match, _capture, offset) => {
+        if (offset > lastIndex) {
+          fragment.appendChild(document.createTextNode(value.slice(lastIndex, offset)));
+        }
+        const span = document.createElement('span');
+        const type = String(typeByLabel.get(String(match || '').toLowerCase()) || 'TE').toLowerCase();
+        span.className = `node-ref node-ref-${type}`;
+        span.textContent = match;
+        fragment.appendChild(span);
+        lastIndex = offset + match.length;
+        return match;
+      });
+      if (lastIndex < value.length) {
+        fragment.appendChild(document.createTextNode(value.slice(lastIndex)));
+      }
+      textNode.parentNode.replaceChild(fragment, textNode);
+    });
+  }
+
+  function addMessage(content, sender, options = {}) {
     const item = document.createElement('div');
     item.className = `msg ${sender}`;
     item.innerHTML =
       `<div class="avatar"><i class="fas ${sender === 'user' ? 'fa-user' : 'fa-robot'}"></i></div>` +
       `<div class="bubble">${renderBubbleContent(content, sender)}</div>`;
     chatMessages.appendChild(item);
+    if (sender === 'assistant' && Array.isArray(options.highlightLabels) && options.highlightLabels.length) {
+      highlightNodeLabelsInBubble(item.querySelector('.bubble'), options.highlightLabels);
+    }
     chatMessages.scrollTop = chatMessages.scrollHeight;
     return item;
   }
@@ -275,6 +347,29 @@
     ].join('\n');
   }
 
+  function buildGraphStatePayload() {
+    const state = getGraphState();
+    const selectedNode = state && typeof state.selectedNode === 'object' && state.selectedNode
+      ? state.selectedNode
+      : {};
+    const currentElements = Array.isArray(state && state.currentElements) ? state.currentElements : [];
+
+    return {
+      mode: String(state.mode || '').trim(),
+      query: String(state.query || '').trim(),
+      queryType: String(state.queryType || '').trim(),
+      classQuery: String(state.classQuery || '').trim(),
+      fixedView: !!state.fixedView,
+      keyNodeLevel: Number(state.keyNodeLevel || 1) || 1,
+      selectedNode: {
+        id: String(selectedNode.id || '').trim(),
+        label: String(selectedNode.displayLabel || selectedNode.rawLabel || selectedNode.label || '').trim(),
+        type: String(selectedNode.type || '').trim(),
+      },
+      currentElements,
+    };
+  }
+
   function formatBackendAnswer(result) {
     const provider = (result.model_provider || currentModelProvider || 'qwen').toLowerCase() === 'deepseek' ? 'deepseek' : 'qwen';
     const styleLabel = currentAnswerStyle === 'custom'
@@ -309,11 +404,13 @@
   async function answerWithBackend(question) {
     const payload = {
       question: buildEffectiveQuestion(question),
+      question_raw: String(question || '').trim(),
       language: currentLang,
       answer_style: currentAnswerStyle === 'custom' ? 'custom' : currentAnswerStyle,
       answer_depth: currentAnswerDepth,
       custom_prompt: currentCustomPrompt || '',
       model_provider: currentModelProvider,
+      graph_state: buildGraphStatePayload(),
     };
 
     if (currentAnswerDepth === 'custom') {
@@ -355,7 +452,7 @@
     try {
       const backend = await answerWithBackend(question);
       loadingNode.remove();
-      addMessage(backend.text, 'assistant');
+      addMessage(backend.text, 'assistant', { highlightLabels: buildHighlightLabels(backend.result) });
       await applyAnswerGraph(backend.result, question);
     } catch (error) {
       loadingNode.remove();

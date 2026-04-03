@@ -40,6 +40,8 @@
       fixedOn: 'Fixed view: On',
       fixedOff: 'Fixed view: Off',
       back: 'Back',
+      backTo: (label) => `Back to ${label}`,
+      backToTree: 'Back to tree',
       reset: 'Reset',
       keyNodeLevel: (level) => `Key-node level: ${level}`,
       treeDetail:
@@ -56,6 +58,8 @@
       fixedOn: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5f00',
       fixedOff: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5173',
       back: '\u8fd4\u56de',
+      backTo: (label) => `\u8fd4\u56de\u5230 ${label}`,
+      backToTree: '\u8fd4\u56de\u5230\u5206\u7c7b\u6811',
       reset: '\u91cd\u7f6e',
       keyNodeLevel: (level) => `\u5173\u952e\u8282\u70b9\u5c42\u6570\uff1a${level}`,
       treeDetail:
@@ -73,6 +77,7 @@
   let currentGraphClassQuery = '';
   let currentSelectedNode = null;
   let currentAnswerGraphElements = [];
+  let currentQueryGraphElements = [];
   let graphHistory = [];
   let dynamicFrame = null;
   let dynamicBridgePromise = null;
@@ -126,6 +131,10 @@
   }
 
   function snapshotState() {
+    const currentElements = currentGraphSource === 'answer'
+      ? cloneAnswerElements(currentAnswerGraphElements)
+      : cloneAnswerElements(currentQueryGraphElements);
+
     return {
       mode: currentMode,
       source: currentGraphSource,
@@ -135,6 +144,7 @@
       fixedView: !!window.fixedView,
       keyNodeLevel: window.currentKeyNodeLevel,
       selectedNode: currentSelectedNode,
+      currentElements,
       lang: window.currentLang,
       historyDepth: graphHistory.length,
     };
@@ -221,9 +231,27 @@
     graphHistory.push(snapshot);
   }
 
+  function describeHistoryState(state) {
+    if (!state || typeof state !== 'object') return textSet().back || 'Back';
+    if (state.kind === 'tree') {
+      return textSet().backToTree || textSet().back || 'Back';
+    }
+    const label = String(state.classQuery || state.query || '').trim();
+    if (!label) {
+      return textSet().back || 'Back';
+    }
+    return typeof textSet().backTo === 'function'
+      ? textSet().backTo(label)
+      : `Back to ${label}`;
+  }
+
   function updateBackButton() {
     if (!els.backBtn) return;
     els.backBtn.disabled = graphHistory.length === 0;
+    if (els.backText) {
+      const previousState = graphHistory.length ? graphHistory[graphHistory.length - 1] : null;
+      els.backText.textContent = previousState ? describeHistoryState(previousState) : (textSet().back || 'Back');
+    }
   }
 
   function normalizeQueryType(value) {
@@ -478,11 +506,11 @@
     currentGraphClassQuery = '';
     currentSelectedNode = null;
     currentAnswerGraphElements = cloneAnswerElements(elements);
+    currentQueryGraphElements = [];
 
     showDynamicSurface();
-    if (els.searchInput) els.searchInput.value = currentGraphQuery;
     updateButtons();
-    setDetail(buildQaDetail());
+    setDetail('');
     notifyStateChange();
     setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery));
 
@@ -505,10 +533,10 @@
           includePaperNodes: true,
           synthesizeDiseaseClasses: false,
           restrictToAnchorComponent: false,
+          forceAnchorLabel: true,
         },
       });
 
-      setDetail(buildQaDetail());
       notifyStateChange();
       return true;
     } finally {
@@ -585,6 +613,7 @@
     currentGraphClassQuery = '';
     currentSelectedNode = null;
     currentAnswerGraphElements = [];
+    currentQueryGraphElements = [];
     showTreeSurface();
     updateButtons();
     setGraphLoading(true, textSet().loadingOverlay('tree'));
@@ -620,6 +649,7 @@
     currentGraphClassQuery = currentGraphQueryType === 'disease_class' ? String(request.classQuery || q).trim() : '';
     currentSelectedNode = null;
     currentAnswerGraphElements = [];
+    currentQueryGraphElements = [];
     showDynamicSurface();
     if (els.searchInput) els.searchInput.value = q;
     updateButtons();
@@ -639,7 +669,8 @@
         throw new Error('G6 embed bridge cannot load graph requests');
       }
 
-      await bridge.loadGraph(request);
+      const payload = await bridge.loadGraph(request);
+      currentQueryGraphElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
       notifyStateChange();
       return true;
     } finally {

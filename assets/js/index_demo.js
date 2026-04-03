@@ -703,11 +703,28 @@
         : 'The graph on the left has been synchronized to the local subgraph used for this answer.';
       return true;
     }
+    function buildCurrentGraphElements(){
+      return cy.elements().map(ele => ({data: JSON.parse(JSON.stringify(ele.data() || {}))}));
+    }
     async function answerWithBackend(question){
       const effectiveQuestion = buildEffectiveQuestion(question);
       const customPrompt = currentCustomPrompt;
       const effectiveStyle = currentAnswerStyle==='custom' ? 'custom' : currentAnswerStyle;
-      const payload = {question:effectiveQuestion,language:currentLang,answer_style:effectiveStyle,answer_depth:currentAnswerDepth,custom_prompt:customPrompt};
+      const payload = {
+        question:effectiveQuestion,
+        question_raw:String(question||'').trim(),
+        language:currentLang,
+        answer_style:effectiveStyle,
+        answer_depth:currentAnswerDepth,
+        custom_prompt:customPrompt,
+        graph_state:{
+          mode: currentGraphKind==='default-tree' ? 'tree' : 'dynamic',
+          query: String(searchInput && searchInput.value || '').trim(),
+          fixedView: !!fixedView,
+          keyNodeLevel: Number(currentKeyNodeLevel || 1) || 1,
+          currentElements: buildCurrentGraphElements(),
+        }
+      };
       payload.model_provider = currentModelProvider;
       if(currentAnswerDepth==='custom'){
         payload.custom_rows = currentCustomDepth.rows;

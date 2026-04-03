@@ -6,6 +6,11 @@
   if (!container) return;
 
   const params = new URLSearchParams(window.location.search);
+  const initialRequest = {
+    query: String(params.get('q') || '').trim(),
+    queryType: String(params.get('type') || '').trim(),
+    classQuery: String(params.get('class') || '').trim(),
+  };
 
   function getHost() {
     try {
@@ -108,8 +113,11 @@
   window.__TEKG_G6_EMBED = bridge;
 
   runner.init().finally(() => {
-    if (runner.getCurrentQuery()) {
-      runner.loadGraph(runner.getCurrentRequest ? runner.getCurrentRequest() : runner.getCurrentQuery()).catch(() => {});
+    if (initialRequest.query) {
+      const request = initialRequest.queryType
+        ? initialRequest
+        : initialRequest.query;
+      runner.loadGraph(request).catch(() => {});
     }
   });
 }());

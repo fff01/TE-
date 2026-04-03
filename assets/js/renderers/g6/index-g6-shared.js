@@ -349,6 +349,7 @@
     }
 
     function teShouldShowLabel(node) {
+      if (node?.alwaysShowLabel) return true;
       const canonicalName = canonicalTeLineageName(node?.rawLabel || node?.displayLabel);
       const depth = teLineageDepths.get(canonicalName);
       return (Number.isFinite(depth) && depth <= 2) || (Math.max(0, Number(node?.databaseDegree) || 0) > 10);
@@ -538,6 +539,7 @@
       const includePaperNodes = options.includePaperNodes === true;
       const synthesizeDiseaseClasses = options.synthesizeDiseaseClasses !== false;
       const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
+      const forceAnchorLabel = options.forceAnchorLabel === true;
       const nodes = [];
       const edges = [];
       const allowedNodeIds = new Set();
@@ -567,7 +569,9 @@
           classQuery: (data.type || 'TE') === 'DiseaseClass' ? String(data.rawLabel || data.label || data.id) : '',
           fillColor: TYPE_COLORS[data.type || 'TE'] || '#94a3b8',
           strokeColor: TYPE_STROKES[data.type || 'TE'] || '#111111',
-          alwaysShowLabel: includePaperNodes && (data.type || 'TE') === 'Paper',
+          alwaysShowLabel:
+            (includePaperNodes && (data.type || 'TE') === 'Paper') ||
+            (forceAnchorLabel && String(data.id || '') === anchorNodeId),
         };
 
         nodes.push(node);
@@ -733,15 +737,17 @@
       currentQuery = query;
       currentQueryType = request.queryType || '';
       currentClassQuery = currentQueryType === 'disease_class' ? String(request.classQuery || query).trim() : '';
-      hooks.setQueryUi(query);
-      hooks.syncRouteState({
-        query,
-        queryType: currentQueryType,
-        classQuery: currentClassQuery,
-        keyNodeLevel: currentKeyNodeLevel,
-        fixedView,
-        lang: currentLang,
-      });
+      if (sourceLabel !== 'qa') {
+        hooks.setQueryUi(query);
+        hooks.syncRouteState({
+          query,
+          queryType: currentQueryType,
+          classQuery: currentClassQuery,
+          keyNodeLevel: currentKeyNodeLevel,
+          fixedView,
+          lang: currentLang,
+        });
+      }
       hooks.setMode('dynamic', {
         query,
         queryType: currentQueryType,
