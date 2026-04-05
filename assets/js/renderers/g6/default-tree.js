@@ -67,6 +67,7 @@
   let registered = false;
   let rootId = null;
   let selectedNodeId = null;
+  let activeTreeConfig = null;
 
   function getEl(id) {
     return document.getElementById(id);
@@ -74,6 +75,15 @@
 
   function getCurrentLang() {
     return typeof currentLang === 'string' ? currentLang : 'en';
+  }
+
+  function escapeHtml(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function getRootLabel() {
@@ -94,6 +104,61 @@
   function getDescription(label, description) {
     if (typeof getDesc === 'function') return getDesc(label || '', 'TE', description || '', '');
     return String(description || '');
+  }
+
+  function buildDefaultTreeConfig() {
+    const defaultDetailHtml = getCurrentLang() === 'zh'
+      ? '<strong>尚未选中节点</strong>当前为 G6 树图视图。'
+      : 'G6 indented default-tree view is active.';
+
+    return {
+      defaultDetailHtml,
+      buildLabel(data, nodeId) {
+        return getDisplayLabel(data.rawLabel || nodeId, data.description || '', data.treeDepth || 0);
+      },
+      buildDetailHtml(nodeData) {
+        const data = nodeData?.data || {};
+        const label = getDisplayLabel(data.rawLabel || nodeData.id, data.description || '', data.treeDepth || 0);
+        const desc = getDescription(data.rawLabel || nodeData.id, data.description || '');
+        return `<strong>${escapeHtml(label)}</strong> (Transposable Element)<br>${escapeHtml(desc)}`;
+      },
+      async onNodeClick(nodeData, context) {
+        const { fixedModeEnabled, homePreviewMode } = context || {};
+        if (fixedModeEnabled || homePreviewMode || typeof window.__TEKG_LOAD_DYNAMIC_GRAPH !== 'function') {
+          return false;
+        }
+        const data = nodeData?.data || {};
+        const query = data.queryLabel || data.rawLabel || nodeData?.id;
+        if (!query) return false;
+        await window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
+        return true;
+      },
+    };
+  }
+
+  function getActiveTreeConfig() {
+    if (!activeTreeConfig) activeTreeConfig = buildDefaultTreeConfig();
+    return activeTreeConfig;
+  }
+
+  function resolveTreeLabel(datum) {
+    const config = getActiveTreeConfig();
+    const data = datum?.data || {};
+    if (typeof config.buildLabel === 'function') {
+      const label = config.buildLabel(data, datum?.id || '');
+      if (label !== undefined && label !== null && label !== '') return String(label);
+    }
+    return String(data.displayLabel || data.rawLabel || datum?.id || '');
+  }
+
+  function resolveTreeLabelFill(datum) {
+    const config = getActiveTreeConfig();
+    const data = datum?.data || {};
+    if (typeof config.buildLabelFill === 'function') {
+      const fill = config.buildLabelFill(data, datum?.id || '');
+      if (fill) return fill;
+    }
+    return datum?.id === rootId ? ROOT_TEXT : TEXT_COLOR;
   }
 
   function setRendererVisibility() {
@@ -437,14 +502,16 @@
   function updateDetail(nodeData) {
     const detailEl = getEl('node-details');
     if (!detailEl) return;
+    const config = getActiveTreeConfig();
     if (!nodeData) {
-      detailEl.textContent = 'G6 indented default-tree view is active.';
+      detailEl.innerHTML = config.defaultDetailHtml || 'G6 indented default-tree view is active.';
       return;
     }
-    const data = nodeData.data || {};
-    const label = getDisplayLabel(data.rawLabel || nodeData.id, data.description || '', data.treeDepth || 0);
-    const desc = getDescription(data.rawLabel || nodeData.id, data.description || '');
-    detailEl.innerHTML = `<strong>${label}</strong> (Transposable Element)<br>${desc}`;
+    if (typeof config.buildDetailHtml === 'function') {
+      detailEl.innerHTML = config.buildDetailHtml(nodeData) || '';
+      return;
+    }
+    detailEl.innerHTML = '';
   }
 
   function clearSelectedNode() {
@@ -522,7 +589,7 @@
     g6Graph = null;
   }
 
-  async function renderDefaultTree() {
+  async function renderTreeData(treeData, options = {}) {
     const detailEl = getEl('node-details');
     try {
       ensureRegistered();
@@ -542,19 +609,15 @@
         if (detailEl) detailEl.textContent = 'G6 container has no size yet.';
         return;
       }
-
-      const source = buildStrictTreeSource();
-      if (!source.rootId) {
-        if (detailEl) detailEl.textContent = 'Default tree data is unavailable.';
-        return;
-      }
-      rootId = source.rootId;
-
-      const treeData = buildTreeNode(source.rootId, source);
       if (!treeData) {
         if (detailEl) detailEl.textContent = 'Failed to build G6 tree data.';
         return;
       }
+      rootId = String(options.rootId || treeData.id || '');
+      activeTreeConfig = {
+        ...buildDefaultTreeConfig(),
+        ...(options.config && typeof options.config === 'object' ? options.config : {}),
+      };
 
       destroyGraph();
       host.innerHTML = '';
@@ -572,12 +635,12 @@
         node: {
           type: 'tekg-indented',
           style: {
-            size: (datum) => [normalizeTextWidth(getDisplayLabel(datum.data?.rawLabel || datum.id, datum.data?.description || '', datum.data?.treeDepth || 0)), NODE_HEIGHT],
+            size: (datum) => [normalizeTextWidth(resolveTreeLabel(datum)), NODE_HEIGHT],
             labelBackground: true,
             labelBackgroundRadius: 0,
             labelBackgroundFill: (datum) => (datum.id === rootId ? ROOT_BG : '#ffffff'),
-            labelFill: (datum) => (datum.id === rootId ? ROOT_TEXT : TEXT_COLOR),
-            labelText: (datum) => getDisplayLabel(datum.data?.rawLabel || datum.id, datum.data?.description || '', datum.data?.treeDepth || 0),
+            labelFill: (datum) => resolveTreeLabelFill(datum),
+            labelText: (datum) => resolveTreeLabel(datum),
             labelTextAlign: (datum) => (datum.id === rootId ? 'center' : 'left'),
             labelTextBaseline: 'top',
             color: (datum) => {
@@ -642,22 +705,31 @@
       graph.on('node:click', async (event) => {
         const targetId = resolveEventNodeId(event);
         if (!targetId || typeof graph.getNodeData !== 'function') return;
+        const nodeData = graph.getNodeData(targetId);
         const fixedModeEnabled = typeof fixedView !== 'undefined' && fixedView === true;
         const homePreviewMode = window.__TEKG_EMBED_MODE === 'home-preview';
-        if (!fixedModeEnabled && !homePreviewMode && typeof window.__TEKG_LOAD_DYNAMIC_GRAPH === 'function') {
-          const targetData = graph.getNodeData(targetId)?.data || {};
-          const query = targetData.queryLabel || targetData.rawLabel || targetId;
-          try {
-            await window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
-            return;
-          } catch (error) {
-            const detailEl = getEl('node-details');
-            if (detailEl) {
-              detailEl.textContent = `G6 tree click failed to load dynamic graph: ${error && error.message ? error.message : 'unknown error'}`;
-            }
-            console.error('G6 tree click failed to load dynamic graph:', error);
-            return;
+        try {
+          if (typeof activeTreeConfig?.onNodeClick === 'function') {
+            const handled = await activeTreeConfig.onNodeClick(nodeData, {
+              nodeId: targetId,
+              fixedModeEnabled,
+              homePreviewMode,
+              loadDynamicGraph(query) {
+                if (typeof window.__TEKG_LOAD_DYNAMIC_GRAPH !== 'function') {
+                  return Promise.reject(new Error('Dynamic graph loader is unavailable.'));
+                }
+                return window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
+              },
+            });
+            if (handled) return;
           }
+        } catch (error) {
+          const detailEl = getEl('node-details');
+          if (detailEl) {
+            detailEl.textContent = `G6 tree click failed to load dynamic graph: ${error && error.message ? error.message : 'unknown error'}`;
+          }
+          console.error('G6 tree click failed to load dynamic graph:', error);
+          return;
         }
         await activateNode(targetId, { shouldFocus: true });
       });
@@ -667,6 +739,29 @@
       }
       console.error('G6 default tree failed:', error);
     }
+  }
+
+  async function renderDefaultTree() {
+    const detailEl = getEl('node-details');
+    const source = buildStrictTreeSource();
+    if (!source.rootId) {
+      if (detailEl) detailEl.textContent = 'Default tree data is unavailable.';
+      return;
+    }
+
+    const treeData = buildTreeNode(source.rootId, source);
+    await renderTreeData(treeData, {
+      rootId: source.rootId,
+      config: buildDefaultTreeConfig(),
+    });
+  }
+
+  async function renderStructuredTree(options = {}) {
+    const treeData = options && typeof options === 'object' ? options.treeData : null;
+    await renderTreeData(treeData, {
+      rootId: options.rootId,
+      config: options.config,
+    });
   }
 
   function bindTriggers() {
@@ -707,6 +802,7 @@
   bindTriggers();
   window.__TEKG_G6_DEFAULT_TREE = {
     render: renderDefaultTree,
+    renderStructuredTree,
     destroy: destroyGraph,
   };
 }());

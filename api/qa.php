@@ -304,13 +304,18 @@ final class QaService
     private function buildGraphAction(array $graphContext, ?string $intent, ?string $entity, string $question, array $graphState = []): array
     {
         $anchor = is_array($graphContext['anchor'] ?? null) ? $graphContext['anchor'] : [];
-        $elements = is_array($graphContext['elements'] ?? null) ? $graphContext['elements'] : [];
-        [$nodes, $edges, $evidence] = $this->splitGraphElements($elements);
+        $nodes = is_array($graphContext['used_nodes'] ?? null) ? $graphContext['used_nodes'] : [];
+        $edges = is_array($graphContext['used_edges'] ?? null) ? $graphContext['used_edges'] : [];
+        $evidence = is_array($graphContext['evidence_edges'] ?? null) ? $graphContext['evidence_edges'] : [];
 
         $query = trim((string)($anchor['name'] ?? ''));
         if ($query === '') {
             $query = $entity ?? $this->extractAnchorFromGraphState($graphState) ?? $this->guessAnchorFromQuestion($question);
         }
+
+        $graphMode = trim((string)($graphState['mode'] ?? ''));
+        $currentKeyNodeLevel = max(1, (int)($graphState['key_node_level'] ?? 1));
+        $currentFixedView = (bool)($graphState['fixed_view'] ?? false);
 
         return [
             'schema' => 'tekg.graph_action.v2',
@@ -327,8 +332,8 @@ final class QaService
             ],
             'preset_state' => [
                 'mode' => 'dynamic',
-                'key_node_level' => 1,
-                'fixed_view' => true,
+                'key_node_level' => $graphMode === 'dynamic' ? $currentKeyNodeLevel : 1,
+                'fixed_view' => $graphMode === 'dynamic' ? $currentFixedView : true,
             ],
             'anchor' => [
                 'id' => (string)($anchor['id'] ?? ''),

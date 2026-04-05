@@ -11,6 +11,7 @@
     TE: '#4e79ff',
     Disease: '#ff7a7a',
     DiseaseClass: '#8f1731',
+    DiseaseCategory: '#d94a58',
     Function: '#41b883',
     Paper: '#f2a93b',
   };
@@ -19,6 +20,7 @@
     TE: '#1f3f99',
     Disease: '#c84f62',
     DiseaseClass: '#5f1020',
+    DiseaseCategory: '#a41f35',
     Function: '#2f8b63',
     Paper: '#b77a16',
   };
@@ -146,13 +148,22 @@
   }
 
   function buildTeam(node) {
-    if (node.type === 'Disease') {
+    if (node.type === 'Disease' || node.type === 'DiseaseCategory' || node.type === 'DiseaseClass') {
       const diseaseClass = String(node.disease_class || '').trim() || 'Disease';
       return `Disease::${diseaseClass}`;
     }
     if (node.type === 'TE') return 'TE';
     if (node.type === 'Function') return 'Function';
     return `${node.type || 'Node'}::${node.id}`;
+  }
+
+  function diseaseCategoryFillColor(level, minLevel, maxLevel) {
+    const safeMin = Number.isFinite(minLevel) ? minLevel : 1;
+    const safeMax = Number.isFinite(maxLevel) ? maxLevel : safeMin;
+    const safeLevel = Number.isFinite(level) ? level : safeMax;
+    const span = Math.max(1, safeMax - safeMin);
+    const normalized = Math.max(0, Math.min(1, (safeLevel - safeMin) / span));
+    return interpolateHexColor('#cf2238', '#f6d4d9', normalized);
   }
 
   function fitLabelToCircle(text, diameter) {
@@ -199,6 +210,7 @@
     let currentQueryType = normalizeQueryType(options.initialQueryType);
     let currentClassQuery = String(options.initialClassQuery || '').trim();
     let currentLang = options.initialLang === 'zh' ? 'zh' : 'en';
+    let currentShowAllLabels = options.initialShowAllLabels === true;
 
     if (currentQueryType === 'disease_class') {
       if (!currentClassQuery) currentClassQuery = currentQuery;
@@ -223,6 +235,7 @@
       setDetailHtml: typeof options.setDetailHtml === 'function' ? options.setDetailHtml : noop,
       setMode: typeof options.setMode === 'function' ? options.setMode : noop,
       onSelection: typeof options.onSelection === 'function' ? options.onSelection : noop,
+      onDiseaseClassClick: typeof options.onDiseaseClassClick === 'function' ? options.onDiseaseClassClick : noop,
       onReady: typeof options.onReady === 'function' ? options.onReady : noop,
       setQueryUi: typeof options.setQueryUi === 'function' ? options.setQueryUi : noop,
       syncRouteState: typeof options.syncRouteState === 'function' ? options.syncRouteState : noop,
@@ -366,6 +379,7 @@
     function secondaryShouldShowLabel(node) {
       const nodeType = String(node?.nodeType || '');
       if (nodeType === 'DiseaseClass') return true;
+      if (nodeType === 'DiseaseCategory') return true;
       if (nodeType === 'Function') {
         return Math.max(0, Number(node?.size) || 0) >= 34;
       }
@@ -385,6 +399,21 @@
       if (!text) return 10;
       const estimated = (diameter - 8) / Math.max(3, text.length * 0.7);
       return Math.max(7, Math.min(12, estimated));
+    }
+
+    function showAllLabelText(node) {
+      const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
+      if (!raw) return '';
+      return fitLabelToCircle(raw, Math.max(16, Number(node?.size) || 16));
+    }
+
+    function showAllLabelFontSize(node) {
+      const text = showAllLabelText(node);
+      const diameter = Math.max(16, Number(node?.size) || 16);
+      if (!text) return 10;
+      const estimated = (diameter - 8) / Math.max(3, text.length * 0.68);
+      const upper = node?.nodeType === 'TE' ? 14 : 12;
+      return Math.max(7, Math.min(upper, estimated));
     }
 
     async function loadEnglishResources() {
@@ -479,6 +508,7 @@
         return description || '';
       }
       if (nodeType === 'DiseaseClass') return description || 'Disease class node in the current graph.';
+      if (nodeType === 'DiseaseCategory') return description || 'Disease classification category in the current graph.';
       if (nodeType === 'TE') {
         const key = translateName(label) || label;
         const mapped = String(teDescriptions?.en?.[key] || '').trim();
@@ -537,9 +567,10 @@
 
     function buildGraphData(elements, options = {}) {
       const includePaperNodes = options.includePaperNodes === true;
-      const synthesizeDiseaseClasses = options.synthesizeDiseaseClasses !== false;
+      const allowSyntheticDiseaseClasses = options.synthesizeDiseaseClasses !== false;
       const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
       const forceAnchorLabel = options.forceAnchorLabel === true;
+      const showAllLabels = options.showAllLabels === true;
       const nodes = [];
       const edges = [];
       const allowedNodeIds = new Set();
@@ -563,12 +594,14 @@
           databaseDegree: Math.max(0, Number(data.degree) || 0),
           description: translateDescription(data.type || 'TE', data.label || data.rawLabel || data.id, data.description || ''),
           diseaseClass: String(data.disease_class || ''),
+          categoryLevel: Math.max(0, Number(data.category_level) || 0),
           team: buildTeam(data),
-          queryLabel: String(data.rawLabel || data.label || data.id),
+          queryLabel: (data.type || 'TE') === 'DiseaseCategory' ? '' : String(data.rawLabel || data.label || data.id),
           queryType: (data.type || 'TE') === 'DiseaseClass' ? 'disease_class' : '',
           classQuery: (data.type || 'TE') === 'DiseaseClass' ? String(data.rawLabel || data.label || data.id) : '',
           fillColor: TYPE_COLORS[data.type || 'TE'] || '#94a3b8',
           strokeColor: TYPE_STROKES[data.type || 'TE'] || '#111111',
+          showAllLabels,
           alwaysShowLabel:
             (includePaperNodes && (data.type || 'TE') === 'Paper') ||
             (forceAnchorLabel && String(data.id || '') === anchorNodeId),
@@ -585,6 +618,20 @@
         node.size = fixedRadius * 2;
         node.fillColor = teFillColorForName(canonicalName);
         node.strokeColor = darkenHexColor(node.fillColor, 0.28);
+      }
+
+      const diseaseCategoryNodes = nodes.filter((node) => node.nodeType === 'DiseaseCategory');
+      if (diseaseCategoryNodes.length) {
+        const levels = diseaseCategoryNodes
+          .map((node) => Math.max(1, Number(node.categoryLevel) || 1))
+          .filter((level) => Number.isFinite(level));
+        const minLevel = levels.length ? Math.min(...levels) : 1;
+        const maxLevel = levels.length ? Math.max(...levels) : minLevel;
+        for (const node of diseaseCategoryNodes) {
+          const fillColor = diseaseCategoryFillColor(Math.max(1, Number(node.categoryLevel) || 1), minLevel, maxLevel);
+          node.fillColor = fillColor;
+          node.strokeColor = darkenHexColor(fillColor, 0.24);
+        }
       }
 
       const baseEdges = [];
@@ -637,6 +684,10 @@
         ? nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id))
         : [...nonIsolatedNodes];
       const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+      const hasNativeDiseaseHierarchy = visibleNodes.some(
+        (node) => node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory'
+      );
+      const synthesizeDiseaseClasses = allowSyntheticDiseaseClasses && !hasNativeDiseaseHierarchy;
       const diseaseMembers = new Map();
       if (synthesizeDiseaseClasses) {
         for (const node of visibleNodes) {
@@ -662,9 +713,18 @@
             queryLabel: diseaseClass,
             queryType: 'disease_class',
             classQuery: diseaseClass,
+            showAllLabels,
           };
           visibleNodes.push(classNode);
           visibleNodeIds.add(classNodeId);
+        }
+      }
+
+      if (showAllLabels) {
+        for (const node of visibleNodes) {
+          const baseSize = Math.max(18, Number(node.size) || 18);
+          node.size = Math.round(baseSize * 1.22 + 4);
+          node.showAllLabels = true;
         }
       }
 
@@ -745,6 +805,7 @@
           classQuery: currentClassQuery,
           keyNodeLevel: currentKeyNodeLevel,
           fixedView,
+          showLabels: currentShowAllLabels,
           lang: currentLang,
         });
       }
@@ -773,7 +834,12 @@
         }
 
         const payloadElements = Array.isArray(elements) ? elements : [];
-        const data = buildGraphData(payloadElements, options.graphDataOptions || {});
+        const graphDataOptions = { ...(options.graphDataOptions || {}) };
+        if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'showAllLabels')) {
+          currentShowAllLabels = graphDataOptions.showAllLabels === true;
+        }
+        graphDataOptions.showAllLabels = currentShowAllLabels;
+        const data = buildGraphData(payloadElements, graphDataOptions);
 
         if (graph && typeof graph.destroy === 'function') {
           graph.destroy();
@@ -790,6 +856,7 @@
               stroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#111111',
               lineWidth: 2,
               labelText: (d) => {
+                if (d.showAllLabels) return showAllLabelText(d);
                 if (d.nodeType === 'TE' && teShouldShowLabel(d)) return d.displayLabel || d.rawLabel || '';
                 if (secondaryShouldShowLabel(d)) return secondaryLabelText(d);
                 return '';
@@ -797,6 +864,7 @@
               labelPlacement: 'center',
               labelFill: '#111111',
               labelFontSize: (d) => {
+                if (d.showAllLabels) return showAllLabelFontSize(d);
                 if (d.nodeType === 'TE' && teShouldShowLabel(d)) return teLabelFontSize(d);
                 if (secondaryShouldShowLabel(d)) return secondaryLabelFontSize(d);
                 return 10;
@@ -873,7 +941,7 @@
         graph.off?.('node:click');
         graph.off?.('edge:click');
         graph.off?.('canvas:click');
-        graph.on('node:click', (event) => {
+        graph.on('node:click', async (event) => {
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
@@ -882,6 +950,14 @@
           if (!fixedView && node.nodeType === 'DiseaseClass') {
             const classQuery = String(node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel || '').trim();
             if (classQuery) {
+              const handled = await Promise.resolve(
+                hooks.onDiseaseClassClick(node, {
+                  query: classQuery,
+                  queryType: 'disease_class',
+                  classQuery,
+                })
+              );
+              if (handled) return;
               loadGraph({
                 query: classQuery,
                 queryType: 'disease_class',
@@ -921,7 +997,7 @@
       }
     }
 
-    async function loadGraph(requestLike) {
+    async function loadGraph(requestLike, options = {}) {
       const request = normalizeGraphRequest(requestLike);
       const query = String(request.query || '').trim() || 'LINE1';
       hooks.setStatus(`Loading graph for ${query} (key-node level ${currentKeyNodeLevel}) ...`);
@@ -943,9 +1019,14 @@
         }
 
         const payload = await response.json();
+        const graphDataOptions = { ...(options.graphDataOptions || {}) };
+        if (request.queryType === 'disease_class') {
+          graphDataOptions.synthesizeDiseaseClasses = false;
+        }
         await renderElements(payload.elements || [], request, {
           sourceLabel: 'query',
           skipInitialStatus: true,
+          graphDataOptions,
         });
         return payload;
       } catch (error) {
@@ -976,6 +1057,7 @@
         classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
+        showLabels: currentShowAllLabels,
         lang: currentLang,
       });
       return Promise.resolve(fixedView);
@@ -989,6 +1071,7 @@
         classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
+        showLabels: currentShowAllLabels,
         lang: currentLang,
       });
       if (!currentQuery) return Promise.resolve();
@@ -1003,6 +1086,7 @@
         classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
+        showLabels: currentShowAllLabels,
         lang: currentLang,
       });
       if (!currentQuery) return Promise.resolve();
@@ -1033,6 +1117,7 @@
       getCurrentRequest: () => buildCurrentRequest(),
       getFixedView: () => fixedView,
       getKeyNodeLevel: () => currentKeyNodeLevel,
+      getShowAllLabels: () => currentShowAllLabels,
       escapeHtml,
     };
   }

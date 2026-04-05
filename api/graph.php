@@ -131,6 +131,16 @@ final class GraphService
 
         $rows = $this->canonicalizeAnchorRows($rows, $anchor);
         $elements = $this->buildElements($anchor, $rows);
+        $classificationPaths = $anchorType === 'Disease'
+            ? $this->loadDiseaseClassificationPaths((string)($anchor['element_id'] ?? ''))
+            : [];
+        $classificationTopClasses = [];
+        foreach ($classificationPaths as $path) {
+            $topCategory = trim((string)($path['top_category'] ?? ''));
+            if ($topCategory !== '') {
+                $classificationTopClasses[$topCategory] = true;
+            }
+        }
 
         return [
             'query' => $query,
@@ -144,6 +154,9 @@ final class GraphService
             'key_level' => $keyLevel,
             'key_node_threshold' => (int)($this->config['key_node_threshold'] ?? 15),
             'key_node_expand_limit' => (int)($this->config['key_node_expand_limit'] ?? 15),
+            'classification_mode' => (!empty($classificationPaths) || !empty($anchor['hierarchy_top_element_id'])) ? 'hierarchy' : 'legacy',
+            'classification_top_classes' => array_keys($classificationTopClasses),
+            'classification_paths' => $classificationPaths,
             'elements' => $elements,
             'matches' => $anchor['matches'],
         ];
@@ -158,11 +171,68 @@ final class GraphService
         };
     }
 
+    private function findDiseaseClassHierarchyAnchor(string $className): ?array
+    {
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (top:DiseaseCategory)
+WHERE coalesce(top.category_level, 0) = 1
+  AND (
+    toLower(trim(coalesce(top.category_label, ''))) = toLower($className)
+    OR toLower(trim(coalesce(top.top_category, ''))) = toLower($className)
+    OR toLower(trim(coalesce(top.category_label, ''))) CONTAINS toLower($className)
+    OR toLower($className) CONTAINS toLower(trim(coalesce(top.category_label, '')))
+    OR toLower(trim(coalesce(top.top_category, ''))) CONTAINS toLower($className)
+    OR toLower($className) CONTAINS toLower(trim(coalesce(top.top_category, '')))
+  )
+OPTIONAL MATCH (top)-[:HAS_SUBCATEGORY*0..10]->(leaf:DiseaseCategory)<-[:CLASSIFIED_AS]-(d:Disease)
+RETURN
+  elementId(top) AS element_id,
+  top.category_node_id AS category_node_id,
+  top.category_label AS category_label,
+  count(DISTINCT d) AS disease_count
+ORDER BY disease_count DESC
+LIMIT 1
+CYPHER,
+            ['className' => $className]
+        );
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        $canonicalClass = trim((string)($rows[0]['category_label'] ?? ''));
+        if ($canonicalClass === '') {
+            return null;
+        }
+
+        return [
+            'element_id' => 'disease_class::' . mb_strtolower($canonicalClass),
+            'labels' => ['DiseaseClass'],
+            'name' => $canonicalClass,
+            'description' => 'Top disease class node synthesized from ICD-11 disease classification hierarchy.',
+            'pmid' => '',
+            'disease_class' => $canonicalClass,
+            'hierarchy_top_element_id' => (string)($rows[0]['element_id'] ?? ''),
+            'hierarchy_category_node_id' => (string)($rows[0]['category_node_id'] ?? ''),
+            'matches' => [[
+                'name' => $canonicalClass,
+                'type' => 'DiseaseClass',
+                'pmid' => '',
+            ]],
+        ];
+    }
+
     private function findDiseaseClassAnchor(string $className): ?array
     {
         $className = trim($className);
         if ($className === '') {
             return null;
+        }
+
+        $hierarchyAnchor = $this->findDiseaseClassHierarchyAnchor($className);
+        if ($hierarchyAnchor !== null) {
+            return $hierarchyAnchor;
         }
 
         $rows = $this->runNeo4j(
@@ -444,6 +514,249 @@ CYPHER,
         return array_merge($rows, $functionRows, $paperRows);
     }
 
+    private function loadDiseaseClassificationPaths(string $diseaseId): array
+    {
+        if ($diseaseId === '') {
+            return [];
+        }
+
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (d:Disease)
+WHERE elementId(d) = $diseaseId
+MATCH (d)-[r:CLASSIFIED_AS]->(leaf:DiseaseCategory)
+OPTIONAL MATCH p=(top:DiseaseCategory)-[:HAS_SUBCATEGORY*0..10]->(leaf)
+WHERE coalesce(top.category_level, 0) = 1
+RETURN
+  coalesce(r.top_category, top.category_label, leaf.top_category, '') AS top_category,
+  leaf.category_label AS leaf_category,
+  coalesce(r.source_status, '') AS source_status,
+  coalesce(r.source_row, '') AS source_row,
+  [n IN nodes(p) | {
+    element_id: elementId(n),
+    label: n.category_label,
+    level: coalesce(n.category_level, 0)
+  }] AS path
+ORDER BY size(nodes(p)), leaf.category_label, source_row
+CYPHER,
+            ['diseaseId' => $diseaseId]
+        );
+
+        $paths = [];
+        $seen = [];
+        foreach ($rows as $row) {
+            $path = is_array($row['path'] ?? null) ? $row['path'] : [];
+            if (empty($path)) {
+                continue;
+            }
+            $key = implode(' | ', array_map(
+                static fn(array $node): string => trim((string)($node['label'] ?? '')),
+                $path
+            ));
+            if ($key === '' || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $paths[] = [
+                'top_category' => (string)($row['top_category'] ?? ''),
+                'leaf_category' => (string)($row['leaf_category'] ?? ''),
+                'source_status' => (string)($row['source_status'] ?? ''),
+                'source_row' => (string)($row['source_row'] ?? ''),
+                'path' => array_map(
+                    static fn(array $node): array => [
+                        'element_id' => (string)($node['element_id'] ?? ''),
+                        'label' => (string)($node['label'] ?? ''),
+                        'level' => (int)($node['level'] ?? 0),
+                    ],
+                    $path
+                ),
+            ];
+        }
+
+        return $paths;
+    }
+
+    private function loadDiseaseClassHierarchyEntries(string $topElementId): array
+    {
+        if ($topElementId === '') {
+            return [];
+        }
+
+        return $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (top:DiseaseCategory)
+WHERE elementId(top) = $topElementId
+MATCH p=(top)-[:HAS_SUBCATEGORY*0..10]->(leaf:DiseaseCategory)
+MATCH (leaf)<-[r:CLASSIFIED_AS]-(d:Disease)
+OPTIONAL MATCH (d)-[bio:BIO_RELATION]-(:TE)
+WITH top, leaf, d, r, p, count(bio) AS te_degree
+ORDER BY te_degree DESC, toLower(coalesce(d.name, ''))
+RETURN
+  elementId(d) AS disease_element_id,
+  labels(d) AS disease_labels,
+  d.name AS disease_name,
+  d.description AS disease_description,
+  d.pmid AS disease_pmid,
+  d.disease_class AS disease_class,
+  coalesce(r.top_category, top.category_label) AS top_category,
+  leaf.category_label AS leaf_category,
+  [n IN nodes(p) | {
+    element_id: elementId(n),
+    labels: labels(n),
+    name: n.category_label,
+    description: coalesce(n.description, ''),
+    pmid: coalesce(n.pmid, ''),
+    category_level: coalesce(n.category_level, 0)
+  }] AS category_path
+LIMIT 12
+CYPHER,
+            ['topElementId' => $topElementId]
+        );
+    }
+
+    private function buildDiseaseClassHierarchyContextRows(array $anchor): array
+    {
+        $entries = $this->loadDiseaseClassHierarchyEntries((string)($anchor['hierarchy_top_element_id'] ?? ''));
+        if (empty($entries)) {
+            return [];
+        }
+
+        $allRows = [];
+        foreach ($entries as $entry) {
+            $topCategory = trim((string)($entry['top_category'] ?? ''));
+            $diseaseClass = $topCategory;
+            $path = is_array($entry['category_path'] ?? null) ? $entry['category_path'] : [];
+            if (empty($path)) {
+                continue;
+            }
+
+            $topNode = $path[0];
+            $anchorName = trim((string)($anchor['name'] ?? ''));
+            $topNodeName = trim((string)($topNode['name'] ?? ''));
+            $skipTopCategoryNode =
+                (string)($topNode['element_id'] ?? '') === (string)($anchor['hierarchy_top_element_id'] ?? '')
+                && $anchorName !== ''
+                && mb_strtolower($anchorName) === mb_strtolower($topNodeName);
+
+            if ($skipTopCategoryNode) {
+                if (count($path) > 1) {
+                    $nextNode = $path[1];
+                    $allRows[] = [
+                        'source_element_id' => (string)($anchor['element_id'] ?? ''),
+                        'source_labels' => ['DiseaseClass'],
+                        'source_name' => (string)($anchor['name'] ?? ''),
+                        'source_description' => (string)($anchor['description'] ?? ''),
+                        'source_pmid' => '',
+                        'source_disease_class' => (string)($anchor['disease_class'] ?? ''),
+                        'target_element_id' => (string)($nextNode['element_id'] ?? ''),
+                        'target_labels' => ['DiseaseCategory'],
+                        'target_name' => (string)($nextNode['name'] ?? ''),
+                        'target_description' => (string)($nextNode['description'] ?? ''),
+                        'target_pmid' => (string)($nextNode['pmid'] ?? ''),
+                        'target_disease_class' => $topCategory,
+                        'target_category_level' => (int)($nextNode['category_level'] ?? 0),
+                        'relation_type' => 'TOP_CLASS_RELATION',
+                        'relation_label' => 'top category',
+                        'relation_pmids' => [],
+                        'relation_evidence' => '',
+                    ];
+                }
+            } else {
+                $allRows[] = [
+                    'source_element_id' => (string)($anchor['element_id'] ?? ''),
+                    'source_labels' => ['DiseaseClass'],
+                    'source_name' => (string)($anchor['name'] ?? ''),
+                    'source_description' => (string)($anchor['description'] ?? ''),
+                    'source_pmid' => '',
+                    'source_disease_class' => (string)($anchor['disease_class'] ?? ''),
+                    'target_element_id' => (string)($topNode['element_id'] ?? ''),
+                    'target_labels' => ['DiseaseCategory'],
+                    'target_name' => (string)($topNode['name'] ?? ''),
+                    'target_description' => (string)($topNode['description'] ?? ''),
+                    'target_pmid' => (string)($topNode['pmid'] ?? ''),
+                    'target_disease_class' => $topCategory,
+                    'target_category_level' => (int)($topNode['category_level'] ?? 0),
+                    'relation_type' => 'TOP_CLASS_RELATION',
+                    'relation_label' => 'top category',
+                    'relation_pmids' => [],
+                    'relation_evidence' => '',
+                ];
+            }
+
+            $pathStartIndex = $skipTopCategoryNode ? 1 : 0;
+            for ($i = $pathStartIndex; $i < count($path) - 1; $i++) {
+                $sourceNode = $path[$i];
+                $targetNode = $path[$i + 1];
+                $allRows[] = [
+                    'source_element_id' => (string)($sourceNode['element_id'] ?? ''),
+                    'source_labels' => ['DiseaseCategory'],
+                    'source_name' => (string)($sourceNode['name'] ?? ''),
+                    'source_description' => (string)($sourceNode['description'] ?? ''),
+                    'source_pmid' => (string)($sourceNode['pmid'] ?? ''),
+                    'source_disease_class' => $topCategory,
+                    'source_category_level' => (int)($sourceNode['category_level'] ?? 0),
+                    'target_element_id' => (string)($targetNode['element_id'] ?? ''),
+                    'target_labels' => ['DiseaseCategory'],
+                    'target_name' => (string)($targetNode['name'] ?? ''),
+                    'target_description' => (string)($targetNode['description'] ?? ''),
+                    'target_pmid' => (string)($targetNode['pmid'] ?? ''),
+                    'target_disease_class' => $topCategory,
+                    'target_category_level' => (int)($targetNode['category_level'] ?? 0),
+                    'relation_type' => 'HAS_SUBCATEGORY',
+                    'relation_label' => 'has subcategory',
+                    'relation_pmids' => [],
+                    'relation_evidence' => '',
+                ];
+            }
+
+            $leafNode = $path[count($path) - 1];
+            $allRows[] = [
+                'source_element_id' => ($skipTopCategoryNode && count($path) === 1)
+                    ? (string)($anchor['element_id'] ?? '')
+                    : (string)($leafNode['element_id'] ?? ''),
+                'source_labels' => ($skipTopCategoryNode && count($path) === 1)
+                    ? ['DiseaseClass']
+                    : ['DiseaseCategory'],
+                'source_name' => ($skipTopCategoryNode && count($path) === 1)
+                    ? (string)($anchor['name'] ?? '')
+                    : (string)($leafNode['name'] ?? ''),
+                'source_description' => ($skipTopCategoryNode && count($path) === 1)
+                    ? (string)($anchor['description'] ?? '')
+                    : (string)($leafNode['description'] ?? ''),
+                'source_pmid' => ($skipTopCategoryNode && count($path) === 1)
+                    ? ''
+                    : (string)($leafNode['pmid'] ?? ''),
+                'source_disease_class' => $topCategory,
+                'source_category_level' => ($skipTopCategoryNode && count($path) === 1)
+                    ? 0
+                    : (int)($leafNode['category_level'] ?? 0),
+                'target_element_id' => (string)($entry['disease_element_id'] ?? ''),
+                'target_labels' => $entry['disease_labels'] ?? ['Disease'],
+                'target_name' => (string)($entry['disease_name'] ?? ''),
+                'target_description' => (string)($entry['disease_description'] ?? ''),
+                'target_pmid' => (string)($entry['disease_pmid'] ?? ''),
+                'target_disease_class' => $diseaseClass,
+                'relation_type' => 'CLASSIFIED_AS',
+                'relation_label' => 'classified disease',
+                'relation_pmids' => [],
+                'relation_evidence' => '',
+            ];
+        }
+
+        $deduped = [];
+        $seenRowKeys = [];
+        foreach ($allRows as $row) {
+            $rowKey = $this->buildRowKey($row);
+            if (isset($seenRowKeys[$rowKey])) {
+                continue;
+            }
+            $seenRowKeys[$rowKey] = true;
+            $deduped[] = $row;
+        }
+
+        return $deduped;
+    }
+
     private function loadDiseaseClassDiseaseRows(string $classAnchorId, string $className, string $classDescription): array
     {
         return $this->runNeo4j(
@@ -482,6 +795,13 @@ CYPHER,
 
     private function buildDiseaseClassContextRows(array $anchor): array
     {
+        if (!empty($anchor['hierarchy_top_element_id'])) {
+            $hierarchyRows = $this->buildDiseaseClassHierarchyContextRows($anchor);
+            if (!empty($hierarchyRows)) {
+                return $hierarchyRows;
+            }
+        }
+
         $classAnchorId = (string)($anchor['element_id'] ?? '');
         $className = (string)($anchor['name'] ?? '');
         $classDescription = (string)($anchor['description'] ?? '');
@@ -491,71 +811,9 @@ CYPHER,
             0,
             12
         );
-
-        $allRows = $diseaseRows;
-        foreach ($diseaseRows as $diseaseRow) {
-            $diseaseId = (string)($diseaseRow['target_element_id'] ?? '');
-            if ($diseaseId === '') {
-                continue;
-            }
-
-            $diseaseName = (string)($diseaseRow['target_name'] ?? '');
-            $diseaseDescription = (string)($diseaseRow['target_description'] ?? '');
-            $diseasePmid = (string)($diseaseRow['target_pmid'] ?? '');
-            $diseaseClass = (string)($diseaseRow['target_disease_class'] ?? '');
-
-            $teRows = array_slice($this->loadDiseaseTeRows($diseaseId), 0, 4);
-            $allRows = array_merge($allRows, $teRows);
-
-            $teIds = [];
-            $supportPmids = [];
-            foreach ($teRows as $teRow) {
-                $teId = (string)($teRow['target_element_id'] ?? '');
-                if ($teId !== '') {
-                    $teIds[] = $teId;
-                }
-                foreach (($teRow['relation_pmids'] ?? []) as $pmid) {
-                    $pmid = trim((string)$pmid);
-                    if ($pmid !== '') {
-                        $supportPmids[$pmid] = true;
-                    }
-                }
-            }
-
-            if (!empty($teIds)) {
-                $functionRows = array_slice(
-                    $this->loadDiseaseFunctionRows(
-                        $diseaseId,
-                        $diseaseName,
-                        $diseaseDescription,
-                        $diseasePmid,
-                        $diseaseClass,
-                        array_values(array_unique($teIds))
-                    ),
-                    0,
-                    4
-                );
-                $allRows = array_merge($allRows, $functionRows);
-            }
-
-            if (!empty($supportPmids)) {
-                $paperRows = array_slice(
-                    $this->loadPaperRowsByPmids(
-                        array_keys($supportPmids),
-                        $diseaseId,
-                        $diseaseName,
-                        $diseaseClass
-                    ),
-                    0,
-                    4
-                );
-                $allRows = array_merge($allRows, $paperRows);
-            }
-        }
-
         $deduped = [];
         $seenRowKeys = [];
-        foreach ($allRows as $row) {
+        foreach ($diseaseRows as $row) {
             $rowKey = $this->buildRowKey($row);
             if (isset($seenRowKeys[$rowKey])) {
                 continue;
@@ -1155,6 +1413,7 @@ CYPHER,
             'description' => $anchor['description'] ?? '',
             'pmid' => $anchor['pmid'] ?? '',
             'disease_class' => $anchor['disease_class'] ?? '',
+            'category_level' => $anchor['category_level'] ?? 0,
         ]);
 
         foreach ($rows as $row) {
@@ -1168,6 +1427,7 @@ CYPHER,
                 'description' => $row['source_description'] ?? '',
                 'pmid' => $row['source_pmid'] ?? '',
                 'disease_class' => $row['source_disease_class'] ?? '',
+                'category_level' => $row['source_category_level'] ?? 0,
             ]);
             $this->addNode($nodes, [
                 'element_id' => $row['target_element_id'],
@@ -1176,6 +1436,7 @@ CYPHER,
                 'description' => $row['target_description'] ?? '',
                 'pmid' => $row['target_pmid'] ?? '',
                 'disease_class' => $row['target_disease_class'] ?? '',
+                'category_level' => $row['target_category_level'] ?? 0,
             ]);
 
             $edgeId = $row['source_element_id'] . '__' . $row['relation_type'] . '__' . $row['target_element_id'];
@@ -1202,6 +1463,7 @@ CYPHER,
                     'description' => $extra['source_description'] ?? '',
                     'pmid' => $extra['source_pmid'] ?? '',
                     'disease_class' => $extra['source_disease_class'] ?? '',
+                    'category_level' => $extra['source_category_level'] ?? 0,
                 ]);
                 $this->addNode($nodes, [
                     'element_id' => $extra['target_element_id'],
@@ -1210,6 +1472,7 @@ CYPHER,
                     'description' => $extra['target_description'] ?? '',
                     'pmid' => $extra['target_pmid'] ?? '',
                     'disease_class' => $extra['target_disease_class'] ?? '',
+                    'category_level' => $extra['target_category_level'] ?? 0,
                 ]);
                 $extraEdgeId = $extra['source_element_id'] . '__' . $extra['relation_type'] . '__' . $extra['target_element_id'];
                 $edges[$extraEdgeId] = [
@@ -1268,6 +1531,7 @@ CYPHER,
                 'description' => (string)($row['description'] ?? ''),
                 'pmid' => (string)($row['pmid'] ?? ''),
                 'disease_class' => (string)($row['disease_class'] ?? ''),
+                'category_level' => (int)($row['category_level'] ?? 0),
             ],
         ];
     }

@@ -58,6 +58,15 @@ EXTRA_DISEASE_ALIASES = {
     "hiv-1 infection": "HIV infection",
     "psychiatric diseases": "psychiatric disorders",
     "genetic instability": "genomic instability",
+    "becker muscular dystrophy (bmd)": "Becker muscular dystrophy",
+    "duchenne muscular dystrophy (dmd)": "Duchenne muscular dystrophy",
+    "chronic fatigue syndrome": "Myalgic Encephalomyelitis/Chronic Fatigue Syndrome",
+    "myalgic encephalomyelitis": "Myalgic Encephalomyelitis/Chronic Fatigue Syndrome",
+    "htlv-1-associated myelopathy (ham)": "HTLV-1-associated myelopathy/tropical spastic paraparesis (HAM/TSP)",
+    "htlv-1-associated myelopathy(ham)": "HTLV-1-associated myelopathy/tropical spastic paraparesis (HAM/TSP)",
+    "tropical spastic paraparesis (tsp)": "HTLV-1-associated myelopathy/tropical spastic paraparesis (HAM/TSP)",
+    "mosaic variegated aneuploidy (mva) syndrome": "premature chromatid separation (PCS)/mosaic variegated aneuploidy (MVA) syndrome",
+    "premature chromatid separation (pcs)": "premature chromatid separation (PCS)/mosaic variegated aneuploidy (MVA) syndrome",
 }
 
 

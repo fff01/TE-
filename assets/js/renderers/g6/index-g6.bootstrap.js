@@ -14,6 +14,8 @@
     badge: document.getElementById('page-badge'),
     graphTitle: document.getElementById('graph-title'),
     searchInput: document.getElementById('node-search'),
+    showLabelsBtn: document.getElementById('toggle-show-labels'),
+    showLabelsText: document.getElementById('show-labels-text'),
     fixedBtn: document.getElementById('toggle-fixed-view'),
     fixedText: document.getElementById('fixed-view-text'),
     backBtn: document.getElementById('back-graph'),
@@ -37,6 +39,8 @@
       badge: 'Tree-first preview with test-aligned dynamic graph',
       graphTitle: 'G6 Graph Workspace',
       searchPlaceholder: 'Search LINE1, L1HS, disease, or function',
+      showNamesOn: 'Show names: On',
+      showNamesOff: 'Show names: Off',
       fixedOn: 'Fixed view: On',
       fixedOff: 'Fixed view: Off',
       back: 'Back',
@@ -55,6 +59,8 @@
       badge: '\u4ee5\u5206\u7c7b\u6811\u4e3a\u9ed8\u8ba4\u5165\u53e3\u7684 G6 \u9884\u89c8',
       graphTitle: 'G6 Graph Workspace',
       searchPlaceholder: '\u641c\u7d22 LINE1\u3001L1HS\u3001\u75be\u75c5\u6216\u529f\u80fd',
+      showNamesOn: '\u663e\u793a\u540d\u5b57\uff1a\u5f00',
+      showNamesOff: '\u663e\u793a\u540d\u5b57\uff1a\u5173',
       fixedOn: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5f00',
       fixedOff: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5173',
       back: '\u8fd4\u56de',
@@ -84,6 +90,7 @@
 
   window.currentLang = params.get('lang') === 'zh' ? 'zh' : 'en';
   window.fixedView = false;
+  window.showLabels = false;
   window.currentKeyNodeLevel = 1;
   window.focusLevel = 0;
   if (typeof window.cy === 'undefined') {
@@ -142,6 +149,7 @@
       queryType: currentGraphQueryType,
       classQuery: currentGraphClassQuery,
       fixedView: !!window.fixedView,
+      showLabels: !!window.showLabels,
       keyNodeLevel: window.currentKeyNodeLevel,
       selectedNode: currentSelectedNode,
       currentElements,
@@ -176,6 +184,12 @@
   function stateSignature(state) {
     if (!state || typeof state !== 'object') return 'none';
     if (state.kind === 'tree') return 'tree';
+    if (state.kind === 'disease_class_tree') {
+      return [
+        'disease_class_tree',
+        state.classQuery || '',
+      ].join('|');
+    }
     if (state.kind === 'query') {
       return [
         'query',
@@ -184,6 +198,7 @@
         state.classQuery || '',
         String(state.keyNodeLevel || 1),
         state.fixedView ? '1' : '0',
+        state.showLabels ? '1' : '0',
       ].join('|');
     }
     if (state.kind === 'answer') {
@@ -192,6 +207,7 @@
         state.query || '',
         String(state.keyNodeLevel || 1),
         state.fixedView ? '1' : '0',
+        state.showLabels ? '1' : '0',
         String((state.elements || []).length),
       ].join('|');
     }
@@ -203,12 +219,21 @@
       return { kind: 'tree' };
     }
 
+    if (currentMode === 'disease_class_tree') {
+      return {
+        kind: 'disease_class_tree',
+        query: currentGraphQuery,
+        classQuery: currentGraphClassQuery || currentGraphQuery,
+      };
+    }
+
     if (currentGraphSource === 'answer') {
       return {
         kind: 'answer',
         query: currentGraphQuery,
         keyNodeLevel: window.currentKeyNodeLevel,
         fixedView: !!window.fixedView,
+        showLabels: !!window.showLabels,
         elements: cloneAnswerElements(currentAnswerGraphElements),
       };
     }
@@ -220,6 +245,7 @@
       classQuery: currentGraphClassQuery,
       keyNodeLevel: window.currentKeyNodeLevel,
       fixedView: !!window.fixedView,
+      showLabels: !!window.showLabels,
     };
   }
 
@@ -235,6 +261,13 @@
     if (!state || typeof state !== 'object') return textSet().back || 'Back';
     if (state.kind === 'tree') {
       return textSet().backToTree || textSet().back || 'Back';
+    }
+    if (state.kind === 'disease_class_tree') {
+      const label = String(state.classQuery || state.query || '').trim();
+      if (!label) return textSet().backToTree || textSet().back || 'Back';
+      return typeof textSet().backTo === 'function'
+        ? textSet().backTo(label)
+        : `Back to ${label}`;
     }
     const label = String(state.classQuery || state.query || '').trim();
     if (!label) {
@@ -319,6 +352,7 @@
     if (els.badge) els.badge.textContent = t.badge;
     if (els.graphTitle) els.graphTitle.textContent = t.graphTitle;
     if (els.searchInput) els.searchInput.placeholder = t.searchPlaceholder;
+    if (els.showLabelsText) els.showLabelsText.textContent = window.showLabels ? t.showNamesOn : t.showNamesOff;
     if (els.fixedText) els.fixedText.textContent = window.fixedView ? t.fixedOn : t.fixedOff;
     if (els.backText) els.backText.textContent = t.back || 'Back';
     if (els.resetText) els.resetText.textContent = t.reset;
@@ -385,6 +419,7 @@
     url.searchParams.set('lang', window.currentLang);
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
+    url.searchParams.set('show_labels', window.showLabels ? '1' : '0');
     const query = String(request.query || '').trim();
     if (query) {
       url.searchParams.set('q', query);
@@ -482,17 +517,16 @@
   }
 
   function extractAnswerGraphElements(result) {
-    const graphContextElements = result && result.graph_context && Array.isArray(result.graph_context.elements)
-      ? result.graph_context.elements
-      : [];
-    if (graphContextElements.length) return graphContextElements;
-
     const graphAction = result && result.graph_action && typeof result.graph_action === 'object'
       ? result.graph_action
       : null;
-    if (!graphAction) return [];
+    const graphActionElements = graphAction ? convertGraphActionSubgraphToElements(graphAction) : [];
+    if (graphActionElements.length) return graphActionElements;
 
-    return convertGraphActionSubgraphToElements(graphAction);
+    const graphContextElements = result && result.graph_context && Array.isArray(result.graph_context.elements)
+      ? result.graph_context.elements
+      : [];
+    return graphContextElements;
   }
 
   async function renderAnswerGraphElements(elements, query, options = {}) {
@@ -534,6 +568,7 @@
           synthesizeDiseaseClasses: false,
           restrictToAnchorComponent: false,
           forceAnchorLabel: true,
+          showAllLabels: window.showLabels,
         },
       });
 
@@ -542,6 +577,225 @@
     } finally {
       setGraphLoading(false);
     }
+  }
+
+  async function fetchDiseaseClassPayload(requestLike) {
+    const request = normalizeGraphRequest(requestLike);
+    const classQuery = String(request.classQuery || request.query || '').trim();
+    if (!classQuery) {
+      throw new Error('Disease class query is required.');
+    }
+
+    const endpoint = new URL('api/graph.php', window.location.href);
+    endpoint.searchParams.set('q', classQuery);
+    endpoint.searchParams.set('type', 'disease_class');
+    endpoint.searchParams.set('class', classQuery);
+    endpoint.searchParams.set('key_level', String(window.currentKeyNodeLevel));
+
+    const response = await fetch(endpoint.toString(), {
+      credentials: 'same-origin',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+  }
+
+  function buildDiseaseClassTreeModel(elements, classQuery) {
+    const nodes = new Map();
+    const children = new Map();
+    const incoming = new Set();
+    const typeRank = {
+      DiseaseClass: 0,
+      DiseaseCategory: 1,
+      Disease: 2,
+    };
+
+    for (const item of Array.isArray(elements) ? elements : []) {
+      const data = item && item.data ? item.data : null;
+      if (!data) continue;
+      if (data.source && data.target) {
+        if (!children.has(data.source)) children.set(data.source, []);
+        children.get(data.source).push(data.target);
+        incoming.add(data.target);
+        continue;
+      }
+
+      const nodeType = String(data.type || '');
+      nodes.set(data.id, {
+        id: data.id,
+        rawLabel: String(data.rawLabel || data.label || data.id || ''),
+        description: String(data.description || ''),
+        nodeType,
+        categoryLevel: Number(data.category_level || 0),
+        diseaseClass: String(data.disease_class || classQuery || ''),
+        queryLabel: nodeType === 'Disease' ? String(data.rawLabel || data.label || data.id || '') : '',
+      });
+    }
+
+    let rootId = '';
+    for (const node of nodes.values()) {
+      if (node.nodeType === 'DiseaseClass') {
+        rootId = node.id;
+        break;
+      }
+    }
+    if (!rootId) {
+      for (const node of nodes.values()) {
+        if (!incoming.has(node.id)) {
+          rootId = node.id;
+          break;
+        }
+      }
+    }
+    if (!rootId || !nodes.has(rootId)) {
+      return { rootId: '', treeData: null };
+    }
+
+    const visit = (nodeId, depth, path) => {
+      if (!nodeId || path.has(nodeId)) return null;
+      const node = nodes.get(nodeId);
+      if (!node) return null;
+
+      const nextPath = new Set(path);
+      nextPath.add(nodeId);
+
+      const sortedChildIds = [...new Set(children.get(nodeId) || [])]
+        .filter((childId) => nodes.has(childId))
+        .sort((leftId, rightId) => {
+          const left = nodes.get(leftId);
+          const right = nodes.get(rightId);
+          const leftRank = typeRank[left?.nodeType] ?? 99;
+          const rightRank = typeRank[right?.nodeType] ?? 99;
+          if (leftRank !== rightRank) return leftRank - rightRank;
+          const leftLevel = Number(left?.categoryLevel || 0);
+          const rightLevel = Number(right?.categoryLevel || 0);
+          if (leftLevel !== rightLevel) return leftLevel - rightLevel;
+          return String(left?.rawLabel || '').localeCompare(String(right?.rawLabel || ''));
+        });
+
+      const childNodes = sortedChildIds
+        .map((childId) => visit(childId, depth + 1, nextPath))
+        .filter(Boolean);
+
+      return {
+        id: node.id,
+        data: {
+          rawLabel: node.rawLabel,
+          displayLabel: node.rawLabel,
+          description: node.description,
+          treeDepth: depth,
+          queryLabel: node.queryLabel,
+          nodeType: node.nodeType,
+          diseaseClass: node.diseaseClass,
+          treeKind: 'disease_class',
+        },
+        style: {
+          collapsed: node.nodeType !== 'Disease' && childNodes.length >= 6,
+        },
+        children: childNodes,
+      };
+    };
+
+    return {
+      rootId,
+      treeData: visit(rootId, 0, new Set()),
+    };
+  }
+
+  function buildDiseaseClassTreeConfigLegacy(classQuery) {
+    const isZh = window.currentLang === 'zh';
+    const typeLabels = isZh
+      ? {
+          DiseaseClass: '疾病大类',
+          DiseaseCategory: '疾病分类',
+          Disease: '疾病',
+        }
+      : {
+          DiseaseClass: 'Disease Class',
+          DiseaseCategory: 'Disease Category',
+          Disease: 'Disease',
+        };
+
+    return {
+      defaultDetailHtml: isZh
+        ? `<strong>${escapeHtml(classQuery)}</strong><br>当前为疾病分类树视图。点击分类节点查看层级，点击疾病叶子可进入普通动态图。`
+        : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
+      buildLabel(data, nodeId) {
+        return String(data.displayLabel || data.rawLabel || nodeId || '');
+      },
+      buildLabelFill(data) {
+        return data.nodeType === 'Disease' ? '#c62828' : '';
+      },
+      buildDetailHtml(nodeData) {
+        const data = nodeData?.data || {};
+        const label = String(data.displayLabel || data.rawLabel || nodeData?.id || '');
+        const typeLabel = typeLabels[data.nodeType] || data.nodeType || '';
+        const description = String(data.description || '').trim();
+        return [
+          `<strong>${escapeHtml(label)}</strong>${typeLabel ? ` (${escapeHtml(typeLabel)})` : ''}`,
+          description ? `<br>${escapeHtml(description)}` : '',
+        ].join('');
+      },
+      async onNodeClick(nodeData, context) {
+        const data = nodeData?.data || {};
+        if (data.nodeType !== 'Disease') return false;
+        const { fixedModeEnabled, homePreviewMode, loadDynamicGraph } = context || {};
+        if (fixedModeEnabled || homePreviewMode || typeof loadDynamicGraph !== 'function') {
+          return false;
+        }
+        const query = String(data.queryLabel || data.rawLabel || nodeData?.id || '').trim();
+        if (!query) return false;
+        await loadDynamicGraph(query);
+        return true;
+      },
+    };
+  }
+
+  function buildDiseaseClassTreeConfig(classQuery) {
+    const isZh = window.currentLang === 'zh';
+    const typeLabels = isZh
+      ? {
+          DiseaseClass: '\u75be\u75c5\u5927\u7c7b',
+          DiseaseCategory: '\u75be\u75c5\u5206\u7c7b',
+          Disease: '\u75be\u75c5',
+        }
+      : {
+          DiseaseClass: 'Disease Class',
+          DiseaseCategory: 'Disease Category',
+          Disease: 'Disease',
+        };
+
+    return {
+      defaultDetailHtml: isZh
+        ? `<strong>${escapeHtml(classQuery)}</strong><br>\u5f53\u524d\u4e3a\u75be\u75c5\u5206\u7c7b\u6811\u89c6\u56fe\u3002\u70b9\u51fb\u5206\u7c7b\u8282\u70b9\u67e5\u770b\u5c42\u7ea7\uff0c\u70b9\u51fb\u75be\u75c5\u53f6\u5b50\u53ef\u8fdb\u5165\u666e\u901a\u52a8\u6001\u56fe\u3002`
+        : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
+      buildLabel(data, nodeId) {
+        return String(data.displayLabel || data.rawLabel || nodeId || '');
+      },
+      buildDetailHtml(nodeData) {
+        const data = nodeData?.data || {};
+        const label = String(data.displayLabel || data.rawLabel || nodeData?.id || '');
+        const typeLabel = typeLabels[data.nodeType] || data.nodeType || '';
+        const description = String(data.description || '').trim();
+        return [
+          `<strong>${escapeHtml(label)}</strong>${typeLabel ? ` (${escapeHtml(typeLabel)})` : ''}`,
+          description ? `<br>${escapeHtml(description)}` : '',
+        ].join('');
+      },
+      async onNodeClick(nodeData, context) {
+        const data = nodeData?.data || {};
+        if (data.nodeType !== 'Disease') return false;
+        const { fixedModeEnabled, homePreviewMode, loadDynamicGraph } = context || {};
+        if (fixedModeEnabled || homePreviewMode || typeof loadDynamicGraph !== 'function') {
+          return false;
+        }
+        const query = String(data.queryLabel || data.rawLabel || nodeData?.id || '').trim();
+        if (!query) return false;
+        await loadDynamicGraph(query);
+        return true;
+      },
+    };
   }
 
   async function applyAnswerGraph(result, options = {}) {
@@ -563,6 +817,7 @@
     }
     window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(preset.key_node_level) || 1));
     window.fixedView = preset.fixed_view !== false;
+    window.showLabels = true;
     updateButtons();
     return renderAnswerGraphElements(elements, query, { ...options, pushHistory: false });
   }
@@ -574,9 +829,18 @@
       return renderDefaultTree({ pushHistory: false });
     }
 
+    if (state.kind === 'disease_class_tree') {
+      return renderDiseaseClassTree({
+        query: state.classQuery || state.query,
+        queryType: 'disease_class',
+        classQuery: state.classQuery || state.query,
+      }, { pushHistory: false });
+    }
+
     if (state.kind === 'query') {
       window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(state.keyNodeLevel) || 1));
       window.fixedView = !!state.fixedView;
+      window.showLabels = !!state.showLabels;
       updateButtons();
       return loadDynamicGraph({
         query: state.query,
@@ -588,6 +852,7 @@
     if (state.kind === 'answer') {
       window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(state.keyNodeLevel) || 1));
       window.fixedView = !!state.fixedView;
+      window.showLabels = !!state.showLabels;
       updateButtons();
       return renderAnswerGraphElements(state.elements || [], state.query || 'LINE1', { pushHistory: false });
     }
@@ -630,6 +895,57 @@
     notifyStateChange();
   }
 
+  async function renderDiseaseClassTree(requestLike, options = {}) {
+    const request = normalizeGraphRequest({
+      ...(requestLike && typeof requestLike === 'object' ? requestLike : {}),
+      queryType: 'disease_class',
+    });
+    const classQuery = String(request.classQuery || request.query || '').trim();
+    if (!classQuery) {
+      return renderDefaultTree(options);
+    }
+
+    if (options.pushHistory !== false) {
+      pushCurrentStateToHistory();
+    }
+
+    currentMode = 'disease_class_tree';
+    currentGraphSource = 'disease_class_tree';
+    currentGraphQuery = classQuery;
+    currentGraphQueryType = 'disease_class';
+    currentGraphClassQuery = classQuery;
+    currentSelectedNode = null;
+    currentAnswerGraphElements = [];
+    currentQueryGraphElements = [];
+    showTreeSurface();
+    if (els.searchInput) els.searchInput.value = classQuery;
+    updateButtons();
+    setDetail(buildLoadingDetailHtml(`Preparing the disease classification tree for ${escapeHtml(classQuery)}.`));
+    notifyStateChange();
+    setGraphLoading(true, textSet().loadingOverlay(classQuery));
+
+    try {
+      const payload = await fetchDiseaseClassPayload(request);
+      currentQueryGraphElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
+      const model = buildDiseaseClassTreeModel(currentQueryGraphElements, classQuery);
+      if (!model.rootId || !model.treeData) {
+        throw new Error('Disease class tree data is unavailable.');
+      }
+      if (!window.__TEKG_G6_DEFAULT_TREE || typeof window.__TEKG_G6_DEFAULT_TREE.renderStructuredTree !== 'function') {
+        throw new Error('Structured tree renderer is unavailable.');
+      }
+      await window.__TEKG_G6_DEFAULT_TREE.renderStructuredTree({
+        rootId: model.rootId,
+        treeData: model.treeData,
+        config: buildDiseaseClassTreeConfig(classQuery),
+      });
+      notifyStateChange();
+      return true;
+    } finally {
+      setGraphLoading(false);
+    }
+  }
+
   async function loadDynamicGraph(requestLike, options = {}) {
     const request = normalizeGraphRequest(requestLike);
     const q = String(request.query || '').trim();
@@ -669,7 +985,11 @@
         throw new Error('G6 embed bridge cannot load graph requests');
       }
 
-      const payload = await bridge.loadGraph(request);
+      const payload = await bridge.loadGraph(request, {
+        graphDataOptions: {
+          showAllLabels: window.showLabels,
+        },
+      });
       currentQueryGraphElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
       notifyStateChange();
       return true;
@@ -717,6 +1037,24 @@
       });
     }
 
+    if (els.showLabelsBtn) {
+      els.showLabelsBtn.addEventListener('click', () => {
+        window.showLabels = !window.showLabels;
+        updateButtons();
+        notifyStateChange();
+        if (currentMode !== 'dynamic') return;
+        if (currentGraphSource === 'answer') {
+          renderAnswerGraphElements(currentAnswerGraphElements, currentGraphQuery || 'LINE1', { pushHistory: false }).catch((error) => {
+            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+          });
+          return;
+        }
+        loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+    }
+
     if (els.levelMinus) {
       els.levelMinus.addEventListener('click', () => {
         if (window.currentKeyNodeLevel <= 1) return;
@@ -757,6 +1095,16 @@
           });
           return;
         }
+        if (currentMode === 'disease_class_tree' && currentGraphClassQuery) {
+          renderDiseaseClassTree({
+            query: currentGraphClassQuery,
+            queryType: 'disease_class',
+            classQuery: currentGraphClassQuery,
+          }, { pushHistory: false }).catch((error) => {
+            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+          });
+          return;
+        }
         renderDefaultTree().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
@@ -771,6 +1119,16 @@
         notifyStateChange();
         if (currentMode === 'dynamic' && currentGraphQuery) {
           loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
+            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+          });
+          return;
+        }
+        if (currentMode === 'disease_class_tree' && currentGraphClassQuery) {
+          renderDiseaseClassTree({
+            query: currentGraphClassQuery,
+            queryType: 'disease_class',
+            classQuery: currentGraphClassQuery,
+          }, { pushHistory: false }).catch((error) => {
             setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
           });
           return;
@@ -830,6 +1188,19 @@
       currentSelectedNode = node || null;
       notifyStateChange();
     },
+    onDiseaseClassClick(node, request) {
+      const classQuery = String(
+        (request && request.classQuery)
+        || (node && (node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel))
+        || ''
+      ).trim();
+      if (!classQuery) return Promise.resolve(false);
+      return renderDiseaseClassTree({
+        query: classQuery,
+        queryType: 'disease_class',
+        classQuery,
+      }, { pushHistory: true }).then(() => true);
+    },
   };
 
   window.__TEKG_LOAD_DYNAMIC_GRAPH = loadDynamicGraph;
@@ -849,6 +1220,9 @@
     },
     showTree() {
       return renderDefaultTree();
+    },
+    showDiseaseClassTree(requestLike) {
+      return renderDiseaseClassTree(requestLike);
     },
     reset() {
       return renderDefaultTree();
@@ -871,6 +1245,20 @@
     },
     getFixedView() {
       return !!window.fixedView;
+    },
+    setShowLabels(next) {
+      window.showLabels = !!next;
+      updateButtons();
+      if (currentMode === 'dynamic') {
+        if (currentGraphSource === 'answer') {
+          return renderAnswerGraphElements(currentAnswerGraphElements, currentGraphQuery || 'LINE1', { pushHistory: false }).then(() => window.showLabels);
+        }
+        return loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).then(() => window.showLabels);
+      }
+      return Promise.resolve(window.showLabels);
+    },
+    getShowLabels() {
+      return !!window.showLabels;
     },
     getKeyNodeLevel() {
       return window.currentKeyNodeLevel;

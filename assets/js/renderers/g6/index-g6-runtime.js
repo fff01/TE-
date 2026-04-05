@@ -20,6 +20,7 @@
     TE: '#4e79ff',
     Disease: '#ff7a7a',
     DiseaseClass: '#8f1731',
+    DiseaseCategory: '#d94a58',
     Function: '#41b883',
     Paper: '#f2a93b',
   };
@@ -28,6 +29,7 @@
     TE: '#1f3f99',
     Disease: '#c84f62',
     DiseaseClass: '#5f1020',
+    DiseaseCategory: '#a41f35',
     Function: '#2f8b63',
     Paper: '#b77a16',
   };
@@ -183,6 +185,7 @@
   function secondaryShouldShowLabel(node) {
     const nodeType = String(node?.nodeType || '');
     if (nodeType === 'DiseaseClass') return true;
+    if (nodeType === 'DiseaseCategory') return true;
     if (nodeType === 'Function') {
       return Math.max(0, Number(node?.size) || 0) >= 34;
     }
@@ -233,13 +236,22 @@
   }
 
   function buildTeam(node) {
-    if (node.type === 'Disease') {
+    if (node.type === 'Disease' || node.type === 'DiseaseCategory' || node.type === 'DiseaseClass') {
       const diseaseClass = String(node.disease_class || '').trim() || 'Disease';
       return `Disease::${diseaseClass}`;
     }
     if (node.type === 'TE') return 'TE';
     if (node.type === 'Function') return 'Function';
     return `${node.type || 'Node'}::${node.id}`;
+  }
+
+  function diseaseCategoryFillColor(level, minLevel, maxLevel) {
+    const safeMin = Number.isFinite(minLevel) ? minLevel : 1;
+    const safeMax = Number.isFinite(maxLevel) ? maxLevel : safeMin;
+    const safeLevel = Number.isFinite(level) ? level : safeMax;
+    const span = Math.max(1, safeMax - safeMin);
+    const normalized = Math.max(0, Math.min(1, (safeLevel - safeMin) / span));
+    return interpolateHexColor('#cf2238', '#f6d4d9', normalized);
   }
 
   function fitLabelToCircle(text, diameter) {
@@ -379,6 +391,7 @@
     const label = String(rawLabel || '').trim();
     const description = String(rawDescription || '').trim();
     if (nodeType === 'DiseaseClass') return description || 'Disease class node in the current graph.';
+    if (nodeType === 'DiseaseCategory') return description || 'Disease classification category in the current graph.';
     if (nodeType === 'TE') {
       const key = translateName(label, nodeType) || label;
       const mapped = String(teDescriptions?.en?.[key] || '').trim();
@@ -415,8 +428,9 @@
         databaseDegree: Math.max(0, Number(data.degree) || 0),
         description: translateDescription(data.type || 'TE', data.label || data.rawLabel || data.id, data.description || ''),
         diseaseClass: String(data.disease_class || ''),
+        categoryLevel: Math.max(0, Number(data.category_level) || 0),
         team: buildTeam(data),
-        queryLabel: String(data.rawLabel || data.label || data.id),
+        queryLabel: (data.type || 'TE') === 'DiseaseCategory' ? '' : String(data.rawLabel || data.label || data.id),
         fillColor: TYPE_COLORS[data.type || 'TE'] || '#94a3b8',
         strokeColor: TYPE_STROKES[data.type || 'TE'] || '#111111',
       };
@@ -432,6 +446,20 @@
       node.size = fixedRadius * 2;
       node.fillColor = teFillColorForName(canonicalName);
       node.strokeColor = darkenHexColor(node.fillColor, 0.28);
+    }
+
+    const diseaseCategoryNodes = nodes.filter((node) => node.nodeType === 'DiseaseCategory');
+    if (diseaseCategoryNodes.length) {
+      const levels = diseaseCategoryNodes
+        .map((node) => Math.max(1, Number(node.categoryLevel) || 1))
+        .filter((level) => Number.isFinite(level));
+      const minLevel = levels.length ? Math.min(...levels) : 1;
+      const maxLevel = levels.length ? Math.max(...levels) : minLevel;
+      for (const node of diseaseCategoryNodes) {
+        const fillColor = diseaseCategoryFillColor(Math.max(1, Number(node.categoryLevel) || 1), minLevel, maxLevel);
+        node.fillColor = fillColor;
+        node.strokeColor = darkenHexColor(fillColor, 0.24);
+      }
     }
 
     const baseEdges = [];
@@ -481,31 +509,36 @@
 
     const visibleNodes = nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id));
     const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+    const hasNativeDiseaseHierarchy = visibleNodes.some(
+      (node) => node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory'
+    );
     const diseaseMembers = new Map();
-    for (const node of visibleNodes) {
-      if (node.nodeType !== 'Disease') continue;
-      const diseaseClass = node.diseaseClass || 'Disease';
-      if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
-      diseaseMembers.get(diseaseClass).push(node);
-    }
+    if (!hasNativeDiseaseHierarchy) {
+      for (const node of visibleNodes) {
+        if (node.nodeType !== 'Disease') continue;
+        const diseaseClass = node.diseaseClass || 'Disease';
+        if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
+        diseaseMembers.get(diseaseClass).push(node);
+      }
 
-    for (const [diseaseClass, members] of diseaseMembers.entries()) {
-      const count = members.length;
-      const classNodeId = `disease-class::${diseaseClass}`;
-      const classNode = {
-        id: classNodeId,
-        size: diseaseClassDiameterFromMembers(members),
-        nodeType: 'DiseaseClass',
-        rawLabel: diseaseClass,
-        displayLabel: diseaseClass,
-        databaseDegree: count,
-        description: `Disease class node for ${diseaseClass}. Connected to ${count} disease node${count === 1 ? '' : 's'} in the current graph.`,
-        diseaseClass,
-        team: `Disease::${diseaseClass}`,
-        queryLabel: '',
-      };
-      visibleNodes.push(classNode);
-      visibleNodeIds.add(classNodeId);
+      for (const [diseaseClass, members] of diseaseMembers.entries()) {
+        const count = members.length;
+        const classNodeId = `disease-class::${diseaseClass}`;
+        const classNode = {
+          id: classNodeId,
+          size: diseaseClassDiameterFromMembers(members),
+          nodeType: 'DiseaseClass',
+          rawLabel: diseaseClass,
+          displayLabel: diseaseClass,
+          databaseDegree: count,
+          description: `Disease class node for ${diseaseClass}. Connected to ${count} disease node${count === 1 ? '' : 's'} in the current graph.`,
+          diseaseClass,
+          team: `Disease::${diseaseClass}`,
+          queryLabel: '',
+        };
+        visibleNodes.push(classNode);
+        visibleNodeIds.add(classNodeId);
+      }
     }
 
     for (const edge of baseEdges) {
@@ -516,14 +549,16 @@
       });
     }
 
-    for (const [diseaseClass, members] of diseaseMembers.entries()) {
-      const classNodeId = `disease-class::${diseaseClass}`;
-      for (const member of members) {
-        edges.push({
-          source: classNodeId,
-          target: member.id,
-          synthetic: true,
-        });
+    if (!hasNativeDiseaseHierarchy) {
+      for (const [diseaseClass, members] of diseaseMembers.entries()) {
+        const classNodeId = `disease-class::${diseaseClass}`;
+        for (const member of members) {
+          edges.push({
+            source: classNodeId,
+            target: member.id,
+            synthetic: true,
+          });
+        }
       }
     }
 

@@ -45,6 +45,14 @@
     if (host && typeof host.onNodeSelect === 'function') host.onNodeSelect(node || null);
   }
 
+  function pushDiseaseClassClick(node, request) {
+    const host = getHost();
+    if (host && typeof host.onDiseaseClassClick === 'function') {
+      return host.onDiseaseClassClick(node || null, request || null);
+    }
+    return false;
+  }
+
   function pushReady() {
     const host = getHost();
     if (host && typeof host.onReady === 'function') host.onReady();
@@ -53,12 +61,13 @@
   const runner = shared.createRunner({
     container,
     initialFixedView: params.get('fixed') === '1',
+    initialShowAllLabels: params.get('show_labels') === '1',
     initialKeyNodeLevel: Math.max(1, Math.min(10, Number(params.get('key_level')) || 1)),
     initialQuery: String(params.get('q') || '').trim(),
     initialQueryType: String(params.get('type') || '').trim(),
     initialClassQuery: String(params.get('class') || '').trim(),
     initialLang: params.get('lang') === 'zh' ? 'zh' : 'en',
-    syncRouteState: ({ query, queryType, classQuery, keyNodeLevel, fixedView, lang }) => {
+    syncRouteState: ({ query, queryType, classQuery, keyNodeLevel, fixedView, showLabels, lang }) => {
       const next = new URLSearchParams(window.location.search);
       if (query) next.set('q', query);
       else next.delete('q');
@@ -69,6 +78,7 @@
       next.set('key_level', String(keyNodeLevel));
       next.set('fixed', fixedView ? '1' : '0');
       next.set('lang', lang === 'zh' ? 'zh' : 'en');
+      next.set('show_labels', showLabels ? '1' : '0');
       window.history.replaceState({}, '', `${window.location.pathname}?${next.toString()}`);
     },
     setStatus: pushStatus,
@@ -76,12 +86,13 @@
     setDetailHtml: pushDetailHtml,
     setMode: pushMode,
     onSelection: pushSelection,
+    onDiseaseClassClick: pushDiseaseClassClick,
     onReady: pushReady,
   });
 
   const bridge = {
-    loadGraph(query) {
-      return runner.loadGraph(query);
+    loadGraph(query, options = {}) {
+      return runner.loadGraph(query, options);
     },
     renderElements(elements, requestLike, options = {}) {
       return runner.renderElements(elements, requestLike, options);
