@@ -691,7 +691,7 @@
           treeKind: 'disease_class',
         },
         style: {
-          collapsed: node.nodeType !== 'Disease' && childNodes.length >= 6,
+          collapsed: false,
         },
         children: childNodes,
       };
@@ -772,6 +772,12 @@
         : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
       buildLabel(data, nodeId) {
         return String(data.displayLabel || data.rawLabel || nodeId || '');
+      },
+      buildLabelFill(data) {
+        return data.nodeType === 'Disease' ? '#c62828' : '';
+      },
+      buildLabelFontWeight(data) {
+        return data.nodeType === 'Disease' ? 'bold' : 'normal';
       },
       buildDetailHtml(nodeData) {
         const data = nodeData?.data || {};

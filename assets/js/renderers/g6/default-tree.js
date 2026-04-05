@@ -161,6 +161,16 @@
     return datum?.id === rootId ? ROOT_TEXT : TEXT_COLOR;
   }
 
+  function resolveTreeLabelFontWeight(datum) {
+    const config = getActiveTreeConfig();
+    const data = datum?.data || {};
+    if (typeof config.buildLabelFontWeight === 'function') {
+      const weight = config.buildLabelFontWeight(data, datum?.id || '');
+      if (weight) return weight;
+    }
+    return 'normal';
+  }
+
   function setRendererVisibility() {
     const cyHost = getEl('cy');
     const g6Host = getEl('g6-default-tree-surface');
@@ -640,6 +650,7 @@
             labelBackgroundRadius: 0,
             labelBackgroundFill: (datum) => (datum.id === rootId ? ROOT_BG : '#ffffff'),
             labelFill: (datum) => resolveTreeLabelFill(datum),
+            labelFontWeight: (datum) => resolveTreeLabelFontWeight(datum),
             labelText: (datum) => resolveTreeLabel(datum),
             labelTextAlign: (datum) => (datum.id === rootId ? 'center' : 'left'),
             labelTextBaseline: 'top',
