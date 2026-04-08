@@ -371,17 +371,6 @@ require __DIR__ . '/head.php';
           <section class="search-layout">
             <div class="side-stack">
               <section class="data-panel">
-                <h3>Best Match</h3>
-                <div id="search-best-match" class="panel-body">
-                  <?php if ($query === ''): ?>
-                    Enter a query to display the best-matched entity here.
-                  <?php else: ?>
-                    Searching for <strong><?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?></strong> ...
-                  <?php endif; ?>
-                </div>
-              </section>
-
-              <section class="data-panel">
                 <h3>Repbase Reference</h3>
                 <div id="search-repbase" class="panel-body">
                   <?php if ($repbase !== null): ?>
@@ -456,11 +445,6 @@ require __DIR__ . '/head.php';
           evidence: 'Evidence: ',
           emptyNode: 'No additional description is available for this node.',
           searching: 'Searching for',
-          best: 'This page presents the best-matched entity as the primary result.',
-          pmid: 'PMID: ',
-          candidates: 'Related candidates: ',
-          noMatch: 'No entity matched the current query.',
-          prompt: 'Enter a query to display the best-matched entity here.',
           repbaseDefault: 'This block shows Repbase information for TE entries aligned to the current database, including canonical name, description, keywords, species, and sequence summary.',
           repbaseMissing: 'The current query is not found in the aligned Repbase subset.',
           repbaseError: 'Failed to load Repbase reference: ',
@@ -476,11 +460,8 @@ require __DIR__ . '/head.php';
           species: 'Species: ',
           sequenceSummary: 'Sequence summary: ',
           referenceCount: 'Reference count: ',
-          resetState: 'Enter a query to display the best-matched entity here.',
-          searchFailed: 'Search failed: '
         };
 
-        const resultEl = document.getElementById('search-best-match');
         const repbaseEl = document.getElementById('search-repbase');
         const resetBtn = document.getElementById('search-reset');
         const resetGraphBtn = document.getElementById('search-reset-graph');
@@ -561,20 +542,6 @@ require __DIR__ . '/head.php';
           }
         }
 
-        function renderBestMatch(payload) {
-          const anchor = payload.anchor;
-          if (!anchor) {
-            resultEl.innerHTML = texts.noMatch;
-            return;
-          }
-          resultEl.innerHTML = '<div><strong>' + anchor.name + '</strong> (' + (anchor.type || 'node') + ')</div>'
-            + '<div style="margin-top:8px;color:#5e7288;">' + texts.best + '</div>'
-            + (anchor.pmid ? '<div style="margin-top:8px;color:#5e7288;">' + texts.pmid + anchor.pmid + '</div>' : '')
-            + (Array.isArray(payload.matches) && payload.matches.length > 1
-              ? '<div style="margin-top:10px;color:#5e7288;">' + texts.candidates + payload.matches.slice(1, 4).map(function (item) { return item.name; }).join(', ') + '</div>'
-              : '');
-        }
-
         const g6BaseSrc = <?= json_encode(site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
         const cytBaseSrc = <?= json_encode(site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
 
@@ -612,13 +579,11 @@ require __DIR__ . '/head.php';
 
         async function runSearch(query) {
           if (!query) {
-            resultEl.innerHTML = texts.prompt;
             repbaseEl.innerHTML = texts.repbaseDefault;
             if (renderer === 'g6') setG6Frame('');
             return;
           }
 
-          resultEl.innerHTML = texts.searching + ' <strong>' + query.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</strong> ...';
           try {
             const searchUrl = new URL('/TE-/api/graph.php', window.location.origin);
             searchUrl.searchParams.set('q', query);
@@ -631,7 +596,6 @@ require __DIR__ . '/head.php';
             if (!response.ok || !payload || payload.ok === false) {
               throw new Error((payload && payload.error) || 'search failed');
             }
-            renderBestMatch(payload);
             await updateRepbaseBlock(query, payload);
             if (renderer === 'g6') {
               setG6Frame(query);
@@ -639,8 +603,7 @@ require __DIR__ . '/head.php';
               setCytFrame(query);
             }
           } catch (err) {
-            resultEl.innerHTML = texts.searchFailed + (err && err.message ? err.message : 'unknown error');
-            repbaseEl.innerHTML = texts.repbaseUnavailable;
+            repbaseEl.innerHTML = texts.repbaseError + (err && err.message ? err.message : 'unknown error');
           }
         }
 
