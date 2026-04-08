@@ -12,10 +12,9 @@
     BaseNode,
     BaseBehavior,
     Badge,
-    CanvasEvent,
     CommonEvent,
     NodeEvent,
-    Polyline,
+    CubicHorizontal,
     subStyleProps,
   } = G6Lib;
 
@@ -27,7 +26,7 @@
     !BaseNode ||
     !BaseBehavior ||
     !Badge ||
-    !Polyline
+    !CubicHorizontal
   ) {
     return;
   }
@@ -44,36 +43,34 @@
     '#FF9845',
     '#5D7092',
   ];
+
   const TREE_EVENT = {
-    COLLAPSE_EXPAND: 'tekg-collapse-expand',
-  };
-  const COLLAPSE_THRESHOLD = 6;
-  const ROOT_BG = '#576286';
-  const ROOT_TEXT = '#ffffff';
-  const TEXT_COLOR = '#666666';
-  const INDENT = 40;
-  const V_GAP = 10;
-  const NODE_HEIGHT = 20;
-  const TREE_LEFT_PADDING = 56;
-  const TREE_VERTICAL_PADDING = 56;
-  const TREE_RIGHT_BUFFER_RATIO = 0.58;
-  const TREE_RIGHT_BUFFER_MIN = 720;
-  const TREE_INITIAL_LEFT_SHIFT_RATIO = 0.05;
-  const TREE_INITIAL_LEFT_SHIFT_MIN = 44;
-  const INTERACTION_TUNING = {
-    zoomSensitivity: 1.18,
-    focusDuration: 220,
-    focusZoomDuration: 180,
-    localFocusZoom: 1.18,
-    dragSpeed: 1.45,
+    COLLAPSE_EXPAND: 'tekg-mindmap-collapse-expand',
   };
 
+  const ROOT_BG = '#cfe0f8';
+  const ROOT_TEXT = '#2f5e99';
+  const TEXT_COLOR = '#2f3a52';
+  const EDGE_COLOR = '#c7cedb';
+  const ROOT_HEIGHT = 20;
+  const NODE_HEIGHT = 18;
+  const ROOT_FONT_SIZE = 12;
+  const NODE_FONT_SIZE = 11;
+  const ROOT_PADDING_X = 10;
+  const NODE_PADDING_X = 8;
+  const TREE_PADDING = [96, 120, 96, 120];
+  const H_GAP = 112;
+  const V_GAP = 12;
+  const MAX_EXPAND_CHILDREN = 6;
+  const INITIAL_ROOT_LEFT_SHIFT = 120;
+
   let g6Graph = null;
-  let isBound = false;
   let registered = false;
   let rootId = null;
   let selectedNodeId = null;
   let activeTreeConfig = null;
+  let stateTreeRoot = null;
+  let lastRenderOptions = null;
 
   function getEl(id) {
     return document.getElementById(id);
@@ -96,8 +93,11 @@
     return getCurrentLang() === 'zh' ? '人类转座子' : 'TE';
   }
 
-  function normalizeTextWidth(text) {
-    return Math.max(36, String(text || '').length * 8 + 6);
+  function normalizeTextWidth(text, isRoot) {
+    const length = Math.max(2, String(text || '').length);
+    const avg = isRoot ? 9.6 : 7.1;
+    const padding = isRoot ? ROOT_PADDING_X : NODE_PADDING_X;
+    return Math.round(length * avg + padding);
   }
 
   function getDisplayLabel(label, description, depth) {
@@ -114,8 +114,8 @@
 
   function buildDefaultTreeConfig() {
     const defaultDetailHtml = getCurrentLang() === 'zh'
-      ? '<strong>尚未选中节点</strong>当前为 G6 树图视图。'
-      : 'G6 indented default-tree view is active.';
+      ? '<strong>尚未选中节点</strong>当前为 G6 思维导图树视图。'
+      : 'G6 mindmap tree view is active.';
 
     return {
       defaultDetailHtml,
@@ -135,7 +135,8 @@
         }
         const data = nodeData?.data || {};
         const query = data.queryLabel || data.rawLabel || nodeData?.id;
-        if (!query) return false;
+        const hasChildren = Array.isArray(nodeData?.children) && nodeData.children.length > 0;
+        if (!query || hasChildren) return false;
         await window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
         return true;
       },
@@ -155,26 +156,6 @@
       if (label !== undefined && label !== null && label !== '') return String(label);
     }
     return String(data.displayLabel || data.rawLabel || datum?.id || '');
-  }
-
-  function resolveTreeLabelFill(datum) {
-    const config = getActiveTreeConfig();
-    const data = datum?.data || {};
-    if (typeof config.buildLabelFill === 'function') {
-      const fill = config.buildLabelFill(data, datum?.id || '');
-      if (fill) return fill;
-    }
-    return datum?.id === rootId ? ROOT_TEXT : TEXT_COLOR;
-  }
-
-  function resolveTreeLabelFontWeight(datum) {
-    const config = getActiveTreeConfig();
-    const data = datum?.data || {};
-    if (typeof config.buildLabelFontWeight === 'function') {
-      const weight = config.buildLabelFontWeight(data, datum?.id || '');
-      if (weight) return weight;
-    }
-    return 'normal';
   }
 
   function setRendererVisibility() {
@@ -236,57 +217,215 @@
     return { nodes, children, rootId: detectedRootId };
   }
 
-  function buildTreeNode(nodeId, source) {
+  function buildTreeNode(nodeId, source, parent = null) {
     const node = source.nodes.get(nodeId);
     if (!node) return null;
     const childIds = source.children.get(nodeId) || [];
     const depth = node.treeDepth || 0;
     const label = getDisplayLabel(node.label, node.description, depth);
-    const children = childIds.map((childId) => buildTreeNode(childId, source)).filter(Boolean);
-
-    return {
+    const treeNode = {
       id: node.id,
+      name: label,
       data: {
         rawLabel: node.label,
         queryLabel: node.queryLabel,
         description: node.description,
         treeDepth: depth,
       },
+      _collapsed: true,
+      _hidden: false,
+      _matched: false,
+      _matched_path: false,
+      _parent: parent,
       style: {
-        collapsed: children.length > 0,
+        collapsed: true,
+        direction: depth === 0 ? 'center' : 'right',
         labelText: label,
       },
-      children,
+      children: [],
     };
+    treeNode.children = childIds.map((childId) => buildTreeNode(childId, source, treeNode)).filter(Boolean);
+    return treeNode;
   }
 
-  class TEKGIndentedNode extends BaseNode {
+  function walkTree(node, visitor) {
+    if (!node || typeof visitor !== 'function') return;
+    visitor(node);
+    const children = Array.isArray(node.children) ? node.children : [];
+    children.forEach((child) => walkTree(child, visitor));
+  }
+
+  function syncCollapsedStyle(node) {
+    walkTree(node, (current) => {
+      current.style ||= {};
+      current.style.collapsed = !!current._collapsed;
+    });
+  }
+
+  function initTreeState(root) {
+    walkTree(root, (node) => {
+      node._matched = false;
+      node._matched_path = false;
+      node._hidden = false;
+      node._collapsed = true;
+    });
+    if (root) {
+      root._collapsed = false;
+    }
+    syncCollapsedStyle(root);
+  }
+
+  function findTreeStateNode(node, targetId) {
+    if (!node || !targetId) return null;
+    if (String(node.id) === String(targetId)) return node;
+    const children = Array.isArray(node.children) ? node.children : [];
+    for (const child of children) {
+      const found = findTreeStateNode(child, targetId);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function setTreeCollapsed(node, collapsed) {
+    if (!node) return;
+    node._collapsed = !!collapsed;
+    node.style ||= {};
+    node.style.collapsed = !!collapsed;
+  }
+
+
+  function buildVisibleGraphData(root, viewportWidth, viewportHeight) {
+    const nodes = [];
+    const edges = [];
+    let rowIndex = 0;
+    const left = TREE_PADDING[3];
+    const top = TREE_PADDING[0];
+    const bottom = TREE_PADDING[2];
+    const rowGap = NODE_HEIGHT + V_GAP;
+
+    function visit(node, depth) {
+      if (!node || node._hidden) return null;
+      const children = Array.isArray(node.children) ? node.children.filter((child) => !child._hidden) : [];
+      const expandedChildren = node._collapsed ? [] : children;
+      const childLayouts = [];
+      for (const child of expandedChildren) {
+        const childLayout = visit(child, depth + 1);
+        if (childLayout) childLayouts.push(childLayout);
+      }
+
+      const y = childLayouts.length > 0
+        ? (childLayouts[0].y + childLayouts[childLayouts.length - 1].y) / 2
+        : rowIndex++ * rowGap;
+      const labelText = node?.style?.labelText || node.name || node.id;
+      const directChildCount = Array.isArray(node.children) ? node.children.length : 0;
+      const isRoot = depth === 0;
+      const nodeWidth = normalizeTextWidth(labelText, isRoot);
+
+      nodes.push({
+        id: node.id,
+        data: {
+          ...(node.data || {}),
+          directChildCount,
+          depth,
+        },
+        children: expandedChildren.map((child) => child.id),
+        style: {
+          ...node.style,
+          x: 0,
+          y,
+          collapsed: !!node._collapsed,
+          directChildCount,
+          labelText,
+          __depth: depth,
+          __width: nodeWidth,
+        },
+      });
+
+      for (const child of expandedChildren) {
+        edges.push({
+          id: `${node.id}__${child.id}`,
+          source: node.id,
+          target: child.id,
+        });
+      }
+
+      return { id: node.id, y, depth, width: nodeWidth };
+    }
+
+    visit(root, 0);
+
+    if (!nodes.length) {
+      return { nodes: [], edges: [] };
+    }
+
+    const maxWidthByDepth = new Map();
+    for (const node of nodes) {
+      const depth = node.style.__depth || 0;
+      const width = node.style.__width || 0;
+      maxWidthByDepth.set(depth, Math.max(maxWidthByDepth.get(depth) || 0, width));
+    }
+
+    const xByDepth = new Map();
+    const maxDepth = Math.max(...nodes.map((node) => node.style.__depth || 0));
+    for (let depth = 0; depth <= maxDepth; depth += 1) {
+      const width = maxWidthByDepth.get(depth) || 0;
+      if (depth === 0) {
+        xByDepth.set(depth, left + width / 2);
+      } else {
+        const prevWidth = maxWidthByDepth.get(depth - 1) || 0;
+        const prevX = xByDepth.get(depth - 1) || left;
+        xByDepth.set(depth, prevX + prevWidth / 2 + H_GAP + width / 2);
+      }
+    }
+
+    const ys = nodes.map((node) => node.style.y);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const contentHeight = Math.max(0, maxY - minY);
+    const availableHeight = Math.max(0, viewportHeight - top - bottom);
+    const offsetY = top + Math.max(0, (availableHeight - contentHeight) / 2) - minY;
+
+    nodes.forEach((node) => {
+      const depth = node.style.__depth || 0;
+      node.style.x = xByDepth.get(depth) || left;
+      node.style.y += offsetY;
+      delete node.style.__depth;
+      delete node.style.__width;
+    });
+
+    return { nodes, edges };
+  }
+
+  async function rerenderFromStateTree() {
+    if (!stateTreeRoot || !lastRenderOptions) return;
+    await renderTreeData(stateTreeRoot, lastRenderOptions);
+  }
+
+  class TEKGMindmapNode extends BaseNode {
     static defaultStyleProps = {
-      ports: [
-        { key: 'in', placement: 'right-bottom' },
-        { key: 'out', placement: 'left-bottom' },
-      ],
-      showIcon: true,
+      showIcon: false,
+      ports: [{ placement: 'right' }, { placement: 'left' }],
     };
 
     constructor(options) {
-      Object.assign(options.style, TEKGIndentedNode.defaultStyleProps);
+      Object.assign(options.style, TEKGMindmapNode.defaultStyleProps);
       super(options);
     }
 
-    get childrenData() {
-      return this.context.model.getChildrenData(this.id) || [];
+    get directChildCount() {
+      return Number(this.parsedAttributes?.directChildCount || 0);
+    }
+
+    get rootNodeId() {
+      return rootId;
     }
 
     getKeyStyle(attributes) {
       const [width, height] = this.getSize(attributes);
-      const keyStyle = super.getKeyStyle(attributes);
       return {
         width,
         height,
-        ...keyStyle,
-        fill: 'transparent',
-        stroke: 'transparent',
+        ...super.getKeyStyle(attributes),
       };
     }
 
@@ -299,44 +438,27 @@
       return subStyleProps(this.getGraphicStyle(attributes), 'label');
     }
 
-    drawIconArea(attributes, container) {
-      const [, h] = this.getSize(attributes);
-      this.upsert(
-        'icon-area',
-        'rect',
-        {
-          fill: 'transparent',
-          height: 30,
-          width: 12,
-          x: -6,
-          y: h,
-          zIndex: -1,
-        },
-        container,
-      );
-    }
-
-    forwardEvent(target, type, listener) {
-      if (target && !Reflect.has(target, '__bind__')) {
-        Reflect.set(target, '__bind__', true);
-        target.addEventListener(type, listener);
-      }
+    isShowCollapse(attributes) {
+      const { collapsed, showIcon } = attributes;
+      return !collapsed && showIcon && this.directChildCount > 0;
     }
 
     getCountStyle(attributes) {
       const { collapsed, color } = attributes;
-      if (!collapsed) return false;
+      const directChildren = this.directChildCount;
+      if (!collapsed || directChildren === 0 || directChildren >= MAX_EXPAND_CHILDREN) return false;
       const [width, height] = this.getSize(attributes);
       return {
         backgroundFill: color,
+        backgroundHeight: 16,
+        backgroundWidth: 16,
         cursor: 'pointer',
         fill: '#fff',
-        fontSize: 8,
-        padding: [0, 10],
+        fontSize: 11,
         text: '+',
         textAlign: 'center',
-        x: width + 10,
-        y: Math.round(height * 0.5) + 1,
+        x: width + 12,
+        y: Math.round(height * 0.5),
       };
     }
 
@@ -349,26 +471,23 @@
       });
     }
 
-    isShowCollapse(attributes) {
-      return !attributes.collapsed && this.childrenData.length > 0;
-    }
-
     getCollapseStyle(attributes) {
-      const { color } = attributes;
-      if (!this.isShowCollapse(attributes)) return false;
+      const { showIcon, color } = attributes;
+      const directChildren = this.directChildCount;
+      if (!this.isShowCollapse(attributes) || directChildren >= MAX_EXPAND_CHILDREN) return false;
       const [width, height] = this.getSize(attributes);
       return {
-        visibility: 'visible',
         backgroundFill: color,
-        backgroundHeight: 12,
-        backgroundWidth: 12,
+        backgroundHeight: 16,
+        backgroundWidth: 16,
         cursor: 'pointer',
         fill: '#fff',
-        fontSize: 10,
+        fontSize: 11,
         text: '-',
         textAlign: 'center',
-        x: width + 10,
-        y: Math.round(height * 0.5) + 1,
+        visibility: showIcon ? 'visible' : 'hidden',
+        x: width + 12,
+        y: Math.round(height * 0.5),
       };
     }
 
@@ -384,24 +503,27 @@
       });
     }
 
+    forwardEvent(target, type, listener) {
+      if (target && !Reflect.has(target, '__bind__')) {
+        Reflect.set(target, '__bind__', true);
+        target.addEventListener(type, listener);
+      }
+    }
+
     render(attributes = this.parsedAttributes, container = this) {
       super.render(attributes, container);
-      this.drawCountShape(attributes, container);
-      this.drawIconArea(attributes, container);
       this.drawCollapseShape(attributes, container);
+      this.drawCountShape(attributes, container);
     }
   }
 
-  class TEKGIndentedEdge extends Polyline {
-    getControlPoints(attributes) {
-      const [sourcePoint, targetPoint] = this.getEndpoints(attributes, false);
-      const [sx] = sourcePoint;
-      const [, ty] = targetPoint;
-      return [[sx, ty]];
+  class TEKGMindmapEdge extends CubicHorizontal {
+    getKeyPath(attributes) {
+      return super.getKeyPath(attributes);
     }
   }
 
-  class TEKGCollapseExpandTree extends BaseBehavior {
+  class TEKGCollapseExpandMindmap extends BaseBehavior {
     constructor(context, options) {
       super(context, options);
       this.bindEvents();
@@ -415,104 +537,57 @@
 
     bindEvents() {
       const { graph } = this.context;
+      graph.on(NodeEvent.POINTER_ENTER, this.showIcon);
+      graph.on(NodeEvent.POINTER_LEAVE, this.hideIcon);
       graph.on(TREE_EVENT.COLLAPSE_EXPAND, this.onCollapseExpand);
     }
 
     unbindEvents() {
       const { graph } = this.context;
+      graph.off(NodeEvent.POINTER_ENTER, this.showIcon);
+      graph.off(NodeEvent.POINTER_LEAVE, this.hideIcon);
       graph.off(TREE_EVENT.COLLAPSE_EXPAND, this.onCollapseExpand);
     }
 
     status = 'idle';
 
+    showIcon = (event) => {
+      this.setIcon(event, true);
+    };
+
+    hideIcon = (event) => {
+      this.setIcon(event, false);
+    };
+
+    setIcon = (event, show) => {
+      if (this.status !== 'idle') return;
+      const id = event?.target?.id;
+      if (!id) return;
+      const { graph, element } = this.context;
+      graph.updateNodeData([{ id, style: { showIcon: show } }]);
+      element.draw({ animation: false, silence: true });
+    };
+
     onCollapseExpand = async (event) => {
       this.status = 'busy';
       const { id, collapsed } = event;
-      const { graph } = this.context;
-      if (collapsed) await graph.collapseElement(id, { animation: false });
-      else await graph.expandElement(id, { animation: false });
-      await activateNode(id, { shouldFocus: false });
-      this.status = 'idle';
-    };
-  }
-
-  class TEKGDragCanvasFast extends BaseBehavior {
-    constructor(context, options) {
-      super(context, options);
-      this.bindEvents();
-    }
-
-    update(options) {
-      this.unbindEvents();
-      super.update(options);
-      this.bindEvents();
-    }
-
-    dragging = false;
-
-    lastPoint = null;
-
-    bindEvents() {
-      const { graph } = this.context;
-      graph.on(CanvasEvent.POINTER_DOWN, this.onPointerDown);
-      graph.on(CommonEvent.POINTER_MOVE, this.onPointerMove);
-      graph.on(CommonEvent.POINTER_UP, this.onPointerUp);
-      graph.on(CommonEvent.POINTER_UP_OUTSIDE, this.onPointerUp);
-      graph.on(CommonEvent.DRAG_END, this.onPointerUp);
-    }
-
-    unbindEvents() {
-      const { graph } = this.context;
-      graph.off(CanvasEvent.POINTER_DOWN, this.onPointerDown);
-      graph.off(CommonEvent.POINTER_MOVE, this.onPointerMove);
-      graph.off(CommonEvent.POINTER_UP, this.onPointerUp);
-      graph.off(CommonEvent.POINTER_UP_OUTSIDE, this.onPointerUp);
-      graph.off(CommonEvent.DRAG_END, this.onPointerUp);
-    }
-
-    getClientPoint(event) {
-      const point = event?.client || event?.nativeEvent || {};
-      const x = Number(point.x ?? point.clientX);
-      const y = Number(point.y ?? point.clientY);
-      if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
-      return { x, y };
-    }
-
-    onPointerDown = (event) => {
-      if (event?.targetType && event.targetType !== 'canvas') return;
-      this.dragging = true;
-      this.lastPoint = this.getClientPoint(event);
-      const { graph } = this.context;
-      if (typeof graph.setCursor === 'function') graph.setCursor('grabbing');
-    };
-
-    onPointerMove = (event) => {
-      if (!this.dragging) return;
-      const currentPoint = this.getClientPoint(event);
-      if (!currentPoint || !this.lastPoint) return;
-      const { graph } = this.context;
-      const dx = (currentPoint.x - this.lastPoint.x) * INTERACTION_TUNING.dragSpeed;
-      const dy = (currentPoint.y - this.lastPoint.y) * INTERACTION_TUNING.dragSpeed;
-      this.lastPoint = currentPoint;
-      if (typeof graph.translateBy === 'function') {
-        graph.translateBy([dx, dy], false);
+      const stateNode = findTreeStateNode(stateTreeRoot, id);
+      const children = Array.isArray(stateNode?.children) ? stateNode.children : [];
+      if (!collapsed && children.length >= MAX_EXPAND_CHILDREN) {
+        this.status = 'idle';
+        return;
       }
-    };
-
-    onPointerUp = () => {
-      this.dragging = false;
-      this.lastPoint = null;
-      const { graph } = this.context;
-      if (typeof graph.setCursor === 'function') graph.setCursor('grab');
+      setTreeCollapsed(stateNode, collapsed);
+      await rerenderFromStateTree();
+      this.status = 'idle';
     };
   }
 
   function ensureRegistered() {
     if (registered) return;
-    register(ExtensionCategory.NODE, 'tekg-indented', TEKGIndentedNode);
-    register(ExtensionCategory.EDGE, 'tekg-indented', TEKGIndentedEdge);
-    register(ExtensionCategory.BEHAVIOR, 'tekg-collapse-expand-tree', TEKGCollapseExpandTree);
-    register(ExtensionCategory.BEHAVIOR, 'tekg-drag-canvas-fast', TEKGDragCanvasFast);
+    register(ExtensionCategory.NODE, 'tekg-mindmap', TEKGMindmapNode);
+    register(ExtensionCategory.EDGE, 'tekg-mindmap', TEKGMindmapEdge);
+    register(ExtensionCategory.BEHAVIOR, 'tekg-mindmap-collapse-expand-tree', TEKGCollapseExpandMindmap);
     registered = true;
   }
 
@@ -521,7 +596,7 @@
     if (!detailEl) return;
     const config = getActiveTreeConfig();
     if (!nodeData) {
-      detailEl.innerHTML = config.defaultDetailHtml || 'G6 indented default-tree view is active.';
+      detailEl.innerHTML = config.defaultDetailHtml || 'G6 mindmap tree view is active.';
       return;
     }
     if (typeof config.buildDetailHtml === 'function') {
@@ -535,16 +610,13 @@
     if (!g6Graph || typeof g6Graph.setElementState !== 'function' || !selectedNodeId) return;
     try {
       g6Graph.setElementState(selectedNodeId, []);
-    } catch (_error) {
-      // stale node ids after rerender can be ignored safely
-    }
+    } catch (_error) {}
     selectedNodeId = null;
   }
 
   function resolveEventNodeId(event) {
     const directId = event?.target?.id;
     if (directId && typeof directId === 'string') return directId;
-
     const candidateIds = [
       event?.target?.config?.id,
       event?.target?.context?.element?.id,
@@ -568,37 +640,11 @@
     }
   }
 
-  async function focusNode(nodeId) {
-    if (!g6Graph || !nodeId || typeof g6Graph.focusElement !== 'function') return;
-    try {
-      await g6Graph.focusElement(nodeId, {
-        duration: INTERACTION_TUNING.focusDuration,
-        easing: 'ease-in-out',
-      });
-      if (typeof focusLevel !== 'undefined' && focusLevel === 100 && typeof g6Graph.getZoom === 'function' && typeof g6Graph.zoomTo === 'function') {
-        const currentZoom = g6Graph.getZoom();
-        const nextZoom = Math.max(currentZoom, INTERACTION_TUNING.localFocusZoom);
-        if (nextZoom !== currentZoom) {
-          await g6Graph.zoomTo(nextZoom, {
-            duration: INTERACTION_TUNING.focusZoomDuration,
-            easing: 'ease-out',
-          });
-        }
-      }
-    } catch (error) {
-      console.warn('G6 focus failed:', error);
-    }
-  }
-
-  async function activateNode(nodeId, { shouldFocus = true } = {}) {
+  async function activateNode(nodeId) {
     if (!g6Graph || !nodeId || typeof g6Graph.getNodeData !== 'function') return;
     const nodeData = g6Graph.getNodeData(nodeId);
     updateDetail(nodeData);
     setSelectedNode(nodeId);
-    const fixedModeEnabled = typeof fixedView !== 'undefined' && fixedView === true;
-    if (shouldFocus && !fixedModeEnabled) {
-      await focusNode(nodeId);
-    }
   }
 
   function destroyGraph() {
@@ -606,20 +652,12 @@
     g6Graph = null;
   }
 
-  function getTreeViewPadding(width, height) {
-    const vertical = Math.max(TREE_VERTICAL_PADDING, Math.round((height || 0) * 0.08));
-    const right = Math.max(TREE_RIGHT_BUFFER_MIN, Math.round((width || 0) * TREE_RIGHT_BUFFER_RATIO));
-    return [vertical, right, vertical, TREE_LEFT_PADDING];
-  }
-
-  function alignTreeViewport(graph, width) {
+  function alignRootToLeft(graph, viewportHeight) {
     if (!graph || typeof graph.translateBy !== 'function') return;
-    const shift = Math.max(TREE_INITIAL_LEFT_SHIFT_MIN, Math.round((width || 0) * TREE_INITIAL_LEFT_SHIFT_RATIO));
-    if (shift <= 0) return;
     try {
-      graph.translateBy([-shift, 0], false);
+      graph.translateBy([INITIAL_ROOT_LEFT_SHIFT, Math.max(0, Math.round(viewportHeight * 0.5))], false);
     } catch (_error) {
-      // If the current G6 build rejects viewport translation here, keep the default fit result.
+      // fallback to default view when viewport translation is unavailable
     }
   }
 
@@ -628,10 +666,6 @@
     try {
       ensureRegistered();
       setRendererVisibility();
-      if (window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.destroy === 'function') {
-        window.__TEKG_G6_DYNAMIC_GRAPH.destroy();
-      }
-
       const host = getEl('g6-default-tree-surface');
       if (!host) return;
 
@@ -644,45 +678,57 @@
         return;
       }
       if (!treeData) {
-        if (detailEl) detailEl.textContent = 'Failed to build G6 tree data.';
+        if (detailEl) detailEl.textContent = 'Failed to build G6 mindmap tree data.';
         return;
       }
+
       rootId = String(options.rootId || treeData.id || '');
       activeTreeConfig = {
         ...buildDefaultTreeConfig(),
         ...(options.config && typeof options.config === 'object' ? options.config : {}),
       };
+      lastRenderOptions = {
+        rootId,
+        config: activeTreeConfig,
+      };
 
       destroyGraph();
       host.innerHTML = '';
+      const visibleData = buildVisibleGraphData(treeData, width, height);
 
       const graph = new Graph({
         container: host,
         width,
         height,
         autoResize: true,
-        autoFit: 'view',
-        padding: getTreeViewPadding(width, height),
+        autoFit: false,
+        padding: TREE_PADDING,
         animation: false,
         cursor: 'grab',
-        data: treeToGraphData(treeData),
+        data: visibleData,
         node: {
-          type: 'tekg-indented',
-          style: {
-            size: (datum) => [normalizeTextWidth(resolveTreeLabel(datum)), NODE_HEIGHT],
-            labelBackground: true,
-            labelBackgroundRadius: 0,
-            labelBackgroundFill: (datum) => (datum.id === rootId ? ROOT_BG : '#ffffff'),
-            labelFill: (datum) => resolveTreeLabelFill(datum),
-            labelFontWeight: (datum) => resolveTreeLabelFontWeight(datum),
-            labelText: (datum) => resolveTreeLabel(datum),
-            labelTextAlign: (datum) => (datum.id === rootId ? 'center' : 'left'),
-            labelTextBaseline: 'top',
-            color: (datum) => {
-              const depth = graph.getAncestorsData(datum.id, 'tree').length - 1;
-              return COLORS[depth % COLORS.length] || ROOT_BG;
-            },
-            showIcon: false,
+          type: 'tekg-mindmap',
+          style: (datum) => {
+            const isRoot = datum.id === rootId;
+            const labelText = resolveTreeLabel(datum);
+            return {
+              direction: isRoot ? 'center' : 'right',
+              labelText,
+              size: [normalizeTextWidth(labelText, isRoot), isRoot ? ROOT_HEIGHT : NODE_HEIGHT],
+              labelFontFamily: 'Gill Sans',
+              labelFontSize: isRoot ? ROOT_FONT_SIZE : NODE_FONT_SIZE,
+              labelPlacement: 'center',
+              labelTextAlign: 'center',
+              labelPadding: isRoot ? [2, 6, 2, 6] : [1, 8, 1, 8],
+              labelFill: isRoot ? ROOT_TEXT : TEXT_COLOR,
+              labelBackground: true,
+              labelBackgroundFill: isRoot ? ROOT_BG : '#ffffff',
+              fill: isRoot ? ROOT_BG : '#ffffff',
+              stroke: isRoot ? ROOT_BG : COLORS[Math.max(0, (datum?.data?.treeDepth || 1) - 1) % COLORS.length],
+              radius: 999,
+              color: isRoot ? ROOT_BG : COLORS[Math.max(0, (datum?.data?.treeDepth || 1) - 1) % COLORS.length],
+              lineWidth: isRoot ? 1.4 : 1.2,
+            };
           },
           state: {
             selected: {
@@ -696,35 +742,16 @@
           },
         },
         edge: {
-          type: 'tekg-indented',
+          type: 'tekg-mindmap',
           style: {
-            radius: 16,
-            lineWidth: 2,
-            sourcePort: 'out',
-            targetPort: 'in',
-            stroke: (datum) => {
-              const depth = graph.getAncestorsData(datum.source, 'tree').length;
-              return COLORS[depth % COLORS.length] || COLORS[0];
-            },
+            lineWidth: 1.4,
+            stroke: EDGE_COLOR,
           },
-        },
-        layout: {
-          type: 'indented',
-          direction: 'LR',
-          isHorizontal: true,
-          indent: INDENT,
-          getHeight: () => NODE_HEIGHT,
-          getVGap: () => V_GAP,
         },
         behaviors: [
-          {
-            type: 'tekg-drag-canvas-fast',
-          },
-          {
-            type: 'zoom-canvas',
-            sensitivity: INTERACTION_TUNING.zoomSensitivity,
-          },
-          'tekg-collapse-expand-tree',
+          'drag-canvas',
+          'zoom-canvas',
+          'tekg-mindmap-collapse-expand-tree',
           {
             type: 'click-select',
             enable: (event) => event.targetType === 'node' && event.target.id !== rootId,
@@ -734,7 +761,6 @@
 
       g6Graph = graph;
       await graph.render();
-      alignTreeViewport(graph, width);
       clearSelectedNode();
       updateDetail(null);
 
@@ -742,38 +768,28 @@
         const targetId = resolveEventNodeId(event);
         if (!targetId || typeof graph.getNodeData !== 'function') return;
         const nodeData = graph.getNodeData(targetId);
-        const fixedModeEnabled = typeof fixedView !== 'undefined' && fixedView === true;
-        const homePreviewMode = window.__TEKG_EMBED_MODE === 'home-preview';
         try {
           if (typeof activeTreeConfig?.onNodeClick === 'function') {
             const handled = await activeTreeConfig.onNodeClick(nodeData, {
               nodeId: targetId,
-              fixedModeEnabled,
-              homePreviewMode,
-              loadDynamicGraph(query) {
-                if (typeof window.__TEKG_LOAD_DYNAMIC_GRAPH !== 'function') {
-                  return Promise.reject(new Error('Dynamic graph loader is unavailable.'));
-                }
-                return window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
-              },
+              fixedModeEnabled: typeof fixedView !== 'undefined' && fixedView === true,
+              homePreviewMode: window.__TEKG_EMBED_MODE === 'home-preview',
             });
             if (handled) return;
           }
         } catch (error) {
-          const detailEl = getEl('node-details');
           if (detailEl) {
-            detailEl.textContent = `G6 tree click failed to load dynamic graph: ${error && error.message ? error.message : 'unknown error'}`;
+            detailEl.textContent = `G6 mindmap tree click failed: ${error && error.message ? error.message : 'unknown error'}`;
           }
-          console.error('G6 tree click failed to load dynamic graph:', error);
           return;
         }
-        await activateNode(targetId, { shouldFocus: true });
+        await activateNode(targetId);
       });
     } catch (error) {
       if (detailEl) {
-        detailEl.textContent = `G6 default tree failed: ${error && error.message ? error.message : 'unknown error'}`;
+        detailEl.textContent = `G6 mindmap tree failed: ${error && error.message ? error.message : 'unknown error'}`;
       }
-      console.error('G6 default tree failed:', error);
+      console.error('G6 mindmap tree failed:', error);
     }
   }
 
@@ -781,12 +797,13 @@
     const detailEl = getEl('node-details');
     const source = buildStrictTreeSource();
     if (!source.rootId) {
-      if (detailEl) detailEl.textContent = 'Default tree data is unavailable.';
+      if (detailEl) detailEl.textContent = 'Mindmap tree data is unavailable.';
       return;
     }
 
-    const treeData = buildTreeNode(source.rootId, source);
-    await renderTreeData(treeData, {
+    stateTreeRoot = buildTreeNode(source.rootId, source);
+    initTreeState(stateTreeRoot);
+    await renderTreeData(stateTreeRoot, {
       rootId: source.rootId,
       config: buildDefaultTreeConfig(),
     });
@@ -794,51 +811,20 @@
 
   async function renderStructuredTree(options = {}) {
     const treeData = options && typeof options === 'object' ? options.treeData : null;
-    await renderTreeData(treeData, {
+    stateTreeRoot = treeData || null;
+    if (stateTreeRoot) {
+      initTreeState(stateTreeRoot);
+    }
+    await renderTreeData(stateTreeRoot, {
       rootId: options.rootId,
       config: options.config,
     });
   }
 
-  function bindTriggers() {
-    if (isBound) return;
-    isBound = true;
-
-    const resetBtn = getEl('reset-graph');
-    if (resetBtn) resetBtn.addEventListener('click', () => setTimeout(renderDefaultTree, 0));
-
-    const zhBtn = getEl('lang-zh');
-    const enBtn = getEl('lang-en');
-    if (zhBtn) zhBtn.addEventListener('click', () => setTimeout(renderDefaultTree, 0));
-    if (enBtn) enBtn.addEventListener('click', () => setTimeout(renderDefaultTree, 0));
-
-    window.addEventListener('resize', () => {
-      if (!g6Graph || typeof g6Graph.resize !== 'function') return;
-      const host = getEl('g6-default-tree-surface');
-      if (!host) return;
-      const width = host.clientWidth || host.offsetWidth;
-      const height = host.clientHeight || host.offsetHeight;
-      if (width && height) g6Graph.resize(width, height);
-    });
-
-    window.addEventListener('tekg:shared-ready', () => {
-      if (window.__TEKG_G6_BOOTSTRAP_OWN_TREE) return;
-      renderDefaultTree();
-    });
-
-      if (!window.__TEKG_G6_BOOTSTRAP_OWN_TREE) {
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-          setTimeout(renderDefaultTree, 0);
-        } else {
-          window.addEventListener('DOMContentLoaded', () => setTimeout(renderDefaultTree, 0), { once: true });
-        }
-      }
-    }
-
-  bindTriggers();
-  window.__TEKG_G6_DEFAULT_TREE = {
+  window.__TEKG_G6_MINDMAP_TREE = {
     render: renderDefaultTree,
     renderStructuredTree,
     destroy: destroyGraph,
   };
+  window.__TEKG_G6_DEFAULT_TREE = window.__TEKG_G6_MINDMAP_TREE;
 }());
