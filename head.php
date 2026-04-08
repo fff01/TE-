@@ -13,6 +13,7 @@ $navItems = [
     'home' => ['label' => 'Home', 'href' => $protoBasePath . '/index.php'],
     'preview' => ['label' => 'Preview', 'href' => $protoBasePath . '/preview.php'],
     'search' => ['label' => 'Search', 'href' => $protoBasePath . '/search.php'],
+    'browse' => ['label' => 'Browse', 'href' => $protoBasePath . '/browse.php'],
     'download' => ['label' => 'Download', 'href' => $protoBasePath . '/download.php'],
     'about' => ['label' => 'About', 'href' => $protoBasePath . '/about.php'],
 ];
@@ -77,9 +78,10 @@ $g6Url = site_url_with_state($protoCurrentPath, $siteLang, 'g6', $currentQueryPa
     }
 
     .proto-header-inner {
-      max-width: 1320px;
+      max-width: 1720px;
       margin: 0 auto;
-      padding: 0 28px;
+      padding: 0 10px;
+      width: min(100%, 1720px);
       min-height: 82px;
       display: flex;
       align-items: center;
@@ -132,6 +134,7 @@ $g6Url = site_url_with_state($protoCurrentPath, $siteLang, 'g6', $currentQueryPa
       gap: 16px;
       flex-wrap: nowrap;
       justify-content: flex-end;
+      margin-left: auto;
     }
 
     .proto-nav {
@@ -226,8 +229,8 @@ $g6Url = site_url_with_state($protoCurrentPath, $siteLang, 'g6', $currentQueryPa
 
     @media (max-width: 680px) {
       .proto-header-inner {
-        padding-left: 18px;
-        padding-right: 18px;
+        padding-left: 10px;
+        padding-right: 10px;
       }
 
       .proto-brand {

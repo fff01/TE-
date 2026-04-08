@@ -21,6 +21,9 @@
 ![alt text](imgs/browse.png)
 6. 扩充数据库
    + 将data/rmsk.txt作为新的详情页，替代repbase
+   + 或者先这样吧，先暂时不讨论browse，先看看队友提供的新数据吧，位于data\rmsk.txt和data_update文件夹的所有文件。你大致浏览一下，看看目前待更新的数据有哪些？
+
+7. 把overview右边的TE分类树图换成LINE1，且关键节点层数为2的动态图
 ---
 
 ## 补充说明

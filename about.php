@@ -373,6 +373,7 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['emb
                   <a href="#introduction" data-pane="introduction" class="is-active">Introduction</a>
                   <a href="#preview" data-pane="preview">Preview</a>
                   <a href="#search" data-pane="search">Search</a>
+                  <a href="#browse" data-pane="browse">Browse</a>
                   <a href="#download" data-pane="download">Download</a>
                 </nav>
               </aside>
@@ -434,6 +435,40 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['emb
                   </div>
                 </section>
 
+                <section class="about-pane" id="pane-browse">
+                  <div class="about-block">
+                    <h4>Browse</h4>
+                    <p>The browse page is intended as a structured entry point for exploring TE classes and TE records in a table-first view inspired by Dfam. Instead of starting from a graph query, users can scan a catalog-style layout, narrow the visible rows with lightweight filters, and move into Search or Preview only when they need more detail.</p>
+                    <p>The first browse iteration focuses on page structure rather than full data interaction: a left filter panel, a main results table, and a header area reserved for summary and search controls. This gives the project a clear database-style browsing surface without changing the existing graph workflows.</p>
+                    <div class="download-mock">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>TE name</th>
+                            <th>Class</th>
+                            <th>Family</th>
+                            <th>Species</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td><em>L1HS</em></td>
+                            <td>Retrotransposon</td>
+                            <td>LINE</td>
+                            <td>Homo sapiens</td>
+                          </tr>
+                          <tr>
+                            <td><em>AluYa5</em></td>
+                            <td>Retrotransposon</td>
+                            <td>SINE</td>
+                            <td>Homo sapiens</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </section>
+
                 <section class="about-pane" id="pane-download">
                   <div class="about-block">
                     <h4>Download</h4>
@@ -491,6 +526,7 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['emb
             introduction: document.getElementById('pane-introduction'),
             search: document.getElementById('pane-search'),
             preview: document.getElementById('pane-preview'),
+            browse: document.getElementById('pane-browse'),
             download: document.getElementById('pane-download')
           };
 
