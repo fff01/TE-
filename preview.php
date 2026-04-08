@@ -40,6 +40,45 @@ if ($siteRenderer === 'g6') {
           background: #fff;
         }
 
+        .preview-fullscreen-btn {
+          position: absolute;
+          top: 92px;
+          right: 18px;
+          z-index: 40;
+          border: 1px solid rgba(219, 231, 243, 0.95);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.96);
+          color: #18345f;
+          padding: 10px 16px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+          transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        }
+
+        .preview-fullscreen-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 16px 30px rgba(15, 23, 42, 0.16);
+        }
+
+        .preview-stage.is-immersive {
+          background: #ffffff;
+        }
+
+        .preview-stage.is-immersive .preview-fullscreen-btn,
+        .preview-stage.is-immersive .qa-overlay-layer {
+          display: none;
+        }
+
+        .preview-stage:fullscreen,
+        .preview-stage:-webkit-full-screen {
+          width: 100vw;
+          height: 100vh;
+          min-height: 100vh;
+          background: #ffffff;
+        }
+
         .qa-overlay-layer {
           position: absolute;
           inset: 0;
@@ -49,7 +88,7 @@ if ($siteRenderer === 'g6') {
 
         .qa-drawer {
           position: absolute;
-          top: 18px;
+          top: 92px;
           right: 18px;
           bottom: 18px;
           width: min(430px, calc(100vw - 36px));
@@ -125,7 +164,10 @@ if ($siteRenderer === 'g6') {
         }
       </style>
 
-      <section class="preview-stage" data-renderer="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
+      <section class="preview-stage" id="previewStage" data-renderer="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
+        <button class="preview-fullscreen-btn" id="previewFullscreenBtn" type="button" aria-label="Enter fullscreen preview">
+          Fullscreen
+        </button>
         <iframe
           id="preview-graph-frame"
           class="preview-graph-frame"
@@ -160,11 +202,13 @@ if ($siteRenderer === 'g6') {
         (() => {
           const rendererMode = <?= json_encode($siteRenderer, JSON_UNESCAPED_UNICODE) ?>;
           const header = document.getElementById('protoHeader');
+          const stage = document.getElementById('previewStage');
+          const fullscreenBtn = document.getElementById('previewFullscreenBtn');
           const graphFrame = document.getElementById('preview-graph-frame');
           const qaFrame = document.getElementById('preview-qa-frame');
           const overlay = document.getElementById('qaOverlay');
           const fab = document.getElementById('qaFab');
-          if (!graphFrame || !qaFrame || !overlay || !fab) return;
+          if (!stage || !fullscreenBtn || !graphFrame || !qaFrame || !overlay || !fab) return;
 
           let qaLoaded = false;
           let boundGraphWindow = null;
@@ -302,13 +346,37 @@ if ($siteRenderer === 'g6') {
             qaFrame.src = qaFrame.dataset.src || '';
           }
 
+          function updateImmersiveState() {
+            const immersive = document.fullscreenElement === stage;
+            stage.classList.toggle('is-immersive', immersive);
+            if (immersive) {
+              overlay.classList.remove('is-open');
+            }
+          }
+
+          async function enterFullscreenPreview() {
+            if (document.fullscreenElement === stage) return;
+            try {
+              await stage.requestFullscreen();
+            } catch (_error) {}
+          }
+
           function toggleOverlay() {
+            if (stage.classList.contains('is-immersive')) return;
             const willOpen = !overlay.classList.contains('is-open');
             overlay.classList.toggle('is-open', willOpen);
             if (willOpen) {
               ensureQaLoaded();
             }
           }
+
+          fullscreenBtn.addEventListener('click', () => {
+            enterFullscreenPreview();
+          });
+
+          document.addEventListener('fullscreenchange', () => {
+            updateImmersiveState();
+          });
 
           graphFrame.addEventListener('load', () => {
             if (rendererMode === 'g6') {
@@ -375,6 +443,7 @@ if ($siteRenderer === 'g6') {
 
           clampFabPosition();
           updateFabPosition();
+          updateImmersiveState();
         })();
       </script>
     </main>
