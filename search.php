@@ -44,6 +44,16 @@ function tekg_repbase_lookup_proto(string $query): ?array
         if (($entry['id'] ?? '') !== $entryId) {
             continue;
         }
+        $sequenceSummary = (string) (($entry['sequence_summary']['raw'] ?? '') ?: '');
+        $lengthBp = null;
+        if ($sequenceSummary !== '' && preg_match('/(\d+)\s*BP/i', $sequenceSummary, $matches) === 1) {
+            $lengthBp = (int) $matches[1];
+        } else {
+            $sequence = preg_replace('/\s+/', '', (string) ($entry['sequence'] ?? '')) ?? '';
+            if ($sequence !== '') {
+                $lengthBp = strlen($sequence);
+            }
+        }
         return [
             'matched' => $query,
             'id' => (string) ($entry['id'] ?? ''),
@@ -51,7 +61,8 @@ function tekg_repbase_lookup_proto(string $query): ?array
             'description' => (string) ($entry['description'] ?? ''),
             'keywords' => is_array($entry['keywords'] ?? null) ? implode(', ', $entry['keywords']) : '',
             'species' => (string) ($entry['species'] ?? ''),
-            'sequence_summary' => (string) (($entry['sequence_summary']['raw'] ?? '') ?: ''),
+            'sequence_summary' => $sequenceSummary,
+            'length_bp' => $lengthBp,
             'reference_count' => is_array($entry['references'] ?? null) ? count($entry['references']) : 0,
         ];
     }
@@ -214,7 +225,7 @@ require __DIR__ . '/head.php';
 
         .search-layout {
           display: grid;
-          grid-template-columns: minmax(340px, .92fr) minmax(0, 1.35fr);
+          grid-template-columns: 1fr;
           gap: 22px;
           align-items: start;
         }
@@ -247,6 +258,10 @@ require __DIR__ . '/head.php';
           min-height: 120px;
         }
 
+        .search-layout.is-hidden {
+          display: none;
+        }
+
         .graph-panel {
           background: #ffffff;
           border: 1px solid #dbe7f8;
@@ -256,7 +271,6 @@ require __DIR__ . '/head.php';
           display: flex;
           flex-direction: column;
           gap: 14px;
-          min-height: 720px;
         }
 
         .graph-panel-head {
@@ -272,27 +286,52 @@ require __DIR__ . '/head.php';
           color: #214b8d;
         }
 
-        .graph-reset {
+        .graph-toggle {
           border: 1px solid #dce5f3;
           border-radius: 8px;
           background: #eef4ff;
           color: #2753b7;
-          padding: 10px 16px;
+          width: 44px;
+          height: 40px;
+          font-size: 20px;
+          line-height: 1;
           font-weight: 700;
           cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .graph-frame {
-          flex: 1;
-          min-height: 640px;
+          flex: 0 0 auto;
+          max-height: 680px;
           border: 1px solid #d8e4f0;
           border-radius: 10px;
           background: linear-gradient(180deg, #ffffff 0%, #eef5ff 100%);
+          overflow: hidden;
+          opacity: 1;
+          transform: translateY(0);
+          margin-top: 4px;
+          transition:
+            max-height 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 0.22s ease,
+            transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+            margin-top 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+            border-color 0.22s ease;
+        }
+
+        .graph-panel.is-collapsed .graph-frame {
+          max-height: 0;
+          opacity: 0;
+          transform: translateY(-10px);
+          margin-top: 0;
+          border-color: transparent;
+          pointer-events: none;
         }
 
         .graph-frame iframe {
           width: 100%;
-          height: 100%;
+          height: 640px;
           min-height: 640px;
           border: 0;
           display: block;
@@ -368,36 +407,33 @@ require __DIR__ . '/head.php';
             </form>
           </section>
 
-          <section class="search-layout">
-            <div class="side-stack">
-              <section class="data-panel">
-                <h3>Repbase Reference</h3>
-                <div id="search-repbase" class="panel-body">
-                  <?php if ($repbase !== null): ?>
-                    <div><strong>Matched name: </strong><?= htmlspecialchars($repbase['matched'], ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Repbase ID: </strong><?= htmlspecialchars($repbase['id'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Canonical name: </strong><?= htmlspecialchars($repbase['nm'] ?: $repbase['id'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Description: </strong><?= htmlspecialchars($repbase['description'] ?: 'No description', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Keywords: </strong><?= htmlspecialchars($repbase['keywords'] ?: 'No keywords', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Species: </strong><?= htmlspecialchars($repbase['species'] ?: 'No species information', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Sequence summary: </strong><?= htmlspecialchars($repbase['sequence_summary'] ?: 'No sequence summary', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Reference count: </strong><?= htmlspecialchars((string) ($repbase['reference_count'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
-                  <?php elseif ($query !== ''): ?>
-                    The current query is not found in the aligned Repbase subset. If the best match is a TE, the page will try again using the best-matched TE name.
-                  <?php else: ?>
-                    This block shows Repbase information for TE entries aligned to the current database, including canonical name, description, keywords, species, and sequence summary.
-                  <?php endif; ?>
-                </div>
-              </section>
-            </div>
+          <section id="search-results" class="search-layout<?= $query === '' ? ' is-hidden' : '' ?>">
+            <section class="data-panel">
+              <h3>Summary</h3>
+              <div id="search-summary" class="panel-body">
+                <?php if ($repbase !== null): ?>
+                  <div><strong>Matched query: </strong><?= htmlspecialchars($repbase['matched'], ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Entity type: </strong>TE</div>
+                  <div><strong>Name: </strong><?= htmlspecialchars($repbase['nm'] ?: $repbase['id'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Description: </strong><?= htmlspecialchars($repbase['description'] ?: 'No description', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Keywords: </strong><?= htmlspecialchars($repbase['keywords'] ?: 'No keywords', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Length: </strong><?= htmlspecialchars($repbase['length_bp'] !== null ? ((string) $repbase['length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Reference count: </strong><?= htmlspecialchars((string) ($repbase['reference_count'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
+                <?php elseif ($query !== ''): ?>
+                  No structured TE summary is available for the current query yet.
+                <?php else: ?>
+                  Search for a TE, disease, function, or PMID to view a concise summary here.
+                <?php endif; ?>
+              </div>
+            </section>
 
-            <section class="graph-panel">
+            <section id="search-graph-panel" class="graph-panel is-collapsed">
               <div class="graph-panel-head">
                 <h3>Local Graph</h3>
-                <button id="search-reset-graph" type="button" class="graph-reset">Reset Graph</button>
+                <button id="search-graph-toggle" type="button" class="graph-toggle" aria-expanded="false" aria-controls="search-graph-frame-wrap" title="Expand local graph"><span id="search-graph-toggle-icon" aria-hidden="true">&#9662;</span></button>
               </div>
               <?php if ($siteRenderer === 'g6'): ?>
-                <div class="graph-frame">
+                <div id="search-graph-frame-wrap" class="graph-frame">
                   <iframe
                     id="search-g6-frame"
                     src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
@@ -405,7 +441,7 @@ require __DIR__ . '/head.php';
                   ></iframe>
                 </div>
               <?php else: ?>
-                <div class="graph-frame">
+                <div id="search-graph-frame-wrap" class="graph-frame">
                   <iframe
                     id="search-cyt-frame"
                     src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
@@ -437,34 +473,28 @@ require __DIR__ . '/head.php';
         const lang = <?= json_encode($siteLang, JSON_UNESCAPED_UNICODE) ?>;
         const renderer = <?= json_encode($siteRenderer, JSON_UNESCAPED_UNICODE) ?>;
         const texts = {
-          te: 'TE',
-          disease: 'Disease',
-          function: 'Function/Mechanism',
-          paper: 'Paper',
-          relation: 'relation',
-          evidence: 'Evidence: ',
           emptyNode: 'No additional description is available for this node.',
-          searching: 'Searching for',
-          repbaseDefault: 'This block shows Repbase information for TE entries aligned to the current database, including canonical name, description, keywords, species, and sequence summary.',
-          repbaseMissing: 'The current query is not found in the aligned Repbase subset.',
-          repbaseError: 'Failed to load Repbase reference: ',
-          repbaseUnavailable: 'Repbase reference is temporarily unavailable.',
+          summaryDefault: 'Search for a TE, disease, function, or PMID to view a concise summary here.',
+          summaryMissing: 'No structured TE summary is available for the current query yet.',
+          summaryError: 'Failed to update summary: ',
           noDescription: 'No description',
           noKeywords: 'No keywords',
-          noSpecies: 'No species information',
-          noSequence: 'No sequence summary',
-          matchName: 'Matched name: ',
-          canonicalName: 'Canonical name: ',
+          noLength: 'No length available',
+          matchedQuery: 'Matched query: ',
+          entityType: 'Entity type: ',
+          name: 'Name: ',
           description: 'Description: ',
           keywords: 'Keywords: ',
-          species: 'Species: ',
-          sequenceSummary: 'Sequence summary: ',
+          length: 'Length: ',
           referenceCount: 'Reference count: ',
         };
 
-        const repbaseEl = document.getElementById('search-repbase');
+        const searchResultsEl = document.getElementById('search-results');
+        const summaryEl = document.getElementById('search-summary');
         const resetBtn = document.getElementById('search-reset');
-        const resetGraphBtn = document.getElementById('search-reset-graph');
+        const graphPanelEl = document.getElementById('search-graph-panel');
+        const graphToggleBtn = document.getElementById('search-graph-toggle');
+        const graphToggleIconEl = document.getElementById('search-graph-toggle-icon');
         const exampleBtn = document.getElementById('search-example');
         const searchForm = document.getElementById('search-form');
         const queryInput = document.getElementById('search-query');
@@ -489,21 +519,30 @@ require __DIR__ . '/head.php';
           return repbaseDataPromise;
         }
 
-        function renderRepbaseCard(repbase, matchedName) {
+        function renderSummaryCard(repbase, matchedName) {
           return [
-            '<div><strong>' + texts.matchName + '</strong>' + matchedName + '</div>',
-            '<div><strong>Repbase ID: </strong>' + (repbase.id || '-') + '</div>',
-            '<div><strong>' + texts.canonicalName + '</strong>' + (repbase.name || repbase.id || '-') + '</div>',
+            '<div><strong>' + texts.matchedQuery + '</strong>' + matchedName + '</div>',
+            '<div><strong>' + texts.entityType + '</strong>TE</div>',
+            '<div><strong>' + texts.name + '</strong>' + (repbase.name || repbase.id || '-') + '</div>',
             '<div><strong>' + texts.description + '</strong>' + (repbase.description || texts.noDescription) + '</div>',
             '<div><strong>' + texts.keywords + '</strong>' + ((repbase.keywords && repbase.keywords.length) ? repbase.keywords.join(', ') : texts.noKeywords) + '</div>',
-            '<div><strong>' + texts.species + '</strong>' + (repbase.species || texts.noSpecies) + '</div>',
-            '<div><strong>' + texts.sequenceSummary + '</strong>' + ((repbase.sequence_summary && repbase.sequence_summary.raw) ? repbase.sequence_summary.raw : texts.noSequence) + '</div>',
+            '<div><strong>' + texts.length + '</strong>' + (repbase.length_bp ? `${repbase.length_bp} bp` : texts.noLength) + '</div>',
             '<div><strong>' + texts.referenceCount + '</strong>' + ((repbase.references && repbase.references.length) ? repbase.references.length : 0) + '</div>'
           ].join('');
         }
 
-        async function updateRepbaseBlock(query, payload) {
-          if (!repbaseEl) return;
+        function renderAnchorSummary(anchor, query, note = '') {
+          const displayName = anchor && (anchor.standard_name || anchor.name) ? (anchor.standard_name || anchor.name) : (query || '-');
+          return [
+            '<div><strong>' + texts.matchedQuery + '</strong>' + (query || displayName) + '</div>',
+            '<div><strong>' + texts.entityType + '</strong>' + ((anchor && anchor.type) ? anchor.type : 'Entity') + '</div>',
+            '<div><strong>' + texts.name + '</strong>' + displayName + '</div>',
+            '<div><strong>' + texts.description + '</strong>' + (((anchor && anchor.description) ? anchor.description : '') || note || texts.summaryMissing) + '</div>'
+          ].join('');
+        }
+
+        async function updateSummaryBlock(query, payload) {
+          if (!summaryEl) return;
           const anchor = payload && payload.anchor ? payload.anchor : null;
           const candidateNames = [];
           if (anchor && anchor.type === 'TE') {
@@ -512,8 +551,12 @@ require __DIR__ . '/head.php';
           }
           if (query) candidateNames.push(query);
           const uniqueNames = Array.from(new Set(candidateNames.filter(Boolean)));
+          if (anchor && anchor.type && anchor.type !== 'TE') {
+            summaryEl.innerHTML = renderAnchorSummary(anchor, query, texts.summaryMissing);
+            return;
+          }
           if (!uniqueNames.length) {
-            repbaseEl.innerHTML = texts.repbaseDefault;
+            summaryEl.innerHTML = texts.summaryDefault;
             return;
           }
           try {
@@ -533,17 +576,36 @@ require __DIR__ . '/head.php';
               return false;
             });
             if (!matchedId || !entryById.has(matchedId)) {
-              repbaseEl.innerHTML = texts.repbaseMissing;
+              summaryEl.innerHTML = anchor ? renderAnchorSummary(anchor, query, texts.summaryMissing) : texts.summaryMissing;
               return;
             }
-            repbaseEl.innerHTML = renderRepbaseCard(entryById.get(matchedId), matchedName || matchedId);
+            summaryEl.innerHTML = renderSummaryCard(entryById.get(matchedId), matchedName || matchedId);
           } catch (err) {
-            repbaseEl.innerHTML = texts.repbaseError + (err && err.message ? err.message : 'unknown error');
+            summaryEl.innerHTML = texts.summaryError + (err && err.message ? err.message : 'unknown error');
           }
         }
 
         const g6BaseSrc = <?= json_encode(site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
         const cytBaseSrc = <?= json_encode(site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
+
+        function setResultsVisible(visible) {
+          if (!searchResultsEl) return;
+          searchResultsEl.classList.toggle('is-hidden', !visible);
+        }
+
+        function setGraphExpanded(expanded) {
+          if (!graphPanelEl || !graphToggleBtn) return;
+          graphPanelEl.classList.toggle('is-collapsed', !expanded);
+          graphToggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+          if (graphToggleIconEl) {
+            graphToggleIconEl.innerHTML = expanded ? '&#9652;' : '&#9662;';
+          }
+          graphToggleBtn.title = expanded ? 'Collapse local graph' : 'Expand local graph';
+          if (expanded && renderer !== 'g6') {
+            setTimeout(resizeCytFrame, 120);
+            setTimeout(resizeCytFrame, 420);
+          }
+        }
 
         function setG6Frame(query) {
           const frame = document.getElementById('search-g6-frame');
@@ -579,10 +641,19 @@ require __DIR__ . '/head.php';
 
         async function runSearch(query) {
           if (!query) {
-            repbaseEl.innerHTML = texts.repbaseDefault;
-            if (renderer === 'g6') setG6Frame('');
+            setResultsVisible(false);
+            setGraphExpanded(false);
+            summaryEl.innerHTML = texts.summaryDefault;
+            if (renderer === 'g6') {
+              setG6Frame('');
+            } else {
+              setCytFrame('');
+            }
             return;
           }
+
+          setResultsVisible(true);
+          setGraphExpanded(false);
 
           try {
             const searchUrl = new URL('/TE-/api/graph.php', window.location.origin);
@@ -596,14 +667,16 @@ require __DIR__ . '/head.php';
             if (!response.ok || !payload || payload.ok === false) {
               throw new Error((payload && payload.error) || 'search failed');
             }
-            await updateRepbaseBlock(query, payload);
+            await updateSummaryBlock(query, payload);
             if (renderer === 'g6') {
               setG6Frame(query);
             } else {
               setCytFrame(query);
             }
           } catch (err) {
-            repbaseEl.innerHTML = texts.repbaseError + (err && err.message ? err.message : 'unknown error');
+            setResultsVisible(true);
+            setGraphExpanded(false);
+            summaryEl.innerHTML = texts.summaryError + (err && err.message ? err.message : 'unknown error');
           }
         }
 
@@ -628,13 +701,13 @@ require __DIR__ . '/head.php';
           });
         }
 
-        if (resetGraphBtn) {
-          resetGraphBtn.addEventListener('click', function () {
-            if (renderer === 'g6') {
-              setG6Frame('');
-            } else {
-              setCytFrame('');
+        if (graphToggleBtn) {
+          graphToggleBtn.addEventListener('click', function () {
+            if (searchResultsEl && searchResultsEl.classList.contains('is-hidden')) {
+              return;
             }
+            const expanded = graphPanelEl ? graphPanelEl.classList.contains('is-collapsed') : false;
+            setGraphExpanded(expanded);
           });
         }
 
