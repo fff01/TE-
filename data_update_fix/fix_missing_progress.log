@@ -1,0 +1,1716 @@
+2026-04-09 12:41:18,707 - INFO - 已备份原文件至 C:\Users\fongi\Desktop\TE\data_update_fix\te_kg2_final_standardized_new.jsonl.fix_missing_backup
+2026-04-09 12:41:18,790 - INFO - 总文献数: 2307, 存在缺失实体的文献数: 746
+2026-04-09 12:41:18,791 - INFO - 缺失实体统计已保存至 C:\Users\fongi\Desktop\TE\data_update_fix\missing_entities_stats.txt
+2026-04-09 12:41:18,792 - INFO - 待处理文献数: 746
+2026-04-09 12:41:18,792 - INFO - 共分为 4 个批次，每批最多 200 篇
+2026-04-09 12:41:18,792 - INFO - 开始处理第 1/4 批次，包含 200 篇文献
+2026-04-09 12:41:25,038 - WARNING - API调用失败 (PMID 2831458, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,116 - WARNING - API调用失败 (PMID 7963508, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,140 - WARNING - API调用失败 (PMID 2463956, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,151 - WARNING - API调用失败 (PMID 3001638, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,152 - WARNING - API调用失败 (PMID 8384324, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,153 - WARNING - API调用失败 (PMID 2566545, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,168 - WARNING - API调用失败 (PMID 1662412, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,171 - WARNING - API调用失败 (PMID 8381385, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,176 - WARNING - API调用失败 (PMID 1548934, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,177 - WARNING - API调用失败 (PMID 8381389, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,193 - WARNING - API调用失败 (PMID 3009826, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,205 - WARNING - API调用失败 (PMID 8387534, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,211 - WARNING - API调用失败 (PMID 7920631, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,211 - WARNING - API调用失败 (PMID 2559294, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,226 - WARNING - API调用失败 (PMID 6323978, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,237 - WARNING - API调用失败 (PMID 8393987, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,244 - WARNING - API调用失败 (PMID 2497061, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,275 - WARNING - API调用失败 (PMID 6096208, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,294 - WARNING - API调用失败 (PMID 2839298, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,300 - WARNING - API调用失败 (PMID 1279394, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,325 - WARNING - API调用失败 (PMID 1662391, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,356 - WARNING - API调用失败 (PMID 7693554, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,370 - WARNING - API调用失败 (PMID 8385341, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,476 - WARNING - API调用失败 (PMID 8114745, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:25,555 - WARNING - API调用失败 (PMID 1320255, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,111 - WARNING - API调用失败 (PMID 2831458, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,180 - WARNING - API调用失败 (PMID 7963508, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,196 - WARNING - API调用失败 (PMID 2463956, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,230 - WARNING - API调用失败 (PMID 1548934, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,240 - WARNING - API调用失败 (PMID 8384324, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,248 - WARNING - API调用失败 (PMID 2566545, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,248 - WARNING - API调用失败 (PMID 3009826, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,253 - WARNING - API调用失败 (PMID 1662412, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,259 - WARNING - API调用失败 (PMID 8387534, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,267 - WARNING - API调用失败 (PMID 2559294, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,276 - WARNING - API调用失败 (PMID 7920631, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,280 - WARNING - API调用失败 (PMID 3001638, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,299 - WARNING - API调用失败 (PMID 8381385, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,312 - WARNING - API调用失败 (PMID 6323978, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,337 - WARNING - API调用失败 (PMID 8381389, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,345 - WARNING - API调用失败 (PMID 6096208, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,365 - WARNING - API调用失败 (PMID 1279394, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,369 - WARNING - API调用失败 (PMID 2839298, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,385 - WARNING - API调用失败 (PMID 1662391, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,400 - WARNING - API调用失败 (PMID 8393987, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,424 - WARNING - API调用失败 (PMID 8385341, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,425 - WARNING - API调用失败 (PMID 7693554, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,464 - WARNING - API调用失败 (PMID 2497061, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,609 - WARNING - API调用失败 (PMID 1320255, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:27,675 - WARNING - API调用失败 (PMID 8114745, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,175 - WARNING - API调用失败 (PMID 2831458, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,179 - WARNING - PMID 2831458 补全API返回空，跳过
+2026-04-09 12:41:31,237 - WARNING - API调用失败 (PMID 7963508, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,237 - WARNING - API调用失败 (PMID 1660526, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,238 - WARNING - PMID 7963508 补全API返回空，跳过
+2026-04-09 12:41:31,284 - WARNING - API调用失败 (PMID 2463956, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,285 - WARNING - PMID 2463956 补全API返回空，跳过
+2026-04-09 12:41:31,290 - WARNING - API调用失败 (PMID 1548934, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,290 - WARNING - PMID 1548934 补全API返回空，跳过
+2026-04-09 12:41:31,295 - WARNING - API调用失败 (PMID 8384324, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,296 - WARNING - API调用失败 (PMID 1719426, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,296 - WARNING - PMID 8384324 补全API返回空，跳过
+2026-04-09 12:41:31,310 - WARNING - API调用失败 (PMID 2566545, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,310 - WARNING - PMID 2566545 补全API返回空，跳过
+2026-04-09 12:41:31,319 - WARNING - API调用失败 (PMID 8387534, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,319 - WARNING - PMID 8387534 补全API返回空，跳过
+2026-04-09 12:41:31,331 - WARNING - API调用失败 (PMID 3001638, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,332 - WARNING - PMID 3001638 补全API返回空，跳过
+2026-04-09 12:41:31,335 - WARNING - API调用失败 (PMID 7920631, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,335 - WARNING - PMID 7920631 补全API返回空，跳过
+2026-04-09 12:41:31,348 - WARNING - API调用失败 (PMID 10208652, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,349 - WARNING - API调用失败 (PMID 1662412, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,349 - WARNING - PMID 1662412 补全API返回空，跳过
+2026-04-09 12:41:31,350 - WARNING - API调用失败 (PMID 8381385, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,351 - WARNING - PMID 8381385 补全API返回空，跳过
+2026-04-09 12:41:31,358 - WARNING - API调用失败 (PMID 2158907, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,359 - WARNING - API调用失败 (PMID 2158485, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,363 - WARNING - API调用失败 (PMID 6323978, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,364 - WARNING - PMID 6323978 补全API返回空，跳过
+2026-04-09 12:41:31,370 - WARNING - API调用失败 (PMID 10066175, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,375 - WARNING - API调用失败 (PMID 3009826, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,376 - WARNING - API调用失败 (PMID 10229571, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,376 - WARNING - PMID 3009826 补全API返回空，跳过
+2026-04-09 12:41:31,383 - WARNING - API调用失败 (PMID 9884350, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,391 - WARNING - API调用失败 (PMID 8381389, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,392 - WARNING - PMID 8381389 补全API返回空，跳过
+2026-04-09 12:41:31,395 - WARNING - API调用失败 (PMID 9694261, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,405 - WARNING - API调用失败 (PMID 9618170, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,417 - WARNING - API调用失败 (PMID 9559534, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,421 - WARNING - API调用失败 (PMID 1279394, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,421 - WARNING - PMID 1279394 补全API返回空，跳过
+2026-04-09 12:41:31,429 - WARNING - API调用失败 (PMID 6096208, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,430 - WARNING - API调用失败 (PMID 9361030, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,431 - WARNING - PMID 6096208 补全API返回空，跳过
+2026-04-09 12:41:31,432 - WARNING - API调用失败 (PMID 9419237, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,438 - WARNING - API调用失败 (PMID 2839298, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,439 - WARNING - PMID 2839298 补全API返回空，跳过
+2026-04-09 12:41:31,447 - WARNING - API调用失败 (PMID 9367680, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,448 - WARNING - API调用失败 (PMID 1662391, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,449 - WARNING - PMID 1662391 补全API返回空，跳过
+2026-04-09 12:41:31,476 - WARNING - API调用失败 (PMID 8385341, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,477 - WARNING - PMID 8385341 补全API返回空，跳过
+2026-04-09 12:41:31,481 - WARNING - API调用失败 (PMID 9403067, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,484 - WARNING - API调用失败 (PMID 7693554, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,485 - WARNING - PMID 7693554 补全API返回空，跳过
+2026-04-09 12:41:31,493 - WARNING - API调用失败 (PMID 8393987, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,494 - WARNING - PMID 8393987 补全API返回空，跳过
+2026-04-09 12:41:31,497 - WARNING - API调用失败 (PMID 9168132, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,498 - WARNING - API调用失败 (PMID 9119397, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,507 - WARNING - API调用失败 (PMID 2559294, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,508 - WARNING - PMID 2559294 补全API返回空，跳过
+2026-04-09 12:41:31,543 - WARNING - API调用失败 (PMID 2497061, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,544 - WARNING - API调用失败 (PMID 8670227, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,544 - WARNING - PMID 2497061 补全API返回空，跳过
+2026-04-09 12:41:31,549 - WARNING - API调用失败 (PMID 8640237, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,616 - WARNING - API调用失败 (PMID 7769618, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,672 - WARNING - API调用失败 (PMID 9332354, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,685 - WARNING - API调用失败 (PMID 8776588, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,724 - WARNING - API调用失败 (PMID 1320255, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,725 - WARNING - PMID 1320255 补全API返回空，跳过
+2026-04-09 12:41:31,733 - WARNING - API调用失败 (PMID 8114745, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,734 - WARNING - PMID 8114745 补全API返回空，跳过
+2026-04-09 12:41:31,816 - WARNING - API调用失败 (PMID 8945517, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,818 - WARNING - API调用失败 (PMID 7549935, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:31,934 - WARNING - API调用失败 (PMID 15507602, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,291 - WARNING - API调用失败 (PMID 1660526, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,368 - WARNING - API调用失败 (PMID 1719426, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,411 - WARNING - API调用失败 (PMID 2158907, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,413 - WARNING - API调用失败 (PMID 10208652, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,422 - WARNING - API调用失败 (PMID 10066175, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,434 - WARNING - API调用失败 (PMID 9884350, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,447 - WARNING - API调用失败 (PMID 10229571, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,449 - WARNING - API调用失败 (PMID 9694261, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,465 - WARNING - API调用失败 (PMID 9618170, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,478 - WARNING - API调用失败 (PMID 9559534, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,494 - WARNING - API调用失败 (PMID 9361030, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,499 - WARNING - API调用失败 (PMID 9419237, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,556 - WARNING - API调用失败 (PMID 9403067, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,559 - WARNING - API调用失败 (PMID 2158485, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,560 - WARNING - API调用失败 (PMID 9168132, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,606 - WARNING - API调用失败 (PMID 8670227, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,626 - WARNING - API调用失败 (PMID 9119397, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,648 - WARNING - API调用失败 (PMID 9367680, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,654 - WARNING - API调用失败 (PMID 8640237, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,673 - WARNING - API调用失败 (PMID 7769618, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,753 - WARNING - API调用失败 (PMID 8776588, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,810 - WARNING - API调用失败 (PMID 9332354, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,879 - WARNING - API调用失败 (PMID 8945517, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,880 - WARNING - API调用失败 (PMID 7549935, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:33,992 - WARNING - API调用失败 (PMID 15507602, 尝试 2/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,344 - WARNING - API调用失败 (PMID 1660526, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,399 - WARNING - API调用失败 (PMID 15461819, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,417 - WARNING - API调用失败 (PMID 1719426, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,476 - WARNING - API调用失败 (PMID 2158907, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,494 - WARNING - API调用失败 (PMID 9884350, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,495 - WARNING - API调用失败 (PMID 10066175, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,497 - WARNING - API调用失败 (PMID 15109395, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,500 - WARNING - API调用失败 (PMID 10229571, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,511 - WARNING - API调用失败 (PMID 9694261, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,525 - WARNING - API调用失败 (PMID 10208652, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,530 - WARNING - API调用失败 (PMID 15028673, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,536 - WARNING - API调用失败 (PMID 9618170, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,559 - WARNING - API调用失败 (PMID 12884004, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,567 - WARNING - API调用失败 (PMID 9419237, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,572 - WARNING - API调用失败 (PMID 12727900, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,583 - WARNING - API调用失败 (PMID 14742665, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,590 - WARNING - API调用失败 (PMID 12411507, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,607 - WARNING - API调用失败 (PMID 14656960, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,611 - WARNING - API调用失败 (PMID 9361030, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,619 - WARNING - API调用失败 (PMID 9403067, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,620 - WARNING - API调用失败 (PMID 2158485, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,621 - WARNING - API调用失败 (PMID 9168132, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,624 - WARNING - API调用失败 (PMID 12579417, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,667 - WARNING - API调用失败 (PMID 9559534, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,684 - WARNING - API调用失败 (PMID 11731496, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,690 - WARNING - API调用失败 (PMID 12094329, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,694 - WARNING - API调用失败 (PMID 8670227, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,707 - WARNING - API调用失败 (PMID 12176320, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,709 - WARNING - API调用失败 (PMID 8640237, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,737 - WARNING - API调用失败 (PMID 11606704, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,746 - WARNING - API调用失败 (PMID 9119397, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,760 - WARNING - API调用失败 (PMID 9367680, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,764 - WARNING - API调用失败 (PMID 11479678, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,788 - WARNING - API调用失败 (PMID 7769618, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,816 - WARNING - API调用失败 (PMID 11875026, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,835 - WARNING - API调用失败 (PMID 11385709, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,844 - WARNING - API调用失败 (PMID 12032244, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,844 - WARNING - API调用失败 (PMID 11385207, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,847 - WARNING - API调用失败 (PMID 11591480, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,851 - WARNING - API调用失败 (PMID 8776588, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,856 - WARNING - API调用失败 (PMID 11371580, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,863 - WARNING - API调用失败 (PMID 9332354, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,915 - WARNING - API调用失败 (PMID 11007163, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,931 - WARNING - API调用失败 (PMID 7549935, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,934 - WARNING - API调用失败 (PMID 8945517, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,941 - WARNING - API调用失败 (PMID 11161810, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,986 - WARNING - API调用失败 (PMID 10862620, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:37,987 - WARNING - API调用失败 (PMID 10781834, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:38,058 - WARNING - API调用失败 (PMID 15507602, 尝试 3/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:41:38,244 - WARNING - API调用失败 (PMID 20028844, 尝试 1/3): 401 Client Error: Authorization Required for url: https://api.deepseek.com/v1/chat/completions
+2026-04-09 12:42:17,465 - INFO - 备份文件已存在: C:\Users\fongi\Desktop\TE\data_update_fix\te_kg2_final_standardized_new.jsonl.fix_missing_backup
+2026-04-09 12:42:17,544 - INFO - 总文献数: 2307, 存在缺失实体的文献数: 746
+2026-04-09 12:42:17,546 - INFO - 缺失实体统计已保存至 C:\Users\fongi\Desktop\TE\data_update_fix\missing_entities_stats.txt
+2026-04-09 12:42:17,546 - INFO - 待处理文献数: 746
+2026-04-09 12:42:17,546 - INFO - 共分为 4 个批次，每批最多 200 篇
+2026-04-09 12:42:17,546 - INFO - 开始处理第 1/4 批次，包含 200 篇文献
+2026-04-09 12:42:44,053 - INFO - 已更新文件中的 PMID 7963508
+2026-04-09 12:42:44,055 - INFO - PMID 7963508 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,281 - INFO - 已更新文件中的 PMID 2566545
+2026-04-09 12:42:44,283 - INFO - PMID 2566545 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,346 - INFO - 已更新文件中的 PMID 8385341
+2026-04-09 12:42:44,348 - INFO - PMID 8385341 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,402 - INFO - 已更新文件中的 PMID 3009826
+2026-04-09 12:42:44,404 - INFO - PMID 3009826 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,496 - INFO - 已更新文件中的 PMID 8393987
+2026-04-09 12:42:44,498 - INFO - PMID 8393987 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,545 - INFO - 已更新文件中的 PMID 1320255
+2026-04-09 12:42:44,547 - INFO - PMID 1320255 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,596 - INFO - 已更新文件中的 PMID 2831458
+2026-04-09 12:42:44,598 - INFO - PMID 2831458 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,640 - INFO - 已更新文件中的 PMID 2463956
+2026-04-09 12:42:44,642 - INFO - PMID 2463956 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,720 - INFO - 已更新文件中的 PMID 2559294
+2026-04-09 12:42:44,722 - INFO - PMID 2559294 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,769 - INFO - 已更新文件中的 PMID 8114745
+2026-04-09 12:42:44,772 - INFO - PMID 8114745 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,818 - INFO - 已更新文件中的 PMID 2839298
+2026-04-09 12:42:44,820 - INFO - PMID 2839298 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,862 - INFO - 已更新文件中的 PMID 6096208
+2026-04-09 12:42:44,864 - INFO - PMID 6096208 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,908 - INFO - 已更新文件中的 PMID 1662412
+2026-04-09 12:42:44,910 - INFO - PMID 1662412 补全成功，添加了 1 个新实体
+2026-04-09 12:42:44,954 - INFO - 已更新文件中的 PMID 3001638
+2026-04-09 12:42:44,955 - INFO - PMID 3001638 补全成功，添加了 1 个新实体
+2026-04-09 12:42:45,003 - INFO - 已更新文件中的 PMID 8387534
+2026-04-09 12:42:45,004 - INFO - PMID 8387534 补全成功，添加了 1 个新实体
+2026-04-09 12:42:45,048 - INFO - 已更新文件中的 PMID 2497061
+2026-04-09 12:42:45,050 - INFO - PMID 2497061 补全成功，添加了 1 个新实体
+2026-04-09 12:42:45,098 - INFO - 已更新文件中的 PMID 6323978
+2026-04-09 12:42:45,100 - INFO - PMID 6323978 补全成功，添加了 1 个新实体
+2026-04-09 12:42:45,144 - INFO - 已更新文件中的 PMID 7920631
+2026-04-09 12:42:45,145 - INFO - PMID 7920631 补全成功，添加了 1 个新实体
+2026-04-09 12:42:45,187 - INFO - 已更新文件中的 PMID 1662391
+2026-04-09 12:42:45,189 - INFO - PMID 1662391 补全成功，添加了 1 个新实体
+2026-04-09 12:42:45,645 - INFO - 已更新文件中的 PMID 8381385
+2026-04-09 12:42:45,647 - INFO - PMID 8381385 补全成功，添加了 2 个新实体
+2026-04-09 12:42:46,097 - INFO - 已更新文件中的 PMID 1548934
+2026-04-09 12:42:46,099 - INFO - PMID 1548934 补全成功，添加了 3 个新实体
+2026-04-09 12:42:46,145 - INFO - 已更新文件中的 PMID 8381389
+2026-04-09 12:42:46,146 - INFO - PMID 8381389 补全成功，添加了 2 个新实体
+2026-04-09 12:42:46,190 - INFO - 已更新文件中的 PMID 10066175
+2026-04-09 12:42:46,192 - INFO - PMID 10066175 补全成功，添加了 1 个新实体
+2026-04-09 12:42:46,291 - INFO - 已更新文件中的 PMID 2158907
+2026-04-09 12:42:46,292 - INFO - PMID 2158907 补全成功，添加了 1 个新实体
+2026-04-09 12:42:46,350 - INFO - 已更新文件中的 PMID 8384324
+2026-04-09 12:42:46,351 - INFO - PMID 8384324 补全成功，添加了 3 个新实体
+2026-04-09 12:42:46,433 - INFO - 已更新文件中的 PMID 1719426
+2026-04-09 12:42:46,436 - INFO - PMID 1719426 补全成功，添加了 1 个新实体
+2026-04-09 12:42:46,654 - INFO - 已更新文件中的 PMID 9694261
+2026-04-09 12:42:46,656 - INFO - PMID 9694261 补全成功，添加了 1 个新实体
+2026-04-09 12:42:46,888 - INFO - 已更新文件中的 PMID 10208652
+2026-04-09 12:42:46,890 - INFO - PMID 10208652 补全成功，添加了 1 个新实体
+2026-04-09 12:42:46,939 - INFO - 已更新文件中的 PMID 7693554
+2026-04-09 12:42:46,941 - INFO - PMID 7693554 补全成功，添加了 2 个新实体
+2026-04-09 12:42:46,989 - INFO - 已更新文件中的 PMID 10229571
+2026-04-09 12:42:46,991 - INFO - PMID 10229571 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,034 - INFO - 已更新文件中的 PMID 1279394
+2026-04-09 12:42:47,036 - INFO - PMID 1279394 补全成功，添加了 3 个新实体
+2026-04-09 12:42:47,082 - INFO - 已更新文件中的 PMID 9332354
+2026-04-09 12:42:47,083 - INFO - PMID 9332354 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,128 - INFO - 已更新文件中的 PMID 9403067
+2026-04-09 12:42:47,129 - INFO - PMID 9403067 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,174 - INFO - 已更新文件中的 PMID 9168132
+2026-04-09 12:42:47,175 - INFO - PMID 9168132 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,228 - INFO - 已更新文件中的 PMID 9559534
+2026-04-09 12:42:47,230 - INFO - PMID 9559534 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,274 - INFO - 已更新文件中的 PMID 9884350
+2026-04-09 12:42:47,275 - INFO - PMID 9884350 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,323 - INFO - 已更新文件中的 PMID 8945517
+2026-04-09 12:42:47,324 - INFO - PMID 8945517 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,372 - INFO - 已更新文件中的 PMID 1660526
+2026-04-09 12:42:47,374 - INFO - PMID 1660526 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,425 - INFO - 已更新文件中的 PMID 9119397
+2026-04-09 12:42:47,427 - INFO - PMID 9119397 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,468 - INFO - 已更新文件中的 PMID 9367680
+2026-04-09 12:42:47,470 - INFO - PMID 9367680 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,515 - INFO - 已更新文件中的 PMID 2158485
+2026-04-09 12:42:47,516 - INFO - PMID 2158485 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,566 - INFO - 已更新文件中的 PMID 9361030
+2026-04-09 12:42:47,568 - INFO - PMID 9361030 补全成功，添加了 1 个新实体
+2026-04-09 12:42:47,990 - INFO - 已更新文件中的 PMID 9419237
+2026-04-09 12:42:47,992 - INFO - PMID 9419237 补全成功，添加了 2 个新实体
+2026-04-09 12:42:48,037 - INFO - 已更新文件中的 PMID 7769618
+2026-04-09 12:42:48,039 - INFO - PMID 7769618 补全成功，添加了 1 个新实体
+2026-04-09 12:42:48,161 - INFO - 已更新文件中的 PMID 8670227
+2026-04-09 12:42:48,162 - INFO - PMID 8670227 补全成功，添加了 1 个新实体
+2026-04-09 12:42:48,240 - INFO - 已更新文件中的 PMID 15461819
+2026-04-09 12:42:48,241 - INFO - PMID 15461819 补全成功，添加了 1 个新实体
+2026-04-09 12:42:48,293 - INFO - 已更新文件中的 PMID 15109395
+2026-04-09 12:42:48,295 - INFO - PMID 15109395 补全成功，添加了 1 个新实体
+2026-04-09 12:42:48,455 - INFO - 已更新文件中的 PMID 9618170
+2026-04-09 12:42:48,457 - INFO - PMID 9618170 补全成功，添加了 2 个新实体
+2026-04-09 12:42:48,657 - INFO - 已更新文件中的 PMID 7549935
+2026-04-09 12:42:48,659 - INFO - PMID 7549935 补全成功，添加了 1 个新实体
+2026-04-09 12:42:48,769 - INFO - 已更新文件中的 PMID 12411507
+2026-04-09 12:42:48,771 - INFO - PMID 12411507 补全成功，添加了 1 个新实体
+2026-04-09 12:42:48,821 - INFO - 已更新文件中的 PMID 12176320
+2026-04-09 12:42:48,822 - INFO - PMID 12176320 补全成功，添加了 1 个新实体
+2026-04-09 12:42:48,870 - INFO - 已更新文件中的 PMID 15507602
+2026-04-09 12:42:48,871 - INFO - PMID 15507602 补全成功，添加了 2 个新实体
+2026-04-09 12:42:48,946 - INFO - 已更新文件中的 PMID 12579417
+2026-04-09 12:42:48,948 - INFO - PMID 12579417 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,001 - INFO - 已更新文件中的 PMID 14656960
+2026-04-09 12:42:49,002 - INFO - PMID 14656960 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,047 - INFO - 已更新文件中的 PMID 12032244
+2026-04-09 12:42:49,049 - INFO - PMID 12032244 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,098 - INFO - 已更新文件中的 PMID 12094329
+2026-04-09 12:42:49,100 - INFO - PMID 12094329 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,254 - INFO - 已更新文件中的 PMID 12727900
+2026-04-09 12:42:49,256 - INFO - PMID 12727900 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,305 - INFO - 已更新文件中的 PMID 8776588
+2026-04-09 12:42:49,307 - INFO - PMID 8776588 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,354 - INFO - 已更新文件中的 PMID 11875026
+2026-04-09 12:42:49,356 - INFO - PMID 11875026 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,723 - INFO - 已更新文件中的 PMID 11731496
+2026-04-09 12:42:49,725 - INFO - PMID 11731496 补全成功，添加了 1 个新实体
+2026-04-09 12:42:49,767 - INFO - 已更新文件中的 PMID 11606704
+2026-04-09 12:42:49,769 - INFO - PMID 11606704 补全成功，添加了 1 个新实体
+2026-04-09 12:42:50,005 - INFO - 已更新文件中的 PMID 11479678
+2026-04-09 12:42:50,007 - INFO - PMID 11479678 补全成功，添加了 1 个新实体
+2026-04-09 12:42:50,055 - INFO - 已更新文件中的 PMID 11371580
+2026-04-09 12:42:50,057 - INFO - PMID 11371580 补全成功，添加了 1 个新实体
+2026-04-09 12:42:50,321 - INFO - 已更新文件中的 PMID 15028673
+2026-04-09 12:42:50,323 - INFO - PMID 15028673 补全成功，添加了 2 个新实体
+2026-04-09 12:42:50,477 - INFO - 已更新文件中的 PMID 11007163
+2026-04-09 12:42:50,480 - INFO - PMID 11007163 补全成功，添加了 1 个新实体
+2026-04-09 12:42:50,574 - INFO - 已更新文件中的 PMID 11591480
+2026-04-09 12:42:50,575 - INFO - PMID 11591480 补全成功，添加了 2 个新实体
+2026-04-09 12:42:50,993 - INFO - 已更新文件中的 PMID 10781834
+2026-04-09 12:42:50,995 - INFO - PMID 10781834 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,044 - INFO - 已更新文件中的 PMID 12884004
+2026-04-09 12:42:51,045 - INFO - PMID 12884004 补全成功，添加了 2 个新实体
+2026-04-09 12:42:51,090 - INFO - 已更新文件中的 PMID 20028844
+2026-04-09 12:42:51,091 - INFO - PMID 20028844 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,136 - INFO - 已更新文件中的 PMID 19471016
+2026-04-09 12:42:51,137 - INFO - PMID 19471016 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,189 - INFO - 已更新文件中的 PMID 19776130
+2026-04-09 12:42:51,191 - INFO - PMID 19776130 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,314 - INFO - 已更新文件中的 PMID 19657334
+2026-04-09 12:42:51,316 - INFO - PMID 19657334 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,369 - INFO - 已更新文件中的 PMID 19823873
+2026-04-09 12:42:51,371 - INFO - PMID 19823873 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,418 - INFO - 已更新文件中的 PMID 19407656
+2026-04-09 12:42:51,420 - INFO - PMID 19407656 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,811 - INFO - 已更新文件中的 PMID 19324900
+2026-04-09 12:42:51,812 - INFO - PMID 19324900 补全成功，添加了 1 个新实体
+2026-04-09 12:42:51,987 - INFO - 已更新文件中的 PMID 19209240
+2026-04-09 12:42:51,989 - INFO - PMID 19209240 补全成功，添加了 1 个新实体
+2026-04-09 12:42:52,045 - INFO - 已更新文件中的 PMID 14742665
+2026-04-09 12:42:52,047 - INFO - PMID 14742665 补全成功，添加了 3 个新实体
+2026-04-09 12:42:52,095 - INFO - 已更新文件中的 PMID 11385709
+2026-04-09 12:42:52,097 - INFO - PMID 11385709 补全成功，添加了 2 个新实体
+2026-04-09 12:42:52,156 - INFO - 已更新文件中的 PMID 11385207
+2026-04-09 12:42:52,158 - INFO - PMID 11385207 补全成功，添加了 2 个新实体
+2026-04-09 12:42:52,287 - INFO - 已更新文件中的 PMID 19147684
+2026-04-09 12:42:52,288 - INFO - PMID 19147684 补全成功，添加了 1 个新实体
+2026-04-09 12:42:52,306 - INFO - PMID 19393186 无新实体可添加（可能已存在或API未返回有效实体）
+2026-04-09 12:42:52,576 - INFO - 已更新文件中的 PMID 10862620
+2026-04-09 12:42:52,577 - INFO - PMID 10862620 补全成功，添加了 3 个新实体
+2026-04-09 12:42:52,815 - INFO - 已更新文件中的 PMID 18923924
+2026-04-09 12:42:52,816 - INFO - PMID 18923924 补全成功，添加了 1 个新实体
+2026-04-09 12:42:52,911 - INFO - 已更新文件中的 PMID 8640237
+2026-04-09 12:42:52,912 - INFO - PMID 8640237 补全成功，添加了 5 个新实体
+2026-04-09 12:42:53,024 - INFO - 已更新文件中的 PMID 18951971
+2026-04-09 12:42:53,026 - INFO - PMID 18951971 补全成功，添加了 1 个新实体
+2026-04-09 12:42:53,124 - INFO - 已更新文件中的 PMID 18952144
+2026-04-09 12:42:53,126 - INFO - PMID 18952144 补全成功，添加了 2 个新实体
+2026-04-09 12:42:53,294 - INFO - 已更新文件中的 PMID 18256243
+2026-04-09 12:42:53,295 - INFO - PMID 18256243 补全成功，添加了 1 个新实体
+2026-04-09 12:42:53,631 - INFO - 已更新文件中的 PMID 19635844
+2026-04-09 12:42:53,633 - INFO - PMID 19635844 补全成功，添加了 3 个新实体
+2026-04-09 12:42:53,677 - INFO - 已更新文件中的 PMID 18047649
+2026-04-09 12:42:53,679 - INFO - PMID 18047649 补全成功，添加了 1 个新实体
+2026-04-09 12:42:53,722 - INFO - 已更新文件中的 PMID 18178607
+2026-04-09 12:42:53,723 - INFO - PMID 18178607 补全成功，添加了 1 个新实体
+2026-04-09 12:42:54,119 - INFO - 已更新文件中的 PMID 17490832
+2026-04-09 12:42:54,120 - INFO - PMID 17490832 补全成功，添加了 1 个新实体
+2026-04-09 12:42:54,166 - INFO - 已更新文件中的 PMID 18721867
+2026-04-09 12:42:54,168 - INFO - PMID 18721867 补全成功，添加了 2 个新实体
+2026-04-09 12:42:54,214 - INFO - 已更新文件中的 PMID 18036258
+2026-04-09 12:42:54,215 - INFO - PMID 18036258 补全成功，添加了 1 个新实体
+2026-04-09 12:42:54,371 - INFO - 已更新文件中的 PMID 17531547
+2026-04-09 12:42:54,373 - INFO - PMID 17531547 补全成功，添加了 1 个新实体
+2026-04-09 12:42:54,424 - INFO - 已更新文件中的 PMID 18369450
+2026-04-09 12:42:54,425 - INFO - PMID 18369450 补全成功，添加了 2 个新实体
+2026-04-09 12:42:54,680 - INFO - 已更新文件中的 PMID 18485226
+2026-04-09 12:42:54,681 - INFO - PMID 18485226 补全成功，添加了 2 个新实体
+2026-04-09 12:42:54,728 - INFO - 已更新文件中的 PMID 17483097
+2026-04-09 12:42:54,729 - INFO - PMID 17483097 补全成功，添加了 1 个新实体
+2026-04-09 12:42:54,775 - INFO - 已更新文件中的 PMID 19266026
+2026-04-09 12:42:54,776 - INFO - PMID 19266026 补全成功，添加了 3 个新实体
+2026-04-09 12:42:54,818 - INFO - 已更新文件中的 PMID 17511669
+2026-04-09 12:42:54,820 - INFO - PMID 17511669 补全成功，添加了 1 个新实体
+2026-04-09 12:42:55,279 - INFO - 已更新文件中的 PMID 17610419
+2026-04-09 12:42:55,280 - INFO - PMID 17610419 补全成功，添加了 2 个新实体
+2026-04-09 12:42:55,324 - INFO - 已更新文件中的 PMID 17334995
+2026-04-09 12:42:55,326 - INFO - PMID 17334995 补全成功，添加了 1 个新实体
+2026-04-09 12:42:55,375 - INFO - 已更新文件中的 PMID 18367521
+2026-04-09 12:42:55,377 - INFO - PMID 18367521 补全成功，添加了 3 个新实体
+2026-04-09 12:42:55,542 - INFO - 已更新文件中的 PMID 19439515
+2026-04-09 12:42:55,543 - INFO - PMID 19439515 补全成功，添加了 5 个新实体
+2026-04-09 12:42:55,587 - INFO - 已更新文件中的 PMID 17079174
+2026-04-09 12:42:55,588 - INFO - PMID 17079174 补全成功，添加了 1 个新实体
+2026-04-09 12:42:55,770 - INFO - 已更新文件中的 PMID 17171681
+2026-04-09 12:42:55,772 - INFO - PMID 17171681 补全成功，添加了 2 个新实体
+2026-04-09 12:42:56,224 - INFO - 已更新文件中的 PMID 17307006
+2026-04-09 12:42:56,225 - INFO - PMID 17307006 补全成功，添加了 2 个新实体
+2026-04-09 12:42:56,294 - INFO - 已更新文件中的 PMID 16522357
+2026-04-09 12:42:56,295 - INFO - PMID 16522357 补全成功，添加了 1 个新实体
+2026-04-09 12:42:56,341 - INFO - 已更新文件中的 PMID 16808900
+2026-04-09 12:42:56,342 - INFO - PMID 16808900 补全成功，添加了 1 个新实体
+2026-04-09 12:42:56,386 - INFO - 已更新文件中的 PMID 16705797
+2026-04-09 12:42:56,387 - INFO - PMID 16705797 补全成功，添加了 1 个新实体
+2026-04-09 12:42:56,470 - INFO - 已更新文件中的 PMID 17574350
+2026-04-09 12:42:56,471 - INFO - PMID 17574350 补全成功，添加了 3 个新实体
+2026-04-09 12:42:56,514 - INFO - 已更新文件中的 PMID 18532878
+2026-04-09 12:42:56,515 - INFO - PMID 18532878 补全成功，添加了 2 个新实体
+2026-04-09 12:42:56,598 - INFO - 已更新文件中的 PMID 17030807
+2026-04-09 12:42:56,600 - INFO - PMID 17030807 补全成功，添加了 1 个新实体
+2026-04-09 12:42:56,737 - INFO - 已更新文件中的 PMID 16093692
+2026-04-09 12:42:56,739 - INFO - PMID 16093692 补全成功，添加了 1 个新实体
+2026-04-09 12:42:56,938 - INFO - 已更新文件中的 PMID 16672366
+2026-04-09 12:42:56,939 - INFO - PMID 16672366 补全成功，添加了 1 个新实体
+2026-04-09 12:42:56,985 - INFO - 已更新文件中的 PMID 16490214
+2026-04-09 12:42:56,986 - INFO - PMID 16490214 补全成功，添加了 1 个新实体
+2026-04-09 12:42:57,193 - INFO - 已更新文件中的 PMID 16877821
+2026-04-09 12:42:57,194 - INFO - PMID 16877821 补全成功，添加了 2 个新实体
+2026-04-09 12:42:57,891 - INFO - 已更新文件中的 PMID 15944437
+2026-04-09 12:42:57,893 - INFO - PMID 15944437 补全成功，添加了 1 个新实体
+2026-04-09 12:42:57,942 - INFO - 已更新文件中的 PMID 15930490
+2026-04-09 12:42:57,943 - INFO - PMID 15930490 补全成功，添加了 1 个新实体
+2026-04-09 12:42:57,993 - INFO - 已更新文件中的 PMID 16183655
+2026-04-09 12:42:57,995 - INFO - PMID 16183655 补全成功，添加了 2 个新实体
+2026-04-09 12:42:58,046 - INFO - 已更新文件中的 PMID 17181857
+2026-04-09 12:42:58,048 - INFO - PMID 17181857 补全成功，添加了 4 个新实体
+2026-04-09 12:42:58,104 - INFO - 已更新文件中的 PMID 15843013
+2026-04-09 12:42:58,105 - INFO - PMID 15843013 补全成功，添加了 1 个新实体
+2026-04-09 12:42:58,151 - INFO - 已更新文件中的 PMID 18252213
+2026-04-09 12:42:58,152 - INFO - PMID 18252213 补全成功，添加了 5 个新实体
+2026-04-09 12:42:58,271 - INFO - 已更新文件中的 PMID 15817567
+2026-04-09 12:42:58,272 - INFO - PMID 15817567 补全成功，添加了 1 个新实体
+2026-04-09 12:42:58,317 - INFO - 已更新文件中的 PMID 11161810
+2026-04-09 12:42:58,318 - INFO - PMID 11161810 补全成功，添加了 8 个新实体
+2026-04-09 12:42:58,394 - INFO - 已更新文件中的 PMID 16728505
+2026-04-09 12:42:58,395 - INFO - PMID 16728505 补全成功，添加了 3 个新实体
+2026-04-09 12:42:58,703 - INFO - 已更新文件中的 PMID 25305771
+2026-04-09 12:42:58,704 - INFO - PMID 25305771 补全成功，添加了 1 个新实体
+2026-04-09 12:42:58,756 - INFO - 已更新文件中的 PMID 25572935
+2026-04-09 12:42:58,757 - INFO - PMID 25572935 补全成功，添加了 1 个新实体
+2026-04-09 12:42:58,811 - INFO - 已更新文件中的 PMID 16648136
+2026-04-09 12:42:58,812 - INFO - PMID 16648136 补全成功，添加了 3 个新实体
+2026-04-09 12:42:58,864 - INFO - 已更新文件中的 PMID 25126862
+2026-04-09 12:42:58,866 - INFO - PMID 25126862 补全成功，添加了 1 个新实体
+2026-04-09 12:42:58,922 - INFO - 已更新文件中的 PMID 15978851
+2026-04-09 12:42:58,923 - INFO - PMID 15978851 补全成功，添加了 1 个新实体
+2026-04-09 12:42:59,010 - INFO - 已更新文件中的 PMID 25243180
+2026-04-09 12:42:59,011 - INFO - PMID 25243180 补全成功，添加了 1 个新实体
+2026-04-09 12:42:59,059 - INFO - 已更新文件中的 PMID 25289675
+2026-04-09 12:42:59,061 - INFO - PMID 25289675 补全成功，添加了 1 个新实体
+2026-04-09 12:42:59,173 - INFO - 已更新文件中的 PMID 16618923
+2026-04-09 12:42:59,175 - INFO - PMID 16618923 补全成功，添加了 4 个新实体
+2026-04-09 12:42:59,230 - INFO - 已更新文件中的 PMID 25143528
+2026-04-09 12:42:59,232 - INFO - PMID 25143528 补全成功，添加了 1 个新实体
+2026-04-09 12:42:59,282 - INFO - 已更新文件中的 PMID 16088935
+2026-04-09 12:42:59,283 - INFO - PMID 16088935 补全成功，添加了 2 个新实体
+2026-04-09 12:42:59,622 - INFO - 已更新文件中的 PMID 15712380
+2026-04-09 12:42:59,623 - INFO - PMID 15712380 补全成功，添加了 2 个新实体
+2026-04-09 12:42:59,765 - INFO - 已更新文件中的 PMID 24824428
+2026-04-09 12:42:59,766 - INFO - PMID 24824428 补全成功，添加了 1 个新实体
+2026-04-09 12:42:59,870 - INFO - 已更新文件中的 PMID 15841484
+2026-04-09 12:42:59,871 - INFO - PMID 15841484 补全成功，添加了 2 个新实体
+2026-04-09 12:43:00,003 - INFO - 已更新文件中的 PMID 24958239
+2026-04-09 12:43:00,004 - INFO - PMID 24958239 补全成功，添加了 1 个新实体
+2026-04-09 12:43:00,014 - INFO - PMID 15643617 无新实体可添加（可能已存在或API未返回有效实体）
+2026-04-09 12:43:00,159 - INFO - 已更新文件中的 PMID 25036377
+2026-04-09 12:43:00,160 - INFO - PMID 25036377 补全成功，添加了 1 个新实体
+2026-04-09 12:43:00,225 - INFO - 已更新文件中的 PMID 15659556
+2026-04-09 12:43:00,226 - INFO - PMID 15659556 补全成功，添加了 2 个新实体
+2026-04-09 12:43:00,605 - INFO - 已更新文件中的 PMID 16344559
+2026-04-09 12:43:00,607 - INFO - PMID 16344559 补全成功，添加了 3 个新实体
+2026-04-09 12:43:00,655 - INFO - 已更新文件中的 PMID 24478191
+2026-04-09 12:43:00,656 - INFO - PMID 24478191 补全成功，添加了 1 个新实体
+2026-04-09 12:43:00,703 - INFO - 已更新文件中的 PMID 24714652
+2026-04-09 12:43:00,704 - INFO - PMID 24714652 补全成功，添加了 1 个新实体
+2026-04-09 12:43:01,046 - INFO - 已更新文件中的 PMID 25842827
+2026-04-09 12:43:01,048 - INFO - PMID 25842827 补全成功，添加了 1 个新实体
+2026-04-09 12:43:01,136 - INFO - 已更新文件中的 PMID 25096406
+2026-04-09 12:43:01,137 - INFO - PMID 25096406 补全成功，添加了 2 个新实体
+2026-04-09 12:43:01,181 - INFO - 已更新文件中的 PMID 15860774
+2026-04-09 12:43:01,182 - INFO - PMID 15860774 补全成功，添加了 4 个新实体
+2026-04-09 12:43:01,233 - INFO - 已更新文件中的 PMID 24981932
+2026-04-09 12:43:01,235 - INFO - PMID 24981932 补全成功，添加了 2 个新实体
+2026-04-09 12:43:01,329 - INFO - 已更新文件中的 PMID 23884656
+2026-04-09 12:43:01,330 - INFO - PMID 23884656 补全成功，添加了 1 个新实体
+2026-04-09 12:43:01,441 - INFO - 已更新文件中的 PMID 24294382
+2026-04-09 12:43:01,447 - INFO - PMID 24294382 补全成功，添加了 1 个新实体
+2026-04-09 12:43:01,514 - INFO - 已更新文件中的 PMID 24035396
+2026-04-09 12:43:01,516 - INFO - PMID 24035396 补全成功，添加了 1 个新实体
+2026-04-09 12:43:01,575 - INFO - 已更新文件中的 PMID 23675310
+2026-04-09 12:43:01,577 - INFO - PMID 23675310 补全成功，添加了 1 个新实体
+2026-04-09 12:43:02,247 - INFO - 已更新文件中的 PMID 23093941
+2026-04-09 12:43:02,249 - INFO - PMID 23093941 补全成功，添加了 1 个新实体
+2026-04-09 12:43:02,308 - INFO - 已更新文件中的 PMID 23497436
+2026-04-09 12:43:02,309 - INFO - PMID 23497436 补全成功，添加了 1 个新实体
+2026-04-09 12:43:02,392 - INFO - 已更新文件中的 PMID 24939876
+2026-04-09 12:43:02,393 - INFO - PMID 24939876 补全成功，添加了 3 个新实体
+2026-04-09 12:43:02,623 - INFO - 已更新文件中的 PMID 24133654
+2026-04-09 12:43:02,624 - INFO - PMID 24133654 补全成功，添加了 2 个新实体
+2026-04-09 12:43:02,677 - INFO - 已更新文件中的 PMID 23125228
+2026-04-09 12:43:02,678 - INFO - PMID 23125228 补全成功，添加了 1 个新实体
+2026-04-09 12:43:02,728 - INFO - 已更新文件中的 PMID 23755966
+2026-04-09 12:43:02,729 - INFO - PMID 23755966 补全成功，添加了 2 个新实体
+2026-04-09 12:43:02,775 - INFO - 已更新文件中的 PMID 23717661
+2026-04-09 12:43:02,776 - INFO - PMID 23717661 补全成功，添加了 2 个新实体
+2026-04-09 12:43:02,823 - INFO - 已更新文件中的 PMID 23803660
+2026-04-09 12:43:02,825 - INFO - PMID 23803660 补全成功，添加了 2 个新实体
+2026-04-09 12:43:02,871 - INFO - 已更新文件中的 PMID 24389010
+2026-04-09 12:43:02,873 - INFO - PMID 24389010 补全成功，添加了 3 个新实体
+2026-04-09 12:43:02,921 - INFO - 已更新文件中的 PMID 22907758
+2026-04-09 12:43:02,922 - INFO - PMID 22907758 补全成功，添加了 1 个新实体
+2026-04-09 12:43:02,969 - INFO - 已更新文件中的 PMID 23750218
+2026-04-09 12:43:02,971 - INFO - PMID 23750218 补全成功，添加了 2 个新实体
+2026-04-09 12:43:03,358 - INFO - 已更新文件中的 PMID 22926102
+2026-04-09 12:43:03,360 - INFO - PMID 22926102 补全成功，添加了 2 个新实体
+2026-04-09 12:43:03,415 - INFO - 已更新文件中的 PMID 22483866
+2026-04-09 12:43:03,417 - INFO - PMID 22483866 补全成功，添加了 1 个新实体
+2026-04-09 12:43:03,467 - INFO - 已更新文件中的 PMID 22770213
+2026-04-09 12:43:03,468 - INFO - PMID 22770213 补全成功，添加了 1 个新实体
+2026-04-09 12:43:03,517 - INFO - 已更新文件中的 PMID 23020800
+2026-04-09 12:43:03,518 - INFO - PMID 23020800 补全成功，添加了 1 个新实体
+2026-04-09 12:43:03,565 - INFO - 已更新文件中的 PMID 24344916
+2026-04-09 12:43:03,566 - INFO - PMID 24344916 补全成功，添加了 3 个新实体
+2026-04-09 12:43:03,767 - INFO - 已更新文件中的 PMID 22461402
+2026-04-09 12:43:03,768 - INFO - PMID 22461402 补全成功，添加了 1 个新实体
+2026-04-09 12:43:04,106 - INFO - 已更新文件中的 PMID 22201974
+2026-04-09 12:43:04,108 - INFO - PMID 22201974 补全成功，添加了 1 个新实体
+2026-04-09 12:43:04,164 - INFO - 已更新文件中的 PMID 22185517
+2026-04-09 12:43:04,166 - INFO - PMID 22185517 补全成功，添加了 1 个新实体
+2026-04-09 12:43:04,216 - INFO - 已更新文件中的 PMID 22214611
+2026-04-09 12:43:04,217 - INFO - PMID 22214611 补全成功，添加了 1 个新实体
+2026-04-09 12:43:04,350 - INFO - 已更新文件中的 PMID 22217707
+2026-04-09 12:43:04,351 - INFO - PMID 22217707 补全成功，添加了 1 个新实体
+2026-04-09 12:43:04,579 - INFO - 已更新文件中的 PMID 22745252
+2026-04-09 12:43:04,580 - INFO - PMID 22745252 补全成功，添加了 2 个新实体
+2026-04-09 12:43:04,632 - INFO - 已更新文件中的 PMID 22753232
+2026-04-09 12:43:04,633 - INFO - PMID 22753232 补全成功，添加了 2 个新实体
+2026-04-09 12:43:05,091 - INFO - 已更新文件中的 PMID 21993621
+2026-04-09 12:43:05,092 - INFO - PMID 21993621 补全成功，添加了 1 个新实体
+2026-04-09 12:43:05,144 - INFO - PMID 22733751 无新实体可添加（可能已存在或API未返回有效实体）
+2026-04-09 12:43:05,265 - INFO - 已更新文件中的 PMID 22159035
+2026-04-09 12:43:05,267 - INFO - PMID 22159035 补全成功，添加了 1 个新实体
+2026-04-09 12:43:05,585 - INFO - 已更新文件中的 PMID 21827582
+2026-04-09 12:43:05,586 - INFO - PMID 21827582 补全成功，添加了 1 个新实体
+2026-04-09 12:43:05,637 - INFO - 已更新文件中的 PMID 21287136
+2026-04-09 12:43:05,638 - INFO - PMID 21287136 补全成功，添加了 1 个新实体
+2026-04-09 12:43:05,687 - INFO - 已更新文件中的 PMID 22593550
+2026-04-09 12:43:05,689 - INFO - PMID 22593550 补全成功，添加了 2 个新实体
+2026-04-09 12:43:05,741 - INFO - 已更新文件中的 PMID 21636526
+2026-04-09 12:43:05,743 - INFO - PMID 21636526 补全成功，添加了 1 个新实体
+2026-04-09 12:43:05,985 - INFO - 已更新文件中的 PMID 20935053
+2026-04-09 12:43:05,987 - INFO - PMID 20935053 补全成功，添加了 1 个新实体
+2026-04-09 12:43:06,058 - INFO - 已更新文件中的 PMID 21874386
+2026-04-09 12:43:06,059 - INFO - PMID 21874386 补全成功，添加了 2 个新实体
+2026-04-09 12:43:06,170 - INFO - 已更新文件中的 PMID 21979053
+2026-04-09 12:43:06,171 - INFO - PMID 21979053 补全成功，添加了 2 个新实体
+2026-04-09 12:43:06,230 - INFO - 已更新文件中的 PMID 21987713
+2026-04-09 12:43:06,231 - INFO - PMID 21987713 补全成功，添加了 2 个新实体
+2026-04-09 12:43:06,352 - INFO - 已更新文件中的 PMID 23322991
+2026-04-09 12:43:06,353 - INFO - PMID 23322991 补全成功，添加了 5 个新实体
+2026-04-09 12:43:06,754 - INFO - 已更新文件中的 PMID 21423624
+2026-04-09 12:43:06,755 - INFO - PMID 21423624 补全成功，添加了 1 个新实体
+2026-04-09 12:43:06,848 - INFO - 已更新文件中的 PMID 22225458
+2026-04-09 12:43:06,850 - INFO - PMID 22225458 补全成功，添加了 3 个新实体
+2026-04-09 12:43:07,057 - INFO - 已更新文件中的 PMID 20852066
+2026-04-09 12:43:07,058 - INFO - PMID 20852066 补全成功，添加了 1 个新实体
+2026-04-09 12:43:07,135 - INFO - 已更新文件中的 PMID 20846497
+2026-04-09 12:43:07,137 - INFO - PMID 20846497 补全成功，添加了 2 个新实体
+2026-04-09 12:43:07,224 - INFO - 已更新文件中的 PMID 23599355
+2026-04-09 12:43:07,225 - INFO - PMID 23599355 补全成功，添加了 5 个新实体
+2026-04-09 12:43:07,276 - INFO - 已更新文件中的 PMID 21297615
+2026-04-09 12:43:07,277 - INFO - PMID 21297615 补全成功，添加了 2 个新实体
+2026-04-09 12:43:07,402 - INFO - 已更新文件中的 PMID 21370050
+2026-04-09 12:43:07,404 - INFO - PMID 21370050 补全成功，添加了 2 个新实体
+2026-04-09 12:43:07,488 - INFO - 已更新文件中的 PMID 23333607
+2026-04-09 12:43:07,489 - INFO - PMID 23333607 补全成功，添加了 6 个新实体
+2026-04-09 12:43:07,596 - INFO - 已更新文件中的 PMID 21636125
+2026-04-09 12:43:07,597 - INFO - PMID 21636125 补全成功，添加了 3 个新实体
+2026-04-09 12:43:07,685 - INFO - 已更新文件中的 PMID 21209933
+2026-04-09 12:43:07,687 - INFO - PMID 21209933 补全成功，添加了 2 个新实体
+2026-04-09 12:43:10,455 - INFO - 已更新文件中的 PMID 20949108
+2026-04-09 12:43:10,456 - INFO - PMID 20949108 补全成功，添加了 4 个新实体
+2026-04-09 12:43:10,681 - INFO - 已更新文件中的 PMID 22079243
+2026-04-09 12:43:10,682 - INFO - PMID 22079243 补全成功，添加了 5 个新实体
+2026-04-09 12:43:10,683 - INFO - 开始处理第 2/4 批次，包含 200 篇文献
+2026-04-09 12:43:28,275 - INFO - 已更新文件中的 PMID 31851760
+2026-04-09 12:43:28,276 - INFO - PMID 31851760 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,335 - INFO - 已更新文件中的 PMID 31717545
+2026-04-09 12:43:28,336 - INFO - PMID 31717545 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,393 - INFO - 已更新文件中的 PMID 20603005
+2026-04-09 12:43:28,394 - INFO - PMID 20603005 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,494 - INFO - 已更新文件中的 PMID 30739781
+2026-04-09 12:43:28,495 - INFO - PMID 30739781 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,549 - INFO - 已更新文件中的 PMID 20500903
+2026-04-09 12:43:28,550 - INFO - PMID 20500903 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,605 - INFO - 已更新文件中的 PMID 31775878
+2026-04-09 12:43:28,605 - INFO - PMID 31775878 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,658 - INFO - 已更新文件中的 PMID 30926969
+2026-04-09 12:43:28,659 - INFO - PMID 30926969 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,713 - INFO - 已更新文件中的 PMID 20176473
+2026-04-09 12:43:28,714 - INFO - PMID 20176473 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,766 - INFO - 已更新文件中的 PMID 31814915
+2026-04-09 12:43:28,767 - INFO - PMID 31814915 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,833 - INFO - 已更新文件中的 PMID 30764754
+2026-04-09 12:43:28,835 - INFO - PMID 30764754 补全成功，添加了 1 个新实体
+2026-04-09 12:43:28,912 - INFO - 已更新文件中的 PMID 30774773
+2026-04-09 12:43:28,913 - INFO - PMID 30774773 补全成功，添加了 1 个新实体
+2026-04-09 12:43:29,009 - INFO - 已更新文件中的 PMID 19740021
+2026-04-09 12:43:29,010 - INFO - PMID 19740021 补全成功，添加了 1 个新实体
+2026-04-09 12:43:29,094 - INFO - 已更新文件中的 PMID 31822674
+2026-04-09 12:43:29,095 - INFO - PMID 31822674 补全成功，添加了 1 个新实体
+2026-04-09 12:43:29,172 - INFO - 已更新文件中的 PMID 20521842
+2026-04-09 12:43:29,174 - INFO - PMID 20521842 补全成功，添加了 1 个新实体
+2026-04-09 12:43:29,261 - INFO - 已更新文件中的 PMID 31568525
+2026-04-09 12:43:29,262 - INFO - PMID 31568525 补全成功，添加了 1 个新实体
+2026-04-09 12:43:29,328 - INFO - 已更新文件中的 PMID 30973874
+2026-04-09 12:43:29,330 - INFO - PMID 30973874 补全成功，添加了 1 个新实体
+2026-04-09 12:43:29,385 - INFO - 已更新文件中的 PMID 31377971
+2026-04-09 12:43:29,386 - INFO - PMID 31377971 补全成功，添加了 1 个新实体
+2026-04-09 12:43:29,440 - INFO - 已更新文件中的 PMID 31101683
+2026-04-09 12:43:29,441 - INFO - PMID 31101683 补全成功，添加了 2 个新实体
+2026-04-09 12:43:29,496 - INFO - 已更新文件中的 PMID 31623314
+2026-04-09 12:43:29,497 - INFO - PMID 31623314 补全成功，添加了 2 个新实体
+2026-04-09 12:43:29,723 - INFO - 已更新文件中的 PMID 31230816
+2026-04-09 12:43:29,724 - INFO - PMID 31230816 补全成功，添加了 2 个新实体
+2026-04-09 12:43:29,977 - INFO - 已更新文件中的 PMID 31073336
+2026-04-09 12:43:29,978 - INFO - PMID 31073336 补全成功，添加了 2 个新实体
+2026-04-09 12:43:30,193 - INFO - 已更新文件中的 PMID 30623286
+2026-04-09 12:43:30,194 - INFO - PMID 30623286 补全成功，添加了 1 个新实体
+2026-04-09 12:43:30,521 - INFO - 已更新文件中的 PMID 31666001
+2026-04-09 12:43:30,522 - INFO - PMID 31666001 补全成功，添加了 2 个新实体
+2026-04-09 12:43:30,575 - INFO - 已更新文件中的 PMID 30061100
+2026-04-09 12:43:30,577 - INFO - PMID 30061100 补全成功，添加了 1 个新实体
+2026-04-09 12:43:30,686 - INFO - 已更新文件中的 PMID 30237828
+2026-04-09 12:43:30,687 - INFO - PMID 30237828 补全成功，添加了 1 个新实体
+2026-04-09 12:43:30,745 - INFO - 已更新文件中的 PMID 30729177
+2026-04-09 12:43:30,747 - INFO - PMID 30729177 补全成功，添加了 3 个新实体
+2026-04-09 12:43:30,799 - INFO - 已更新文件中的 PMID 30367120
+2026-04-09 12:43:30,800 - INFO - PMID 30367120 补全成功，添加了 1 个新实体
+2026-04-09 12:43:30,858 - INFO - 已更新文件中的 PMID 31151386
+2026-04-09 12:43:30,859 - INFO - PMID 31151386 补全成功，添加了 3 个新实体
+2026-04-09 12:43:30,980 - INFO - 已更新文件中的 PMID 30514403
+2026-04-09 12:43:30,981 - INFO - PMID 30514403 补全成功，添加了 1 个新实体
+2026-04-09 12:43:31,041 - INFO - 已更新文件中的 PMID 30221208
+2026-04-09 12:43:31,042 - INFO - PMID 30221208 补全成功，添加了 1 个新实体
+2026-04-09 12:43:31,111 - INFO - 已更新文件中的 PMID 29802231
+2026-04-09 12:43:31,112 - INFO - PMID 29802231 补全成功，添加了 1 个新实体
+2026-04-09 12:43:31,320 - INFO - 已更新文件中的 PMID 29872154
+2026-04-09 12:43:31,321 - INFO - PMID 29872154 补全成功，添加了 1 个新实体
+2026-04-09 12:43:31,536 - INFO - 已更新文件中的 PMID 20147320
+2026-04-09 12:43:31,538 - INFO - PMID 20147320 补全成功，添加了 4 个新实体
+2026-04-09 12:43:31,624 - INFO - 已更新文件中的 PMID 29949758
+2026-04-09 12:43:31,625 - INFO - PMID 29949758 补全成功，添加了 1 个新实体
+2026-04-09 12:43:31,713 - INFO - 已更新文件中的 PMID 29729503
+2026-04-09 12:43:31,714 - INFO - PMID 29729503 补全成功，添加了 1 个新实体
+2026-04-09 12:43:31,800 - INFO - 已更新文件中的 PMID 30123290
+2026-04-09 12:43:31,801 - INFO - PMID 30123290 补全成功，添加了 2 个新实体
+2026-04-09 12:43:31,941 - INFO - 已更新文件中的 PMID 29724131
+2026-04-09 12:43:31,970 - INFO - PMID 29724131 补全成功，添加了 1 个新实体
+2026-04-09 12:43:32,103 - INFO - 已更新文件中的 PMID 30418605
+2026-04-09 12:43:32,104 - INFO - PMID 30418605 补全成功，添加了 2 个新实体
+2026-04-09 12:43:32,229 - INFO - 已更新文件中的 PMID 29726894
+2026-04-09 12:43:32,230 - INFO - PMID 29726894 补全成功，添加了 1 个新实体
+2026-04-09 12:43:32,322 - INFO - 已更新文件中的 PMID 30568248
+2026-04-09 12:43:32,324 - INFO - PMID 30568248 补全成功，添加了 2 个新实体
+2026-04-09 12:43:32,407 - INFO - 已更新文件中的 PMID 29725084
+2026-04-09 12:43:32,408 - INFO - PMID 29725084 补全成功，添加了 1 个新实体
+2026-04-09 12:43:32,558 - INFO - 已更新文件中的 PMID 29649143
+2026-04-09 12:43:32,559 - INFO - PMID 29649143 补全成功，添加了 1 个新实体
+2026-04-09 12:43:32,637 - INFO - 已更新文件中的 PMID 29526463
+2026-04-09 12:43:32,639 - INFO - PMID 29526463 补全成功，添加了 1 个新实体
+2026-04-09 12:43:32,745 - INFO - 已更新文件中的 PMID 29580552
+2026-04-09 12:43:32,746 - INFO - PMID 29580552 补全成功，添加了 1 个新实体
+2026-04-09 12:43:32,848 - INFO - 已更新文件中的 PMID 30341801
+2026-04-09 12:43:32,849 - INFO - PMID 30341801 补全成功，添加了 3 个新实体
+2026-04-09 12:43:33,050 - INFO - 已更新文件中的 PMID 30037614
+2026-04-09 12:43:33,052 - INFO - PMID 30037614 补全成功，添加了 3 个新实体
+2026-04-09 12:43:33,165 - INFO - 已更新文件中的 PMID 29474918
+2026-04-09 12:43:33,166 - INFO - PMID 29474918 补全成功，添加了 1 个新实体
+2026-04-09 12:43:33,297 - INFO - 已更新文件中的 PMID 29875629
+2026-04-09 12:43:33,298 - INFO - PMID 29875629 补全成功，添加了 2 个新实体
+2026-04-09 12:43:33,433 - INFO - 已更新文件中的 PMID 29458070
+2026-04-09 12:43:33,434 - INFO - PMID 29458070 补全成功，添加了 1 个新实体
+2026-04-09 12:43:33,532 - INFO - 已更新文件中的 PMID 29405002
+2026-04-09 12:43:33,533 - INFO - PMID 29405002 补全成功，添加了 1 个新实体
+2026-04-09 12:43:33,652 - INFO - 已更新文件中的 PMID 29321585
+2026-04-09 12:43:33,654 - INFO - PMID 29321585 补全成功，添加了 1 个新实体
+2026-04-09 12:43:33,762 - INFO - 已更新文件中的 PMID 29219079
+2026-04-09 12:43:33,763 - INFO - PMID 29219079 补全成功，添加了 1 个新实体
+2026-04-09 12:43:33,897 - INFO - 已更新文件中的 PMID 29154869
+2026-04-09 12:43:33,899 - INFO - PMID 29154869 补全成功，添加了 1 个新实体
+2026-04-09 12:43:33,982 - INFO - 已更新文件中的 PMID 29505568
+2026-04-09 12:43:33,983 - INFO - PMID 29505568 补全成功，添加了 1 个新实体
+2026-04-09 12:43:34,079 - INFO - 已更新文件中的 PMID 29089466
+2026-04-09 12:43:34,081 - INFO - PMID 29089466 补全成功，添加了 1 个新实体
+2026-04-09 12:43:34,166 - INFO - 已更新文件中的 PMID 29066820
+2026-04-09 12:43:34,167 - INFO - PMID 29066820 补全成功，添加了 1 个新实体
+2026-04-09 12:43:34,263 - INFO - 已更新文件中的 PMID 29237055
+2026-04-09 12:43:34,264 - INFO - PMID 29237055 补全成功，添加了 1 个新实体
+2026-04-09 12:43:34,367 - INFO - 已更新文件中的 PMID 29288557
+2026-04-09 12:43:34,368 - INFO - PMID 29288557 补全成功，添加了 1 个新实体
+2026-04-09 12:43:34,733 - INFO - 已更新文件中的 PMID 29032825
+2026-04-09 12:43:34,734 - INFO - PMID 29032825 补全成功，添加了 1 个新实体
+2026-04-09 12:43:34,834 - INFO - 已更新文件中的 PMID 29525183
+2026-04-09 12:43:34,838 - INFO - PMID 29525183 补全成功，添加了 2 个新实体
+2026-04-09 12:43:35,077 - INFO - 已更新文件中的 PMID 28662076
+2026-04-09 12:43:35,078 - INFO - PMID 28662076 补全成功，添加了 1 个新实体
+2026-04-09 12:43:35,195 - INFO - 已更新文件中的 PMID 30658985
+2026-04-09 12:43:35,196 - INFO - PMID 30658985 补全成功，添加了 4 个新实体
+2026-04-09 12:43:35,293 - INFO - 已更新文件中的 PMID 28957348
+2026-04-09 12:43:35,294 - INFO - PMID 28957348 补全成功，添加了 1 个新实体
+2026-04-09 12:43:35,389 - INFO - 已更新文件中的 PMID 29309036
+2026-04-09 12:43:35,390 - INFO - PMID 29309036 补全成功，添加了 3 个新实体
+2026-04-09 12:43:35,491 - INFO - 已更新文件中的 PMID 29327725
+2026-04-09 12:43:35,492 - INFO - PMID 29327725 补全成功，添加了 3 个新实体
+2026-04-09 12:43:35,754 - INFO - 已更新文件中的 PMID 28938719
+2026-04-09 12:43:35,756 - INFO - PMID 28938719 补全成功，添加了 1 个新实体
+2026-04-09 12:43:36,036 - INFO - 已更新文件中的 PMID 28139237
+2026-04-09 12:43:36,042 - INFO - PMID 28139237 补全成功，添加了 1 个新实体
+2026-04-09 12:43:36,144 - INFO - 已更新文件中的 PMID 28750672
+2026-04-09 12:43:36,147 - INFO - PMID 28750672 补全成功，添加了 2 个新实体
+2026-04-09 12:43:36,276 - INFO - 已更新文件中的 PMID 28450901
+2026-04-09 12:43:36,277 - INFO - PMID 28450901 补全成功，添加了 2 个新实体
+2026-04-09 12:43:36,387 - INFO - 已更新文件中的 PMID 28334850
+2026-04-09 12:43:36,388 - INFO - PMID 28334850 补全成功，添加了 1 个新实体
+2026-04-09 12:43:36,503 - INFO - 已更新文件中的 PMID 28414318
+2026-04-09 12:43:36,504 - INFO - PMID 28414318 补全成功，添加了 2 个新实体
+2026-04-09 12:43:36,645 - INFO - 已更新文件中的 PMID 28824558
+2026-04-09 12:43:36,646 - INFO - PMID 28824558 补全成功，添加了 2 个新实体
+2026-04-09 12:43:36,763 - INFO - 已更新文件中的 PMID 28826027
+2026-04-09 12:43:36,764 - INFO - PMID 28826027 补全成功，添加了 2 个新实体
+2026-04-09 12:43:36,903 - INFO - 已更新文件中的 PMID 29016854
+2026-04-09 12:43:36,904 - INFO - PMID 29016854 补全成功，添加了 3 个新实体
+2026-04-09 12:43:36,986 - INFO - 已更新文件中的 PMID 28390408
+2026-04-09 12:43:36,987 - INFO - PMID 28390408 补全成功，添加了 2 个新实体
+2026-04-09 12:43:37,077 - INFO - 已更新文件中的 PMID 28245871
+2026-04-09 12:43:37,078 - INFO - PMID 28245871 补全成功，添加了 1 个新实体
+2026-04-09 12:43:37,190 - INFO - 已更新文件中的 PMID 27965292
+2026-04-09 12:43:37,191 - INFO - PMID 27965292 补全成功，添加了 1 个新实体
+2026-04-09 12:43:37,377 - INFO - 已更新文件中的 PMID 29861327
+2026-04-09 12:43:37,378 - INFO - PMID 29861327 补全成功，添加了 6 个新实体
+2026-04-09 12:43:37,481 - INFO - 已更新文件中的 PMID 27999094
+2026-04-09 12:43:37,482 - INFO - PMID 27999094 补全成功，添加了 1 个新实体
+2026-04-09 12:43:37,587 - INFO - 已更新文件中的 PMID 28355180
+2026-04-09 12:43:37,588 - INFO - PMID 28355180 补全成功，添加了 2 个新实体
+2026-04-09 12:43:37,763 - INFO - 已更新文件中的 PMID 27658045
+2026-04-09 12:43:37,765 - INFO - PMID 27658045 补全成功，添加了 1 个新实体
+2026-04-09 12:43:37,894 - INFO - 已更新文件中的 PMID 27914481
+2026-04-09 12:43:37,896 - INFO - PMID 27914481 补全成功，添加了 1 个新实体
+2026-04-09 12:43:38,005 - INFO - 已更新文件中的 PMID 28500952
+2026-04-09 12:43:38,007 - INFO - PMID 28500952 补全成功，添加了 4 个新实体
+2026-04-09 12:43:38,177 - INFO - 已更新文件中的 PMID 27426086
+2026-04-09 12:43:38,178 - INFO - PMID 27426086 补全成功，添加了 1 个新实体
+2026-04-09 12:43:38,288 - INFO - 已更新文件中的 PMID 27604870
+2026-04-09 12:43:38,290 - INFO - PMID 27604870 补全成功，添加了 1 个新实体
+2026-04-09 12:43:38,493 - INFO - 已更新文件中的 PMID 27999332
+2026-04-09 12:43:38,494 - INFO - PMID 27999332 补全成功，添加了 3 个新实体
+2026-04-09 12:43:38,580 - INFO - 已更新文件中的 PMID 28637190
+2026-04-09 12:43:38,581 - INFO - PMID 28637190 补全成功，添加了 3 个新实体
+2026-04-09 12:43:38,714 - INFO - 已更新文件中的 PMID 27259691
+2026-04-09 12:43:38,716 - INFO - PMID 27259691 补全成功，添加了 1 个新实体
+2026-04-09 12:43:38,827 - INFO - 已更新文件中的 PMID 27780869
+2026-04-09 12:43:38,829 - INFO - PMID 27780869 补全成功，添加了 2 个新实体
+2026-04-09 12:43:38,913 - INFO - 已更新文件中的 PMID 27071356
+2026-04-09 12:43:38,914 - INFO - PMID 27071356 补全成功，添加了 1 个新实体
+2026-04-09 12:43:39,026 - INFO - 已更新文件中的 PMID 28666380
+2026-04-09 12:43:39,027 - INFO - PMID 28666380 补全成功，添加了 3 个新实体
+2026-04-09 12:43:39,180 - INFO - 已更新文件中的 PMID 28100588
+2026-04-09 12:43:39,181 - INFO - PMID 28100588 补全成功，添加了 2 个新实体
+2026-04-09 12:43:39,280 - INFO - 已更新文件中的 PMID 26942045
+2026-04-09 12:43:39,281 - INFO - PMID 26942045 补全成功，添加了 1 个新实体
+2026-04-09 12:43:39,418 - INFO - 已更新文件中的 PMID 26942044
+2026-04-09 12:43:39,419 - INFO - PMID 26942044 补全成功，添加了 1 个新实体
+2026-04-09 12:43:39,553 - INFO - 已更新文件中的 PMID 27095191
+2026-04-09 12:43:39,555 - INFO - PMID 27095191 补全成功，添加了 1 个新实体
+2026-04-09 12:43:39,683 - INFO - 已更新文件中的 PMID 27900322
+2026-04-09 12:43:39,684 - INFO - PMID 27900322 补全成功，添加了 2 个新实体
+2026-04-09 12:43:39,770 - INFO - 已更新文件中的 PMID 26895045
+2026-04-09 12:43:39,771 - INFO - PMID 26895045 补全成功，添加了 1 个新实体
+2026-04-09 12:43:40,015 - INFO - 已更新文件中的 PMID 26384559
+2026-04-09 12:43:40,017 - INFO - PMID 26384559 补全成功，添加了 1 个新实体
+2026-04-09 12:43:40,129 - INFO - 已更新文件中的 PMID 26585388
+2026-04-09 12:43:40,130 - INFO - PMID 26585388 补全成功，添加了 1 个新实体
+2026-04-09 12:43:40,227 - INFO - 已更新文件中的 PMID 26743714
+2026-04-09 12:43:40,228 - INFO - PMID 26743714 补全成功，添加了 1 个新实体
+2026-04-09 12:43:40,331 - INFO - 已更新文件中的 PMID 26740556
+2026-04-09 12:43:40,332 - INFO - PMID 26740556 补全成功，添加了 1 个新实体
+2026-04-09 12:43:40,460 - INFO - 已更新文件中的 PMID 26334179
+2026-04-09 12:43:40,461 - INFO - PMID 26334179 补全成功，添加了 1 个新实体
+2026-04-09 12:43:40,566 - INFO - 已更新文件中的 PMID 26223268
+2026-04-09 12:43:40,567 - INFO - PMID 26223268 补全成功，添加了 1 个新实体
+2026-04-09 12:43:40,714 - INFO - 已更新文件中的 PMID 27247436
+2026-04-09 12:43:40,716 - INFO - PMID 27247436 补全成功，添加了 3 个新实体
+2026-04-09 12:43:40,869 - INFO - 已更新文件中的 PMID 26148505
+2026-04-09 12:43:40,871 - INFO - PMID 26148505 补全成功，添加了 1 个新实体
+2026-04-09 12:43:41,018 - INFO - 已更新文件中的 PMID 26001115
+2026-04-09 12:43:41,020 - INFO - PMID 26001115 补全成功，添加了 1 个新实体
+2026-04-09 12:43:41,143 - INFO - 已更新文件中的 PMID 25951186
+2026-04-09 12:43:41,144 - INFO - PMID 25951186 补全成功，添加了 1 个新实体
+2026-04-09 12:43:41,275 - INFO - 已更新文件中的 PMID 26021318
+2026-04-09 12:43:41,277 - INFO - PMID 26021318 补全成功，添加了 1 个新实体
+2026-04-09 12:43:41,417 - INFO - 已更新文件中的 PMID 26122653
+2026-04-09 12:43:41,419 - INFO - PMID 26122653 补全成功，添加了 1 个新实体
+2026-04-09 12:43:41,419 - INFO - PMID 26208039 无新实体可添加（可能已存在或API未返回有效实体）
+2026-04-09 12:43:41,521 - INFO - 已更新文件中的 PMID 26983639
+2026-04-09 12:43:41,522 - INFO - PMID 26983639 补全成功，添加了 3 个新实体
+2026-04-09 12:43:41,640 - INFO - 已更新文件中的 PMID 26104698
+2026-04-09 12:43:41,642 - INFO - PMID 26104698 补全成功，添加了 1 个新实体
+2026-04-09 12:43:41,724 - INFO - 已更新文件中的 PMID 26585389
+2026-04-09 12:43:41,725 - INFO - PMID 26585389 补全成功，添加了 2 个新实体
+2026-04-09 12:43:41,896 - INFO - 已更新文件中的 PMID 25798578
+2026-04-09 12:43:41,897 - INFO - PMID 25798578 补全成功，添加了 1 个新实体
+2026-04-09 12:43:42,000 - INFO - 已更新文件中的 PMID 29564828
+2026-04-09 12:43:42,001 - INFO - PMID 29564828 补全成功，添加了 9 个新实体
+2026-04-09 12:43:42,192 - INFO - 已更新文件中的 PMID 25860606
+2026-04-09 12:43:42,193 - INFO - PMID 25860606 补全成功，添加了 2 个新实体
+2026-04-09 12:43:42,316 - INFO - 已更新文件中的 PMID 25774044
+2026-04-09 12:43:42,317 - INFO - PMID 25774044 补全成功，添加了 1 个新实体
+2026-04-09 12:43:42,389 - INFO - 已更新文件中的 PMID 25866159
+2026-04-09 12:43:42,391 - INFO - PMID 25866159 补全成功，添加了 2 个新实体
+2026-04-09 12:43:42,652 - INFO - 已更新文件中的 PMID 25795118
+2026-04-09 12:43:42,653 - INFO - PMID 25795118 补全成功，添加了 1 个新实体
+2026-04-09 12:43:42,771 - INFO - 已更新文件中的 PMID 25701601
+2026-04-09 12:43:42,772 - INFO - PMID 25701601 补全成功，添加了 1 个新实体
+2026-04-09 12:43:42,903 - INFO - 已更新文件中的 PMID 39577413
+2026-04-09 12:43:42,904 - INFO - PMID 39577413 补全成功，添加了 1 个新实体
+2026-04-09 12:43:43,049 - INFO - 已更新文件中的 PMID 25613453
+2026-04-09 12:43:43,050 - INFO - PMID 25613453 补全成功，添加了 1 个新实体
+2026-04-09 12:43:43,269 - INFO - 已更新文件中的 PMID 25546334
+2026-04-09 12:43:43,270 - INFO - PMID 25546334 补全成功，添加了 1 个新实体
+2026-04-09 12:43:43,428 - INFO - 已更新文件中的 PMID 39423215
+2026-04-09 12:43:43,429 - INFO - PMID 39423215 补全成功，添加了 1 个新实体
+2026-04-09 12:43:43,830 - INFO - 已更新文件中的 PMID 38937837
+2026-04-09 12:43:43,830 - INFO - PMID 38937837 补全成功，添加了 1 个新实体
+2026-04-09 12:43:44,091 - INFO - 已更新文件中的 PMID 27913727
+2026-04-09 12:43:44,092 - INFO - PMID 27913727 补全成功，添加了 6 个新实体
+2026-04-09 12:43:44,231 - INFO - 已更新文件中的 PMID 25956794
+2026-04-09 12:43:44,233 - INFO - PMID 25956794 补全成功，添加了 3 个新实体
+2026-04-09 12:43:44,363 - INFO - 已更新文件中的 PMID 39011896
+2026-04-09 12:43:44,364 - INFO - PMID 39011896 补全成功，添加了 1 个新实体
+2026-04-09 12:43:44,443 - INFO - 已更新文件中的 PMID 27219456
+2026-04-09 12:43:44,445 - INFO - PMID 27219456 补全成功，添加了 5 个新实体
+2026-04-09 12:43:44,446 - INFO - PMID 39103003 无新实体可添加（可能已存在或API未返回有效实体）
+2026-04-09 12:43:44,592 - INFO - 已更新文件中的 PMID 38960580
+2026-04-09 12:43:44,597 - INFO - PMID 38960580 补全成功，添加了 1 个新实体
+2026-04-09 12:43:44,722 - INFO - 已更新文件中的 PMID 26095805
+2026-04-09 12:43:44,724 - INFO - PMID 26095805 补全成功，添加了 4 个新实体
+2026-04-09 12:43:44,873 - INFO - 已更新文件中的 PMID 38783375
+2026-04-09 12:43:44,874 - INFO - PMID 38783375 补全成功，添加了 1 个新实体
+2026-04-09 12:43:45,005 - INFO - 已更新文件中的 PMID 38936517
+2026-04-09 12:43:45,006 - INFO - PMID 38936517 补全成功，添加了 1 个新实体
+2026-04-09 12:43:45,124 - INFO - 已更新文件中的 PMID 38834915
+2026-04-09 12:43:45,125 - INFO - PMID 38834915 补全成功，添加了 1 个新实体
+2026-04-09 12:43:45,234 - INFO - 已更新文件中的 PMID 39318356
+2026-04-09 12:43:45,235 - INFO - PMID 39318356 补全成功，添加了 2 个新实体
+2026-04-09 12:43:45,406 - INFO - 已更新文件中的 PMID 39356058
+2026-04-09 12:43:45,407 - INFO - PMID 39356058 补全成功，添加了 2 个新实体
+2026-04-09 12:43:45,520 - INFO - 已更新文件中的 PMID 39311137
+2026-04-09 12:43:45,521 - INFO - PMID 39311137 补全成功，添加了 2 个新实体
+2026-04-09 12:43:45,638 - INFO - 已更新文件中的 PMID 39868163
+2026-04-09 12:43:45,640 - INFO - PMID 39868163 补全成功，添加了 3 个新实体
+2026-04-09 12:43:45,640 - INFO - PMID 38960717 无新实体可添加（可能已存在或API未返回有效实体）
+2026-04-09 12:43:45,865 - INFO - 已更新文件中的 PMID 38709956
+2026-04-09 12:43:45,868 - INFO - PMID 38709956 补全成功，添加了 1 个新实体
+2026-04-09 12:43:45,968 - INFO - 已更新文件中的 PMID 39122675
+2026-04-09 12:43:45,970 - INFO - PMID 39122675 补全成功，添加了 3 个新实体
+2026-04-09 12:43:46,219 - INFO - 已更新文件中的 PMID 38945203
+2026-04-09 12:43:46,220 - INFO - PMID 38945203 补全成功，添加了 2 个新实体
+2026-04-09 12:43:46,350 - INFO - 已更新文件中的 PMID 37628742
+2026-04-09 12:43:46,352 - INFO - PMID 37628742 补全成功，添加了 1 个新实体
+2026-04-09 12:43:46,488 - INFO - 已更新文件中的 PMID 39102544
+2026-04-09 12:43:46,490 - INFO - PMID 39102544 补全成功，添加了 3 个新实体
+2026-04-09 12:43:46,583 - INFO - 已更新文件中的 PMID 26854351
+2026-04-09 12:43:46,585 - INFO - PMID 26854351 补全成功，添加了 7 个新实体
+2026-04-09 12:43:46,709 - INFO - 已更新文件中的 PMID 37543704
+2026-04-09 12:43:46,717 - INFO - PMID 37543704 补全成功，添加了 1 个新实体
+2026-04-09 12:43:46,977 - INFO - 已更新文件中的 PMID 39883328
+2026-04-09 12:43:46,979 - INFO - PMID 39883328 补全成功，添加了 1 个新实体
+2026-04-09 12:43:47,085 - INFO - 已更新文件中的 PMID 37620405
+2026-04-09 12:43:47,087 - INFO - PMID 37620405 补全成功，添加了 1 个新实体
+2026-04-09 12:43:47,192 - INFO - 已更新文件中的 PMID 37394769
+2026-04-09 12:43:47,193 - INFO - PMID 37394769 补全成功，添加了 1 个新实体
+2026-04-09 12:43:47,297 - INFO - 已更新文件中的 PMID 37381037
+2026-04-09 12:43:47,299 - INFO - PMID 37381037 补全成功，添加了 1 个新实体
+2026-04-09 12:43:47,429 - INFO - 已更新文件中的 PMID 37292765
+2026-04-09 12:43:47,431 - INFO - PMID 37292765 补全成功，添加了 1 个新实体
+2026-04-09 12:43:47,531 - INFO - 已更新文件中的 PMID 38793589
+2026-04-09 12:43:47,532 - INFO - PMID 38793589 补全成功，添加了 3 个新实体
+2026-04-09 12:43:47,628 - INFO - 已更新文件中的 PMID 38759652
+2026-04-09 12:43:47,629 - INFO - PMID 38759652 补全成功，添加了 3 个新实体
+2026-04-09 12:43:47,737 - INFO - 已更新文件中的 PMID 37298193
+2026-04-09 12:43:47,738 - INFO - PMID 37298193 补全成功，添加了 1 个新实体
+2026-04-09 12:43:47,831 - INFO - 已更新文件中的 PMID 37175696
+2026-04-09 12:43:47,832 - INFO - PMID 37175696 补全成功，添加了 1 个新实体
+2026-04-09 12:43:47,967 - INFO - 已更新文件中的 PMID 37234925
+2026-04-09 12:43:47,968 - INFO - PMID 37234925 补全成功，添加了 1 个新实体
+2026-04-09 12:43:48,059 - INFO - 已更新文件中的 PMID 37012406
+2026-04-09 12:43:48,061 - INFO - PMID 37012406 补全成功，添加了 1 个新实体
+2026-04-09 12:43:48,139 - INFO - 已更新文件中的 PMID 37165451
+2026-04-09 12:43:48,140 - INFO - PMID 37165451 补全成功，添加了 1 个新实体
+2026-04-09 12:43:48,231 - INFO - 已更新文件中的 PMID 37264881
+2026-04-09 12:43:48,233 - INFO - PMID 37264881 补全成功，添加了 1 个新实体
+2026-04-09 12:43:48,356 - INFO - 已更新文件中的 PMID 36992338
+2026-04-09 12:43:48,357 - INFO - PMID 36992338 补全成功，添加了 1 个新实体
+2026-04-09 12:43:48,452 - INFO - 已更新文件中的 PMID 36497059
+2026-04-09 12:43:48,453 - INFO - PMID 36497059 补全成功，添加了 1 个新实体
+2026-04-09 12:43:48,534 - INFO - 已更新文件中的 PMID 38261975
+2026-04-09 12:43:48,536 - INFO - PMID 38261975 补全成功，添加了 3 个新实体
+2026-04-09 12:43:48,716 - INFO - 已更新文件中的 PMID 36859566
+2026-04-09 12:43:48,717 - INFO - PMID 36859566 补全成功，添加了 1 个新实体
+2026-04-09 12:43:48,807 - INFO - 已更新文件中的 PMID 38102195
+2026-04-09 12:43:48,809 - INFO - PMID 38102195 补全成功，添加了 2 个新实体
+2026-04-09 12:43:48,975 - INFO - 已更新文件中的 PMID 36657637
+2026-04-09 12:43:48,976 - INFO - PMID 36657637 补全成功，添加了 1 个新实体
+2026-04-09 12:43:49,090 - INFO - 已更新文件中的 PMID 36418540
+2026-04-09 12:43:49,112 - INFO - PMID 36418540 补全成功，添加了 1 个新实体
+2026-04-09 12:43:49,485 - INFO - 已更新文件中的 PMID 37271534
+2026-04-09 12:43:49,486 - INFO - PMID 37271534 补全成功，添加了 3 个新实体
+2026-04-09 12:43:49,612 - INFO - 已更新文件中的 PMID 36914622
+2026-04-09 12:43:49,614 - INFO - PMID 36914622 补全成功，添加了 2 个新实体
+2026-04-09 12:43:49,796 - INFO - 已更新文件中的 PMID 36215696
+2026-04-09 12:43:49,798 - INFO - PMID 36215696 补全成功，添加了 1 个新实体
+2026-04-09 12:43:49,958 - INFO - 已更新文件中的 PMID 36143463
+2026-04-09 12:43:49,961 - INFO - PMID 36143463 补全成功，添加了 1 个新实体
+2026-04-09 12:43:50,072 - INFO - 已更新文件中的 PMID 36010599
+2026-04-09 12:43:50,082 - INFO - PMID 36010599 补全成功，添加了 1 个新实体
+2026-04-09 12:43:50,180 - INFO - 已更新文件中的 PMID 35871298
+2026-04-09 12:43:50,182 - INFO - PMID 35871298 补全成功，添加了 1 个新实体
+2026-04-09 12:43:50,471 - INFO - 已更新文件中的 PMID 36192170
+2026-04-09 12:43:50,472 - INFO - PMID 36192170 补全成功，添加了 2 个新实体
+2026-04-09 12:43:50,561 - INFO - 已更新文件中的 PMID 36997626
+2026-04-09 12:43:50,563 - INFO - PMID 36997626 补全成功，添加了 2 个新实体
+2026-04-09 12:43:50,647 - INFO - 已更新文件中的 PMID 35859320
+2026-04-09 12:43:50,649 - INFO - PMID 35859320 补全成功，添加了 1 个新实体
+2026-04-09 12:43:50,744 - INFO - 已更新文件中的 PMID 35868859
+2026-04-09 12:43:50,745 - INFO - PMID 35868859 补全成功，添加了 1 个新实体
+2026-04-09 12:43:50,845 - INFO - 已更新文件中的 PMID 36420574
+2026-04-09 12:43:50,847 - INFO - PMID 36420574 补全成功，添加了 2 个新实体
+2026-04-09 12:43:50,979 - INFO - 已更新文件中的 PMID 35864085
+2026-04-09 12:43:50,980 - INFO - PMID 35864085 补全成功，添加了 2 个新实体
+2026-04-09 12:43:51,066 - INFO - 已更新文件中的 PMID 35768521
+2026-04-09 12:43:51,067 - INFO - PMID 35768521 补全成功，添加了 1 个新实体
+2026-04-09 12:43:51,177 - INFO - 已更新文件中的 PMID 36537219
+2026-04-09 12:43:51,179 - INFO - PMID 36537219 补全成功，添加了 2 个新实体
+2026-04-09 12:43:51,275 - INFO - 已更新文件中的 PMID 36219870
+2026-04-09 12:43:51,277 - INFO - PMID 36219870 补全成功，添加了 2 个新实体
+2026-04-09 12:43:51,367 - INFO - 已更新文件中的 PMID 35732404
+2026-04-09 12:43:51,368 - INFO - PMID 35732404 补全成功，添加了 1 个新实体
+2026-04-09 12:43:51,512 - INFO - 已更新文件中的 PMID 35704668
+2026-04-09 12:43:51,513 - INFO - PMID 35704668 补全成功，添加了 1 个新实体
+2026-04-09 12:43:51,598 - INFO - 已更新文件中的 PMID 34675070
+2026-04-09 12:43:51,599 - INFO - PMID 34675070 补全成功，添加了 1 个新实体
+2026-04-09 12:43:51,695 - INFO - 已更新文件中的 PMID 35609796
+2026-04-09 12:43:51,696 - INFO - PMID 35609796 补全成功，添加了 1 个新实体
+2026-04-09 12:43:51,834 - INFO - 已更新文件中的 PMID 38720252
+2026-04-09 12:43:51,835 - INFO - PMID 38720252 补全成功，添加了 7 个新实体
+2026-04-09 12:43:51,927 - INFO - 已更新文件中的 PMID 38397133
+2026-04-09 12:43:51,928 - INFO - PMID 38397133 补全成功，添加了 6 个新实体
+2026-04-09 12:43:52,048 - INFO - 已更新文件中的 PMID 38590523
+2026-04-09 12:43:52,050 - INFO - PMID 38590523 补全成功，添加了 5 个新实体
+2026-04-09 12:43:52,153 - INFO - 已更新文件中的 PMID 34587152
+2026-04-09 12:43:52,155 - INFO - PMID 34587152 补全成功，添加了 1 个新实体
+2026-04-09 12:43:52,257 - INFO - 已更新文件中的 PMID 35691110
+2026-04-09 12:43:52,259 - INFO - PMID 35691110 补全成功，添加了 2 个新实体
+2026-04-09 12:43:52,883 - INFO - 已更新文件中的 PMID 34231212
+2026-04-09 12:43:52,885 - INFO - PMID 34231212 补全成功，添加了 1 个新实体
+2026-04-09 12:43:53,178 - INFO - 已更新文件中的 PMID 34400477
+2026-04-09 12:43:53,180 - INFO - PMID 34400477 补全成功，添加了 2 个新实体
+2026-04-09 12:43:53,279 - INFO - 已更新文件中的 PMID 34390351
+2026-04-09 12:43:53,281 - INFO - PMID 34390351 补全成功，添加了 2 个新实体
+2026-04-09 12:43:53,985 - INFO - 已更新文件中的 PMID 35970867
+2026-04-09 12:43:53,987 - INFO - PMID 35970867 补全成功，添加了 5 个新实体
+2026-04-09 12:43:54,523 - INFO - 已更新文件中的 PMID 35342861
+2026-04-09 12:43:54,525 - INFO - PMID 35342861 补全成功，添加了 4 个新实体
+2026-04-09 12:43:55,188 - INFO - 已更新文件中的 PMID 36460901
+2026-04-09 12:43:55,190 - INFO - PMID 36460901 补全成功，添加了 6 个新实体
+2026-04-09 12:43:55,331 - INFO - 已更新文件中的 PMID 36780344
+2026-04-09 12:43:55,333 - INFO - PMID 36780344 补全成功，添加了 7 个新实体
+2026-04-09 12:43:55,622 - INFO - 已更新文件中的 PMID 35741345
+2026-04-09 12:43:55,625 - INFO - PMID 35741345 补全成功，添加了 5 个新实体
+2026-04-09 12:43:58,820 - INFO - 已更新文件中的 PMID 34253898
+2026-04-09 12:43:58,821 - INFO - PMID 34253898 补全成功，添加了 6 个新实体
+2026-04-09 12:43:58,822 - INFO - 开始处理第 3/4 批次，包含 200 篇文献
+2026-04-09 12:44:07,528 - INFO - 已更新文件中的 PMID 33989302
+2026-04-09 12:44:07,529 - INFO - PMID 33989302 补全成功，添加了 1 个新实体
+2026-04-09 12:44:07,637 - INFO - 已更新文件中的 PMID 33672287
+2026-04-09 12:44:07,639 - INFO - PMID 33672287 补全成功，添加了 1 个新实体
+2026-04-09 12:44:07,737 - INFO - 已更新文件中的 PMID 34071585
+2026-04-09 12:44:07,739 - INFO - PMID 34071585 补全成功，添加了 1 个新实体
+2026-04-09 12:44:07,972 - INFO - 已更新文件中的 PMID 34183725
+2026-04-09 12:44:07,973 - INFO - PMID 34183725 补全成功，添加了 1 个新实体
+2026-04-09 12:44:08,106 - INFO - 已更新文件中的 PMID 33526699
+2026-04-09 12:44:08,107 - INFO - PMID 33526699 补全成功，添加了 1 个新实体
+2026-04-09 12:44:08,222 - INFO - 已更新文件中的 PMID 33693705
+2026-04-09 12:44:08,223 - INFO - PMID 33693705 补全成功，添加了 1 个新实体
+2026-04-09 12:44:08,342 - INFO - 已更新文件中的 PMID 33992534
+2026-04-09 12:44:08,343 - INFO - PMID 33992534 补全成功，添加了 1 个新实体
+2026-04-09 12:44:08,471 - INFO - 已更新文件中的 PMID 33983939
+2026-04-09 12:44:08,472 - INFO - PMID 33983939 补全成功，添加了 1 个新实体
+2026-04-09 12:44:08,605 - INFO - 已更新文件中的 PMID 34174884
+2026-04-09 12:44:08,606 - INFO - PMID 34174884 补全成功，添加了 1 个新实体
+2026-04-09 12:44:08,774 - INFO - 已更新文件中的 PMID 33684176
+2026-04-09 12:44:08,776 - INFO - PMID 33684176 补全成功，添加了 1 个新实体
+2026-04-09 12:44:08,890 - INFO - 已更新文件中的 PMID 34158539
+2026-04-09 12:44:08,891 - INFO - PMID 34158539 补全成功，添加了 1 个新实体
+2026-04-09 12:44:09,036 - INFO - 已更新文件中的 PMID 33445593
+2026-04-09 12:44:09,038 - INFO - PMID 33445593 补全成功，添加了 2 个新实体
+2026-04-09 12:44:09,135 - INFO - 已更新文件中的 PMID 33826137
+2026-04-09 12:44:09,136 - INFO - PMID 33826137 补全成功，添加了 1 个新实体
+2026-04-09 12:44:09,281 - INFO - 已更新文件中的 PMID 34010392
+2026-04-09 12:44:09,283 - INFO - PMID 34010392 补全成功，添加了 2 个新实体
+2026-04-09 12:44:09,496 - INFO - 已更新文件中的 PMID 33616891
+2026-04-09 12:44:09,500 - INFO - PMID 33616891 补全成功，添加了 2 个新实体
+2026-04-09 12:44:09,596 - INFO - 已更新文件中的 PMID 34083437
+2026-04-09 12:44:09,598 - INFO - PMID 34083437 补全成功，添加了 2 个新实体
+2026-04-09 12:44:09,728 - INFO - 已更新文件中的 PMID 33432196
+2026-04-09 12:44:09,730 - INFO - PMID 33432196 补全成功，添加了 2 个新实体
+2026-04-09 12:44:09,885 - INFO - 已更新文件中的 PMID 33315879
+2026-04-09 12:44:09,886 - INFO - PMID 33315879 补全成功，添加了 2 个新实体
+2026-04-09 12:44:10,033 - INFO - 已更新文件中的 PMID 33722937
+2026-04-09 12:44:10,034 - INFO - PMID 33722937 补全成功，添加了 2 个新实体
+2026-04-09 12:44:10,148 - INFO - 已更新文件中的 PMID 33293698
+2026-04-09 12:44:10,150 - INFO - PMID 33293698 补全成功，添加了 2 个新实体
+2026-04-09 12:44:10,251 - INFO - 已更新文件中的 PMID 33659249
+2026-04-09 12:44:10,252 - INFO - PMID 33659249 补全成功，添加了 2 个新实体
+2026-04-09 12:44:10,396 - INFO - 已更新文件中的 PMID 33751828
+2026-04-09 12:44:10,397 - INFO - PMID 33751828 补全成功，添加了 2 个新实体
+2026-04-09 12:44:10,568 - INFO - 已更新文件中的 PMID 33896072
+2026-04-09 12:44:10,569 - INFO - PMID 33896072 补全成功，添加了 2 个新实体
+2026-04-09 12:44:10,674 - INFO - 已更新文件中的 PMID 33186547
+2026-04-09 12:44:10,675 - INFO - PMID 33186547 补全成功，添加了 1 个新实体
+2026-04-09 12:44:10,818 - INFO - 已更新文件中的 PMID 32722770
+2026-04-09 12:44:10,818 - INFO - PMID 32722770 补全成功，添加了 1 个新实体
+2026-04-09 12:44:10,984 - INFO - 已更新文件中的 PMID 33032882
+2026-04-09 12:44:10,986 - INFO - PMID 33032882 补全成功，添加了 1 个新实体
+2026-04-09 12:44:11,134 - INFO - 已更新文件中的 PMID 32965162
+2026-04-09 12:44:11,136 - INFO - PMID 32965162 补全成功，添加了 1 个新实体
+2026-04-09 12:44:11,279 - INFO - 已更新文件中的 PMID 32669333
+2026-04-09 12:44:11,280 - INFO - PMID 32669333 补全成功，添加了 1 个新实体
+2026-04-09 12:44:11,436 - INFO - 已更新文件中的 PMID 33972655
+2026-04-09 12:44:11,438 - INFO - PMID 33972655 补全成功，添加了 3 个新实体
+2026-04-09 12:44:11,591 - INFO - 已更新文件中的 PMID 33060137
+2026-04-09 12:44:11,592 - INFO - PMID 33060137 补全成功，添加了 2 个新实体
+2026-04-09 12:44:11,738 - INFO - 已更新文件中的 PMID 32449724
+2026-04-09 12:44:11,739 - INFO - PMID 32449724 补全成功，添加了 1 个新实体
+2026-04-09 12:44:11,890 - INFO - 已更新文件中的 PMID 32486217
+2026-04-09 12:44:11,891 - INFO - PMID 32486217 补全成功，添加了 1 个新实体
+2026-04-09 12:44:12,074 - INFO - 已更新文件中的 PMID 32504224
+2026-04-09 12:44:12,075 - INFO - PMID 32504224 补全成功，添加了 1 个新实体
+2026-04-09 12:44:12,227 - INFO - 已更新文件中的 PMID 33058565
+2026-04-09 12:44:12,228 - INFO - PMID 33058565 补全成功，添加了 2 个新实体
+2026-04-09 12:44:12,362 - INFO - 已更新文件中的 PMID 32503430
+2026-04-09 12:44:12,363 - INFO - PMID 32503430 补全成功，添加了 1 个新实体
+2026-04-09 12:44:12,510 - INFO - 已更新文件中的 PMID 32441177
+2026-04-09 12:44:12,511 - INFO - PMID 32441177 补全成功，添加了 1 个新实体
+2026-04-09 12:44:12,622 - INFO - 已更新文件中的 PMID 32712063
+2026-04-09 12:44:12,623 - INFO - PMID 32712063 补全成功，添加了 2 个新实体
+2026-04-09 12:44:12,728 - INFO - 已更新文件中的 PMID 32817447
+2026-04-09 12:44:12,730 - INFO - PMID 32817447 补全成功，添加了 2 个新实体
+2026-04-09 12:44:12,875 - INFO - 已更新文件中的 PMID 32170069
+2026-04-09 12:44:12,876 - INFO - PMID 32170069 补全成功，添加了 2 个新实体
+2026-04-09 12:44:13,028 - INFO - 已更新文件中的 PMID 31964400
+2026-04-09 12:44:13,029 - INFO - PMID 31964400 补全成功，添加了 1 个新实体
+2026-04-09 12:44:13,190 - INFO - 已更新文件中的 PMID 31874857
+2026-04-09 12:44:13,192 - INFO - PMID 31874857 补全成功，添加了 1 个新实体
+2026-04-09 12:44:13,341 - INFO - 已更新文件中的 PMID 34113336
+2026-04-09 12:44:13,342 - INFO - PMID 34113336 补全成功，添加了 4 个新实体
+2026-04-09 12:44:13,445 - INFO - 已更新文件中的 PMID 41767206
+2026-04-09 12:44:13,446 - INFO - PMID 41767206 补全成功，添加了 1 个新实体
+2026-04-09 12:44:13,601 - INFO - 已更新文件中的 PMID 41477637
+2026-04-09 12:44:13,602 - INFO - PMID 41477637 补全成功，添加了 1 个新实体
+2026-04-09 12:44:13,753 - INFO - 已更新文件中的 PMID 41602168
+2026-04-09 12:44:13,754 - INFO - PMID 41602168 补全成功，添加了 1 个新实体
+2026-04-09 12:44:13,886 - INFO - 已更新文件中的 PMID 41763613
+2026-04-09 12:44:13,887 - INFO - PMID 41763613 补全成功，添加了 1 个新实体
+2026-04-09 12:44:14,008 - INFO - 已更新文件中的 PMID 41381971
+2026-04-09 12:44:14,009 - INFO - PMID 41381971 补全成功，添加了 1 个新实体
+2026-04-09 12:44:14,156 - INFO - 已更新文件中的 PMID 32142408
+2026-04-09 12:44:14,158 - INFO - PMID 32142408 补全成功，添加了 2 个新实体
+2026-04-09 12:44:14,274 - INFO - 已更新文件中的 PMID 41272845
+2026-04-09 12:44:14,276 - INFO - PMID 41272845 补全成功，添加了 1 个新实体
+2026-04-09 12:44:14,469 - INFO - 已更新文件中的 PMID 41279747
+2026-04-09 12:44:14,470 - INFO - PMID 41279747 补全成功，添加了 1 个新实体
+2026-04-09 12:44:14,568 - INFO - 已更新文件中的 PMID 41473303
+2026-04-09 12:44:14,570 - INFO - PMID 41473303 补全成功，添加了 2 个新实体
+2026-04-09 12:44:14,686 - INFO - 已更新文件中的 PMID 32075559
+2026-04-09 12:44:14,687 - INFO - PMID 32075559 补全成功，添加了 2 个新实体
+2026-04-09 12:44:14,803 - INFO - 已更新文件中的 PMID 41278988
+2026-04-09 12:44:14,804 - INFO - PMID 41278988 补全成功，添加了 1 个新实体
+2026-04-09 12:44:14,960 - INFO - 已更新文件中的 PMID 41247621
+2026-04-09 12:44:14,961 - INFO - PMID 41247621 补全成功，添加了 1 个新实体
+2026-04-09 12:44:15,102 - INFO - 已更新文件中的 PMID 32958672
+2026-04-09 12:44:15,103 - INFO - PMID 32958672 补全成功，添加了 4 个新实体
+2026-04-09 12:44:15,224 - INFO - 已更新文件中的 PMID 40953126
+2026-04-09 12:44:15,225 - INFO - PMID 40953126 补全成功，添加了 1 个新实体
+2026-04-09 12:44:15,358 - INFO - 已更新文件中的 PMID 40962935
+2026-04-09 12:44:15,359 - INFO - PMID 40962935 补全成功，添加了 1 个新实体
+2026-04-09 12:44:15,505 - INFO - 已更新文件中的 PMID 40914050
+2026-04-09 12:44:15,506 - INFO - PMID 40914050 补全成功，添加了 1 个新实体
+2026-04-09 12:44:15,649 - INFO - 已更新文件中的 PMID 32053231
+2026-04-09 12:44:15,650 - INFO - PMID 32053231 补全成功，添加了 4 个新实体
+2026-04-09 12:44:15,799 - INFO - 已更新文件中的 PMID 40806778
+2026-04-09 12:44:15,800 - INFO - PMID 40806778 补全成功，添加了 1 个新实体
+2026-04-09 12:44:15,960 - INFO - 已更新文件中的 PMID 41223332
+2026-04-09 12:44:15,962 - INFO - PMID 41223332 补全成功，添加了 2 个新实体
+2026-04-09 12:44:16,122 - INFO - 已更新文件中的 PMID 40696366
+2026-04-09 12:44:16,123 - INFO - PMID 40696366 补全成功，添加了 1 个新实体
+2026-04-09 12:44:16,282 - INFO - 已更新文件中的 PMID 40646624
+2026-04-09 12:44:16,283 - INFO - PMID 40646624 补全成功，添加了 1 个新实体
+2026-04-09 12:44:16,387 - INFO - 已更新文件中的 PMID 40696405
+2026-04-09 12:44:16,388 - INFO - PMID 40696405 补全成功，添加了 1 个新实体
+2026-04-09 12:44:16,526 - INFO - 已更新文件中的 PMID 32075553
+2026-04-09 12:44:16,527 - INFO - PMID 32075553 补全成功，添加了 2 个新实体
+2026-04-09 12:44:16,658 - INFO - 已更新文件中的 PMID 40971922
+2026-04-09 12:44:16,659 - INFO - PMID 40971922 补全成功，添加了 2 个新实体
+2026-04-09 12:44:16,805 - INFO - 已更新文件中的 PMID 40588507
+2026-04-09 12:44:16,807 - INFO - PMID 40588507 补全成功，添加了 1 个新实体
+2026-04-09 12:44:16,910 - INFO - 已更新文件中的 PMID 40607221
+2026-04-09 12:44:16,911 - INFO - PMID 40607221 补全成功，添加了 1 个新实体
+2026-04-09 12:44:17,041 - INFO - 已更新文件中的 PMID 40852913
+2026-04-09 12:44:17,043 - INFO - PMID 40852913 补全成功，添加了 2 个新实体
+2026-04-09 12:44:17,185 - INFO - 已更新文件中的 PMID 40791480
+2026-04-09 12:44:17,187 - INFO - PMID 40791480 补全成功，添加了 2 个新实体
+2026-04-09 12:44:17,354 - INFO - 已更新文件中的 PMID 40814019
+2026-04-09 12:44:17,356 - INFO - PMID 40814019 补全成功，添加了 2 个新实体
+2026-04-09 12:44:17,476 - INFO - 已更新文件中的 PMID 31712748
+2026-04-09 12:44:17,477 - INFO - PMID 31712748 补全成功，添加了 5 个新实体
+2026-04-09 12:44:17,618 - INFO - 已更新文件中的 PMID 41690151
+2026-04-09 12:44:17,619 - INFO - PMID 41690151 补全成功，添加了 5 个新实体
+2026-04-09 12:44:17,766 - INFO - 已更新文件中的 PMID 40629180
+2026-04-09 12:44:17,768 - INFO - PMID 40629180 补全成功，添加了 2 个新实体
+2026-04-09 12:44:17,874 - INFO - 已更新文件中的 PMID 40610675
+2026-04-09 12:44:17,875 - INFO - PMID 40610675 补全成功，添加了 2 个新实体
+2026-04-09 12:44:18,025 - INFO - 已更新文件中的 PMID 40341501
+2026-04-09 12:44:18,027 - INFO - PMID 40341501 补全成功，添加了 2 个新实体
+2026-04-09 12:44:18,167 - INFO - 已更新文件中的 PMID 40298111
+2026-04-09 12:44:18,168 - INFO - PMID 40298111 补全成功，添加了 1 个新实体
+2026-04-09 12:44:18,319 - INFO - 已更新文件中的 PMID 40251809
+2026-04-09 12:44:18,320 - INFO - PMID 40251809 补全成功，添加了 1 个新实体
+2026-04-09 12:44:18,467 - INFO - 已更新文件中的 PMID 39920152
+2026-04-09 12:44:18,469 - INFO - PMID 39920152 补全成功，添加了 1 个新实体
+2026-04-09 12:44:18,610 - INFO - 已更新文件中的 PMID 40257001
+2026-04-09 12:44:18,611 - INFO - PMID 40257001 补全成功，添加了 1 个新实体
+2026-04-09 12:44:18,800 - INFO - 已更新文件中的 PMID 40128823
+2026-04-09 12:44:18,803 - INFO - PMID 40128823 补全成功，添加了 1 个新实体
+2026-04-09 12:44:18,940 - INFO - 已更新文件中的 PMID 40171783
+2026-04-09 12:44:18,941 - INFO - PMID 40171783 补全成功，添加了 1 个新实体
+2026-04-09 12:44:19,034 - INFO - 已更新文件中的 PMID 40360186
+2026-04-09 12:44:19,035 - INFO - PMID 40360186 补全成功，添加了 2 个新实体
+2026-04-09 12:44:19,164 - INFO - 已更新文件中的 PMID 41219721
+2026-04-09 12:44:19,165 - INFO - PMID 41219721 补全成功，添加了 4 个新实体
+2026-04-09 12:44:19,337 - INFO - 已更新文件中的 PMID 39631470
+2026-04-09 12:44:19,339 - INFO - PMID 39631470 补全成功，添加了 1 个新实体
+2026-04-09 12:44:19,476 - INFO - 已更新文件中的 PMID 40071709
+2026-04-09 12:44:19,477 - INFO - PMID 40071709 补全成功，添加了 1 个新实体
+2026-04-09 12:44:19,626 - INFO - 已更新文件中的 PMID 39985481
+2026-04-09 12:44:19,627 - INFO - PMID 39985481 补全成功，添加了 1 个新实体
+2026-04-09 12:44:19,745 - INFO - 已更新文件中的 PMID 40051556
+2026-04-09 12:44:19,746 - INFO - PMID 40051556 补全成功，添加了 1 个新实体
+2026-04-09 12:44:19,884 - INFO - 已更新文件中的 PMID 41490817
+2026-04-09 12:44:19,885 - INFO - PMID 41490817 补全成功，添加了 5 个新实体
+2026-04-09 12:44:20,009 - INFO - 已更新文件中的 PMID 32727536
+2026-04-09 12:44:20,010 - INFO - PMID 32727536 补全成功，添加了 9 个新实体
+2026-04-09 12:44:20,140 - INFO - 已更新文件中的 PMID 39604704
+2026-04-09 12:44:20,142 - INFO - PMID 39604704 补全成功，添加了 1 个新实体
+2026-04-09 12:44:20,298 - INFO - 已更新文件中的 PMID 39314493
+2026-04-09 12:44:20,299 - INFO - PMID 39314493 补全成功，添加了 1 个新实体
+2026-04-09 12:44:20,422 - INFO - 已更新文件中的 PMID 40568936
+2026-04-09 12:44:20,423 - INFO - PMID 40568936 补全成功，添加了 3 个新实体
+2026-04-09 12:44:20,562 - INFO - 已更新文件中的 PMID 35117975
+2026-04-09 12:44:20,563 - INFO - PMID 35117975 补全成功，添加了 1 个新实体
+2026-04-09 12:44:20,714 - INFO - 已更新文件中的 PMID 35183687
+2026-04-09 12:44:20,715 - INFO - PMID 35183687 补全成功，添加了 1 个新实体
+2026-04-09 12:44:20,836 - INFO - 已更新文件中的 PMID 40326043
+2026-04-09 12:44:20,837 - INFO - PMID 40326043 补全成功，添加了 3 个新实体
+2026-04-09 12:44:21,002 - INFO - 已更新文件中的 PMID 40188359
+2026-04-09 12:44:21,003 - INFO - PMID 40188359 补全成功，添加了 3 个新实体
+2026-04-09 12:44:21,107 - INFO - 已更新文件中的 PMID 35244719
+2026-04-09 12:44:21,108 - INFO - PMID 35244719 补全成功，添加了 1 个新实体
+2026-04-09 12:44:21,216 - INFO - 已更新文件中的 PMID 35154098
+2026-04-09 12:44:21,218 - INFO - PMID 35154098 补全成功，添加了 2 个新实体
+2026-04-09 12:44:21,334 - INFO - 已更新文件中的 PMID 34773059
+2026-04-09 12:44:21,336 - INFO - PMID 34773059 补全成功，添加了 1 个新实体
+2026-04-09 12:44:21,458 - INFO - 已更新文件中的 PMID 12006980
+2026-04-09 12:44:21,459 - INFO - PMID 12006980 补全成功，添加了 1 个新实体
+2026-04-09 12:44:21,625 - INFO - 已更新文件中的 PMID 34999728
+2026-04-09 12:44:21,627 - INFO - PMID 34999728 补全成功，添加了 1 个新实体
+2026-04-09 12:44:21,762 - INFO - 已更新文件中的 PMID 10811918
+2026-04-09 12:44:21,763 - INFO - PMID 10811918 补全成功，添加了 1 个新实体
+2026-04-09 12:44:21,880 - INFO - 已更新文件中的 PMID 12107440
+2026-04-09 12:44:21,882 - INFO - PMID 12107440 补全成功，添加了 1 个新实体
+2026-04-09 12:44:21,994 - INFO - 已更新文件中的 PMID 34828342
+2026-04-09 12:44:21,995 - INFO - PMID 34828342 补全成功，添加了 1 个新实体
+2026-04-09 12:44:22,112 - INFO - 已更新文件中的 PMID 1310068
+2026-04-09 12:44:22,113 - INFO - PMID 1310068 补全成功，添加了 1 个新实体
+2026-04-09 12:44:22,221 - INFO - 已更新文件中的 PMID 15826653
+2026-04-09 12:44:22,222 - INFO - PMID 15826653 补全成功，添加了 1 个新实体
+2026-04-09 12:44:22,361 - INFO - 已更新文件中的 PMID 40270975
+2026-04-09 12:44:22,363 - INFO - PMID 40270975 补全成功，添加了 3 个新实体
+2026-04-09 12:44:22,542 - INFO - 已更新文件中的 PMID 14530963
+2026-04-09 12:44:22,544 - INFO - PMID 14530963 补全成功，添加了 1 个新实体
+2026-04-09 12:44:22,679 - INFO - 已更新文件中的 PMID 35082789
+2026-04-09 12:44:22,681 - INFO - PMID 35082789 补全成功，添加了 2 个新实体
+2026-04-09 12:44:22,803 - INFO - 已更新文件中的 PMID 14610717
+2026-04-09 12:44:22,804 - INFO - PMID 14610717 补全成功，添加了 1 个新实体
+2026-04-09 12:44:22,969 - INFO - 已更新文件中的 PMID 17134851
+2026-04-09 12:44:22,970 - INFO - PMID 17134851 补全成功，添加了 1 个新实体
+2026-04-09 12:44:23,086 - INFO - 已更新文件中的 PMID 15243629
+2026-04-09 12:44:23,087 - INFO - PMID 15243629 补全成功，添加了 1 个新实体
+2026-04-09 12:44:23,220 - INFO - 已更新文件中的 PMID 39668246
+2026-04-09 12:44:23,221 - INFO - PMID 39668246 补全成功，添加了 3 个新实体
+2026-04-09 12:44:23,352 - INFO - 已更新文件中的 PMID 16434051
+2026-04-09 12:44:23,354 - INFO - PMID 16434051 补全成功，添加了 1 个新实体
+2026-04-09 12:44:23,499 - INFO - 已更新文件中的 PMID 15467158
+2026-04-09 12:44:23,500 - INFO - PMID 15467158 补全成功，添加了 2 个新实体
+2026-04-09 12:44:23,682 - INFO - 已更新文件中的 PMID 15272086
+2026-04-09 12:44:23,683 - INFO - PMID 15272086 补全成功，添加了 2 个新实体
+2026-04-09 12:44:23,818 - INFO - 已更新文件中的 PMID 40568672
+2026-04-09 12:44:23,819 - INFO - PMID 40568672 补全成功，添加了 6 个新实体
+2026-04-09 12:44:23,970 - INFO - 已更新文件中的 PMID 17562864
+2026-04-09 12:44:23,971 - INFO - PMID 17562864 补全成功，添加了 1 个新实体
+2026-04-09 12:44:24,126 - INFO - 已更新文件中的 PMID 15292941
+2026-04-09 12:44:24,127 - INFO - PMID 15292941 补全成功，添加了 2 个新实体
+2026-04-09 12:44:24,282 - INFO - 已更新文件中的 PMID 17517773
+2026-04-09 12:44:24,284 - INFO - PMID 17517773 补全成功，添加了 2 个新实体
+2026-04-09 12:44:24,444 - INFO - 已更新文件中的 PMID 41167193
+2026-04-09 12:44:24,446 - INFO - PMID 41167193 补全成功，添加了 8 个新实体
+2026-04-09 12:44:24,559 - INFO - 已更新文件中的 PMID 18779051
+2026-04-09 12:44:24,561 - INFO - PMID 18779051 补全成功，添加了 1 个新实体
+2026-04-09 12:44:24,699 - INFO - 已更新文件中的 PMID 17152059
+2026-04-09 12:44:24,700 - INFO - PMID 17152059 补全成功，添加了 2 个新实体
+2026-04-09 12:44:24,819 - INFO - 已更新文件中的 PMID 16775427
+2026-04-09 12:44:24,820 - INFO - PMID 16775427 补全成功，添加了 2 个新实体
+2026-04-09 12:44:24,978 - INFO - 已更新文件中的 PMID 22228215
+2026-04-09 12:44:24,980 - INFO - PMID 22228215 补全成功，添加了 1 个新实体
+2026-04-09 12:44:25,137 - INFO - 已更新文件中的 PMID 18396111
+2026-04-09 12:44:25,138 - INFO - PMID 18396111 补全成功，添加了 2 个新实体
+2026-04-09 12:44:25,287 - INFO - 已更新文件中的 PMID 21878639
+2026-04-09 12:44:25,288 - INFO - PMID 21878639 补全成功，添加了 1 个新实体
+2026-04-09 12:44:25,416 - INFO - 已更新文件中的 PMID 35013466
+2026-04-09 12:44:25,417 - INFO - PMID 35013466 补全成功，添加了 5 个新实体
+2026-04-09 12:44:25,550 - INFO - 已更新文件中的 PMID 17470553
+2026-04-09 12:44:25,551 - INFO - PMID 17470553 补全成功，添加了 2 个新实体
+2026-04-09 12:44:25,726 - INFO - 已更新文件中的 PMID 23135621
+2026-04-09 12:44:25,728 - INFO - PMID 23135621 补全成功，添加了 1 个新实体
+2026-04-09 12:44:25,880 - INFO - 已更新文件中的 PMID 22160459
+2026-04-09 12:44:25,881 - INFO - PMID 22160459 补全成功，添加了 1 个新实体
+2026-04-09 12:44:26,041 - INFO - 已更新文件中的 PMID 21506922
+2026-04-09 12:44:26,042 - INFO - PMID 21506922 补全成功，添加了 2 个新实体
+2026-04-09 12:44:26,154 - INFO - 已更新文件中的 PMID 21085180
+2026-04-09 12:44:26,156 - INFO - PMID 21085180 补全成功，添加了 1 个新实体
+2026-04-09 12:44:26,287 - INFO - 已更新文件中的 PMID 21069374
+2026-04-09 12:44:26,289 - INFO - PMID 21069374 补全成功，添加了 2 个新实体
+2026-04-09 12:44:26,440 - INFO - 已更新文件中的 PMID 22845795
+2026-04-09 12:44:26,441 - INFO - PMID 22845795 补全成功，添加了 1 个新实体
+2026-04-09 12:44:26,559 - INFO - 已更新文件中的 PMID 22094313
+2026-04-09 12:44:26,560 - INFO - PMID 22094313 补全成功，添加了 2 个新实体
+2026-04-09 12:44:26,774 - INFO - 已更新文件中的 PMID 23540693
+2026-04-09 12:44:26,775 - INFO - PMID 23540693 补全成功，添加了 1 个新实体
+2026-04-09 12:44:26,941 - INFO - 已更新文件中的 PMID 15190191
+2026-04-09 12:44:26,942 - INFO - PMID 15190191 补全成功，添加了 1 个新实体
+2026-04-09 12:44:27,078 - INFO - 已更新文件中的 PMID 10980575
+2026-04-09 12:44:27,080 - INFO - PMID 10980575 补全成功，添加了 1 个新实体
+2026-04-09 12:44:27,233 - INFO - 已更新文件中的 PMID 20421991
+2026-04-09 12:44:27,235 - INFO - PMID 20421991 补全成功，添加了 3 个新实体
+2026-04-09 12:44:27,400 - INFO - 已更新文件中的 PMID 21715505
+2026-04-09 12:44:27,401 - INFO - PMID 21715505 补全成功，添加了 3 个新实体
+2026-04-09 12:44:27,531 - INFO - 已更新文件中的 PMID 17028956
+2026-04-09 12:44:27,532 - INFO - PMID 17028956 补全成功，添加了 1 个新实体
+2026-04-09 12:44:27,683 - INFO - 已更新文件中的 PMID 12083952
+2026-04-09 12:44:27,684 - INFO - PMID 12083952 补全成功，添加了 1 个新实体
+2026-04-09 12:44:27,807 - INFO - 已更新文件中的 PMID 18615094
+2026-04-09 12:44:27,809 - INFO - PMID 18615094 补全成功，添加了 1 个新实体
+2026-04-09 12:44:27,957 - INFO - 已更新文件中的 PMID 17623810
+2026-04-09 12:44:27,958 - INFO - PMID 17623810 补全成功，添加了 1 个新实体
+2026-04-09 12:44:28,064 - INFO - 已更新文件中的 PMID 21573203
+2026-04-09 12:44:28,065 - INFO - PMID 21573203 补全成功，添加了 1 个新实体
+2026-04-09 12:44:28,253 - INFO - 已更新文件中的 PMID 21034368
+2026-04-09 12:44:28,254 - INFO - PMID 21034368 补全成功，添加了 1 个新实体
+2026-04-09 12:44:28,419 - INFO - 已更新文件中的 PMID 23734298
+2026-04-09 12:44:28,420 - INFO - PMID 23734298 补全成功，添加了 1 个新实体
+2026-04-09 12:44:28,558 - INFO - 已更新文件中的 PMID 17293976
+2026-04-09 12:44:28,559 - INFO - PMID 17293976 补全成功，添加了 5 个新实体
+2026-04-09 12:44:28,862 - INFO - 已更新文件中的 PMID 23648019
+2026-04-09 12:44:28,863 - INFO - PMID 23648019 补全成功，添加了 1 个新实体
+2026-04-09 12:44:29,034 - INFO - 已更新文件中的 PMID 23555307
+2026-04-09 12:44:29,035 - INFO - PMID 23555307 补全成功，添加了 1 个新实体
+2026-04-09 12:44:29,174 - INFO - 已更新文件中的 PMID 12827496
+2026-04-09 12:44:29,176 - INFO - PMID 12827496 补全成功，添加了 2 个新实体
+2026-04-09 12:44:29,355 - INFO - 已更新文件中的 PMID 20602999
+2026-04-09 12:44:29,356 - INFO - PMID 20602999 补全成功，添加了 2 个新实体
+2026-04-09 12:44:29,497 - INFO - 已更新文件中的 PMID 24212657
+2026-04-09 12:44:29,498 - INFO - PMID 24212657 补全成功，添加了 1 个新实体
+2026-04-09 12:44:29,674 - INFO - 已更新文件中的 PMID 16365384
+2026-04-09 12:44:29,676 - INFO - PMID 16365384 补全成功，添加了 7 个新实体
+2026-04-09 12:44:29,836 - INFO - 已更新文件中的 PMID 23928856
+2026-04-09 12:44:29,837 - INFO - PMID 23928856 补全成功，添加了 1 个新实体
+2026-04-09 12:44:29,978 - INFO - 已更新文件中的 PMID 24371271
+2026-04-09 12:44:29,979 - INFO - PMID 24371271 补全成功，添加了 1 个新实体
+2026-04-09 12:44:30,228 - INFO - 已更新文件中的 PMID 23151517
+2026-04-09 12:44:30,238 - INFO - PMID 23151517 补全成功，添加了 2 个新实体
+2026-04-09 12:44:30,393 - INFO - 已更新文件中的 PMID 23053642
+2026-04-09 12:44:30,395 - INFO - PMID 23053642 补全成功，添加了 4 个新实体
+2026-04-09 12:44:30,590 - INFO - 已更新文件中的 PMID 20948976
+2026-04-09 12:44:30,592 - INFO - PMID 20948976 补全成功，添加了 5 个新实体
+2026-04-09 12:44:30,724 - INFO - 已更新文件中的 PMID 34680288
+2026-04-09 12:44:30,726 - INFO - PMID 34680288 补全成功，添加了 8 个新实体
+2026-04-09 12:44:30,856 - INFO - 已更新文件中的 PMID 24337508
+2026-04-09 12:44:30,858 - INFO - PMID 24337508 补全成功，添加了 1 个新实体
+2026-04-09 12:44:30,988 - INFO - 已更新文件中的 PMID 22547343
+2026-04-09 12:44:30,989 - INFO - PMID 22547343 补全成功，添加了 3 个新实体
+2026-04-09 12:44:31,171 - INFO - 已更新文件中的 PMID 2536938
+2026-04-09 12:44:31,173 - INFO - PMID 2536938 补全成功，添加了 1 个新实体
+2026-04-09 12:44:31,344 - INFO - 已更新文件中的 PMID 25010268
+2026-04-09 12:44:31,346 - INFO - PMID 25010268 补全成功，添加了 2 个新实体
+2026-04-09 12:44:31,524 - INFO - 已更新文件中的 PMID 17273961
+2026-04-09 12:44:31,525 - INFO - PMID 17273961 补全成功，添加了 4 个新实体
+2026-04-09 12:44:31,690 - INFO - 已更新文件中的 PMID 25043885
+2026-04-09 12:44:31,691 - INFO - PMID 25043885 补全成功，添加了 2 个新实体
+2026-04-09 12:44:31,869 - INFO - 已更新文件中的 PMID 22513051
+2026-04-09 12:44:31,870 - INFO - PMID 22513051 补全成功，添加了 3 个新实体
+2026-04-09 12:44:32,022 - INFO - 已更新文件中的 PMID 20496420
+2026-04-09 12:44:32,066 - INFO - PMID 20496420 补全成功，添加了 5 个新实体
+2026-04-09 12:44:32,172 - INFO - 已更新文件中的 PMID 25745018
+2026-04-09 12:44:32,173 - INFO - PMID 25745018 补全成功，添加了 1 个新实体
+2026-04-09 12:44:32,344 - INFO - 已更新文件中的 PMID 24505276
+2026-04-09 12:44:32,344 - INFO - PMID 24505276 补全成功，添加了 1 个新实体
+2026-04-09 12:44:32,469 - INFO - 已更新文件中的 PMID 26448926
+2026-04-09 12:44:32,470 - INFO - PMID 26448926 补全成功，添加了 1 个新实体
+2026-04-09 12:44:32,604 - INFO - 已更新文件中的 PMID 26496357
+2026-04-09 12:44:32,606 - INFO - PMID 26496357 补全成功，添加了 1 个新实体
+2026-04-09 12:44:32,755 - INFO - 已更新文件中的 PMID 26763876
+2026-04-09 12:44:32,756 - INFO - PMID 26763876 补全成功，添加了 1 个新实体
+2026-04-09 12:44:32,847 - INFO - 已更新文件中的 PMID 23665280
+2026-04-09 12:44:32,848 - INFO - PMID 23665280 补全成功，添加了 3 个新实体
+2026-04-09 12:44:32,954 - INFO - 已更新文件中的 PMID 25782871
+2026-04-09 12:44:32,956 - INFO - PMID 25782871 补全成功，添加了 2 个新实体
+2026-04-09 12:44:32,957 - INFO - PMID 26734601 无新实体可添加（可能已存在或API未返回有效实体）
+2026-04-09 12:44:33,073 - INFO - 已更新文件中的 PMID 25716322
+2026-04-09 12:44:33,075 - INFO - PMID 25716322 补全成功，添加了 2 个新实体
+2026-04-09 12:44:33,181 - INFO - 已更新文件中的 PMID 26895060
+2026-04-09 12:44:33,182 - INFO - PMID 26895060 补全成功，添加了 1 个新实体
+2026-04-09 12:44:33,368 - INFO - 已更新文件中的 PMID 27319353
+2026-04-09 12:44:33,369 - INFO - PMID 27319353 补全成功，添加了 1 个新实体
+2026-04-09 12:44:33,480 - INFO - 已更新文件中的 PMID 26907772
+2026-04-09 12:44:33,482 - INFO - PMID 26907772 补全成功，添加了 1 个新实体
+2026-04-09 12:44:33,607 - INFO - 已更新文件中的 PMID 27131603
+2026-04-09 12:44:33,609 - INFO - PMID 27131603 补全成功，添加了 1 个新实体
+2026-04-09 12:44:33,716 - INFO - 已更新文件中的 PMID 27197217
+2026-04-09 12:44:33,718 - INFO - PMID 27197217 补全成功，添加了 1 个新实体
+2026-04-09 12:44:33,827 - INFO - 已更新文件中的 PMID 27863519
+2026-04-09 12:44:33,828 - INFO - PMID 27863519 补全成功，添加了 1 个新实体
+2026-04-09 12:44:33,977 - INFO - 已更新文件中的 PMID 26901440
+2026-04-09 12:44:33,978 - INFO - PMID 26901440 补全成功，添加了 1 个新实体
+2026-04-09 12:44:34,088 - INFO - 已更新文件中的 PMID 21878902
+2026-04-09 12:44:34,089 - INFO - PMID 21878902 补全成功，添加了 5 个新实体
+2026-04-09 12:44:34,201 - INFO - 已更新文件中的 PMID 27428332
+2026-04-09 12:44:34,202 - INFO - PMID 27428332 补全成功，添加了 1 个新实体
+2026-04-09 12:44:34,329 - INFO - 已更新文件中的 PMID 25791297
+2026-04-09 12:44:34,330 - INFO - PMID 25791297 补全成功，添加了 3 个新实体
+2026-04-09 12:44:34,480 - INFO - 已更新文件中的 PMID 26156589
+2026-04-09 12:44:34,482 - INFO - PMID 26156589 补全成功，添加了 2 个新实体
+2026-04-09 12:44:34,600 - INFO - 已更新文件中的 PMID 27893851
+2026-04-09 12:44:34,601 - INFO - PMID 27893851 补全成功，添加了 1 个新实体
+2026-04-09 12:44:34,719 - INFO - 已更新文件中的 PMID 26769797
+2026-04-09 12:44:34,720 - INFO - PMID 26769797 补全成功，添加了 2 个新实体
+2026-04-09 12:44:34,827 - INFO - 已更新文件中的 PMID 2834650
+2026-04-09 12:44:34,828 - INFO - PMID 2834650 补全成功，添加了 1 个新实体
+2026-04-09 12:44:34,935 - INFO - 已更新文件中的 PMID 28536242
+2026-04-09 12:44:34,936 - INFO - PMID 28536242 补全成功，添加了 1 个新实体
+2026-04-09 12:44:35,095 - INFO - 已更新文件中的 PMID 17280610
+2026-04-09 12:44:35,097 - INFO - PMID 17280610 补全成功，添加了 9 个新实体
+2026-04-09 12:44:35,213 - INFO - 已更新文件中的 PMID 26134849
+2026-04-09 12:44:35,215 - INFO - PMID 26134849 补全成功，添加了 4 个新实体
+2026-04-09 12:44:35,330 - INFO - 已更新文件中的 PMID 27482511
+2026-04-09 12:44:35,331 - INFO - PMID 27482511 补全成功，添加了 3 个新实体
+2026-04-09 12:44:35,589 - INFO - 已更新文件中的 PMID 27900318
+2026-04-09 12:44:35,590 - INFO - PMID 27900318 补全成功，添加了 2 个新实体
+2026-04-09 12:44:35,745 - INFO - 已更新文件中的 PMID 27293999
+2026-04-09 12:44:35,746 - INFO - PMID 27293999 补全成功，添加了 2 个新实体
+2026-04-09 12:44:36,431 - INFO - 已更新文件中的 PMID 27428429
+2026-04-09 12:44:36,433 - INFO - PMID 27428429 补全成功，添加了 3 个新实体
+2026-04-09 12:44:36,435 - INFO - 开始处理第 4/4 批次，包含 146 篇文献
+2026-04-09 12:44:51,871 - INFO - 已更新文件中的 PMID 30454683
+2026-04-09 12:44:51,872 - INFO - PMID 30454683 补全成功，添加了 1 个新实体
+2026-04-09 12:44:51,984 - INFO - 已更新文件中的 PMID 29201157
+2026-04-09 12:44:51,985 - INFO - PMID 29201157 补全成功，添加了 1 个新实体
+2026-04-09 12:44:52,162 - INFO - 已更新文件中的 PMID 29393154
+2026-04-09 12:44:52,163 - INFO - PMID 29393154 补全成功，添加了 1 个新实体
+2026-04-09 12:44:52,295 - INFO - 已更新文件中的 PMID 29262603
+2026-04-09 12:44:52,296 - INFO - PMID 29262603 补全成功，添加了 1 个新实体
+2026-04-09 12:44:52,433 - INFO - 已更新文件中的 PMID 29239145
+2026-04-09 12:44:52,435 - INFO - PMID 29239145 补全成功，添加了 1 个新实体
+2026-04-09 12:44:52,564 - INFO - 已更新文件中的 PMID 30692270
+2026-04-09 12:44:52,565 - INFO - PMID 30692270 补全成功，添加了 1 个新实体
+2026-04-09 12:44:52,733 - INFO - 已更新文件中的 PMID 28585566
+2026-04-09 12:44:52,734 - INFO - PMID 28585566 补全成功，添加了 1 个新实体
+2026-04-09 12:44:52,917 - INFO - 已更新文件中的 PMID 29941661
+2026-04-09 12:44:52,918 - INFO - PMID 29941661 补全成功，添加了 1 个新实体
+2026-04-09 12:44:53,100 - INFO - 已更新文件中的 PMID 28546999
+2026-04-09 12:44:53,102 - INFO - PMID 28546999 补全成功，添加了 1 个新实体
+2026-04-09 12:44:53,260 - INFO - 已更新文件中的 PMID 29095993
+2026-04-09 12:44:53,260 - INFO - PMID 29095993 补全成功，添加了 1 个新实体
+2026-04-09 12:44:53,435 - INFO - 已更新文件中的 PMID 28381173
+2026-04-09 12:44:53,436 - INFO - PMID 28381173 补全成功，添加了 1 个新实体
+2026-04-09 12:44:53,623 - INFO - 已更新文件中的 PMID 29315404
+2026-04-09 12:44:53,624 - INFO - PMID 29315404 补全成功，添加了 1 个新实体
+2026-04-09 12:44:53,752 - INFO - 已更新文件中的 PMID 28930601
+2026-04-09 12:44:53,753 - INFO - PMID 28930601 补全成功，添加了 1 个新实体
+2026-04-09 12:44:53,869 - INFO - 已更新文件中的 PMID 29293456
+2026-04-09 12:44:53,870 - INFO - PMID 29293456 补全成功，添加了 2 个新实体
+2026-04-09 12:44:54,034 - INFO - 已更新文件中的 PMID 28516305
+2026-04-09 12:44:54,036 - INFO - PMID 28516305 补全成功，添加了 2 个新实体
+2026-04-09 12:44:54,200 - INFO - 已更新文件中的 PMID 29497175
+2026-04-09 12:44:54,202 - INFO - PMID 29497175 补全成功，添加了 2 个新实体
+2026-04-09 12:44:54,355 - INFO - 已更新文件中的 PMID 29970450
+2026-04-09 12:44:54,356 - INFO - PMID 29970450 补全成功，添加了 2 个新实体
+2026-04-09 12:44:54,530 - INFO - 已更新文件中的 PMID 29028794
+2026-04-09 12:44:54,540 - INFO - PMID 29028794 补全成功，添加了 2 个新实体
+2026-04-09 12:44:54,668 - INFO - 已更新文件中的 PMID 28974576
+2026-04-09 12:44:54,670 - INFO - PMID 28974576 补全成功，添加了 2 个新实体
+2026-04-09 12:44:54,870 - INFO - 已更新文件中的 PMID 30564290
+2026-04-09 12:44:54,871 - INFO - PMID 30564290 补全成功，添加了 2 个新实体
+2026-04-09 12:44:55,048 - INFO - 已更新文件中的 PMID 28586350
+2026-04-09 12:44:55,050 - INFO - PMID 28586350 补全成功，添加了 2 个新实体
+2026-04-09 12:44:55,226 - INFO - 已更新文件中的 PMID 29697392
+2026-04-09 12:44:55,251 - INFO - PMID 29697392 补全成功，添加了 3 个新实体
+2026-04-09 12:44:55,377 - INFO - 已更新文件中的 PMID 31175045
+2026-04-09 12:44:55,378 - INFO - PMID 31175045 补全成功，添加了 1 个新实体
+2026-04-09 12:44:55,501 - INFO - 已更新文件中的 PMID 28238795
+2026-04-09 12:44:55,502 - INFO - PMID 28238795 补全成功，添加了 3 个新实体
+2026-04-09 12:44:55,637 - INFO - 已更新文件中的 PMID 30776360
+2026-04-09 12:44:55,638 - INFO - PMID 30776360 补全成功，添加了 3 个新实体
+2026-04-09 12:44:55,779 - INFO - 已更新文件中的 PMID 30880007
+2026-04-09 12:44:55,780 - INFO - PMID 30880007 补全成功，添加了 1 个新实体
+2026-04-09 12:44:55,951 - INFO - 已更新文件中的 PMID 31308215
+2026-04-09 12:44:55,953 - INFO - PMID 31308215 补全成功，添加了 1 个新实体
+2026-04-09 12:44:56,110 - INFO - 已更新文件中的 PMID 31042469
+2026-04-09 12:44:56,111 - INFO - PMID 31042469 补全成功，添加了 1 个新实体
+2026-04-09 12:44:56,281 - INFO - 已更新文件中的 PMID 31220479
+2026-04-09 12:44:56,282 - INFO - PMID 31220479 补全成功，添加了 1 个新实体
+2026-04-09 12:44:56,473 - INFO - 已更新文件中的 PMID 31088544
+2026-04-09 12:44:56,474 - INFO - PMID 31088544 补全成功，添加了 2 个新实体
+2026-04-09 12:44:56,621 - INFO - 已更新文件中的 PMID 32082363
+2026-04-09 12:44:56,623 - INFO - PMID 32082363 补全成功，添加了 1 个新实体
+2026-04-09 12:44:56,799 - INFO - 已更新文件中的 PMID 31846834
+2026-04-09 12:44:56,800 - INFO - PMID 31846834 补全成功，添加了 1 个新实体
+2026-04-09 12:44:56,940 - INFO - 已更新文件中的 PMID 31393562
+2026-04-09 12:44:56,941 - INFO - PMID 31393562 补全成功，添加了 1 个新实体
+2026-04-09 12:44:57,105 - INFO - 已更新文件中的 PMID 32037450
+2026-04-09 12:44:57,106 - INFO - PMID 32037450 补全成功，添加了 1 个新实体
+2026-04-09 12:44:57,255 - INFO - 已更新文件中的 PMID 33125285
+2026-04-09 12:44:57,256 - INFO - PMID 33125285 补全成功，添加了 1 个新实体
+2026-04-09 12:44:57,424 - INFO - 已更新文件中的 PMID 31492497
+2026-04-09 12:44:57,425 - INFO - PMID 31492497 补全成功，添加了 2 个新实体
+2026-04-09 12:44:57,624 - INFO - 已更新文件中的 PMID 32794422
+2026-04-09 12:44:57,626 - INFO - PMID 32794422 补全成功，添加了 1 个新实体
+2026-04-09 12:44:57,780 - INFO - 已更新文件中的 PMID 32887319
+2026-04-09 12:44:57,781 - INFO - PMID 32887319 补全成功，添加了 1 个新实体
+2026-04-09 12:44:57,950 - INFO - 已更新文件中的 PMID 31369326
+2026-04-09 12:44:57,952 - INFO - PMID 31369326 补全成功，添加了 2 个新实体
+2026-04-09 12:44:58,125 - INFO - 已更新文件中的 PMID 32651277
+2026-04-09 12:44:58,127 - INFO - PMID 32651277 补全成功，添加了 1 个新实体
+2026-04-09 12:44:58,321 - INFO - 已更新文件中的 PMID 32850797
+2026-04-09 12:44:58,322 - INFO - PMID 32850797 补全成功，添加了 1 个新实体
+2026-04-09 12:44:58,523 - INFO - 已更新文件中的 PMID 33009411
+2026-04-09 12:44:58,524 - INFO - PMID 33009411 补全成功，添加了 1 个新实体
+2026-04-09 12:44:58,701 - INFO - 已更新文件中的 PMID 33541338
+2026-04-09 12:44:58,702 - INFO - PMID 33541338 补全成功，添加了 1 个新实体
+2026-04-09 12:44:58,889 - INFO - 已更新文件中的 PMID 31293617
+2026-04-09 12:44:58,891 - INFO - PMID 31293617 补全成功，添加了 3 个新实体
+2026-04-09 12:44:59,097 - INFO - 已更新文件中的 PMID 33335196
+2026-04-09 12:44:59,098 - INFO - PMID 33335196 补全成功，添加了 1 个新实体
+2026-04-09 12:44:59,251 - INFO - 已更新文件中的 PMID 31761672
+2026-04-09 12:44:59,252 - INFO - PMID 31761672 补全成功，添加了 3 个新实体
+2026-04-09 12:44:59,425 - INFO - 已更新文件中的 PMID 28883657
+2026-04-09 12:44:59,427 - INFO - PMID 28883657 补全成功，添加了 5 个新实体
+2026-04-09 12:44:59,596 - INFO - 已更新文件中的 PMID 33822432
+2026-04-09 12:44:59,597 - INFO - PMID 33822432 补全成功，添加了 1 个新实体
+2026-04-09 12:44:59,706 - INFO - 已更新文件中的 PMID 33673859
+2026-04-09 12:44:59,707 - INFO - PMID 33673859 补全成功，添加了 1 个新实体
+2026-04-09 12:44:59,859 - INFO - 已更新文件中的 PMID 33717489
+2026-04-09 12:44:59,860 - INFO - PMID 33717489 补全成功，添加了 1 个新实体
+2026-04-09 12:45:00,001 - INFO - 已更新文件中的 PMID 33771478
+2026-04-09 12:45:00,003 - INFO - PMID 33771478 补全成功，添加了 2 个新实体
+2026-04-09 12:45:00,139 - INFO - 已更新文件中的 PMID 34538459
+2026-04-09 12:45:00,140 - INFO - PMID 34538459 补全成功，添加了 1 个新实体
+2026-04-09 12:45:00,349 - INFO - 已更新文件中的 PMID 32760121
+2026-04-09 12:45:00,350 - INFO - PMID 32760121 补全成功，添加了 2 个新实体
+2026-04-09 12:45:00,543 - INFO - 已更新文件中的 PMID 32156659
+2026-04-09 12:45:00,544 - INFO - PMID 32156659 补全成功，添加了 3 个新实体
+2026-04-09 12:45:00,737 - INFO - 已更新文件中的 PMID 34554261
+2026-04-09 12:45:00,739 - INFO - PMID 34554261 补全成功，添加了 1 个新实体
+2026-04-09 12:45:00,902 - INFO - 已更新文件中的 PMID 33648399
+2026-04-09 12:45:00,904 - INFO - PMID 33648399 补全成功，添加了 3 个新实体
+2026-04-09 12:45:01,071 - INFO - 已更新文件中的 PMID 33833453
+2026-04-09 12:45:01,072 - INFO - PMID 33833453 补全成功，添加了 2 个新实体
+2026-04-09 12:45:01,232 - INFO - 已更新文件中的 PMID 35095420
+2026-04-09 12:45:01,233 - INFO - PMID 35095420 补全成功，添加了 1 个新实体
+2026-04-09 12:45:01,361 - INFO - 已更新文件中的 PMID 34880381
+2026-04-09 12:45:01,362 - INFO - PMID 34880381 补全成功，添加了 1 个新实体
+2026-04-09 12:45:01,497 - INFO - 已更新文件中的 PMID 34304633
+2026-04-09 12:45:01,499 - INFO - PMID 34304633 补全成功，添加了 2 个新实体
+2026-04-09 12:45:01,692 - INFO - 已更新文件中的 PMID 34382720
+2026-04-09 12:45:01,694 - INFO - PMID 34382720 补全成功，添加了 2 个新实体
+2026-04-09 12:45:01,879 - INFO - 已更新文件中的 PMID 33839117
+2026-04-09 12:45:01,881 - INFO - PMID 33839117 补全成功，添加了 3 个新实体
+2026-04-09 12:45:02,070 - INFO - 已更新文件中的 PMID 31455402
+2026-04-09 12:45:02,071 - INFO - PMID 31455402 补全成功，添加了 5 个新实体
+2026-04-09 12:45:02,263 - INFO - 已更新文件中的 PMID 35650434
+2026-04-09 12:45:02,265 - INFO - PMID 35650434 补全成功，添加了 2 个新实体
+2026-04-09 12:45:02,432 - INFO - 已更新文件中的 PMID 32980960
+2026-04-09 12:45:02,433 - INFO - PMID 32980960 补全成功，添加了 4 个新实体
+2026-04-09 12:45:02,593 - INFO - 已更新文件中的 PMID 36912092
+2026-04-09 12:45:02,594 - INFO - PMID 36912092 补全成功，添加了 1 个新实体
+2026-04-09 12:45:02,715 - INFO - 已更新文件中的 PMID 35997928
+2026-04-09 12:45:02,716 - INFO - PMID 35997928 补全成功，添加了 1 个新实体
+2026-04-09 12:45:02,896 - INFO - 已更新文件中的 PMID 35219588
+2026-04-09 12:45:02,898 - INFO - PMID 35219588 补全成功，添加了 2 个新实体
+2026-04-09 12:45:03,078 - INFO - 已更新文件中的 PMID 36197106
+2026-04-09 12:45:03,079 - INFO - PMID 36197106 补全成功，添加了 1 个新实体
+2026-04-09 12:45:03,279 - INFO - 已更新文件中的 PMID 37382785
+2026-04-09 12:45:03,280 - INFO - PMID 37382785 补全成功，添加了 1 个新实体
+2026-04-09 12:45:03,456 - INFO - 已更新文件中的 PMID 35169076
+2026-04-09 12:45:03,457 - INFO - PMID 35169076 补全成功，添加了 2 个新实体
+2026-04-09 12:45:03,642 - INFO - 已更新文件中的 PMID 37130035
+2026-04-09 12:45:03,644 - INFO - PMID 37130035 补全成功，添加了 1 个新实体
+2026-04-09 12:45:03,795 - INFO - 已更新文件中的 PMID 37124903
+2026-04-09 12:45:03,797 - INFO - PMID 37124903 补全成功，添加了 1 个新实体
+2026-04-09 12:45:04,011 - INFO - 已更新文件中的 PMID 36970932
+2026-04-09 12:45:04,012 - INFO - PMID 36970932 补全成功，添加了 1 个新实体
+2026-04-09 12:45:04,207 - INFO - 已更新文件中的 PMID 36639706
+2026-04-09 12:45:04,209 - INFO - PMID 36639706 补全成功，添加了 1 个新实体
+2026-04-09 12:45:04,400 - INFO - 已更新文件中的 PMID 35760782
+2026-04-09 12:45:04,402 - INFO - PMID 35760782 补全成功，添加了 2 个新实体
+2026-04-09 12:45:04,622 - INFO - 已更新文件中的 PMID 34739871
+2026-04-09 12:45:04,623 - INFO - PMID 34739871 补全成功，添加了 2 个新实体
+2026-04-09 12:45:04,792 - INFO - 已更新文件中的 PMID 35171907
+2026-04-09 12:45:04,793 - INFO - PMID 35171907 补全成功，添加了 3 个新实体
+2026-04-09 12:45:04,976 - INFO - 已更新文件中的 PMID 36942479
+2026-04-09 12:45:04,977 - INFO - PMID 36942479 补全成功，添加了 2 个新实体
+2026-04-09 12:45:05,173 - INFO - 已更新文件中的 PMID 36482283
+2026-04-09 12:45:05,174 - INFO - PMID 36482283 补全成功，添加了 2 个新实体
+2026-04-09 12:45:05,378 - INFO - 已更新文件中的 PMID 35395816
+2026-04-09 12:45:05,381 - INFO - PMID 35395816 补全成功，添加了 3 个新实体
+2026-04-09 12:45:05,577 - INFO - 已更新文件中的 PMID 38092519
+2026-04-09 12:45:05,578 - INFO - PMID 38092519 补全成功，添加了 1 个新实体
+2026-04-09 12:45:05,709 - INFO - 已更新文件中的 PMID 36198378
+2026-04-09 12:45:05,710 - INFO - PMID 36198378 补全成功，添加了 3 个新实体
+2026-04-09 12:45:05,923 - INFO - 已更新文件中的 PMID 37180175
+2026-04-09 12:45:05,924 - INFO - PMID 37180175 补全成功，添加了 1 个新实体
+2026-04-09 12:45:06,112 - INFO - 已更新文件中的 PMID 38072720
+2026-04-09 12:45:06,113 - INFO - PMID 38072720 补全成功，添加了 1 个新实体
+2026-04-09 12:45:06,325 - INFO - 已更新文件中的 PMID 38013627
+2026-04-09 12:45:06,326 - INFO - PMID 38013627 补全成功，添加了 1 个新实体
+2026-04-09 12:45:06,504 - INFO - 已更新文件中的 PMID 37508536
+2026-04-09 12:45:06,506 - INFO - PMID 37508536 补全成功，添加了 2 个新实体
+2026-04-09 12:45:06,731 - INFO - 已更新文件中的 PMID 38067177
+2026-04-09 12:45:06,734 - INFO - PMID 38067177 补全成功，添加了 1 个新实体
+2026-04-09 12:45:06,940 - INFO - 已更新文件中的 PMID 38256242
+2026-04-09 12:45:06,941 - INFO - PMID 38256242 补全成功，添加了 1 个新实体
+2026-04-09 12:45:07,083 - INFO - 已更新文件中的 PMID 39088190
+2026-04-09 12:45:07,084 - INFO - PMID 39088190 补全成功，添加了 1 个新实体
+2026-04-09 12:45:07,277 - INFO - 已更新文件中的 PMID 36964102
+2026-04-09 12:45:07,278 - INFO - PMID 36964102 补全成功，添加了 3 个新实体
+2026-04-09 12:45:07,433 - INFO - 已更新文件中的 PMID 39048794
+2026-04-09 12:45:07,435 - INFO - PMID 39048794 补全成功，添加了 1 个新实体
+2026-04-09 12:45:07,642 - INFO - 已更新文件中的 PMID 39009627
+2026-04-09 12:45:07,643 - INFO - PMID 39009627 补全成功，添加了 1 个新实体
+2026-04-09 12:45:07,824 - INFO - 已更新文件中的 PMID 37580626
+2026-04-09 12:45:07,825 - INFO - PMID 37580626 补全成功，添加了 2 个新实体
+2026-04-09 12:45:07,980 - INFO - 已更新文件中的 PMID 38363375
+2026-04-09 12:45:07,982 - INFO - PMID 38363375 补全成功，添加了 1 个新实体
+2026-04-09 12:45:08,128 - INFO - 已更新文件中的 PMID 39789389
+2026-04-09 12:45:08,129 - INFO - PMID 39789389 补全成功，添加了 1 个新实体
+2026-04-09 12:45:08,259 - INFO - 已更新文件中的 PMID 38042508
+2026-04-09 12:45:08,261 - INFO - PMID 38042508 补全成功，添加了 1 个新实体
+2026-04-09 12:45:08,432 - INFO - 已更新文件中的 PMID 39350015
+2026-04-09 12:45:08,433 - INFO - PMID 39350015 补全成功，添加了 1 个新实体
+2026-04-09 12:45:08,625 - INFO - 已更新文件中的 PMID 40251151
+2026-04-09 12:45:08,627 - INFO - PMID 40251151 补全成功，添加了 1 个新实体
+2026-04-09 12:45:08,794 - INFO - 已更新文件中的 PMID 38168642
+2026-04-09 12:45:08,796 - INFO - PMID 38168642 补全成功，添加了 2 个新实体
+2026-04-09 12:45:08,953 - INFO - 已更新文件中的 PMID 34761935
+2026-04-09 12:45:08,954 - INFO - PMID 34761935 补全成功，添加了 5 个新实体
+2026-04-09 12:45:09,071 - INFO - 已更新文件中的 PMID 40225919
+2026-04-09 12:45:09,073 - INFO - PMID 40225919 补全成功，添加了 1 个新实体
+2026-04-09 12:45:09,215 - INFO - 已更新文件中的 PMID 34058684
+2026-04-09 12:45:09,217 - INFO - PMID 34058684 补全成功，添加了 7 个新实体
+2026-04-09 12:45:09,410 - INFO - 已更新文件中的 PMID 38313255
+2026-04-09 12:45:09,411 - INFO - PMID 38313255 补全成功，添加了 2 个新实体
+2026-04-09 12:45:09,596 - INFO - 已更新文件中的 PMID 39214989
+2026-04-09 12:45:09,599 - INFO - PMID 39214989 补全成功，添加了 2 个新实体
+2026-04-09 12:45:09,763 - INFO - 已更新文件中的 PMID 40048554
+2026-04-09 12:45:09,766 - INFO - PMID 40048554 补全成功，添加了 1 个新实体
+2026-04-09 12:45:09,966 - INFO - 已更新文件中的 PMID 39251041
+2026-04-09 12:45:09,968 - INFO - PMID 39251041 补全成功，添加了 1 个新实体
+2026-04-09 12:45:10,112 - INFO - 已更新文件中的 PMID 39190688
+2026-04-09 12:45:10,113 - INFO - PMID 39190688 补全成功，添加了 2 个新实体
+2026-04-09 12:45:10,341 - INFO - 已更新文件中的 PMID 40237561
+2026-04-09 12:45:10,343 - INFO - PMID 40237561 补全成功，添加了 1 个新实体
+2026-04-09 12:45:10,485 - INFO - 已更新文件中的 PMID 35842613
+2026-04-09 12:45:10,486 - INFO - PMID 35842613 补全成功，添加了 6 个新实体
+2026-04-09 12:45:10,662 - INFO - 已更新文件中的 PMID 40157412
+2026-04-09 12:45:10,664 - INFO - PMID 40157412 补全成功，添加了 1 个新实体
+2026-04-09 12:45:10,900 - INFO - 已更新文件中的 PMID 40001600
+2026-04-09 12:45:10,902 - INFO - PMID 40001600 补全成功，添加了 1 个新实体
+2026-04-09 12:45:11,114 - INFO - 已更新文件中的 PMID 40021663
+2026-04-09 12:45:11,116 - INFO - PMID 40021663 补全成功，添加了 2 个新实体
+2026-04-09 12:45:11,239 - INFO - 已更新文件中的 PMID 40600062
+2026-04-09 12:45:11,240 - INFO - PMID 40600062 补全成功，添加了 1 个新实体
+2026-04-09 12:45:11,427 - INFO - 已更新文件中的 PMID 41066570
+2026-04-09 12:45:11,428 - INFO - PMID 41066570 补全成功，添加了 1 个新实体
+2026-04-09 12:45:11,644 - INFO - 已更新文件中的 PMID 40497966
+2026-04-09 12:45:11,645 - INFO - PMID 40497966 补全成功，添加了 2 个新实体
+2026-04-09 12:45:11,837 - INFO - 已更新文件中的 PMID 40510242
+2026-04-09 12:45:11,838 - INFO - PMID 40510242 补全成功，添加了 1 个新实体
+2026-04-09 12:45:12,010 - INFO - 已更新文件中的 PMID 40707718
+2026-04-09 12:45:12,012 - INFO - PMID 40707718 补全成功，添加了 1 个新实体
+2026-04-09 12:45:12,217 - INFO - 已更新文件中的 PMID 39601242
+2026-04-09 12:45:12,218 - INFO - PMID 39601242 补全成功，添加了 2 个新实体
+2026-04-09 12:45:12,367 - INFO - 已更新文件中的 PMID 40832305
+2026-04-09 12:45:12,368 - INFO - PMID 40832305 补全成功，添加了 1 个新实体
+2026-04-09 12:45:12,497 - INFO - 已更新文件中的 PMID 40940398
+2026-04-09 12:45:12,500 - INFO - PMID 40940398 补全成功，添加了 2 个新实体
+2026-04-09 12:45:12,705 - INFO - 已更新文件中的 PMID 25750667
+2026-04-09 12:45:12,706 - INFO - PMID 25750667 补全成功，添加了 1 个新实体
+2026-04-09 12:45:12,839 - INFO - 已更新文件中的 PMID 41648247
+2026-04-09 12:45:12,840 - INFO - PMID 41648247 补全成功，添加了 1 个新实体
+2026-04-09 12:45:13,000 - INFO - 已更新文件中的 PMID 28637276
+2026-04-09 12:45:13,002 - INFO - PMID 28637276 补全成功，添加了 1 个新实体
+2026-04-09 12:45:13,188 - INFO - 已更新文件中的 PMID 41721893
+2026-04-09 12:45:13,189 - INFO - PMID 41721893 补全成功，添加了 1 个新实体
+2026-04-09 12:45:13,369 - INFO - 已更新文件中的 PMID 41747018
+2026-04-09 12:45:13,371 - INFO - PMID 41747018 补全成功，添加了 1 个新实体
+2026-04-09 12:45:13,558 - INFO - 已更新文件中的 PMID 40789164
+2026-04-09 12:45:13,560 - INFO - PMID 40789164 补全成功，添加了 2 个新实体
+2026-04-09 12:45:13,783 - INFO - 已更新文件中的 PMID 9065445
+2026-04-09 12:45:13,784 - INFO - PMID 9065445 补全成功，添加了 1 个新实体
+2026-04-09 12:45:13,934 - INFO - 已更新文件中的 PMID 40612682
+2026-04-09 12:45:13,935 - INFO - PMID 40612682 补全成功，添加了 2 个新实体
+2026-04-09 12:45:14,107 - INFO - 已更新文件中的 PMID 41747652
+2026-04-09 12:45:14,108 - INFO - PMID 41747652 补全成功，添加了 2 个新实体
+2026-04-09 12:45:14,230 - INFO - 已更新文件中的 PMID 9384598
+2026-04-09 12:45:14,231 - INFO - PMID 9384598 补全成功，添加了 1 个新实体
+2026-04-09 12:45:14,384 - INFO - 已更新文件中的 PMID 41256552
+2026-04-09 12:45:14,386 - INFO - PMID 41256552 补全成功，添加了 2 个新实体
+2026-04-09 12:45:14,536 - INFO - 已更新文件中的 PMID 19123937
+2026-04-09 12:45:14,538 - INFO - PMID 19123937 补全成功，添加了 1 个新实体
+2026-04-09 12:45:14,718 - INFO - 已更新文件中的 PMID 9609225
+2026-04-09 12:45:14,720 - INFO - PMID 9609225 补全成功，添加了 1 个新实体
+2026-04-09 12:45:14,920 - INFO - 已更新文件中的 PMID 9697692
+2026-04-09 12:45:14,921 - INFO - PMID 9697692 补全成功，添加了 1 个新实体
+2026-04-09 12:45:15,032 - INFO - 已更新文件中的 PMID 40825873
+2026-04-09 12:45:15,033 - INFO - PMID 40825873 补全成功，添加了 3 个新实体
+2026-04-09 12:45:15,212 - INFO - 已更新文件中的 PMID 37934570
+2026-04-09 12:45:15,213 - INFO - PMID 37934570 补全成功，添加了 2 个新实体
+2026-04-09 12:45:15,367 - INFO - 已更新文件中的 PMID 8118820
+2026-04-09 12:45:15,368 - INFO - PMID 8118820 补全成功，添加了 2 个新实体
+2026-04-09 12:45:15,571 - INFO - 已更新文件中的 PMID 41785602
+2026-04-09 12:45:15,573 - INFO - PMID 41785602 补全成功，添加了 2 个新实体
+2026-04-09 12:45:15,718 - INFO - 已更新文件中的 PMID 41489510
+2026-04-09 12:45:15,719 - INFO - PMID 41489510 补全成功，添加了 3 个新实体
+2026-04-09 12:45:15,917 - INFO - 已更新文件中的 PMID 40432477
+2026-04-09 12:45:15,918 - INFO - PMID 40432477 补全成功，添加了 4 个新实体
+2026-04-09 12:45:16,148 - INFO - 已更新文件中的 PMID 41460923
+2026-04-09 12:45:16,149 - INFO - PMID 41460923 补全成功，添加了 3 个新实体
+2026-04-09 12:45:16,294 - INFO - 已更新文件中的 PMID 38086852
+2026-04-09 12:45:16,295 - INFO - PMID 38086852 补全成功，添加了 6 个新实体
+2026-04-09 12:45:16,544 - INFO - 已更新文件中的 PMID 41296188
+2026-04-09 12:45:16,546 - INFO - PMID 41296188 补全成功，添加了 3 个新实体
+2026-04-09 12:45:16,728 - INFO - 已更新文件中的 PMID 41690451
+2026-04-09 12:45:16,730 - INFO - PMID 41690451 补全成功，添加了 5 个新实体
+2026-04-09 12:45:16,935 - INFO - 已更新文件中的 PMID 38332006
+2026-04-09 12:45:16,936 - INFO - PMID 38332006 补全成功，添加了 13 个新实体
+2026-04-09 12:45:16,938 - INFO - 
+========== 最终统计 ==========
+2026-04-09 12:45:16,938 - INFO - 存在缺失实体的总文献数: 746
+2026-04-09 12:45:16,938 - INFO - 成功补全的文献数: 739
+2026-04-09 12:45:16,938 - INFO - 总共添加的实体数: 1321
+2026-04-09 12:45:16,939 - INFO - 平均每篇添加实体数: 1.79
+2026-04-09 12:45:16,941 - INFO - 详细统计已保存至: C:\Users\fongi\Desktop\TE\data_update_fix\missing_entities_stats.txt
+2026-04-09 12:45:16,941 - INFO - 完成日志: C:\Users\fongi\Desktop\TE\data_update_fix\fixed_missing_pmids.txt
+2026-04-09 12:45:51,028 - INFO - 备份文件已存在: C:\Users\fongi\Desktop\TE\data_update_fix\te_kg2_final_standardized_new.jsonl.fix_missing_backup
+2026-04-09 12:45:51,028 - INFO - 已加载 746 个已完成的PMID
+2026-04-09 12:45:51,103 - INFO - 总文献数: 2307, 存在缺失实体的文献数: 0
+2026-04-09 12:45:51,104 - INFO - 没有需要补全的实体，程序退出。
+2026-04-09 12:46:37,633 - INFO - 备份文件已存在: C:\Users\fongi\Desktop\TE\data_update_fix\te_kg2_final_standardized_new.jsonl.fix_missing_backup
+2026-04-09 12:46:37,634 - INFO - 已加载 746 个已完成的PMID
+2026-04-09 12:46:37,711 - INFO - 总文献数: 2307, 存在缺失实体的文献数: 0
+2026-04-09 12:46:37,711 - INFO - 没有需要补全的实体，程序退出。

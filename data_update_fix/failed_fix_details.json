@@ -1,0 +1,674 @@
+{
+  "11875026": {
+    "missing_names": [
+      "Disease"
+    ],
+    "api_response": [
+      {
+        "name": "human diseases",
+        "type": "diseases",
+        "description": "Human diseases are health conditions that may be associated with transcriptionally competent HERV-W elements."
+      }
+    ],
+    "skipped_reasons": {
+      "Disease": [],
+      "human diseases": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "38332006": {
+    "missing_names": [
+      "P53 rs1042522"
+    ],
+    "api_response": [
+      {
+        "name": "TP53 rs1042522",
+        "type": "mutations",
+        "description": "TP53 rs1042522 is a single nucleotide polymorphism in the TP53 gene associated with early pregnancy loss risk."
+      }
+    ],
+    "skipped_reasons": {
+      "P53 rs1042522": [],
+      "TP53 rs1042522": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "26734601": {
+    "missing_names": [
+      "Gene"
+    ],
+    "api_response": [
+      {
+        "name": "LINE-1",
+        "type": "transposons",
+        "description": "LINE-1 is an active retrotransposon comprising about 17% of the human genome and linked to genomic instability in cancer."
+      }
+    ],
+    "skipped_reasons": {
+      "Gene": [],
+      "LINE-1": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "12176320": {
+    "missing_names": [
+      "gene"
+    ],
+    "api_response": [
+      {
+        "name": "L1",
+        "type": "transposons",
+        "description": "L1 is a human retrotransposon associated with genetic instability."
+      }
+    ],
+    "skipped_reasons": {
+      "gene": [],
+      "L1": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "37292765": {
+    "missing_names": [
+      "P53 mutation"
+    ],
+    "api_response": [
+      {
+        "name": "TP53 mutation",
+        "type": "mutations",
+        "description": "TP53 mutation is a genetic alteration in the TP53 gene associated with tumor evolution and immunogenic SINE stress regulation."
+      }
+    ],
+    "skipped_reasons": {
+      "P53 mutation": [],
+      "TP53 mutation": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "31846834": {
+    "missing_names": [
+      "LINE-1 ribonucleoprotein particles (LINE-1-RNPs)"
+    ],
+    "api_response": [
+      {
+        "name": "LINE-1 ribonucleoprotein particles",
+        "type": "proteins",
+        "description": "LINE-1 ribonucleoprotein particles are complexes that bind to telomeric repeat containing RNA and support telomeric integrity in alternative lengthening of telomeres."
+      }
+    ],
+    "skipped_reasons": {
+      "LINE-1 ribonucleoprotein particles (LINE-1-RNPs)": [],
+      "LINE-1 ribonucleoprotein particles": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "22214611": {
+    "missing_names": [
+      "Gene"
+    ],
+    "api_response": [
+      {
+        "name": "SP1",
+        "type": "genes",
+        "description": "SP1 is a gene encoding a transcription factor that binds to specific DNA sequences."
+      },
+      {
+        "name": "HCT116",
+        "type": "genes",
+        "description": "HCT116 is a gene associated with a human colorectal carcinoma cell line used in the study."
+      }
+    ],
+    "skipped_reasons": {
+      "Gene": [],
+      "SP1": [
+        "already_exists"
+      ],
+      "HCT116": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "19393186": {
+    "missing_names": [
+      "LTR7B and AluSx integration"
+    ],
+    "api_response": [
+      {
+        "name": "LTR7B",
+        "type": "transposons",
+        "description": "LTR7B is a transposable element integrated into the SFTPB gene."
+      },
+      {
+        "name": "AluSx",
+        "type": "transposons",
+        "description": "AluSx is a transposable element integrated into the SFTPB gene."
+      }
+    ],
+    "skipped_reasons": {
+      "LTR7B and AluSx integration": [],
+      "LTR7B": [
+        "already_exists"
+      ],
+      "AluSx": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "40825873": {
+    "missing_names": [
+      "ERGIC and Golgi"
+    ],
+    "api_response": [
+      {
+        "name": "ERGIC",
+        "type": "functions",
+        "description": "ERGIC is the ER-Golgi intermediate compartment involved in protein sorting and transport."
+      },
+      {
+        "name": "Golgi",
+        "type": "functions",
+        "description": "Golgi is an organelle involved in modifying, sorting, and packaging proteins for secretion."
+      }
+    ],
+    "skipped_reasons": {
+      "ERGIC and Golgi": [],
+      "ERGIC": [
+        "already_exists"
+      ],
+      "Golgi": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "40497966": {
+    "missing_names": [
+      "mutation and rearrangement"
+    ],
+    "api_response": [
+      {
+        "name": "mutation",
+        "type": "mutations",
+        "description": "Mutation is a change in the DNA sequence that can be caused by LINE-1 transposition."
+      },
+      {
+        "name": "rearrangement",
+        "type": "mutations",
+        "description": "Rearrangement is a structural alteration of genomic DNA that can result from LINE-1 transposition."
+      }
+    ],
+    "skipped_reasons": {
+      "mutation and rearrangement": [],
+      "mutation": [
+        "already_exists"
+      ],
+      "rearrangement": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "18532878": {
+    "missing_names": [
+      "gene"
+    ],
+    "api_response": [
+      {
+        "name": "DLK1",
+        "type": "genes",
+        "description": "DLK1 is a gene in the imprinted Dlk1-Dio3 cluster studied across mammalian evolution."
+      },
+      {
+        "name": "DIO3",
+        "type": "genes",
+        "description": "DIO3 is a gene in the imprinted Dlk1-Dio3 cluster studied across mammalian evolution."
+      }
+    ],
+    "skipped_reasons": {
+      "gene": [],
+      "DLK1": [
+        "already_exists"
+      ],
+      "DIO3": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "39103003": {
+    "missing_names": [
+      "HDAC inhibitors + ADAR inhibitors"
+    ],
+    "api_response": [
+      {
+        "name": "HDAC inhibitors",
+        "type": "pharmaceuticals",
+        "description": "HDAC inhibitors are compounds that inhibit histone deacetylases and modulate gene expression."
+      },
+      {
+        "name": "ADAR inhibitors",
+        "type": "pharmaceuticals",
+        "description": "ADAR inhibitors are compounds that inhibit adenosine deaminases acting on RNA to affect RNA editing."
+      }
+    ],
+    "skipped_reasons": {
+      "HDAC inhibitors + ADAR inhibitors": [],
+      "HDAC inhibitors": [
+        "already_exists"
+      ],
+      "ADAR inhibitors": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "24505276": {
+    "missing_names": [
+      "D125N in PTPRQ protein"
+    ],
+    "api_response": [
+      {
+        "name": "D125N",
+        "type": "mutations",
+        "description": "D125N is a somatic, damaging single nucleotide variant in the PTPRQ protein."
+      },
+      {
+        "name": "PTPRQ",
+        "type": "proteins",
+        "description": "PTPRQ is a protein containing the D125N mutation identified in a well-differentiated liposarcoma."
+      }
+    ],
+    "skipped_reasons": {
+      "D125N in PTPRQ protein": [],
+      "D125N": [
+        "already_exists"
+      ],
+      "PTPRQ": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "26208039": {
+    "missing_names": [
+      "Protein"
+    ],
+    "api_response": [
+      {
+        "name": "tdTomato",
+        "type": "proteins",
+        "description": "tdTomato is a fluorescent protein used as a reporter in genetic studies."
+      },
+      {
+        "name": "enhanced green fluorescent protein",
+        "type": "proteins",
+        "description": "Enhanced green fluorescent protein is a fluorescent protein used as a reporter in genetic studies."
+      }
+    ],
+    "skipped_reasons": {
+      "Protein": [],
+      "tdTomato": [
+        "already_exists"
+      ],
+      "enhanced green fluorescent protein": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "29028794": {
+    "missing_names": [
+      "Condensin II and GAIT complexes"
+    ],
+    "api_response": [
+      {
+        "name": "Condensin II",
+        "type": "proteins",
+        "description": "Condensin II is a protein complex that restricts LINE-1 retrotransposition by inhibiting transcription and translation."
+      },
+      {
+        "name": "GAIT complexes",
+        "type": "proteins",
+        "description": "GAIT complexes are protein assemblies that inhibit translation of mRNAs, including those of LINE-1 retrotransposons, in response to interferon-gamma."
+      }
+    ],
+    "skipped_reasons": {
+      "Condensin II and GAIT complexes": [],
+      "Condensin II": [
+        "already_exists"
+      ],
+      "GAIT complexes": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "38960717": {
+    "missing_names": [
+      "ChAHP and ChAHP2"
+    ],
+    "api_response": [
+      {
+        "name": "ChAHP",
+        "type": "proteins",
+        "description": "ChAHP is a protein complex composed of ADNP, CHD4, and HP1 proteins that represses retrotransposons."
+      },
+      {
+        "name": "ChAHP2",
+        "type": "proteins",
+        "description": "ChAHP2 is a protein complex homologous to ChAHP, composed of ADNP2, CHD4, and HP1 proteins, that represses retrotransposons."
+      }
+    ],
+    "skipped_reasons": {
+      "ChAHP and ChAHP2": [],
+      "ChAHP": [
+        "already_exists"
+      ],
+      "ChAHP2": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "21423624": {
+    "missing_names": [
+      "Gene"
+    ],
+    "api_response": [
+      {
+        "name": "AGO2",
+        "type": "genes",
+        "description": "AGO2 is a gene encoding Argonaute 2, involved in RNA interference and gene repression."
+      },
+      {
+        "name": "EIF2C2",
+        "type": "genes",
+        "description": "EIF2C2 is a gene encoding Argonaute 2, also known as AGO2, involved in RNA-mediated gene silencing."
+      }
+    ],
+    "skipped_reasons": {
+      "Gene": [],
+      "AGO2": [
+        "already_exists"
+      ],
+      "EIF2C2": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "22733751": {
+    "missing_names": [
+      "MER20/MER39"
+    ],
+    "api_response": [
+      {
+        "name": "MER20",
+        "type": "transposons",
+        "description": "MER20 is a transposable element that contributes to the enhancer/promoter for decidual prolactin in humans."
+      },
+      {
+        "name": "MER39",
+        "type": "transposons",
+        "description": "MER39 is a transposable element that contributes to the enhancer/promoter for decidual prolactin in humans."
+      }
+    ],
+    "skipped_reasons": {
+      "MER20/MER39": [],
+      "MER20": [
+        "already_exists"
+      ],
+      "MER39": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "33293698": {
+    "missing_names": [
+      "SVA insertion in MSH6/MSH2"
+    ],
+    "api_response": [
+      {
+        "name": "SVA insertion in MSH6",
+        "type": "mutations",
+        "description": "SVA insertion in MSH6 is a retrotransposon insertion in exon 5 of the MSH6 gene that causes aberrant RNA splicing and Lynch syndrome."
+      },
+      {
+        "name": "SVA insertion in MSH2",
+        "type": "mutations",
+        "description": "SVA insertion in MSH2 is a retrotransposon insertion in exon 3 of the MSH2 gene that causes aberrant RNA splicing and Lynch syndrome."
+      }
+    ],
+    "skipped_reasons": {
+      "SVA insertion in MSH6/MSH2": [],
+      "SVA insertion in MSH6": [
+        "already_exists"
+      ],
+      "SVA insertion in MSH2": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "15643617": {
+    "missing_names": [
+      "Gene"
+    ],
+    "api_response": [
+      {
+        "name": "PRNP",
+        "type": "genes",
+        "description": "PRNP is a gene encoding the prion protein involved in repeat expansions."
+      },
+      {
+        "name": "USH1C",
+        "type": "genes",
+        "description": "USH1C is a gene associated with mitochondrial-nuclear sequence transfer."
+      },
+      {
+        "name": "ERCC6",
+        "type": "genes",
+        "description": "ERCC6 is a gene where a 26-bp insertion suggests DNA oligonucleotide capture."
+      }
+    ],
+    "skipped_reasons": {
+      "Gene": [],
+      "PRNP": [
+        "already_exists"
+      ],
+      "USH1C": [
+        "already_exists"
+      ],
+      "ERCC6": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "18252213": {
+    "missing_names": [
+      "Gross deletion in IGHM, BTK, Artemis"
+    ],
+    "api_response": [
+      {
+        "name": "Gross deletion in IGHM",
+        "type": "mutations",
+        "description": "Gross deletion in IGHM is a genetic mutation involving large-scale deletion in the IGHM gene."
+      },
+      {
+        "name": "Gross deletion in BTK",
+        "type": "mutations",
+        "description": "Gross deletion in BTK is a genetic mutation involving large-scale deletion in the BTK gene."
+      },
+      {
+        "name": "Gross deletion in Artemis",
+        "type": "mutations",
+        "description": "Gross deletion in Artemis is a genetic mutation involving large-scale deletion in the Artemis gene."
+      }
+    ],
+    "skipped_reasons": {
+      "Gross deletion in IGHM, BTK, Artemis": [],
+      "Gross deletion in IGHM": [
+        "already_exists"
+      ],
+      "Gross deletion in BTK": [
+        "already_exists"
+      ],
+      "Gross deletion in Artemis": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "20602999": {
+    "missing_names": [
+      "Gene"
+    ],
+    "api_response": [
+      {
+        "name": "L1(Ta)",
+        "type": "transposons",
+        "description": "L1(Ta) is a retrotransposon in the human genome that contributes to genetic diversity."
+      },
+      {
+        "name": "LINE-1",
+        "type": "transposons",
+        "description": "LINE-1 is a type of retrotransposon involved in structural genomic variation."
+      },
+      {
+        "name": "Alu SINEs",
+        "type": "transposons",
+        "description": "Alu SINEs are short interspersed nuclear elements that are sources of genomic diversity."
+      }
+    ],
+    "skipped_reasons": {
+      "Gene": [],
+      "L1(Ta)": [
+        "already_exists"
+      ],
+      "LINE-1": [
+        "already_exists"
+      ],
+      "Alu SINEs": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "32075553": {
+    "missing_names": [
+      "MER44, THE1, Tigger3, MLT1 families"
+    ],
+    "api_response": [
+      {
+        "name": "MER44",
+        "type": "transposons",
+        "description": "MER44 is a family of transposable elements enriched in differentially accessible chromatin in stimulated human macrophages."
+      },
+      {
+        "name": "THE1",
+        "type": "transposons",
+        "description": "THE1 is a family of transposable elements that harbor binding motifs for transcription factors like NF-κB in immune response contexts."
+      },
+      {
+        "name": "Tigger3",
+        "type": "transposons",
+        "description": "Tigger3 is a family of transposable elements contributing to regulatory regions near differentially expressed genes in immune activation."
+      },
+      {
+        "name": "MLT1",
+        "type": "transposons",
+        "description": "MLT1 is a family of transposable elements involved in accessible chromatin regions associated with gene expression regulation during immune responses."
+      }
+    ],
+    "skipped_reasons": {
+      "MER44, THE1, Tigger3, MLT1 families": [],
+      "MER44": [
+        "already_exists"
+      ],
+      "THE1": [
+        "already_exists"
+      ],
+      "Tigger3": [
+        "already_exists"
+      ],
+      "MLT1": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  },
+  "29564828": {
+    "missing_names": [
+      "defect in ATM, MRE11, BLM, LIG4, WRN, Ku70"
+    ],
+    "api_response": [
+      {
+        "name": "defect in ATM",
+        "type": "mutations",
+        "description": "Defect in ATM is a mutation in the ATM gene associated with impaired fertility and chromothripsis."
+      },
+      {
+        "name": "defect in MRE11",
+        "type": "mutations",
+        "description": "Defect in MRE11 is a mutation in the MRE11 gene linked to double-strand break response impairment and chromothripsis."
+      },
+      {
+        "name": "defect in BLM",
+        "type": "mutations",
+        "description": "Defect in BLM is a mutation in the BLM gene that contributes to chromosomal instability and chromothripsis."
+      },
+      {
+        "name": "defect in LIG4",
+        "type": "mutations",
+        "description": "Defect in LIG4 is a mutation in the LIG4 gene involved in DNA repair and chromothripsis susceptibility."
+      },
+      {
+        "name": "defect in WRN",
+        "type": "mutations",
+        "description": "Defect in WRN is a mutation in the WRN gene associated with premature aging and chromothripsis."
+      },
+      {
+        "name": "defect in Ku70",
+        "type": "mutations",
+        "description": "Defect in Ku70 is a mutation in the Ku70 gene that affects double-strand break response and chromothripsis."
+      }
+    ],
+    "skipped_reasons": {
+      "defect in ATM, MRE11, BLM, LIG4, WRN, Ku70": [],
+      "defect in ATM": [
+        "already_exists"
+      ],
+      "defect in MRE11": [
+        "already_exists"
+      ],
+      "defect in BLM": [
+        "already_exists"
+      ],
+      "defect in LIG4": [
+        "already_exists"
+      ],
+      "defect in WRN": [
+        "already_exists"
+      ],
+      "defect in Ku70": [
+        "already_exists"
+      ]
+    },
+    "reason": "no_entity_added"
+  }
+}
