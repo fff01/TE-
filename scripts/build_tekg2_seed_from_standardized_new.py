@@ -3,7 +3,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-INPUT_FILE = ROOT / "te_kg2_final_standardized_new.jsonl"
+INPUT_FILE = ROOT / "data_update_fix" / "te_kg2_final_standardized_new_standardized_fix.jsonl"
 OUTPUT_DIR = ROOT / "data" / "processed" / "tekg2"
 SEED_JSON = OUTPUT_DIR / "tekg2_seed.json"
 REPORT_JSON = OUTPUT_DIR / "tekg2_seed_report.json"
@@ -20,6 +20,7 @@ ENTITY_BUCKET_MAP = {
     "peptides": "peptides",
     "pharmaceuticals": "pharmaceuticals",
     "toxins": "toxins",
+    "mutations": "mutations",
     "paper": "papers",
     "papers": "papers",
 }
@@ -134,6 +135,7 @@ def build_seed(input_file: Path):
     skipped_report = 0
     unresolved = []
     unresolved_count = 0
+    malformed_relation_count = 0
     total_records = 0
 
     for _line_no, obj in iter_jsonl(input_file):
@@ -158,19 +160,24 @@ def build_seed(input_file: Path):
 
         for rel in (obj.get("relations") or []):
             relation_name = norm(rel.get("relation", ""))
+            source_raw = norm(rel.get("source", ""))
+            target_raw = norm(rel.get("target", ""))
             if norm_key(relation_name) in {x.casefold() for x in REPORT_RELATIONS}:
                 skipped_report += 1
                 continue
-            source_bucket, source_name = infer_endpoint(rel.get("source", ""), indexes)
-            target_bucket, target_name = infer_endpoint(rel.get("target", ""), indexes)
+            if not source_raw or not target_raw:
+                malformed_relation_count += 1
+                continue
+            source_bucket, source_name = infer_endpoint(source_raw, indexes)
+            target_bucket, target_name = infer_endpoint(target_raw, indexes)
             if not source_bucket or not target_bucket or not source_name or not target_name:
                 unresolved_count += 1
                 if len(unresolved) < 25:
                     unresolved.append({
                         "pmid": pmid,
-                        "source": rel.get("source", ""),
+                        "source": source_raw,
                         "relation": relation_name,
-                        "target": rel.get("target", ""),
+                        "target": target_raw,
                         "source_bucket": source_bucket,
                         "target_bucket": target_bucket,
                     })
@@ -224,6 +231,7 @@ def build_seed(input_file: Path):
         "top_relations": relation_counter.most_common(30),
         "skipped_report_relations": skipped_report,
         "unresolved_relation_count": unresolved_count,
+        "malformed_relation_count": malformed_relation_count,
         "unresolved_relation_samples": unresolved,
     }
     return seed, report
