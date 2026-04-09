@@ -14,35 +14,80 @@
   } = G6Lib;
   if (!Graph || !register || !ExtensionCategory || !Rect || !CircleCombo || !Badge) return;
 
-  const TYPE_ORDER = ['TE', 'Disease', 'Function'];
+  const TYPE_ORDER = ['TE', 'Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate'];
   const TYPE_LABEL = {
     TE: 'TE',
     Disease: 'Disease',
     Function: 'Function',
+    Gene: 'Gene',
+    Protein: 'Protein',
+    RNA: 'RNA',
+    Mutation: 'Mutation',
+    Pharmaceutical: 'Pharmaceutical',
+    Toxin: 'Toxin',
+    Lipid: 'Lipid',
+    Peptide: 'Peptide',
+    Carbohydrate: 'Carbohydrate',
     Paper: 'Paper',
   };
   const TYPE_COLORS = {
     TE: '#4e79ff',
     Disease: '#ff7a7a',
     Function: '#41b883',
+    Gene: '#8a7cf8',
+    Protein: '#59bfb6',
+    RNA: '#72b6ff',
+    Mutation: '#ffb066',
+    Pharmaceutical: '#a98cf6',
+    Toxin: '#df8a78',
+    Lipid: '#95c863',
+    Peptide: '#54c9c0',
+    Carbohydrate: '#d5b458',
     Paper: '#f2a93b',
   };
   const COMBO_BG = {
     TE: '#eef4ff',
     Disease: '#fff1f1',
     Function: '#eefaf5',
+    Gene: '#f3efff',
+    Protein: '#eefafa',
+    RNA: '#eef6ff',
+    Mutation: '#fff4e8',
+    Pharmaceutical: '#f4f0ff',
+    Toxin: '#fff1ec',
+    Lipid: '#f3fae8',
+    Peptide: '#eafaf7',
+    Carbohydrate: '#fdf8e7',
     Paper: '#fff7ea',
   };
   const COMBO_STROKE = {
     TE: '#b9ccff',
     Disease: '#ffc8c8',
     Function: '#bfe9d4',
+    Gene: '#e4dcff',
+    Protein: '#d3f0ed',
+    RNA: '#dcebff',
+    Mutation: '#ffe1bf',
+    Pharmaceutical: '#e4dbff',
+    Toxin: '#f5d3ca',
+    Lipid: '#e0efc8',
+    Peptide: '#d0f1ec',
+    Carbohydrate: '#efe0a8',
     Paper: '#ffd89b',
   };
   const NODE_STROKE = {
     TE: '#2f63d8',
     Disease: '#d65b6f',
     Function: '#2f9d6b',
+    Gene: '#6656d8',
+    Protein: '#2d8f87',
+    RNA: '#3d88db',
+    Mutation: '#db7c1f',
+    Pharmaceutical: '#7a60d4',
+    Toxin: '#b25d49',
+    Lipid: '#6ea23b',
+    Peptide: '#249f97',
+    Carbohydrate: '#ab8b28',
     Paper: '#d08c23',
   };
 
@@ -159,6 +204,15 @@
       TE: `This group contains ${nodeCount} transposable element nodes.`,
       Disease: `This group contains ${nodeCount} disease nodes.`,
       Function: `This group contains ${nodeCount} function or mechanism nodes.`,
+      Gene: `This group contains ${nodeCount} gene nodes.`,
+      Protein: `This group contains ${nodeCount} protein nodes.`,
+      RNA: `This group contains ${nodeCount} RNA nodes.`,
+      Mutation: `This group contains ${nodeCount} mutation nodes.`,
+      Pharmaceutical: `This group contains ${nodeCount} pharmaceutical nodes.`,
+      Toxin: `This group contains ${nodeCount} toxin nodes.`,
+      Lipid: `This group contains ${nodeCount} lipid nodes.`,
+      Peptide: `This group contains ${nodeCount} peptide nodes.`,
+      Carbohydrate: `This group contains ${nodeCount} carbohydrate nodes.`,
       Paper: `This group contains ${nodeCount} paper nodes.`,
     };
     return map[type] || `This group contains ${nodeCount} nodes.`;
@@ -295,7 +349,7 @@
     }
 
     const hasKeyNodeMetadata = rawNodes.some((node) => typeof node.isKeyNode === 'boolean');
-    const counts = { TE: 0, Disease: 0, Function: 0, Paper: 0 };
+    const counts = { TE: 0, Disease: 0, Function: 0, Gene: 0, Protein: 0, RNA: 0, Mutation: 0, Pharmaceutical: 0, Toxin: 0, Lipid: 0, Peptide: 0, Carbohydrate: 0, Paper: 0 };
     const comboCounts = new Map();
     const filteredNodes = rawNodes.filter((node) => {
       const type = TYPE_LABEL[node.type] ? node.type : 'TE';
@@ -638,6 +692,15 @@
                 TE: '#3b6fdf',
                 Disease: '#d86a7a',
                 Function: '#3da978',
+                Gene: '#6b4ee6',
+                Protein: '#199393',
+                RNA: '#458fe3',
+                Mutation: '#eb8a20',
+                Pharmaceutical: '#7c5ee0',
+                Toxin: '#bf6246',
+                Lipid: '#6ea930',
+                Peptide: '#12a391',
+                Carbohydrate: '#b79122',
                 Paper: '#d39a34',
               };
               return map[type] || '#64748b';
@@ -649,6 +712,15 @@
                 TE: '#1d4ed8',
                 Disease: '#b84e60',
                 Function: '#21885c',
+                Gene: '#5437cf',
+                Protein: '#126f6f',
+                RNA: '#2a72c5',
+                Mutation: '#c96d05',
+                Pharmaceutical: '#6340bc',
+                Toxin: '#9f4d34',
+                Lipid: '#55861e',
+                Peptide: '#0d8b7b',
+                Carbohydrate: '#8b6d11',
                 Paper: '#b57f1d',
               };
               return map[type] || '#334155';
@@ -660,6 +732,15 @@
                 TE: 'rgba(29, 78, 216, 0.45)',
                 Disease: 'rgba(184, 78, 96, 0.45)',
                 Function: 'rgba(33, 136, 92, 0.45)',
+                Gene: 'rgba(84, 55, 207, 0.45)',
+                Protein: 'rgba(18, 111, 111, 0.45)',
+                RNA: 'rgba(42, 114, 197, 0.45)',
+                Mutation: 'rgba(201, 109, 5, 0.45)',
+                Pharmaceutical: 'rgba(99, 64, 188, 0.45)',
+                Toxin: 'rgba(159, 77, 52, 0.45)',
+                Lipid: 'rgba(85, 134, 30, 0.45)',
+                Peptide: 'rgba(13, 139, 123, 0.45)',
+                Carbohydrate: 'rgba(139, 109, 17, 0.45)',
                 Paper: 'rgba(181, 127, 29, 0.45)',
               };
               return map[type] || 'rgba(51, 65, 85, 0.45)';

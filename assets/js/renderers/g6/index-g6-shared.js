@@ -13,6 +13,15 @@
     DiseaseClass: '#8f1731',
     DiseaseCategory: '#d94a58',
     Function: '#41b883',
+    Gene: '#8a7cf8',
+    Protein: '#59bfb6',
+    RNA: '#72b6ff',
+    Mutation: '#ffb066',
+    Pharmaceutical: '#a98cf6',
+    Toxin: '#df8a78',
+    Lipid: '#95c863',
+    Peptide: '#54c9c0',
+    Carbohydrate: '#d5b458',
     Paper: '#f2a93b',
   };
 
@@ -22,6 +31,15 @@
     DiseaseClass: '#5f1020',
     DiseaseCategory: '#a41f35',
     Function: '#2f8b63',
+    Gene: '#6656d8',
+    Protein: '#2d8f87',
+    RNA: '#3d88db',
+    Mutation: '#db7c1f',
+    Pharmaceutical: '#7a60d4',
+    Toxin: '#b25d49',
+    Lipid: '#6ea23b',
+    Peptide: '#249f97',
+    Carbohydrate: '#ab8b28',
     Paper: '#b77a16',
   };
 
@@ -380,11 +398,24 @@
       const nodeType = String(node?.nodeType || '');
       if (nodeType === 'DiseaseClass') return true;
       if (nodeType === 'DiseaseCategory') return true;
-      if (nodeType === 'Function') {
-        return Math.max(0, Number(node?.size) || 0) >= 34;
-      }
       if (nodeType === 'Paper') return !!node?.alwaysShowLabel;
-      return false;
+
+      const labelThresholds = {
+        Disease: 34,
+        Function: 34,
+        Gene: 30,
+        Protein: 30,
+        RNA: 30,
+        Mutation: 30,
+        Pharmaceutical: 32,
+        Toxin: 30,
+        Lipid: 30,
+        Peptide: 30,
+        Carbohydrate: 30,
+      };
+
+      return Object.prototype.hasOwnProperty.call(labelThresholds, nodeType)
+        && Math.max(0, Number(node?.size) || 0) >= labelThresholds[nodeType];
     }
 
     function secondaryLabelText(node) {

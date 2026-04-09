@@ -27,7 +27,7 @@ if (is_file($localConfigPath)) {
 }
 
 $config = [
-    'neo4j_url' => $localConfig['neo4j_url'] ?? env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg/tx/commit'),
+    'neo4j_url' => $localConfig['neo4j_url'] ?? env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg2/tx/commit'),
     'neo4j_user' => $localConfig['neo4j_user'] ?? env_value(['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'),
     'neo4j_password' => $localConfig['neo4j_password'] ?? env_value(['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD'], ''),
     'key_node_threshold' => (int)($localConfig['key_node_threshold'] ?? env_value(['KEY_NODE_THRESHOLD_BIOLOGY', 'KEY_NODE_THRESHOLD'], '15')),
@@ -340,12 +340,12 @@ CYPHER,
         }
 
         $anchorName = trim((string)($anchor['name'] ?? ''));
-        if ($anchorName !== 'LINE1') {
+        if (!$this->isLine1CanonicalTeName($anchorName)) {
             return [$anchor];
         }
 
         $aliases = [$anchor];
-        foreach (['LINE-1', 'L1'] as $aliasName) {
+        foreach (['LINE-1', 'LINE1', 'L1'] as $aliasName) {
             $aliasNode = $this->findExactTeNodeByName($aliasName);
             if ($aliasNode === null) {
                 continue;
@@ -395,7 +395,11 @@ CYPHER,
     {
         $anchorId = (string)($anchor['element_id'] ?? '');
         $anchorName = trim((string)($anchor['name'] ?? ''));
-        if ($anchorId === '' || $anchorName !== 'LINE1' || $this->normalizeType($anchor['labels'] ?? []) !== 'TE') {
+        if (
+            $anchorId === ''
+            || !$this->isLine1CanonicalTeName($anchorName)
+            || $this->normalizeType($anchor['labels'] ?? []) !== 'TE'
+        ) {
             return $rows;
         }
 
@@ -1027,10 +1031,81 @@ CYPHER,
     {
         $rows = array_values(array_filter($rows, static fn(array $row): bool => !empty($row['target_element_id'])));
         $limits = [
-            'TE' => ['TE' => 14, 'Disease' => 18, 'Function' => 6, 'Paper' => 16],
-            'Function' => ['TE' => 10, 'Paper' => 10],
-            'Paper' => ['TE' => 10, 'Disease' => 8, 'Function' => 8],
-            'Unknown' => ['TE' => 8, 'Disease' => 8, 'Function' => 8, 'Paper' => 8],
+            'TE' => [
+                'TE' => 14,
+                'Disease' => 18,
+                'Function' => 10,
+                'Gene' => 14,
+                'Protein' => 12,
+                'RNA' => 10,
+                'Mutation' => 10,
+                'Pharmaceutical' => 8,
+                'Toxin' => 6,
+                'Lipid' => 4,
+                'Peptide' => 4,
+                'Carbohydrate' => 4,
+                'Paper' => 16,
+            ],
+            'Disease' => [
+                'TE' => 12,
+                'Disease' => 8,
+                'Function' => 10,
+                'Gene' => 10,
+                'Protein' => 10,
+                'RNA' => 8,
+                'Mutation' => 10,
+                'Pharmaceutical' => 8,
+                'Toxin' => 6,
+                'Lipid' => 4,
+                'Peptide' => 4,
+                'Carbohydrate' => 4,
+                'Paper' => 8,
+            ],
+            'Function' => [
+                'TE' => 10,
+                'Disease' => 8,
+                'Function' => 8,
+                'Gene' => 10,
+                'Protein' => 10,
+                'RNA' => 8,
+                'Mutation' => 8,
+                'Pharmaceutical' => 6,
+                'Toxin' => 4,
+                'Lipid' => 4,
+                'Peptide' => 4,
+                'Carbohydrate' => 4,
+                'Paper' => 10,
+            ],
+            'Paper' => [
+                'TE' => 10,
+                'Disease' => 8,
+                'Function' => 8,
+                'Gene' => 8,
+                'Protein' => 8,
+                'RNA' => 6,
+                'Mutation' => 8,
+                'Pharmaceutical' => 6,
+                'Toxin' => 4,
+                'Lipid' => 3,
+                'Peptide' => 3,
+                'Carbohydrate' => 3,
+                'Paper' => 0,
+            ],
+            'Unknown' => [
+                'TE' => 8,
+                'Disease' => 8,
+                'Function' => 8,
+                'Gene' => 8,
+                'Protein' => 8,
+                'RNA' => 6,
+                'Mutation' => 6,
+                'Pharmaceutical' => 4,
+                'Toxin' => 4,
+                'Lipid' => 3,
+                'Peptide' => 3,
+                'Carbohydrate' => 3,
+                'Paper' => 8,
+            ],
         ];
         $typeLimits = $limits[$anchorType] ?? $limits['Unknown'];
         $buckets = [];
@@ -1172,10 +1247,66 @@ CYPHER,
         }
 
         $limits = [
-            'TE' => ['TE' => 10, 'Disease' => 50, 'Function' => 6, 'Paper' => 8],
-            'Disease' => ['TE' => 8, 'Disease' => 6, 'Function' => 12, 'Paper' => 10],
-            'Function' => ['TE' => 10, 'Disease' => 12, 'Function' => 8, 'Paper' => 8],
-            'Paper' => ['TE' => 8, 'Disease' => 8, 'Function' => 8, 'Paper' => 0],
+            'TE' => [
+                'TE' => 10,
+                'Disease' => 50,
+                'Function' => 8,
+                'Gene' => 12,
+                'Protein' => 10,
+                'RNA' => 8,
+                'Mutation' => 8,
+                'Pharmaceutical' => 6,
+                'Toxin' => 4,
+                'Lipid' => 3,
+                'Peptide' => 3,
+                'Carbohydrate' => 3,
+                'Paper' => 8,
+            ],
+            'Disease' => [
+                'TE' => 8,
+                'Disease' => 6,
+                'Function' => 12,
+                'Gene' => 8,
+                'Protein' => 8,
+                'RNA' => 6,
+                'Mutation' => 8,
+                'Pharmaceutical' => 6,
+                'Toxin' => 4,
+                'Lipid' => 3,
+                'Peptide' => 3,
+                'Carbohydrate' => 3,
+                'Paper' => 10,
+            ],
+            'Function' => [
+                'TE' => 10,
+                'Disease' => 12,
+                'Function' => 8,
+                'Gene' => 10,
+                'Protein' => 8,
+                'RNA' => 8,
+                'Mutation' => 8,
+                'Pharmaceutical' => 6,
+                'Toxin' => 4,
+                'Lipid' => 3,
+                'Peptide' => 3,
+                'Carbohydrate' => 3,
+                'Paper' => 8,
+            ],
+            'Paper' => [
+                'TE' => 8,
+                'Disease' => 8,
+                'Function' => 8,
+                'Gene' => 8,
+                'Protein' => 8,
+                'RNA' => 6,
+                'Mutation' => 8,
+                'Pharmaceutical' => 6,
+                'Toxin' => 4,
+                'Lipid' => 3,
+                'Peptide' => 3,
+                'Carbohydrate' => 3,
+                'Paper' => 0,
+            ],
             'Unknown' => [],
         ];
 
@@ -1279,9 +1410,9 @@ CYPHER,
         $lower = mb_strtolower($trimmed);
         $aliases = [
             'te' => 'TE',
-            'line1' => 'LINE1',
-            'line-1' => 'LINE1',
-            'l1' => 'LINE1',
+            'line1' => 'LINE-1',
+            'line-1' => 'LINE-1',
+            'l1' => 'LINE-1',
             '阿尔兹海默症' => "Alzheimer's disease",
             '阿兹海默症' => "Alzheimer's disease",
             '阿尔茨海默症' => "Alzheimer's disease",
@@ -1306,6 +1437,11 @@ CYPHER,
         ];
 
         return $aliases[$lower] ?? $trimmed;
+    }
+
+    private function isLine1CanonicalTeName(string $name): bool
+    {
+        return in_array(mb_strtolower(trim($name)), ['line1', 'line-1', 'l1'], true);
     }
 
     private function shouldAllowFuzzySearch(string $normalized): bool
@@ -1660,7 +1796,7 @@ CYPHER,
 
     private function normalizeType(array $labels): string
     {
-        foreach (['TE', 'Disease', 'Function', 'Paper'] as $preferred) {
+        foreach (['TE', 'DiseaseClass', 'DiseaseCategory', 'Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate', 'Paper'] as $preferred) {
             if (in_array($preferred, $labels, true)) {
                 return $preferred;
             }

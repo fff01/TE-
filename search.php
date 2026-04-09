@@ -6,6 +6,24 @@ $activePage = 'search';
 $protoCurrentPath = '/TE-/search.php';
 $protoSubtitle = 'Search the current TE knowledge graph';
 
+function tekg_clean_label_proto(string $value): string
+{
+    $value = trim($value);
+    $value = preg_replace('/<[^>]+>/', '', $value) ?? $value;
+    $value = rtrim($value, ".;,");
+    return preg_replace('/\s+/', ' ', $value) ?? $value;
+}
+
+function tekg_lower_proto(string $value): string
+{
+    return function_exists('mb_strtolower') ? mb_strtolower($value) : strtolower($value);
+}
+
+function tekg_canonicalize_label_proto(string $value): string
+{
+    return str_replace(['_', '-', ' '], '', tekg_lower_proto(tekg_clean_label_proto($value)));
+}
+
 function tekg_repbase_lookup_proto(string $query): ?array
 {
     $query = trim($query);
@@ -23,18 +41,8 @@ function tekg_repbase_lookup_proto(string $query): ?array
         return null;
     }
 
-    $clean = static function (string $value): string {
-        $value = trim($value);
-        $value = preg_replace('/<[^>]+>/', '', $value) ?? $value;
-        $value = rtrim($value, ".;,");
-        return preg_replace('/\s+/', ' ', $value) ?? $value;
-    };
-    $canonicalize = static function (string $value) use ($clean): string {
-        return str_replace(['_', '-', ' '], '', mb_strtolower($clean($value)));
-    };
-
-    $strictKey = mb_strtolower($clean($query));
-    $canonicalKey = $canonicalize($query);
+    $strictKey = tekg_lower_proto(tekg_clean_label_proto($query));
+    $canonicalKey = tekg_canonicalize_label_proto($query);
     $entryId = $payload['name_index'][$strictKey] ?? $payload['canonical_index'][$canonicalKey] ?? null;
     if (!$entryId || empty($payload['entries']) || !is_array($payload['entries'])) {
         return null;
@@ -70,6 +78,227 @@ function tekg_repbase_lookup_proto(string $query): ?array
     return null;
 }
 
+function tekg_dfam_lookup_index_proto(): ?array
+{
+    static $lookup = null;
+    static $loaded = false;
+    if ($loaded) {
+        return $lookup;
+    }
+    $loaded = true;
+    $file = __DIR__ . '/data/processed/dfam/dfam_lookup_index.json';
+    if (!is_file($file)) {
+        return null;
+    }
+    $decoded = json_decode((string) file_get_contents($file), true);
+    $lookup = is_array($decoded) ? $decoded : null;
+    return $lookup;
+}
+
+function tekg_dfam_entry_proto(string $accession): ?array
+{
+    static $cache = [];
+    if (isset($cache[$accession])) {
+        return $cache[$accession];
+    }
+    $file = __DIR__ . '/data/processed/dfam/entries/' . $accession . '.json';
+    if (!is_file($file)) {
+        $cache[$accession] = null;
+        return null;
+    }
+    $decoded = json_decode((string) file_get_contents($file), true);
+    $cache[$accession] = is_array($decoded) ? $decoded : null;
+    return $cache[$accession];
+}
+
+function tekg_dfam_model_label_proto(string $modelType): string
+{
+    $labels = [
+        'full' => 'Full consensus model',
+        'fragment_3end' => "3' end fragment model",
+        'fragment_5end' => "5' end fragment model",
+        'fragment_internal' => 'Internal fragment model',
+        'fragment_ltr' => 'LTR fragment model',
+        'unknown_fragment' => 'Fragment model',
+    ];
+    return $labels[$modelType] ?? 'Consensus model';
+}
+
+function tekg_dfam_plot_relative_path_proto(string $accession): string
+{
+    return '/TE-/data/processed/dfam/plots/' . rawurlencode($accession) . '.svg';
+}
+
+function tekg_dfam_plot_filesystem_path_proto(string $accession): string
+{
+    return __DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'processed' . DIRECTORY_SEPARATOR . 'dfam' . DIRECTORY_SEPARATOR . 'plots' . DIRECTORY_SEPARATOR . $accession . '.svg';
+}
+
+function tekg_run_python_for_dfam_plot_proto(string $accession): bool
+{
+    $script = __DIR__ . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'plot' . DIRECTORY_SEPARATOR . 'render_dfam_structure_svg.py';
+    if (!is_file($script)) {
+        return false;
+    }
+
+    $commands = [
+        'py -3',
+        'python',
+    ];
+
+    foreach ($commands as $command) {
+        @shell_exec($command . ' ' . escapeshellarg($script) . ' ' . escapeshellarg($accession) . ' 2>&1');
+        if (is_file(tekg_dfam_plot_filesystem_path_proto($accession))) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function tekg_dfam_structure_svg_path_proto(array $entry): ?string
+{
+    $accession = trim((string) ($entry['accession'] ?? ''));
+    if ($accession === '' || empty($entry['sequence']) || empty($entry['length_bp'])) {
+        return null;
+    }
+
+    $svgFile = tekg_dfam_plot_filesystem_path_proto($accession);
+    $catalogFile = __DIR__ . '/data/processed/dfam/dfam_curated_catalog.json';
+    $rendererScript = __DIR__ . '/scripts/plot/render_dfam_structure_svg.py';
+    $baseRenderer = __DIR__ . '/scripts/plot/base_SVG.py';
+    $needsRender = !is_file($svgFile);
+
+    if (!$needsRender) {
+        $svgTime = @filemtime($svgFile) ?: 0;
+        $sourceTime = max(
+            @filemtime($catalogFile) ?: 0,
+            @filemtime($rendererScript) ?: 0,
+            @filemtime($baseRenderer) ?: 0
+        );
+        $needsRender = $svgTime < $sourceTime;
+    }
+
+    if ($needsRender && !tekg_run_python_for_dfam_plot_proto($accession)) {
+        return null;
+    }
+
+    return is_file($svgFile) ? tekg_dfam_plot_relative_path_proto($accession) : null;
+}
+
+function tekg_dfam_lookup_proto(string $query, string $type = 'all'): ?array
+{
+    $query = trim($query);
+    if ($query === '') {
+        return null;
+    }
+
+    $normalizedType = strtoupper(trim($type));
+    if (in_array($normalizedType, ['DISEASE', 'FUNCTION', 'PAPER'], true)) {
+        return null;
+    }
+
+    $lookup = tekg_dfam_lookup_index_proto();
+    if (!is_array($lookup)) {
+        return null;
+    }
+
+    $strictKey = tekg_lower_proto(tekg_clean_label_proto($query));
+    $canonicalKey = tekg_canonicalize_label_proto($query);
+    $accession = $lookup['name_index'][$strictKey] ?? $lookup['canonical_index'][$canonicalKey] ?? null;
+    if (!is_string($accession) || $accession === '') {
+        return null;
+    }
+
+    $entry = tekg_dfam_entry_proto($accession);
+    if (!is_array($entry)) {
+        return null;
+    }
+
+    $entry['matched_query'] = $query;
+    $entry['sequence_length_bp'] = (int) ($entry['length_bp'] ?? 0);
+    $entry['model_type_label'] = tekg_dfam_model_label_proto((string) ($entry['model_type'] ?? 'full'));
+    $entry['structure_svg_path'] = tekg_dfam_structure_svg_path_proto($entry);
+    return $entry;
+}
+
+function tekg_karyotype_index_proto(): ?array
+{
+    static $lookup = null;
+    static $loaded = false;
+    if ($loaded) {
+        return $lookup;
+    }
+    $loaded = true;
+    $file = __DIR__ . '/data/processed/rmsk/karyotype_index.json';
+    if (!is_file($file)) {
+        return null;
+    }
+    $decoded = json_decode((string) file_get_contents($file), true);
+    $lookup = is_array($decoded) ? $decoded : null;
+    return $lookup;
+}
+
+function tekg_karyotype_lookup_proto(string $query, string $type = 'all', ?array $repbase = null): ?array
+{
+    $query = trim($query);
+    if ($query === '') {
+        return null;
+    }
+
+    $normalizedType = strtoupper(trim($type));
+    if (in_array($normalizedType, ['DISEASE', 'FUNCTION', 'PAPER'], true)) {
+        return null;
+    }
+
+    $lookup = tekg_karyotype_index_proto();
+    if (!is_array($lookup)) {
+        return null;
+    }
+
+    $candidates = [$query];
+    if (is_array($repbase)) {
+        foreach (['nm', 'id'] as $key) {
+            $candidate = trim((string) ($repbase[$key] ?? ''));
+            if ($candidate !== '') {
+                $candidates[] = $candidate;
+            }
+        }
+    }
+
+    $teName = null;
+    foreach ($candidates as $candidate) {
+        $strictKey = tekg_lower_proto(tekg_clean_label_proto($candidate));
+        $canonicalKey = tekg_canonicalize_label_proto($candidate);
+        $teName = $lookup['name_index'][$strictKey] ?? $lookup['canonical_index'][$canonicalKey] ?? null;
+        if (is_string($teName) && $teName !== '') {
+            break;
+        }
+    }
+
+    if (!is_string($teName) || $teName === '') {
+        return null;
+    }
+
+    $entry = $lookup['entries'][$teName] ?? null;
+    if (!is_array($entry)) {
+        return null;
+    }
+
+    $entry['matched_query'] = $query;
+    $entry['resolved_te_name'] = $teName;
+    return $entry;
+}
+
+function tekg_format_sequence_proto(string $sequence, int $wrap = 80): string
+{
+    $sequence = preg_replace('/\s+/', '', strtolower(trim($sequence))) ?? '';
+    if ($sequence === '') {
+        return '';
+    }
+    return rtrim(chunk_split($sequence, $wrap, "\n"));
+}
+
 function tekg_request_scalar_proto(array $source, string $key, string $default = ''): string
 {
     if (!array_key_exists($key, $source)) {
@@ -95,6 +324,8 @@ $siteRenderer = site_renderer();
 $query = tekg_request_scalar_proto($_GET, 'q', '');
 $type = tekg_request_scalar_proto($_GET, 'type', 'all');
 $repbase = tekg_repbase_lookup_proto($query);
+$dfamSequence = tekg_dfam_lookup_proto($query, $type);
+$genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $searchGraphSrc = $siteRenderer === 'g6'
     ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
         'embed' => 'search-result',
@@ -166,8 +397,8 @@ require __DIR__ . '/head.php';
 
         .query-form-grid {
           display: grid;
-          grid-template-columns: minmax(260px, 0.72fr) minmax(380px, 1.28fr);
-          gap: 28px 36px;
+          grid-template-columns: 1fr;
+          gap: 18px;
           align-items: end;
         }
 
@@ -230,12 +461,12 @@ require __DIR__ . '/head.php';
           align-items: start;
         }
 
-        .side-stack {
-          display: grid;
-          gap: 22px;
+        .search-layout.is-hidden {
+          display: none;
         }
 
-        .data-panel {
+        .data-panel,
+        .graph-panel {
           background: #ffffff;
           border: 1px solid #dbe7f8;
           border-radius: 10px;
@@ -243,11 +474,15 @@ require __DIR__ . '/head.php';
           box-shadow: 0 8px 24px rgba(25, 56, 105, 0.05);
         }
 
-        .data-panel h3 {
+        .data-panel h3,
+        .graph-panel-head h3 {
           margin: 0 0 14px;
           font-size: 22px;
           font-weight: 700;
           color: #214b8d;
+        }
+
+        .data-panel h3 {
           padding-bottom: 12px;
           border-bottom: 1px solid #e5edf7;
         }
@@ -258,16 +493,120 @@ require __DIR__ . '/head.php';
           min-height: 120px;
         }
 
-        .search-layout.is-hidden {
-          display: none;
+        .sequence-panel {
+          display: grid;
+          gap: 18px;
+          grid-column: 1 / -1;
+          width: 100%;
+        }
+
+        .sequence-meta {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+          gap: 12px 20px;
+          font-size: 15px;
+          color: #52687f;
+        }
+
+        .sequence-meta strong {
+          color: #214b8d;
+        }
+
+        .sequence-fragment-note {
+          padding: 12px 14px;
+          border: 1px solid #f2d7a1;
+          border-radius: 10px;
+          background: #fff8e8;
+          color: #8a6410;
+          font-size: 15px;
+          line-height: 1.6;
+        }
+
+        .sequence-code-wrap {
+          width: 100%;
+          max-width: 100%;
+          min-height: 320px;
+          max-height: 320px;
+          border: 1px solid #dbe6f4;
+          border-radius: 10px;
+          background: #f9fbff;
+          overflow-x: auto;
+          overflow-y: auto;
+        }
+
+        .sequence-code {
+          margin: 0;
+          padding: 16px 18px;
+          min-width: max-content;
+          font-family: Consolas, 'Courier New', monospace;
+          font-size: 13px;
+          line-height: 1.6;
+          white-space: pre;
+          word-break: normal;
+          color: #183152;
+        }
+
+        .sequence-plot {
+          border: 1px solid #dbe6f4;
+          border-radius: 10px;
+          background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+          padding: 14px 16px;
+        }
+
+        .sequence-plot img {
+          display: block;
+          width: 100%;
+          height: auto;
+        }
+
+        .distribution-panel {
+          display: grid;
+          gap: 18px;
+          grid-column: 1 / -1;
+          width: 100%;
+        }
+
+        .distribution-meta {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+          gap: 12px 20px;
+          font-size: 15px;
+          color: #52687f;
+        }
+
+        .distribution-meta strong {
+          color: #214b8d;
+        }
+
+        .distribution-karyotype-wrap {
+          width: 100%;
+          border: 1px solid #dbe6f4;
+          border-radius: 10px;
+          background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+          padding: 14px 16px;
+          overflow-x: auto;
+          overflow-y: hidden;
+        }
+
+        .distribution-karyotype {
+          min-height: 360px;
+          min-width: 1080px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .distribution-status {
+          margin: 0;
+          font-size: 14px;
+          color: #7f91a6;
+        }
+
+        .distribution-karyotype svg {
+          display: block;
         }
 
         .graph-panel {
-          background: #ffffff;
-          border: 1px solid #dbe7f8;
-          border-radius: 10px;
-          padding: 22px;
-          box-shadow: 0 8px 24px rgba(25, 56, 105, 0.05);
           display: flex;
           flex-direction: column;
           gap: 14px;
@@ -278,12 +617,6 @@ require __DIR__ . '/head.php';
           align-items: center;
           justify-content: space-between;
           gap: 14px;
-        }
-
-        .graph-panel-head h3 {
-          margin: 0;
-          font-size: 22px;
-          color: #214b8d;
         }
 
         .graph-toggle {
@@ -382,20 +715,11 @@ require __DIR__ . '/head.php';
             <h2>Query by keyword</h2>
             <div class="query-divider"></div>
             <form id="search-form" method="GET">
+              <input type="hidden" name="type" value="all">
               <div class="query-form-grid">
                 <div class="query-field">
-                  <label for="search-type">Entity type</label>
-                  <select id="search-type" class="query-control" name="type">
-                    <option value="all" <?= $type === 'all' ? 'selected' : '' ?>>All entity types</option>
-                    <option value="TE" <?= $type === 'TE' ? 'selected' : '' ?>>TE</option>
-                    <option value="Disease" <?= $type === 'Disease' ? 'selected' : '' ?>>Disease</option>
-                    <option value="Function" <?= $type === 'Function' ? 'selected' : '' ?>>Function</option>
-                    <option value="Paper" <?= $type === 'Paper' ? 'selected' : '' ?>>Paper</option>
-                  </select>
-                </div>
-                <div class="query-field">
-                  <label for="search-query">Identifier or keyword</label>
-                  <input id="search-query" class="query-control" type="text" name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter a TE, disease, function, or PMID">
+                  <label for="search-query">Keyword or identifier</label>
+                  <input id="search-query" class="query-control" type="text" name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter a keyword, TE, disease, function, or PMID">
                 </div>
               </div>
               <div class="query-actions">
@@ -432,27 +756,70 @@ require __DIR__ . '/head.php';
                 <h3>Local Graph</h3>
                 <button id="search-graph-toggle" type="button" class="graph-toggle" aria-expanded="false" aria-controls="search-graph-frame-wrap" title="Expand local graph"><span id="search-graph-toggle-icon" aria-hidden="true">&#9662;</span></button>
               </div>
-              <?php if ($siteRenderer === 'g6'): ?>
-                <div id="search-graph-frame-wrap" class="graph-frame">
-                  <iframe
-                    id="search-g6-frame"
-                    src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
-                    title="Search graph (G6)"
-                  ></iframe>
-                </div>
-              <?php else: ?>
-                <div id="search-graph-frame-wrap" class="graph-frame">
-                  <iframe
-                    id="search-cyt-frame"
-                    src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
-                    title="Search graph (Cytoscape)"
-                  ></iframe>
-                </div>
-              <?php endif; ?>
+              <div id="search-graph-frame-wrap" class="graph-frame">
+                <iframe
+                  id="<?= $siteRenderer === 'g6' ? 'search-g6-frame' : 'search-cyt-frame' ?>"
+                  src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
+                  title="Search graph (<?= htmlspecialchars(strtoupper($siteRenderer), ENT_QUOTES, 'UTF-8') ?>)"
+                ></iframe>
+              </div>
             </section>
+
+            <?php if ($dfamSequence !== null): ?>
+              <section class="data-panel sequence-panel">
+                <h3>Sequence</h3>
+                <div class="sequence-meta">
+                  <div><strong>Matched query: </strong><?= htmlspecialchars($dfamSequence['matched_query'] ?? $query, ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Dfam accession: </strong><?= htmlspecialchars($dfamSequence['accession'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Dfam family: </strong><?= htmlspecialchars($dfamSequence['name'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Length: </strong><?= htmlspecialchars(!empty($dfamSequence['sequence_length_bp']) ? ((string) $dfamSequence['sequence_length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Model type: </strong><?= htmlspecialchars($dfamSequence['model_type_label'] ?? 'Consensus model', ENT_QUOTES, 'UTF-8') ?></div>
+                  <?php if (!empty($dfamSequence['display_classification'])): ?>
+                    <div><strong>Classification: </strong><?= htmlspecialchars((string) $dfamSequence['display_classification'], ENT_QUOTES, 'UTF-8') ?></div>
+                  <?php endif; ?>
+                </div>
+                <?php if (!empty($dfamSequence['is_fragment'])): ?>
+                  <div class="sequence-fragment-note">
+                    This sequence is a Dfam fragment consensus model (<?= htmlspecialchars(strtolower((string) ($dfamSequence['model_type_label'] ?? 'fragment model')), ENT_QUOTES, 'UTF-8') ?>).
+                  </div>
+                <?php endif; ?>
+                <div class="sequence-code-wrap">
+                  <pre class="sequence-code"><?= htmlspecialchars(tekg_format_sequence_proto((string) ($dfamSequence['sequence'] ?? '')), ENT_QUOTES, 'UTF-8') ?></pre>
+                </div>
+                <?php if (!empty($dfamSequence['structure_svg_path'])): ?>
+                  <div class="sequence-plot">
+                    <img src="<?= htmlspecialchars((string) $dfamSequence['structure_svg_path'], ENT_QUOTES, 'UTF-8') ?>" alt="Dfam sequence structure plot for <?= htmlspecialchars((string) ($dfamSequence['name'] ?? $query), ENT_QUOTES, 'UTF-8') ?>">
+                  </div>
+                <?php endif; ?>
+              </section>
+            <?php endif; ?>
+
+            <?php if ($genomeDistribution !== null): ?>
+              <section id="search-karyotype-panel" class="data-panel distribution-panel">
+                <h3>Genome Annotation Distribution</h3>
+                <div class="distribution-meta">
+                  <div><strong>Assembly: </strong><?= htmlspecialchars((string) ($genomeDistribution['assembly_label'] ?? 'Homo sapiens [hg38]'), ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Mode: </strong>All Hits</div>
+                  <div><strong>Bin size: </strong><?= htmlspecialchars(number_format(((int) ($genomeDistribution['bin_size_bp'] ?? 1000000)) / 1000000, 0) . ' Mb', ENT_QUOTES, 'UTF-8') ?></div>
+                  <div><strong>Total hits: </strong><?= htmlspecialchars(number_format((int) ($genomeDistribution['total_hits'] ?? 0)), ENT_QUOTES, 'UTF-8') ?></div>
+                </div>
+                <p id="search-karyotype-status" class="distribution-status">Loading genome annotation distribution...</p>
+                <div class="distribution-karyotype-wrap">
+                  <div
+                    id="search-karyotype-view"
+                    class="distribution-karyotype"
+                    data-karyotype-path="<?= htmlspecialchars((string) ($genomeDistribution['data_json_path'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                  ></div>
+                </div>
+              </section>
+            <?php endif; ?>
           </section>
         </div>
       </section>
+
+      <?php if ($genomeDistribution !== null): ?>
+      <script src="/TE-/assets/vendor/karyotype/Karyotype.js"></script>
+      <?php endif; ?>
 
       <script>
         (() => {
@@ -466,132 +833,59 @@ require __DIR__ . '/head.php';
         })();
       </script>
 
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.25.0/cytoscape.min.js"></script>
-      <script src="/TE-/assets/data/graph_demo_data.js"></script>
       <script>
       (function () {
-        const lang = <?= json_encode($siteLang, JSON_UNESCAPED_UNICODE) ?>;
-        const renderer = <?= json_encode($siteRenderer, JSON_UNESCAPED_UNICODE) ?>;
-        const texts = {
-          emptyNode: 'No additional description is available for this node.',
-          summaryDefault: 'Search for a TE, disease, function, or PMID to view a concise summary here.',
-          summaryMissing: 'No structured TE summary is available for the current query yet.',
-          summaryError: 'Failed to update summary: ',
-          noDescription: 'No description',
-          noKeywords: 'No keywords',
-          noLength: 'No length available',
-          matchedQuery: 'Matched query: ',
-          entityType: 'Entity type: ',
-          name: 'Name: ',
-          description: 'Description: ',
-          keywords: 'Keywords: ',
-          length: 'Length: ',
-          referenceCount: 'Reference count: ',
-        };
+        const panel = document.getElementById('search-karyotype-panel');
+        const view = document.getElementById('search-karyotype-view');
+        const status = document.getElementById('search-karyotype-status');
 
-        const searchResultsEl = document.getElementById('search-results');
-        const summaryEl = document.getElementById('search-summary');
-        const resetBtn = document.getElementById('search-reset');
+        if (!panel || !view) {
+          return;
+        }
+
+        const dataPath = view.dataset.karyotypePath || '';
+        if (!dataPath || typeof window.Karyotype !== 'function') {
+          if (status) {
+            status.textContent = 'Genome annotation distribution is unavailable right now.';
+          }
+          return;
+        }
+
+        fetch(dataPath, { cache: 'no-store' })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error('Failed to load karyotype data');
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            view.innerHTML = '';
+            new window.Karyotype(view, data);
+            if (status) {
+              status.hidden = true;
+            }
+          })
+          .catch(function (error) {
+            console.error(error);
+            if (status) {
+              status.textContent = 'Genome annotation distribution is unavailable right now.';
+              status.hidden = false;
+            }
+          });
+      }());
+      </script>
+
+      <script>
+      (function () {
         const graphPanelEl = document.getElementById('search-graph-panel');
         const graphToggleBtn = document.getElementById('search-graph-toggle');
         const graphToggleIconEl = document.getElementById('search-graph-toggle-icon');
+        const resetBtn = document.getElementById('search-reset');
         const exampleBtn = document.getElementById('search-example');
         const searchForm = document.getElementById('search-form');
         const queryInput = document.getElementById('search-query');
-        const typeField = document.getElementById('search-type');
-        let repbaseDataPromise = null;
-
-        function cleanRepbaseLabel(value) {
-          return String(value || '').replace(/<[^>]+>/g, '').trim().replace(/[.;,]+$/g, '').replace(/\s+/g, ' ');
-        }
-
-        function canonicalizeRepbaseLabel(value) {
-          return cleanRepbaseLabel(value).toLowerCase().replace(/[_\-\s]/g, '');
-        }
-
-        async function loadRepbaseData() {
-          if (!repbaseDataPromise) {
-            repbaseDataPromise = fetch('/TE-/data/processed/te_repbase_db_matched.json').then(function (res) {
-              if (!res.ok) throw new Error('Repbase data load failed');
-              return res.json();
-            });
-          }
-          return repbaseDataPromise;
-        }
-
-        function renderSummaryCard(repbase, matchedName) {
-          return [
-            '<div><strong>' + texts.matchedQuery + '</strong>' + matchedName + '</div>',
-            '<div><strong>' + texts.entityType + '</strong>TE</div>',
-            '<div><strong>' + texts.name + '</strong>' + (repbase.name || repbase.id || '-') + '</div>',
-            '<div><strong>' + texts.description + '</strong>' + (repbase.description || texts.noDescription) + '</div>',
-            '<div><strong>' + texts.keywords + '</strong>' + ((repbase.keywords && repbase.keywords.length) ? repbase.keywords.join(', ') : texts.noKeywords) + '</div>',
-            '<div><strong>' + texts.length + '</strong>' + (repbase.length_bp ? `${repbase.length_bp} bp` : texts.noLength) + '</div>',
-            '<div><strong>' + texts.referenceCount + '</strong>' + ((repbase.references && repbase.references.length) ? repbase.references.length : 0) + '</div>'
-          ].join('');
-        }
-
-        function renderAnchorSummary(anchor, query, note = '') {
-          const displayName = anchor && (anchor.standard_name || anchor.name) ? (anchor.standard_name || anchor.name) : (query || '-');
-          return [
-            '<div><strong>' + texts.matchedQuery + '</strong>' + (query || displayName) + '</div>',
-            '<div><strong>' + texts.entityType + '</strong>' + ((anchor && anchor.type) ? anchor.type : 'Entity') + '</div>',
-            '<div><strong>' + texts.name + '</strong>' + displayName + '</div>',
-            '<div><strong>' + texts.description + '</strong>' + (((anchor && anchor.description) ? anchor.description : '') || note || texts.summaryMissing) + '</div>'
-          ].join('');
-        }
-
-        async function updateSummaryBlock(query, payload) {
-          if (!summaryEl) return;
-          const anchor = payload && payload.anchor ? payload.anchor : null;
-          const candidateNames = [];
-          if (anchor && anchor.type === 'TE') {
-            if (anchor.standard_name) candidateNames.push(anchor.standard_name);
-            if (anchor.name) candidateNames.push(anchor.name);
-          }
-          if (query) candidateNames.push(query);
-          const uniqueNames = Array.from(new Set(candidateNames.filter(Boolean)));
-          if (anchor && anchor.type && anchor.type !== 'TE') {
-            summaryEl.innerHTML = renderAnchorSummary(anchor, query, texts.summaryMissing);
-            return;
-          }
-          if (!uniqueNames.length) {
-            summaryEl.innerHTML = texts.summaryDefault;
-            return;
-          }
-          try {
-            const repbasePayload = await loadRepbaseData();
-            const entries = repbasePayload.entries || [];
-            const entryById = new Map(entries.map(function (entry) { return [entry.id, entry]; }));
-            let matchedId = null;
-            let matchedName = null;
-            uniqueNames.some(function (name) {
-              const strictKey = cleanRepbaseLabel(name).toLowerCase();
-              const canonicalKey = canonicalizeRepbaseLabel(name);
-              matchedId = (repbasePayload.name_index && repbasePayload.name_index[strictKey]) || (repbasePayload.canonical_index && repbasePayload.canonical_index[canonicalKey]) || null;
-              if (matchedId) {
-                matchedName = name;
-                return true;
-              }
-              return false;
-            });
-            if (!matchedId || !entryById.has(matchedId)) {
-              summaryEl.innerHTML = anchor ? renderAnchorSummary(anchor, query, texts.summaryMissing) : texts.summaryMissing;
-              return;
-            }
-            summaryEl.innerHTML = renderSummaryCard(entryById.get(matchedId), matchedName || matchedId);
-          } catch (err) {
-            summaryEl.innerHTML = texts.summaryError + (err && err.message ? err.message : 'unknown error');
-          }
-        }
-
-        const g6BaseSrc = <?= json_encode(site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
-        const cytBaseSrc = <?= json_encode(site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'search-result']), JSON_UNESCAPED_UNICODE) ?>;
-
-        function setResultsVisible(visible) {
-          if (!searchResultsEl) return;
-          searchResultsEl.classList.toggle('is-hidden', !visible);
-        }
+        const siteLang = <?= json_encode($siteLang, JSON_UNESCAPED_UNICODE) ?>;
+        const siteRenderer = <?= json_encode($siteRenderer, JSON_UNESCAPED_UNICODE) ?>;
 
         function setGraphExpanded(expanded) {
           if (!graphPanelEl || !graphToggleBtn) return;
@@ -601,143 +895,37 @@ require __DIR__ . '/head.php';
             graphToggleIconEl.innerHTML = expanded ? '&#9652;' : '&#9662;';
           }
           graphToggleBtn.title = expanded ? 'Collapse local graph' : 'Expand local graph';
-          if (expanded && renderer !== 'g6') {
-            setTimeout(resizeCytFrame, 120);
-            setTimeout(resizeCytFrame, 420);
-          }
-        }
-
-        function setG6Frame(query) {
-          const frame = document.getElementById('search-g6-frame');
-          if (!frame) return;
-          const url = new URL(g6BaseSrc, window.location.origin);
-          if (query) {
-            url.searchParams.set('q', query);
-          }
-          frame.src = url.toString();
-        }
-
-        function setCytFrame(query) {
-          const frame = document.getElementById('search-cyt-frame');
-          if (!frame) return;
-          const url = new URL(cytBaseSrc, window.location.origin);
-          if (query) {
-            url.searchParams.set('q', query);
-          }
-          frame.src = url.toString();
-        }
-
-        function resizeCytFrame() {
-          const frame = document.getElementById('search-cyt-frame');
-          if (!frame) return;
-          try {
-            const cy = frame.contentWindow && frame.contentWindow.__TEKG_CY ? frame.contentWindow.__TEKG_CY : null;
-            if (cy) {
-              cy.resize();
-              cy.fit(undefined, 55);
-            }
-          } catch (_error) {}
-        }
-
-        async function runSearch(query) {
-          if (!query) {
-            setResultsVisible(false);
-            setGraphExpanded(false);
-            summaryEl.innerHTML = texts.summaryDefault;
-            if (renderer === 'g6') {
-              setG6Frame('');
-            } else {
-              setCytFrame('');
-            }
-            return;
-          }
-
-          setResultsVisible(true);
-          setGraphExpanded(false);
-
-          try {
-            const searchUrl = new URL('/TE-/api/graph.php', window.location.origin);
-            searchUrl.searchParams.set('q', query);
-            if (typeField && typeField.value !== 'all') {
-              searchUrl.searchParams.set('type', typeField.value);
-            }
-            searchUrl.searchParams.set('lang', lang);
-            const response = await fetch(searchUrl.toString(), { cache: 'no-store' });
-            const payload = await response.json();
-            if (!response.ok || !payload || payload.ok === false) {
-              throw new Error((payload && payload.error) || 'search failed');
-            }
-            await updateSummaryBlock(query, payload);
-            if (renderer === 'g6') {
-              setG6Frame(query);
-            } else {
-              setCytFrame(query);
-            }
-          } catch (err) {
-            setResultsVisible(true);
-            setGraphExpanded(false);
-            summaryEl.innerHTML = texts.summaryError + (err && err.message ? err.message : 'unknown error');
-          }
-        }
-
-        if (exampleBtn) {
-          exampleBtn.addEventListener('click', function () {
-            queryInput.value = 'L1HS';
-            searchForm.requestSubmit();
-          });
-        }
-
-        if (resetBtn) {
-          resetBtn.addEventListener('click', function () {
-            queryInput.value = '';
-            if (typeField) typeField.value = 'all';
-            const url = new URL(window.location.href);
-            url.searchParams.delete('q');
-            url.searchParams.set('type', 'all');
-            url.searchParams.set('lang', lang);
-            url.searchParams.set('renderer', renderer);
-            window.history.replaceState({}, '', url.toString());
-            runSearch('');
-          });
         }
 
         if (graphToggleBtn) {
           graphToggleBtn.addEventListener('click', function () {
-            if (searchResultsEl && searchResultsEl.classList.contains('is-hidden')) {
-              return;
-            }
             const expanded = graphPanelEl ? graphPanelEl.classList.contains('is-collapsed') : false;
             setGraphExpanded(expanded);
           });
         }
 
-        if (searchForm) {
-          searchForm.addEventListener('submit', function (evt) {
-            evt.preventDefault();
-            const query = queryInput.value.trim();
-            const url = new URL(window.location.href);
-            if (query) {
-              url.searchParams.set('q', query);
-            } else {
-              url.searchParams.delete('q');
+        if (exampleBtn) {
+          exampleBtn.addEventListener('click', function () {
+            if (queryInput) {
+              queryInput.value = 'L1HS';
             }
-            if (typeField) url.searchParams.set('type', typeField.value || 'all');
-            url.searchParams.set('lang', lang);
-            url.searchParams.set('renderer', renderer);
-            window.history.replaceState({}, '', url.toString());
-            runSearch(query);
+            if (searchForm) {
+              searchForm.requestSubmit();
+            }
           });
         }
 
-        const cytFrame = document.getElementById('search-cyt-frame');
-        if (cytFrame) {
-          cytFrame.addEventListener('load', () => {
-            setTimeout(resizeCytFrame, 120);
-            setTimeout(resizeCytFrame, 420);
+        if (resetBtn) {
+          resetBtn.addEventListener('click', function () {
+            const url = new URL('/TE-/search.php', window.location.origin);
+            url.searchParams.set('type', 'all');
+            url.searchParams.set('lang', siteLang);
+            url.searchParams.set('renderer', siteRenderer);
+            window.location.href = url.toString();
           });
         }
 
-        runSearch(queryInput.value.trim());
+        setGraphExpanded(false);
       }());
       </script>
     </main>

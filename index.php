@@ -5,22 +5,154 @@ $protoCurrentPath = '/TE-/index.php';
 $protoSubtitle = 'A transposable-element knowledge graph for exploration and discovery';
 require __DIR__ . '/head.php';
 
-$seedPath = __DIR__ . '/data/processed/te_kg2_graph_seed.json';
+$seedPath = __DIR__ . '/data/processed/tekg2/tekg2_seed.json';
 $seed = json_decode((string) file_get_contents($seedPath), true);
 $nodeBuckets = $seed['nodes'] ?? [];
-$datasetCounts = [
-    'TE' => count($nodeBuckets['transposons'] ?? []),
-    'Disease' => count($nodeBuckets['diseases'] ?? []),
-    'Function' => count($nodeBuckets['functions'] ?? []),
-    'Paper' => count($nodeBuckets['papers'] ?? []),
+
+$datasetMeta = [
+    [
+        'key' => 'TE',
+        'bucket' => 'transposons',
+        'label' => 'TE',
+        'gradient' => 'linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%)',
+        'shadow' => '0 4px 14px rgba(30, 74, 142, 0.12)',
+        'text' => '#214b8d',
+        'samples' => ['LINE-1', 'L1HS', 'AluY', 'SVA_F'],
+    ],
+    [
+        'key' => 'Disease',
+        'bucket' => 'diseases',
+        'label' => 'Disease',
+        'gradient' => 'linear-gradient(180deg, #fff0f2 0%, #ffdbe3 100%)',
+        'shadow' => '0 4px 14px rgba(200, 79, 98, 0.12)',
+        'text' => '#b54d60',
+        'samples' => ["Alzheimer's disease", 'breast cancer', 'lung cancer', 'Duchenne muscular dystrophy'],
+    ],
+    [
+        'key' => 'Function',
+        'bucket' => 'functions',
+        'label' => 'Function',
+        'gradient' => 'linear-gradient(180deg, #eefaf5 0%, #d8f0db 100%)',
+        'shadow' => '0 4px 14px rgba(58, 126, 73, 0.12)',
+        'text' => '#2f8b63',
+        'samples' => ['retrotransposition', 'genomic instability', 'DNA repair', 'innate immune response'],
+    ],
+    [
+        'key' => 'Gene',
+        'bucket' => 'genes',
+        'label' => 'Gene',
+        'gradient' => 'linear-gradient(180deg, #f4f1ff 0%, #e0d6ff 100%)',
+        'shadow' => '0 4px 14px rgba(102, 86, 216, 0.12)',
+        'text' => '#6656d8',
+        'samples' => ['CYBB', 'Dystrophin', 'SAMHD1', 'APOBEC3A'],
+    ],
+    [
+        'key' => 'Protein',
+        'bucket' => 'proteins',
+        'label' => 'Protein',
+        'gradient' => 'linear-gradient(180deg, #eefaf9 0%, #d5f0ec 100%)',
+        'shadow' => '0 4px 14px rgba(45, 143, 135, 0.12)',
+        'text' => '#2d8f87',
+        'samples' => ['ORF1p', 'ORF2p', 'L1ORF1p', 'Reverse transcriptase'],
+    ],
+    [
+        'key' => 'RNA',
+        'bucket' => 'rnas',
+        'label' => 'RNA',
+        'gradient' => 'linear-gradient(180deg, #eef7ff 0%, #dcebff 100%)',
+        'shadow' => '0 4px 14px rgba(61, 136, 219, 0.12)',
+        'text' => '#3d88db',
+        'samples' => ['LINE-1 RNA', 'LINE-1 mRNA', 'mRNA', 'RNA'],
+    ],
+    [
+        'key' => 'Mutation',
+        'bucket' => 'mutations',
+        'label' => 'Mutation',
+        'gradient' => 'linear-gradient(180deg, #fff5ea 0%, #ffe3c4 100%)',
+        'shadow' => '0 4px 14px rgba(219, 124, 31, 0.12)',
+        'text' => '#db7c1f',
+        'samples' => ['P53 mutation', 'TREX1 mutation', 'ATM mutation', 'MECP2 mutation'],
+    ],
+    [
+        'key' => 'Pharmaceutical',
+        'bucket' => 'pharmaceuticals',
+        'label' => 'Pharmaceutical',
+        'gradient' => 'linear-gradient(180deg, #f5f2ff 0%, #e7ddff 100%)',
+        'shadow' => '0 4px 14px rgba(122, 96, 212, 0.12)',
+        'text' => '#7a60d4',
+        'samples' => ['lamivudine', 'Melatonin', 'Ribavirin', 'Dexamethasone'],
+    ],
+    [
+        'key' => 'Toxin',
+        'bucket' => 'toxins',
+        'label' => 'Toxin',
+        'gradient' => 'linear-gradient(180deg, #fff4f1 0%, #f7d7cf 100%)',
+        'shadow' => '0 4px 14px rgba(178, 93, 73, 0.12)',
+        'text' => '#b25d49',
+        'samples' => ['Benzo(a)pyrene', 'cadmium chloride', '1,3-Butadiene', 'TCDD'],
+    ],
+    [
+        'key' => 'Lipid',
+        'bucket' => 'lipids',
+        'label' => 'Lipid',
+        'gradient' => 'linear-gradient(180deg, #f4faeb 0%, #e1efc9 100%)',
+        'shadow' => '0 4px 14px rgba(110, 162, 59, 0.12)',
+        'text' => '#6ea23b',
+        'samples' => ['arachidonic acid', 'palmitic acid', 'C15H31-IMeNMe3', 'C17H31-IMeNMe3'],
+    ],
+    [
+        'key' => 'Peptide',
+        'bucket' => 'peptides',
+        'label' => 'Peptide',
+        'gradient' => 'linear-gradient(180deg, #edf9f7 0%, #d2f1ec 100%)',
+        'shadow' => '0 4px 14px rgba(36, 159, 151, 0.12)',
+        'text' => '#249f97',
+        'samples' => ['2A peptide', 'amyloid beta', 'beta-endorphin', 'peptide'],
+    ],
+    [
+        'key' => 'Carbohydrate',
+        'bucket' => 'carbohydrates',
+        'label' => 'Carbohydrate',
+        'gradient' => 'linear-gradient(180deg, #fdf9ea 0%, #f0e2ad 100%)',
+        'shadow' => '0 4px 14px rgba(171, 139, 40, 0.12)',
+        'text' => '#ab8b28',
+        'samples' => ['Fasting glucose', 'Disialoganglioside GD2', 'cytidine diphosphate ribitol'],
+    ],
+    [
+        'key' => 'Paper',
+        'bucket' => 'papers',
+        'label' => 'Paper',
+        'gradient' => 'linear-gradient(180deg, #fff6eb 0%, #ffe3c5 100%)',
+        'shadow' => '0 4px 14px rgba(183, 122, 22, 0.12)',
+        'text' => '#b77a16',
+        'samples' => ['PMID: 40600062', 'PMID: 41000934', 'PMID: 40707718', 'PMID: 41473303'],
+    ],
 ];
 
-$caseStudies = [
-    'TE' => ['LINE1', 'L1HS', 'Alu', 'HERV-K'],
-    'Disease' => ["Alzheimer's disease", 'breast cancer', 'lung cancer', 'Frontotemporal dementia'],
-    'Function' => ['retrotransposition', 'genomic instability', 'innate immune response', 'DNA damage'],
-    'Paper' => ['PMID: 40600062', 'PMID: 41000934', 'PMID: 40707718', 'PMID: 41473303'],
-];
+$datasetItems = [];
+foreach ($datasetMeta as $meta) {
+    $bucket = $meta['bucket'];
+    $count = count($nodeBuckets[$bucket] ?? []);
+    $samples = $meta['samples'];
+    if (empty($samples)) {
+        $rawItems = $nodeBuckets[$bucket] ?? [];
+        $samples = [];
+        foreach ($rawItems as $rawItem) {
+            $name = is_array($rawItem) ? ($rawItem['name'] ?? $rawItem['title'] ?? $rawItem['id'] ?? '') : (string) $rawItem;
+            $name = trim((string) $name);
+            if ($name === '') {
+                continue;
+            }
+            $samples[] = $name;
+            if (count($samples) >= 4) {
+                break;
+            }
+        }
+    }
+    $meta['count'] = $count;
+    $meta['samples'] = $samples;
+    $datasetItems[] = $meta;
+}
 
 $overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into graph preview, search, download, and project information.';
 
@@ -140,7 +272,7 @@ $treeEmbedUrl = $siteRenderer === 'g6'
 
         .status-grid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 24px;
           align-items: start;
         }
@@ -159,50 +291,30 @@ $treeEmbedUrl = $siteRenderer === 'g6'
         }
 
         .status-badge {
-          width: 188px;
-          height: 188px;
+          width: 160px;
+          height: 160px;
           margin: 0 auto 14px;
           border-radius: 50%;
-          background: linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%);
+          background: var(--status-gradient, linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%));
           border: 8px solid #f8fbff;
-          box-shadow: 0 4px 14px rgba(30, 74, 142, 0.12);
+          box-shadow: var(--status-shadow, 0 4px 14px rgba(30, 74, 142, 0.12));
           display: grid;
           align-content: center;
           justify-items: center;
           gap: 8px;
         }
 
-        .status-item[data-status-item="TE"] .status-badge {
-          background: linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%);
-          box-shadow: 0 4px 14px rgba(30, 74, 142, 0.12);
-        }
-
-        .status-item[data-status-item="Disease"] .status-badge {
-          background: linear-gradient(180deg, #ffeef2 0%, #ffd9e5 100%);
-          box-shadow: 0 4px 14px rgba(170, 61, 103, 0.12);
-        }
-
-        .status-item[data-status-item="Function"] .status-badge {
-          background: linear-gradient(180deg, #eef9ef 0%, #d8f0db 100%);
-          box-shadow: 0 4px 14px rgba(58, 126, 73, 0.12);
-        }
-
-        .status-item[data-status-item="Paper"] .status-badge {
-          background: linear-gradient(180deg, #fff4e8 0%, #ffe2c3 100%);
-          box-shadow: 0 4px 14px rgba(176, 116, 46, 0.12);
-        }
-
         .status-count {
-          font-size: 38px;
+          font-size: 34px;
           line-height: 1;
           font-weight: 800;
-          color: #214b8d;
+          color: var(--status-text, #214b8d);
         }
 
         .status-name {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 700;
-          color: #214b8d;
+          color: var(--status-text, #214b8d);
         }
 
         .status-panel {
@@ -255,7 +367,7 @@ $treeEmbedUrl = $siteRenderer === 'g6'
 
         .link-grid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 18px;
         }
 
@@ -302,7 +414,7 @@ $treeEmbedUrl = $siteRenderer === 'g6'
         @media (max-width: 992px) {
           .status-grid,
           .link-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
           }
 
           .hero-content h1 {
@@ -358,20 +470,20 @@ $treeEmbedUrl = $siteRenderer === 'g6'
             <h3>Dataset Status</h3>
           </div>
           <div class="status-grid">
-            <?php foreach ($datasetCounts as $key => $count): ?>
-              <div class="status-item" data-status-item="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>">
-                <button class="status-trigger" type="button" data-status-trigger="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false">
+            <?php foreach ($datasetItems as $item): ?>
+              <div class="status-item" data-status-item="<?= htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8') ?>" style="--status-gradient: <?= htmlspecialchars($item['gradient'], ENT_QUOTES, 'UTF-8') ?>; --status-shadow: <?= htmlspecialchars($item['shadow'], ENT_QUOTES, 'UTF-8') ?>; --status-text: <?= htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8') ?>;">
+                <button class="status-trigger" type="button" data-status-trigger="<?= htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false">
                   <div class="status-badge">
-                    <div class="status-count"><?= number_format($count) ?></div>
-                    <div class="status-name"><?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?></div>
+                    <div class="status-count"><?= number_format($item['count']) ?></div>
+                    <div class="status-name"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></div>
                   </div>
                 </button>
                 <div class="status-panel">
                   <div class="status-panel-inner">
-                    <h4><?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?> case studies</h4>
+                    <h4><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?> examples</h4>
                     <div class="status-panel-list">
-                      <?php foreach ($caseStudies[$key] as $item): ?>
-                        <a class="status-panel-link" href="javascript:void(0)"><?= htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?></a>
+                      <?php foreach ($item['samples'] as $sample): ?>
+                        <a class="status-panel-link" href="javascript:void(0)"><?= htmlspecialchars($sample, ENT_QUOTES, 'UTF-8') ?></a>
                       <?php endforeach; ?>
                     </div>
                   </div>

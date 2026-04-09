@@ -30,7 +30,7 @@ function pick(string $localKey, array $envNames, ?string $default = null): ?stri
 $config = [
     'dashscope_key' => pick('dashscope_key', ['DASHSCOPE_API_KEY_BIOLOGY', 'DASHSCOPE_API_KEY']),
     'dashscope_model' => pick('dashscope_model', ['DASHSCOPE_MODEL_BIOLOGY', 'DASHSCOPE_MODEL'], 'qwen-plus'),
-    'neo4j_url' => pick('neo4j_url', ['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg/tx/commit'),
+    'neo4j_url' => pick('neo4j_url', ['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg2/tx/commit'),
     'neo4j_user' => pick('neo4j_user', ['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'),
     'neo4j_password' => pick('neo4j_password', ['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD']),
 ];
