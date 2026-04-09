@@ -1,0 +1,345 @@
+{
+  "input_file": "D:\\wamp64\\www\\TE-\\te_kg2_final_standardized_new.jsonl",
+  "records": 2307,
+  "node_counts": {
+    "rnas": 586,
+    "toxins": 64,
+    "lipids": 25,
+    "proteins": 1056,
+    "transposons": 207,
+    "papers": 2307,
+    "genes": 1231,
+    "functions": 3415,
+    "peptides": 23,
+    "diseases": 666,
+    "pharmaceuticals": 279,
+    "carbohydrates": 12
+  },
+  "relation_count": 10696,
+  "top_relations": [
+    [
+      "associate with",
+      2329
+    ],
+    [
+      "participate in",
+      2013
+    ],
+    [
+      "express",
+      895
+    ],
+    [
+      "involve in",
+      786
+    ],
+    [
+      "regulate",
+      707
+    ],
+    [
+      "inhibit",
+      594
+    ],
+    [
+      "mediate",
+      572
+    ],
+    [
+      "lead to",
+      526
+    ],
+    [
+      "utilize",
+      419
+    ],
+    [
+      "encode",
+      362
+    ],
+    [
+      "affect",
+      352
+    ],
+    [
+      "interact with",
+      341
+    ],
+    [
+      "bind",
+      328
+    ],
+    [
+      "insert into",
+      281
+    ],
+    [
+      "promote",
+      278
+    ],
+    [
+      "perform",
+      277
+    ],
+    [
+      "cause",
+      252
+    ],
+    [
+      "drive",
+      195
+    ],
+    [
+      "induce",
+      188
+    ],
+    [
+      "activate",
+      186
+    ],
+    [
+      "suppress",
+      155
+    ],
+    [
+      "treat",
+      139
+    ],
+    [
+      "catalyze",
+      135
+    ],
+    [
+      "correlate with",
+      67
+    ],
+    [
+      "create",
+      44
+    ],
+    [
+      "silence",
+      44
+    ],
+    [
+      "cooccur with",
+      42
+    ],
+    [
+      "modulate",
+      38
+    ],
+    [
+      "trigger",
+      32
+    ],
+    [
+      "cleave",
+      31
+    ]
+  ],
+  "skipped_report_relations": 7144,
+  "unresolved_relation_count": 1868,
+  "unresolved_relation_samples": [
+    {
+      "pmid": "6096208",
+      "source": "Alu insertion in c-mos",
+      "relation": "disrupt",
+      "target": "c-mos",
+      "source_bucket": null,
+      "target_bucket": "genes"
+    },
+    {
+      "pmid": "6323978",
+      "source": "Alu",
+      "relation": "insert into",
+      "target": "ORA-gp5 locus",
+      "source_bucket": "transposons",
+      "target_bucket": null
+    },
+    {
+      "pmid": "6323978",
+      "source": "Alu",
+      "relation": "inhibit",
+      "target": "ORA-gp5 locus",
+      "source_bucket": "transposons",
+      "target_bucket": null
+    },
+    {
+      "pmid": "6323978",
+      "source": "ORA-gp5 locus",
+      "relation": "associate with",
+      "target": "c-mos",
+      "source_bucket": null,
+      "target_bucket": "genes"
+    },
+    {
+      "pmid": "6323978",
+      "source": "ORA-gp5 locus",
+      "relation": "involve in",
+      "target": "Integration",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "6323978",
+      "source": "ORA-gp5 locus",
+      "relation": "involve in",
+      "target": "Recombination",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "6323978",
+      "source": "ORA-gp5 locus",
+      "relation": "involve in",
+      "target": "Transposition",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "2559294",
+      "source": "Alu",
+      "relation": "insert into",
+      "target": "human ribosomal DNA spacer",
+      "source_bucket": "transposons",
+      "target_bucket": null
+    },
+    {
+      "pmid": "2463956",
+      "source": "Alu",
+      "relation": "insert into",
+      "target": "T+ processed pseudogene",
+      "source_bucket": "transposons",
+      "target_bucket": null
+    },
+    {
+      "pmid": "2497061",
+      "source": "LINE-1 insertion in F8",
+      "relation": "associate with",
+      "target": "Hemophilia A",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "2839298",
+      "source": "Alu insertion in Ecogpt",
+      "relation": "lead to",
+      "target": "Insertional mutagenesis",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "2566545",
+      "source": "Alu insertion in INSR",
+      "relation": "associate with",
+      "target": "Non-insulin-dependent diabetes mellitus",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "2566545",
+      "source": "Alu insertion in INSR",
+      "relation": "associate with",
+      "target": "Hyperinsulinemia",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "2566545",
+      "source": "Alu insertion in INSR",
+      "relation": "segregate with",
+      "target": "Maturity-onset diabetes of the young",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "2831458",
+      "source": "LINE-1 insertion in Factor VIII gene",
+      "relation": "cause",
+      "target": "Haemophilia A",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "3009826",
+      "source": "Alu",
+      "relation": "insert into",
+      "target": "human alphoid repetitive DNA",
+      "source_bucket": "transposons",
+      "target_bucket": null
+    },
+    {
+      "pmid": "3001638",
+      "source": "Alu insertion in Mlvi-2",
+      "relation": "associate with",
+      "target": "B cell lymphoma",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "3001638",
+      "source": "Alu insertion in Mlvi-2",
+      "relation": "lead to",
+      "target": "Insertional mutation",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "7963508",
+      "source": "ACE gene polymorphism",
+      "relation": "affect",
+      "target": "Plasma renin activity response to salt restriction",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "7920631",
+      "source": "LINE-1 insertion in Dystrophin",
+      "relation": "associate with",
+      "target": "Muscular dystrophy",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "8114745",
+      "source": "RNA polymerase III termination signal",
+      "relation": "inhibit",
+      "target": "RNA 3' processing",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "7693554",
+      "source": "Undermethylation of LINE-1 5' end",
+      "relation": "associate with",
+      "target": "L1Hs expression",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "7693554",
+      "source": "Methylation state of LINE-1 5' end",
+      "relation": "affect",
+      "target": "L1Hs expression",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    },
+    {
+      "pmid": "8393987",
+      "source": "Alu retroposition event",
+      "relation": "associate with",
+      "target": "Huntington disease",
+      "source_bucket": null,
+      "target_bucket": "diseases"
+    },
+    {
+      "pmid": "8393987",
+      "source": "Alu retroposition event",
+      "relation": "involve in",
+      "target": "Insertional mutation",
+      "source_bucket": null,
+      "target_bucket": "functions"
+    }
+  ]
+}
