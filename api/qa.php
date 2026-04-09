@@ -135,7 +135,12 @@ final class QaService
         $normalizedStyle = strtolower(trim($answerStyle));
         $answerStyle = in_array($normalizedStyle, ['simple', 'detailed', 'custom'], true) ? $normalizedStyle : 'simple';
         $answerDepth = $this->normalizeAnswerDepth($answerDepth, $answerStyle, $customRows, $customReferences);
-        $language = $language !== '' ? $language : $this->detectLanguage($analysisQuestion);
+        $detectedLanguage = $this->detectLanguage($analysisQuestion);
+        if ($detectedLanguage === 'zh') {
+            $language = 'zh';
+        } else {
+            $language = $language !== '' ? $language : $detectedLanguage;
+        }
         $this->debug('answer:normalized', ['language' => $language, 'style' => $answerStyle, 'depth' => $answerDepth]);
         $smallTalkAnswer = $this->getSmallTalkAnswer($analysisQuestion, $language);
         if ($smallTalkAnswer !== null) {
