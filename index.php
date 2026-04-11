@@ -154,18 +154,31 @@ foreach ($datasetMeta as $meta) {
     $datasetItems[] = $meta;
 }
 
-$overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into graph preview, search, download, and project information.';
+$overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into browsing, graph exploration, genomic, expression, epigenetics, download, and project information.';
 
 $quickLinks = [
-    ['title' => 'Preview', 'href' => site_url_with_state('/TE-/preview.php', $siteLang, $siteRenderer), 'icon' => 'preview'],
-    ['title' => 'Search', 'href' => site_url_with_state('/TE-/search.php', $siteLang, $siteRenderer), 'icon' => 'search'],
-    ['title' => 'Download', 'href' => site_url_with_state('/TE-/download.php', $siteLang, $siteRenderer), 'icon' => 'download'],
+    ['title' => 'Home', 'href' => site_url_with_state('/TE-/index.php', $siteLang, $siteRenderer), 'icon' => 'home'],
     ['title' => 'Browse', 'href' => site_url_with_state('/TE-/browse.php', $siteLang, $siteRenderer), 'icon' => 'browse'],
+    ['title' => 'TE-KG', 'href' => site_url_with_state('/TE-/preview.php', $siteLang, $siteRenderer), 'icon' => 'preview'],
+    ['title' => 'Genomic', 'href' => site_url_with_state('/TE-/genomic.php', $siteLang, $siteRenderer), 'icon' => 'genomic'],
+    ['title' => 'Expression', 'href' => site_url_with_state('/TE-/expression.php', $siteLang, $siteRenderer), 'icon' => 'expression'],
+    ['title' => 'Epigenetics', 'href' => site_url_with_state('/TE-/epigenetics.php', $siteLang, $siteRenderer), 'icon' => 'epigenetics'],
+    ['title' => 'Download', 'href' => site_url_with_state('/TE-/download.php', $siteLang, $siteRenderer), 'icon' => 'download'],
+    ['title' => 'About', 'href' => site_url_with_state('/TE-/about.php', $siteLang, $siteRenderer), 'icon' => 'about'],
 ];
 
+$homeGraphQuery = 'LINE1';
 $treeEmbedUrl = $siteRenderer === 'g6'
-    ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'home-preview'])
-    : site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', ['embed' => 'home-preview']);
+    ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', [
+        'embed' => 'home-preview',
+        'q' => $homeGraphQuery,
+        'type' => 'TE',
+    ])
+    : site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', [
+        'embed' => 'search-result',
+        'q' => $homeGraphQuery,
+        'type' => 'TE',
+    ]);
 ?>
       <style>
         .hero-area {
@@ -272,7 +285,7 @@ $treeEmbedUrl = $siteRenderer === 'g6'
 
         .status-grid {
           display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 24px;
           align-items: start;
         }
@@ -367,7 +380,7 @@ $treeEmbedUrl = $siteRenderer === 'g6'
 
         .link-grid {
           display: grid;
-          grid-template-columns: repeat(5, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 18px;
         }
 
@@ -455,7 +468,7 @@ $treeEmbedUrl = $siteRenderer === 'g6'
               <div class="hero-figure-frame">
               <div class="figure-canvas">
                 <div class="tree-frame">
-                  <iframe src="<?= htmlspecialchars($treeEmbedUrl, ENT_QUOTES, 'UTF-8') ?>" title="TE classification tree" loading="lazy"></iframe>
+                  <iframe src="<?= htmlspecialchars($treeEmbedUrl, ENT_QUOTES, 'UTF-8') ?>" title="LINE1 dynamic graph preview" loading="lazy"></iframe>
                 </div>
               </div>
             </div>
@@ -503,16 +516,24 @@ $treeEmbedUrl = $siteRenderer === 'g6'
             <?php foreach ($quickLinks as $item): ?>
               <a class="link-card" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8') ?>">
                 <div class="link-card-icon">
-                  <?php if ($item['icon'] === 'preview'): ?>
+                  <?php if ($item['icon'] === 'home'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M10 30 32 12l22 18"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" d="M16 28v24h32V28"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" d="M27 52V36h10v16"/></svg>
+                  <?php elseif ($item['icon'] === 'preview'): ?>
                     <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M10 14h44v36H10z"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M18 24h28M18 32h18M18 40h22"/><circle cx="47" cy="37" r="8" fill="none" stroke="currentColor" stroke-width="3.2"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="m53 43 5 5"/></svg>
-                  <?php elseif ($item['icon'] === 'search'): ?>
-                    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="28" cy="28" r="14" fill="none" stroke="currentColor" stroke-width="3.4"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" d="m39 39 13 13"/><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M22 28h12M28 22v12"/></svg>
-                  <?php elseif ($item['icon'] === 'download'): ?>
-                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" d="M16 50h32a6 6 0 0 0 6-6V20l-10-10H16a6 6 0 0 0-6 6v28a6 6 0 0 0 6 6Z"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" d="M32 24v16"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" d="m25 34 7 7 7-7"/></svg>
                   <?php elseif ($item['icon'] === 'browse'): ?>
                     <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" d="M12 14h40v36H12z"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M20 24h24M20 32h24M20 40h18"/><circle cx="48" cy="40" r="4" fill="currentColor"/></svg>
-                  <?php else: ?>
+                  <?php elseif ($item['icon'] === 'genomic'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M20 14c8 0 8 8 16 8s8-8 16-8"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M20 50c8 0 8-8 16-8s8 8 16 8"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M20 14v36M52 14v36"/><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M24 22h8M32 30h8M24 38h8"/></svg>
+                  <?php elseif ($item['icon'] === 'expression'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M14 48h36"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M18 48V30M30 48V20M42 48V12"/><circle cx="18" cy="30" r="3" fill="currentColor"/><circle cx="30" cy="20" r="3" fill="currentColor"/><circle cx="42" cy="12" r="3" fill="currentColor"/></svg>
+                  <?php elseif ($item['icon'] === 'epigenetics'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" d="M18 18h28v28H18z"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M18 26h28M26 18v28"/><circle cx="40" cy="26" r="4" fill="none" stroke="currentColor" stroke-width="3"/><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M40 10v6M54 26h-6"/></svg>
+                  <?php elseif ($item['icon'] === 'download'): ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" d="M16 50h32a6 6 0 0 0 6-6V20l-10-10H16a6 6 0 0 0-6 6v28a6 6 0 0 0 6 6Z"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" d="M32 24v16"/><path fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" d="m25 34 7 7 7-7"/></svg>
+                  <?php elseif ($item['icon'] === 'about'): ?>
                     <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="3.2"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M18 50c2-9 8-14 14-14s12 5 14 14"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M16 18h-6M54 18h-6M32 6V0"/></svg>
+                  <?php else: ?>
+                    <svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="18" fill="none" stroke="currentColor" stroke-width="3.2"/><path fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" d="M32 24v10"/><circle cx="32" cy="40" r="2.6" fill="currentColor"/></svg>
                   <?php endif; ?>
                 </div>
                 <h4><?= htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8') ?></h4>

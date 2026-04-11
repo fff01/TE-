@@ -11,9 +11,11 @@ $protoSubtitle = $protoSubtitle ?? 'Transposable Elements Knowledge Graph';
 
 $navItems = [
     'home' => ['label' => 'Home', 'href' => $protoBasePath . '/index.php'],
-    'preview' => ['label' => 'Preview', 'href' => $protoBasePath . '/preview.php'],
-    'search' => ['label' => 'Search', 'href' => $protoBasePath . '/search.php'],
     'browse' => ['label' => 'Browse', 'href' => $protoBasePath . '/browse.php'],
+    'preview' => ['label' => 'TE-KG', 'href' => $protoBasePath . '/preview.php'],
+    'genomic' => ['label' => 'Genomic', 'href' => $protoBasePath . '/genomic.php'],
+    'expression' => ['label' => 'Expression', 'href' => $protoBasePath . '/expression.php'],
+    'epigenetics' => ['label' => 'Epigenetics', 'href' => $protoBasePath . '/epigenetics.php'],
     'download' => ['label' => 'Download', 'href' => $protoBasePath . '/download.php'],
     'about' => ['label' => 'About', 'href' => $protoBasePath . '/about.php'],
 ];

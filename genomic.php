@@ -1,0 +1,82 @@
+<?php
+$pageTitle = 'TE-KG Genomic';
+$activePage = 'genomic';
+$protoCurrentPath = '/TE-/genomic.php';
+$protoSubtitle = 'Genomic views and loci-oriented TE exploration';
+require __DIR__ . '/head.php';
+?>
+      <style>
+        .module-shell {
+          background: #f5f9ff;
+          min-height: calc(100vh - 82px);
+          padding: 34px 0 54px;
+        }
+
+        .proto-container {
+          max-width: 1320px;
+          margin: 0 auto;
+          padding: 0 28px;
+        }
+
+        .module-title {
+          margin: 0 0 22px;
+          font-size: 52px;
+          font-weight: 700;
+          color: #8a93a3;
+          line-height: 1.1;
+        }
+
+        .module-crumbs {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 38px;
+          font-size: 16px;
+          color: #70809a;
+        }
+
+        .module-crumbs a {
+          color: #2f63b9;
+          font-weight: 500;
+        }
+
+        .module-panel {
+          background: #ffffff;
+          border: 1px solid #dbe7f8;
+          border-radius: 10px;
+          box-shadow: 0 10px 28px rgba(26, 60, 112, 0.08);
+          padding: 30px 26px;
+        }
+
+        .module-panel h2 {
+          margin: 0 0 14px;
+          font-size: 28px;
+          color: #193458;
+          font-weight: 700;
+        }
+
+        .module-panel p {
+          margin: 0;
+          font-size: 17px;
+          line-height: 1.75;
+          color: #5b7091;
+          max-width: 860px;
+        }
+      </style>
+
+      <section class="module-shell">
+        <div class="proto-container">
+          <h1 class="module-title">Genomic</h1>
+          <div class="module-crumbs">
+            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <span>/</span>
+            <span>Genomic</span>
+          </div>
+
+          <div class="module-panel">
+            <h2>Genomic module placeholder</h2>
+            <p>This entry point is now wired into the public navigation. It is reserved for genome-scale TE views such as locus summaries, annotation tracks, and chromosome-level distribution workflows.</p>
+          </div>
+        </div>
+      </section>
+<?php require __DIR__ . '/foot.php'; ?>

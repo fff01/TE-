@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/site_i18n.php';
 
-$pageTitle = 'TE-KG Search';
-$activePage = 'search';
+$pageTitle = 'TE-KG Detail';
+$activePage = 'browse';
 $protoCurrentPath = '/TE-/search.php';
-$protoSubtitle = 'Search the current TE knowledge graph';
+$protoSubtitle = 'TE detail view';
 
 function tekg_clean_label_proto(string $value): string
 {
@@ -335,6 +335,17 @@ $searchGraphSrc = $siteRenderer === 'g6'
         'embed' => 'search-result',
         'q' => $query !== '' ? $query : null,
       ], static fn ($value) => $value !== null && $value !== ''));
+$browseBackUrl = site_url_with_state('/TE-/browse.php', $siteLang, $siteRenderer);
+$detailSections = [
+    ['id' => 'search-summary-panel', 'label' => 'Summary'],
+    ['id' => 'search-graph-panel', 'label' => 'Local Graph'],
+];
+if ($dfamSequence !== null) {
+    $detailSections[] = ['id' => 'search-sequence-panel', 'label' => 'Sequence'];
+}
+if ($genomeDistribution !== null) {
+    $detailSections[] = ['id' => 'search-karyotype-panel', 'label' => 'Genome Annotation'];
+}
 
 require __DIR__ . '/head.php';
 ?>
@@ -346,7 +357,7 @@ require __DIR__ . '/head.php';
         }
 
         .proto-container {
-          max-width: 1320px;
+          max-width: 1480px;
           margin: 0 auto;
           padding: 0 28px;
         }
@@ -373,27 +384,134 @@ require __DIR__ . '/head.php';
           font-weight: 500;
         }
 
-        .query-panel {
-          background: #ffffff;
-          border: 1px solid #dbe7f8;
+
+
+        html {
+          scroll-behavior: smooth;
+        }
+
+        .detail-toolbar {
+          --detail-sidebar-width: 184px;
+          display: grid;
+          grid-template-columns: var(--detail-sidebar-width) minmax(0, 1fr);
+          gap: 18px;
+          align-items: center;
+        }
+
+        .detail-back-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 8px;
+          width: 100%;
+          box-sizing: border-box;
+          margin-left: -8px;
+          min-height: 48px;
+          padding: 0 14px;
+          border: 1px solid #dfe6ef;
           border-radius: 10px;
-          box-shadow: 0 10px 28px rgba(26, 60, 112, 0.08);
-          padding: 34px 42px 30px;
-          margin-bottom: 28px;
-        }
-
-        .query-panel h2 {
-          margin: 0 0 22px;
-          font-size: 28px;
+          background: #ffffff;
+          box-shadow: 0 8px 24px rgba(25, 56, 105, 0.05);
+          color: #214b8d;
+          font-size: 15px;
           font-weight: 700;
-          color: #7b8597;
+          white-space: nowrap;
         }
 
-        .query-divider {
-          height: 1px;
-          background: #e2e8f2;
-          margin-bottom: 32px;
+        .detail-search-form {
+          min-width: 0;
+          width: min(100%, 440px);
+          justify-self: end;
         }
+
+        .detail-search-box {
+          position: relative;
+        }
+
+        .detail-search-icon {
+          position: absolute;
+          top: 50%;
+          left: 18px;
+          transform: translateY(-50%);
+          width: 18px;
+          height: 18px;
+          color: #88a0bf;
+          pointer-events: none;
+        }
+
+        .detail-search-box .query-control {
+          padding-left: 48px;
+          min-height: 50px;
+        }
+
+        .detail-layout {
+          display: grid;
+          grid-template-columns: 184px minmax(0, 1fr);
+          gap: 18px;
+          align-items: start;
+        }
+
+        .detail-layout.is-hidden {
+          display: none;
+        }
+
+        .detail-sidebar {
+          position: sticky;
+          top: 108px;
+          margin-left: -8px;
+        }
+
+        .detail-nav {
+          background: #ffffff;
+          border: 1px solid #dfe6ef;
+          border-radius: 10px;
+          box-shadow: 0 8px 24px rgba(25, 56, 105, 0.05);
+          padding: 14px 12px;
+          display: grid;
+          gap: 8px;
+        }
+
+        .detail-nav-title {
+          margin: 0 0 6px;
+          padding: 0 8px;
+          color: #6f8198;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .detail-nav-link {
+          display: block;
+          padding: 11px 12px;
+          border-radius: 8px;
+          color: #61789f;
+          font-size: 15px;
+          font-weight: 600;
+          transition: background 0.18s ease, color 0.18s ease;
+        }
+
+        .detail-nav-link.is-active,
+        .detail-nav-link:hover {
+          background: #eef4ff;
+          color: #214b8d;
+        }
+
+        .detail-content {
+          min-width: 0;
+          display: grid;
+          gap: 14px;
+        }
+
+        .query-panel {
+          background: transparent;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+          padding: 0;
+          margin-bottom: 18px;
+        }
+
 
         .query-form-grid {
           display: grid;
@@ -459,10 +577,6 @@ require __DIR__ . '/head.php';
           grid-template-columns: 1fr;
           gap: 22px;
           align-items: start;
-        }
-
-        .search-layout.is-hidden {
-          display: none;
         }
 
         .data-panel,
@@ -677,9 +791,16 @@ require __DIR__ . '/head.php';
         }
 
         @media (max-width: 1100px) {
-          .query-form-grid,
           .search-layout {
             grid-template-columns: 1fr;
+          }
+
+          .detail-layout {
+            grid-template-columns: 1fr;
+          }
+
+          .detail-sidebar {
+            position: static;
           }
         }
 
@@ -688,132 +809,132 @@ require __DIR__ . '/head.php';
             padding: 0 18px;
           }
 
-          .query-panel {
-            padding: 24px 18px 22px;
+          .detail-toolbar {
+            grid-template-columns: 1fr;
           }
 
-          .query-actions {
-            gap: 10px;
-          }
-
-          .query-btn {
+          .detail-back-link {
             width: 100%;
+          }
+
+          .detail-search-form {
+            width: 100%;
+            justify-self: stretch;
           }
         }
       </style>
 
       <section class="search-shell">
         <div class="proto-container">
-          <h1 class="download-page-title">Search</h1>
-          <div class="download-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php'), ENT_QUOTES, 'UTF-8') ?>">Home</a>
-            <span>/</span>
-            <span>Search</span>
-          </div>
-
           <section class="query-panel">
-            <h2>Query by keyword</h2>
-            <div class="query-divider"></div>
-            <form id="search-form" method="GET">
-              <input type="hidden" name="type" value="all">
-              <div class="query-form-grid">
-                <div class="query-field">
-                  <label for="search-query">Keyword or identifier</label>
-                  <input id="search-query" class="query-control" type="text" name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="Enter a keyword, TE, disease, function, or PMID">
+            <div class="detail-toolbar">
+              <a class="detail-back-link" href="<?= htmlspecialchars($browseBackUrl, ENT_QUOTES, 'UTF-8') ?>">&larr; Back to Browse</a>
+              <form id="search-form" class="detail-search-form" method="GET">
+                <input type="hidden" name="type" value="all">
+                <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="renderer" value="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
+                <div class="detail-search-box">
+                  <svg class="detail-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="m20 20-3.8-3.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
+                  <input id="search-query" class="query-control" type="text" name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search a TE, disease, function, or PMID">
                 </div>
-              </div>
-              <div class="query-actions">
-                <button class="query-btn is-primary" type="submit">Search</button>
-                <button class="query-btn" id="search-reset" type="button">Reset</button>
-                <button class="query-btn" id="search-example" type="button">Example</button>
-                <span class="example-note">Example query: L1HS</span>
-              </div>
-            </form>
+              </form>
+            </div>
           </section>
 
-          <section id="search-results" class="search-layout<?= $query === '' ? ' is-hidden' : '' ?>">
-            <section class="data-panel">
-              <h3>Summary</h3>
-              <div id="search-summary" class="panel-body">
-                <?php if ($repbase !== null): ?>
-                  <div><strong>Matched query: </strong><?= htmlspecialchars($repbase['matched'], ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Entity type: </strong>TE</div>
-                  <div><strong>Name: </strong><?= htmlspecialchars($repbase['nm'] ?: $repbase['id'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Description: </strong><?= htmlspecialchars($repbase['description'] ?: 'No description', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Keywords: </strong><?= htmlspecialchars($repbase['keywords'] ?: 'No keywords', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Length: </strong><?= htmlspecialchars($repbase['length_bp'] !== null ? ((string) $repbase['length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Reference count: </strong><?= htmlspecialchars((string) ($repbase['reference_count'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
-                <?php elseif ($query !== ''): ?>
-                  No structured TE summary is available for the current query yet.
-                <?php else: ?>
-                  Search for a TE, disease, function, or PMID to view a concise summary here.
-                <?php endif; ?>
-              </div>
-            </section>
+          <div id="search-results" class="detail-layout<?= $query === '' ? ' is-hidden' : '' ?>">
+            <aside class="detail-sidebar">
+              <nav class="detail-nav" aria-label="Detail sections">
+                <div class="detail-nav-title">Detail Sections</div>
+                <?php foreach ($detailSections as $section): ?>
+                  <a class="detail-nav-link" data-detail-nav-link href="#<?= htmlspecialchars($section['id'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($section['label'], ENT_QUOTES, 'UTF-8') ?></a>
+                <?php endforeach; ?>
+              </nav>
+            </aside>
 
-            <section id="search-graph-panel" class="graph-panel is-collapsed">
-              <div class="graph-panel-head">
-                <h3>Local Graph</h3>
-                <button id="search-graph-toggle" type="button" class="graph-toggle" aria-expanded="false" aria-controls="search-graph-frame-wrap" title="Expand local graph"><span id="search-graph-toggle-icon" aria-hidden="true">&#9662;</span></button>
-              </div>
-              <div id="search-graph-frame-wrap" class="graph-frame">
-                <iframe
-                  id="<?= $siteRenderer === 'g6' ? 'search-g6-frame' : 'search-cyt-frame' ?>"
-                  src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
-                  title="Search graph (<?= htmlspecialchars(strtoupper($siteRenderer), ENT_QUOTES, 'UTF-8') ?>)"
-                ></iframe>
-              </div>
-            </section>
-
-            <?php if ($dfamSequence !== null): ?>
-              <section class="data-panel sequence-panel">
-                <h3>Sequence</h3>
-                <div class="sequence-meta">
-                  <div><strong>Matched query: </strong><?= htmlspecialchars($dfamSequence['matched_query'] ?? $query, ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Dfam accession: </strong><?= htmlspecialchars($dfamSequence['accession'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Dfam family: </strong><?= htmlspecialchars($dfamSequence['name'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Length: </strong><?= htmlspecialchars(!empty($dfamSequence['sequence_length_bp']) ? ((string) $dfamSequence['sequence_length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Model type: </strong><?= htmlspecialchars($dfamSequence['model_type_label'] ?? 'Consensus model', ENT_QUOTES, 'UTF-8') ?></div>
-                  <?php if (!empty($dfamSequence['display_classification'])): ?>
-                    <div><strong>Classification: </strong><?= htmlspecialchars((string) $dfamSequence['display_classification'], ENT_QUOTES, 'UTF-8') ?></div>
+            <div class="detail-content">
+              <section id="search-summary-panel" class="data-panel">
+                <h3>Summary</h3>
+                <div id="search-summary" class="panel-body">
+                  <?php if ($repbase !== null): ?>
+                    <div><strong>Matched query: </strong><?= htmlspecialchars($repbase['matched'], ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Entity type: </strong>TE</div>
+                    <div><strong>Name: </strong><?= htmlspecialchars($repbase['nm'] ?: $repbase['id'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Description: </strong><?= htmlspecialchars($repbase['description'] ?: 'No description', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Keywords: </strong><?= htmlspecialchars($repbase['keywords'] ?: 'No keywords', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Length: </strong><?= htmlspecialchars($repbase['length_bp'] !== null ? ((string) $repbase['length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Reference count: </strong><?= htmlspecialchars((string) ($repbase['reference_count'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
+                  <?php elseif ($query !== ''): ?>
+                    No structured TE summary is available for the current query yet.
+                  <?php else: ?>
+                    Search for a TE, disease, function, or PMID to view a concise summary here.
                   <?php endif; ?>
                 </div>
-                <?php if (!empty($dfamSequence['is_fragment'])): ?>
-                  <div class="sequence-fragment-note">
-                    This sequence is a Dfam fragment consensus model (<?= htmlspecialchars(strtolower((string) ($dfamSequence['model_type_label'] ?? 'fragment model')), ENT_QUOTES, 'UTF-8') ?>).
-                  </div>
-                <?php endif; ?>
-                <div class="sequence-code-wrap">
-                  <pre class="sequence-code"><?= htmlspecialchars(tekg_format_sequence_proto((string) ($dfamSequence['sequence'] ?? '')), ENT_QUOTES, 'UTF-8') ?></pre>
-                </div>
-                <?php if (!empty($dfamSequence['structure_svg_path'])): ?>
-                  <div class="sequence-plot">
-                    <img src="<?= htmlspecialchars((string) $dfamSequence['structure_svg_path'], ENT_QUOTES, 'UTF-8') ?>" alt="Dfam sequence structure plot for <?= htmlspecialchars((string) ($dfamSequence['name'] ?? $query), ENT_QUOTES, 'UTF-8') ?>">
-                  </div>
-                <?php endif; ?>
               </section>
-            <?php endif; ?>
 
-            <?php if ($genomeDistribution !== null): ?>
-              <section id="search-karyotype-panel" class="data-panel distribution-panel">
-                <h3>Genome Annotation Distribution</h3>
-                <div class="distribution-meta">
-                  <div><strong>Assembly: </strong><?= htmlspecialchars((string) ($genomeDistribution['assembly_label'] ?? 'Homo sapiens [hg38]'), ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Mode: </strong>All Hits</div>
-                  <div><strong>Bin size: </strong><?= htmlspecialchars(number_format(((int) ($genomeDistribution['bin_size_bp'] ?? 1000000)) / 1000000, 0) . ' Mb', ENT_QUOTES, 'UTF-8') ?></div>
-                  <div><strong>Total hits: </strong><?= htmlspecialchars(number_format((int) ($genomeDistribution['total_hits'] ?? 0)), ENT_QUOTES, 'UTF-8') ?></div>
+              <section id="search-graph-panel" class="graph-panel is-collapsed">
+                <div class="graph-panel-head">
+                  <h3>Local Graph</h3>
+                  <button id="search-graph-toggle" type="button" class="graph-toggle" aria-expanded="false" aria-controls="search-graph-frame-wrap" title="Expand local graph"><span id="search-graph-toggle-icon" aria-hidden="true">&#9662;</span></button>
                 </div>
-                <p id="search-karyotype-status" class="distribution-status">Loading genome annotation distribution...</p>
-                <div class="distribution-karyotype-wrap">
-                  <div
-                    id="search-karyotype-view"
-                    class="distribution-karyotype"
-                    data-karyotype-path="<?= htmlspecialchars((string) ($genomeDistribution['data_json_path'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                  ></div>
+                <div id="search-graph-frame-wrap" class="graph-frame">
+                  <iframe
+                    id="<?= $siteRenderer === 'g6' ? 'search-g6-frame' : 'search-cyt-frame' ?>"
+                    src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
+                    title="Search graph (<?= htmlspecialchars(strtoupper($siteRenderer), ENT_QUOTES, 'UTF-8') ?>)"
+                  ></iframe>
                 </div>
               </section>
-            <?php endif; ?>
-          </section>
+
+              <?php if ($dfamSequence !== null): ?>
+                <section id="search-sequence-panel" class="data-panel sequence-panel">
+                  <h3>Sequence</h3>
+                  <div class="sequence-meta">
+                    <div><strong>Matched query: </strong><?= htmlspecialchars($dfamSequence['matched_query'] ?? $query, ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Dfam accession: </strong><?= htmlspecialchars($dfamSequence['accession'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Dfam family: </strong><?= htmlspecialchars($dfamSequence['name'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Length: </strong><?= htmlspecialchars(!empty($dfamSequence['sequence_length_bp']) ? ((string) $dfamSequence['sequence_length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Model type: </strong><?= htmlspecialchars($dfamSequence['model_type_label'] ?? 'Consensus model', ENT_QUOTES, 'UTF-8') ?></div>
+                    <?php if (!empty($dfamSequence['display_classification'])): ?>
+                      <div><strong>Classification: </strong><?= htmlspecialchars((string) $dfamSequence['display_classification'], ENT_QUOTES, 'UTF-8') ?></div>
+                    <?php endif; ?>
+                  </div>
+                  <?php if (!empty($dfamSequence['is_fragment'])): ?>
+                    <div class="sequence-fragment-note">
+                      This sequence is a Dfam fragment consensus model (<?= htmlspecialchars(strtolower((string) ($dfamSequence['model_type_label'] ?? 'fragment model')), ENT_QUOTES, 'UTF-8') ?>).
+                    </div>
+                  <?php endif; ?>
+                  <div class="sequence-code-wrap">
+                    <pre class="sequence-code"><?= htmlspecialchars(tekg_format_sequence_proto((string) ($dfamSequence['sequence'] ?? '')), ENT_QUOTES, 'UTF-8') ?></pre>
+                  </div>
+                  <?php if (!empty($dfamSequence['structure_svg_path'])): ?>
+                    <div class="sequence-plot">
+                      <img src="<?= htmlspecialchars((string) $dfamSequence['structure_svg_path'], ENT_QUOTES, 'UTF-8') ?>" alt="Dfam sequence structure plot for <?= htmlspecialchars((string) ($dfamSequence['name'] ?? $query), ENT_QUOTES, 'UTF-8') ?>">
+                    </div>
+                  <?php endif; ?>
+                </section>
+              <?php endif; ?>
+
+              <?php if ($genomeDistribution !== null): ?>
+                <section id="search-karyotype-panel" class="data-panel distribution-panel">
+                  <h3>Genome Annotation Distribution</h3>
+                  <div class="distribution-meta">
+                    <div><strong>Assembly: </strong><?= htmlspecialchars((string) ($genomeDistribution['assembly_label'] ?? 'Homo sapiens [hg38]'), ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Mode: </strong>All Hits</div>
+                    <div><strong>Bin size: </strong><?= htmlspecialchars(number_format(((int) ($genomeDistribution['bin_size_bp'] ?? 1000000)) / 1000000, 0) . ' Mb', ENT_QUOTES, 'UTF-8') ?></div>
+                    <div><strong>Total hits: </strong><?= htmlspecialchars(number_format((int) ($genomeDistribution['total_hits'] ?? 0)), ENT_QUOTES, 'UTF-8') ?></div>
+                  </div>
+                  <p id="search-karyotype-status" class="distribution-status">Loading genome annotation distribution...</p>
+                  <div class="distribution-karyotype-wrap">
+                    <div
+                      id="search-karyotype-view"
+                      class="distribution-karyotype"
+                      data-karyotype-path="<?= htmlspecialchars((string) ($genomeDistribution['data_json_path'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                    ></div>
+                  </div>
+                </section>
+              <?php endif; ?>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -880,12 +1001,7 @@ require __DIR__ . '/head.php';
         const graphPanelEl = document.getElementById('search-graph-panel');
         const graphToggleBtn = document.getElementById('search-graph-toggle');
         const graphToggleIconEl = document.getElementById('search-graph-toggle-icon');
-        const resetBtn = document.getElementById('search-reset');
-        const exampleBtn = document.getElementById('search-example');
-        const searchForm = document.getElementById('search-form');
-        const queryInput = document.getElementById('search-query');
-        const siteLang = <?= json_encode($siteLang, JSON_UNESCAPED_UNICODE) ?>;
-        const siteRenderer = <?= json_encode($siteRenderer, JSON_UNESCAPED_UNICODE) ?>;
+        const navLinks = Array.from(document.querySelectorAll('[data-detail-nav-link]'));
 
         function setGraphExpanded(expanded) {
           if (!graphPanelEl || !graphToggleBtn) return;
@@ -897,6 +1013,18 @@ require __DIR__ . '/head.php';
           graphToggleBtn.title = expanded ? 'Collapse local graph' : 'Expand local graph';
         }
 
+        function setActiveSection(id) {
+          navLinks.forEach((link) => {
+            const isActive = link.getAttribute('href') === `#${id}`;
+            link.classList.toggle('is-active', isActive);
+            if (isActive) {
+              link.setAttribute('aria-current', 'location');
+            } else {
+              link.removeAttribute('aria-current');
+            }
+          });
+        }
+
         if (graphToggleBtn) {
           graphToggleBtn.addEventListener('click', function () {
             const expanded = graphPanelEl ? graphPanelEl.classList.contains('is-collapsed') : false;
@@ -904,25 +1032,38 @@ require __DIR__ . '/head.php';
           });
         }
 
-        if (exampleBtn) {
-          exampleBtn.addEventListener('click', function () {
-            if (queryInput) {
-              queryInput.value = 'L1HS';
+        navLinks.forEach((link) => {
+          link.addEventListener('click', function () {
+            const targetId = (link.getAttribute('href') || '').replace('#', '');
+            if (targetId === 'search-graph-panel') {
+              setGraphExpanded(true);
             }
-            if (searchForm) {
-              searchForm.requestSubmit();
+            if (targetId) {
+              setActiveSection(targetId);
             }
           });
-        }
+        });
 
-        if (resetBtn) {
-          resetBtn.addEventListener('click', function () {
-            const url = new URL('/TE-/search.php', window.location.origin);
-            url.searchParams.set('type', 'all');
-            url.searchParams.set('lang', siteLang);
-            url.searchParams.set('renderer', siteRenderer);
-            window.location.href = url.toString();
-          });
+        const sections = navLinks
+          .map((link) => document.getElementById((link.getAttribute('href') || '').replace('#', '')))
+          .filter(Boolean);
+
+        if (sections.length > 0) {
+          setActiveSection(sections[0].id);
+          if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+              const visible = entries
+                .filter((entry) => entry.isIntersecting)
+                .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+              if (visible.length > 0 && visible[0].target && visible[0].target.id) {
+                setActiveSection(visible[0].target.id);
+              }
+            }, {
+              rootMargin: '-15% 0px -65% 0px',
+              threshold: [0.05, 0.15, 0.35, 0.6],
+            });
+            sections.forEach((section) => observer.observe(section));
+          }
         }
 
         setGraphExpanded(false);

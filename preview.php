@@ -43,7 +43,7 @@ if ($siteRenderer === 'g6') {
         .preview-fullscreen-btn {
           position: absolute;
           top: 92px;
-          right: 18px;
+          left: 18px;
           z-index: 40;
           border: 1px solid rgba(219, 231, 243, 0.95);
           border-radius: 999px;
@@ -91,7 +91,9 @@ if ($siteRenderer === 'g6') {
           top: 92px;
           right: 18px;
           bottom: 18px;
-          width: min(430px, calc(100vw - 36px));
+          width: 430px;
+          min-width: 340px;
+          max-width: calc(100vw - 72px);
           background: #ffffff;
           border: 1px solid #dbe7f3;
           border-radius: 20px;
@@ -100,10 +102,51 @@ if ($siteRenderer === 'g6') {
           transform: translateX(calc(100% + 24px));
           transition: transform 0.22s ease;
           pointer-events: auto;
+          user-select: none;
         }
 
         .qa-overlay-layer.is-open .qa-drawer {
           transform: translateX(0);
+        }
+
+        .qa-overlay-layer.is-resizing .qa-drawer {
+          transition: none;
+        }
+
+        .qa-overlay-layer.is-resizing,
+        .qa-overlay-layer.is-resizing * {
+          cursor: ew-resize !important;
+          user-select: none !important;
+        }
+
+        .qa-drawer-resize {
+          position: absolute;
+          top: 0;
+          left: 0;
+          bottom: 0;
+          width: 14px;
+          padding: 0;
+          border: 0;
+          background: linear-gradient(90deg, rgba(143, 178, 234, 0.22) 0%, rgba(143, 178, 234, 0.06) 45%, rgba(143, 178, 234, 0) 100%);
+          cursor: ew-resize;
+          z-index: 2;
+        }
+
+        .qa-drawer-resize::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 4px;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 56px;
+          border-radius: 999px;
+          background: rgba(120, 146, 190, 0.42);
+        }
+
+        .qa-drawer-resize:hover::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize::after {
+          background: rgba(79, 123, 214, 0.68);
         }
 
         .qa-drawer iframe {
@@ -175,8 +218,9 @@ if ($siteRenderer === 'g6') {
           title="TE-KG preview graph"
         ></iframe>
 
-        <div class="qa-overlay-layer" id="qaOverlay">
-          <div class="qa-drawer">
+        <div class="qa-overlay-layer is-open" id="qaOverlay">
+          <div class="qa-drawer" id="qaDrawer">
+            <button class="qa-drawer-resize" id="qaDrawerResize" type="button" aria-label="Resize QA assistant"></button>
             <iframe
               id="preview-qa-frame"
               title="TE-KG QA overlay"
@@ -184,7 +228,7 @@ if ($siteRenderer === 'g6') {
             ></iframe>
           </div>
 
-          <button class="qa-fab" id="qaFab" type="button" aria-label="Open QA assistant">
+          <button class="qa-fab" id="qaFab" type="button" aria-label="Toggle QA assistant">
             <svg viewBox="0 0 64 64" aria-hidden="true">
               <rect x="14" y="18" width="36" height="28" rx="10" fill="none" stroke="currentColor" stroke-width="4"/>
               <circle cx="26" cy="31" r="3" fill="currentColor"/>
@@ -207,13 +251,18 @@ if ($siteRenderer === 'g6') {
           const graphFrame = document.getElementById('preview-graph-frame');
           const qaFrame = document.getElementById('preview-qa-frame');
           const overlay = document.getElementById('qaOverlay');
+          const qaDrawer = document.getElementById('qaDrawer');
+          const qaDrawerResize = document.getElementById('qaDrawerResize');
           const fab = document.getElementById('qaFab');
-          if (!stage || !fullscreenBtn || !graphFrame || !qaFrame || !overlay || !fab) return;
+          if (!stage || !fullscreenBtn || !graphFrame || !qaFrame || !overlay || !qaDrawer || !qaDrawerResize || !fab) return;
 
           let qaLoaded = false;
+          let drawerOpen = true;
+          let qaDrawerWidth = 430;
           let boundGraphWindow = null;
           let dragState = null;
           let movedDuringDrag = false;
+          let resizeState = null;
 
           function resizeEmbeddedCytFrame(frame, padding = 55) {
             if (!frame) return;
@@ -224,6 +273,24 @@ if ($siteRenderer === 'g6') {
                 cy.fit(undefined, padding);
               }
             } catch (_error) {}
+          }
+
+
+          function getMinDrawerWidth() {
+            return 340;
+          }
+
+          function getMaxDrawerWidth() {
+            return Math.max(420, Math.min(820, window.innerWidth - 56));
+          }
+
+          function clampDrawerWidth(width) {
+            return Math.max(getMinDrawerWidth(), Math.min(getMaxDrawerWidth(), width));
+          }
+
+          function applyDrawerWidth() {
+            qaDrawerWidth = clampDrawerWidth(qaDrawerWidth);
+            qaDrawer.style.width = `${qaDrawerWidth}px`;
           }
 
           const fabPosition = {
@@ -346,12 +413,14 @@ if ($siteRenderer === 'g6') {
             qaFrame.src = qaFrame.dataset.src || '';
           }
 
-          function updateImmersiveState() {
+          function applyOverlayState() {
             const immersive = document.fullscreenElement === stage;
             stage.classList.toggle('is-immersive', immersive);
-            if (immersive) {
-              overlay.classList.remove('is-open');
-            }
+            overlay.classList.toggle('is-open', !immersive && drawerOpen);
+          }
+
+          function updateImmersiveState() {
+            applyOverlayState();
           }
 
           async function enterFullscreenPreview() {
@@ -363,11 +432,11 @@ if ($siteRenderer === 'g6') {
 
           function toggleOverlay() {
             if (stage.classList.contains('is-immersive')) return;
-            const willOpen = !overlay.classList.contains('is-open');
-            overlay.classList.toggle('is-open', willOpen);
-            if (willOpen) {
+            drawerOpen = !drawerOpen;
+            if (drawerOpen) {
               ensureQaLoaded();
             }
+            applyOverlayState();
           }
 
           fullscreenBtn.addEventListener('click', () => {
@@ -436,13 +505,47 @@ if ($siteRenderer === 'g6') {
             }
           });
 
+          qaDrawerResize.addEventListener('pointerdown', (event) => {
+            resizeState = {
+              pointerId: event.pointerId,
+              startX: event.clientX,
+              startWidth: qaDrawer.getBoundingClientRect().width || qaDrawerWidth,
+            };
+            overlay.classList.add('is-resizing');
+            qaDrawerResize.setPointerCapture(event.pointerId);
+            event.preventDefault();
+          });
+
+          qaDrawerResize.addEventListener('pointermove', (event) => {
+            if (!resizeState || resizeState.pointerId !== event.pointerId) return;
+            const dx = event.clientX - resizeState.startX;
+            qaDrawerWidth = clampDrawerWidth(resizeState.startWidth - dx);
+            applyDrawerWidth();
+          });
+
+          function finishResize(event) {
+            if (!resizeState || resizeState.pointerId !== event.pointerId) return;
+            try {
+              qaDrawerResize.releasePointerCapture(event.pointerId);
+            } catch (_error) {}
+            resizeState = null;
+            overlay.classList.remove('is-resizing');
+          }
+
+          qaDrawerResize.addEventListener('pointerup', finishResize);
+          qaDrawerResize.addEventListener('pointercancel', finishResize);
+
           window.addEventListener('resize', () => {
             clampFabPosition();
             updateFabPosition();
+            applyDrawerWidth();
           });
 
+          qaDrawerWidth = Math.round(qaDrawer.getBoundingClientRect().width) || qaDrawerWidth;
+          applyDrawerWidth();
           clampFabPosition();
           updateFabPosition();
+          ensureQaLoaded();
           updateImmersiveState();
         })();
       </script>

@@ -24,7 +24,49 @@
    + 将data/rmsk.txt作为新的详情页，替代repbase
    + 或者先这样吧，先暂时不讨论browse，先看看队友提供的新数据吧，位于data\rmsk.txt和data_update文件夹的所有文件。你大致浏览一下，看看目前待更新的数据有哪些？
 
-7. 把overview右边的TE分类树图换成LINE1，且关键节点层数为2的动态图
+7. 把overview右边的TE分类树图换成LINE1，且关键节点层数为2的
+
+---
+
+search后面加个JBrowse
++ tracks: hg38.fa.gz
+  + refseq: 已发
+  + Clinvar: 搜索
+    + CNV: 
+    + var: 
++ search加个导航栏√
++ 作为详情页，内置到browse里，查询功能简化√，且可以展示一步一步的分类树
++ 加2个normal，1个cancer
+  + 柱形图：plotly js
+![alt text](image-1.png)
+
++ 数据源：优先repbase（人类独有+人类与其他物种共有），仅染色体信息使用rmsk，repbase没有的再加dfam的
+
+新增模块
+
++ Genomic：下拉框
+
++ Expression：下拉框
+  + CNCB：LncExpDBEpigenetics：下拉框
+
+问答助手：
++ 能够根据现有节点RAG，一步一步分析，直到分析出TE是如何导致疾病的
++ 能够模拟突变某个碱基后，知识图谱的动态变化
+
+图谱：
++ 增加图例，且可以选择展示哪类节点
+
+--
+队友：
+
+分类树的规则：和repbase核对
+
+Adding a genome assembly in Fasta format
+
++ rmsk:预处理成适用于JBrowse
++ refseq:预处理成适用于JBrowse
+  + Add a GFF3
+
 ---
 
 ## 补充说明
