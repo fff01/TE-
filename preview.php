@@ -10,13 +10,8 @@ $siteRenderer = site_renderer();
 $queryParams = $_GET;
 unset($queryParams['lang'], $queryParams['renderer']);
 
-if ($siteRenderer === 'g6') {
-    $graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'preview-graphonly']));
-    $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'qa-overlay']));
-} else {
-    $graphSrc = site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', array_merge($queryParams, ['embed' => 'preview-graphonly']));
-    $qaSrc = site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', array_merge($queryParams, ['embed' => 'qa-overlay']));
-}
+$graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'preview-graphonly']));
+$qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'qa-overlay']));
 ?>
       <style>
         .proto-main.preview-main {

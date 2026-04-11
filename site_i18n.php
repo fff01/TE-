@@ -33,8 +33,8 @@ if (!function_exists('site_renderer')) {
         }
 
         $requested = strtolower(trim((string) ($_GET['renderer'] ?? '')));
-        if (in_array($requested, ['cytoscape', 'g6'], true)) {
-            $renderer = $requested;
+        if ($requested === 'cytoscape' || $requested === 'g6') {
+            $renderer = 'g6';
             if (!headers_sent()) {
                 setcookie('site_renderer', $renderer, time() + 86400 * 30, '/');
             }
@@ -43,7 +43,11 @@ if (!function_exists('site_renderer')) {
         }
 
         $cookie = strtolower(trim((string) ($_COOKIE['site_renderer'] ?? '')));
-        $renderer = in_array($cookie, ['cytoscape', 'g6'], true) ? $cookie : 'cytoscape';
+        $renderer = 'g6';
+        if ($cookie === 'cytoscape' && !headers_sent()) {
+            setcookie('site_renderer', $renderer, time() + 86400 * 30, '/');
+            $_COOKIE['site_renderer'] = $renderer;
+        }
         return $renderer;
     }
 }

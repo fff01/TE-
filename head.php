@@ -24,8 +24,6 @@ $currentQueryParams = $_GET;
 unset($currentQueryParams['lang'], $currentQueryParams['renderer']);
 $zhUrl = site_url_with_state($protoCurrentPath, 'zh', $siteRenderer, $currentQueryParams);
 $enUrl = site_url_with_state($protoCurrentPath, 'en', $siteRenderer, $currentQueryParams);
-$cytUrl = site_url_with_state($protoCurrentPath, $siteLang, 'cytoscape', $currentQueryParams);
-$g6Url = site_url_with_state($protoCurrentPath, $siteLang, 'g6', $currentQueryParams);
 ?>
 <!DOCTYPE html>
 <html lang="<?= $siteLang === 'zh' ? 'zh-CN' : 'en' ?>">
@@ -270,10 +268,6 @@ $g6Url = site_url_with_state($protoCurrentPath, $siteLang, 'g6', $currentQueryPa
             <a class="proto-control<?= $siteLang === 'en' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($enUrl, ENT_QUOTES, 'UTF-8') ?>">English</a>
           </div>
 
-          <div class="proto-control-group" aria-label="Renderer switch">
-            <a class="proto-control<?= $siteRenderer === 'cytoscape' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($cytUrl, ENT_QUOTES, 'UTF-8') ?>">Cytoscape</a>
-            <a class="proto-control<?= $siteRenderer === 'g6' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($g6Url, ENT_QUOTES, 'UTF-8') ?>">G6</a>
-          </div>
         </div>
       </div>
     </header>

@@ -326,15 +326,10 @@ $type = tekg_request_scalar_proto($_GET, 'type', 'all');
 $repbase = tekg_repbase_lookup_proto($query);
 $dfamSequence = tekg_dfam_lookup_proto($query, $type);
 $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
-$searchGraphSrc = $siteRenderer === 'g6'
-    ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
-        'embed' => 'search-result',
-        'q' => $query !== '' ? $query : null,
-      ], static fn ($value) => $value !== null && $value !== ''))
-    : site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', array_filter([
-        'embed' => 'search-result',
-        'q' => $query !== '' ? $query : null,
-      ], static fn ($value) => $value !== null && $value !== ''));
+$searchGraphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
+    'embed' => 'search-result',
+    'q' => $query !== '' ? $query : null,
+], static fn ($value) => $value !== null && $value !== ''));
 $browseBackUrl = site_url_with_state('/TE-/browse.php', $siteLang, $siteRenderer);
 $detailSections = [
     ['id' => 'search-summary-panel', 'label' => 'Summary'],
@@ -878,9 +873,9 @@ require __DIR__ . '/head.php';
                 </div>
                 <div id="search-graph-frame-wrap" class="graph-frame">
                   <iframe
-                    id="<?= $siteRenderer === 'g6' ? 'search-g6-frame' : 'search-cyt-frame' ?>"
+                    id="search-g6-frame"
                     src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
-                    title="Search graph (<?= htmlspecialchars(strtoupper($siteRenderer), ENT_QUOTES, 'UTF-8') ?>)"
+                    title="Search graph (G6)"
                   ></iframe>
                 </div>
               </section>

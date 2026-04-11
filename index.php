@@ -168,17 +168,11 @@ $quickLinks = [
 ];
 
 $homeGraphQuery = 'LINE1';
-$treeEmbedUrl = $siteRenderer === 'g6'
-    ? site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', [
-        'embed' => 'home-preview',
-        'q' => $homeGraphQuery,
-        'type' => 'TE',
-    ])
-    : site_url_with_state('/TE-/index_demo.html', $siteLang, 'cytoscape', [
-        'embed' => 'search-result',
-        'q' => $homeGraphQuery,
-        'type' => 'TE',
-    ]);
+$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', [
+    'embed' => 'home-preview',
+    'q' => $homeGraphQuery,
+    'type' => 'TE',
+]);
 ?>
       <style>
         .hero-area {
