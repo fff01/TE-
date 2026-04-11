@@ -30,6 +30,9 @@
     dynamicSurface: document.getElementById('g6-dynamic-surface'),
     graphLoader: document.getElementById('graph-preloader'),
     graphLoaderLabel: document.getElementById('graph-preloader-label'),
+    graphLegend: document.getElementById('graph-type-legend'),
+    graphLegendTitle: document.getElementById('graph-legend-title'),
+    graphLegendList: document.getElementById('graph-legend-list'),
     main: document.querySelector('.main'),
   };
 
@@ -53,6 +56,7 @@
       loadingDetail: (query) => buildLoadingDetailHtml(`Preparing the dynamic graph for ${escapeHtml(query)}.`),
       loadingOverlay: (query) => `Preparing ${escapeHtml(query)} ...`,
       graphError: (message) => `Failed: ${message || 'unknown error'}`,
+      legendTitle: 'Entity Legend',
     },
     zh: {
       pageTitle: 'TEKG G6 Workspace',
@@ -73,6 +77,7 @@
       loadingDetail: (query) => buildLoadingDetailHtml(`\u6b63\u5728\u4e3a ${escapeHtml(query)} \u51c6\u5907 G6 \u52a8\u6001\u56fe\u3002`),
       loadingOverlay: (query) => `\u6b63\u5728\u51c6\u5907 ${escapeHtml(query)} ...`,
       graphError: (message) => `\u5931\u8d25\uff1a${message || '\u672a\u77e5\u9519\u8bef'}`,
+      legendTitle: '\u5b9e\u4f53\u56fe\u4f8b',
     },
   };
 
@@ -120,6 +125,128 @@
 
   function textSet() {
     return UI[window.currentLang] || UI.en;
+  }
+
+  const LEGEND_FALLBACK_ORDER = ['TE', 'Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate', 'Paper'];
+  const LEGEND_FALLBACK_LABELS = {
+    TE: 'TE',
+    Disease: 'Disease',
+    Function: 'Function',
+    Gene: 'Gene',
+    Protein: 'Protein',
+    RNA: 'RNA',
+    Mutation: 'Mutation',
+    Pharmaceutical: 'Pharmaceutical',
+    Toxin: 'Toxin',
+    Lipid: 'Lipid',
+    Peptide: 'Peptide',
+    Carbohydrate: 'Carbohydrate',
+    Paper: 'Paper',
+  };
+  const LEGEND_FALLBACK_COLORS = {
+    TE: '#4e79ff',
+    Disease: '#ff7a7a',
+    Function: '#41b883',
+    Gene: '#8a7cf8',
+    Protein: '#59bfb6',
+    RNA: '#72b6ff',
+    Mutation: '#ffb066',
+    Pharmaceutical: '#a98cf6',
+    Toxin: '#df8a78',
+    Lipid: '#95c863',
+    Peptide: '#54c9c0',
+    Carbohydrate: '#d5b458',
+    Paper: '#f2a93b',
+  };
+
+  let visibleTypeState = null;
+
+  function getLegendTypeMeta() {
+    const sharedMeta = window.__TEKG_G6_TYPE_META && typeof window.__TEKG_G6_TYPE_META === 'object'
+      ? window.__TEKG_G6_TYPE_META
+      : {};
+    const order = Array.isArray(sharedMeta.legendOrder) && sharedMeta.legendOrder.length
+      ? sharedMeta.legendOrder
+      : LEGEND_FALLBACK_ORDER;
+    const labels = sharedMeta.labels && typeof sharedMeta.labels === 'object'
+      ? sharedMeta.labels
+      : LEGEND_FALLBACK_LABELS;
+    const colors = sharedMeta.colors && typeof sharedMeta.colors === 'object'
+      ? sharedMeta.colors
+      : LEGEND_FALLBACK_COLORS;
+
+    return [...new Set(order)]
+      .filter((type) => (labels[type] || type) && colors[type])
+      .map((type) => ({
+        type,
+        label: String(labels[type] || type),
+        color: String(colors[type] || '#94a3b8'),
+      }));
+  }
+
+  function ensureVisibleTypeState() {
+    const next = visibleTypeState && typeof visibleTypeState === 'object'
+      ? { ...visibleTypeState }
+      : {};
+    for (const item of getLegendTypeMeta()) {
+      if (typeof next[item.type] !== 'boolean') next[item.type] = true;
+    }
+    visibleTypeState = next;
+    return visibleTypeState;
+  }
+
+  function getVisibleTypePayload() {
+    return { ...ensureVisibleTypeState() };
+  }
+
+  function buildCurrentGraphDataOptions(extra = {}) {
+    return Object.assign({
+      showAllLabels: window.showLabels,
+      visibleTypes: getVisibleTypePayload(),
+    }, extra || {});
+  }
+
+  function renderGraphLegend() {
+    const t = textSet();
+    if (els.graphLegendTitle) {
+      els.graphLegendTitle.textContent = t.legendTitle || 'Entity Legend';
+    }
+    if (!els.graphLegendList) return;
+
+    const visibleMap = ensureVisibleTypeState();
+    const items = getLegendTypeMeta();
+    els.graphLegendList.innerHTML = items.map((item) => {
+      const safeType = escapeHtml(item.type);
+      const safeLabel = escapeHtml(item.label);
+      const safeColor = escapeHtml(item.color);
+      const checked = visibleMap[item.type] !== false ? ' checked' : '';
+      return [
+        '<div class="graph-legend-item">',
+        `  <input class="graph-legend-check" type="checkbox" data-type="${safeType}" aria-label="${safeLabel}"${checked}>`,
+        `  <span class="graph-legend-swatch" style="--legend-color:${safeColor};"></span>`,
+        `  <span class="graph-legend-text">${safeLabel}</span>`,
+        '</div>',
+      ].join('');
+    }).join('');
+  }
+
+  function syncLegendVisibility(mode = currentMode) {
+    if (!els.graphLegend) return;
+    const hasItems = getLegendTypeMeta().length > 0;
+    const shouldShow = mode === 'dynamic' && hasItems;
+    els.graphLegend.hidden = !shouldShow;
+    els.graphLegend.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+  }
+
+  function applyLegendTypeFilter() {
+    if (currentMode !== 'dynamic') return Promise.resolve(false);
+    const sourceElements = currentGraphSource === 'answer'
+      ? currentAnswerGraphElements
+      : currentQueryGraphElements;
+    return renderDynamicElementsFromCache(sourceElements, {
+      source: currentGraphSource,
+      request: buildCurrentGraphRequest(),
+    }).then(() => true);
   }
 
   function setDetail(html) {
@@ -179,6 +306,84 @@
 
   function cloneAnswerElements(elements) {
     return JSON.parse(JSON.stringify(Array.isArray(elements) ? elements : []));
+  }
+
+  function filterElementsByVisibleTypes(elements) {
+    const source = cloneAnswerElements(elements);
+    const visibleMap = getVisibleTypePayload();
+    const visibleNodeIds = new Set();
+    const filteredNodes = [];
+    const filteredEdges = [];
+
+    for (const item of source) {
+      const data = item && item.data ? item.data : null;
+      if (!data || data.source || data.target) continue;
+      const nodeType = String(data.type || 'TE').trim() || 'TE';
+      if (visibleMap[nodeType] === false) continue;
+      filteredNodes.push(item);
+      visibleNodeIds.add(String(data.id || ''));
+    }
+
+    for (const item of source) {
+      const data = item && item.data ? item.data : null;
+      if (!data || !data.source || !data.target) continue;
+      if (!visibleNodeIds.has(String(data.source || '')) || !visibleNodeIds.has(String(data.target || ''))) continue;
+      filteredEdges.push(item);
+    }
+
+    return [...filteredNodes, ...filteredEdges];
+  }
+
+  async function renderDynamicElementsFromCache(elements, options = {}) {
+    const source = options && options.source === 'answer' ? 'answer' : 'query';
+    const request = normalizeGraphRequest(options && options.request ? options.request : buildCurrentGraphRequest());
+    const renderElements = filterElementsByVisibleTypes(elements);
+
+    currentSelectedNode = null;
+    showDynamicSurface();
+    updateButtons();
+    setDetail('');
+    notifyStateChange();
+    setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery || request.query || 'LINE1'));
+
+    try {
+      await waitForDynamicSurfaceSize();
+      const frame = source === 'answer'
+        ? (dynamicFrame || ensureDynamicFrame({ query: '' }))
+        : ensureDynamicFrame(request);
+      if (!dynamicBridgePromise) {
+        dynamicBridgePromise = waitForEmbedBridge(frame);
+      }
+
+      const bridge = await dynamicBridgePromise;
+      if (!bridge || typeof bridge.renderElements !== 'function') {
+        throw new Error('G6 embed bridge cannot render cached graph elements');
+      }
+
+      const graphDataOptions = source === 'answer'
+        ? buildCurrentGraphDataOptions({
+            includePaperNodes: true,
+            synthesizeDiseaseClasses: false,
+            restrictToAnchorComponent: false,
+            forceAnchorLabel: true,
+          })
+        : buildCurrentGraphDataOptions(
+            request.queryType === 'disease_class'
+              ? { synthesizeDiseaseClasses: false }
+              : {}
+          );
+
+      await bridge.renderElements(renderElements, request, {
+        sourceLabel: source === 'answer' ? 'qa' : 'query',
+        skipInitialStatus: true,
+        graphDataOptions,
+      });
+
+      notifyStateChange();
+      return true;
+    } finally {
+      setGraphLoading(false);
+    }
   }
 
   function stateSignature(state) {
@@ -357,6 +562,7 @@
     if (els.backText) els.backText.textContent = t.back || 'Back';
     if (els.resetText) els.resetText.textContent = t.reset;
     if (els.levelText) els.levelText.textContent = t.keyNodeLevel(window.currentKeyNodeLevel);
+    if (els.graphLegendTitle) els.graphLegendTitle.textContent = t.legendTitle || 'Entity Legend';
     if (els.levelMinus) els.levelMinus.disabled = window.currentKeyNodeLevel <= 1;
     if (els.levelPlus) els.levelPlus.disabled = window.currentKeyNodeLevel >= 10;
     updateBackButton();
@@ -372,11 +578,13 @@
   function showTreeSurface() {
     if (els.treeSurface) els.treeSurface.style.display = 'block';
     if (els.dynamicSurface) els.dynamicSurface.style.display = 'none';
+    syncLegendVisibility('tree');
   }
 
   function showDynamicSurface() {
     if (els.treeSurface) els.treeSurface.style.display = 'none';
     if (els.dynamicSurface) els.dynamicSurface.style.display = 'block';
+    syncLegendVisibility('dynamic');
   }
 
   function waitForDynamicSurfaceSize(maxAttempts = 60, delayMs = 50) {
@@ -420,6 +628,7 @@
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
     url.searchParams.set('show_labels', window.showLabels ? '1' : '0');
+    url.searchParams.set('bridge_v', '20260411a');
     const query = String(request.query || '').trim();
     if (query) {
       url.searchParams.set('q', query);
@@ -561,15 +770,14 @@
         throw new Error('G6 embed bridge cannot render QA elements');
       }
 
-      await bridge.renderElements(elements, { query: currentGraphQuery }, {
+      await bridge.renderElements(filterElementsByVisibleTypes(currentAnswerGraphElements), { query: currentGraphQuery }, {
         sourceLabel: 'qa',
-        graphDataOptions: {
+        graphDataOptions: buildCurrentGraphDataOptions({
           includePaperNodes: true,
           synthesizeDiseaseClasses: false,
           restrictToAnchorComponent: false,
           forceAnchorLabel: true,
-          showAllLabels: window.showLabels,
-        },
+        }),
       });
 
       notifyStateChange();
@@ -707,9 +915,9 @@
     const isZh = window.currentLang === 'zh';
     const typeLabels = isZh
       ? {
-          DiseaseClass: '疾病大类',
-          DiseaseCategory: '疾病分类',
-          Disease: '疾病',
+          DiseaseClass: '\u75be\u75c5\u5927\u7c7b',
+          DiseaseCategory: '\u75be\u75c5\u5206\u7c7b',
+          Disease: '\u75be\u75c5',
         }
       : {
           DiseaseClass: 'Disease Class',
@@ -719,7 +927,7 @@
 
     return {
       defaultDetailHtml: isZh
-        ? `<strong>${escapeHtml(classQuery)}</strong><br>当前为疾病分类树视图。点击分类节点查看层级，点击疾病叶子可进入普通动态图。`
+        ? `<strong>${escapeHtml(classQuery)}</strong><br>\u5f53\u524d\u4e3a\u75be\u75c5\u5206\u7c7b\u6811\u89c6\u56fe\u3002\u70b9\u51fb\u5206\u7c7b\u8282\u70b9\u67e5\u770b\u5c42\u7ea7\uff0c\u70b9\u51fb\u75be\u75c5\u53f6\u5b50\u53ef\u8fdb\u5165\u666e\u901a\u52a8\u6001\u56fe\u3002`
         : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
       buildLabel(data, nodeId) {
         return String(data.displayLabel || data.rawLabel || nodeId || '');
@@ -992,12 +1200,17 @@
       }
 
       const payload = await bridge.loadGraph(request, {
-        graphDataOptions: {
-          showAllLabels: window.showLabels,
-        },
+        graphDataOptions: buildCurrentGraphDataOptions(),
       });
       currentQueryGraphElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
-      notifyStateChange();
+      if (Object.values(getVisibleTypePayload()).some((isVisible) => isVisible === false)) {
+        await renderDynamicElementsFromCache(currentQueryGraphElements, {
+          source: 'query',
+          request,
+        });
+      } else {
+        notifyStateChange();
+      }
       return true;
     } finally {
       setGraphLoading(false);
@@ -1005,6 +1218,26 @@
   }
 
   function bindEvents() {
+    renderGraphLegend();
+    syncLegendVisibility(currentMode);
+    window.addEventListener('tekg:g6-state-change', (event) => {
+      const nextMode = event && event.detail && typeof event.detail.mode === 'string' ? event.detail.mode : currentMode;
+      syncLegendVisibility(nextMode);
+    });
+
+    if (els.graphLegendList) {
+      els.graphLegendList.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || !target.classList.contains('graph-legend-check')) return;
+        const type = String(target.dataset.type || '').trim();
+        if (!type) return;
+        ensureVisibleTypeState()[type] = target.checked;
+        applyLegendTypeFilter().catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+    }
+
     if (els.searchInput) {
       els.searchInput.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter') return;

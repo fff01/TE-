@@ -15,6 +15,7 @@
   if (!Graph || !register || !ExtensionCategory || !Rect || !CircleCombo || !Badge) return;
 
   const TYPE_ORDER = ['TE', 'Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate'];
+  const TYPE_LEGEND_ORDER = [...TYPE_ORDER, 'Paper'];
   const TYPE_LABEL = {
     TE: 'TE',
     Disease: 'Disease',
@@ -167,7 +168,7 @@
     if (!detailEl) return;
     if (!datum) {
       detailEl.textContent = getCurrentLang() === 'zh'
-        ? 'G6 动态图已激活。'
+        ? 'G6 鍔ㄦ€佸浘宸叉縺娲汇€?
         : 'G6 dynamic graph is active.';
       return;
     }
@@ -178,7 +179,7 @@
     }
 
     if (datum.kind === 'edge') {
-      detailEl.innerHTML = `<strong>${datum.sourceLabel}</strong> → ${datum.relation} → <strong>${datum.targetLabel}</strong><br>${datum.evidence}`;
+      detailEl.innerHTML = `<strong>${datum.sourceLabel}</strong> 鈫?${datum.relation} 鈫?<strong>${datum.targetLabel}</strong><br>${datum.evidence}`;
       return;
     }
 
@@ -193,12 +194,12 @@
     const lang = getCurrentLang();
     if (lang === 'zh') {
       const map = {
-        TE: `当前分组包含 ${nodeCount} 个转座元件节点。`,
-        Disease: `当前分组包含 ${nodeCount} 个疾病节点。`,
-        Function: `当前分组包含 ${nodeCount} 个功能或机制节点。`,
-        Paper: `当前分组包含 ${nodeCount} 个文献节点。`,
+        TE: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓浆搴у厓浠惰妭鐐广€俙,
+        Disease: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓柧鐥呰妭鐐广€俙,
+        Function: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓姛鑳芥垨鏈哄埗鑺傜偣銆俙,
+        Paper: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓枃鐚妭鐐广€俙,
       };
-      return map[type] || `当前分组包含 ${nodeCount} 个节点。`;
+      return map[type] || `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓妭鐐广€俙;
     }
     const map = {
       TE: `This group contains ${nodeCount} transposable element nodes.`,
@@ -435,7 +436,7 @@
             relation: getRelSafe(edge.relation || edge.relationType || ''),
             sourceLabel: source.data.label,
             targetLabel: target.data.label,
-            evidence: edge.evidence || (Array.isArray(edge.pmids) && edge.pmids.length ? `PMID: ${edge.pmids.join(', ')}` : (getCurrentLang() === 'zh' ? '当前未附证据。' : 'No evidence attached.')),
+            evidence: edge.evidence || (Array.isArray(edge.pmids) && edge.pmids.length ? `PMID: ${edge.pmids.join(', ')}` : (getCurrentLang() === 'zh' ? '褰撳墠鏈檮璇佹嵁銆? : 'No evidence attached.')),
           },
         };
       });
@@ -947,6 +948,12 @@
   }
 
   bindTriggers();
+  window.__TEKG_G6_TYPE_META = Object.freeze({
+    order: Object.freeze([...TYPE_ORDER]),
+    legendOrder: Object.freeze([...TYPE_LEGEND_ORDER]),
+    labels: Object.freeze({ ...TYPE_LABEL }),
+    colors: Object.freeze({ ...TYPE_COLORS }),
+  });
   window.__TEKG_G6_DYNAMIC_GRAPH = {
     render: renderDynamicGraph,
     rerender: rerenderLast,

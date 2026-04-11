@@ -47,8 +47,37 @@
     SUBFAMILY_OF: 'contains',
     EVIDENCE_RELATION: 'literature support',
     BIO_RELATION: 'related to',
-    '与…相关': 'associated with',
-    '与...相关': 'associated with',
+    associated_with: 'associated with',
+    related_to: 'related to',
+    promotes: 'promotes',
+    mediates: 'mediates',
+    reports: 'reports',
+    affects: 'affects',
+    executes: 'executes',
+    participates_in: 'participates in',
+    regulates: 'regulates',
+    leads_to: 'leads to',
+    uses: 'uses',
+    inhibits: 'inhibits',
+    triggers: 'triggers',
+    induces: 'induces',
+    increases_risk_of: 'increases risk of',
+    modulates: 'modulates',
+    facilitates: 'facilitates',
+    occurs_in: 'occurs in',
+    activates: 'activates',
+    disrupts: 'disrupts',
+    produces: 'produces',
+    acts_as: 'acts as',
+    enables: 'enables',
+    explains: 'explains',
+    provides: 'provides',
+    predisposes_to: 'predisposes to',
+    is_regulated_by: 'is regulated by',
+    alters: 'alters',
+    lacks: 'lacks',
+    manifests_as: 'manifests as',
+    characterizes: 'characterizes',
     '相关': 'associated with',
     '促进': 'promotes',
     '介导': 'mediates',
@@ -602,6 +631,9 @@
       const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
       const forceAnchorLabel = options.forceAnchorLabel === true;
       const showAllLabels = options.showAllLabels === true;
+      const visibleTypes = options.visibleTypes && typeof options.visibleTypes === 'object'
+        ? options.visibleTypes
+        : null;
       const nodes = [];
       const edges = [];
       const allowedNodeIds = new Set();
@@ -611,15 +643,17 @@
         const data = item && item.data ? item.data : null;
         if (!data) continue;
         if (data.source && data.target) continue;
-        if (!includePaperNodes && (data.type || 'TE') === 'Paper') continue;
+        const nodeType = data.type || 'TE';
+        if (!includePaperNodes && nodeType === 'Paper') continue;
+        if (visibleTypes && visibleTypes[nodeType] === false) continue;
         if (!anchorNodeId) anchorNodeId = String(data.id || '');
 
         const node = {
           id: data.id,
-          size: (data.type || 'TE') === 'Paper'
+          size: nodeType === 'Paper'
             ? Math.max(28, degreeToSize(data.degree))
             : degreeToSize(data.degree),
-          nodeType: data.type || 'TE',
+          nodeType,
           rawLabel: data.rawLabel || data.label || data.id,
           displayLabel: translateName(data.label || data.rawLabel || data.id),
           databaseDegree: Math.max(0, Number(data.degree) || 0),
@@ -627,11 +661,11 @@
           diseaseClass: String(data.disease_class || ''),
           categoryLevel: Math.max(0, Number(data.category_level) || 0),
           team: buildTeam(data),
-          queryLabel: (data.type || 'TE') === 'DiseaseCategory' ? '' : String(data.rawLabel || data.label || data.id),
-          queryType: (data.type || 'TE') === 'DiseaseClass' ? 'disease_class' : '',
-          classQuery: (data.type || 'TE') === 'DiseaseClass' ? String(data.rawLabel || data.label || data.id) : '',
-          fillColor: TYPE_COLORS[data.type || 'TE'] || '#94a3b8',
-          strokeColor: TYPE_STROKES[data.type || 'TE'] || '#111111',
+          queryLabel: nodeType === 'DiseaseCategory' ? '' : String(data.rawLabel || data.label || data.id),
+          queryType: nodeType === 'DiseaseClass' ? 'disease_class' : '',
+          classQuery: nodeType === 'DiseaseClass' ? String(data.rawLabel || data.label || data.id) : '',
+          fillColor: TYPE_COLORS[nodeType] || '#94a3b8',
+          strokeColor: TYPE_STROKES[nodeType] || '#111111',
           showAllLabels,
           alwaysShowLabel:
             (includePaperNodes && (data.type || 'TE') === 'Paper') ||
@@ -688,8 +722,9 @@
       }
 
       const nonIsolatedNodes = nodes.filter((node) => connectedNodeIds.has(node.id));
+      const candidateNodes = nonIsolatedNodes.length ? nonIsolatedNodes : [...nodes];
       const adjacency = new Map();
-      for (const node of nonIsolatedNodes) adjacency.set(node.id, []);
+      for (const node of candidateNodes) adjacency.set(node.id, []);
       for (const edge of baseEdges) {
         if (!adjacency.has(edge.source) || !adjacency.has(edge.target)) continue;
         adjacency.get(edge.source).push(edge.target);
@@ -697,7 +732,7 @@
       }
 
       const mainComponentNodeIds = new Set();
-      const traversalStartId = adjacency.has(anchorNodeId) ? anchorNodeId : (nonIsolatedNodes[0]?.id || '');
+      const traversalStartId = adjacency.has(anchorNodeId) ? anchorNodeId : (candidateNodes[0]?.id || '');
       if (traversalStartId) {
         const queue = [traversalStartId];
         mainComponentNodeIds.add(traversalStartId);
@@ -711,9 +746,9 @@
         }
       }
 
-      const visibleNodes = restrictToAnchorComponent
-        ? nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id))
-        : [...nonIsolatedNodes];
+      const visibleNodes = (!restrictToAnchorComponent || baseEdges.length === 0 || nonIsolatedNodes.length === 0)
+        ? [...candidateNodes]
+        : candidateNodes.filter((node) => mainComponentNodeIds.has(node.id));
       const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
       const hasNativeDiseaseHierarchy = visibleNodes.some(
         (node) => node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory'
