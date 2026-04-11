@@ -88,7 +88,7 @@ Use:
 - `Demo 3`
 - `Demo 7`
 
-These are the best starting points for Cytoscape.js or ECharts network rendering.
+These are the best starting points for the current G6-based network rendering.
 
 ### For QA
 

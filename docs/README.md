@@ -14,7 +14,7 @@ to keep the working directory cleaner.
 
 ## Notes
 
-- Runtime files such as `index_demo.html`, `assets/data/graph_demo_data.js`, and `api/` are still kept
+- Runtime files such as `index_g6.html`, `assets/data/graph_demo_data.js`, and `api/` are still kept
   in the project root.
 - Auxiliary scripts that used to be scattered in the root have started to move into
   `scripts/`, including the local relay and ad-hoc data helpers.

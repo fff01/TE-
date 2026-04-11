@@ -1,7 +1,20 @@
-api/config.local.php
-assignment_pdf_extract.txt
-大作业.pdf
-__pycache__/
-*.pyc
-api/qa_debug.log
-_tmp_search_js_check.js
+# Large local datasets
+/new_data/
+/new_data/JBrowse/
+/new_data/bulk_expression_web/
+/data/rmsk.txt
+
+
+# Large reference or genome files
+*.fa
+*.fasta
+*.fai
+*.gzi
+*.gtf
+*.gff
+*.gff3
+*.bb
+*.bw
+*.vcf
+*.vcf.gz
+*.tbi

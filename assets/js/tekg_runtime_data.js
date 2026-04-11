@@ -11,7 +11,7 @@
     };
     const pageParams = new URLSearchParams(window.location.search);
     const embedMode = pageParams.get('embed') || '';
-    const currentRenderer = pageParams.get('renderer') === 'g6' ? 'g6' : 'cytoscape';
+    const currentRenderer = 'g6';
     window.__TEKG_EMBED_MODE = embedMode;
     window.__TEKG_RENDERER_MODE = currentRenderer;
     const demoData = window.GRAPH_DEMO_DATA || {elements:[],qa:{}};

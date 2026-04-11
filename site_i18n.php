@@ -32,22 +32,11 @@ if (!function_exists('site_renderer')) {
             return $renderer;
         }
 
-        $requested = strtolower(trim((string) ($_GET['renderer'] ?? '')));
-        if ($requested === 'cytoscape' || $requested === 'g6') {
-            $renderer = 'g6';
-            if (!headers_sent()) {
-                setcookie('site_renderer', $renderer, time() + 86400 * 30, '/');
-            }
-            $_COOKIE['site_renderer'] = $renderer;
-            return $renderer;
-        }
-
-        $cookie = strtolower(trim((string) ($_COOKIE['site_renderer'] ?? '')));
         $renderer = 'g6';
-        if ($cookie === 'cytoscape' && !headers_sent()) {
+        if (!headers_sent()) {
             setcookie('site_renderer', $renderer, time() + 86400 * 30, '/');
-            $_COOKIE['site_renderer'] = $renderer;
         }
+        $_COOKIE['site_renderer'] = $renderer;
         return $renderer;
     }
 }
@@ -73,7 +62,7 @@ if (!function_exists('site_url_with_state')) {
     function site_url_with_state(string $href, ?string $lang = null, ?string $renderer = null, array $extraParams = []): string
     {
         $lang = $lang ?? site_lang();
-        $renderer = $renderer ?? site_renderer();
+        $renderer = 'g6';
 
         $parts = parse_url($href);
         $path = (string) ($parts['path'] ?? $href);

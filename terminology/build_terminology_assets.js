@@ -3,7 +3,7 @@ const path = require('path');
 const vm = require('vm');
 
 const root = path.resolve(__dirname, '..');
-const indexPath = path.join(root, 'index_demo.html');
+const indexPath = path.join(root, 'index_g6.html');
 const seedPath = path.join(root, 'data', 'processed', 'te_kg2_graph_seed.json');
 const jsonOut = path.join(__dirname, 'te_terminology.json');
 const csvOut = path.join(__dirname, 'te_terminology.csv');
@@ -477,7 +477,7 @@ function uniqueSorted(values) {
 function buildTerminologyPayload(nameMap, relLabel) {
   return {
     version: 3,
-    generated_from: 'index_demo.html',
+    generated_from: 'index_g6.html',
     generated_at: new Date().toISOString(),
     names: {
       zh: { ...(nameMap.zh || {}), ...(curatedNameAdditions.zh || {}) },

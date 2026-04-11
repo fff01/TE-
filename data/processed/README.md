@@ -62,14 +62,14 @@
 
 - `te_descriptions.json`
   - 当前数据库中 TE 节点的双语 description 资源。
-  - 已与数据库现存 TE 节点一一对应，用于替代 `index_demo.html` 内联 TE 描述。
+  - 已与数据库现存 TE 节点一一对应，用于替代 `index_g6.html` 内联 TE 描述。
 
 - `entity_descriptions.json`
   - Disease / Function 的双语 description 资源。
-  - 供前端页面（尤其是 `index_demo.html`）读取，用于替代旧的内联 `descMap`。
+  - 供前端页面（尤其是 `index_g6.html`）读取，用于替代旧的内联 `descMap`。
 
 - `ui_text.json`
-  - `index_demo.html` 及相关页面使用的双语 UI 文案资源。
+  - `index_g6.html` 及相关页面使用的双语 UI 文案资源。
   - 包括按钮文字、标题、工具栏提示、局部图说明、模型标签等。
 
 - `local_qa_templates.json`

@@ -61,7 +61,7 @@ D:\wamp64\www\TE-
 然后通过浏览器访问：
 
 ```text
-http://localhost/TE-/index_demo.html
+http://localhost/TE-/index_g6.html
 ```
 
 ## 如何验证后端

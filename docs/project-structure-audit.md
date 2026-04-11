@@ -33,7 +33,7 @@
 - `head.php`
 - `foot.php`
 - `site_i18n.php`
-- `index_demo.html`
+- `index_g6.html`
 - `index_g6.html`
 - `index_g6_embed.html`
 - `index_g6_test.html`
