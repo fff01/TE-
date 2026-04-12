@@ -10,4 +10,10 @@ return [
     'neo4j_password' => 'xjss9577',
     'key_node_threshold' => 3,
     'key_node_expand_limit' => 20,
+    'mysql_host' => '127.0.0.1',
+    'mysql_port' => 3306,
+    'mysql_expression_database' => 'tekg_expression',
+    'mysql_user' => 'root',
+    'mysql_password' => '',
+    'mysql_charset' => 'utf8mb4',
 ];

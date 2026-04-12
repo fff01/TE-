@@ -290,6 +290,216 @@ function tekg_karyotype_lookup_proto(string $query, string $type = 'all', ?array
     return $entry;
 }
 
+function tekg_jbrowse_index_proto(): ?array
+{
+    static $lookup = null;
+    static $loaded = false;
+    if ($loaded) {
+        return $lookup;
+    }
+    $loaded = true;
+
+    $representativeFile = __DIR__ . '/new_data/JBrowse/repeats/te_representative_index.json';
+    $manifestFile = __DIR__ . '/new_data/JBrowse/repeats/te_hits_manifest.json';
+    if (!is_file($representativeFile)) {
+        return null;
+    }
+
+    $decoded = json_decode((string) file_get_contents($representativeFile), true);
+    if (!is_array($decoded)) {
+        return null;
+    }
+    $manifest = is_file($manifestFile)
+        ? json_decode((string) file_get_contents($manifestFile), true)
+        : [];
+    if (!is_array($manifest)) {
+        $manifest = [];
+    }
+
+    $nameIndex = [];
+    $canonicalIndex = [];
+    foreach ($decoded as $name => $entry) {
+        if (!is_string($name) || $name === '' || !is_array($entry)) {
+            continue;
+        }
+        $strictKey = tekg_lower_proto(tekg_clean_label_proto($name));
+        $canonicalKey = tekg_canonicalize_label_proto($name);
+        if ($strictKey !== '') {
+            $nameIndex[$strictKey] = $name;
+        }
+        if ($canonicalKey !== '') {
+            $canonicalIndex[$canonicalKey] = $name;
+        }
+    }
+
+    $lookup = [
+        'entries' => $decoded,
+        'name_index' => $nameIndex,
+        'canonical_index' => $canonicalIndex,
+        'hit_manifest' => $manifest,
+    ];
+    return $lookup;
+}
+
+function tekg_jbrowse_load_hit_entry_proto(string $teName, array $lookup): ?array
+{
+    static $cache = [];
+    if (array_key_exists($teName, $cache)) {
+        return $cache[$teName];
+    }
+
+    $relativePath = $lookup['hit_manifest'][$teName] ?? null;
+    if (!is_string($relativePath) || $relativePath === '') {
+        $cache[$teName] = null;
+        return null;
+    }
+
+    $absolutePath = __DIR__ . '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+    if (!is_file($absolutePath)) {
+        $cache[$teName] = null;
+        return null;
+    }
+
+    $decoded = json_decode((string) file_get_contents($absolutePath), true);
+    $cache[$teName] = is_array($decoded) ? $decoded : null;
+    return $cache[$teName];
+}
+
+function tekg_jbrowse_lookup_proto(string $query, string $type = 'all', ?array $repbase = null, ?string $lang = null): ?array
+{
+    $query = trim($query);
+    if ($query === '') {
+        return null;
+    }
+
+    $normalizedType = strtoupper(trim($type));
+    if (in_array($normalizedType, ['DISEASE', 'FUNCTION', 'PAPER'], true)) {
+        return null;
+    }
+
+    $lookup = tekg_jbrowse_index_proto();
+    if (!is_array($lookup)) {
+        return null;
+    }
+
+    $candidates = [$query];
+    if (is_array($repbase)) {
+        foreach (['nm', 'id'] as $key) {
+            $candidate = trim((string) ($repbase[$key] ?? ''));
+            if ($candidate !== '') {
+                $candidates[] = $candidate;
+            }
+        }
+    }
+
+    $teName = null;
+    foreach ($candidates as $candidate) {
+        $strictKey = tekg_lower_proto(tekg_clean_label_proto($candidate));
+        $canonicalKey = tekg_canonicalize_label_proto($candidate);
+        $teName = $lookup['name_index'][$strictKey] ?? $lookup['canonical_index'][$canonicalKey] ?? null;
+        if (is_string($teName) && $teName !== '') {
+            break;
+        }
+    }
+
+    if (!is_string($teName) || $teName === '') {
+        return null;
+    }
+
+    $entry = $lookup['entries'][$teName] ?? null;
+    if (!is_array($entry)) {
+        return null;
+    }
+
+    $hitEntry = tekg_jbrowse_load_hit_entry_proto($teName, $lookup);
+    if (is_array($hitEntry)) {
+        $entry = array_replace($entry, $hitEntry);
+    }
+
+    $locus = is_array($entry['representative_locus'] ?? null) ? $entry['representative_locus'] : null;
+    if (!is_array($locus)) {
+        return null;
+    }
+
+    $sampleHits = [];
+    foreach (($entry['sample_hits'] ?? []) as $hit) {
+        if (!is_array($hit)) {
+            continue;
+        }
+        $chrom = trim((string) ($hit['chrom'] ?? ''));
+        $start = (int) ($hit['start'] ?? -1);
+        $end = (int) ($hit['end'] ?? -1);
+        if ($chrom === '' || $start < 0 || $end <= $start) {
+            continue;
+        }
+        $strand = ((string) ($hit['strand'] ?? '+')) === '-' ? '-' : '+';
+        $length = max(1, (int) ($hit['length'] ?? ($end - $start)));
+        $score = (int) ($hit['score'] ?? 0);
+        $sampleHits[] = [
+            'chrom' => $chrom,
+            'start' => $start,
+            'end' => $end,
+            'strand' => $strand,
+            'length' => $length,
+            'score' => $score,
+            'label' => sprintf(
+                '%s:%s-%s | %s | len %s bp | score %s',
+                $chrom,
+                number_format($start + 1),
+                number_format($end),
+                $strand === '-' ? 'reverse strand' : 'forward strand',
+                number_format($length),
+                number_format($score)
+            ),
+        ];
+    }
+    if ($sampleHits === []) {
+        $fallbackChrom = (string) ($locus['chrom'] ?? '');
+        $fallbackStart = (int) ($locus['start'] ?? 0);
+        $fallbackEnd = (int) ($locus['end'] ?? 0);
+        $fallbackStrand = ((string) ($locus['strand'] ?? '+')) === '-' ? '-' : '+';
+        $fallbackLength = max(1, (int) ($locus['length'] ?? ($fallbackEnd - $fallbackStart)));
+        $fallbackScore = (int) ($locus['score'] ?? 0);
+        $sampleHits[] = [
+            'chrom' => $fallbackChrom,
+            'start' => $fallbackStart,
+            'end' => $fallbackEnd,
+            'strand' => $fallbackStrand,
+            'length' => $fallbackLength,
+            'score' => $fallbackScore,
+            'label' => sprintf(
+                '%s:%s-%s | %s | len %s bp | score %s',
+                $fallbackChrom,
+                number_format($fallbackStart + 1),
+                number_format($fallbackEnd),
+                $fallbackStrand === '-' ? 'reverse strand' : 'forward strand',
+                number_format($fallbackLength),
+                number_format($fallbackScore)
+            ),
+        ];
+    }
+
+    $browserParams = array_filter([
+        'te' => $teName,
+        'chr' => (string) ($locus['chrom'] ?? ''),
+        'start' => array_key_exists('start', $locus) ? (string) ((int) $locus['start']) : null,
+        'end' => array_key_exists('end', $locus) ? (string) ((int) $locus['end']) : null,
+    ], static fn ($value) => $value !== null && $value !== '');
+
+    $entry['matched_query'] = $query;
+    $entry['resolved_te_name'] = $teName;
+    $entry['sample_hits'] = $sampleHits;
+    $entry['locus_label'] = sprintf(
+        '%s:%s-%s',
+        (string) ($locus['chrom'] ?? '-'),
+        number_format(((int) ($locus['start'] ?? 0)) + 1),
+        number_format((int) ($locus['end'] ?? 0))
+    );
+    $entry['browser_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), 'g6', $browserParams);
+    $entry['config_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), 'g6', $browserParams + ['format' => 'config']);
+    return $entry;
+}
+
 function tekg_format_sequence_proto(string $sequence, int $wrap = 80): string
 {
     $sequence = preg_replace('/\s+/', '', strtolower(trim($sequence))) ?? '';
@@ -326,6 +536,7 @@ $type = tekg_request_scalar_proto($_GET, 'type', 'all');
 $repbase = tekg_repbase_lookup_proto($query);
 $dfamSequence = tekg_dfam_lookup_proto($query, $type);
 $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
+$jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
 $searchGraphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
     'embed' => 'search-result',
     'q' => $query !== '' ? $query : null,
@@ -340,6 +551,9 @@ if ($dfamSequence !== null) {
 }
 if ($genomeDistribution !== null) {
     $detailSections[] = ['id' => 'search-karyotype-panel', 'label' => 'Genome Annotation'];
+}
+if ($jbrowseSession !== null) {
+    $detailSections[] = ['id' => 'search-jbrowse-panel', 'label' => 'Genome Browser'];
 }
 
 require __DIR__ . '/head.php';
@@ -386,7 +600,7 @@ require __DIR__ . '/head.php';
         }
 
         .detail-toolbar {
-          --detail-sidebar-width: 184px;
+          --detail-sidebar-width: 196px;
           display: grid;
           grid-template-columns: var(--detail-sidebar-width) minmax(0, 1fr);
           gap: 18px;
@@ -400,7 +614,7 @@ require __DIR__ . '/head.php';
           gap: 8px;
           width: 100%;
           box-sizing: border-box;
-          margin-left: -8px;
+          margin-left: -12px;
           min-height: 48px;
           padding: 0 14px;
           border: 1px solid #dfe6ef;
@@ -441,7 +655,7 @@ require __DIR__ . '/head.php';
 
         .detail-layout {
           display: grid;
-          grid-template-columns: 184px minmax(0, 1fr);
+          grid-template-columns: 196px minmax(0, 1fr);
           gap: 18px;
           align-items: start;
         }
@@ -453,7 +667,7 @@ require __DIR__ . '/head.php';
         .detail-sidebar {
           position: sticky;
           top: 108px;
-          margin-left: -8px;
+          margin-left: -12px;
         }
 
         .detail-nav {
@@ -715,6 +929,188 @@ require __DIR__ . '/head.php';
           display: block;
         }
 
+        .jbrowse-panel {
+          display: grid;
+          gap: 18px;
+          grid-column: 1 / -1;
+          width: 100%;
+        }
+
+        .jbrowse-panel-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+          flex-wrap: wrap;
+          padding-bottom: 12px;
+          border-bottom: 1px solid #e5edf7;
+        }
+
+        .jbrowse-panel h3 {
+          margin: 0;
+          padding: 0;
+          border: 0;
+        }
+
+        .jbrowse-open-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 40px;
+          padding: 0 16px;
+          border-radius: 999px;
+          border: 1px solid #d9e5f7;
+          background: #eef4ff;
+          color: #214b8d;
+          font-size: 14px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .jbrowse-summary {
+          background: #ffffff;
+          border: 1px solid #dbe7f8;
+          border-radius: 14px;
+          box-shadow: 0 10px 28px rgba(26, 60, 112, 0.08);
+          padding: 20px 22px;
+        }
+
+        .jbrowse-summary h2 {
+          margin: 0 0 12px;
+          font-size: 24px;
+          color: #193458;
+          font-weight: 700;
+        }
+
+        .jbrowse-meta {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px 18px;
+        }
+
+        .jbrowse-meta-item {
+          min-width: 0;
+        }
+
+        .jbrowse-meta-label {
+          display: block;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #7a8baa;
+          margin-bottom: 4px;
+          font-weight: 700;
+        }
+
+        .jbrowse-meta-value {
+          display: block;
+          font-size: 17px;
+          line-height: 1.45;
+          color: #27466f;
+          word-break: break-word;
+        }
+
+        .jbrowse-track-toolbar {
+          margin-top: 18px;
+          padding-top: 16px;
+          border-top: 1px solid #e5edf9;
+        }
+
+        .jbrowse-control-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-end;
+          gap: 14px 18px;
+        }
+
+        .jbrowse-hit-picker {
+          min-width: min(420px, 100%);
+          flex: 1 1 420px;
+        }
+
+        .jbrowse-hit-picker-label {
+          display: block;
+          margin-bottom: 8px;
+          font-size: 12px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #7a8baa;
+          font-weight: 700;
+        }
+
+        .jbrowse-hit-picker-select {
+          width: 100%;
+          min-height: 44px;
+          padding: 10px 14px;
+          border-radius: 12px;
+          border: 1px solid #d7e3f7;
+          background: #fbfdff;
+          color: #27466f;
+          font-size: 14px;
+          line-height: 1.4;
+        }
+
+        .jbrowse-track-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .jbrowse-track-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          border-radius: 999px;
+          background: #f5f8ff;
+          border: 1px solid #e0e9f8;
+        }
+
+        .jbrowse-track-item input[type='checkbox'] {
+          width: 18px;
+          height: 18px;
+          accent-color: #3d8f57;
+          cursor: pointer;
+          margin: 0;
+          flex: 0 0 auto;
+        }
+
+        .jbrowse-track-dot {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          flex: 0 0 auto;
+          border: 2px solid rgba(18, 43, 86, 0.12);
+        }
+
+        .jbrowse-track-name {
+          font-size: 15px;
+          color: #26466f;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .jbrowse-browser-stage {
+          margin-top: 10px;
+        }
+
+        #search_jbrowse_linear_genome_view {
+          height: 840px;
+          background: transparent;
+        }
+
+        .jbrowse-loading {
+          height: 840px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #587399;
+          font-size: 18px;
+          border-radius: 16px;
+          background: rgba(255, 255, 255, 0.62);
+          border: 1px solid rgba(219, 231, 248, 0.9);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+        }
         .graph-panel {
           display: flex;
           flex-direction: column;
@@ -928,6 +1324,101 @@ require __DIR__ . '/head.php';
                   </div>
                 </section>
               <?php endif; ?>
+              <?php if ($jbrowseSession !== null): ?>
+                <section id="search-jbrowse-panel" class="data-panel jbrowse-panel">
+                  <div class="jbrowse-panel-head">
+                    <h3>Genome Browser</h3>
+                    <a class="jbrowse-open-link" id="searchJBrowseOpenLink" href="<?= htmlspecialchars((string) ($jbrowseSession['browser_url'] ?? '#'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">Open in full browser</a>
+                  </div>
+                  <div class="jbrowse-summary">
+                    <h2>Genome browser session</h2>
+                    <div class="jbrowse-meta">
+                      <div class="jbrowse-meta-item">
+                        <span class="jbrowse-meta-label">TE</span>
+                        <span class="jbrowse-meta-value"><?= htmlspecialchars((string) ($jbrowseSession['resolved_te_name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                      </div>
+                      <div class="jbrowse-meta-item">
+                        <span class="jbrowse-meta-label">Representative locus</span>
+                        <span class="jbrowse-meta-value"><?= htmlspecialchars((string) ($jbrowseSession['locus_label'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                      </div>
+                      <div class="jbrowse-meta-item">
+                        <span class="jbrowse-meta-label">Initial browser window</span>
+                        <span class="jbrowse-meta-value" id="searchJBrowseDefaultLoc">-</span>
+                      </div>
+                      <div class="jbrowse-meta-item">
+                        <span class="jbrowse-meta-label">Total genomic hits</span>
+                        <span class="jbrowse-meta-value"><?= htmlspecialchars(number_format((int) ($jbrowseSession['total_hits'] ?? 0)), ENT_QUOTES, 'UTF-8') ?></span>
+                      </div>
+                      <div class="jbrowse-meta-item">
+                        <span class="jbrowse-meta-label">Repeat features in window</span>
+                        <span class="jbrowse-meta-value" id="searchJBrowseRepeatCount">-</span>
+                      </div>
+                      <div class="jbrowse-meta-item">
+                        <span class="jbrowse-meta-label">RefSeq features in window</span>
+                        <span class="jbrowse-meta-value" id="searchJBrowseRefseqCount">-</span>
+                      </div>
+                    </div>
+                    <div class="jbrowse-track-toolbar">
+                      <div class="jbrowse-control-row">
+                        <div class="jbrowse-hit-picker">
+                          <label class="jbrowse-hit-picker-label" for="searchJBrowseHitSelect">Genomic hit</label>
+                          <select id="searchJBrowseHitSelect" class="jbrowse-hit-picker-select">
+                            <?php
+                              $jbrowseRepresentative = is_array($jbrowseSession['representative_locus'] ?? null) ? $jbrowseSession['representative_locus'] : [];
+                              foreach (($jbrowseSession['sample_hits'] ?? []) as $hitIndex => $hit):
+                                if (!is_array($hit)) {
+                                  continue;
+                                }
+                                $hitChrom = trim((string) ($hit['chrom'] ?? ''));
+                                $hitStart = (int) ($hit['start'] ?? -1);
+                                $hitEnd = (int) ($hit['end'] ?? -1);
+                                if ($hitChrom === '' || $hitStart < 0 || $hitEnd <= $hitStart) {
+                                  continue;
+                                }
+                                $isSelectedHit = $hitChrom === (string) ($jbrowseRepresentative['chrom'] ?? '')
+                                  && $hitStart === (int) ($jbrowseRepresentative['start'] ?? -2)
+                                  && $hitEnd === (int) ($jbrowseRepresentative['end'] ?? -3);
+                            ?>
+                            <option value="<?= (int) $hitIndex ?>"
+                                    data-chrom="<?= htmlspecialchars($hitChrom, ENT_QUOTES, 'UTF-8') ?>"
+                                    data-start="<?= (int) $hitStart ?>"
+                                    data-end="<?= (int) $hitEnd ?>"
+                                    <?= $isSelectedHit ? 'selected' : '' ?>><?= htmlspecialchars((string) ($hit['label'] ?? ($hitChrom . ':' . ($hitStart + 1) . '-' . $hitEnd)), ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+                        <div class="jbrowse-track-list" id="searchJBrowseTrackControls">
+                          <label class="jbrowse-track-item">
+                            <input type="checkbox" data-track-id="repeats_hg38" checked>
+                            <span class="jbrowse-track-dot" style="background:#d8a11a"></span>
+                            <span class="jbrowse-track-name">Repeats</span>
+                          </label>
+                          <label class="jbrowse-track-item">
+                            <input type="checkbox" data-track-id="ncbi_refseq_window" checked>
+                            <span class="jbrowse-track-dot" style="background:#5fa1da"></span>
+                            <span class="jbrowse-track-name">NCBI RefSeq</span>
+                          </label>
+                          <label class="jbrowse-track-item">
+                            <input type="checkbox" data-track-id="clinvar_variants" checked>
+                            <span class="jbrowse-track-dot" style="background:#73b36b"></span>
+                            <span class="jbrowse-track-name">ClinVar variants</span>
+                          </label>
+                          <label class="jbrowse-track-item">
+                            <input type="checkbox" data-track-id="clinvar_cnv" checked>
+                            <span class="jbrowse-track-dot" style="background:#cc7f9f"></span>
+                            <span class="jbrowse-track-name">ClinVar CNV</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="jbrowse-browser-stage">
+                    <div id="search_jbrowse_linear_genome_view">
+                      <div class="jbrowse-loading">Preparing genome browser session...</div>
+                    </div>
+                  </div>
+                </section>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -990,6 +1481,195 @@ require __DIR__ . '/head.php';
           });
       }());
       </script>
+      <?php if ($jbrowseSession !== null): ?>
+      <script src="https://unpkg.com/@jbrowse/react-linear-genome-view2@3.5.0/dist/react-linear-genome-view.umd.production.min.js" crossorigin></script>
+      <script>
+      (function () {
+        const mount = document.getElementById('search_jbrowse_linear_genome_view');
+        const controls = Array.from(document.querySelectorAll('#searchJBrowseTrackControls input[data-track-id]'));
+        const hitSelect = document.getElementById('searchJBrowseHitSelect');
+        const repeatCountEl = document.getElementById('searchJBrowseRepeatCount');
+        const refseqCountEl = document.getElementById('searchJBrowseRefseqCount');
+        const defaultLocEl = document.getElementById('searchJBrowseDefaultLoc');
+        const openLink = document.getElementById('searchJBrowseOpenLink');
+        const browserBaseUrl = <?= json_encode((string) ($jbrowseSession['browser_url'] ?? ''), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        const configUrl = <?= json_encode((string) ($jbrowseSession['config_url'] ?? ''), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+
+        if (!mount || !configUrl || typeof window.JBrowseReactLinearGenomeView === 'undefined') {
+          return;
+        }
+
+        const { React, createRoot, createViewState, JBrowseLinearGenomeView } = window.JBrowseReactLinearGenomeView;
+        const root = createRoot(mount);
+        let runtimeConfig = null;
+
+        function getSelectedTrackIds() {
+          return controls.filter(input => input.checked).map(input => input.dataset.trackId);
+        }
+
+        function getSelectedHitParams() {
+          const option = hitSelect && hitSelect.selectedOptions.length ? hitSelect.selectedOptions[0] : null;
+          return {
+            chrom: option ? String(option.dataset.chrom || '') : '',
+            start: option ? String(option.dataset.start || '') : '',
+            end: option ? String(option.dataset.end || '') : '',
+          };
+        }
+
+        function buildBrowserUrl() {
+          const url = new URL(browserBaseUrl, window.location.origin);
+          const hit = getSelectedHitParams();
+          if (hit.chrom) {
+            url.searchParams.set('chr', hit.chrom);
+          }
+          if (hit.start) {
+            url.searchParams.set('start', hit.start);
+          }
+          if (hit.end) {
+            url.searchParams.set('end', hit.end);
+          }
+          url.searchParams.delete('format');
+          return url.toString();
+        }
+
+        function buildConfigUrl() {
+          const url = new URL(buildBrowserUrl());
+          url.searchParams.set('format', 'config');
+          return url.toString();
+        }
+
+        function renderBrowser() {
+          if (!runtimeConfig) {
+            return;
+          }
+          const selectedTrackIds = getSelectedTrackIds();
+          const trackConfigs = [
+            {
+              type: 'FeatureTrack',
+              trackId: 'repeats_hg38',
+              name: 'Repeats',
+              assemblyNames: ['hg38'],
+              category: ['Annotation'],
+              adapter: {
+                type: 'Gff3Adapter',
+                gffLocation: { uri: runtimeConfig.repeatTrackUrl },
+              },
+            },
+            {
+              type: 'FeatureTrack',
+              trackId: 'ncbi_refseq_window',
+              name: 'NCBI RefSeq',
+              assemblyNames: ['hg38'],
+              category: ['Annotation'],
+              adapter: {
+                type: 'Gff3Adapter',
+                gffLocation: { uri: runtimeConfig.refseqTrackUrl },
+              },
+            },
+            {
+              type: 'FeatureTrack',
+              trackId: 'clinvar_variants',
+              name: 'ClinVar variants',
+              assemblyNames: ['hg38'],
+              category: ['ClinVar'],
+              adapter: {
+                type: 'BigBedAdapter',
+                uri: runtimeConfig.clinvarMainUrl,
+              },
+            },
+            {
+              type: 'FeatureTrack',
+              trackId: 'clinvar_cnv',
+              name: 'ClinVar CNV',
+              assemblyNames: ['hg38'],
+              category: ['ClinVar'],
+              adapter: {
+                type: 'BigBedAdapter',
+                uri: runtimeConfig.clinvarCnvUrl,
+              },
+            },
+          ];
+          const selectedTracks = trackConfigs.filter(track => selectedTrackIds.includes(track.trackId));
+          const state = new createViewState({
+            assembly: {
+              name: 'hg38',
+              sequence: {
+                type: 'ReferenceSequenceTrack',
+                trackId: 'hg38_reference',
+                name: 'Reference sequence',
+                assemblyNames: ['hg38'],
+                adapter: {
+                  type: 'IndexedFastaAdapter',
+                  fastaLocation: { uri: runtimeConfig.fastaUrl },
+                  faiLocation: { uri: runtimeConfig.faiUrl },
+                },
+              },
+            },
+            tracks: selectedTracks,
+            defaultSession: {
+              name: runtimeConfig.pageMeta && runtimeConfig.pageMeta.te ? `JBrowse - ${runtimeConfig.pageMeta.te}` : 'JBrowse locus session',
+              view: {
+                id: 'linearGenomeView',
+                type: 'LinearGenomeView',
+                init: {
+                  assembly: 'hg38',
+                  loc: runtimeConfig.pageMeta.defaultLoc,
+                  tracks: selectedTrackIds,
+                },
+              },
+            },
+          });
+          root.render(React.createElement(JBrowseLinearGenomeView, { viewState: state }));
+        }
+
+        function applyConfig(config) {
+          runtimeConfig = config;
+          if (defaultLocEl && config.pageMeta) {
+            defaultLocEl.textContent = String(config.pageMeta.defaultLoc ?? '-');
+          }
+          if (repeatCountEl && config.pageMeta) {
+            repeatCountEl.textContent = String(config.pageMeta.repeatFeatureCount ?? '-');
+          }
+          if (refseqCountEl && config.pageMeta) {
+            refseqCountEl.textContent = String(config.pageMeta.refseqFeatureCount ?? '-');
+          }
+          if (openLink) {
+            openLink.href = buildBrowserUrl();
+          }
+          renderBrowser();
+          window.requestAnimationFrame(renderBrowser);
+          window.setTimeout(renderBrowser, 120);
+        }
+
+        function loadConfig(url) {
+          root.render(React.createElement('div', { className: 'jbrowse-loading' }, 'Loading selected genomic hit...'));
+          fetch(url, { cache: 'no-store' })
+            .then(function (response) {
+              if (!response.ok) {
+                throw new Error('Failed to load JBrowse config');
+              }
+              return response.json();
+            })
+            .then(applyConfig)
+            .catch(function (error) {
+              console.error(error);
+              mount.innerHTML = '<div class="jbrowse-loading">Genome browser is unavailable right now.</div>';
+            });
+        }
+
+        controls.forEach(input => {
+          input.addEventListener('change', renderBrowser);
+        });
+        if (hitSelect) {
+          hitSelect.addEventListener('change', function () {
+            loadConfig(buildConfigUrl());
+          });
+        }
+
+        loadConfig(configUrl);
+      }());
+      </script>
+      <?php endif; ?>
 
       <script>
       (function () {
@@ -1068,3 +1748,4 @@ require __DIR__ . '/head.php';
   </div>
 </body>
 </html>
+

@@ -7,6 +7,54 @@ require __DIR__ . '/head.php';
 
 $downloadItems = [
     [
+        'dataset' => 'Cancer Cell Line expression matrix',
+        'filename' => 'CCLE_TE_normalized_count.tsv',
+        'path' => '/TE-/new_data/bulk_expression_web/cancer_cell_line/CCLE_TE_normalized_count.tsv',
+        'format' => 'TSV',
+        'used_in' => 'Expression browse, detail summary, and Plotly views',
+        'description' => 'Raw bulk expression matrix for the cancer cell line cohort used to derive Cancer Cell Line expression summaries and charts.',
+    ],
+    [
+        'dataset' => 'Cancer Cell Line metadata',
+        'filename' => 'CCLE_meta.csv',
+        'path' => '/TE-/new_data/bulk_expression_web/cancer_cell_line/CCLE_meta.csv',
+        'format' => 'CSV',
+        'used_in' => 'Expression dataset preprocessing',
+        'description' => 'Metadata mapping each cancer cell line run to its cohort label for aggregation and plotting.',
+    ],
+    [
+        'dataset' => 'Normal Cell Line expression matrix',
+        'filename' => 'Normal_cell_line_TE_normalized_count.tsv',
+        'path' => '/TE-/new_data/bulk_expression_web/normal_cell_line/Normal_cell_line_TE_normalized_count.tsv',
+        'format' => 'TSV',
+        'used_in' => 'Expression browse, detail summary, and Plotly views',
+        'description' => 'Raw bulk expression matrix for normal cell line contexts used in the public Expression module.',
+    ],
+    [
+        'dataset' => 'Normal Cell Line metadata',
+        'filename' => 'Normal_cell_line_meta.csv',
+        'path' => '/TE-/new_data/bulk_expression_web/normal_cell_line/Normal_cell_line_meta.csv',
+        'format' => 'CSV',
+        'used_in' => 'Expression dataset preprocessing',
+        'description' => 'Metadata mapping normal cell line runs to their cell type labels.',
+    ],
+    [
+        'dataset' => 'Normal Tissue expression matrix',
+        'filename' => 'Normal_tissue_TE_normalized_count.tsv',
+        'path' => '/TE-/new_data/bulk_expression_web/normal_tissue/Normal_tissue_TE_normalized_count.tsv',
+        'format' => 'TSV',
+        'used_in' => 'Expression browse, detail summary, and Plotly views',
+        'description' => 'Raw bulk expression matrix for normal tissue contexts used in the public Expression module.',
+    ],
+    [
+        'dataset' => 'Normal Tissue metadata',
+        'filename' => 'Normal_tissue_meta.csv',
+        'path' => '/TE-/new_data/bulk_expression_web/normal_tissue/Normal_tissue_meta.csv',
+        'format' => 'CSV',
+        'used_in' => 'Expression dataset preprocessing',
+        'description' => 'Metadata mapping normal tissue runs to their organ labels.',
+    ],
+    [
         'dataset' => 'Graph seed',
         'filename' => 'te_kg2_graph_seed.json',
         'path' => '/TE-/data/processed/te_kg2_graph_seed.json',
@@ -392,11 +440,11 @@ $downloadItems = [
               return button;
             };
 
-            pagination.appendChild(makeButton('‹', Math.max(1, currentPage - 1), false));
+            pagination.appendChild(makeButton('鈥?, Math.max(1, currentPage - 1), false));
             for (let page = 1; page <= totalPages; page += 1) {
               pagination.appendChild(makeButton(String(page), page, page === currentPage));
             }
-            pagination.appendChild(makeButton('›', Math.min(totalPages, currentPage + 1), false));
+            pagination.appendChild(makeButton('鈥?, Math.min(totalPages, currentPage + 1), false));
           }
 
           function render() {

@@ -28,7 +28,7 @@
 
 ---
 
-search后面加个JBrowse
+search后面加个JBrowse√
 + tracks: hg38.fa.gz
   + refseq: 已发
   + Clinvar: 搜索

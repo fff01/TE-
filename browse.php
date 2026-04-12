@@ -264,8 +264,7 @@ $browseRows = tekg_browse_load_rows();
           font-weight: 700;
           color: #617089;
           letter-spacing: 0.04em;
-          text-transform: uppercase;
-        }
+                  }
 
         .browse-filter-input,
         .browse-filter-select,
@@ -351,9 +350,8 @@ $browseRows = tekg_browse_load_rows();
           background: #f3f6fa;
           color: #53657e;
           font-size: 12px;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          font-weight: 800;
+          letter-spacing: 0.02em;
+                    font-weight: 800;
         }
 
         .browse-table tr:last-child td {
@@ -575,7 +573,7 @@ $browseRows = tekg_browse_load_rows();
                     </colgroup>
                     <thead>
                       <tr>
-                        <th>TE name</th>
+                        <th>TE Name</th>
                         <th>Class</th>
                         <th>Family</th>
                         <th>Subtype</th>

@@ -476,3 +476,17 @@
 [2026-04-11 06:57:37] answer:prepared {"rows":0,"refs":0,"intent":"te_to_disease","depth":"shallow"}
 [2026-04-11 06:57:39] answer:llm
 [2026-04-11 06:57:39] answer:done {"mode":"neighbor_fallback+llm"}
+[2026-04-12 11:31:40] answer:start {"question":"LINE-1 related diseases\n\n[Current G6 graph context]\nMode: Tree\nCenter node: None\nSelected node: None\nKey-node level: 1\nFixed view: Off","question_raw":"LINE-1 related diseases","graph_state":{"mode":"tree","query":"","query_type":"","class_query":"","fixed_view":false,"key_node_level":1,"selected_node":{"id":"","label":"","type":""},"current_elements":[]},"language":"en","style":"simple","depth":"shallow"}
+[2026-04-12 11:31:40] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-04-12 11:31:40] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-04-12 11:31:41] answer:template_query {"rows":0}
+[2026-04-12 11:31:41] answer:prepared {"rows":0,"refs":0,"intent":"te_to_disease","depth":"shallow"}
+[2026-04-12 11:31:43] answer:structured_local {"error":"HTTP request failed: Failed to connect to 127.0.0.1 port 18087 after 2040 ms: Couldn't connect to server"}
+[2026-04-12 11:31:43] answer:done {"mode":"neighbor_fallback+structured_local"}
+[2026-04-12 11:32:59] answer:start {"question":"LINE-1 related diseases\n\n[Current G6 graph context]\nMode: Tree\nCenter node: None\nSelected node: None\nKey-node level: 1\nFixed view: Off","question_raw":"LINE-1 related diseases","graph_state":{"mode":"tree","query":"","query_type":"","class_query":"","fixed_view":false,"key_node_level":1,"selected_node":{"id":"","label":"","type":""},"current_elements":[]},"language":"en","style":"simple","depth":"shallow"}
+[2026-04-12 11:32:59] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-04-12 11:32:59] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-04-12 11:32:59] answer:template_query {"rows":0}
+[2026-04-12 11:32:59] answer:prepared {"rows":0,"refs":0,"intent":"te_to_disease","depth":"shallow"}
+[2026-04-12 11:33:01] answer:llm
+[2026-04-12 11:33:01] answer:done {"mode":"neighbor_fallback+llm"}
