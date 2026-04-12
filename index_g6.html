@@ -345,7 +345,7 @@
     <div class="actions">
       <span class="badge" id="page-badge">Independent G6 entry</span>
       <div class="lang">
-        <button id="lang-zh" type="button">涓枃</button>
+        <button id="lang-zh" type="button">濞戞搩鍘介弸?/button>
         <button id="lang-en" type="button" class="active">English</button>
       </div>
     </div>
@@ -403,35 +403,46 @@
       <div class="detail" id="node-details">Preparing G6 workspace...</div>
     </section>
     <section class="panel">
-      <div class="head"><h2 id="qa-title">Interactive QA Demo</h2></div>
-      <div class="chat">
-        <div class="qa-controls">
-          <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-mode-label">Answer mode</span>
-            <div class="segmented" id="style-segmented">
-              <button id="mode-simple" class="active" type="button">Brief</button>
-              <button id="mode-detailed" type="button">Detailed</button>
-              <button id="mode-custom" type="button">Custom</button>
+      <div class="head qa-head">
+        <h2 id="qa-title" hidden>Interactive QA Demo</h2>
+        <div class="qa-topbar">
+          <div class="qa-dropdown" data-qa-dropdown="style">
+            <button id="qa-style-trigger" class="qa-dropdown-trigger" type="button" data-qa-trigger="style" aria-expanded="false" aria-controls="qa-style-menu">
+              <span id="qa-style-current">Brief</span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="qa-style-menu" class="qa-dropdown-menu" data-qa-menu="style">
+              <button id="mode-simple" class="qa-dropdown-option active" type="button">Brief</button>
+              <button id="mode-detailed" class="qa-dropdown-option" type="button">Detailed</button>
+              <button id="mode-custom" class="qa-dropdown-option" type="button">Custom</button>
             </div>
           </div>
-          <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-depth-label">Answer depth</span>
-            <div class="segmented" id="depth-segmented">
-              <button id="depth-shallow" class="active" type="button">Shallow</button>
-              <button id="depth-medium" type="button">Medium</button>
-              <button id="depth-deep" type="button">Deep</button>
-              <button id="depth-custom" type="button">Custom</button>
+          <div class="qa-dropdown" data-qa-dropdown="depth">
+            <button id="qa-depth-trigger" class="qa-dropdown-trigger" type="button" data-qa-trigger="depth" aria-expanded="false" aria-controls="qa-depth-menu">
+              <span id="qa-depth-current">Shallow</span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="qa-depth-menu" class="qa-dropdown-menu" data-qa-menu="depth">
+              <button id="depth-shallow" class="qa-dropdown-option active" type="button">Shallow</button>
+              <button id="depth-medium" class="qa-dropdown-option" type="button">Medium</button>
+              <button id="depth-deep" class="qa-dropdown-option" type="button">Deep</button>
+              <button id="depth-custom" class="qa-dropdown-option" type="button">Custom</button>
             </div>
           </div>
-          <div class="qa-mode">
-            <span class="qa-mode-label" id="qa-model-label">Model</span>
-            <div class="segmented" id="model-segmented">
-              <button id="model-qwen" class="active" type="button">Qwen</button>
-              <button id="model-deepseek" type="button">DeepSeek</button>
+          <div class="qa-dropdown" data-qa-dropdown="model">
+            <button id="qa-model-trigger" class="qa-dropdown-trigger" type="button" data-qa-trigger="model" aria-expanded="false" aria-controls="qa-model-menu">
+              <span id="qa-model-current">Qwen</span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="qa-model-menu" class="qa-dropdown-menu" data-qa-menu="model">
+              <button id="model-qwen" class="qa-dropdown-option active" type="button">Qwen</button>
+              <button id="model-deepseek" class="qa-dropdown-option" type="button">DeepSeek</button>
             </div>
           </div>
         </div>
-        <div class="custom-editor" id="custom-editor">
+      </div>
+      <div class="chat">
+        <div class="custom-editor" id="custom-editor"> 
           <div class="custom-editor-card">
             <div class="custom-editor-title" id="custom-editor-title">Custom prompt</div>
             <div class="custom-editor-help" id="custom-editor-help">Write the tone, structure, emphasis, or constraints you want the QA model to follow. After confirmation, it will be temporarily saved and used for subsequent questions.</div>

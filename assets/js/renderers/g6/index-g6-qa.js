@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   if (window.__TEKG_RENDERER_MODE !== 'g6') return;
 
   const chatMessages = document.getElementById('chat-messages');
@@ -219,6 +219,9 @@
     const depthCustomBtn = byId('depth-custom');
     const modelQwenBtn = byId('model-qwen');
     const modelDeepSeekBtn = byId('model-deepseek');
+    const styleCurrent = byId('qa-style-current');
+    const depthCurrent = byId('qa-depth-current');
+    const modelCurrent = byId('qa-model-current');
     const t = qaText();
 
     if (byId('qa-title')) byId('qa-title').textContent = t.qaTitle || 'Interactive QA Demo';
@@ -233,6 +236,7 @@
       modeSimpleBtn.classList.toggle('active', currentAnswerStyle === 'simple');
       modeDetailedBtn.classList.toggle('active', currentAnswerStyle === 'detailed');
       modeCustomBtn.classList.toggle('active', currentAnswerStyle === 'custom');
+      if (styleCurrent) styleCurrent.textContent = currentAnswerStyle === 'detailed' ? 'Detailed' : currentAnswerStyle === 'custom' ? 'Custom' : 'Brief';
     }
 
     if (depthShallowBtn && depthMediumBtn && depthDeepBtn && depthCustomBtn) {
@@ -244,6 +248,7 @@
       depthMediumBtn.classList.toggle('active', currentAnswerDepth === 'medium');
       depthDeepBtn.classList.toggle('active', currentAnswerDepth === 'deep');
       depthCustomBtn.classList.toggle('active', currentAnswerDepth === 'custom');
+      if (depthCurrent) depthCurrent.textContent = currentAnswerDepth === 'medium' ? 'Medium' : currentAnswerDepth === 'deep' ? 'Deep' : currentAnswerDepth === 'custom' ? 'Custom' : 'Shallow';
     }
 
     if (modelQwenBtn && modelDeepSeekBtn) {
@@ -251,6 +256,7 @@
       modelDeepSeekBtn.textContent = t.modelDeepSeek || 'DeepSeek';
       modelQwenBtn.classList.toggle('active', currentModelProvider === 'qwen');
       modelDeepSeekBtn.classList.toggle('active', currentModelProvider === 'deepseek');
+      if (modelCurrent) modelCurrent.textContent = currentModelProvider === 'deepseek' ? (t.modelDeepSeek || 'DeepSeek') : (t.modelQwen || 'Qwen');
     }
 
     userInput.placeholder = t.ph || 'Ask your question';
@@ -381,7 +387,7 @@
       ? `Custom (row=${result.custom_rows || currentCustomDepth.rows}, references=${result.custom_references || currentCustomDepth.references})`
       : ({ shallow: 'Shallow', medium: 'Medium', deep: 'Deep' }[result.answer_depth] || 'Shallow');
     const t = qaText();
-    const prefix = `> ${(t.providerPrefix || 'Model: ')}${provider === 'deepseek' ? t.modelDeepSeek : t.modelQwen}\n> ${styleLabel} · Depth: ${depthLabel}\n\n`;
+    const prefix = `> ${(t.providerPrefix || 'Model: ')}${provider === 'deepseek' ? t.modelDeepSeek : t.modelQwen}\n> ${styleLabel} 闂?Depth: ${depthLabel}\n\n`;
     return `${prefix}${result.answer || t.fallback || 'No answer is available right now.'}`;
   }
 
@@ -448,7 +454,7 @@
     addMessage(question, 'user');
     userInput.value = '';
 
-    const loadingNode = addMessage('Retrieving graph evidence and generating the answer…', 'assistant');
+    const loadingNode = addMessage('Retrieving graph evidence and generating the answer...', 'assistant');
     try {
       const backend = await answerWithBackend(question);
       loadingNode.remove();
@@ -468,21 +474,22 @@
 
     document.addEventListener('click', (event) => {
       if (!event.target) return;
-      if (event.target.id === 'mode-simple') setAnswerStyle('simple');
-      if (event.target.id === 'mode-detailed') setAnswerStyle('detailed');
-      if (event.target.id === 'mode-custom') openCustomPromptEditor();
-      if (event.target.id === 'confirm-custom-editor') closeCustomEditor({ save: true });
-      if (event.target.id === 'cancel-custom-editor') {
+      const target = event.target;
+      if (target.id === 'mode-simple') { setAnswerStyle('simple'); if (target.blur) target.blur(); }
+      if (target.id === 'mode-detailed') { setAnswerStyle('detailed'); if (target.blur) target.blur(); }
+      if (target.id === 'mode-custom') { openCustomPromptEditor(); if (target.blur) target.blur(); }
+      if (target.id === 'confirm-custom-editor') closeCustomEditor({ save: true });
+      if (target.id === 'cancel-custom-editor') {
         customPromptDraft = currentCustomPrompt || '';
         customDepthDraft = { ...currentCustomDepth };
         closeCustomEditor({ save: false });
       }
-      if (event.target.id === 'depth-shallow') setAnswerDepth('shallow');
-      if (event.target.id === 'depth-medium') setAnswerDepth('medium');
-      if (event.target.id === 'depth-deep') setAnswerDepth('deep');
-      if (event.target.id === 'depth-custom') openCustomDepthEditor();
-      if (event.target.id === 'model-qwen') setModelProvider('qwen');
-      if (event.target.id === 'model-deepseek') setModelProvider('deepseek');
+      if (target.id === 'depth-shallow') { setAnswerDepth('shallow'); if (target.blur) target.blur(); }
+      if (target.id === 'depth-medium') { setAnswerDepth('medium'); if (target.blur) target.blur(); }
+      if (target.id === 'depth-deep') { setAnswerDepth('deep'); if (target.blur) target.blur(); }
+      if (target.id === 'depth-custom') { openCustomDepthEditor(); if (target.blur) target.blur(); }
+      if (target.id === 'model-qwen') { setModelProvider('qwen'); if (target.blur) target.blur(); }
+      if (target.id === 'model-deepseek') { setModelProvider('deepseek'); if (target.blur) target.blur(); }
     });
 
     window.addEventListener('tekg:g6-state-change', updateAnswerModeUi);
@@ -509,3 +516,4 @@
     console.error('G6 QA bootstrap failed:', error);
   });
 }());
+
