@@ -89,64 +89,80 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
         .qa-drawer {
           position: absolute;
           top: 92px;
-          right: 18px;
-          bottom: 18px;
+          left: calc(100% - 448px);
           width: 430px;
-          min-width: 340px;
-          max-width: calc(100vw - 72px);
+          height: calc(100% - 110px);
           background: #ffffff;
           border: 1px solid #dbe7f3;
           border-radius: 20px;
           box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
           overflow: hidden;
-          transform: translateX(calc(100% + 24px));
-          transition: transform 0.22s ease;
-          pointer-events: auto;
+          display: flex;
+          flex-direction: column;
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transform: translateY(12px) scale(0.985);
+          transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
           user-select: none;
         }
 
         .qa-overlay-layer.is-open .qa-drawer {
-          transform: translateX(0);
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+          transform: translateY(0) scale(1);
         }
 
+        .qa-overlay-layer.is-dragging .qa-drawer,
         .qa-overlay-layer.is-resizing .qa-drawer {
           transition: none;
         }
 
-        .qa-overlay-layer.is-resizing,
-        .qa-overlay-layer.is-resizing * {
-          cursor: ew-resize !important;
+        .qa-overlay-layer.is-dragging,
+        .qa-overlay-layer.is-dragging * {
+          cursor: move !important;
           user-select: none !important;
         }
 
-        .qa-drawer-resize {
-          position: absolute;
-          top: 0;
-          left: 0;
-          bottom: 0;
-          width: 14px;
-          padding: 0;
-          border: 0;
-          background: linear-gradient(90deg, rgba(143, 178, 234, 0.22) 0%, rgba(143, 178, 234, 0.06) 45%, rgba(143, 178, 234, 0) 100%);
-          cursor: ew-resize;
-          z-index: 2;
+        .qa-overlay-layer.is-resizing,
+        .qa-overlay-layer.is-resizing * {
+          user-select: none !important;
         }
 
-        .qa-drawer-resize::after {
+        .qa-drawer-drag {
+          position: relative;
+          flex: 0 0 22px;
+          width: 100%;
+          padding: 0;
+          border: 0;
+          border-bottom: 1px solid rgba(219, 231, 243, 0.95);
+          background: linear-gradient(180deg, rgba(248, 251, 255, 0.98) 0%, rgba(244, 248, 253, 0.94) 100%);
+          cursor: move;
+        }
+
+        .qa-drawer-drag::after {
           content: '';
           position: absolute;
           top: 50%;
-          left: 4px;
-          transform: translateY(-50%);
-          width: 4px;
-          height: 56px;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 56px;
+          height: 4px;
           border-radius: 999px;
           background: rgba(120, 146, 190, 0.42);
         }
 
-        .qa-drawer-resize:hover::after,
-        .qa-overlay-layer.is-resizing .qa-drawer-resize::after {
+        .qa-drawer-drag:hover::after,
+        .qa-overlay-layer.is-dragging .qa-drawer-drag::after {
           background: rgba(79, 123, 214, 0.68);
+        }
+
+        .qa-drawer-body {
+          position: relative;
+          flex: 1 1 auto;
+          min-height: 0;
+          overflow: hidden;
         }
 
         .qa-drawer iframe {
@@ -155,6 +171,187 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
           border: 0;
           display: block;
           background: #fff;
+        }
+
+        .qa-drawer-resize {
+          position: absolute;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          z-index: 3;
+        }
+
+        .qa-drawer-resize-w {
+          top: 24px;
+          left: 0;
+          bottom: 14px;
+          width: 14px;
+          cursor: ew-resize;
+        }
+
+        .qa-drawer-resize-e {
+          top: 24px;
+          right: 0;
+          bottom: 14px;
+          width: 14px;
+          cursor: ew-resize;
+        }
+
+        .qa-drawer-resize-s {
+          left: 14px;
+          right: 24px;
+          bottom: 0;
+          height: 14px;
+          cursor: ns-resize;
+        }
+
+        .qa-drawer-resize-nw {
+          top: 0;
+          left: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nwse-resize;
+        }
+
+        .qa-drawer-resize-ne {
+          top: 0;
+          right: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nesw-resize;
+        }
+
+        .qa-drawer-resize-sw {
+          left: 0;
+          bottom: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nesw-resize;
+        }
+
+        .qa-drawer-resize-se {
+          right: 0;
+          bottom: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nwse-resize;
+        }
+
+        .qa-drawer-resize-w::after,
+        .qa-drawer-resize-e::after,
+        .qa-drawer-resize-s::after,
+        .qa-drawer-resize-nw::after,
+        .qa-drawer-resize-ne::after,
+        .qa-drawer-resize-sw::after,
+        .qa-drawer-resize-se::after {
+          content: '';
+          position: absolute;
+          opacity: 0;
+          transition: opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+        }
+
+        .qa-drawer-resize-w::after,
+        .qa-drawer-resize-e::after {
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 56px;
+          border-radius: 999px;
+          background: rgba(120, 146, 190, 0.42);
+        }
+
+        .qa-drawer-resize-w::after {
+          left: 4px;
+        }
+
+        .qa-drawer-resize-e::after {
+          right: 4px;
+        }
+
+        .qa-drawer-resize-s::after {
+          left: 50%;
+          bottom: 4px;
+          transform: translateX(-50%);
+          width: 56px;
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(120, 146, 190, 0.42);
+        }
+
+        .qa-drawer-resize-nw::after,
+        .qa-drawer-resize-ne::after,
+        .qa-drawer-resize-sw::after,
+        .qa-drawer-resize-se::after {
+          width: 12px;
+          height: 12px;
+          background: transparent;
+        }
+
+        .qa-drawer-resize-nw::after {
+          top: 5px;
+          left: 5px;
+          border-left: 3px solid rgba(120, 146, 190, 0.58);
+          border-top: 3px solid rgba(120, 146, 190, 0.58);
+          border-top-left-radius: 10px;
+        }
+
+        .qa-drawer-resize-ne::after {
+          top: 5px;
+          right: 5px;
+          border-right: 3px solid rgba(120, 146, 190, 0.58);
+          border-top: 3px solid rgba(120, 146, 190, 0.58);
+          border-top-right-radius: 10px;
+        }
+
+        .qa-drawer-resize-sw::after {
+          left: 5px;
+          bottom: 5px;
+          border-left: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom-left-radius: 10px;
+        }
+
+        .qa-drawer-resize-se::after {
+          right: 5px;
+          bottom: 5px;
+          border-right: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom-right-radius: 10px;
+        }
+
+        .qa-drawer-resize-w:hover::after,
+        .qa-drawer-resize-e:hover::after,
+        .qa-drawer-resize-s:hover::after,
+        .qa-drawer-resize-nw:hover::after,
+        .qa-drawer-resize-ne:hover::after,
+        .qa-drawer-resize-sw:hover::after,
+        .qa-drawer-resize-se:hover::after {
+          opacity: 1;
+        }
+
+        .qa-drawer-resize-w:hover::after,
+        .qa-drawer-resize-e:hover::after,
+        .qa-drawer-resize-s:hover::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-w::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-e::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-s::after {
+          opacity: 1;
+          background: rgba(79, 123, 214, 0.68);
+        }
+
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-nw::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-ne::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-sw::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-se::after,
+        .qa-drawer-resize-nw:hover::after,
+        .qa-drawer-resize-ne:hover::after,
+        .qa-drawer-resize-sw:hover::after,
+        .qa-drawer-resize-se:hover::after {
+          opacity: 1;
+          border-left-color: rgba(79, 123, 214, 0.78);
+          border-right-color: rgba(79, 123, 214, 0.78);
+          border-top-color: rgba(79, 123, 214, 0.78);
+          border-bottom-color: rgba(79, 123, 214, 0.78);
         }
 
         .qa-fab {
@@ -199,9 +396,9 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
 
           .qa-drawer {
             top: 10px;
-            right: 10px;
-            bottom: 10px;
+            left: 10px;
             width: min(420px, calc(100vw - 20px));
+            height: calc(100% - 20px);
             border-radius: 16px;
           }
         }
@@ -220,12 +417,21 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
 
         <div class="qa-overlay-layer is-open" id="qaOverlay">
           <div class="qa-drawer" id="qaDrawer">
-            <button class="qa-drawer-resize" id="qaDrawerResize" type="button" aria-label="Resize QA assistant"></button>
-            <iframe
-              id="preview-qa-frame"
-              title="TE-KG QA overlay"
-              data-src="<?= htmlspecialchars($qaSrc, ENT_QUOTES, 'UTF-8') ?>"
-            ></iframe>
+            <button class="qa-drawer-drag" id="qaDrawerDrag" type="button" aria-label="Move QA assistant"></button>
+            <div class="qa-drawer-body">
+              <iframe
+                id="preview-qa-frame"
+                title="TE-KG QA overlay"
+                data-src="<?= htmlspecialchars($qaSrc, ENT_QUOTES, 'UTF-8') ?>"
+              ></iframe>
+            </div>
+            <button class="qa-drawer-resize qa-drawer-resize-w" id="qaDrawerResizeW" type="button" aria-label="Resize QA assistant width"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-e" id="qaDrawerResizeE" type="button" aria-label="Resize QA assistant width"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-s" id="qaDrawerResizeS" type="button" aria-label="Resize QA assistant height"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-nw" id="qaDrawerResizeNW" type="button" aria-label="Resize QA assistant"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-ne" id="qaDrawerResizeNE" type="button" aria-label="Resize QA assistant"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-sw" id="qaDrawerResizeSW" type="button" aria-label="Resize QA assistant"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-se" id="qaDrawerResizeSE" type="button" aria-label="Resize QA assistant"></button>
           </div>
 
           <button class="qa-fab" id="qaFab" type="button" aria-label="Toggle QA assistant">
@@ -252,16 +458,24 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
           const qaFrame = document.getElementById('preview-qa-frame');
           const overlay = document.getElementById('qaOverlay');
           const qaDrawer = document.getElementById('qaDrawer');
-          const qaDrawerResize = document.getElementById('qaDrawerResize');
+          const qaDrawerDrag = document.getElementById('qaDrawerDrag');
+          const qaDrawerResizeW = document.getElementById('qaDrawerResizeW');
+          const qaDrawerResizeE = document.getElementById('qaDrawerResizeE');
+          const qaDrawerResizeS = document.getElementById('qaDrawerResizeS');
+          const qaDrawerResizeNW = document.getElementById('qaDrawerResizeNW');
+          const qaDrawerResizeNE = document.getElementById('qaDrawerResizeNE');
+          const qaDrawerResizeSW = document.getElementById('qaDrawerResizeSW');
+          const qaDrawerResizeSE = document.getElementById('qaDrawerResizeSE');
           const fab = document.getElementById('qaFab');
-          if (!stage || !fullscreenBtn || !graphFrame || !qaFrame || !overlay || !qaDrawer || !qaDrawerResize || !fab) return;
+          if (!stage || !fullscreenBtn || !graphFrame || !qaFrame || !overlay || !qaDrawer || !qaDrawerDrag || !qaDrawerResizeW || !qaDrawerResizeE || !qaDrawerResizeS || !qaDrawerResizeNW || !qaDrawerResizeNE || !qaDrawerResizeSW || !qaDrawerResizeSE || !fab) return;
 
           let qaLoaded = false;
           let drawerOpen = true;
-          let qaDrawerWidth = 430;
+          let qaWindowRect = null;
           let boundGraphWindow = null;
-          let dragState = null;
+          let fabDragState = null;
           let movedDuringDrag = false;
+          let moveState = null;
           let resizeState = null;
 
           function resizeEmbeddedCytFrame(frame, padding = 55) {
@@ -275,22 +489,73 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
             } catch (_error) {}
           }
 
+          function getStageBounds() {
+            return stage.getBoundingClientRect();
+          }
 
           function getMinDrawerWidth() {
             return 340;
           }
 
+          function getMinDrawerHeight() {
+            return 360;
+          }
+
           function getMaxDrawerWidth() {
-            return Math.max(420, Math.min(820, window.innerWidth - 56));
+            const bounds = getStageBounds();
+            return Math.max(280, Math.min(820, bounds.width - 24));
+          }
+
+          function getMaxDrawerHeight() {
+            const bounds = getStageBounds();
+            return Math.max(280, bounds.height - 24);
           }
 
           function clampDrawerWidth(width) {
-            return Math.max(getMinDrawerWidth(), Math.min(getMaxDrawerWidth(), width));
+            const maxWidth = getMaxDrawerWidth();
+            const minWidth = Math.min(getMinDrawerWidth(), maxWidth);
+            return Math.max(minWidth, Math.min(maxWidth, width));
           }
 
-          function applyDrawerWidth() {
-            qaDrawerWidth = clampDrawerWidth(qaDrawerWidth);
-            qaDrawer.style.width = `${qaDrawerWidth}px`;
+          function clampDrawerHeight(height) {
+            const maxHeight = getMaxDrawerHeight();
+            const minHeight = Math.min(getMinDrawerHeight(), maxHeight);
+            return Math.max(minHeight, Math.min(maxHeight, height));
+          }
+
+          function getDefaultDrawerRect() {
+            const bounds = getStageBounds();
+            const width = clampDrawerWidth(430);
+            const height = clampDrawerHeight(Math.max(getMinDrawerHeight(), bounds.height - 110));
+            return clampDrawerRect({
+              left: bounds.width - width - 18,
+              top: 92,
+              width,
+              height,
+            });
+          }
+
+          function clampDrawerRect(rect) {
+            const bounds = getStageBounds();
+            const width = clampDrawerWidth(rect.width);
+            const height = clampDrawerHeight(rect.height);
+            const maxLeft = Math.max(12, bounds.width - width - 12);
+            const maxTop = Math.max(12, bounds.height - height - 12);
+            return {
+              left: Math.max(12, Math.min(maxLeft, rect.left)),
+              top: Math.max(12, Math.min(maxTop, rect.top)),
+              width,
+              height,
+            };
+          }
+
+          function applyDrawerRect() {
+            if (!qaWindowRect) qaWindowRect = getDefaultDrawerRect();
+            qaWindowRect = clampDrawerRect(qaWindowRect);
+            qaDrawer.style.left = `${qaWindowRect.left}px`;
+            qaDrawer.style.top = `${qaWindowRect.top}px`;
+            qaDrawer.style.width = `${qaWindowRect.width}px`;
+            qaDrawer.style.height = `${qaWindowRect.height}px`;
           }
 
           const fabPosition = {
@@ -439,6 +704,14 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
             applyOverlayState();
           }
 
+          function clearBodyCursor() {
+            document.body.style.cursor = '';
+          }
+
+          function setBodyCursor(value) {
+            document.body.style.cursor = value;
+          }
+
           fullscreenBtn.addEventListener('click', () => {
             enterFullscreenPreview();
           });
@@ -467,7 +740,7 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
 
           fab.addEventListener('pointerdown', (event) => {
             movedDuringDrag = false;
-            dragState = {
+            fabDragState = {
               pointerId: event.pointerId,
               startX: event.clientX,
               startY: event.clientY,
@@ -478,20 +751,20 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
           });
 
           fab.addEventListener('pointermove', (event) => {
-            if (!dragState || dragState.pointerId !== event.pointerId) return;
-            const dx = event.clientX - dragState.startX;
-            const dy = event.clientY - dragState.startY;
+            if (!fabDragState || fabDragState.pointerId !== event.pointerId) return;
+            const dx = event.clientX - fabDragState.startX;
+            const dy = event.clientY - fabDragState.startY;
             if (Math.abs(dx) > 4 || Math.abs(dy) > 4) movedDuringDrag = true;
-            fabPosition.x = dragState.baseX + dx;
-            fabPosition.y = dragState.baseY + dy;
+            fabPosition.x = fabDragState.baseX + dx;
+            fabPosition.y = fabDragState.baseY + dy;
             clampFabPosition();
             updateFabPosition();
           });
 
           fab.addEventListener('pointerup', (event) => {
-            if (dragState && dragState.pointerId === event.pointerId) {
+            if (fabDragState && fabDragState.pointerId === event.pointerId) {
               fab.releasePointerCapture(event.pointerId);
-              dragState = null;
+              fabDragState = null;
               if (!movedDuringDrag) {
                 toggleOverlay();
               }
@@ -499,50 +772,169 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge(
           });
 
           fab.addEventListener('pointercancel', (event) => {
-            if (dragState && dragState.pointerId === event.pointerId) {
+            if (fabDragState && fabDragState.pointerId === event.pointerId) {
               try { fab.releasePointerCapture(event.pointerId); } catch (_error) {}
-              dragState = null;
+              fabDragState = null;
             }
           });
 
-          qaDrawerResize.addEventListener('pointerdown', (event) => {
-            resizeState = {
+          qaDrawerDrag.addEventListener('pointerdown', (event) => {
+            moveState = {
               pointerId: event.pointerId,
               startX: event.clientX,
-              startWidth: qaDrawer.getBoundingClientRect().width || qaDrawerWidth,
+              startY: event.clientY,
+              startRect: { ...(qaWindowRect || getDefaultDrawerRect()) },
             };
-            overlay.classList.add('is-resizing');
-            qaDrawerResize.setPointerCapture(event.pointerId);
+            overlay.classList.add('is-dragging');
+            setBodyCursor('move');
+            qaDrawerDrag.setPointerCapture(event.pointerId);
             event.preventDefault();
           });
 
-          qaDrawerResize.addEventListener('pointermove', (event) => {
+          qaDrawerDrag.addEventListener('pointermove', (event) => {
+            if (!moveState || moveState.pointerId !== event.pointerId) return;
+            const dx = event.clientX - moveState.startX;
+            const dy = event.clientY - moveState.startY;
+            qaWindowRect = clampDrawerRect({
+              ...moveState.startRect,
+              left: moveState.startRect.left + dx,
+              top: moveState.startRect.top + dy,
+            });
+            applyDrawerRect();
+          });
+
+          function finishMove(event) {
+            if (!moveState || moveState.pointerId !== event.pointerId) return;
+            try {
+              qaDrawerDrag.releasePointerCapture(event.pointerId);
+            } catch (_error) {}
+            moveState = null;
+            overlay.classList.remove('is-dragging');
+            clearBodyCursor();
+          }
+
+          qaDrawerDrag.addEventListener('pointerup', finishMove);
+          qaDrawerDrag.addEventListener('pointercancel', finishMove);
+
+          function getResizeCursor(handle) {
+            if (handle === 'w' || handle === 'e') return 'ew-resize';
+            if (handle === 's') return 'ns-resize';
+            if (handle === 'nw' || handle === 'se') return 'nwse-resize';
+            if (handle === 'ne' || handle === 'sw') return 'nesw-resize';
+            return 'default';
+          }
+
+          function startResize(handle, element, event) {
+            resizeState = {
+              handle,
+              pointerId: event.pointerId,
+              startX: event.clientX,
+              startY: event.clientY,
+              startRect: { ...(qaWindowRect || getDefaultDrawerRect()) },
+              element,
+            };
+            overlay.classList.add('is-resizing');
+            setBodyCursor(getResizeCursor(handle));
+            element.setPointerCapture(event.pointerId);
+            event.preventDefault();
+          }
+
+          function updateResize(event) {
             if (!resizeState || resizeState.pointerId !== event.pointerId) return;
             const dx = event.clientX - resizeState.startX;
-            qaDrawerWidth = clampDrawerWidth(resizeState.startWidth - dx);
-            applyDrawerWidth();
-          });
+            const dy = event.clientY - resizeState.startY;
+            const startRect = resizeState.startRect;
+            const minWidth = Math.min(getMinDrawerWidth(), getMaxDrawerWidth());
+            const maxWidth = getMaxDrawerWidth();
+            const minHeight = Math.min(getMinDrawerHeight(), getMaxDrawerHeight());
+            const maxHeight = getMaxDrawerHeight();
+            const startRight = startRect.left + startRect.width;
+            const startBottom = startRect.top + startRect.height;
+            let left = startRect.left;
+            let top = startRect.top;
+            let width = startRect.width;
+            let height = startRect.height;
+
+            if (resizeState.handle.includes('w')) {
+              left = Math.min(Math.max(12, startRect.left + dx), startRight - minWidth);
+              width = startRight - left;
+              if (width > maxWidth) {
+                width = maxWidth;
+                left = startRight - width;
+              }
+            }
+
+            if (resizeState.handle.includes('e')) {
+              width = Math.max(minWidth, Math.min(maxWidth, startRect.width + dx));
+            }
+
+            if (resizeState.handle.includes('n')) {
+              top = Math.min(Math.max(12, startRect.top + dy), startBottom - minHeight);
+              height = startBottom - top;
+              if (height > maxHeight) {
+                height = maxHeight;
+                top = startBottom - height;
+              }
+            }
+
+            if (resizeState.handle.includes('s')) {
+              height = Math.max(minHeight, Math.min(maxHeight, startRect.height + dy));
+            }
+
+            qaWindowRect = clampDrawerRect({ left, top, width, height });
+            applyDrawerRect();
+          }
+
+          qaDrawerResizeW.addEventListener('pointerdown', (event) => startResize('w', qaDrawerResizeW, event));
+          qaDrawerResizeE.addEventListener('pointerdown', (event) => startResize('e', qaDrawerResizeE, event));
+          qaDrawerResizeS.addEventListener('pointerdown', (event) => startResize('s', qaDrawerResizeS, event));
+          qaDrawerResizeNW.addEventListener('pointerdown', (event) => startResize('nw', qaDrawerResizeNW, event));
+          qaDrawerResizeNE.addEventListener('pointerdown', (event) => startResize('ne', qaDrawerResizeNE, event));
+          qaDrawerResizeSW.addEventListener('pointerdown', (event) => startResize('sw', qaDrawerResizeSW, event));
+          qaDrawerResizeSE.addEventListener('pointerdown', (event) => startResize('se', qaDrawerResizeSE, event));
+
+          qaDrawerResizeW.addEventListener('pointermove', updateResize);
+          qaDrawerResizeE.addEventListener('pointermove', updateResize);
+          qaDrawerResizeS.addEventListener('pointermove', updateResize);
+          qaDrawerResizeNW.addEventListener('pointermove', updateResize);
+          qaDrawerResizeNE.addEventListener('pointermove', updateResize);
+          qaDrawerResizeSW.addEventListener('pointermove', updateResize);
+          qaDrawerResizeSE.addEventListener('pointermove', updateResize);
 
           function finishResize(event) {
             if (!resizeState || resizeState.pointerId !== event.pointerId) return;
             try {
-              qaDrawerResize.releasePointerCapture(event.pointerId);
+              resizeState.element.releasePointerCapture(event.pointerId);
             } catch (_error) {}
             resizeState = null;
             overlay.classList.remove('is-resizing');
+            clearBodyCursor();
           }
 
-          qaDrawerResize.addEventListener('pointerup', finishResize);
-          qaDrawerResize.addEventListener('pointercancel', finishResize);
+          qaDrawerResizeW.addEventListener('pointerup', finishResize);
+          qaDrawerResizeW.addEventListener('pointercancel', finishResize);
+          qaDrawerResizeE.addEventListener('pointerup', finishResize);
+          qaDrawerResizeE.addEventListener('pointercancel', finishResize);
+          qaDrawerResizeS.addEventListener('pointerup', finishResize);
+          qaDrawerResizeS.addEventListener('pointercancel', finishResize);
+          qaDrawerResizeNW.addEventListener('pointerup', finishResize);
+          qaDrawerResizeNW.addEventListener('pointercancel', finishResize);
+          qaDrawerResizeNE.addEventListener('pointerup', finishResize);
+          qaDrawerResizeNE.addEventListener('pointercancel', finishResize);
+          qaDrawerResizeSW.addEventListener('pointerup', finishResize);
+          qaDrawerResizeSW.addEventListener('pointercancel', finishResize);
+          qaDrawerResizeSE.addEventListener('pointerup', finishResize);
+          qaDrawerResizeSE.addEventListener('pointercancel', finishResize);
 
           window.addEventListener('resize', () => {
             clampFabPosition();
             updateFabPosition();
-            applyDrawerWidth();
+            qaWindowRect = clampDrawerRect(qaWindowRect || getDefaultDrawerRect());
+            applyDrawerRect();
           });
 
-          qaDrawerWidth = Math.round(qaDrawer.getBoundingClientRect().width) || qaDrawerWidth;
-          applyDrawerWidth();
+          qaWindowRect = getDefaultDrawerRect();
+          applyDrawerRect();
           clampFabPosition();
           updateFabPosition();
           ensureQaLoaded();
