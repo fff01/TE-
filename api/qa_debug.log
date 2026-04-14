@@ -504,3 +504,10 @@
 [2026-04-13 08:58:16] answer:prepared {"rows":0,"refs":0,"intent":"te_to_disease","depth":"shallow"}
 [2026-04-13 08:58:18] answer:structured_local {"error":"HTTP request failed: Failed to connect to 127.0.0.1 port 18087 after 2053 ms: Couldn't connect to server"}
 [2026-04-13 08:58:18] answer:done {"mode":"neighbor_fallback+structured_local"}
+[2026-04-14 03:14:10] answer:start {"question":"LINE-1 related diseases\n\n[Current G6 graph context]\nMode: Dynamic graph\nCenter node: LINE1\nSelected node: None\nKey-node level: 1\nFixed view: Off","question_raw":"LINE-1 related diseases","graph_state":{"mode":"dynamic","query":"LINE1","query_type":"","class_query":"","fixed_view":false,"key_node_level":1,"selected_node":{"id":"","label":"","type":""},"current_elements":[]},"language":"en","style":"simple","depth":"shallow"}
+[2026-04-14 03:14:10] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-04-14 03:14:10] answer:intent {"entity":"LINE1","disease":null,"intent":"te_to_disease"}
+[2026-04-14 03:14:11] answer:template_query {"rows":0}
+[2026-04-14 03:14:11] answer:prepared {"rows":0,"refs":0,"intent":"te_to_disease","depth":"shallow"}
+[2026-04-14 03:14:13] answer:llm
+[2026-04-14 03:14:13] answer:done {"mode":"neighbor_fallback+llm"}

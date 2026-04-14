@@ -290,6 +290,161 @@ function tekg_karyotype_lookup_proto(string $query, string $type = 'all', ?array
     return $entry;
 }
 
+
+function tekg_tree_classification_index_proto(): ?array
+{
+    static $lookup = null;
+    static $loaded = false;
+    if ($loaded) {
+        return $lookup;
+    }
+    $loaded = true;
+
+    $file = __DIR__ . '/data/processed/tree_te_lineage.json';
+    if (!is_file($file)) {
+        return null;
+    }
+
+    $decoded = json_decode((string) file_get_contents($file), true);
+    if (!is_array($decoded)) {
+        return null;
+    }
+
+    $nodes = is_array($decoded['nodes'] ?? null) ? $decoded['nodes'] : [];
+    $edges = is_array($decoded['edges'] ?? null) ? $decoded['edges'] : [];
+    $nodeMap = [];
+    $nameIndex = [];
+    $canonicalIndex = [];
+    foreach ($nodes as $node) {
+        if (!is_array($node)) {
+            continue;
+        }
+        $name = trim((string) ($node['name'] ?? ''));
+        if ($name === '') {
+            continue;
+        }
+        $nodeMap[$name] = $node;
+        $strictKey = tekg_lower_proto(tekg_clean_label_proto($name));
+        $canonicalKey = tekg_canonicalize_label_proto($name);
+        if ($strictKey !== '') {
+            $nameIndex[$strictKey] = $name;
+        }
+        if ($canonicalKey !== '') {
+            $canonicalIndex[$canonicalKey] = $name;
+        }
+    }
+
+    $parentMap = [];
+    foreach ($edges as $edge) {
+        if (!is_array($edge)) {
+            continue;
+        }
+        $child = trim((string) ($edge['child'] ?? ''));
+        $parent = trim((string) ($edge['parent'] ?? ''));
+        if ($child === '' || $parent === '') {
+            continue;
+        }
+        $parentMap[$child] = $parent;
+    }
+
+    $lookup = [
+        'root' => (string) ($decoded['root'] ?? ''),
+        'nodes' => $nodeMap,
+        'name_index' => $nameIndex,
+        'canonical_index' => $canonicalIndex,
+        'parent_map' => $parentMap,
+    ];
+    return $lookup;
+}
+
+function tekg_tree_classification_display_label_proto(string $label): string
+{
+    $map = [
+        'TE' => 'TE - Human',
+        'Retrotransposon' => 'Class I: Retrotransposons',
+        'DNA Transposon' => 'Class II: DNA Transposons',
+        'SINE' => 'SINEs',
+    ];
+    return $map[$label] ?? $label;
+}
+
+function tekg_tree_classification_lookup_proto(string $query, string $type = 'all', ?array $repbase = null, ?array $dfam = null): ?array
+{
+    $query = trim($query);
+    if ($query === '') {
+        return null;
+    }
+
+    $normalizedType = strtoupper(trim($type));
+    if (in_array($normalizedType, ['DISEASE', 'FUNCTION', 'PAPER'], true)) {
+        return null;
+    }
+
+    $lookup = tekg_tree_classification_index_proto();
+    if (!is_array($lookup)) {
+        return null;
+    }
+
+    $candidates = [$query];
+    if (is_array($repbase)) {
+        foreach (['nm', 'id'] as $key) {
+            $candidate = trim((string) ($repbase[$key] ?? ''));
+            if ($candidate !== '') {
+                $candidates[] = $candidate;
+            }
+        }
+    }
+    if (is_array($dfam)) {
+        foreach (['name', 'accession', 'matched_query'] as $key) {
+            $candidate = trim((string) ($dfam[$key] ?? ''));
+            if ($candidate !== '') {
+                $candidates[] = $candidate;
+            }
+        }
+    }
+
+    $teName = null;
+    foreach ($candidates as $candidate) {
+        $strictKey = tekg_lower_proto(tekg_clean_label_proto($candidate));
+        $canonicalKey = tekg_canonicalize_label_proto($candidate);
+        $teName = $lookup['name_index'][$strictKey] ?? $lookup['canonical_index'][$canonicalKey] ?? null;
+        if (is_string($teName) && $teName !== '') {
+            break;
+        }
+    }
+
+    if (!is_string($teName) || $teName === '') {
+        return null;
+    }
+
+    $path = [];
+    $seen = [];
+    $current = $teName;
+    while ($current !== '' && !isset($seen[$current])) {
+        $seen[$current] = true;
+        $node = $lookup['nodes'][$current] ?? ['name' => $current, 'depth' => count($path), 'description' => ''];
+        $path[] = [
+            'name' => $current,
+            'display_label' => tekg_tree_classification_display_label_proto($current),
+            'depth' => (int) ($node['depth'] ?? count($path)),
+            'description' => (string) ($node['description'] ?? ''),
+        ];
+        $current = (string) ($lookup['parent_map'][$current] ?? '');
+    }
+
+    $path = array_reverse($path);
+    if ($path === []) {
+        return null;
+    }
+
+    return [
+        'matched_query' => $query,
+        'resolved_te_name' => $teName,
+        'path' => $path,
+        'display_path' => implode(' --- ', array_map(static fn(array $node): string => (string) ($node['display_label'] ?? ''), $path)),
+    ];
+}
+
 function tekg_jbrowse_index_proto(): ?array
 {
     static $lookup = null;
@@ -537,6 +692,7 @@ $repbase = tekg_repbase_lookup_proto($query);
 $dfamSequence = tekg_dfam_lookup_proto($query, $type);
 $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
+$classificationSession = tekg_tree_classification_lookup_proto($query, $type, $repbase, $dfamSequence);
 $searchGraphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
     'embed' => 'search-result',
     'q' => $query !== '' ? $query : null,
@@ -814,6 +970,75 @@ require __DIR__ . '/head.php';
           line-height: 1.8;
           color: #5e7288;
           min-height: 120px;
+        }
+
+        .summary-classification {
+          margin-top: 18px;
+          padding-top: 16px;
+          border-top: 1px solid #e6eef9;
+        }
+
+        .summary-classification-title {
+          margin: 0 0 12px;
+          font-size: 15px;
+          font-weight: 700;
+          color: #214b8d;
+        }
+
+        .summary-classification-stage {
+          padding: 16px 18px;
+          border: 1px solid #dce7f6;
+          border-radius: 12px;
+          background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
+          overflow: hidden;
+        }
+
+        .summary-classification-flow {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .summary-classification-node {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 40px;
+          padding: 8px 16px;
+          border-radius: 999px;
+          border: 1px solid #cfe0fb;
+          background: #ffffff;
+          color: #285097;
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1.35;
+          text-align: center;
+          box-shadow: 0 4px 14px rgba(35, 70, 128, 0.05);
+        }
+
+        .summary-classification-node.is-current {
+          border-color: #6d93e8;
+          background: #eef4ff;
+          color: #214b8d;
+          box-shadow: 0 8px 20px rgba(38, 78, 150, 0.1);
+        }
+
+        .summary-classification-connector {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: #7b90b4;
+          font-size: 18px;
+          line-height: 1;
+          font-weight: 700;
+        }
+
+        .summary-classification-note {
+          margin-top: 10px;
+          font-size: 13px;
+          color: #6f83a0;
+          line-height: 1.6;
         }
 
         .sequence-panel {
@@ -1254,6 +1479,31 @@ require __DIR__ . '/head.php';
                     <div><strong>Keywords: </strong><?= htmlspecialchars($repbase['keywords'] ?: 'No keywords', ENT_QUOTES, 'UTF-8') ?></div>
                     <div><strong>Length: </strong><?= htmlspecialchars($repbase['length_bp'] !== null ? ((string) $repbase['length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
                     <div><strong>Reference count: </strong><?= htmlspecialchars((string) ($repbase['reference_count'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
+                    <?php if (is_array($classificationSession) && !empty($classificationSession['path']) && is_array($classificationSession['path'])): ?>
+                      <div class="summary-classification">
+                        <h4 class="summary-classification-title">Classification</h4>
+                        <div class="summary-classification-stage" aria-label="TE classification path">
+                          <div class="summary-classification-flow">
+                            <?php
+                              $classificationPath = array_values(array_filter(
+                                  $classificationSession['path'],
+                                  static fn ($item) => is_array($item) && trim((string) ($item['display_label'] ?? '')) !== ''
+                              ));
+                              $classificationLastIndex = count($classificationPath) - 1;
+                            ?>
+                            <?php foreach ($classificationPath as $index => $node): ?>
+                              <span class="summary-classification-node<?= $index === $classificationLastIndex ? ' is-current' : '' ?>">
+                                <?= htmlspecialchars((string) ($node['display_label'] ?? $node['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+                              </span>
+                              <?php if ($index < $classificationLastIndex): ?>
+                                <span class="summary-classification-connector" aria-hidden="true">&rarr;</span>
+                              <?php endif; ?>
+                            <?php endforeach; ?>
+                          </div>
+                          <div class="summary-classification-note">Rendered from the current tree.txt lineage only. No extra levels are inferred.</div>
+                        </div>
+                      </div>
+                    <?php endif; ?>
                   <?php elseif ($query !== ''): ?>
                     No structured TE summary is available for the current query yet.
                   <?php else: ?>
