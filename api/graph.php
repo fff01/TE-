@@ -580,6 +580,106 @@ CYPHER,
         return $paths;
     }
 
+
+    private function loadTopDiseaseCategoriesForDiseases(array $diseaseIds): array
+    {
+        $diseaseIds = array_values(array_unique(array_filter(array_map('strval', $diseaseIds))));
+        if (empty($diseaseIds)) {
+            return [];
+        }
+
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (d:Disease)
+WHERE elementId(d) IN $diseaseIds
+MATCH (d)-[r:CLASSIFIED_AS]->(leaf:DiseaseCategory)
+OPTIONAL MATCH p=(top:DiseaseCategory)-[:HAS_SUBCATEGORY*0..10]->(leaf)
+WHERE coalesce(top.category_level, 0) = 1
+WITH d, leaf, coalesce(top, leaf) AS displayCategory, r
+RETURN
+  elementId(d) AS disease_element_id,
+  elementId(displayCategory) AS category_element_id,
+  displayCategory.category_node_id AS category_node_id,
+  displayCategory.category_label AS category_label,
+  coalesce(displayCategory.description, '') AS category_description,
+  coalesce(displayCategory.category_level, 0) AS category_level,
+  coalesce(r.top_category, displayCategory.category_label, leaf.top_category, '') AS top_category
+ORDER BY category_label, disease_element_id
+CYPHER,
+            ['diseaseIds' => $diseaseIds]
+        );
+
+        $deduped = [];
+        $seen = [];
+        foreach ($rows as $row) {
+            $diseaseId = (string)($row['disease_element_id'] ?? '');
+            $categoryId = (string)($row['category_element_id'] ?? '');
+            if ($diseaseId === '' || $categoryId === '') {
+                continue;
+            }
+            $key = $diseaseId . '__' . $categoryId;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $deduped[] = $row;
+        }
+
+        return $deduped;
+    }
+
+    private function appendTopLevelDiseaseCategories(array &$nodes, array &$edges): void
+    {
+        $diseaseIds = [];
+        foreach ($nodes as $id => $node) {
+            $data = $node['data'] ?? [];
+            if (($data['type'] ?? '') !== 'Disease') {
+                continue;
+            }
+            $diseaseIds[] = (string)$id;
+        }
+
+        if (empty($diseaseIds)) {
+            return;
+        }
+
+        $rows = $this->loadTopDiseaseCategoriesForDiseases($diseaseIds);
+        if (empty($rows)) {
+            return;
+        }
+
+        foreach ($rows as $row) {
+            $categoryId = (string)($row['category_element_id'] ?? '');
+            $diseaseId = (string)($row['disease_element_id'] ?? '');
+            if ($categoryId === '' || $diseaseId === '' || !isset($nodes[$diseaseId])) {
+                continue;
+            }
+
+            $this->addNode($nodes, [
+                'element_id' => $categoryId,
+                'labels' => ['DiseaseCategory'],
+                'name' => (string)($row['category_label'] ?? ''),
+                'description' => (string)($row['category_description'] ?? ''),
+                'pmid' => '',
+                'disease_class' => (string)($row['top_category'] ?? ''),
+                'category_level' => (int)($row['category_level'] ?? 0),
+            ]);
+
+            $edgeId = $categoryId . '__CLASSIFIED_AS_TOP_CATEGORY__' . $diseaseId;
+            $edges[$edgeId] = [
+                'data' => [
+                    'id' => $edgeId,
+                    'source' => $categoryId,
+                    'target' => $diseaseId,
+                    'relation' => 'classified disease',
+                    'relationType' => 'CLASSIFIED_AS_TOP_CATEGORY',
+                    'evidence' => '',
+                    'pmids' => [],
+                ],
+            ];
+        }
+    }
+
     private function loadDiseaseClassHierarchyEntries(string $topElementId): array
     {
         if ($topElementId === '') {
@@ -1625,6 +1725,10 @@ CYPHER,
             }
         }
 
+        $anchorType = $this->normalizeType($anchor['labels'] ?? []);
+        if ($anchorType !== 'DiseaseClass') {
+            $this->appendTopLevelDiseaseCategories($nodes, $edges);
+        }
         $this->collapseDuplicateDiseaseNodes($nodes, $edges);
 
         $nodeIds = array_keys($nodes);

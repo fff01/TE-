@@ -810,23 +810,36 @@
 
   function buildDiseaseClassTreeModel(elements, classQuery) {
     const nodes = new Map();
-    const children = new Map();
-    const incoming = new Set();
+    const rawChildren = new Map();
+    const parentChoice = new Map();
     const typeRank = {
       DiseaseClass: 0,
       DiseaseCategory: 1,
       Disease: 2,
     };
 
+    const getParentRank = (node) => {
+      const nodeType = String(node?.nodeType || '');
+      const rank = typeRank[nodeType] ?? 99;
+      const level = Number(node?.categoryLevel || 0);
+      return [rank, level, String(node?.rawLabel || '')];
+    };
+
+    const compareRankTuple = (left, right) => {
+      for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+        const a = left[i];
+        const b = right[i];
+        if (a === b) continue;
+        if (typeof a === 'number' && typeof b === 'number') return a - b;
+        return String(a).localeCompare(String(b));
+      }
+      return 0;
+    };
+
     for (const item of Array.isArray(elements) ? elements : []) {
       const data = item && item.data ? item.data : null;
       if (!data) continue;
-      if (data.source && data.target) {
-        if (!children.has(data.source)) children.set(data.source, []);
-        children.get(data.source).push(data.target);
-        incoming.add(data.target);
-        continue;
-      }
+      if (data.source && data.target) continue;
 
       const nodeType = String(data.type || '');
       nodes.set(data.id, {
@@ -840,16 +853,53 @@
       });
     }
 
+    for (const item of Array.isArray(elements) ? elements : []) {
+      const data = item && item.data ? item.data : null;
+      if (!data || !data.source || !data.target) continue;
+      if (!nodes.has(data.source) || !nodes.has(data.target)) continue;
+
+      const sourceNode = nodes.get(data.source);
+      const targetNode = nodes.get(data.target);
+      if (!sourceNode || !targetNode) continue;
+
+      const currentParent = parentChoice.get(targetNode.id);
+      const candidate = {
+        parentId: sourceNode.id,
+        rank: getParentRank(sourceNode),
+      };
+      if (!currentParent || compareRankTuple(candidate.rank, currentParent.rank) < 0) {
+        parentChoice.set(targetNode.id, candidate);
+      }
+    }
+
+    const children = new Map();
+    for (const [childId, parentMeta] of parentChoice.entries()) {
+      const parentId = parentMeta.parentId;
+      if (!children.has(parentId)) children.set(parentId, []);
+      children.get(parentId).push(childId);
+    }
+
+    const requestedClass = String(classQuery || '').trim().toLowerCase();
     let rootId = '';
-    for (const node of nodes.values()) {
-      if (node.nodeType === 'DiseaseClass') {
-        rootId = node.id;
-        break;
+    if (requestedClass) {
+      for (const node of nodes.values()) {
+        if (node.nodeType === 'DiseaseCategory' && String(node.rawLabel || '').trim().toLowerCase() === requestedClass) {
+          rootId = node.id;
+          break;
+        }
       }
     }
     if (!rootId) {
       for (const node of nodes.values()) {
-        if (!incoming.has(node.id)) {
+        if (node.nodeType === 'DiseaseClass') {
+          rootId = node.id;
+          break;
+        }
+      }
+    }
+    if (!rootId) {
+      for (const node of nodes.values()) {
+        if (!parentChoice.has(node.id)) {
           rootId = node.id;
           break;
         }
@@ -859,13 +909,9 @@
       return { rootId: '', treeData: null };
     }
 
-    const visit = (nodeId, depth, path) => {
-      if (!nodeId || path.has(nodeId)) return null;
+    const visit = (nodeId, depth) => {
       const node = nodes.get(nodeId);
       if (!node) return null;
-
-      const nextPath = new Set(path);
-      nextPath.add(nodeId);
 
       const sortedChildIds = [...new Set(children.get(nodeId) || [])]
         .filter((childId) => nodes.has(childId))
@@ -882,7 +928,7 @@
         });
 
       const childNodes = sortedChildIds
-        .map((childId) => visit(childId, depth + 1, nextPath))
+        .map((childId) => visit(childId, depth + 1))
         .filter(Boolean);
 
       return {
@@ -906,7 +952,7 @@
 
     return {
       rootId,
-      treeData: visit(rootId, 0, new Set()),
+      treeData: visit(rootId, 0),
     };
   }
 
