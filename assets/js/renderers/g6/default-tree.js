@@ -92,8 +92,20 @@
       .replace(/'/g, '&#39;');
   }
 
+  const TREE_DISPLAY_LABELS = new Map([
+    ['TE', 'Transposable Elements - Human'],
+    ['Retrotransposon', 'Class I: Retrotransposons'],
+    ['DNA Transposon', 'Class II: DNA Transposons'],
+    ['SINE', 'SINEs'],
+  ]);
+
   function getRootLabel() {
-    return getCurrentLang() === 'zh' ? '人类转座子' : 'TE';
+    return 'Transposable Elements - Human';
+  }
+
+  function getTreeDisplayLabel(raw) {
+    const key = String(raw || '').trim();
+    return TREE_DISPLAY_LABELS.get(key) || key;
   }
 
   function normalizeTextWidth(text) {
@@ -103,6 +115,8 @@
   function getDisplayLabel(label, description, depth) {
     const raw = String(label || '');
     if (depth === 0) return getRootLabel();
+    const mapped = getTreeDisplayLabel(raw);
+    if (mapped !== raw) return mapped;
     if (typeof getName === 'function') return getName(raw, 'TE', description || '', '');
     return raw;
   }

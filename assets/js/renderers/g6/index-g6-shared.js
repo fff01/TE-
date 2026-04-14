@@ -1013,7 +1013,7 @@
           if (!node) return;
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
-          if (!fixedView && node.nodeType === 'DiseaseClass') {
+          if (!fixedView && (node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory')) {
             const classQuery = String(node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel || '').trim();
             if (classQuery) {
               const handled = await Promise.resolve(

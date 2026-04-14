@@ -58,8 +58,10 @@
   const NODE_FONT_SIZE = 11;
   const ROOT_PADDING_X = 10;
   const NODE_PADDING_X = 8;
-  const TREE_PADDING = [96, 120, 96, 120];
-  const H_GAP = 112;
+  const DEFAULT_TREE_PADDING = [96, 120, 96, 120];
+  const COMPACT_TREE_PADDING = [56, 56, 56, 56];
+  const DEFAULT_H_GAP = 112;
+  const COMPACT_H_GAP = 52;
   const V_GAP = 12;
   const MAX_EXPAND_CHILDREN = 6;
   const INITIAL_ROOT_LEFT_SHIFT = 120;
@@ -89,20 +91,35 @@
       .replace(/'/g, '&#39;');
   }
 
+  const TREE_DISPLAY_LABELS = new Map([
+    ['TE', 'Transposable Elements - Human'],
+    ['Retrotransposon', 'Class I: Retrotransposons'],
+    ['DNA Transposon', 'Class II: DNA Transposons'],
+    ['SINE', 'SINEs'],
+  ]);
+
   function getRootLabel() {
-    return getCurrentLang() === 'zh' ? '人类转座子' : 'TE';
+    return 'TE - Human';
+  }
+
+  function getTreeDisplayLabel(raw) {
+    const key = String(raw || '').trim();
+    return TREE_DISPLAY_LABELS.get(key) || key;
   }
 
   function normalizeTextWidth(text, isRoot) {
+    const compact = !!getActiveTreeConfig()?.compactLayout;
     const length = Math.max(2, String(text || '').length);
-    const avg = isRoot ? 9.6 : 7.1;
-    const padding = isRoot ? ROOT_PADDING_X : NODE_PADDING_X;
+    const avg = isRoot ? (compact ? 8.8 : 9.6) : (compact ? 6.2 : 7.1);
+    const padding = isRoot ? (compact ? 8 : ROOT_PADDING_X) : (compact ? 6 : NODE_PADDING_X);
     return Math.round(length * avg + padding);
   }
 
   function getDisplayLabel(label, description, depth) {
     const raw = String(label || '');
     if (depth === 0) return getRootLabel();
+    const mapped = getTreeDisplayLabel(raw);
+    if (mapped !== raw) return mapped;
     if (typeof getName === 'function') return getName(raw, 'TE', description || '', '');
     return raw;
   }
@@ -146,6 +163,38 @@
   function getActiveTreeConfig() {
     if (!activeTreeConfig) activeTreeConfig = buildDefaultTreeConfig();
     return activeTreeConfig;
+  }
+
+  function isCompactTreeLayout() {
+    return !!getActiveTreeConfig()?.compactLayout;
+  }
+
+  function getTreePadding() {
+    return isCompactTreeLayout() ? COMPACT_TREE_PADDING : DEFAULT_TREE_PADDING;
+  }
+
+  function getHorizontalGap() {
+    return isCompactTreeLayout() ? COMPACT_H_GAP : DEFAULT_H_GAP;
+  }
+
+  function resolveTreeLabelFill(datum, isRoot) {
+    const config = getActiveTreeConfig();
+    const data = datum?.data || {};
+    if (typeof config.buildLabelFill === 'function') {
+      const color = config.buildLabelFill(data, datum?.id || '');
+      if (color) return String(color);
+    }
+    return isRoot ? ROOT_TEXT : TEXT_COLOR;
+  }
+
+  function resolveTreeLabelFontWeight(datum, isRoot) {
+    const config = getActiveTreeConfig();
+    const data = datum?.data || {};
+    if (typeof config.buildLabelFontWeight === 'function') {
+      const weight = config.buildLabelFontWeight(data, datum?.id || '');
+      if (weight) return String(weight);
+    }
+    return isRoot ? '600' : 'normal';
   }
 
   function resolveTreeLabel(datum) {
@@ -262,14 +311,15 @@
     });
   }
 
-  function initTreeState(root) {
+  function initTreeState(root, options = {}) {
+    const expandAll = !!(options && options.expandAll);
     walkTree(root, (node) => {
       node._matched = false;
       node._matched_path = false;
       node._hidden = false;
-      node._collapsed = true;
+      node._collapsed = expandAll ? false : true;
     });
-    if (root) {
+    if (root && !expandAll) {
       root._collapsed = false;
     }
     syncCollapsedStyle(root);
@@ -298,9 +348,10 @@
     const nodes = [];
     const edges = [];
     let rowIndex = 0;
-    const left = TREE_PADDING[3];
-    const top = TREE_PADDING[0];
-    const bottom = TREE_PADDING[2];
+    const treePadding = getTreePadding();
+    const left = treePadding[3];
+    const top = treePadding[0];
+    const bottom = treePadding[2];
     const rowGap = NODE_HEIGHT + V_GAP;
 
     function visit(node, depth) {
@@ -374,7 +425,7 @@
       } else {
         const prevWidth = maxWidthByDepth.get(depth - 1) || 0;
         const prevX = xByDepth.get(depth - 1) || left;
-        xByDepth.set(depth, prevX + prevWidth / 2 + H_GAP + width / 2);
+        xByDepth.set(depth, prevX + prevWidth / 2 + getHorizontalGap() + width / 2);
       }
     }
 
@@ -702,7 +753,7 @@
         height,
         autoResize: true,
         autoFit: false,
-        padding: TREE_PADDING,
+        padding: getTreePadding(),
         animation: false,
         cursor: 'grab',
         data: visibleData,
@@ -711,6 +762,7 @@
           style: (datum) => {
             const isRoot = datum.id === rootId;
             const labelText = resolveTreeLabel(datum);
+            const compact = isCompactTreeLayout();
             return {
               direction: isRoot ? 'center' : 'right',
               labelText,
@@ -719,8 +771,11 @@
               labelFontSize: isRoot ? ROOT_FONT_SIZE : NODE_FONT_SIZE,
               labelPlacement: 'center',
               labelTextAlign: 'center',
-              labelPadding: isRoot ? [2, 6, 2, 6] : [1, 8, 1, 8],
-              labelFill: isRoot ? ROOT_TEXT : TEXT_COLOR,
+              labelPadding: isRoot
+                ? (compact ? [2, 4, 2, 4] : [2, 6, 2, 6])
+                : (compact ? [1, 6, 1, 6] : [1, 8, 1, 8]),
+              labelFill: resolveTreeLabelFill(datum, isRoot),
+              labelFontWeight: resolveTreeLabelFontWeight(datum, isRoot),
               labelBackground: true,
               labelBackgroundFill: isRoot ? ROOT_BG : '#ffffff',
               fill: isRoot ? ROOT_BG : '#ffffff',
@@ -733,9 +788,7 @@
           state: {
             selected: {
               lineWidth: 0,
-              labelFill: '#40A8FF',
               labelBackground: true,
-              labelFontWeight: 'normal',
               labelBackgroundFill: '#e8f7ff',
               labelBackgroundRadius: 10,
             },
@@ -813,7 +866,9 @@
     const treeData = options && typeof options === 'object' ? options.treeData : null;
     stateTreeRoot = treeData || null;
     if (stateTreeRoot) {
-      initTreeState(stateTreeRoot);
+      initTreeState(stateTreeRoot, {
+        expandAll: !!(options.expandAll || (options.config && options.config.expandAll)),
+      });
     }
     await renderTreeData(stateTreeRoot, {
       rootId: options.rootId,

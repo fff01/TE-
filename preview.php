@@ -15,8 +15,8 @@ $g6PreviewVersion = max(
     (int)@filemtime(__DIR__ . '/assets/css/tekg_runtime.css'),
     (int)@filemtime(__DIR__ . '/assets/js/renderers/g6/index-g6-qa.js')
 );
-$graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'preview-graphonly', 'v' => (string)$g6PreviewVersion]));
-$qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'qa-overlay', 'v' => (string)$g6PreviewVersion]));
+$graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'preview-graphonly']));
+$qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'qa-overlay']));
 ?>
       <style>
         .proto-main.preview-main {

@@ -628,7 +628,6 @@
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
     url.searchParams.set('show_labels', window.showLabels ? '1' : '0');
-    url.searchParams.set('bridge_v', '20260411a');
     const query = String(request.query || '').trim();
     if (query) {
       url.searchParams.set('q', query);
@@ -930,7 +929,7 @@
         ? `<strong>${escapeHtml(classQuery)}</strong><br>\u5f53\u524d\u4e3a\u75be\u75c5\u5206\u7c7b\u6811\u89c6\u56fe\u3002\u70b9\u51fb\u5206\u7c7b\u8282\u70b9\u67e5\u770b\u5c42\u7ea7\uff0c\u70b9\u51fb\u75be\u75c5\u53f6\u5b50\u53ef\u8fdb\u5165\u666e\u901a\u52a8\u6001\u56fe\u3002`
         : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
       buildLabel(data, nodeId) {
-        return String(data.displayLabel || data.rawLabel || nodeId || '');
+        return truncateDiseaseTreeLabel(data.displayLabel || data.rawLabel || nodeId || '', data);
       },
       buildLabelFill(data) {
         return data.nodeType === 'Disease' ? '#c62828' : '';
@@ -961,6 +960,16 @@
   }
 
   function buildDiseaseClassTreeConfig(classQuery) {
+    const truncateDiseaseTreeLabel = (label, data) => {
+      const text = String(label || '').trim();
+      if (!text) return text;
+      if (String(data?.nodeType || '') === 'Disease') return text;
+      const depth = Number(data?.treeDepth || 0);
+      const limitsByDepth = { 0: 12, 1: 18, 2: 22, 3: 26, 4: 30 };
+      const limit = limitsByDepth[depth] || 32;
+      if (text.length <= limit) return text;
+      return `${text.slice(0, Math.max(1, limit - 1)).trimEnd()}…`;
+    };
     const isZh = window.currentLang === 'zh';
     const typeLabels = isZh
       ? {
@@ -979,7 +988,7 @@
         ? `<strong>${escapeHtml(classQuery)}</strong><br>\u5f53\u524d\u4e3a\u75be\u75c5\u5206\u7c7b\u6811\u89c6\u56fe\u3002\u70b9\u51fb\u5206\u7c7b\u8282\u70b9\u67e5\u770b\u5c42\u7ea7\uff0c\u70b9\u51fb\u75be\u75c5\u53f6\u5b50\u53ef\u8fdb\u5165\u666e\u901a\u52a8\u6001\u56fe\u3002`
         : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
       buildLabel(data, nodeId) {
-        return String(data.displayLabel || data.rawLabel || nodeId || '');
+        return truncateDiseaseTreeLabel(data.displayLabel || data.rawLabel || nodeId || '', data);
       },
       buildLabelFill(data) {
         return data.nodeType === 'Disease' ? '#c62828' : '';
@@ -987,6 +996,8 @@
       buildLabelFontWeight(data) {
         return data.nodeType === 'Disease' ? 'bold' : 'normal';
       },
+      expandAll: true,
+      compactLayout: true,
       buildDetailHtml(nodeData) {
         const data = nodeData?.data || {};
         const label = String(data.displayLabel || data.rawLabel || nodeData?.id || '');
@@ -1151,6 +1162,7 @@
       await window.__TEKG_G6_DEFAULT_TREE.renderStructuredTree({
         rootId: model.rootId,
         treeData: model.treeData,
+        expandAll: true,
         config: buildDiseaseClassTreeConfig(classQuery),
       });
       notifyStateChange();
