@@ -18,39 +18,86 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $analysis = $context['analysis'] ?? [];
+        $language = (string)($analysis['language'] ?? 'en');
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
         $graphResult = $context['plugin_results']['Graph Plugin'] ?? [];
         $localCitations = $this->collectLocalCitations($graphResult, $entities);
         $queryTerms = $this->buildPubMedTerms((string)($context['question'] ?? ''), $analysis, $localCitations);
+
         $pubmedCitations = [];
-        $evidence = [];
+        $pubmedTotalCount = 0;
         $errors = [];
+        $evidenceItems = [];
+        $previewItems = [];
 
         foreach ($queryTerms as $term) {
             try {
-                $pubmedCitations = array_merge($pubmedCitations, $this->searchPubMed($term));
-                $evidence[] = 'PubMed query: ' . $term;
+                $result = $this->searchPubMed($term);
+                $pubmedTotalCount += (int)($result['total_count'] ?? 0);
+                $pubmedCitations = array_merge($pubmedCitations, (array)($result['citations'] ?? []));
+                $evidenceItems[] = ($language === 'zh' ? 'PubMed 检索词：' : 'PubMed query: ') . $term;
             } catch (Throwable $error) {
                 $errors[] = 'PubMed query failed for "' . $term . '": ' . $error->getMessage();
             }
         }
 
         $citations = $this->dedupeCitations(array_merge($localCitations, $pubmedCitations));
-        $evidence[] = 'Local literature hits: ' . count($localCitations);
-        if ($queryTerms !== []) {
-            $evidence[] = 'PubMed citations retrieved: ' . count($pubmedCitations);
+        $reviewedCount = count($citations);
+        $localCount = count($localCitations);
+
+        foreach (array_slice($citations, 0, 5) as $citation) {
+            $previewItems[] = [
+                'title' => (string)($citation['title'] ?? 'Untitled record'),
+                'meta' => trim(implode(' · ', array_filter([
+                    (string)($citation['source'] ?? ''),
+                    (string)($citation['journal'] ?? ''),
+                    (string)($citation['year'] ?? ''),
+                    ($citation['pmid'] ?? '') !== '' ? 'PMID ' . (string)$citation['pmid'] : '',
+                ]))),
+                'url' => (string)($citation['url'] ?? ''),
+            ];
         }
+
+        $displaySummary = $this->buildDisplaySummary($language, $pubmedTotalCount, $reviewedCount, $localCount, $queryTerms !== []);
+        $resultMessage = $this->buildResultMessage($language, $citations, $pubmedTotalCount);
 
         return [
             'plugin_name' => $this->getName(),
-            'status' => $citations === [] ? 'empty' : 'ok',
-            'query_summary' => $queryTerms === [] ? 'Used local graph literature only.' : 'Collected local literature and queried PubMed via NCBI E-utilities.',
+            'status' => $citations === [] && $errors === [] ? 'empty' : ($errors === [] ? 'ok' : 'partial'),
+            'query_summary' => $queryTerms === []
+                ? 'Used local graph literature only.'
+                : 'Collected local literature and queried PubMed via NCBI E-utilities.',
             'results' => [
                 'query_terms' => $queryTerms,
-                'local_citation_count' => count($localCitations),
-                'pubmed_citation_count' => count($pubmedCitations),
+                'local_citation_count' => $localCount,
+                'pubmed_total_hits' => $pubmedTotalCount,
+                'reviewed_citation_count' => $reviewedCount,
+                'citations' => $citations,
             ],
-            'evidence_items' => $evidence,
+            'display_label' => $language === 'zh'
+                ? '查阅了 ' . $reviewedCount . ' 篇文献摘要'
+                : 'Reviewed ' . $reviewedCount . ' literature records',
+            'display_summary' => $displaySummary,
+            'display_details' => [
+                'summary' => $displaySummary,
+                'preview_items' => $previewItems,
+                'evidence_items' => array_values(array_unique($evidenceItems)),
+                'citations' => $citations,
+                'raw_preview' => [
+                    'query_terms' => $queryTerms,
+                    'local_citation_count' => $localCount,
+                    'pubmed_total_hits' => $pubmedTotalCount,
+                    'reviewed_citation_count' => $reviewedCount,
+                    'citations' => $citations,
+                ],
+                'result_message' => $resultMessage,
+            ],
+            'result_counts' => [
+                'local_hits' => $localCount,
+                'pubmed_candidates' => $pubmedTotalCount,
+                'reviewed' => $reviewedCount,
+            ],
+            'evidence_items' => array_values(array_unique($evidenceItems)),
             'citations' => $citations,
             'errors' => $errors,
             'latency_ms' => (int)round((microtime(true) - $started) * 1000),
@@ -63,6 +110,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         if ($citations !== []) {
             return $this->dedupeCitations($citations);
         }
+
         $rows = [];
         foreach ($entities as $entity) {
             $label = trim((string)($entity['label'] ?? ''));
@@ -71,9 +119,12 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 continue;
             }
             $sourceLabel = $type === 'Disease' ? 'Disease' : 'TE';
-            $cypher = "MATCH (a:$sourceLabel)-[r]->(p:Paper)\nWHERE replace(replace(replace(toLower(trim(coalesce(a.name,''))), '-', ''), '_', ''), ' ', '') = replace(replace(replace(toLower(trim(\$entity)), '-', ''), '_', ''), ' ', '')\nRETURN coalesce(p.pmid,'') AS pmid, coalesce(p.name,'') AS title, '' AS year, '' AS journal";
+            $cypher = "MATCH (a:$sourceLabel)-[r]->(p:Paper)
+                       WHERE replace(replace(replace(toLower(trim(coalesce(a.name,''))), '-', ''), '_', ''), ' ', '') = replace(replace(replace(toLower(trim(\$entity)), '-', ''), '_', ''), ' ', '')
+                       RETURN coalesce(p.pmid,'') AS pmid, coalesce(p.name,'') AS title, '' AS year, '' AS journal";
             $rows = array_merge($rows, $this->neo4j->run($cypher, ['entity' => $label]));
         }
+
         foreach ($rows as $row) {
             $pmid = trim((string)($row['pmid'] ?? ''));
             $citations[] = [
@@ -85,15 +136,21 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 'url' => $pmid !== '' ? 'https://pubmed.ncbi.nlm.nih.gov/' . rawurlencode($pmid) . '/' : '',
             ];
         }
+
         return $this->dedupeCitations($citations);
     }
 
     private function buildPubMedTerms(string $question, array $analysis, array $localCitations): array
     {
-        $needsPubMed = ($analysis['asks_for_papers'] ?? false) || ($analysis['compare_mode'] ?? false) || count($localCitations) < 3;
+        $needsPubMed = ($analysis['needs_external_literature'] ?? false)
+            || ($analysis['asks_for_papers'] ?? false)
+            || ($analysis['compare_mode'] ?? false)
+            || count($localCitations) < 3;
+
         if (!$needsPubMed) {
             return [];
         }
+
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
         $teLabels = [];
         $diseaseLabels = [];
@@ -104,6 +161,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 $diseaseLabels[] = (string)$entity['label'];
             }
         }
+
         $keywords = is_array($analysis['question_keywords'] ?? null) ? $analysis['question_keywords'] : [];
         if (($analysis['compare_mode'] ?? false) && count($diseaseLabels) >= 2 && $teLabels !== []) {
             return [
@@ -111,10 +169,12 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 $this->composeQueryTerm($teLabels[0], $diseaseLabels[1], $keywords),
             ];
         }
+
         $term = $this->composeQueryTerm($teLabels[0] ?? '', $diseaseLabels[0] ?? '', $keywords);
         if ($term !== '') {
             return [$term];
         }
+
         return [trim($question)];
     }
 
@@ -130,7 +190,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         foreach ($keywords as $keyword) {
             $parts[] = '"' . $keyword . '"';
         }
-        return implode(' AND ', $parts);
+        return implode(' AND ', array_filter($parts));
     }
 
     private function searchPubMed(string $term): array
@@ -149,11 +209,13 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
             $common['email'] = (string)$this->config['pubmed_email'];
         }
 
-        $search = $this->httpJson($base . 'esearch.fcgi?' . http_build_query($common + ['term' => $term, 'retmax' => 5, 'sort' => 'relevance']));
+        $search = $this->httpJson($base . 'esearch.fcgi?' . http_build_query($common + ['term' => $term, 'retmax' => 8, 'sort' => 'relevance']));
+        $totalCount = (int)($search['esearchresult']['count'] ?? 0);
         $ids = array_values(array_filter((array)($search['esearchresult']['idlist'] ?? []), static fn($id): bool => trim((string)$id) !== ''));
         if ($ids === []) {
-            file_put_contents($cachePath, json_encode([], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-            return [];
+            $result = ['term' => $term, 'total_count' => $totalCount, 'citations' => []];
+            file_put_contents($cachePath, json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+            return $result;
         }
 
         $summary = $this->httpJson($base . 'esummary.fcgi?' . http_build_query($common + ['id' => implode(',', $ids)]));
@@ -176,8 +238,14 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 'query_term' => $term,
             ];
         }
-        file_put_contents($cachePath, json_encode($citations, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-        return $citations;
+
+        $result = [
+            'term' => $term,
+            'total_count' => $totalCount,
+            'citations' => $citations,
+        ];
+        file_put_contents($cachePath, json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+        return $result;
     }
 
     private function fetchPubMedAbstracts(array $ids, array $common): array
@@ -188,6 +256,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         if ($parsed === false) {
             return [];
         }
+
         $abstracts = [];
         foreach ($parsed->PubmedArticle as $article) {
             $pmid = trim((string)($article->MedlineCitation->PMID ?? ''));
@@ -208,7 +277,38 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         if ($abstract === '') {
             return '';
         }
-        return mb_strlen($abstract, 'UTF-8') > 280 ? mb_substr($abstract, 0, 277, 'UTF-8') . '...' : $abstract;
+        return tekg_agent_strlen($abstract) > 280 ? tekg_agent_substr($abstract, 0, 277) . '...' : $abstract;
+    }
+
+    private function buildDisplaySummary(string $language, int $pubmedTotalCount, int $reviewedCount, int $localCount, bool $usedPubMed): string
+    {
+        if ($language === 'zh') {
+            if ($usedPubMed) {
+                return '我先把本地图谱里的文献线索合并起来，再去 PubMed 外部检索，累计找到 ' . $pubmedTotalCount . ' 个候选结果，并筛选出 ' . $reviewedCount . ' 篇值得继续综合的摘要。';
+            }
+            return '这轮主要使用了本地图谱里的文献线索，当前整理出 ' . $localCount . ' 条可直接引用的记录。';
+        }
+        if ($usedPubMed) {
+            return 'I combined the local paper evidence with an external PubMed search, found ' . $pubmedTotalCount . ' candidate records, and reviewed ' . $reviewedCount . ' abstracts that were worth carrying into the answer.';
+        }
+        return 'This round mainly relied on local graph literature evidence and assembled ' . $localCount . ' directly citable records.';
+    }
+
+    private function buildResultMessage(string $language, array $citations, int $pubmedTotalCount): string
+    {
+        if ($citations === []) {
+            return $language === 'zh'
+                ? '这一轮没有拿到足够稳定的文献证据，我后面需要更多本地关系或更具体的检索词。'
+                : 'This round did not yield stable literature evidence, so I will need stronger local context or more specific search terms.';
+        }
+        if ($language === 'zh') {
+            return $pubmedTotalCount > 0
+                ? '这些文献主要集中在机制、癌症相关性和致病证据上，足够支撑后面的综合回答。'
+                : '现有本地文献已经能支撑一轮回答，我会优先使用这些可追溯证据。';
+        }
+        return $pubmedTotalCount > 0
+            ? 'These papers mainly cover mechanism, cancer relevance, and disease evidence, which is enough to support the next synthesis step.'
+            : 'The current local literature is already strong enough to support a first evidence-backed answer.';
     }
 
     private function dedupeCitations(array $citations): array
@@ -218,7 +318,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         foreach ($citations as $citation) {
             $key = trim((string)($citation['pmid'] ?? ''));
             if ($key === '') {
-                $key = mb_strtolower(trim((string)($citation['title'] ?? '')), 'UTF-8');
+                $key = tekg_agent_lower(trim((string)($citation['title'] ?? '')));
             }
             if ($key === '' || isset($seen[$key])) {
                 continue;
@@ -241,27 +341,10 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
 
     private function httpText(string $url): string
     {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 45,
-            CURLOPT_HTTPHEADER => ['Accept: application/json, text/xml'],
-        ]);
-        if (($this->config['ssl_verify'] ?? false) !== true) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        $response = tekg_agent_http_request($url, 'GET', ['Accept: application/json, text/xml'], null, 45, (bool)($this->config['ssl_verify'] ?? false));
+        if ((int)$response['status'] >= 400) {
+            throw new RuntimeException('PubMed returned HTTP ' . (int)$response['status']);
         }
-        $raw = curl_exec($ch);
-        if ($raw === false) {
-            $error = curl_error($ch) ?: 'Unknown PubMed cURL failure';
-            curl_close($ch);
-            throw new RuntimeException($error);
-        }
-        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($status >= 400) {
-            throw new RuntimeException('PubMed returned HTTP ' . $status);
-        }
-        return (string)$raw;
+        return (string)$response['body'];
     }
 }

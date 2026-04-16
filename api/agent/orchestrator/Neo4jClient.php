@@ -20,33 +20,20 @@ final class TekgAgentNeo4jClient
             'resultDataContents' => ['row'],
         ]]], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json'],
-            CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_TIMEOUT => 45,
-            CURLOPT_USERPWD => (string)($this->config['neo4j_user'] ?? '') . ':' . (string)($this->config['neo4j_password'] ?? ''),
-        ]);
-        if (($this->config['ssl_verify'] ?? false) !== true) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        $headers = ['Content-Type: application/json', 'Accept: application/json'];
+        $user = (string)($this->config['neo4j_user'] ?? '');
+        $password = (string)($this->config['neo4j_password'] ?? '');
+        if ($user !== '' || $password !== '') {
+            $headers[] = 'Authorization: Basic ' . base64_encode($user . ':' . $password);
         }
-        $raw = curl_exec($ch);
-        if ($raw === false) {
-            $error = curl_error($ch) ?: 'Unknown Neo4j cURL failure';
-            curl_close($ch);
-            throw new RuntimeException('Neo4j query failed: ' . $error);
-        }
-        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        $decoded = json_decode($raw, true);
+
+        $response = tekg_agent_http_request($url, 'POST', $headers, $payload, 45, (bool)($this->config['ssl_verify'] ?? false));
+        $decoded = json_decode((string)$response['body'], true);
         if (!is_array($decoded)) {
             throw new RuntimeException('Neo4j returned invalid JSON.');
         }
-        if ($status >= 400) {
-            throw new RuntimeException('Neo4j returned HTTP ' . $status);
+        if ((int)$response['status'] >= 400) {
+            throw new RuntimeException('Neo4j returned HTTP ' . (int)$response['status']);
         }
         if (!empty($decoded['errors']) && is_array($decoded['errors'])) {
             $message = (string)($decoded['errors'][0]['message'] ?? 'Unknown Neo4j error');

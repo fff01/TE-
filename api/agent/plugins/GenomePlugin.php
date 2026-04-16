@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
 {
-    private ?array $representativeIndex = null;
-
     public function getName(): string
     {
         return 'Genome Plugin';
@@ -14,9 +12,12 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $analysis = $context['analysis'] ?? [];
+        $language = (string)($analysis['language'] ?? 'en');
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
+
         $results = [];
         $evidence = [];
+        $previewItems = [];
         foreach ($entities as $entity) {
             if (($entity['type'] ?? '') !== 'TE') {
                 continue;
@@ -45,13 +46,44 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
             ];
             if ($chrom !== '' && $start > 0 && $end > 0) {
                 $evidence[] = $label . ' representative locus: ' . $chrom . ':' . $start . '-' . $end . ' with ' . (int)($hitBundle['total_hits'] ?? 0) . ' total hits';
+                $previewItems[] = [
+                    'title' => $label,
+                    'meta' => $chrom . ':' . $start . '-' . $end,
+                    'url' => $jbrowseUrl,
+                ];
             }
         }
+
+        $displaySummary = $language === 'zh'
+            ? ($results === []
+                ? '基因组位点这一轮没有提供额外补充信息。'
+                : '我定位到了代表性的基因组位点和浏览器入口，可作为后续验证位置证据的补充。')
+            : ($results === []
+                ? 'The genome lookup did not add extra context in this round.'
+                : 'I located representative genomic loci and browser entry points that can be used as supporting genomic context.');
+
         return [
             'plugin_name' => $this->getName(),
             'status' => $results === [] ? 'empty' : 'ok',
             'query_summary' => 'Loaded representative genomic hits and browser loci for recognized TE entities.',
             'results' => $results,
+            'display_label' => $language === 'zh'
+                ? '定位了 ' . count($results) . ' 个基因组位点'
+                : 'Resolved ' . count($results) . ' genomic loci',
+            'display_summary' => $displaySummary,
+            'display_details' => [
+                'summary' => $displaySummary,
+                'preview_items' => array_slice($previewItems, 0, 5),
+                'evidence_items' => $evidence,
+                'citations' => [],
+                'raw_preview' => $results,
+                'result_message' => $language === 'zh'
+                    ? '这些位点信息更适合作为基因组背景或浏览器入口。'
+                    : 'These loci are most useful as genomic context or browser entry points.',
+            ],
+            'result_counts' => [
+                'loci' => count($results),
+            ],
             'evidence_items' => $evidence,
             'citations' => [],
             'errors' => [],

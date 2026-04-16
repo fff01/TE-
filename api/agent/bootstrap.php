@@ -75,9 +75,27 @@ function tekg_agent_config(): array
 
 function tekg_agent_normalize_lookup_token(string $value): string
 {
-    $value = trim(mb_strtolower($value, 'UTF-8'));
+    $value = trim(tekg_agent_lower($value));
     $value = preg_replace('/[\s\-_]+/u', '', $value) ?? $value;
     return trim($value);
+}
+
+function tekg_agent_lower(string $value): string
+{
+    return function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
+}
+
+function tekg_agent_strlen(string $value): int
+{
+    return function_exists('mb_strlen') ? mb_strlen($value, 'UTF-8') : strlen($value);
+}
+
+function tekg_agent_substr(string $value, int $start, ?int $length = null): string
+{
+    if (function_exists('mb_substr')) {
+        return $length === null ? mb_substr($value, $start, null, 'UTF-8') : mb_substr($value, $start, $length, 'UTF-8');
+    }
+    return $length === null ? substr($value, $start) : substr($value, $start, $length);
 }
 
 function tekg_agent_detect_language(string $question, string $fallback = 'en'): string
@@ -102,6 +120,61 @@ function tekg_agent_json_response(int $status, array $payload): void
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+}
+
+function tekg_agent_http_request(string $url, string $method = 'GET', array $headers = [], ?string $body = null, int $timeout = 45, bool $sslVerify = false): array
+{
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_CUSTOMREQUEST => strtoupper($method),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_HTTPHEADER => $headers,
+        ]);
+        if ($body !== null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        }
+        if (!$sslVerify) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        }
+        $raw = curl_exec($ch);
+        if ($raw === false) {
+            $error = curl_error($ch) ?: 'Unknown HTTP transport error';
+            curl_close($ch);
+            throw new RuntimeException($error);
+        }
+        $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        return ['status' => $status, 'body' => (string)$raw];
+    }
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => strtoupper($method),
+            'header' => implode("\r\n", $headers),
+            'content' => $body ?? '',
+            'timeout' => $timeout,
+            'ignore_errors' => true,
+        ],
+        'ssl' => [
+            'verify_peer' => $sslVerify,
+            'verify_peer_name' => $sslVerify,
+        ],
+    ]);
+    $raw = @file_get_contents($url, false, $context);
+    if ($raw === false) {
+        throw new RuntimeException('HTTP request failed.');
+    }
+    $status = 200;
+    foreach (($http_response_header ?? []) as $headerLine) {
+        if (preg_match('#^HTTP/\S+\s+(\d{3})#', (string)$headerLine, $matches)) {
+            $status = (int)$matches[1];
+            break;
+        }
+    }
+    return ['status' => $status, 'body' => (string)$raw];
 }
 
 interface TekgAgentPluginInterface

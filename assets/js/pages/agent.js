@@ -9,13 +9,17 @@
     config = {};
   }
 
-  const storageKey = 'tekg-academic-agent-session';
-  let sessionId = '';
-  try {
-    sessionId = window.localStorage.getItem(storageKey) || '';
-  } catch (_error) {
-    sessionId = '';
+  if (window.marked && typeof window.marked.setOptions === 'function') {
+    window.marked.setOptions({
+      breaks: true,
+      gfm: true,
+      mangle: false,
+      headerIds: false,
+    });
   }
+
+  const ui = config.ui || {};
+  const storageKey = 'tekg-academic-agent-session';
 
   const app = document.getElementById('agentApp');
   const form = document.getElementById('agentForm');
@@ -31,14 +35,20 @@
   const inspectorBody = document.getElementById('agentInspectorBody');
   const inspectorClose = document.getElementById('agentInspectorClose');
   const modeSwitch = document.getElementById('agentModeSwitch');
-  const threadHead = document.getElementById('agentThreadHead');
-  const threadTitle = document.getElementById('agentThreadTitle');
-  const threadMode = document.getElementById('agentThreadMode');
 
-  const turnStore = new Map();
+  let currentMode = config.defaultMode === 'quick' ? 'quick' : 'agent';
+  let sessionId = '';
+  try {
+    sessionId = window.localStorage.getItem(storageKey) || '';
+  } catch (_error) {
+    sessionId = '';
+  }
+
+  let activeAbortController = null;
   let turnCounter = 0;
-  let currentMode = 'agent';
-  const ui = config.ui || {};
+
+  const toolDetailStore = new Map();
+  const turnStore = new Map();
 
   function escapeHtml(value) {
     return String(value || '')
@@ -49,12 +59,143 @@
       .replace(/'/g, '&#39;');
   }
 
+  function renderMarkdown(markdown) {
+    const source = String(markdown || '')
+      .replace(/^\[\^(\d+)\]:\s+.+$/gm, '')
+      .trim();
+    if (!source) {
+      return '';
+    }
+    if (window.marked && typeof window.marked.parse === 'function') {
+      return window.marked.parse(source);
+    }
+    return `<p>${escapeHtml(source)}</p>`;
+  }
+
   function setStatus(text) {
     statusNode.textContent = text || '';
   }
 
   function setLoading(loading) {
     submitButton.disabled = !!loading;
+    questionInput.disabled = !!loading;
+  }
+
+  function normalizeCitationTitle(citation) {
+    const title = String(citation && citation.title ? citation.title : '').trim();
+    if (title) {
+      return title;
+    }
+    const pmid = String(citation && citation.pmid ? citation.pmid : '').trim();
+    return pmid ? `PubMed PMID ${pmid}` : 'Open citation';
+  }
+
+  function normalizeCitationUrl(citation) {
+    const explicitUrl = String(citation && citation.url ? citation.url : '').trim();
+    if (explicitUrl) {
+      return explicitUrl;
+    }
+    const pmid = String(citation && citation.pmid ? citation.pmid : '').trim();
+    return pmid ? `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(pmid)}/` : '#';
+  }
+
+  function dedupeCitations(citations) {
+    const seen = new Set();
+    const next = [];
+    for (const citation of Array.isArray(citations) ? citations : []) {
+      if (!citation || typeof citation !== 'object') continue;
+      const pmid = String(citation.pmid || '').trim();
+      const title = String(citation.title || '').trim();
+      const key = pmid || title.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      next.push({
+        ...citation,
+        pmid,
+        title,
+        url: normalizeCitationUrl(citation),
+      });
+    }
+    return next;
+  }
+
+  function mergeTurnCitations(turn, citations) {
+    if (!turn) return;
+    turn.citations = dedupeCitations([...(turn.citations || []), ...(Array.isArray(citations) ? citations : [])]);
+  }
+
+  function enhanceAnswerCitations(turn, answerNode) {
+    if (!turn || !answerNode) return;
+
+    answerNode.querySelectorAll('p, li, blockquote').forEach((node) => {
+      const text = node.textContent || '';
+      if (/^\[\^\d+\]:/.test(text.trim())) {
+        node.remove();
+      }
+    });
+
+    const walker = document.createTreeWalker(answerNode, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) {
+      textNodes.push(walker.currentNode);
+    }
+
+    const markerPattern = /\[\^(\d+)\]/g;
+    textNodes.forEach((textNode) => {
+      const text = textNode.nodeValue || '';
+      markerPattern.lastIndex = 0;
+      if (!markerPattern.test(text)) {
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
+      markerPattern.lastIndex = 0;
+      let match;
+      while ((match = markerPattern.exec(text)) !== null) {
+        const start = match.index;
+        if (start > lastIndex) {
+          fragment.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+        }
+
+        const citationIndex = Math.max(0, Number.parseInt(match[1], 10) - 1);
+        const citation = turn.citations[citationIndex] || {};
+        const anchor = document.createElement('a');
+        anchor.className = 'agent-inline-citation';
+        anchor.href = normalizeCitationUrl(citation);
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+        anchor.textContent = String(citationIndex + 1);
+        anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
+        anchor.dataset.citationTitle = normalizeCitationTitle(citation);
+
+        const sup = document.createElement('sup');
+        sup.appendChild(anchor);
+        fragment.appendChild(sup);
+        lastIndex = markerPattern.lastIndex;
+      }
+
+      if (lastIndex < text.length) {
+        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+      textNode.parentNode.replaceChild(fragment, textNode);
+    });
+  }
+
+  function scrollConversationToBottom(force = false) {
+    requestAnimationFrame(() => {
+      const distanceToBottom = chatScroll.scrollHeight - chatScroll.scrollTop - chatScroll.clientHeight;
+      if (force || distanceToBottom < 160) {
+        chatScroll.scrollTop = chatScroll.scrollHeight;
+      }
+    });
+  }
+
+  function ensureConversationStarted() {
+    if (emptyStateNode) {
+      emptyStateNode.remove();
+    }
+    app.classList.remove('is-pristine');
   }
 
   function setMode(nextMode) {
@@ -66,252 +207,201 @@
     if (currentMode === 'quick') {
       questionInput.placeholder = ui.placeholder_quick || 'Quick QA is coming soon.';
       composerHintNode.textContent = ui.quick_mode_notice || '';
-      threadMode.textContent = ui.quick_mode || 'Quick QA';
     } else {
-      questionInput.placeholder = ui.placeholder_agent || 'Message the academic agent...';
+      questionInput.placeholder = ui.placeholder_agent || 'Ask the academic agent...';
       composerHintNode.textContent = '';
-      threadMode.textContent = ui.agent_mode || 'Agent';
     }
-  }
-
-  function autoResizeTextarea() {
-    questionInput.style.height = 'auto';
-    questionInput.style.height = Math.min(questionInput.scrollHeight, 280) + 'px';
-  }
-
-  function scrollConversationToBottom() {
-    requestAnimationFrame(() => {
-      chatScroll.scrollTop = chatScroll.scrollHeight;
-    });
-  }
-
-  function ensureConversationStarted() {
-    if (emptyStateNode) {
-      emptyStateNode.remove();
-    }
-    app.classList.remove('is-pristine');
-    threadHead.hidden = false;
-  }
-
-  function createTurn(question) {
-    ensureConversationStarted();
-    if (!threadTitle.textContent) {
-      threadTitle.textContent = question.length > 40 ? question.slice(0, 40) + '…' : question;
-    }
-    const turnId = 'turn-' + (++turnCounter);
-    const turn = document.createElement('article');
-    turn.className = 'agent-turn is-pending';
-    turn.dataset.turnId = turnId;
-    turn.innerHTML = `
-      <div class="agent-user-row">
-        <div class="agent-user-bubble">${escapeHtml(question)}</div>
-      </div>
-      <div class="agent-assistant-row">
-        <div class="agent-thinking">
-          <div class="agent-thinking-head">
-            <span>Deep thinking</span>
-            <span class="agent-assistant-meta" data-role="timer">Running...</span>
-          </div>
-          <div class="agent-thinking-body" data-role="thinking-body">
-            <div class="agent-thinking-bullet">Planning the academic route and choosing plugins.</div>
-          </div>
-        </div>
-        <div class="agent-answer" data-role="answer">Working on the answer...</div>
-        <div class="agent-assistant-meta" data-role="meta"></div>
-      </div>
-    `;
-    conversationNode.appendChild(turn);
-    scrollConversationToBottom();
-    return { id: turnId, node: turn, startedAt: performance.now() };
-  }
-
-  function simpleMarkdownToHtml(text) {
-    const escaped = escapeHtml(text || '');
-    const lines = escaped.split(/\r?\n/);
-    const parts = [];
-    let inList = false;
-
-    const closeList = () => {
-      if (inList) {
-        parts.push('</ul>');
-        inList = false;
-      }
-    };
-
-    lines.forEach((line) => {
-      const trimmed = line.trim();
-      if (!trimmed) {
-        closeList();
-        return;
-      }
-      if (trimmed.startsWith('## ')) {
-        closeList();
-        parts.push(`<h3>${trimmed.slice(3)}</h3>`);
-        return;
-      }
-      if (trimmed.startsWith('### ')) {
-        closeList();
-        parts.push(`<h4>${trimmed.slice(4)}</h4>`);
-        return;
-      }
-      if (trimmed.startsWith('- ')) {
-        if (!inList) {
-          parts.push('<ul>');
-          inList = true;
-        }
-        parts.push(`<li>${trimmed.slice(2)}</li>`);
-        return;
-      }
-      closeList();
-      parts.push(`<p>${trimmed}</p>`);
-    });
-
-    closeList();
-    return parts.join('');
   }
 
   function formatElapsed(ms) {
     const seconds = Math.max(0, ms / 1000);
-    if (seconds < 1) {
-      return seconds.toFixed(1) + 's';
-    }
-    return Math.round(seconds * 10) / 10 + 's';
+    return seconds < 1 ? `${seconds.toFixed(1)}s` : `${(Math.round(seconds * 10) / 10).toFixed(1)}s`;
   }
 
-  function toolEventLabel(call, language) {
-    const resultCount = Array.isArray(call.results)
-      ? call.results.length
-      : (call.results && typeof call.results === 'object'
-        ? Object.keys(call.results).length
-        : 0);
-
-    if (call.plugin_name === 'Graph Plugin') {
-      return language === 'zh'
-        ? `查询到了 ${resultCount} 条关系`
-        : `Queried ${resultCount} graph relations`;
-    }
-    if (call.plugin_name === 'Literature Plugin') {
-      const total = (call.results && ((call.results.local_citation_count || 0) + (call.results.pubmed_citation_count || 0))) || 0;
-      return language === 'zh'
-        ? `查阅了 ${total} 篇文献摘要`
-        : `Reviewed ${total} literature records`;
-    }
-    if (call.plugin_name === 'Tree Plugin') {
-      return language === 'zh'
-        ? `解析了 ${resultCount} 条分类路径`
-        : `Resolved ${resultCount} classification paths`;
-    }
-    if (call.plugin_name === 'Expression Plugin') {
-      return language === 'zh'
-        ? `整理了 ${resultCount} 个表达摘要`
-        : `Summarized ${resultCount} expression profiles`;
-    }
-    if (call.plugin_name === 'Genome Plugin') {
-      return language === 'zh'
-        ? `定位了 ${resultCount} 个基因组位点`
-        : `Resolved ${resultCount} genomic loci`;
-    }
-    return call.query_summary || call.plugin_name || 'Tool call';
+  function createTurn(question) {
+    ensureConversationStarted();
+    const turnId = `turn-${++turnCounter}`;
+    const node = document.createElement('article');
+    node.className = 'agent-turn is-pending';
+    node.dataset.turnId = turnId;
+    node.innerHTML = `
+      <div class="agent-user-row">
+        <div class="agent-user-bubble">${escapeHtml(question)}</div>
+      </div>
+      <div class="agent-assistant-row">
+        <section class="agent-thinking" data-role="thinking">
+          <div class="agent-thinking-head">
+            <span class="agent-thinking-title">${escapeHtml(ui.thinking_title || 'Deep thinking')}</span>
+            <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml(ui.thinking_running || 'Running...')}</span>
+          </div>
+          <div class="agent-thinking-body" data-role="thinking-body"></div>
+        </section>
+        <section class="agent-answer" data-role="answer"></section>
+      </div>
+    `;
+    conversationNode.appendChild(node);
+    const turn = {
+      id: turnId,
+      node,
+      question,
+      startedAt: performance.now(),
+      language: 'en',
+      toolIds: [],
+      evidence: [],
+      citations: [],
+      limits: [],
+      answer: '',
+    };
+    turnStore.set(turnId, turn);
+    scrollConversationToBottom(true);
+    return turn;
   }
 
-  function renderThinking(turn, data, elapsedMs) {
+  function createThinkingLine(turn, text, variant = 'bullet') {
     const body = turn.node.querySelector('[data-role="thinking-body"]');
-    const timer = turn.node.querySelector('[data-role="timer"]');
-    body.innerHTML = '';
-    timer.textContent = `(${formatElapsed(elapsedMs)})`;
-
-    const trace = Array.isArray(data.reasoning_trace) ? data.reasoning_trace : [];
-    const pluginCalls = Array.isArray(data.plugin_calls) ? data.plugin_calls : [];
-
-    trace
-      .filter((item) => item.step !== 'synthesizing')
-      .forEach((item) => {
-        const bullet = document.createElement('div');
-        bullet.className = 'agent-thinking-bullet';
-        bullet.textContent = item.details || item.title || item.step || '';
-        body.appendChild(bullet);
-      });
-
-    pluginCalls.forEach((call, index) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'agent-tool-event';
-      button.dataset.turnId = turn.id;
-      button.dataset.pluginIndex = String(index);
-      button.innerHTML = `
-        <span class="agent-tool-event-icon">◎</span>
-        <span>${escapeHtml(toolEventLabel(call, data.language || 'en'))}</span>
-      `;
-      body.appendChild(button);
-    });
+    const line = document.createElement('div');
+    line.className = `agent-thinking-line is-${variant}`;
+    line.textContent = text;
+    body.appendChild(line);
+    scrollConversationToBottom();
+    return line;
   }
 
-  function renderTurn(turn, data, elapsedMs) {
-    turnStore.set(turn.id, data);
-    turn.node.classList.remove('is-pending');
-    turn.node.querySelector('[data-role="answer"]').innerHTML = simpleMarkdownToHtml(data.answer || '');
-    turn.node.querySelector('[data-role="meta"]').textContent = `${data.model_provider || 'model'} · ${data.model || ''} · confidence ${String(data.confidence || 'unknown').toUpperCase()}`;
-    renderThinking(turn, data, elapsedMs);
+  function createToolEvent(turn, event) {
+    const body = turn.node.querySelector('[data-role="thinking-body"]');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'agent-tool-block';
+
+    const toolId = String(event.detail_payload_id || `tool-${turn.id}-${turn.toolIds.length + 1}`);
+    const label = String(event.display_label || event.summary || event.message || event.plugin_name || 'Tool event');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'agent-tool-event';
+    button.dataset.detailId = toolId;
+    button.title = ui.tool_open_hint || 'Click to inspect details';
+    button.innerHTML = `
+      <span class="agent-tool-event-icon">◎</span>
+      <span class="agent-tool-event-label">${escapeHtml(label)}</span>
+    `;
+    wrapper.appendChild(button);
+
+    const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+    const previewItems = Array.isArray(payload.preview_items) ? payload.preview_items.slice(0, 5) : [];
+    if (previewItems.length) {
+      const preview = document.createElement('div');
+      preview.className = 'agent-tool-preview';
+      preview.innerHTML = previewItems.map((item) => {
+        if (typeof item === 'string') {
+          return `<div class="agent-tool-preview-item">${escapeHtml(item)}</div>`;
+        }
+        const title = escapeHtml(item.title || item.label || item.summary || '');
+        const subline = escapeHtml(item.meta || item.subtitle || '');
+        return `<div class="agent-tool-preview-item"><span>${title}</span>${subline ? `<small>${subline}</small>` : ''}</div>`;
+      }).join('');
+      wrapper.appendChild(preview);
+    }
+
+    body.appendChild(wrapper);
+    turn.toolIds.push(toolId);
+    mergeTurnCitations(turn, payload.citations || payload.display_details?.citations || []);
+    toolDetailStore.set(toolId, {
+      title: event.plugin_name || label,
+      summary: event.summary || event.message || '',
+      payload: payload,
+      plugin_name: event.plugin_name || '',
+    });
     scrollConversationToBottom();
   }
 
-  function buildInspectorSection(title, innerHtml) {
+  function updateThinkingMeta(turn, done) {
+    const meta = turn.node.querySelector('[data-role="thinking-meta"]');
+    const elapsed = formatElapsed(performance.now() - turn.startedAt);
+    meta.textContent = done
+      ? `${ui.thinking_done || 'Done'} · ${elapsed}`
+      : `${ui.thinking_running || 'Running...'} · ${elapsed}`;
+  }
+
+  function setAnswer(turn, markdown, language) {
+    turn.answer = String(markdown || '');
+    turn.language = language || turn.language || 'en';
+    const answerNode = turn.node.querySelector('[data-role="answer"]');
+    answerNode.innerHTML = renderMarkdown(turn.answer);
+    enhanceAnswerCitations(turn, answerNode);
+    scrollConversationToBottom();
+  }
+
+  function finalizeTurn(turn) {
+    turn.node.classList.remove('is-pending');
+    updateThinkingMeta(turn, true);
+    scrollConversationToBottom(true);
+  }
+
+  function formatInspectorList(items, emptyMessage) {
+    if (!Array.isArray(items) || items.length === 0) {
+      return `<div class="agent-detail-empty">${escapeHtml(emptyMessage)}</div>`;
+    }
+    return `<div class="agent-detail-list">${items.map((item) => {
+      if (typeof item === 'string') {
+        return `<div class="agent-detail-item">${escapeHtml(item)}</div>`;
+      }
+      const title = escapeHtml(item.title || item.label || item.name || '');
+      const meta = escapeHtml(item.meta || item.summary || item.subtitle || '');
+      const body = escapeHtml(item.body || item.abstract_summary || item.text || '');
+      const link = item.url
+        ? `<a class="agent-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${title || escapeHtml(item.url)}</a>`
+        : title;
+      return `
+        <div class="agent-detail-item">
+          ${link ? `<strong>${link}</strong>` : ''}
+          ${meta ? `<div class="agent-detail-meta">${meta}</div>` : ''}
+          ${body ? `<div class="agent-detail-body">${body}</div>` : ''}
+        </div>
+      `;
+    }).join('')}</div>`;
+  }
+
+  function buildInspectorSection(title, html) {
     return `
       <section class="agent-detail-card">
         <h4>${escapeHtml(title)}</h4>
-        ${innerHtml}
+        ${html}
       </section>
     `;
   }
 
-  function citationMarkup(citations) {
-    if (!Array.isArray(citations) || citations.length === 0) {
-      return '<div class="agent-detail-meta">No citations were returned for this tool call.</div>';
-    }
-    return `<div class="agent-detail-list">${citations.map((citation) => {
-      const title = citation.title || 'Untitled record';
-      const pmid = citation.pmid ? `PMID: ${citation.pmid}` : '';
-      const meta = [citation.source || '', pmid, citation.journal || '', citation.year || ''].filter(Boolean).join(' · ');
-      const titleHtml = citation.url
-        ? `<a class="agent-link" href="${escapeHtml(citation.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(title)}</a>`
-        : escapeHtml(title);
-      const abstract = citation.abstract_summary ? `<div class="agent-detail-meta">${escapeHtml(citation.abstract_summary)}</div>` : '';
-      return `<div class="agent-detail-item"><strong>${titleHtml}</strong><div class="agent-detail-meta">${escapeHtml(meta)}</div>${abstract}</div>`;
-    }).join('')}</div>`;
-  }
+  function openInspector(detailId) {
+    const detail = toolDetailStore.get(detailId);
+    if (!detail) return;
 
-  function resultPreviewMarkup(results) {
-    if (results == null) {
-      return '<div class="agent-detail-meta">No result payload was returned.</div>';
-    }
-    const preview = JSON.stringify(results, null, 2);
-    return `<pre class="agent-detail-pre">${escapeHtml(preview)}</pre>`;
-  }
+    const payload = detail.payload || {};
+    const resultCounts = payload.result_counts || {};
+    const countLines = Object.keys(resultCounts).map((key) => `${key}: ${resultCounts[key]}`);
 
-  function openInspectorFor(turnId, pluginIndex) {
-    const data = turnStore.get(turnId);
-    const call = data && Array.isArray(data.plugin_calls) ? data.plugin_calls[pluginIndex] : null;
-    if (!call) {
-      return;
-    }
-    inspectorTitle.textContent = call.plugin_name || 'Plugin details';
+    inspectorTitle.textContent = detail.title || ui.plugin_details || 'Plugin Details';
     inspectorBody.innerHTML = [
-      buildInspectorSection('Summary', `
+      buildInspectorSection(ui.inspector_summary || 'Summary', `
         <div class="agent-detail-meta">
-          <div><strong>Status:</strong> ${escapeHtml(call.status || '')}</div>
-          <div><strong>Latency:</strong> ${escapeHtml(String(call.latency_ms || 0))} ms</div>
-          <div><strong>Query:</strong> ${escapeHtml(call.query_summary || '')}</div>
+          ${detail.summary ? `<p>${escapeHtml(detail.summary)}</p>` : ''}
+          ${countLines.length ? `<p>${escapeHtml(countLines.join(' · '))}</p>` : ''}
         </div>
       `),
-      buildInspectorSection('Evidence', Array.isArray(call.evidence_items) && call.evidence_items.length
-        ? `<div class="agent-detail-list">${call.evidence_items.map((item) => `<div class="agent-detail-item">${escapeHtml(item)}</div>`).join('')}</div>`
-        : '<div class="agent-detail-meta">No evidence items were returned for this tool call.</div>'),
-      buildInspectorSection('Citations', citationMarkup(call.citations)),
-      buildInspectorSection('Returned Data', resultPreviewMarkup(call.results)),
-      buildInspectorSection('Errors', Array.isArray(call.errors) && call.errors.length
-        ? `<div class="agent-detail-list">${call.errors.map((item) => `<div class="agent-detail-item">${escapeHtml(item)}</div>`).join('')}</div>`
-        : '<div class="agent-detail-meta">No plugin errors were reported.</div>'),
+      buildInspectorSection(ui.inspector_evidence || 'Evidence', formatInspectorList(
+        payload.evidence_items || payload.display_details?.evidence_items || [],
+        ui.tool_empty_evidence || 'No evidence items were returned for this tool call.',
+      )),
+      buildInspectorSection(ui.inspector_citations || 'Citations', formatInspectorList(
+        payload.citations || payload.display_details?.citations || [],
+        ui.tool_empty_citations || 'No citations were returned for this tool call.',
+      )),
+      buildInspectorSection(ui.inspector_data || 'Returned Data', payload.raw_preview
+        ? `<pre class="agent-detail-pre">${escapeHtml(JSON.stringify(payload.raw_preview, null, 2))}</pre>`
+        : `<div class="agent-detail-empty">${escapeHtml(ui.tool_empty_data || 'No result payload was returned.')}</div>`),
+      buildInspectorSection(ui.inspector_errors || 'Errors', formatInspectorList(
+        payload.errors || payload.display_details?.errors || [],
+        ui.tool_empty_errors || 'No plugin errors were reported.',
+      )),
     ].join('');
+
     inspector.setAttribute('aria-hidden', 'false');
     app.classList.add('is-inspector-open');
   }
@@ -321,9 +411,118 @@
     app.classList.remove('is-inspector-open');
   }
 
+  function handleStreamEvent(turn, event) {
+    if (!event || typeof event !== 'object') return;
+
+    if (event.type === 'planning') {
+      createThinkingLine(turn, String(event.message || ''), 'bullet');
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
+    if (event.type === 'tool_start') {
+      if (event.message) {
+        createThinkingLine(turn, String(event.message), 'bullet');
+      }
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
+    if (event.type === 'tool_progress') {
+      if (event.message) {
+        createThinkingLine(turn, String(event.message), 'bullet');
+      }
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
+    if (event.type === 'tool_result') {
+      createToolEvent(turn, event);
+      if (event.message) {
+        createThinkingLine(turn, String(event.message), 'bullet');
+      }
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
+    if (event.type === 'synthesizing') {
+      createThinkingLine(turn, String(event.message || ''), 'bullet');
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
+    if (event.type === 'answer') {
+      setAnswer(turn, String(event.message || ''), String(event.language || turn.language || 'en'));
+      return;
+    }
+
+    if (event.type === 'error') {
+      createThinkingLine(turn, String(event.message || 'The request failed.'), 'error');
+      return;
+    }
+
+    if (event.type === 'done') {
+      finalizeTurn(turn);
+    }
+  }
+
+  async function readEventStream(response, onEvent) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        break;
+      }
+      buffer += decoder.decode(value, { stream: true });
+
+      let boundaryIndex = buffer.indexOf('\n\n');
+      while (boundaryIndex !== -1) {
+        const chunk = buffer.slice(0, boundaryIndex);
+        buffer = buffer.slice(boundaryIndex + 2);
+        const event = parseStreamChunk(chunk);
+        if (event) {
+          onEvent(event);
+        }
+        boundaryIndex = buffer.indexOf('\n\n');
+      }
+    }
+
+    const finalChunk = buffer.trim();
+    if (finalChunk) {
+      const event = parseStreamChunk(finalChunk);
+      if (event) {
+        onEvent(event);
+      }
+    }
+  }
+
+  function parseStreamChunk(chunk) {
+    const lines = String(chunk || '')
+      .split(/\r?\n/)
+      .map((line) => line.trimEnd())
+      .filter(Boolean);
+    if (!lines.length) {
+      return null;
+    }
+    const dataLines = lines
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trimStart());
+    if (!dataLines.length) {
+      return null;
+    }
+    try {
+      return JSON.parse(dataLines.join('\n'));
+    } catch (_error) {
+      return null;
+    }
+  }
+
   async function submitQuestion(event) {
     event.preventDefault();
-    const question = (questionInput.value || '').trim();
+    const question = String(questionInput.value || '').trim();
     if (!question) {
       setStatus('Please enter a question.');
       questionInput.focus();
@@ -334,58 +533,64 @@
       return;
     }
 
+    if (activeAbortController) {
+      activeAbortController.abort();
+    }
+
     const turn = createTurn(question);
+    const abortController = new AbortController();
+    activeAbortController = abortController;
+
     setLoading(true);
-    setStatus('Thinking...');
+    setStatus(ui.thinking_running || 'Running...');
     questionInput.value = '';
-    autoResizeTextarea();
 
     try {
-      const response = await fetch(config.apiUrl || '/TE-/api/agent.php', {
+      const response = await fetch(config.streamApiUrl || '/TE-/api/agent_stream.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         body: JSON.stringify({
           question,
-          model: (config.defaultModel || 'deepseek-chat').trim(),
+          model: String(config.defaultModel || 'deepseek-chat').trim(),
           mode: 'academic',
           session_id: sessionId || undefined,
         }),
+        signal: abortController.signal,
       });
-      const payload = await response.json();
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || `Request failed with HTTP ${response.status}`);
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Streaming request failed with HTTP ${response.status}`);
       }
-      const data = payload.data || {};
-      sessionId = data.session_id || sessionId;
-      try {
-        if (sessionId) {
-          window.localStorage.setItem(storageKey, sessionId);
+
+      await readEventStream(response, (streamEvent) => {
+        if (streamEvent.session_id) {
+          sessionId = String(streamEvent.session_id);
+          try {
+            window.localStorage.setItem(storageKey, sessionId);
+          } catch (_error) {}
         }
-      } catch (_error) {}
-      renderTurn(turn, data, performance.now() - turn.startedAt);
+        handleStreamEvent(turn, streamEvent);
+      });
+
+      finalizeTurn(turn);
       setStatus('');
     } catch (error) {
-      renderTurn(turn, {
-        answer: `## Error\n${error && error.message ? error.message : 'Unknown request failure'}`,
-        model_provider: 'system',
-        model: config.defaultModel || 'deepseek-chat',
-        confidence: 'low',
-        language: 'en',
-        reasoning_trace: [{
-          step: 'planning',
-          title: 'Request failed',
-          details: error && error.message ? error.message : 'Unknown request failure',
-        }],
-        plugin_calls: [],
-      }, performance.now() - turn.startedAt);
+      const message = error && error.name === 'AbortError'
+        ? 'The request was cancelled.'
+        : (error && error.message ? error.message : 'Unknown request failure');
+      handleStreamEvent(turn, { type: 'error', message });
+      setAnswer(turn, message, 'en');
+      finalizeTurn(turn);
       setStatus('The request failed.');
     } finally {
+      if (activeAbortController === abortController) {
+        activeAbortController = null;
+      }
       setLoading(false);
       questionInput.focus();
     }
   }
 
-  questionInput.addEventListener('input', autoResizeTextarea);
   questionInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -394,9 +599,9 @@
   });
 
   conversationNode.addEventListener('click', (event) => {
-    const target = event.target.closest('.agent-tool-event');
-    if (!target) return;
-    openInspectorFor(target.dataset.turnId || '', Number(target.dataset.pluginIndex || 0));
+    const toolEvent = event.target.closest('.agent-tool-event');
+    if (!toolEvent) return;
+    openInspector(String(toolEvent.dataset.detailId || ''));
   });
 
   inspectorClose.addEventListener('click', closeInspector);
@@ -410,6 +615,5 @@
   }
 
   form.addEventListener('submit', submitQuestion);
-  setMode('agent');
-  autoResizeTextarea();
+  setMode(currentMode);
 })();
