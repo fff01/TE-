@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-JBROWSE_DIR = ROOT / 'new_data' / 'JBrowse'
+JBROWSE_DIR = ROOT / 'data' / 'JBrowse'
 FASTA_PATH = JBROWSE_DIR / 'hg38.fa'
 FAI_PATH = JBROWSE_DIR / 'hg38.fa.fai'
 CHROM_SIZES_PATH = JBROWSE_DIR / 'hg38.chrom.sizes'

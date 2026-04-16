@@ -1,0 +1,383 @@
+        .proto-main.preview-main {
+          padding: 0;
+          background: #f3f8ff;
+        }
+
+        .preview-stage {
+          position: relative;
+          width: 100%;
+          height: calc(100vh - 82px);
+          min-height: 640px;
+          background: #f3f8ff;
+        }
+
+        .preview-graph-frame {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          display: block;
+          background: #fff;
+        }
+
+        .preview-fullscreen-btn {
+          position: absolute;
+          top: 92px;
+          left: 18px;
+          z-index: 40;
+          border: 1px solid rgba(219, 231, 243, 0.95);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.96);
+          color: #18345f;
+          padding: 10px 16px;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+          transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+        }
+
+        .preview-fullscreen-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 16px 30px rgba(15, 23, 42, 0.16);
+        }
+
+        .preview-stage.is-immersive {
+          background: #ffffff;
+        }
+
+        .preview-stage.is-immersive .preview-fullscreen-btn,
+        .preview-stage.is-immersive .qa-overlay-layer {
+          display: none;
+        }
+
+        .preview-stage:fullscreen,
+        .preview-stage:-webkit-full-screen {
+          width: 100vw;
+          height: 100vh;
+          min-height: 100vh;
+          background: #ffffff;
+        }
+
+        .qa-overlay-layer {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 20;
+        }
+
+        .qa-drawer {
+          position: absolute;
+          top: 92px;
+          left: calc(100% - 448px);
+          width: 430px;
+          height: calc(100% - 110px);
+          background: #ffffff;
+          border: 1px solid #dbe7f3;
+          border-radius: 20px;
+          box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          opacity: 0;
+          visibility: hidden;
+          pointer-events: none;
+          transform: translateY(12px) scale(0.985);
+          transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
+          user-select: none;
+        }
+
+        .qa-overlay-layer.is-open .qa-drawer {
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+          transform: translateY(0) scale(1);
+        }
+
+        .qa-overlay-layer.is-dragging .qa-drawer,
+        .qa-overlay-layer.is-resizing .qa-drawer {
+          transition: none;
+        }
+
+        .qa-overlay-layer.is-dragging,
+        .qa-overlay-layer.is-dragging * {
+          cursor: move !important;
+          user-select: none !important;
+        }
+
+        .qa-overlay-layer.is-resizing,
+        .qa-overlay-layer.is-resizing * {
+          user-select: none !important;
+        }
+
+        .qa-drawer-drag {
+          position: relative;
+          flex: 0 0 22px;
+          width: 100%;
+          padding: 0;
+          border: 0;
+          border-bottom: 1px solid rgba(219, 231, 243, 0.95);
+          background: linear-gradient(180deg, rgba(248, 251, 255, 0.98) 0%, rgba(244, 248, 253, 0.94) 100%);
+          cursor: move;
+        }
+
+        .qa-drawer-drag::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 56px;
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(120, 146, 190, 0.42);
+        }
+
+        .qa-drawer-drag:hover::after,
+        .qa-overlay-layer.is-dragging .qa-drawer-drag::after {
+          background: rgba(79, 123, 214, 0.68);
+        }
+
+        .qa-drawer-body {
+          position: relative;
+          flex: 1 1 auto;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .qa-drawer iframe {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          display: block;
+          background: #fff;
+        }
+
+        .qa-drawer-resize {
+          position: absolute;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          z-index: 3;
+        }
+
+        .qa-drawer-resize-w {
+          top: 24px;
+          left: 0;
+          bottom: 14px;
+          width: 14px;
+          cursor: ew-resize;
+        }
+
+        .qa-drawer-resize-e {
+          top: 24px;
+          right: 0;
+          bottom: 14px;
+          width: 14px;
+          cursor: ew-resize;
+        }
+
+        .qa-drawer-resize-s {
+          left: 14px;
+          right: 24px;
+          bottom: 0;
+          height: 14px;
+          cursor: ns-resize;
+        }
+
+        .qa-drawer-resize-nw {
+          top: 0;
+          left: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nwse-resize;
+        }
+
+        .qa-drawer-resize-ne {
+          top: 0;
+          right: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nesw-resize;
+        }
+
+        .qa-drawer-resize-sw {
+          left: 0;
+          bottom: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nesw-resize;
+        }
+
+        .qa-drawer-resize-se {
+          right: 0;
+          bottom: 0;
+          width: 24px;
+          height: 24px;
+          cursor: nwse-resize;
+        }
+
+        .qa-drawer-resize-w::after,
+        .qa-drawer-resize-e::after,
+        .qa-drawer-resize-s::after,
+        .qa-drawer-resize-nw::after,
+        .qa-drawer-resize-ne::after,
+        .qa-drawer-resize-sw::after,
+        .qa-drawer-resize-se::after {
+          content: '';
+          position: absolute;
+          opacity: 0;
+          transition: opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+        }
+
+        .qa-drawer-resize-w::after,
+        .qa-drawer-resize-e::after {
+          top: 50%;
+          transform: translateY(-50%);
+          width: 4px;
+          height: 56px;
+          border-radius: 999px;
+          background: rgba(120, 146, 190, 0.42);
+        }
+
+        .qa-drawer-resize-w::after {
+          left: 4px;
+        }
+
+        .qa-drawer-resize-e::after {
+          right: 4px;
+        }
+
+        .qa-drawer-resize-s::after {
+          left: 50%;
+          bottom: 4px;
+          transform: translateX(-50%);
+          width: 56px;
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(120, 146, 190, 0.42);
+        }
+
+        .qa-drawer-resize-nw::after,
+        .qa-drawer-resize-ne::after,
+        .qa-drawer-resize-sw::after,
+        .qa-drawer-resize-se::after {
+          width: 12px;
+          height: 12px;
+          background: transparent;
+        }
+
+        .qa-drawer-resize-nw::after {
+          top: 5px;
+          left: 5px;
+          border-left: 3px solid rgba(120, 146, 190, 0.58);
+          border-top: 3px solid rgba(120, 146, 190, 0.58);
+          border-top-left-radius: 10px;
+        }
+
+        .qa-drawer-resize-ne::after {
+          top: 5px;
+          right: 5px;
+          border-right: 3px solid rgba(120, 146, 190, 0.58);
+          border-top: 3px solid rgba(120, 146, 190, 0.58);
+          border-top-right-radius: 10px;
+        }
+
+        .qa-drawer-resize-sw::after {
+          left: 5px;
+          bottom: 5px;
+          border-left: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom-left-radius: 10px;
+        }
+
+        .qa-drawer-resize-se::after {
+          right: 5px;
+          bottom: 5px;
+          border-right: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom: 3px solid rgba(120, 146, 190, 0.58);
+          border-bottom-right-radius: 10px;
+        }
+
+        .qa-drawer-resize-w:hover::after,
+        .qa-drawer-resize-e:hover::after,
+        .qa-drawer-resize-s:hover::after,
+        .qa-drawer-resize-nw:hover::after,
+        .qa-drawer-resize-ne:hover::after,
+        .qa-drawer-resize-sw:hover::after,
+        .qa-drawer-resize-se:hover::after {
+          opacity: 1;
+        }
+
+        .qa-drawer-resize-w:hover::after,
+        .qa-drawer-resize-e:hover::after,
+        .qa-drawer-resize-s:hover::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-w::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-e::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-s::after {
+          opacity: 1;
+          background: rgba(79, 123, 214, 0.68);
+        }
+
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-nw::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-ne::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-sw::after,
+        .qa-overlay-layer.is-resizing .qa-drawer-resize-se::after,
+        .qa-drawer-resize-nw:hover::after,
+        .qa-drawer-resize-ne:hover::after,
+        .qa-drawer-resize-sw:hover::after,
+        .qa-drawer-resize-se:hover::after {
+          opacity: 1;
+          border-left-color: rgba(79, 123, 214, 0.78);
+          border-right-color: rgba(79, 123, 214, 0.78);
+          border-top-color: rgba(79, 123, 214, 0.78);
+          border-bottom-color: rgba(79, 123, 214, 0.78);
+        }
+
+        .qa-fab {
+          position: fixed;
+          width: 72px;
+          height: 72px;
+          border: 0;
+          border-radius: 50%;
+          background: linear-gradient(180deg, #4f7bd6 0%, #2f63b9 100%);
+          color: #fff;
+          box-shadow: 0 16px 34px rgba(47, 99, 185, 0.28);
+          display: grid;
+          place-items: center;
+          cursor: grab;
+          pointer-events: auto;
+          z-index: 30;
+          user-select: none;
+          touch-action: none;
+        }
+
+        .qa-fab:active {
+          cursor: grabbing;
+        }
+
+        .qa-fab svg {
+          width: 34px;
+          height: 34px;
+          display: block;
+        }
+
+        @media (max-width: 1120px) {
+          .preview-stage {
+            height: calc(100vh - 126px);
+          }
+        }
+
+        @media (max-width: 680px) {
+          .preview-stage {
+            height: calc(100vh - 118px);
+            min-height: 560px;
+          }
+
+          .qa-drawer {
+            top: 10px;
+            left: 10px;
+            width: min(420px, calc(100vw - 20px));
+            height: calc(100% - 20px);
+            border-radius: 16px;
+          }
+        }

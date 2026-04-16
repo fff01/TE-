@@ -1,9 +1,5 @@
 # Large local datasets
-/new_data/
-/new_data/JBrowse/
-/new_data/bulk_expression_web/
-/data/rmsk.txt
-
+data/
 
 # Large reference or genome files
 *.fa

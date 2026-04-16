@@ -4,6 +4,7 @@ $activePage = 'genomic';
 $protoCurrentPath = '/TE-/jbrowse.php';
 $protoSubtitle = 'Standalone genome browser for TE loci';
 require __DIR__ . '/site_i18n.php';
+require __DIR__ . '/path_config.php';
 $isEmbedded = trim((string) ($_GET['embed'] ?? '')) !== '';
 
 function jbrowse_primary_chr_order(): array
@@ -43,6 +44,45 @@ function jbrowse_normalize_te(?string $te): string
     return $te;
 }
 
+function jbrowse_project_relative_path(string $relativePath): string
+{
+    $normalized = ltrim(str_replace('\\', '/', $relativePath), '/');
+    if ($normalized === '') {
+        return 'data/JBrowse';
+    }
+    if (str_starts_with($normalized, 'data/JBrowse/')) {
+        return $normalized;
+    }
+    if ($normalized === 'data/JBrowse') {
+        return $normalized;
+    }
+    if (str_starts_with($normalized, 'JBrowse/')) {
+        return 'data/' . $normalized;
+    }
+    if ($normalized === 'JBrowse') {
+        return 'data/JBrowse';
+    }
+    $marker = '/JBrowse/';
+    $markerPos = strpos($normalized, $marker);
+    if ($markerPos !== false) {
+        return 'data/JBrowse/' . substr($normalized, $markerPos + strlen($marker));
+    }
+    if (str_ends_with($normalized, '/JBrowse')) {
+        return 'data/JBrowse';
+    }
+    return 'data/JBrowse/' . $normalized;
+}
+
+function jbrowse_project_fs_path(string $relativePath): string
+{
+    return tekg_fs_from_project_relative(jbrowse_project_relative_path($relativePath));
+}
+
+function jbrowse_project_url(string $relativePath): string
+{
+    return tekg_url_from_project_relative(jbrowse_project_relative_path($relativePath));
+}
+
 function jbrowse_load_hit_entry(string $te, array $hitManifest): ?array
 {
     static $cache = [];
@@ -56,7 +96,7 @@ function jbrowse_load_hit_entry(string $te, array $hitManifest): ?array
         return null;
     }
 
-    $absolutePath = __DIR__ . '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+    $absolutePath = jbrowse_project_fs_path($relativePath);
     if (!is_file($absolutePath)) {
         $cache[$te] = null;
         return null;
@@ -304,7 +344,7 @@ $siteLang = site_lang();
 $siteRenderer = site_renderer();
 
 $root = __DIR__;
-$jbrowseDir = $root . '/new_data/JBrowse';
+$jbrowseDir = TEKG_JBROWSE_FS_DIR;
 $repeatsDir = $jbrowseDir . '/repeats';
 $representativeIndex = jbrowse_read_json($repeatsDir . '/te_representative_index.json');
 $hitManifest = jbrowse_read_json($repeatsDir . '/te_hits_manifest.json');
@@ -320,19 +360,19 @@ $regionKey = implode('__', [
 $repeatsRows = jbrowse_collect_repeat_rows($repeatsDir . '/hg38.rmsk.repeats.bed', $locus['chr'], $locus['view_start'], $locus['view_end']);
 $refseqRows = jbrowse_collect_refseq_rows($jbrowseDir . '/hg38.ncbiRefSeq.gtf/hg38.ncbiRefSeq.gtf', $locus['chr'], $locus['view_start'], $locus['view_end']);
 
-$repeatCacheRel = 'new_data/JBrowse/cache/repeats/' . $regionKey . '.gff3';
-$refseqCacheRel = 'new_data/JBrowse/cache/refseq/' . $regionKey . '.gff3';
-$repeatCacheAbs = $root . '/' . $repeatCacheRel;
-$refseqCacheAbs = $root . '/' . $refseqCacheRel;
+$repeatCacheRel = jbrowse_project_relative_path('cache/repeats/' . $regionKey . '.gff3');
+$refseqCacheRel = jbrowse_project_relative_path('cache/refseq/' . $regionKey . '.gff3');
+$repeatCacheAbs = jbrowse_project_fs_path($repeatCacheRel);
+$refseqCacheAbs = jbrowse_project_fs_path($refseqCacheRel);
 jbrowse_write_gff3_cache($repeatCacheAbs, $repeatsRows);
 jbrowse_write_gff3_cache($refseqCacheAbs, $refseqRows);
 
-$repeatTrackUrl = '/TE-/' . str_replace('\\', '/', $repeatCacheRel);
-$refseqTrackUrl = '/TE-/' . str_replace('\\', '/', $refseqCacheRel);
-$fastaUrl = '/TE-/new_data/JBrowse/hg38.fa';
-$faiUrl = '/TE-/new_data/JBrowse/hg38.fa.fai';
-$clinvarMainUrl = '/TE-/new_data/JBrowse/clinvarMain.bb';
-$clinvarCnvUrl = '/TE-/new_data/JBrowse/clinvarCnv.bb';
+$repeatTrackUrl = jbrowse_project_url($repeatCacheRel);
+$refseqTrackUrl = jbrowse_project_url($refseqCacheRel);
+$fastaUrl = tekg_jbrowse_url('hg38.fa');
+$faiUrl = tekg_jbrowse_url('hg38.fa.fai');
+$clinvarMainUrl = tekg_jbrowse_url('clinvarMain.bb');
+$clinvarCnvUrl = tekg_jbrowse_url('clinvarCnv.bb');
 $defaultLoc = sprintf(
     '%s:%s..%s',
     $locus['chr'],
@@ -391,235 +431,7 @@ if ($isEmbedded) {
     require __DIR__ . '/head.php';
 }
 ?>
-      <style>
-        .jbrowse-shell {
-          background: #f5f9ff;
-          min-height: calc(100vh - 82px);
-          padding: 34px 0 56px;
-        }
-
-        .jbrowse-shell.is-embedded {
-          background: transparent;
-          min-height: auto;
-          padding: 0;
-        }
-
-        .jbrowse-embed-body {
-          margin: 0;
-          background: transparent;
-        }
-
-        .jbrowse-container {
-          max-width: 1560px;
-          margin: 0 auto;
-          padding: 0 28px;
-        }
-
-        .jbrowse-title {
-          margin: 0 0 18px;
-          font-size: 52px;
-          font-weight: 700;
-          color: #8a93a3;
-          line-height: 1.1;
-        }
-
-        .jbrowse-crumbs {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 26px;
-          font-size: 16px;
-          color: #70809a;
-        }
-
-        .jbrowse-crumbs a {
-          color: #2f63b9;
-          font-weight: 500;
-        }
-
-        .jbrowse-topbar {
-          display: flex;
-          justify-content: space-between;
-          gap: 20px;
-          align-items: stretch;
-          margin-bottom: 18px;
-          flex-wrap: wrap;
-        }
-
-        .jbrowse-summary {
-          background: #ffffff;
-          border: 1px solid #dbe7f8;
-          border-radius: 14px;
-          box-shadow: 0 10px 28px rgba(26, 60, 112, 0.08);
-          padding: 20px 22px;
-          min-width: 360px;
-          flex: 1 1 100%;
-        }
-
-        .jbrowse-summary h2 {
-          margin: 0 0 12px;
-          font-size: 24px;
-          color: #193458;
-          font-weight: 700;
-        }
-
-        .jbrowse-meta {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px 18px;
-        }
-
-        .jbrowse-meta-item {
-          min-width: 0;
-        }
-
-        .jbrowse-meta-label {
-          display: block;
-          font-size: 12px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #7a8baa;
-          margin-bottom: 4px;
-          font-weight: 700;
-        }
-
-        .jbrowse-meta-value {
-          display: block;
-          font-size: 17px;
-          line-height: 1.45;
-          color: #27466f;
-          word-break: break-word;
-        }
-
-        .jbrowse-note {
-          margin-top: 14px;
-          font-size: 14px;
-          line-height: 1.7;
-          color: #6a7f9e;
-        }
-
-        .jbrowse-track-toolbar {
-          margin-top: 18px;
-          padding-top: 16px;
-          border-top: 1px solid #e5edf9;
-        }
-
-        .jbrowse-control-row {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: flex-end;
-          gap: 14px 18px;
-        }
-
-        .jbrowse-hit-picker {
-          min-width: min(420px, 100%);
-          flex: 1 1 420px;
-        }
-
-        .jbrowse-hit-picker-label {
-          display: block;
-          margin-bottom: 8px;
-          font-size: 12px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #7a8baa;
-          font-weight: 700;
-        }
-
-        .jbrowse-hit-picker-select {
-          width: 100%;
-          min-height: 44px;
-          padding: 10px 14px;
-          border-radius: 12px;
-          border: 1px solid #d7e3f7;
-          background: #fbfdff;
-          color: #27466f;
-          font-size: 14px;
-          line-height: 1.4;
-        }
-
-        .jbrowse-track-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .jbrowse-track-item {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 14px;
-          border-radius: 999px;
-          background: #f5f8ff;
-          border: 1px solid #e0e9f8;
-        }
-
-        .jbrowse-track-item input[type='checkbox'] {
-          width: 18px;
-          height: 18px;
-          accent-color: #3d8f57;
-          cursor: pointer;
-          margin: 0;
-          flex: 0 0 auto;
-        }
-
-        .jbrowse-track-dot {
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          flex: 0 0 auto;
-          border: 2px solid rgba(18, 43, 86, 0.12);
-        }
-
-        .jbrowse-track-name {
-          font-size: 15px;
-          color: #26466f;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .jbrowse-browser-stage {
-          margin-top: 10px;
-        }
-
-        .jbrowse-browser-head {
-          margin: 0 0 10px;
-          padding: 0;
-          background: transparent;
-          border: 0;
-        }
-
-        .jbrowse-browser-head strong {
-          display: block;
-          font-size: 24px;
-          color: #1c3f73;
-          margin-bottom: 6px;
-        }
-
-        .jbrowse-browser-head span {
-          display: block;
-          font-size: 15px;
-          color: #6881a7;
-        }
-
-        #jbrowse_linear_genome_view {
-          height: 840px;
-          background: transparent;
-        }
-
-        .jbrowse-loading {
-          height: 840px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #587399;
-          font-size: 18px;
-          border-radius: 16px;
-          background: rgba(255, 255, 255, 0.62);
-          border: 1px solid rgba(219, 231, 248, 0.9);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
-        }
-      </style>
+      <link rel="stylesheet" href="/TE-/assets/css/pages/jbrowse.css">
 
       <section class="jbrowse-shell<?= $isEmbedded ? ' is-embedded' : '' ?>">
         <div class="jbrowse-container">
@@ -737,178 +549,8 @@ if ($isEmbedded) {
       </section>
 
       <script src="https://unpkg.com/@jbrowse/react-linear-genome-view2@3.5.0/dist/react-linear-genome-view.umd.production.min.js" crossorigin></script>
-      <script>
-        (function () {
-          const meta = <?= json_encode($pageMeta, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-          const { React, createRoot, createViewState, JBrowseLinearGenomeView } = JBrowseReactLinearGenomeView;
-          const mount = document.getElementById('jbrowse_linear_genome_view');
-          const controls = Array.from(document.querySelectorAll('#jbrowseTrackControls input[data-track-id]'));
-          const hitSelect = document.getElementById('jbrowseHitSelect');
-          const defaultLocEl = document.getElementById('jbrowseDefaultLoc');
-          const repeatCountEl = document.getElementById('jbrowseRepeatCount');
-          const refseqCountEl = document.getElementById('jbrowseRefseqCount');
-          const root = createRoot(mount);
-          let runtimeConfig = null;
-
-          function getSelectedTrackIds() {
-            return controls.filter(input => input.checked).map(input => input.dataset.trackId);
-          }
-
-          function getSelectedHitParams() {
-            const option = hitSelect && hitSelect.selectedOptions.length ? hitSelect.selectedOptions[0] : null;
-            return {
-              chrom: option ? String(option.dataset.chrom || '') : String(meta.chr || ''),
-              start: option ? String(option.dataset.start || '') : String(meta.start || ''),
-              end: option ? String(option.dataset.end || '') : String(meta.end || ''),
-            };
-          }
-
-          function buildConfigUrl() {
-            const url = new URL(window.location.href);
-            const hit = getSelectedHitParams();
-            if (meta.te) {
-              url.searchParams.set('te', meta.te);
-            }
-            if (hit.chrom) {
-              url.searchParams.set('chr', hit.chrom);
-            }
-            if (hit.start) {
-              url.searchParams.set('start', hit.start);
-            }
-            if (hit.end) {
-              url.searchParams.set('end', hit.end);
-            }
-            url.searchParams.set('format', 'config');
-            return url.toString();
-          }
-
-          function renderBrowser() {
-            if (!runtimeConfig) {
-              return;
-            }
-            const selectedTrackIds = getSelectedTrackIds();
-            const trackConfigs = [
-              {
-                type: 'FeatureTrack',
-                trackId: 'repeats_hg38',
-                name: 'Repeats',
-                assemblyNames: ['hg38'],
-                category: ['Annotation'],
-                adapter: {
-                  type: 'Gff3Adapter',
-                  gffLocation: { uri: runtimeConfig.repeatTrackUrl },
-                },
-              },
-              {
-                type: 'FeatureTrack',
-                trackId: 'ncbi_refseq_window',
-                name: 'NCBI RefSeq',
-                assemblyNames: ['hg38'],
-                category: ['Annotation'],
-                adapter: {
-                  type: 'Gff3Adapter',
-                  gffLocation: { uri: runtimeConfig.refseqTrackUrl },
-                },
-              },
-              {
-                type: 'FeatureTrack',
-                trackId: 'clinvar_variants',
-                name: 'ClinVar variants',
-                assemblyNames: ['hg38'],
-                category: ['ClinVar'],
-                adapter: {
-                  type: 'BigBedAdapter',
-                  uri: runtimeConfig.clinvarMainUrl,
-                },
-              },
-              {
-                type: 'FeatureTrack',
-                trackId: 'clinvar_cnv',
-                name: 'ClinVar CNV',
-                assemblyNames: ['hg38'],
-                category: ['ClinVar'],
-                adapter: {
-                  type: 'BigBedAdapter',
-                  uri: runtimeConfig.clinvarCnvUrl,
-                },
-              },
-            ];
-            const selectedTracks = trackConfigs.filter(track => selectedTrackIds.includes(track.trackId));
-            const state = new createViewState({
-              assembly: {
-                name: 'hg38',
-                sequence: {
-                  type: 'ReferenceSequenceTrack',
-                  trackId: 'hg38_reference',
-                  name: 'Reference sequence',
-                  assemblyNames: ['hg38'],
-                  adapter: {
-                    type: 'IndexedFastaAdapter',
-                    fastaLocation: { uri: runtimeConfig.fastaUrl },
-                    faiLocation: { uri: runtimeConfig.faiUrl },
-                  },
-                },
-              },
-              tracks: selectedTracks,
-              defaultSession: {
-                name: runtimeConfig.pageMeta && runtimeConfig.pageMeta.te ? `JBrowse - ${runtimeConfig.pageMeta.te}` : 'JBrowse locus session',
-                view: {
-                  id: 'linearGenomeView',
-                  type: 'LinearGenomeView',
-                  init: {
-                    assembly: 'hg38',
-                    loc: runtimeConfig.pageMeta.defaultLoc,
-                    tracks: selectedTrackIds,
-                  },
-                },
-              },
-            });
-
-            root.render(React.createElement(JBrowseLinearGenomeView, { viewState: state }));
-          }
-
-          function applyConfig(config) {
-            runtimeConfig = config;
-            if (defaultLocEl && config.pageMeta) {
-              defaultLocEl.textContent = String(config.pageMeta.defaultLoc ?? '-');
-            }
-            if (repeatCountEl && config.pageMeta) {
-              repeatCountEl.textContent = String(config.pageMeta.repeatFeatureCount ?? '-');
-            }
-            if (refseqCountEl && config.pageMeta) {
-              refseqCountEl.textContent = String(config.pageMeta.refseqFeatureCount ?? '-');
-            }
-            renderBrowser();
-            window.requestAnimationFrame(renderBrowser);
-            window.setTimeout(renderBrowser, 120);
-          }
-
-          function loadSelectedHit() {
-            root.render(React.createElement('div', { className: 'jbrowse-loading' }, 'Loading selected genomic hit...'));
-            fetch(buildConfigUrl(), { cache: 'no-store' })
-              .then(function (response) {
-                if (!response.ok) {
-                  throw new Error('Failed to load JBrowse config');
-                }
-                return response.json();
-              })
-              .then(applyConfig)
-              .catch(function (error) {
-                console.error(error);
-                mount.innerHTML = '<div class="jbrowse-loading">Genome browser is unavailable right now.</div>';
-              });
-          }
-
-          controls.forEach(input => {
-            input.addEventListener('change', renderBrowser);
-          });
-          if (hitSelect) {
-            hitSelect.addEventListener('change', loadSelectedHit);
-          }
-
-          loadSelectedHit();
-        })();
-      </script>
+      <script id="jbrowse-page-meta" type="application/json"><?= json_encode($pageMeta, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+      <script src="/TE-/assets/js/pages/jbrowse.js"></script>
 <?php
 if ($isEmbedded) {
     ?>

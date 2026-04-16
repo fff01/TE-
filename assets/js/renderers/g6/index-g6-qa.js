@@ -63,6 +63,22 @@
   }
 
   function buildHighlightLabels(result) {
+    const explicitCandidates = Array.isArray(result && result.highlight_candidates)
+      ? result.highlight_candidates
+      : [];
+    if (explicitCandidates.length) {
+      const labels = new Map();
+      explicitCandidates.forEach((item) => {
+        const label = String((item && (item.display_label || item.label || item.name)) || '').trim();
+        const type = String((item && item.type) || 'TE').trim() || 'TE';
+        if (!label || label.length < 2 || type === 'Paper') return;
+        const key = label.toLowerCase();
+        if (!labels.has(key)) labels.set(key, { label, type });
+      });
+      if (labels.size) {
+        return Array.from(labels.values()).sort((a, b) => b.label.length - a.label.length);
+      }
+    }
     const graphContext = result && typeof result === 'object' ? result.graph_context : null;
     const anchor = graphContext && graphContext.anchor ? {
       label: String(graphContext.anchor.name || '').trim(),
@@ -387,7 +403,7 @@
       ? `Custom (row=${result.custom_rows || currentCustomDepth.rows}, references=${result.custom_references || currentCustomDepth.references})`
       : ({ shallow: 'Shallow', medium: 'Medium', deep: 'Deep' }[result.answer_depth] || 'Shallow');
     const t = qaText();
-    const prefix = `> ${(t.providerPrefix || 'Model: ')}${provider === 'deepseek' ? t.modelDeepSeek : t.modelQwen}\n> ${styleLabel} 闂?Depth: ${depthLabel}\n\n`;
+    const prefix = `> ${(t.providerPrefix || 'Model: ')}${provider === 'deepseek' ? t.modelDeepSeek : t.modelQwen}\n> ${styleLabel} | Depth: ${depthLabel}\n\n`;
     return `${prefix}${result.answer || t.fallback || 'No answer is available right now.'}`;
   }
 

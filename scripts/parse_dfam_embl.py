@@ -14,7 +14,7 @@ ENTRIES_DIR = OUT_DIR / "entries"
 CATALOG_PATH = OUT_DIR / "dfam_curated_catalog.json"
 LOOKUP_INDEX_PATH = OUT_DIR / "dfam_lookup_index.json"
 GRAPH_REPORT_PATH = OUT_DIR / "dfam_curated_match_report.json"
-GRAPH_SOURCE_PATH = ROOT / "data_update_fix" / "te_kg2_final_standardized_new_standardized_fix.jsonl"
+GRAPH_SOURCE_PATH = ROOT / "archive" / "processing_history" / "data_update_fix" / "te_kg2_final_standardized_new_standardized_fix.jsonl"
 SUPPORTED_FEATURE_TYPES = {"CDS", "repeat_region", "LTR", "misc_feature", "polyA_signal", "promoter"}
 
 

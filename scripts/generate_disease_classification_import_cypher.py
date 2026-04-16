@@ -7,7 +7,7 @@ from pathlib import Path
 from disease_top_class import normalize_compare_key
 
 ROOT = Path(__file__).resolve().parents[1]
-TMP_DIR = ROOT / "tmp_icd11_csv"
+TMP_DIR = ROOT / "archive" / "processing_history" / "tmp_icd11_csv"
 IMPORTS_DIR = ROOT / "imports"
 PROCESSED_DIR = ROOT / "data" / "processed"
 

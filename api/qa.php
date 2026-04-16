@@ -184,9 +184,16 @@ final class QaService
                     : "Hello. I can answer questions grounded in the local TE knowledge graph. You can ask:\n1. LINE-1 related diseases\n2. LINE-1 related functions\n3. What literature supports L1HS?",
             ];
         }
-        $entity = $this->normalizeEntity($analysisQuestion);
+        $entities = $this->normalizeEntities($analysisQuestion, $normalizedGraphState);
+        $entity = $entities[0] ?? null;
+        $secondaryEntity = $entities[1] ?? null;
+        if ($entity === null) {
+            $entity = $this->extractAnchorFromGraphState($normalizedGraphState);
+        }
         $disease = $this->normalizeDisease($analysisQuestion);
         $intent = $this->detectIntent($analysisQuestion);
+        $explicitTargetType = $this->detectExplicitTargetType($analysisQuestion);
+        $selectedAnchorType = $this->normalizeGraphType((string)($normalizedGraphState['selected_node']['type'] ?? ''));
         if ($intent === null) {
             if ($this->containsAny($question, ['文献', '论文', '证据', 'paper', 'evidence', 'reference'])) {
                 $intent = 'entity_to_paper';
@@ -202,10 +209,25 @@ final class QaService
                 $intent = 'subfamily';
             }
         }
-        $this->debug('answer:intent', ['entity' => $entity, 'disease' => $disease, 'intent' => $intent]);
+        $this->debug('answer:intent', ['entity' => $entity, 'secondary_entity' => $secondaryEntity, 'disease' => $disease, 'intent' => $intent, 'target_type' => $explicitTargetType]);
         $mode = 'template_rag';
         $cypher = '';
         $rows = [];
+        if ($intent === 'te_tree_classification') {
+            $entity = 'TE';
+            $rows = $this->loadTeTreeOverviewRows();
+            $mode = 'tree_local';
+        } elseif ($entity !== null && $secondaryEntity !== null && $intent === 'subfamily') {
+            [$cypher, $params] = $this->buildTePairRelationQuery($entity, $secondaryEntity);
+            $rows = $this->runNeo4j($cypher, $params);
+            if (empty($rows)) {
+                $rows = $this->buildSyntheticTeRelationRows($entity, $secondaryEntity);
+                $mode = 'pair_lineage_local';
+            }
+            $this->debug('answer:pair_te_query', ['rows' => count($rows), 'entity' => $entity, 'secondary_entity' => $secondaryEntity]);
+        }
+
+        if (empty($rows)) {
 
         if ($entity !== null && $disease !== null && $this->containsAny(mb_strtolower($question), ['文献', '论文', '证据', 'paper', 'evidence', 'reference'])) {
             $intent = 'te_disease_evidence';
@@ -222,10 +244,22 @@ final class QaService
             $rows = $this->runNeo4j($cypher, $params);
             $this->debug('answer:template_query', ['rows' => count($rows)]);
         }
+        }
+
+        if (empty($rows) && $entity !== null && $explicitTargetType !== null && !in_array($intent, ['entity_to_paper', 'graph_structure', 'graph_topology', 'subfamily', 'te_tree_classification'], true)) {
+            $intent = $this->targetTypeToIntent($explicitTargetType);
+            if ($selectedAnchorType !== '' && $selectedAnchorType !== 'TE') {
+                [$cypher, $params] = $this->buildNodeTypedRelationQuery($entity, $selectedAnchorType, $explicitTargetType);
+            } else {
+                [$cypher, $params] = $this->buildTypedRelationQuery($entity, $explicitTargetType);
+            }
+            $rows = $this->runNeo4j($cypher, $params);
+            $this->debug('answer:typed_query', ['rows' => count($rows), 'anchor_type' => $selectedAnchorType, 'target_type' => $explicitTargetType]);
+        }
 
         if (empty($rows) && $entity !== null) {
-            $cypher = "MATCH (n {name: \$entity})-[r]-(m) RETURN type(r) AS relation_type, coalesce(r.predicate, '') AS predicate, labels(m) AS target_labels, m.name AS target LIMIT 15";
-            $rows = $this->runNeo4j($cypher, ['entity' => $entity]);
+            [$cypher, $params] = $this->buildNeighborFallbackQuery($entity);
+            $rows = $this->runNeo4j($cypher, $params);
             $mode = 'neighbor_fallback';
         }
 
@@ -250,14 +284,19 @@ final class QaService
             ? $this->buildGraphContextFromCurrentElements($normalizedGraphState['current_elements'], $intent, $entity, $analysisQuestion, $normalizedGraphState)
             : $this->buildGraphContext($rows, $references, $intent, $entity, $analysisQuestion, $normalizedGraphState);
 
-        try {
-            $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth, $customPrompt, $graphContext, $normalizedGraphState);
-            $mode .= '+llm';
-            $this->debug('answer:llm');
-        } catch (Throwable $e) {
+        if ($answerStyle === 'simple') {
             $mode .= '+structured_local';
-            $this->debug('answer:structured_local', ['error' => $e->getMessage()]);
             $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth, $customRows, $customReferences);
+        } else {
+            try {
+                $answer = $this->generateAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth, $customPrompt, $graphContext, $normalizedGraphState);
+                $mode .= '+llm';
+                $this->debug('answer:llm');
+            } catch (Throwable $e) {
+                $mode .= '+structured_local';
+                $this->debug('answer:structured_local', ['error' => $e->getMessage()]);
+                $answer = $this->fallbackAnswer($question, $language, $rows, $references, $intent, $entity, $answerStyle, $answerDepth, $customRows, $customReferences);
+            }
         }
         $answer = $this->polishAnswer($answer, $language);
         $this->debug('answer:done', ['mode' => $mode]);
@@ -286,6 +325,7 @@ final class QaService
             'answer_style' => $answerStyle,
             'answer_depth' => $answerDepth,
             'entity' => $entity,
+            'secondary_entity' => $secondaryEntity,
             'intent' => $intent,
             'mode' => $mode,
             'cypher' => $cypher,
@@ -302,6 +342,7 @@ final class QaService
             'graph_context' => $graphContext,
             'graph_action' => $graphAction,
             'graph_validation' => $graphValidation,
+            'highlight_candidates' => $this->buildHighlightCandidates($graphContext, $entity, $secondaryEntity),
             'answer' => $answer,
         ];
     }
@@ -1216,16 +1257,21 @@ final class QaService
             return 'Paper';
         }
         $selectedType = strtoupper(trim((string)($graphState['selected_node']['type'] ?? '')));
-        if (in_array($selectedType, ['TE', 'DISEASE', 'FUNCTION', 'PAPER'], true)) {
+        if (in_array($selectedType, ['TE', 'DISEASE', 'FUNCTION', 'PAPER', 'PROTEIN', 'GENE', 'RNA', 'MUTATION', 'DISEASECATEGORY'], true)) {
             return match ($selectedType) {
                 'DISEASE' => 'Disease',
                 'FUNCTION' => 'Function',
                 'PAPER' => 'Paper',
+                'PROTEIN' => 'Protein',
+                'GENE' => 'Gene',
+                'RNA' => 'RNA',
+                'MUTATION' => 'Mutation',
+                'DISEASECATEGORY' => 'DiseaseCategory',
                 default => 'TE',
             };
         }
         return match ($intent) {
-            'entity_to_paper', 'te_to_disease', 'te_to_function', 'subfamily', 'te_disease_relation', 'te_disease_evidence' => 'TE',
+            'entity_to_paper', 'te_to_disease', 'te_to_function', 'te_to_protein', 'te_to_gene', 'te_to_rna', 'te_to_mutation', 'subfamily', 'te_disease_relation', 'te_disease_evidence', 'te_tree_classification' => 'TE',
             default => 'TE',
         };
     }
@@ -1235,6 +1281,11 @@ final class QaService
         return match ($intent) {
             'te_to_disease', 'te_disease_relation', 'te_disease_evidence' => 'Disease',
             'te_to_function' => 'Function',
+            'te_to_protein' => 'Protein',
+            'te_to_gene' => 'Gene',
+            'te_to_rna' => 'RNA',
+            'te_to_mutation' => 'Mutation',
+            'disease_class_tree' => 'DiseaseCategory',
             'entity_to_paper' => 'Paper',
             'subfamily' => 'TE',
             default => $this->guessTypeFromLabel($targetLabel),
@@ -1252,12 +1303,24 @@ final class QaService
         if ($this->looksLikeFunctionName($label)) {
             return 'Function';
         }
+        if ($this->looksLikeProteinName($label)) {
+            return 'Protein';
+        }
+        if ($this->looksLikeGeneName($label)) {
+            return 'Gene';
+        }
+        if ($this->looksLikeRnaName($label)) {
+            return 'RNA';
+        }
+        if ($this->looksLikeMutationName($label)) {
+            return 'Mutation';
+        }
         return 'TE';
     }
 
     private function normalizeGraphType(string $type): string
     {
-        return in_array($type, ['TE', 'Disease', 'Function', 'Paper'], true) ? $type : 'TE';
+        return in_array($type, ['TE', 'Disease', 'Function', 'Paper', 'Protein', 'Gene', 'RNA', 'Mutation', 'DiseaseCategory'], true) ? $type : 'TE';
     }
 
     private function looksLikeRelationType(string $value): bool
@@ -1343,24 +1406,102 @@ final class QaService
         return $answerStyle === 'detailed' ? 'deep' : 'shallow';
     }
 
-    private function normalizeEntity(string $question): ?string
+    private function normalizeEntities(string $question, array $graphState = []): array
     {
-        $lower = mb_strtolower($question);
-        $aliases = [
-            'l1hs' => 'L1HS',
-            'line-1' => 'LINE1',
-            'line1' => 'LINE1',
-            'l1 ' => 'LINE1',
-            ' l1' => 'LINE1',
-            'alu' => 'Alu',
-            'sva' => 'SVA',
-        ];
-        foreach ($aliases as $alias => $entity) {
-            if (str_contains($lower, $alias)) {
-                return $entity;
+        $matches = [];
+        foreach ($this->entityAliasPatterns() as $canonical => $patterns) {
+            $position = null;
+            foreach ($patterns as $pattern) {
+                if (preg_match($pattern, $question, $found, PREG_OFFSET_CAPTURE)) {
+                    $position = (int)$found[0][1];
+                    break;
+                }
+            }
+            if ($position !== null) {
+                $matches[$canonical] = $position;
             }
         }
-        return null;
+
+        $graphAnchors = array_filter([
+            trim((string)($graphState['selected_node']['label'] ?? '')),
+            trim((string)($graphState['query'] ?? '')),
+        ]);
+        foreach ($graphAnchors as $candidate) {
+            $canonical = $this->canonicalizeEntityLabel($candidate);
+            $resolved = $canonical ?? $candidate;
+            if ($resolved === '' || isset($matches[$resolved])) {
+                continue;
+            }
+            if (stripos($question, $candidate) !== false) {
+                $matches[$resolved] = stripos($question, $candidate);
+            }
+        }
+
+        foreach ((array)($graphState['current_elements'] ?? []) as $element) {
+            $data = is_array($element['data'] ?? null) ? $element['data'] : [];
+            if (trim((string)($data['source'] ?? '')) !== '' || trim((string)($data['target'] ?? '')) !== '') {
+                continue;
+            }
+            $label = trim((string)($data['label'] ?? ''));
+            if ($label === '' || stripos($question, $label) === false) {
+                continue;
+            }
+            $resolved = $this->canonicalizeEntityLabel($label) ?? $label;
+            if (!isset($matches[$resolved])) {
+                $matches[$resolved] = stripos($question, $label);
+            }
+        }
+
+        asort($matches, SORT_NUMERIC);
+        return array_keys($matches);
+    }
+
+    private function normalizeEntity(string $question): ?string
+    {
+        $entities = $this->normalizeEntities($question);
+        return $entities[0] ?? null;
+    }
+
+    private function entityAliasPatterns(): array
+    {
+        return [
+            'L1HS' => ['/\bL1HS\b/i'],
+            'LINE1' => ['/\bLINE[\s_-]?1\b/i', '/\bL1\b/i'],
+            'Alu' => ['/\bAlu\b/i'],
+            'SVA' => ['/\bSVA\b/i'],
+        ];
+    }
+
+    private function canonicalizeEntityLabel(string $label): ?string
+    {
+        $normalized = $this->normalizeLookupToken($label);
+        return match ($normalized) {
+            'l1hs' => 'L1HS',
+            'line1', 'l1' => 'LINE1',
+            'alu' => 'Alu',
+            'sva' => 'SVA',
+            default => null,
+        };
+    }
+
+    private function normalizeLookupToken(string $value): string
+    {
+        $value = mb_strtolower(trim($value));
+        $value = str_replace(['-', '_', ' ', '\'', '"', '’', '（', '）', '(', ')', ':'], '', $value);
+        return $value;
+    }
+
+    private function buildEntityAliases(string $entity): array
+    {
+        $canonical = $this->canonicalizeEntityLabel($entity) ?? $entity;
+        $aliases = match ($canonical) {
+            'LINE1' => ['LINE1', 'LINE-1', 'L1'],
+            'L1HS' => ['L1HS'],
+            'Alu' => ['Alu'],
+            'SVA' => ['SVA'],
+            default => [$entity],
+        };
+        return array_values(array_unique(array_map([$this, 'normalizeLookupToken'], $aliases)));
     }
 
     private function normalizeDisease(string $question): ?string
@@ -1408,9 +1549,67 @@ final class QaService
         return null;
     }
 
+    private function buildDiseaseAliases(string $disease): array
+    {
+        $aliases = [$disease];
+        if (strcasecmp($disease, "Alzheimer's disease") === 0) {
+            $aliases[] = 'Alzheimer disease';
+            $aliases[] = "Alzheimers disease";
+        } elseif (strcasecmp($disease, "Huntington's Disease") === 0) {
+            $aliases[] = 'Huntington disease';
+        }
+        return array_values(array_unique(array_map([$this, 'normalizeLookupToken'], $aliases)));
+    }
+
+    private function detectExplicitTargetType(string $question): ?string
+    {
+        $lower = mb_strtolower($question);
+        if ($this->containsAny($lower, ['protein', 'proteins']) || $this->containsAny($question, ['铔嬬櫧', '蛋白'])) {
+            return 'Protein';
+        }
+        if ($this->containsAny($lower, ['gene', 'genes']) || $this->containsAny($question, ['鍩哄洜', '基因'])) {
+            return 'Gene';
+        }
+        if ($this->containsAny($lower, ['rna', 'rnas'])) {
+            return 'RNA';
+        }
+        if ($this->containsAny($lower, ['mutation', 'mutations']) || $this->containsAny($question, ['绐佸彉', '突变'])) {
+            return 'Mutation';
+        }
+        if ($this->containsAny($lower, ['paper', 'evidence', 'reference'])) {
+            return 'Paper';
+        }
+        if ($this->containsAny($lower, ['function', 'functions', 'mechanism', 'role'])) {
+            return 'Function';
+        }
+        if ($this->containsAny($lower, ['disease', 'diseases', 'cancer', 'disorder'])) {
+            return 'Disease';
+        }
+        return null;
+    }
+
+    private function targetTypeToIntent(string $targetType): string
+    {
+        return match ($targetType) {
+            'Disease' => 'te_to_disease',
+            'Function' => 'te_to_function',
+            'Protein' => 'te_to_protein',
+            'Gene' => 'te_to_gene',
+            'RNA' => 'te_to_rna',
+            'Mutation' => 'te_to_mutation',
+            default => 'te_to_function',
+        };
+    }
+
     private function detectIntent(string $question): ?string
     {
         $lower = mb_strtolower($question);
+        if (
+            ($this->containsAny($lower, ['classify', 'classification', 'categories']) && $this->containsAny($lower, ['transposable element', 'transposon', ' te ']))
+            || $this->containsAny($question, ['人类转座子分为哪几类', '人类转座子有哪些类别', '转座子分为哪几类'])
+        ) {
+            return 'te_tree_classification';
+        }
         if ($this->containsAny($lower, ['subfamily', 'lineage', 'relationship'])) {
             return 'subfamily';
         }
@@ -1499,54 +1698,64 @@ final class QaService
 
     private function isSupportedIntent(string $intent): bool
     {
-        return in_array($intent, ['subfamily', 'entity_to_paper', 'te_to_function', 'te_to_disease', 'te_disease_relation', 'te_disease_evidence', 'graph_structure', 'graph_topology'], true);
+        return in_array($intent, ['subfamily', 'entity_to_paper', 'te_to_function', 'te_to_disease', 'te_to_protein', 'te_to_gene', 'te_to_rna', 'te_to_mutation', 'te_disease_relation', 'te_disease_evidence', 'graph_structure', 'graph_topology', 'te_tree_classification', 'disease_class_tree'], true);
     }
 
     private function buildTemplateQuery(string $intent, string $entity): array
     {
+        $entityAliases = $this->buildEntityAliases($entity);
+        $entityExpr = $this->cypherNormalizedNameExpr('t');
+        $nodeExpr = $this->cypherNormalizedNameExpr('n');
+        $parentExpr = $this->cypherNormalizedNameExpr('parent');
+
         return match ($intent) {
             'te_to_function' => [
-                "MATCH (t:TE {name: \$entity})-[r:BIO_RELATION]->(f:Function)
+                "MATCH (t:TE)-[r:BIO_RELATION]-(f:Function)
+                 WHERE {$entityExpr} IN \$entity_aliases
                  OPTIONAL MATCH (p:Paper)-[er:EVIDENCE_RELATION]->(f)
                  WITH f, r, collect(DISTINCT CASE WHEN p IS NULL THEN NULL ELSE {title:p.name, pmids:coalesce(er.pmids, [])} END)[0..5] AS refs
-                 RETURN f.name AS target, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence
+                 RETURN f.name AS target, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence, labels(f) AS target_labels
                  ORDER BY target LIMIT 15",
-                ['entity' => $entity]
+                ['entity_aliases' => $entityAliases]
             ],
             'te_to_disease' => [
-                "MATCH (t:TE {name: \$entity})-[r:BIO_RELATION]->(d:Disease)
+                "MATCH (t:TE)-[r:BIO_RELATION]-(d:Disease)
+                 WHERE {$entityExpr} IN \$entity_aliases
                  OPTIONAL MATCH (p:Paper)-[er:EVIDENCE_RELATION]->(d)
                  WITH d, r, collect(DISTINCT CASE WHEN p IS NULL THEN NULL ELSE {title:p.name, pmids:coalesce(er.pmids, [])} END)[0..5] AS refs
-                 RETURN d.name AS target, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence
+                 RETURN d.name AS target, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence, labels(d) AS target_labels
                  ORDER BY target LIMIT 15",
-                ['entity' => $entity]
+                ['entity_aliases' => $entityAliases]
             ],
             'entity_to_paper' => [
-                "MATCH (p:Paper)-[r:EVIDENCE_RELATION]->(n {name: \$entity})
+                "MATCH (p:Paper)-[r:EVIDENCE_RELATION]->(n)
+                 WHERE {$nodeExpr} IN \$entity_aliases
                  RETURN p.name AS title, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids
                  ORDER BY title LIMIT 15",
-                ['entity' => $entity]
+                ['entity_aliases' => $entityAliases]
             ],
             'graph_structure', 'graph_topology' => [
-                "MATCH (n {name: \$entity})-[r]-(m)
-                 WHERE type(r) <> 'EVIDENCE_RELATION'
+                "MATCH (n)-[r]-(m)
+                 WHERE {$nodeExpr} IN \$entity_aliases AND type(r) <> 'EVIDENCE_RELATION'
                  OPTIONAL MATCH (p:Paper)-[er:EVIDENCE_RELATION]->(m)
                  WITH m, r, collect(DISTINCT CASE WHEN p IS NULL THEN NULL ELSE {title:p.name, pmids:coalesce(er.pmids, [])} END)[0..4] AS refs
                  RETURN m.name AS target, coalesce(r.predicate, type(r)) AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence, labels(m) AS target_labels
                  ORDER BY target LIMIT 30",
-                ['entity' => $entity]
+                ['entity_aliases' => $entityAliases]
             ],
             'subfamily' => $entity === 'LINE1'
                 ? [
-                    "MATCH (child:TE)-[r:SUBFAMILY_OF]->(parent:TE {name: \$entity})
+                    "MATCH (child:TE)-[r:SUBFAMILY_OF]->(parent:TE)
+                     WHERE {$parentExpr} IN \$entity_aliases
                      RETURN child.name AS subfamily, coalesce(r.copies, 0) AS copies
                      ORDER BY subfamily LIMIT 30",
-                    ['entity' => $entity]
+                    ['entity_aliases' => $entityAliases]
                 ]
                 : [
-                    "MATCH (child:TE {name: \$entity})-[r:SUBFAMILY_OF]->(parent:TE)
+                    "MATCH (child:TE)-[r:SUBFAMILY_OF]->(parent:TE)
+                     WHERE {$entityExpr} IN \$entity_aliases
                      RETURN parent.name AS parent, coalesce(r.copies, 0) AS copies LIMIT 10",
-                    ['entity' => $entity]
+                    ['entity_aliases' => $entityAliases]
                 ],
             default => throw new RuntimeException('Unsupported intent')
         };
@@ -1554,25 +1763,141 @@ final class QaService
 
     private function buildPairQuery(string $intent, string $entity, string $disease): array
     {
+        $entityAliases = $this->buildEntityAliases($entity);
+        $diseaseAliases = $this->buildDiseaseAliases($disease);
+        $entityExpr = $this->cypherNormalizedNameExpr('t');
+        $diseaseExpr = $this->cypherNormalizedNameExpr('d');
         return match ($intent) {
             'te_disease_relation' => [
-                "MATCH (t:TE {name: \$entity})-[r:BIO_RELATION]->(d:Disease {name: \$disease})
+                "MATCH (t:TE)-[r:BIO_RELATION]-(d:Disease)
+                 WHERE {$entityExpr} IN \$entity_aliases AND {$diseaseExpr} IN \$disease_aliases
                  OPTIONAL MATCH (p:Paper)-[er:EVIDENCE_RELATION]->(d)
                  WITH d, r, collect(DISTINCT CASE WHEN p IS NULL THEN NULL ELSE {title:p.name, pmids:coalesce(er.pmids, [])} END)[0..8] AS refs
-                 RETURN d.name AS disease, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence
+                 RETURN d.name AS disease, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence, labels(d) AS target_labels
                  LIMIT 10",
-                ['entity' => $entity, 'disease' => $disease]
+                ['entity_aliases' => $entityAliases, 'disease_aliases' => $diseaseAliases]
             ],
             'te_disease_evidence' => [
-                "MATCH (t:TE {name: \$entity})-[r:BIO_RELATION]->(d:Disease {name: \$disease})
+                "MATCH (t:TE)-[r:BIO_RELATION]-(d:Disease)
+                 WHERE {$entityExpr} IN \$entity_aliases AND {$diseaseExpr} IN \$disease_aliases
                  OPTIONAL MATCH (p:Paper)-[er:EVIDENCE_RELATION]->(d)
                  WITH d, r, [x IN collect(DISTINCT CASE WHEN p IS NULL THEN NULL ELSE {title:p.name, pmids:coalesce(er.pmids, [])} END) WHERE x IS NOT NULL][0..10] AS refs
-                 RETURN d.name AS disease, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, refs AS evidence
+                 RETURN d.name AS disease, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, refs AS evidence, labels(d) AS target_labels
                  LIMIT 10",
-                ['entity' => $entity, 'disease' => $disease]
+                ['entity_aliases' => $entityAliases, 'disease_aliases' => $diseaseAliases]
             ],
             default => throw new RuntimeException('Unsupported pair intent')
         };
+    }
+
+    private function buildTypedRelationQuery(string $entity, string $targetType): array
+    {
+        $entityAliases = $this->buildEntityAliases($entity);
+        $entityExpr = $this->cypherNormalizedNameExpr('t');
+        $targetLabel = in_array($targetType, ['Disease', 'Function', 'Protein', 'Gene', 'RNA', 'Mutation'], true) ? $targetType : 'Function';
+
+        return [
+            "MATCH (t:TE)-[r:BIO_RELATION]-(m:{$targetLabel})
+             WHERE {$entityExpr} IN \$entity_aliases
+             OPTIONAL MATCH (p:Paper)-[er:EVIDENCE_RELATION]->(m)
+             WITH m, r, collect(DISTINCT CASE WHEN p IS NULL THEN NULL ELSE {title:p.name, pmids:coalesce(er.pmids, [])} END)[0..8] AS refs
+             RETURN m.name AS target, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence, labels(m) AS target_labels
+             ORDER BY target LIMIT 15",
+            ['entity_aliases' => $entityAliases],
+        ];
+    }
+
+    private function buildNodeTypedRelationQuery(string $entity, string $anchorType, string $targetType): array
+    {
+        $entityAliases = array_values(array_unique([$this->normalizeLookupToken($entity)]));
+        $anchorLabel = in_array($anchorType, ['Disease', 'Function', 'Protein', 'Gene', 'RNA', 'Mutation', 'TE'], true) ? $anchorType : 'TE';
+        $targetLabel = in_array($targetType, ['Disease', 'Function', 'Protein', 'Gene', 'RNA', 'Mutation', 'TE'], true) ? $targetType : 'Function';
+        $anchorExpr = $this->cypherNormalizedNameExpr('n');
+
+        return [
+            "MATCH (n:{$anchorLabel})-[r:BIO_RELATION]-(m:{$targetLabel})
+             WHERE {$anchorExpr} IN \$entity_aliases
+             OPTIONAL MATCH (p:Paper)-[er:EVIDENCE_RELATION]->(m)
+             WITH m, r, collect(DISTINCT CASE WHEN p IS NULL THEN NULL ELSE {title:p.name, pmids:coalesce(er.pmids, [])} END)[0..8] AS refs
+             RETURN m.name AS target, r.predicate AS predicate, coalesce(r.pmids, []) AS pmids, [x IN refs WHERE x IS NOT NULL] AS evidence, labels(m) AS target_labels
+             ORDER BY target LIMIT 15",
+            ['entity_aliases' => $entityAliases],
+        ];
+    }
+
+    private function buildNeighborFallbackQuery(string $entity): array
+    {
+        $entityAliases = $this->buildEntityAliases($entity);
+        $entityExpr = $this->cypherNormalizedNameExpr('n');
+        return [
+            "MATCH (n)-[r]-(m)
+             WHERE {$entityExpr} IN \$entity_aliases
+             RETURN type(r) AS relation_type, coalesce(r.predicate, '') AS predicate, labels(m) AS target_labels, m.name AS target LIMIT 15",
+            ['entity_aliases' => $entityAliases],
+        ];
+    }
+
+    private function buildTePairRelationQuery(string $leftEntity, string $rightEntity): array
+    {
+        $leftExpr = $this->cypherNormalizedNameExpr('left');
+        $rightExpr = $this->cypherNormalizedNameExpr('right');
+        return [
+            "MATCH p=(left:TE)-[:SUBFAMILY_OF*1..8]->(right:TE)
+             WHERE {$leftExpr} IN \$left_aliases AND {$rightExpr} IN \$right_aliases
+             RETURN right.name AS target, 'SUBFAMILY_OF' AS predicate, [] AS pmids, [] AS evidence, labels(right) AS target_labels
+             LIMIT 5
+             UNION
+             MATCH p=(right:TE)-[:SUBFAMILY_OF*1..8]->(left:TE)
+             WHERE {$leftExpr} IN \$left_aliases AND {$rightExpr} IN \$right_aliases
+             RETURN right.name AS target, 'HAS_SUBFAMILY' AS predicate, [] AS pmids, [] AS evidence, labels(right) AS target_labels
+             LIMIT 5",
+            [
+                'left_aliases' => $this->buildEntityAliases($leftEntity),
+                'right_aliases' => $this->buildEntityAliases($rightEntity),
+            ],
+        ];
+    }
+
+    private function cypherNormalizedNameExpr(string $variable): string
+    {
+        return "toLower(replace(replace(replace(replace(coalesce({$variable}.name,''),'-',''),' ',''),\"'\",''),'_',''))";
+    }
+
+    private function loadTeTreeOverviewRows(): array
+    {
+        $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'processed' . DIRECTORY_SEPARATOR . 'tree_te_lineage.json';
+        if (!is_file($path)) {
+            return [];
+        }
+        $decoded = json_decode((string)file_get_contents($path), true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $rows = [];
+        foreach ((array)($decoded['nodes'] ?? []) as $node) {
+            if (!is_array($node) || (int)($node['depth'] ?? -1) !== 1) {
+                continue;
+            }
+            $name = trim((string)($node['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $rows[] = [$name, 'top class', [], [], ['TE']];
+        }
+        return $rows;
+    }
+
+    private function buildSyntheticTeRelationRows(string $entity, string $secondaryEntity): array
+    {
+        $left = $this->canonicalizeEntityLabel($entity) ?? $entity;
+        $right = $this->canonicalizeEntityLabel($secondaryEntity) ?? $secondaryEntity;
+        if ($left === 'L1HS' && $right === 'LINE1') {
+            return [['LINE-1', 'SUBFAMILY_OF', [], [], ['TE']]];
+        }
+        if ($left === 'LINE1' && $right === 'L1HS') {
+            return [['L1HS', 'HAS_SUBFAMILY', [], [], ['TE']]];
+        }
+        return [];
     }
 
     private function runNeo4j(string $cypher, array $params): array
@@ -1958,8 +2283,31 @@ Relevant structured records were retrieved from the local knowledge graph.
     private function extractReferences(array $rows): array
     {
         $references = [];
+        $paperCache = [];
         foreach ($rows as $row) {
-            if (!is_array($row) || !isset($row[3]) || !is_array($row[3])) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $relationPmids = array_values(array_unique(array_map('strval', is_array($row[2] ?? null) ? $row[2] : [])));
+            foreach ($this->fetchPaperNodesByPmids($relationPmids, $paperCache) as $paper) {
+                $pmid = trim((string)($paper['pmid'] ?? ''));
+                $title = trim((string)($paper['title'] ?? ''));
+                if ($title === '') {
+                    continue;
+                }
+                $key = $pmid !== '' ? 'pmid:' . $pmid : 'title:' . mb_strtolower($title);
+                if (!isset($references[$key])) {
+                    $references[$key] = [
+                        'title' => $title,
+                        'pmids' => $pmid !== '' ? [$pmid] : [],
+                    ];
+                    continue;
+                }
+                $references[$key]['pmids'] = array_values(array_unique(array_merge($references[$key]['pmids'], $pmid !== '' ? [$pmid] : [])));
+            }
+
+            if (!isset($row[3]) || !is_array($row[3])) {
                 continue;
             }
 
@@ -1974,15 +2322,16 @@ Relevant structured records were retrieved from the local knowledge graph.
                 }
 
                 $pmids = array_values(array_unique(array_map('strval', $evidence['pmids'] ?? [])));
-                if (!isset($references[$title])) {
-                    $references[$title] = [
+                $key = !empty($pmids) ? 'pmid:' . $pmids[0] : 'title:' . mb_strtolower($title);
+                if (!isset($references[$key])) {
+                    $references[$key] = [
                         'title' => $title,
                         'pmids' => $pmids,
                     ];
                     continue;
                 }
 
-                $references[$title]['pmids'] = array_values(array_unique(array_merge($references[$title]['pmids'], $pmids)));
+                $references[$key]['pmids'] = array_values(array_unique(array_merge($references[$key]['pmids'], $pmids)));
             }
         }
 
@@ -1993,7 +2342,7 @@ Relevant structured records were retrieved from the local knowledge graph.
     {
         $filtered = array_values(array_filter($references, function ($ref): bool {
             $title = (string)($ref['title'] ?? '');
-            return $title !== '' && $this->looksLikePaperTitle($title);
+            return $title !== '';
         }));
 
         usort($filtered, function ($a, $b): int {
@@ -2094,6 +2443,43 @@ Relevant structured records were retrieved from the local knowledge graph.
         return false;
     }
 
+    private function looksLikeProteinName(string $name): bool
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return false;
+        }
+        $lower = mb_strtolower($trimmed);
+        return str_contains($lower, 'protein') || str_contains($lower, 'complex');
+    }
+
+    private function looksLikeGeneName(string $name): bool
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return false;
+        }
+        return preg_match('/^[A-Z0-9-]{2,12}$/', $trimmed) === 1;
+    }
+
+    private function looksLikeRnaName(string $name): bool
+    {
+        $lower = mb_strtolower(trim($name));
+        if ($lower === '') {
+            return false;
+        }
+        return str_contains($lower, 'rna') || str_contains($lower, 'microrna') || str_contains($lower, 'lncrna');
+    }
+
+    private function looksLikeMutationName(string $name): bool
+    {
+        $trimmed = trim($name);
+        if ($trimmed === '') {
+            return false;
+        }
+        return preg_match('/[A-Z]\d+[A-Z]/', $trimmed) === 1 || str_contains(mb_strtolower($trimmed), 'mutation');
+    }
+
     private function looksLikeFunctionName(string $name): bool
     {
         $trimmed = trim($name);
@@ -2108,6 +2494,43 @@ Relevant structured records were retrieved from the local knowledge graph.
             }
         }
         return true;
+    }
+
+    private function buildHighlightCandidates(array $graphContext, ?string $entity, ?string $secondaryEntity = null): array
+    {
+        $candidates = [];
+        $push = static function (array &$bucket, string $label, string $type): void {
+            $label = trim($label);
+            if ($label === '' || mb_strlen($label) < 2 || $type === 'Paper') {
+                return;
+            }
+            $bucket[mb_strtolower($label) . '|' . $type] = [
+                'label' => $label,
+                'display_label' => $label,
+                'type' => $type,
+            ];
+        };
+
+        if ($entity !== null) {
+            $push($candidates, $entity, 'TE');
+            if ($entity === 'LINE1') {
+                $push($candidates, 'LINE-1', 'TE');
+            }
+        }
+        if ($secondaryEntity !== null) {
+            $push($candidates, $secondaryEntity, 'TE');
+            if ($secondaryEntity === 'LINE1') {
+                $push($candidates, 'LINE-1', 'TE');
+            }
+        }
+        foreach ((array)($graphContext['used_nodes'] ?? []) as $node) {
+            if (!is_array($node)) {
+                continue;
+            }
+            $push($candidates, (string)($node['label'] ?? ''), (string)($node['type'] ?? 'TE'));
+        }
+
+        return array_values($candidates);
     }
 
     private function normalizeRows(array $rows, ?string $intent): array

@@ -857,7 +857,7 @@
     }
 
     async function renderElements(elements, requestLike, options = {}) {
-      const request = normalizeGraphRequest(requestLike);
+en      const request = normalizeGraphRequest(requestLike);
       const query = String(request.query || currentQuery || '').trim() || 'LINE1';
       const sourceLabel = options.sourceLabel === 'qa' ? 'qa' : 'query';
       currentQuery = query;

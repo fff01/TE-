@@ -159,7 +159,25 @@
     Paper: '#f2a93b',
   };
 
+  const VISIBLE_TYPE_STATE_STORAGE_KEY = 'tekg:g6-visible-types';
   let visibleTypeState = null;
+
+  function loadPersistedVisibleTypeState() {
+    try {
+      const raw = window.sessionStorage.getItem(VISIBLE_TYPE_STATE_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function persistVisibleTypeState() {
+    try {
+      window.sessionStorage.setItem(VISIBLE_TYPE_STATE_STORAGE_KEY, JSON.stringify(visibleTypeState || {}));
+    } catch (_error) {}
+  }
 
   function getLegendTypeMeta() {
     const sharedMeta = window.__TEKG_G6_TYPE_META && typeof window.__TEKG_G6_TYPE_META === 'object'
@@ -185,13 +203,17 @@
   }
 
   function ensureVisibleTypeState() {
-    const next = visibleTypeState && typeof visibleTypeState === 'object'
-      ? { ...visibleTypeState }
+    const seed = visibleTypeState && typeof visibleTypeState === 'object'
+      ? visibleTypeState
+      : loadPersistedVisibleTypeState();
+    const next = seed && typeof seed === 'object'
+      ? { ...seed }
       : {};
     for (const item of getLegendTypeMeta()) {
       if (typeof next[item.type] !== 'boolean') next[item.type] = true;
     }
     visibleTypeState = next;
+    persistVisibleTypeState();
     return visibleTypeState;
   }
 
@@ -338,11 +360,12 @@
     const source = options && options.source === 'answer' ? 'answer' : 'query';
     const request = normalizeGraphRequest(options && options.request ? options.request : buildCurrentGraphRequest());
     const renderElements = filterElementsByVisibleTypes(elements);
+    const preservedSelectionId = currentSelectedNode && typeof currentSelectedNode.id === 'string'
+      ? String(currentSelectedNode.id || '').trim()
+      : '';
 
-    currentSelectedNode = null;
     showDynamicSurface();
     updateButtons();
-    setDetail('');
     notifyStateChange();
     setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery || request.query || 'LINE1'));
 
@@ -376,6 +399,7 @@
       await bridge.renderElements(renderElements, request, {
         sourceLabel: source === 'answer' ? 'qa' : 'query',
         skipInitialStatus: true,
+        preserveSelectionId: preservedSelectionId,
         graphDataOptions,
       });
 
@@ -746,13 +770,11 @@
     currentGraphQuery = String(query || currentGraphQuery || '').trim() || 'LINE1';
     currentGraphQueryType = '';
     currentGraphClassQuery = '';
-    currentSelectedNode = null;
     currentAnswerGraphElements = cloneAnswerElements(elements);
     currentQueryGraphElements = [];
 
     showDynamicSurface();
     updateButtons();
-    setDetail('');
     notifyStateChange();
     setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery));
 
@@ -771,6 +793,7 @@
 
       await bridge.renderElements(filterElementsByVisibleTypes(currentAnswerGraphElements), { query: currentGraphQuery }, {
         sourceLabel: 'qa',
+        preserveSelectionId: '',
         graphDataOptions: buildCurrentGraphDataOptions({
           includePaperNodes: true,
           synthesizeDiseaseClasses: false,
@@ -1290,6 +1313,7 @@
         const type = String(target.dataset.type || '').trim();
         if (!type) return;
         ensureVisibleTypeState()[type] = target.checked;
+        persistVisibleTypeState();
         applyLegendTypeFilter().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
@@ -1574,6 +1598,19 @@
     },
     getState() {
       return snapshotState();
+    },
+    getVisibleTypes() {
+      return getVisibleTypePayload();
+    },
+    setVisibleTypes(nextState) {
+      if (!nextState || typeof nextState !== 'object') return getVisibleTypePayload();
+      visibleTypeState = { ...ensureVisibleTypeState(), ...nextState };
+      persistVisibleTypeState();
+      renderGraphLegend();
+      if (currentMode === 'dynamic') {
+        void applyLegendTypeFilter();
+      }
+      return getVisibleTypePayload();
     },
   };
 

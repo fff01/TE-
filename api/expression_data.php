@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 function tekg_expression_config(): array
@@ -356,7 +355,85 @@ function tekg_expression_fetch_browse_page(array $filters = [], int $page = 1, i
             'min_global_median' => $filters['min_global_median'] ?? null,
         ],
         'sort' => tekg_expression_normalize_sort($sort),
+        'chart' => strtolower(trim($chartType)) === 'box' ? 'box' : 'bar',
     ];
+}
+
+function tekg_expression_context_stat_quartile_columns(): array
+{
+    static $state = null;
+    if (is_array($state)) {
+        return $state;
+    }
+
+    $state = ['q1' => false, 'q3' => false];
+    $rows = tekg_expression_fetch_all("SHOW COLUMNS FROM expression_context_stats");
+    foreach ($rows as $row) {
+        $field = (string)($row['Field'] ?? '');
+        if ($field === 'q1_value') {
+            $state['q1'] = true;
+        }
+        if ($field === 'q3_value') {
+            $state['q3'] = true;
+        }
+    }
+    return $state;
+}
+
+function tekg_expression_fetch_quartile_maps_from_tsv(string $teName): array
+{
+    static $cache = [];
+    if (isset($cache[$teName])) {
+        return $cache[$teName];
+    }
+
+    $path = dirname(__DIR__) . '/data/raw/new_data/bulk_expression_web/processed/te_expression_context_stats.tsv';
+    if (!is_file($path)) {
+        return $cache[$teName] = [];
+    }
+
+    $handle = fopen($path, 'r');
+    if (!$handle) {
+        return $cache[$teName] = [];
+    }
+
+    $separator = chr(9);
+    $enclosure = '"';
+    $escape = "\\";
+    $header = fgetcsv($handle, 0, $separator, $enclosure, $escape);
+    if (!is_array($header)) {
+        fclose($handle);
+        return $cache[$teName] = [];
+    }
+    $columns = array_flip($header);
+    $map = [];
+    $seenTarget = false;
+
+    while (($row = fgetcsv($handle, 0, $separator, $enclosure, $escape)) !== false) {
+        $rowTe = isset($columns['te_name']) ? (string)($row[$columns['te_name']] ?? '') : '';
+        if ($rowTe === '') {
+            continue;
+        }
+        if ($seenTarget && $rowTe !== $teName) {
+            break;
+        }
+        if ($rowTe !== $teName) {
+            continue;
+        }
+        $seenTarget = true;
+        $rowDataset = isset($columns['dataset_key']) ? (string)($row[$columns['dataset_key']] ?? '') : '';
+        $contextLabel = isset($columns['context_label']) ? (string)($row[$columns['context_label']] ?? '') : '';
+        if ($rowDataset === '' || $contextLabel === '') {
+            continue;
+        }
+        $map[$rowDataset][$contextLabel] = [
+            'q1_value' => isset($columns['q1_value']) && ($row[$columns['q1_value']] ?? '') !== '' ? (float)$row[$columns['q1_value']] : null,
+            'q3_value' => isset($columns['q3_value']) && ($row[$columns['q3_value']] ?? '') !== '' ? (float)$row[$columns['q3_value']] : null,
+        ];
+    }
+
+    fclose($handle);
+    return $cache[$teName] = $map;
 }
 
 function tekg_expression_fetch_dataset_summaries(string $teName): array
@@ -373,7 +450,7 @@ function tekg_expression_fetch_dataset_summaries(string $teName): array
     );
 }
 
-function tekg_expression_fetch_context_stats(string $teName, string $datasetKey, string $metric = 'median', string $sort = 'default'): array
+function tekg_expression_fetch_context_stats(string $teName, string $datasetKey, string $metric = 'median', string $sort = 'default', bool $includeQuartiles = false): array
 {
     $resolved = tekg_expression_resolve_te_name($teName);
     $datasetKey = tekg_expression_normalize_dataset_key($datasetKey);
@@ -388,18 +465,52 @@ function tekg_expression_fetch_context_stats(string $teName, string $datasetKey,
         default => 'context_order ASC, context_full_name ASC',
     };
 
-    return tekg_expression_fetch_all(
+    $quartileColumns = tekg_expression_context_stat_quartile_columns();
+    $q1Select = $quartileColumns['q1'] ? 'q1_value' : 'NULL AS q1_value';
+    $q3Select = $quartileColumns['q3'] ? 'q3_value' : 'NULL AS q3_value';
+
+    $rows = tekg_expression_fetch_all(
         'SELECT te_name, dataset_key, dataset_label, dataset_order, context_label, context_full_name, context_order, sample_count,
-                min_value, median_value, mean_value, max_value, std_value, cv_value
+                min_value, ' . $q1Select . ', median_value, ' . $q3Select . ', mean_value, max_value, std_value, cv_value
          FROM expression_context_stats
          WHERE te_name = ? AND dataset_key = ?
          ORDER BY ' . $orderSql,
         [$resolved, $datasetKey],
         'ss'
     );
+
+    if (!$includeQuartiles) {
+        return $rows;
+    }
+
+    $needsQuartileFallback = !$quartileColumns['q1'] || !$quartileColumns['q3'];
+    if (!$needsQuartileFallback) {
+        foreach ($rows as $row) {
+            if (($row['q1_value'] ?? null) === null || ($row['q3_value'] ?? null) === null) {
+                $needsQuartileFallback = true;
+                break;
+            }
+        }
+    }
+
+    if ($needsQuartileFallback) {
+        $quartileMaps = tekg_expression_fetch_quartile_maps_from_tsv($resolved);
+        $quartileMap = $quartileMaps[$datasetKey] ?? [];
+        foreach ($rows as &$row) {
+            $contextLabel = (string)($row['context_label'] ?? '');
+            $extra = $quartileMap[$contextLabel] ?? null;
+            if ($extra !== null) {
+                $row['q1_value'] = $extra['q1_value'];
+                $row['q3_value'] = $extra['q3_value'];
+            }
+        }
+        unset($row);
+    }
+
+    return $rows;
 }
 
-function tekg_expression_fetch_detail_bundle(string $teName, string $metric = 'median', string $sort = 'default'): ?array
+function tekg_expression_fetch_detail_bundle(string $teName, string $metric = 'median', string $sort = 'default', string $chartType = 'bar'): ?array
 {
     $resolved = tekg_expression_resolve_te_name($teName);
     if ($resolved === null) {
@@ -423,7 +534,7 @@ function tekg_expression_fetch_detail_bundle(string $teName, string $metric = 'm
         $datasetKey = (string)$datasetSummary['dataset_key'];
         $datasets[$datasetKey] = [
             'summary' => $datasetSummary,
-            'contexts' => tekg_expression_fetch_context_stats($resolved, $datasetKey, $metric, $sort),
+            'contexts' => tekg_expression_fetch_context_stats($resolved, $datasetKey, $metric, $sort, ($chartType ?? 'bar') === 'box'),
             'catalog' => $catalog['contexts_by_dataset'][$datasetKey] ?? [],
         ];
     }
@@ -434,6 +545,7 @@ function tekg_expression_fetch_detail_bundle(string $teName, string $metric = 'm
         'datasets' => $datasets,
         'metric' => tekg_expression_normalize_metric($metric),
         'sort' => tekg_expression_normalize_sort($sort),
+        'chart' => strtolower(trim($chartType)) === 'box' ? 'box' : 'bar',
     ];
 }
 function tekg_expression_normalize_browse_value_mode(?string $mode): string

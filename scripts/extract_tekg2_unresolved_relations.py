@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-INPUT_FILE = ROOT / "te_kg2_final_standardized_new.jsonl"
+INPUT_FILE = ROOT / "data" / "raw" / "manual_drop" / "te_kg2_final_standardized_new.jsonl"
 OUTPUT_DIR = ROOT / "data" / "processed" / "tekg2"
 OUTPUT_JSONL = OUTPUT_DIR / "tekg2_unresolved_relations.jsonl"
 OUTPUT_CSV = OUTPUT_DIR / "tekg2_unresolved_relations.csv"

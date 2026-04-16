@@ -3,7 +3,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-INPUT_FILE = ROOT / "data_update_fix" / "te_kg2_final_standardized_new_standardized_fix.jsonl"
+INPUT_FILE = ROOT / "archive" / "processing_history" / "data_update_fix" / "te_kg2_final_standardized_new_standardized_fix.jsonl"
 OUTPUT_DIR = ROOT / "data" / "processed" / "tekg2"
 SEED_JSON = OUTPUT_DIR / "tekg2_seed.json"
 REPORT_JSON = OUTPUT_DIR / "tekg2_seed_report.json"

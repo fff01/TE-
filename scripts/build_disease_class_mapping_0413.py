@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 
 
 ROOT = Path(__file__).resolve().parents[1]
-WORKBOOK = ROOT / "disease_update_new" / "disease_classify_all_update.xlsx"
+WORKBOOK = ROOT / "archive" / "processing_history" / "disease_update_new" / "disease_classify_all_update.xlsx"
 INPUT_JSONL = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_clean.jsonl"
 OUTPUT_DIR = ROOT / "data" / "processed" / "tekg2"
 OUTPUT_JSON = OUTPUT_DIR / "disease_class_mapping_0413.json"

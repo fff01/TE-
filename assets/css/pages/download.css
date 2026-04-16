@@ -1,0 +1,244 @@
+        .download-shell {
+          background: #f5f9ff;
+          min-height: calc(100vh - 82px);
+          padding: 34px 0 54px;
+        }
+
+        .proto-container {
+          max-width: 1320px;
+          margin: 0 auto;
+          padding: 0 28px;
+        }
+
+        .download-page-title {
+          margin: 0 0 22px;
+          font-size: 52px;
+          font-weight: 700;
+          color: #8a93a3;
+          line-height: 1.1;
+        }
+
+        .download-crumbs {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 38px;
+          font-size: 16px;
+          color: #70809a;
+        }
+
+        .download-crumbs a {
+          color: #2f63b9;
+          font-weight: 500;
+        }
+
+        .download-panel {
+          background: #ffffff;
+          border: 1px solid #dbe7f8;
+          border-radius: 10px;
+          box-shadow: 0 10px 28px rgba(26, 60, 112, 0.08);
+          padding: 30px 26px 18px;
+        }
+
+        .download-panel h2 {
+          margin: 0;
+          font-size: 28px;
+          color: #7b8597;
+          font-weight: 700;
+        }
+
+        .download-divider {
+          height: 1px;
+          background: #e2e8f2;
+          margin: 20px 0 22px;
+        }
+
+        .download-tools {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin-bottom: 14px;
+          flex-wrap: wrap;
+        }
+
+        .download-tools-left,
+        .download-tools-right {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #7b8597;
+          font-size: 15px;
+        }
+
+        .download-select,
+        .download-search {
+          min-height: 46px;
+          border: 1px solid #dce5f3;
+          border-radius: 8px;
+          background: #ffffff;
+          padding: 0 14px;
+          font-size: 15px;
+          color: #193458;
+          outline: none;
+        }
+
+        .download-search {
+          min-width: 280px;
+        }
+
+        .download-table-wrap {
+          overflow-x: auto;
+        }
+
+        .download-table {
+          width: 100%;
+          border-collapse: collapse;
+          min-width: 980px;
+        }
+
+        .download-table thead th {
+          padding: 16px 12px;
+          text-align: left;
+          font-size: 16px;
+          font-weight: 700;
+          color: #2d5f1f;
+          border-bottom: 2px solid #1f2937;
+        }
+
+        .download-table tbody td {
+          padding: 18px 12px;
+          border-bottom: 1px solid #dde6f3;
+          color: #193458;
+          font-size: 15px;
+          vertical-align: top;
+          line-height: 1.6;
+        }
+
+        .download-table td.dataset-cell {
+          width: 31%;
+        }
+
+        .download-table td.dataset-cell em {
+          font-style: italic;
+          color: #17345c;
+        }
+
+        .dataset-toggle {
+          border: 0;
+          background: transparent;
+          padding: 0;
+          margin: 0;
+          font: inherit;
+          color: inherit;
+          cursor: pointer;
+          text-align: left;
+          width: 100%;
+        }
+
+        .dataset-title-line {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .dataset-caret {
+          width: 18px;
+          height: 18px;
+          flex: 0 0 18px;
+          transition: transform 0.22s ease;
+          color: #5877aa;
+        }
+
+        .dataset-row.is-open .dataset-caret {
+          transform: rotate(90deg);
+        }
+
+        .dataset-description {
+          max-height: 0;
+          overflow: hidden;
+          transition: max-height 0.26s ease;
+          color: #76859b;
+          font-size: 13px;
+          padding-left: 28px;
+        }
+
+        .dataset-row.is-open .dataset-description {
+          max-height: 140px;
+          margin-top: 8px;
+        }
+
+        .dataset-description-inner {
+          padding-top: 4px;
+          line-height: 1.65;
+        }
+
+        .download-table a.file-link {
+          color: #5f8f3d;
+          font-weight: 500;
+          word-break: break-word;
+        }
+
+        .download-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding-top: 18px;
+          flex-wrap: wrap;
+          color: #7b8597;
+          font-size: 15px;
+        }
+
+        .download-pagination {
+          display: inline-flex;
+          border: 1px solid #dce5f3;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #ffffff;
+        }
+
+        .download-page-btn {
+          min-width: 42px;
+          height: 42px;
+          border: 0;
+          border-right: 1px solid #dce5f3;
+          background: #ffffff;
+          color: #31588f;
+          cursor: pointer;
+          font-size: 16px;
+        }
+
+        .download-page-btn:last-child {
+          border-right: 0;
+        }
+
+        .download-page-btn.is-active {
+          background: #2f63b9;
+          color: #ffffff;
+        }
+
+        .download-empty {
+          padding: 28px 10px 10px;
+          color: #7b8597;
+          font-size: 15px;
+        }
+
+        @media (max-width: 720px) {
+          .proto-container {
+            padding: 0 18px;
+          }
+
+          .download-panel {
+            padding-left: 18px;
+            padding-right: 18px;
+          }
+
+          .download-page-title {
+            font-size: 40px;
+          }
+
+          .download-search {
+            min-width: 220px;
+          }
+        }

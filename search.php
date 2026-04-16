@@ -1,5 +1,6 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/site_i18n.php';
+require_once __DIR__ . '/path_config.php';
 
 $pageTitle = 'TE-KG Detail';
 $activePage = 'browse';
@@ -22,6 +23,39 @@ function tekg_lower_proto(string $value): string
 function tekg_canonicalize_label_proto(string $value): string
 {
     return str_replace(['_', '-', ' '], '', tekg_lower_proto(tekg_clean_label_proto($value)));
+}
+function tekg_jbrowse_project_relative_path_proto(string $relativePath): string
+{
+    $normalized = ltrim(str_replace('\\', '/', $relativePath), '/');
+    if ($normalized === '') {
+        return 'data/JBrowse';
+    }
+    if (str_starts_with($normalized, 'data/JBrowse/')) {
+        return $normalized;
+    }
+    if ($normalized === 'data/JBrowse') {
+        return $normalized;
+    }
+    if (str_starts_with($normalized, 'JBrowse/')) {
+        return 'data/' . $normalized;
+    }
+    if ($normalized === 'JBrowse') {
+        return 'data/JBrowse';
+    }
+    $marker = '/JBrowse/';
+    $markerPos = strpos($normalized, $marker);
+    if ($markerPos !== false) {
+        return 'data/JBrowse/' . substr($normalized, $markerPos + strlen($marker));
+    }
+    if (str_ends_with($normalized, '/JBrowse')) {
+        return 'data/JBrowse';
+    }
+    return 'data/JBrowse/' . $normalized;
+}
+
+function tekg_jbrowse_project_fs_path_proto(string $relativePath): string
+{
+    return tekg_fs_from_project_relative(tekg_jbrowse_project_relative_path_proto($relativePath));
 }
 
 function tekg_repbase_lookup_proto(string $query): ?array
@@ -69,9 +103,11 @@ function tekg_repbase_lookup_proto(string $query): ?array
             'description' => (string) ($entry['description'] ?? ''),
             'keywords' => is_array($entry['keywords'] ?? null) ? implode(', ', $entry['keywords']) : '',
             'species' => (string) ($entry['species'] ?? ''),
+            'classification' => is_array($entry['classification'] ?? null) ? implode(' > ', $entry['classification']) : '',
             'sequence_summary' => $sequenceSummary,
             'length_bp' => $lengthBp,
             'reference_count' => is_array($entry['references'] ?? null) ? count($entry['references']) : 0,
+            'sequence' => (string) ($entry['sequence'] ?? ''),
         ];
     }
 
@@ -186,6 +222,30 @@ function tekg_dfam_structure_svg_path_proto(array $entry): ?string
     return is_file($svgFile) ? tekg_dfam_plot_relative_path_proto($accession) : null;
 }
 
+
+function tekg_repbase_structure_svg_url_proto(?array $repbase, string $query): ?string
+{
+    $candidate = '';
+    if (is_array($repbase)) {
+        foreach (['nm', 'id'] as $key) {
+            $value = trim((string) ($repbase[$key] ?? ''));
+            if ($value !== '') {
+                $candidate = $value;
+                break;
+            }
+        }
+    }
+
+    if ($candidate === '') {
+        $candidate = trim($query);
+    }
+    if ($candidate === '') {
+        return null;
+    }
+
+    return '/TE-/repbase_structure_svg.php?te=' . rawurlencode($candidate);
+}
+
 function tekg_dfam_lookup_proto(string $query, string $type = 'all'): ?array
 {
     $query = trim($query);
@@ -288,6 +348,301 @@ function tekg_karyotype_lookup_proto(string $query, string $type = 'all', ?array
     $entry['matched_query'] = $query;
     $entry['resolved_te_name'] = $teName;
     return $entry;
+}
+
+
+function tekg_project_relative_from_site_path_proto(string $path): string
+{
+    $normalized = trim(str_replace('\\', '/', $path));
+    if ($normalized === '') {
+        return '';
+    }
+    if (str_starts_with($normalized, '/TE-/')) {
+        $normalized = substr($normalized, 5);
+    }
+    return ltrim($normalized, '/');
+}
+
+function tekg_jbrowse_bin_size_proto(): int
+{
+    return 1000000;
+}
+
+function tekg_jbrowse_bin_cache_directory_proto(): string
+{
+    $dir = tekg_jbrowse_project_fs_path_proto('repeats/bin_hits');
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0777, true);
+    }
+    return $dir;
+}
+
+function tekg_jbrowse_bin_cache_path_proto(string $teName): string
+{
+    $slug = preg_replace('/[^A-Za-z0-9._-]+/', '_', $teName) ?? 'te';
+    $slug = trim($slug, '_');
+    if ($slug === '') {
+        $slug = 'te';
+    }
+    return tekg_jbrowse_bin_cache_directory_proto() . DIRECTORY_SEPARATOR . $slug . '__' . substr(sha1($teName), 0, 12) . '.json';
+}
+
+function tekg_jbrowse_hit_label_proto(string $chrom, int $start, int $end, string $strand, int $length, int $score): string
+{
+    return sprintf(
+        '%s:%s-%s | %s | len %s bp | score %s',
+        $chrom,
+        number_format($start + 1),
+        number_format($end),
+        $strand === '-' ? 'reverse strand' : 'forward strand',
+        number_format($length),
+        number_format($score)
+    );
+}
+
+function tekg_jbrowse_build_bin_hits_for_te_proto(string $teName, int $binSize): ?array
+{
+    $rmskPath = __DIR__ . '/data/rmsk.txt';
+    if (!is_file($rmskPath)) {
+        return null;
+    }
+
+    $primaryChroms = array_fill_keys(array_merge(
+        array_map(static fn (int $i): string => 'chr' . $i, range(1, 22)),
+        ['chrX', 'chrY']
+    ), true);
+
+    $handle = @fopen($rmskPath, 'r');
+    if ($handle === false) {
+        return null;
+    }
+
+    $bins = [];
+    $totalHits = 0;
+
+    try {
+        while (($raw = fgets($handle)) !== false) {
+            if (!is_string($raw) || trim($raw) === '') {
+                continue;
+            }
+            $parts = explode("	", rtrim($raw, "
+
+"));
+            if (count($parts) < 15) {
+                continue;
+            }
+
+            $repName = (string) ($parts[10] ?? '');
+            if ($repName !== $teName) {
+                continue;
+            }
+
+            $chrom = (string) ($parts[5] ?? '');
+            if ($chrom === '' || !isset($primaryChroms[$chrom])) {
+                continue;
+            }
+
+            $start = isset($parts[6]) ? (int) $parts[6] : -1;
+            $end = isset($parts[7]) ? (int) $parts[7] : -1;
+            if ($start < 0 || $end <= $start) {
+                continue;
+            }
+
+            $strand = ((string) ($parts[9] ?? '+')) === '-' ? '-' : '+';
+            $length = max(1, $end - $start);
+            $score = isset($parts[1]) ? (int) $parts[1] : 0;
+
+            $hit = [
+                'chrom' => $chrom,
+                'start' => $start,
+                'end' => $end,
+                'strand' => $strand,
+                'length' => $length,
+                'score' => $score,
+                'label' => tekg_jbrowse_hit_label_proto($chrom, $start, $end, $strand, $length, $score),
+            ];
+
+            $totalHits += 1;
+            $startBin = intdiv(max(0, $start), $binSize);
+            $endBin = intdiv(max(0, $end - 1), $binSize);
+            for ($binIndex = $startBin; $binIndex <= $endBin; $binIndex++) {
+                $binStart = ($binIndex * $binSize) + 1;
+                $binEnd = ($binIndex + 1) * $binSize;
+                $key = $chrom . ':' . $binStart . '-' . $binEnd;
+                if (!isset($bins[$key])) {
+                    $bins[$key] = [
+                        'chrom' => $chrom,
+                        'start' => $binStart,
+                        'end' => $binEnd,
+                        'count' => 0,
+                        'hits' => [],
+                    ];
+                }
+                $bins[$key]['hits'][] = $hit;
+                $bins[$key]['count'] += 1;
+            }
+        }
+    } finally {
+        fclose($handle);
+    }
+
+    if ($bins === []) {
+        return [
+            'te' => $teName,
+            'bin_size_bp' => $binSize,
+            'total_hits' => 0,
+            'bins' => [],
+        ];
+    }
+
+    ksort($bins);
+    return [
+        'te' => $teName,
+        'bin_size_bp' => $binSize,
+        'total_hits' => $totalHits,
+        'bins' => $bins,
+    ];
+}
+
+function tekg_jbrowse_load_bin_hits_for_te_proto(string $teName): ?array
+{
+    static $cache = [];
+    if (array_key_exists($teName, $cache)) {
+        return $cache[$teName];
+    }
+
+    $cachePath = tekg_jbrowse_bin_cache_path_proto($teName);
+    $rmskPath = __DIR__ . '/data/rmsk.txt';
+    $sourceTime = is_file($rmskPath) ? ((int) @filemtime($rmskPath)) : 0;
+    $decoded = null;
+
+    if (is_file($cachePath) && ((int) @filemtime($cachePath)) >= $sourceTime) {
+        $decoded = json_decode((string) file_get_contents($cachePath), true);
+        if (!is_array($decoded) || (int) ($decoded['bin_size_bp'] ?? 0) !== tekg_jbrowse_bin_size_proto()) {
+            $decoded = null;
+        }
+    }
+
+    if (!is_array($decoded)) {
+        $decoded = tekg_jbrowse_build_bin_hits_for_te_proto($teName, tekg_jbrowse_bin_size_proto());
+        if (is_array($decoded)) {
+            @file_put_contents(
+                $cachePath,
+                json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                LOCK_EX
+            );
+        }
+    }
+
+    $cache[$teName] = is_array($decoded) ? $decoded : null;
+    return $cache[$teName];
+}
+
+function tekg_karyotype_bin_hit_map_proto(?array $genomeDistribution, ?array $jbrowseSession): array
+{
+    $result = [
+        'available' => false,
+        'bin_size_bp' => (int) ($genomeDistribution['bin_size_bp'] ?? ($jbrowseSession['bin_size_bp'] ?? 0)),
+        'sample_hit_total' => is_array($jbrowseSession['sample_hits'] ?? null) ? count($jbrowseSession['sample_hits']) : 0,
+        'total_hits' => (int) ($jbrowseSession['total_hits'] ?? ($genomeDistribution['total_hits'] ?? 0)),
+        'bins' => [],
+    ];
+
+    if (!is_array($genomeDistribution) || !is_array($jbrowseSession)) {
+        return $result;
+    }
+
+    $rawBinHits = is_array($jbrowseSession['bin_hits'] ?? null) ? $jbrowseSession['bin_hits'] : [];
+    if ($rawBinHits === []) {
+        return $result;
+    }
+
+    $dataJsonPath = tekg_project_relative_from_site_path_proto((string) ($genomeDistribution['data_json_path'] ?? ''));
+    if ($dataJsonPath === '') {
+        return $result;
+    }
+
+    $absolutePath = tekg_fs_from_project_relative($dataJsonPath);
+    if (!is_file($absolutePath)) {
+        return $result;
+    }
+
+    $payload = json_decode((string) file_get_contents($absolutePath), true);
+    if (!is_array($payload)) {
+        return $result;
+    }
+
+    $countByBinKey = [];
+    foreach ((array) ($payload['singleton_contigs'] ?? []) as $contig) {
+        if (!is_array($contig)) {
+            continue;
+        }
+        $chrom = trim((string) ($contig['name'] ?? ''));
+        if ($chrom === '') {
+            continue;
+        }
+        foreach ((array) ($contig['hit_clusters'] ?? []) as $cluster) {
+            if (!is_array($cluster) || count($cluster) < 3) {
+                continue;
+            }
+            $start = (int) ($cluster[0] ?? 0);
+            $end = (int) ($cluster[1] ?? 0);
+            $count = (int) ($cluster[2] ?? 0);
+            if ($start <= 0 || $end < $start) {
+                continue;
+            }
+            $countByBinKey[$chrom . ':' . $start . '-' . $end] = $count;
+        }
+    }
+
+    foreach ($rawBinHits as $key => $bin) {
+        if (!is_string($key) || !is_array($bin)) {
+            continue;
+        }
+        $chrom = trim((string) ($bin['chrom'] ?? ''));
+        $start = (int) ($bin['start'] ?? 0);
+        $end = (int) ($bin['end'] ?? 0);
+        $hits = [];
+        foreach ((array) ($bin['hits'] ?? []) as $index => $hit) {
+            if (!is_array($hit)) {
+                continue;
+            }
+            $hitChrom = trim((string) ($hit['chrom'] ?? ''));
+            $hitStart = (int) ($hit['start'] ?? -1);
+            $hitEnd = (int) ($hit['end'] ?? -1);
+            if ($hitChrom === '' || $hitStart < 0 || $hitEnd <= $hitStart) {
+                continue;
+            }
+            $hitStrand = ((string) ($hit['strand'] ?? '+')) === '-' ? '-' : '+';
+            $hitLength = max(1, (int) ($hit['length'] ?? ($hitEnd - $hitStart)));
+            $hitScore = (int) ($hit['score'] ?? 0);
+            $hits[] = [
+                'hitIndex' => (int) $index,
+                'chrom' => $hitChrom,
+                'start' => $hitStart,
+                'end' => $hitEnd,
+                'strand' => $hitStrand,
+                'length' => $hitLength,
+                'score' => $hitScore,
+                'label' => (string) ($hit['label'] ?? tekg_jbrowse_hit_label_proto($hitChrom, $hitStart, $hitEnd, $hitStrand, $hitLength, $hitScore)),
+            ];
+        }
+
+        if ($chrom === '' || $start <= 0 || $end < $start || $hits === []) {
+            continue;
+        }
+
+        $result['bins'][$key] = [
+            'chrom' => $chrom,
+            'start' => $start,
+            'end' => $end,
+            'count' => (int) ($countByBinKey[$key] ?? count($hits)),
+            'hits' => $hits,
+        ];
+    }
+
+    $result['available'] = $result['bins'] !== [];
+    return $result;
 }
 
 
@@ -454,8 +809,8 @@ function tekg_jbrowse_index_proto(): ?array
     }
     $loaded = true;
 
-    $representativeFile = __DIR__ . '/new_data/JBrowse/repeats/te_representative_index.json';
-    $manifestFile = __DIR__ . '/new_data/JBrowse/repeats/te_hits_manifest.json';
+    $representativeFile = tekg_jbrowse_project_fs_path_proto('repeats/te_representative_index.json');
+    $manifestFile = tekg_jbrowse_project_fs_path_proto('repeats/te_hits_manifest.json');
     if (!is_file($representativeFile)) {
         return null;
     }
@@ -509,7 +864,7 @@ function tekg_jbrowse_load_hit_entry_proto(string $teName, array $lookup): ?arra
         return null;
     }
 
-    $absolutePath = __DIR__ . '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+    $absolutePath = tekg_jbrowse_project_fs_path_proto($relativePath);
     if (!is_file($absolutePath)) {
         $cache[$teName] = null;
         return null;
@@ -569,6 +924,12 @@ function tekg_jbrowse_lookup_proto(string $query, string $type = 'all', ?array $
     $hitEntry = tekg_jbrowse_load_hit_entry_proto($teName, $lookup);
     if (is_array($hitEntry)) {
         $entry = array_replace($entry, $hitEntry);
+    }
+
+    $binHitEntry = tekg_jbrowse_load_bin_hits_for_te_proto($teName);
+    if (is_array($binHitEntry)) {
+        $entry['bin_size_bp'] = (int) ($binHitEntry['bin_size_bp'] ?? tekg_jbrowse_bin_size_proto());
+        $entry['bin_hits'] = is_array($binHitEntry['bins'] ?? null) ? $binHitEntry['bins'] : [];
     }
 
     $locus = is_array($entry['representative_locus'] ?? null) ? $entry['representative_locus'] : null;
@@ -690,8 +1051,10 @@ $query = tekg_request_scalar_proto($_GET, 'q', '');
 $type = tekg_request_scalar_proto($_GET, 'type', 'all');
 $repbase = tekg_repbase_lookup_proto($query);
 $dfamSequence = tekg_dfam_lookup_proto($query, $type);
+$repbaseStructureSvgUrl = tekg_repbase_structure_svg_url_proto($repbase, $query);
 $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
+$karyotypeHitMap = tekg_karyotype_bin_hit_map_proto($genomeDistribution, $jbrowseSession);
 $classificationSession = tekg_tree_classification_lookup_proto($query, $type, $repbase, $dfamSequence);
 $searchGraphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
     'embed' => 'search-result',
@@ -702,7 +1065,7 @@ $detailSections = [
     ['id' => 'search-summary-panel', 'label' => 'Summary'],
     ['id' => 'search-graph-panel', 'label' => 'Local Graph'],
 ];
-if ($dfamSequence !== null) {
+if ($repbase !== null) {
     $detailSections[] = ['id' => 'search-sequence-panel', 'label' => 'Sequence'];
 }
 if ($genomeDistribution !== null) {
@@ -714,731 +1077,7 @@ if ($jbrowseSession !== null) {
 
 require __DIR__ . '/head.php';
 ?>
-      <style>
-        .search-shell {
-          background: #f5f9ff;
-          min-height: calc(100vh - 82px);
-          padding: 34px 0 54px;
-        }
-
-        .proto-container {
-          max-width: 1480px;
-          margin: 0 auto;
-          padding: 0 28px;
-        }
-
-        .download-page-title {
-          margin: 0 0 22px;
-          font-size: 52px;
-          font-weight: 700;
-          color: #8a93a3;
-          line-height: 1.1;
-        }
-
-        .download-crumbs {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 38px;
-          font-size: 16px;
-          color: #70809a;
-        }
-
-        .download-crumbs a {
-          color: #2f63b9;
-          font-weight: 500;
-        }
-
-
-
-        html {
-          scroll-behavior: smooth;
-        }
-
-        .detail-toolbar {
-          --detail-sidebar-width: 196px;
-          display: grid;
-          grid-template-columns: var(--detail-sidebar-width) minmax(0, 1fr);
-          gap: 18px;
-          align-items: center;
-        }
-
-        .detail-back-link {
-          display: inline-flex;
-          align-items: center;
-          justify-content: flex-start;
-          gap: 8px;
-          width: 100%;
-          box-sizing: border-box;
-          margin-left: -12px;
-          min-height: 48px;
-          padding: 0 14px;
-          border: 1px solid #dfe6ef;
-          border-radius: 10px;
-          background: #ffffff;
-          box-shadow: 0 8px 24px rgba(25, 56, 105, 0.05);
-          color: #214b8d;
-          font-size: 15px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .detail-search-form {
-          min-width: 0;
-          width: min(100%, 440px);
-          justify-self: end;
-        }
-
-        .detail-search-box {
-          position: relative;
-        }
-
-        .detail-search-icon {
-          position: absolute;
-          top: 50%;
-          left: 18px;
-          transform: translateY(-50%);
-          width: 18px;
-          height: 18px;
-          color: #88a0bf;
-          pointer-events: none;
-        }
-
-        .detail-search-box .query-control {
-          padding-left: 48px;
-          min-height: 50px;
-        }
-
-        .detail-layout {
-          display: grid;
-          grid-template-columns: 196px minmax(0, 1fr);
-          gap: 18px;
-          align-items: start;
-        }
-
-        .detail-layout.is-hidden {
-          display: none;
-        }
-
-        .detail-sidebar {
-          position: sticky;
-          top: 108px;
-          margin-left: -12px;
-        }
-
-        .detail-nav {
-          background: #ffffff;
-          border: 1px solid #dfe6ef;
-          border-radius: 10px;
-          box-shadow: 0 8px 24px rgba(25, 56, 105, 0.05);
-          padding: 14px 12px;
-          display: grid;
-          gap: 8px;
-        }
-
-        .detail-nav-title {
-          margin: 0 0 6px;
-          padding: 0 8px;
-          color: #6f8198;
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-        }
-
-        .detail-nav-link {
-          display: block;
-          padding: 11px 12px;
-          border-radius: 8px;
-          color: #61789f;
-          font-size: 15px;
-          font-weight: 600;
-          transition: background 0.18s ease, color 0.18s ease;
-        }
-
-        .detail-nav-link.is-active,
-        .detail-nav-link:hover {
-          background: #eef4ff;
-          color: #214b8d;
-        }
-
-        .detail-content {
-          min-width: 0;
-          display: grid;
-          gap: 14px;
-        }
-
-        .query-panel {
-          background: transparent;
-          border: 0;
-          border-radius: 0;
-          box-shadow: none;
-          padding: 0;
-          margin-bottom: 18px;
-        }
-
-
-        .query-form-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 18px;
-          align-items: end;
-        }
-
-        .query-field label {
-          display: block;
-          margin-bottom: 12px;
-          font-size: 16px;
-          color: #7b8597;
-          font-weight: 500;
-        }
-
-        .query-control {
-          width: 100%;
-          min-height: 58px;
-          border: 1px solid #dce5f3;
-          border-radius: 8px;
-          background: #ffffff;
-          padding: 0 18px;
-          font-size: 17px;
-          color: #193458;
-          outline: none;
-          transition: border-color 0.18s ease, box-shadow 0.18s ease;
-        }
-
-        .query-control:focus {
-          border-color: #8fb2ea;
-          box-shadow: 0 0 0 3px rgba(47, 99, 185, 0.08);
-        }
-
-        .query-actions {
-          display: flex;
-          gap: 12px;
-          align-items: center;
-          flex-wrap: wrap;
-          margin-top: 28px;
-        }
-
-        .query-btn {
-          min-width: 126px;
-          min-height: 54px;
-          border-radius: 8px;
-          border: 1px solid #cfdcf0;
-          background: #ffffff;
-          color: #61789f;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        .query-btn.is-primary {
-          background: #2f63b9;
-          border-color: #2f63b9;
-          color: #ffffff;
-        }
-
-        .search-layout {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 22px;
-          align-items: start;
-        }
-
-        .data-panel,
-        .graph-panel {
-          background: #ffffff;
-          border: 1px solid #dbe7f8;
-          border-radius: 10px;
-          padding: 24px 26px 22px;
-          box-shadow: 0 8px 24px rgba(25, 56, 105, 0.05);
-        }
-
-        .data-panel h3,
-        .graph-panel-head h3 {
-          margin: 0 0 14px;
-          font-size: 22px;
-          font-weight: 700;
-          color: #214b8d;
-        }
-
-        .data-panel h3 {
-          padding-bottom: 12px;
-          border-bottom: 1px solid #e5edf7;
-        }
-
-        .panel-body {
-          line-height: 1.8;
-          color: #5e7288;
-          min-height: 120px;
-        }
-
-        .summary-classification {
-          margin-top: 18px;
-          padding-top: 16px;
-          border-top: 1px solid #e6eef9;
-        }
-
-        .summary-classification-title {
-          margin: 0 0 12px;
-          font-size: 15px;
-          font-weight: 700;
-          color: #214b8d;
-        }
-
-        .summary-classification-stage {
-          padding: 16px 18px;
-          border: 1px solid #dce7f6;
-          border-radius: 12px;
-          background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
-          overflow: hidden;
-        }
-
-        .summary-classification-flow {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-        }
-
-        .summary-classification-node {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 40px;
-          padding: 8px 16px;
-          border-radius: 999px;
-          border: 1px solid #cfe0fb;
-          background: #ffffff;
-          color: #285097;
-          font-size: 14px;
-          font-weight: 600;
-          line-height: 1.35;
-          text-align: center;
-          box-shadow: 0 4px 14px rgba(35, 70, 128, 0.05);
-        }
-
-        .summary-classification-node.is-current {
-          border-color: #6d93e8;
-          background: #eef4ff;
-          color: #214b8d;
-          box-shadow: 0 8px 20px rgba(38, 78, 150, 0.1);
-        }
-
-        .summary-classification-connector {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          color: #7b90b4;
-          font-size: 18px;
-          line-height: 1;
-          font-weight: 700;
-        }
-
-        .summary-classification-note {
-          margin-top: 10px;
-          font-size: 13px;
-          color: #6f83a0;
-          line-height: 1.6;
-        }
-
-        .sequence-panel {
-          display: grid;
-          gap: 18px;
-          grid-column: 1 / -1;
-          width: 100%;
-        }
-
-        .sequence-meta {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-          gap: 12px 20px;
-          font-size: 15px;
-          color: #52687f;
-        }
-
-        .sequence-meta strong {
-          color: #214b8d;
-        }
-
-        .sequence-fragment-note {
-          padding: 12px 14px;
-          border: 1px solid #f2d7a1;
-          border-radius: 10px;
-          background: #fff8e8;
-          color: #8a6410;
-          font-size: 15px;
-          line-height: 1.6;
-        }
-
-        .sequence-code-wrap {
-          width: 100%;
-          max-width: 100%;
-          min-height: 320px;
-          max-height: 320px;
-          border: 1px solid #dbe6f4;
-          border-radius: 10px;
-          background: #f9fbff;
-          overflow-x: auto;
-          overflow-y: auto;
-        }
-
-        .sequence-code {
-          margin: 0;
-          padding: 16px 18px;
-          min-width: max-content;
-          font-family: Consolas, 'Courier New', monospace;
-          font-size: 13px;
-          line-height: 1.6;
-          white-space: pre;
-          word-break: normal;
-          color: #183152;
-        }
-
-        .sequence-plot {
-          border: 1px solid #dbe6f4;
-          border-radius: 10px;
-          background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
-          padding: 14px 16px;
-        }
-
-        .sequence-plot img {
-          display: block;
-          width: 100%;
-          height: auto;
-        }
-
-        .distribution-panel {
-          display: grid;
-          gap: 18px;
-          grid-column: 1 / -1;
-          width: 100%;
-        }
-
-        .distribution-meta {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-          gap: 12px 20px;
-          font-size: 15px;
-          color: #52687f;
-        }
-
-        .distribution-meta strong {
-          color: #214b8d;
-        }
-
-        .distribution-karyotype-wrap {
-          width: 100%;
-          border: 1px solid #dbe6f4;
-          border-radius: 10px;
-          background: linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
-          padding: 14px 16px;
-          overflow-x: auto;
-          overflow-y: hidden;
-        }
-
-        .distribution-karyotype {
-          min-height: 360px;
-          min-width: 1080px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .distribution-status {
-          margin: 0;
-          font-size: 14px;
-          color: #7f91a6;
-        }
-
-        .distribution-karyotype svg {
-          display: block;
-        }
-
-        .jbrowse-panel {
-          display: grid;
-          gap: 18px;
-          grid-column: 1 / -1;
-          width: 100%;
-        }
-
-        .jbrowse-panel-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-          flex-wrap: wrap;
-          padding-bottom: 12px;
-          border-bottom: 1px solid #e5edf7;
-        }
-
-        .jbrowse-panel h3 {
-          margin: 0;
-          padding: 0;
-          border: 0;
-        }
-
-        .jbrowse-open-link {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 40px;
-          padding: 0 16px;
-          border-radius: 999px;
-          border: 1px solid #d9e5f7;
-          background: #eef4ff;
-          color: #214b8d;
-          font-size: 14px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .jbrowse-summary {
-          background: #ffffff;
-          border: 1px solid #dbe7f8;
-          border-radius: 14px;
-          box-shadow: 0 10px 28px rgba(26, 60, 112, 0.08);
-          padding: 20px 22px;
-        }
-
-        .jbrowse-summary h2 {
-          margin: 0 0 12px;
-          font-size: 24px;
-          color: #193458;
-          font-weight: 700;
-        }
-
-        .jbrowse-meta {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 12px 18px;
-        }
-
-        .jbrowse-meta-item {
-          min-width: 0;
-        }
-
-        .jbrowse-meta-label {
-          display: block;
-          font-size: 12px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #7a8baa;
-          margin-bottom: 4px;
-          font-weight: 700;
-        }
-
-        .jbrowse-meta-value {
-          display: block;
-          font-size: 17px;
-          line-height: 1.45;
-          color: #27466f;
-          word-break: break-word;
-        }
-
-        .jbrowse-track-toolbar {
-          margin-top: 18px;
-          padding-top: 16px;
-          border-top: 1px solid #e5edf9;
-        }
-
-        .jbrowse-control-row {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: flex-end;
-          gap: 14px 18px;
-        }
-
-        .jbrowse-hit-picker {
-          min-width: min(420px, 100%);
-          flex: 1 1 420px;
-        }
-
-        .jbrowse-hit-picker-label {
-          display: block;
-          margin-bottom: 8px;
-          font-size: 12px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #7a8baa;
-          font-weight: 700;
-        }
-
-        .jbrowse-hit-picker-select {
-          width: 100%;
-          min-height: 44px;
-          padding: 10px 14px;
-          border-radius: 12px;
-          border: 1px solid #d7e3f7;
-          background: #fbfdff;
-          color: #27466f;
-          font-size: 14px;
-          line-height: 1.4;
-        }
-
-        .jbrowse-track-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .jbrowse-track-item {
-          display: inline-flex;
-          align-items: center;
-          gap: 10px;
-          padding: 10px 14px;
-          border-radius: 999px;
-          background: #f5f8ff;
-          border: 1px solid #e0e9f8;
-        }
-
-        .jbrowse-track-item input[type='checkbox'] {
-          width: 18px;
-          height: 18px;
-          accent-color: #3d8f57;
-          cursor: pointer;
-          margin: 0;
-          flex: 0 0 auto;
-        }
-
-        .jbrowse-track-dot {
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          flex: 0 0 auto;
-          border: 2px solid rgba(18, 43, 86, 0.12);
-        }
-
-        .jbrowse-track-name {
-          font-size: 15px;
-          color: #26466f;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .jbrowse-browser-stage {
-          margin-top: 10px;
-        }
-
-        #search_jbrowse_linear_genome_view {
-          height: 840px;
-          background: transparent;
-        }
-
-        .jbrowse-loading {
-          height: 840px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #587399;
-          font-size: 18px;
-          border-radius: 16px;
-          background: rgba(255, 255, 255, 0.62);
-          border: 1px solid rgba(219, 231, 248, 0.9);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
-        }
-        .graph-panel {
-          display: flex;
-          flex-direction: column;
-          gap: 14px;
-        }
-
-        .graph-panel-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 14px;
-        }
-
-        .graph-toggle {
-          border: 1px solid #dce5f3;
-          border-radius: 8px;
-          background: #eef4ff;
-          color: #2753b7;
-          width: 44px;
-          height: 40px;
-          font-size: 20px;
-          line-height: 1;
-          font-weight: 700;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .graph-frame {
-          flex: 0 0 auto;
-          max-height: 680px;
-          border: 1px solid #d8e4f0;
-          border-radius: 10px;
-          background: linear-gradient(180deg, #ffffff 0%, #eef5ff 100%);
-          overflow: hidden;
-          opacity: 1;
-          transform: translateY(0);
-          margin-top: 4px;
-          transition:
-            max-height 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-            opacity 0.22s ease,
-            transform 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-            margin-top 0.36s cubic-bezier(0.22, 1, 0.36, 1),
-            border-color 0.22s ease;
-        }
-
-        .graph-panel.is-collapsed .graph-frame {
-          max-height: 0;
-          opacity: 0;
-          transform: translateY(-10px);
-          margin-top: 0;
-          border-color: transparent;
-          pointer-events: none;
-        }
-
-        .graph-frame iframe {
-          width: 100%;
-          height: 640px;
-          min-height: 640px;
-          border: 0;
-          display: block;
-          border-radius: 10px;
-        }
-
-        .example-note {
-          font-size: 14px;
-          color: #8b98ad;
-        }
-
-        @media (max-width: 1100px) {
-          .search-layout {
-            grid-template-columns: 1fr;
-          }
-
-          .detail-layout {
-            grid-template-columns: 1fr;
-          }
-
-          .detail-sidebar {
-            position: static;
-          }
-        }
-
-        @media (max-width: 680px) {
-          .proto-container {
-            padding: 0 18px;
-          }
-
-          .detail-toolbar {
-            grid-template-columns: 1fr;
-          }
-
-          .detail-back-link {
-            width: 100%;
-          }
-
-          .detail-search-form {
-            width: 100%;
-            justify-self: stretch;
-          }
-        }
-      </style>
+      <link rel="stylesheet" href="/TE-/assets/css/pages/search.css">
 
       <section class="search-shell">
         <div class="proto-container">
@@ -1470,88 +1109,32 @@ require __DIR__ . '/head.php';
             <div class="detail-content">
               <section id="search-summary-panel" class="data-panel">
                 <h3>Summary</h3>
-                <div id="search-summary" class="panel-body">
-                  <?php if ($repbase !== null): ?>
-                    <div><strong>Matched query: </strong><?= htmlspecialchars($repbase['matched'], ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Entity type: </strong>TE</div>
-                    <div><strong>Name: </strong><?= htmlspecialchars($repbase['nm'] ?: $repbase['id'] ?: '-', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Description: </strong><?= htmlspecialchars($repbase['description'] ?: 'No description', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Keywords: </strong><?= htmlspecialchars($repbase['keywords'] ?: 'No keywords', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Length: </strong><?= htmlspecialchars($repbase['length_bp'] !== null ? ((string) $repbase['length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Reference count: </strong><?= htmlspecialchars((string) ($repbase['reference_count'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
-                    <?php if (is_array($classificationSession) && !empty($classificationSession['path']) && is_array($classificationSession['path'])): ?>
-                      <div class="summary-classification">
-                        <h4 class="summary-classification-title">Classification</h4>
-                        <div class="summary-classification-stage" aria-label="TE classification path">
-                          <div class="summary-classification-flow">
-                            <?php
-                              $classificationPath = array_values(array_filter(
-                                  $classificationSession['path'],
-                                  static fn ($item) => is_array($item) && trim((string) ($item['display_label'] ?? '')) !== ''
-                              ));
-                              $classificationLastIndex = count($classificationPath) - 1;
-                            ?>
-                            <?php foreach ($classificationPath as $index => $node): ?>
-                              <span class="summary-classification-node<?= $index === $classificationLastIndex ? ' is-current' : '' ?>">
-                                <?= htmlspecialchars((string) ($node['display_label'] ?? $node['name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
-                              </span>
-                              <?php if ($index < $classificationLastIndex): ?>
-                                <span class="summary-classification-connector" aria-hidden="true">&rarr;</span>
-                              <?php endif; ?>
-                            <?php endforeach; ?>
-                          </div>
-                          <div class="summary-classification-note">Rendered from the current tree.txt lineage only. No extra levels are inferred.</div>
-                        </div>
-                      </div>
-                    <?php endif; ?>
-                  <?php elseif ($query !== ''): ?>
-                    No structured TE summary is available for the current query yet.
-                  <?php else: ?>
-                    Search for a TE, disease, function, or PMID to view a concise summary here.
-                  <?php endif; ?>
-                </div>
+                <?php require __DIR__ . '/templates/components/search_summary_meta.php'; ?>
               </section>
 
-              <section id="search-graph-panel" class="graph-panel is-collapsed">
-                <div class="graph-panel-head">
-                  <h3>Local Graph</h3>
-                  <button id="search-graph-toggle" type="button" class="graph-toggle" aria-expanded="false" aria-controls="search-graph-frame-wrap" title="Expand local graph"><span id="search-graph-toggle-icon" aria-hidden="true">&#9662;</span></button>
-                </div>
-                <div id="search-graph-frame-wrap" class="graph-frame">
-                  <iframe
-                    id="search-g6-frame"
-                    src="<?= htmlspecialchars($searchGraphSrc, ENT_QUOTES, 'UTF-8') ?>"
-                    title="Search graph (G6)"
-                  ></iframe>
-                </div>
-              </section>
+              <?php require __DIR__ . '/templates/components/search_graph_panel.php'; ?>
 
-              <?php if ($dfamSequence !== null): ?>
+              <?php if ($repbase !== null): ?>
                 <section id="search-sequence-panel" class="data-panel sequence-panel">
                   <h3>Sequence</h3>
-                  <div class="sequence-meta">
-                    <div><strong>Matched query: </strong><?= htmlspecialchars($dfamSequence['matched_query'] ?? $query, ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Dfam accession: </strong><?= htmlspecialchars($dfamSequence['accession'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Dfam family: </strong><?= htmlspecialchars($dfamSequence['name'] ?? '-', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Length: </strong><?= htmlspecialchars(!empty($dfamSequence['sequence_length_bp']) ? ((string) $dfamSequence['sequence_length_bp']) . ' bp' : 'No length available', ENT_QUOTES, 'UTF-8') ?></div>
-                    <div><strong>Model type: </strong><?= htmlspecialchars($dfamSequence['model_type_label'] ?? 'Consensus model', ENT_QUOTES, 'UTF-8') ?></div>
-                    <?php if (!empty($dfamSequence['display_classification'])): ?>
-                      <div><strong>Classification: </strong><?= htmlspecialchars((string) $dfamSequence['display_classification'], ENT_QUOTES, 'UTF-8') ?></div>
-                    <?php endif; ?>
-                  </div>
-                  <?php if (!empty($dfamSequence['is_fragment'])): ?>
-                    <div class="sequence-fragment-note">
-                      This sequence is a Dfam fragment consensus model (<?= htmlspecialchars(strtolower((string) ($dfamSequence['model_type_label'] ?? 'fragment model')), ENT_QUOTES, 'UTF-8') ?>).
+                  <?php if (!empty($repbase['sequence_summary'])): ?>
+                    <div class="sequence-meta">
+                      <div><strong>Sequence summary: </strong><?= htmlspecialchars((string) $repbase['sequence_summary'], ENT_QUOTES, 'UTF-8') ?></div>
+                    </div>
+                  <?php endif; ?>
+                  <?php if (!empty($repbaseStructureSvgUrl)): ?>
+                    <div class="sequence-plot">
+                      <object
+                        class="sequence-plot-object"
+                        data="<?= htmlspecialchars((string) $repbaseStructureSvgUrl, ENT_QUOTES, 'UTF-8') ?>"
+                        type="image/svg+xml"
+                        aria-label="Sequence structure plot for <?= htmlspecialchars((string) ($repbase['nm'] ?? $query), ENT_QUOTES, 'UTF-8') ?>">
+                      </object>
                     </div>
                   <?php endif; ?>
                   <div class="sequence-code-wrap">
-                    <pre class="sequence-code"><?= htmlspecialchars(tekg_format_sequence_proto((string) ($dfamSequence['sequence'] ?? '')), ENT_QUOTES, 'UTF-8') ?></pre>
+                    <pre class="sequence-code"><?= htmlspecialchars(tekg_format_sequence_proto((string) ($repbase['sequence'] ?? '')), ENT_QUOTES, 'UTF-8') ?></pre>
                   </div>
-                  <?php if (!empty($dfamSequence['structure_svg_path'])): ?>
-                    <div class="sequence-plot">
-                      <img src="<?= htmlspecialchars((string) $dfamSequence['structure_svg_path'], ENT_QUOTES, 'UTF-8') ?>" alt="Dfam sequence structure plot for <?= htmlspecialchars((string) ($dfamSequence['name'] ?? $query), ENT_QUOTES, 'UTF-8') ?>">
-                    </div>
-                  <?php endif; ?>
                 </section>
               <?php endif; ?>
 
@@ -1611,7 +1194,10 @@ require __DIR__ . '/head.php';
                     <div class="jbrowse-track-toolbar">
                       <div class="jbrowse-control-row">
                         <div class="jbrowse-hit-picker">
-                          <label class="jbrowse-hit-picker-label" for="searchJBrowseHitSelect">Genomic hit</label>
+                          <div class="jbrowse-hit-picker-head">
+                            <label class="jbrowse-hit-picker-label" for="searchJBrowseHitSelect">Genomic hit</label>
+                            <button type="button" class="jbrowse-hit-restore" id="searchJBrowseRestoreHits" hidden>Show sampled hits</button>
+                          </div>
                           <select id="searchJBrowseHitSelect" class="jbrowse-hit-picker-select">
                             <?php
                               $jbrowseRepresentative = is_array($jbrowseSession['representative_locus'] ?? null) ? $jbrowseSession['representative_locus'] : [];
@@ -1636,6 +1222,7 @@ require __DIR__ . '/head.php';
                                     <?= $isSelectedHit ? 'selected' : '' ?>><?= htmlspecialchars((string) ($hit['label'] ?? ($hitChrom . ':' . ($hitStart + 1) . '-' . $hitEnd)), ENT_QUOTES, 'UTF-8') ?></option>
                             <?php endforeach; ?>
                           </select>
+                          <div class="jbrowse-hit-scope" id="searchJBrowseHitScope" hidden></div>
                         </div>
                         <div class="jbrowse-track-list" id="searchJBrowseTrackControls">
                           <label class="jbrowse-track-item">
@@ -1678,324 +1265,30 @@ require __DIR__ . '/head.php';
       <script src="/TE-/assets/vendor/karyotype/Karyotype.js"></script>
       <?php endif; ?>
 
-      <script>
-        (() => {
-          const header = document.getElementById('protoHeader');
-          function syncHeader() {
-            if (!header) return;
-            header.classList.toggle('is-scrolled', window.scrollY > 12);
-          }
-          window.addEventListener('scroll', syncHeader, { passive: true });
-          syncHeader();
-        })();
-      </script>
+      
 
-      <script>
-      (function () {
-        const panel = document.getElementById('search-karyotype-panel');
-        const view = document.getElementById('search-karyotype-view');
-        const status = document.getElementById('search-karyotype-status');
-
-        if (!panel || !view) {
-          return;
-        }
-
-        const dataPath = view.dataset.karyotypePath || '';
-        if (!dataPath || typeof window.Karyotype !== 'function') {
-          if (status) {
-            status.textContent = 'Genome annotation distribution is unavailable right now.';
-          }
-          return;
-        }
-
-        fetch(dataPath, { cache: 'no-store' })
-          .then(function (response) {
-            if (!response.ok) {
-              throw new Error('Failed to load karyotype data');
-            }
-            return response.json();
-          })
-          .then(function (data) {
-            view.innerHTML = '';
-            new window.Karyotype(view, data);
-            if (status) {
-              status.hidden = true;
-            }
-          })
-          .catch(function (error) {
-            console.error(error);
-            if (status) {
-              status.textContent = 'Genome annotation distribution is unavailable right now.';
-              status.hidden = false;
-            }
-          });
-      }());
-      </script>
+      
       <?php if ($jbrowseSession !== null): ?>
       <script src="https://unpkg.com/@jbrowse/react-linear-genome-view2@3.5.0/dist/react-linear-genome-view.umd.production.min.js" crossorigin></script>
-      <script>
-      (function () {
-        const mount = document.getElementById('search_jbrowse_linear_genome_view');
-        const controls = Array.from(document.querySelectorAll('#searchJBrowseTrackControls input[data-track-id]'));
-        const hitSelect = document.getElementById('searchJBrowseHitSelect');
-        const repeatCountEl = document.getElementById('searchJBrowseRepeatCount');
-        const refseqCountEl = document.getElementById('searchJBrowseRefseqCount');
-        const defaultLocEl = document.getElementById('searchJBrowseDefaultLoc');
-        const openLink = document.getElementById('searchJBrowseOpenLink');
-        const browserBaseUrl = <?= json_encode((string) ($jbrowseSession['browser_url'] ?? ''), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-        const configUrl = <?= json_encode((string) ($jbrowseSession['config_url'] ?? ''), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
-
-        if (!mount || !configUrl || typeof window.JBrowseReactLinearGenomeView === 'undefined') {
-          return;
-        }
-
-        const { React, createRoot, createViewState, JBrowseLinearGenomeView } = window.JBrowseReactLinearGenomeView;
-        const root = createRoot(mount);
-        let runtimeConfig = null;
-
-        function getSelectedTrackIds() {
-          return controls.filter(input => input.checked).map(input => input.dataset.trackId);
-        }
-
-        function getSelectedHitParams() {
-          const option = hitSelect && hitSelect.selectedOptions.length ? hitSelect.selectedOptions[0] : null;
-          return {
-            chrom: option ? String(option.dataset.chrom || '') : '',
-            start: option ? String(option.dataset.start || '') : '',
-            end: option ? String(option.dataset.end || '') : '',
-          };
-        }
-
-        function buildBrowserUrl() {
-          const url = new URL(browserBaseUrl, window.location.origin);
-          const hit = getSelectedHitParams();
-          if (hit.chrom) {
-            url.searchParams.set('chr', hit.chrom);
-          }
-          if (hit.start) {
-            url.searchParams.set('start', hit.start);
-          }
-          if (hit.end) {
-            url.searchParams.set('end', hit.end);
-          }
-          url.searchParams.delete('format');
-          return url.toString();
-        }
-
-        function buildConfigUrl() {
-          const url = new URL(buildBrowserUrl());
-          url.searchParams.set('format', 'config');
-          return url.toString();
-        }
-
-        function renderBrowser() {
-          if (!runtimeConfig) {
-            return;
-          }
-          const selectedTrackIds = getSelectedTrackIds();
-          const trackConfigs = [
-            {
-              type: 'FeatureTrack',
-              trackId: 'repeats_hg38',
-              name: 'Repeats',
-              assemblyNames: ['hg38'],
-              category: ['Annotation'],
-              adapter: {
-                type: 'Gff3Adapter',
-                gffLocation: { uri: runtimeConfig.repeatTrackUrl },
-              },
-            },
-            {
-              type: 'FeatureTrack',
-              trackId: 'ncbi_refseq_window',
-              name: 'NCBI RefSeq',
-              assemblyNames: ['hg38'],
-              category: ['Annotation'],
-              adapter: {
-                type: 'Gff3Adapter',
-                gffLocation: { uri: runtimeConfig.refseqTrackUrl },
-              },
-            },
-            {
-              type: 'FeatureTrack',
-              trackId: 'clinvar_variants',
-              name: 'ClinVar variants',
-              assemblyNames: ['hg38'],
-              category: ['ClinVar'],
-              adapter: {
-                type: 'BigBedAdapter',
-                uri: runtimeConfig.clinvarMainUrl,
-              },
-            },
-            {
-              type: 'FeatureTrack',
-              trackId: 'clinvar_cnv',
-              name: 'ClinVar CNV',
-              assemblyNames: ['hg38'],
-              category: ['ClinVar'],
-              adapter: {
-                type: 'BigBedAdapter',
-                uri: runtimeConfig.clinvarCnvUrl,
-              },
-            },
-          ];
-          const selectedTracks = trackConfigs.filter(track => selectedTrackIds.includes(track.trackId));
-          const state = new createViewState({
-            assembly: {
-              name: 'hg38',
-              sequence: {
-                type: 'ReferenceSequenceTrack',
-                trackId: 'hg38_reference',
-                name: 'Reference sequence',
-                assemblyNames: ['hg38'],
-                adapter: {
-                  type: 'IndexedFastaAdapter',
-                  fastaLocation: { uri: runtimeConfig.fastaUrl },
-                  faiLocation: { uri: runtimeConfig.faiUrl },
-                },
-              },
-            },
-            tracks: selectedTracks,
-            defaultSession: {
-              name: runtimeConfig.pageMeta && runtimeConfig.pageMeta.te ? `JBrowse - ${runtimeConfig.pageMeta.te}` : 'JBrowse locus session',
-              view: {
-                id: 'linearGenomeView',
-                type: 'LinearGenomeView',
-                init: {
-                  assembly: 'hg38',
-                  loc: runtimeConfig.pageMeta.defaultLoc,
-                  tracks: selectedTrackIds,
-                },
-              },
-            },
-          });
-          root.render(React.createElement(JBrowseLinearGenomeView, { viewState: state }));
-        }
-
-        function applyConfig(config) {
-          runtimeConfig = config;
-          if (defaultLocEl && config.pageMeta) {
-            defaultLocEl.textContent = String(config.pageMeta.defaultLoc ?? '-');
-          }
-          if (repeatCountEl && config.pageMeta) {
-            repeatCountEl.textContent = String(config.pageMeta.repeatFeatureCount ?? '-');
-          }
-          if (refseqCountEl && config.pageMeta) {
-            refseqCountEl.textContent = String(config.pageMeta.refseqFeatureCount ?? '-');
-          }
-          if (openLink) {
-            openLink.href = buildBrowserUrl();
-          }
-          renderBrowser();
-          window.requestAnimationFrame(renderBrowser);
-          window.setTimeout(renderBrowser, 120);
-        }
-
-        function loadConfig(url) {
-          root.render(React.createElement('div', { className: 'jbrowse-loading' }, 'Loading selected genomic hit...'));
-          fetch(url, { cache: 'no-store' })
-            .then(function (response) {
-              if (!response.ok) {
-                throw new Error('Failed to load JBrowse config');
-              }
-              return response.json();
-            })
-            .then(applyConfig)
-            .catch(function (error) {
-              console.error(error);
-              mount.innerHTML = '<div class="jbrowse-loading">Genome browser is unavailable right now.</div>';
-            });
-        }
-
-        controls.forEach(input => {
-          input.addEventListener('change', renderBrowser);
-        });
-        if (hitSelect) {
-          hitSelect.addEventListener('change', function () {
-            loadConfig(buildConfigUrl());
-          });
-        }
-
-        loadConfig(configUrl);
-      }());
-      </script>
+      
       <?php endif; ?>
 
-      <script>
-      (function () {
-        const graphPanelEl = document.getElementById('search-graph-panel');
-        const graphToggleBtn = document.getElementById('search-graph-toggle');
-        const graphToggleIconEl = document.getElementById('search-graph-toggle-icon');
-        const navLinks = Array.from(document.querySelectorAll('[data-detail-nav-link]'));
+      
 
-        function setGraphExpanded(expanded) {
-          if (!graphPanelEl || !graphToggleBtn) return;
-          graphPanelEl.classList.toggle('is-collapsed', !expanded);
-          graphToggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-          if (graphToggleIconEl) {
-            graphToggleIconEl.innerHTML = expanded ? '&#9652;' : '&#9662;';
-          }
-          graphToggleBtn.title = expanded ? 'Collapse local graph' : 'Expand local graph';
-        }
-
-        function setActiveSection(id) {
-          navLinks.forEach((link) => {
-            const isActive = link.getAttribute('href') === `#${id}`;
-            link.classList.toggle('is-active', isActive);
-            if (isActive) {
-              link.setAttribute('aria-current', 'location');
-            } else {
-              link.removeAttribute('aria-current');
-            }
-          });
-        }
-
-        if (graphToggleBtn) {
-          graphToggleBtn.addEventListener('click', function () {
-            const expanded = graphPanelEl ? graphPanelEl.classList.contains('is-collapsed') : false;
-            setGraphExpanded(expanded);
-          });
-        }
-
-        navLinks.forEach((link) => {
-          link.addEventListener('click', function () {
-            const targetId = (link.getAttribute('href') || '').replace('#', '');
-            if (targetId === 'search-graph-panel') {
-              setGraphExpanded(true);
-            }
-            if (targetId) {
-              setActiveSection(targetId);
-            }
-          });
-        });
-
-        const sections = navLinks
-          .map((link) => document.getElementById((link.getAttribute('href') || '').replace('#', '')))
-          .filter(Boolean);
-
-        if (sections.length > 0) {
-          setActiveSection(sections[0].id);
-          if ('IntersectionObserver' in window) {
-            const observer = new IntersectionObserver((entries) => {
-              const visible = entries
-                .filter((entry) => entry.isIntersecting)
-                .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-              if (visible.length > 0 && visible[0].target && visible[0].target.id) {
-                setActiveSection(visible[0].target.id);
-              }
-            }, {
-              rootMargin: '-15% 0px -65% 0px',
-              threshold: [0.05, 0.15, 0.35, 0.6],
-            });
-            sections.forEach((section) => observer.observe(section));
-          }
-        }
-
-        setGraphExpanded(false);
-      }());
-      </script>
+      <script id="search-page-config" type="application/json"><?= json_encode([
+        'browserBaseUrl' => (string) ($jbrowseSession['browser_url'] ?? ''),
+        'configUrl' => (string) ($jbrowseSession['config_url'] ?? ''),
+        'karyotypeHitMap' => $karyotypeHitMap,
+      ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
+      <script src="/TE-/assets/js/pages/search.js"></script>
     </main>
   </div>
 </body>
 </html>
+
+
+
+
+
+
 

@@ -12,7 +12,7 @@ from typing import Any
 
 
 ROOT = Path(r"D:\wamp64\www\TE-")
-BULK_ROOT = ROOT / "new_data" / "bulk_expression_web"
+BULK_ROOT = ROOT / "data" / "raw" / "new_data" / "bulk_expression_web"
 OUT_ROOT = BULK_ROOT / "processed"
 
 
@@ -133,13 +133,35 @@ def load_meta(config: DatasetConfig) -> tuple[dict[str, str], dict[str, str], di
     return run_to_context, context_to_full_name, stats
 
 
+def quartiles(sorted_values: list[float]) -> tuple[float | None, float | None]:
+    count = len(sorted_values)
+    if count == 0:
+        return None, None
+    if count == 1:
+        return sorted_values[0], sorted_values[0]
+    midpoint = count // 2
+    if count % 2 == 0:
+        lower_half = sorted_values[:midpoint]
+        upper_half = sorted_values[midpoint:]
+    else:
+        lower_half = sorted_values[:midpoint]
+        upper_half = sorted_values[midpoint + 1 :]
+    if not lower_half:
+        lower_half = sorted_values
+    if not upper_half:
+        upper_half = sorted_values
+    return median(lower_half), median(upper_half)
+
+
 def summarize_metric(values: list[float]) -> dict[str, float | int | None]:
     if not values:
         return {
             "sample_count": 0,
             "min_value": None,
+            "q1_value": None,
             "max_value": None,
             "median_value": None,
+            "q3_value": None,
             "mean_value": None,
             "std_value": None,
             "cv_value": None,
@@ -148,6 +170,7 @@ def summarize_metric(values: list[float]) -> dict[str, float | int | None]:
     count = len(sorted_values)
     min_value = sorted_values[0]
     max_value = sorted_values[-1]
+    q1_value, q3_value = quartiles(sorted_values)
     median_value = median(sorted_values)
     mean_value = sum(sorted_values) / count
     if count > 1:
@@ -159,8 +182,10 @@ def summarize_metric(values: list[float]) -> dict[str, float | int | None]:
     return {
         "sample_count": count,
         "min_value": min_value,
+        "q1_value": q1_value,
         "max_value": max_value,
         "median_value": median_value,
+        "q3_value": q3_value,
         "mean_value": mean_value,
         "std_value": std_value,
         "cv_value": cv_value,
@@ -293,7 +318,9 @@ def prepare_dataset(
                     "context_order": order_value,
                     "sample_count": metric_stats["sample_count"],
                     "min_value": round_or_none(metric_stats["min_value"]),
+                    "q1_value": round_or_none(metric_stats["q1_value"]),
                     "median_value": round_or_none(metric_stats["median_value"]),
+                    "q3_value": round_or_none(metric_stats["q3_value"]),
                     "mean_value": round_or_none(metric_stats["mean_value"]),
                     "max_value": round_or_none(metric_stats["max_value"]),
                     "std_value": round_or_none(metric_stats["std_value"]),
@@ -506,7 +533,9 @@ CREATE TABLE IF NOT EXISTS expression_context_stats (
   context_order INT NOT NULL,
   sample_count INT NOT NULL,
   min_value DOUBLE NULL,
+  q1_value DOUBLE NULL,
   median_value DOUBLE NULL,
+  q3_value DOUBLE NULL,
   mean_value DOUBLE NULL,
   max_value DOUBLE NULL,
   std_value DOUBLE NULL,
@@ -545,7 +574,9 @@ def main() -> None:
         "context_order",
         "sample_count",
         "min_value",
+        "q1_value",
         "median_value",
+        "q3_value",
         "mean_value",
         "max_value",
         "std_value",
