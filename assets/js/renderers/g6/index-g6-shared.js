@@ -857,7 +857,7 @@
     }
 
     async function renderElements(elements, requestLike, options = {}) {
-en      const request = normalizeGraphRequest(requestLike);
+      const request = normalizeGraphRequest(requestLike);
       const query = String(request.query || currentQuery || '').trim() || 'LINE1';
       const sourceLabel = options.sourceLabel === 'qa' ? 'qa' : 'query';
       currentQuery = query;
@@ -906,6 +906,25 @@ en      const request = normalizeGraphRequest(requestLike);
         }
         graphDataOptions.showAllLabels = currentShowAllLabels;
         const data = buildGraphData(payloadElements, graphDataOptions);
+
+        if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
+          if (graph && typeof graph.destroy === 'function') {
+            graph.destroy();
+            graph = null;
+          }
+          container.innerHTML = '';
+          hooks.onSelection?.(null);
+          hooks.setDetail(
+            'No visible graph nodes',
+            'The current legend filters hide all nodes for this graph. Re-enable at least one node type to render the subgraph.',
+          );
+          hooks.setStatus(
+            sourceLabel === 'qa'
+              ? 'The current QA graph has no visible nodes under the active legend filters.'
+              : `No visible nodes remain for ${query} under the active legend filters.`,
+          );
+          return { elements: payloadElements };
+        }
 
         if (graph && typeof graph.destroy === 'function') {
           graph.destroy();
@@ -1086,6 +1105,28 @@ en      const request = normalizeGraphRequest(requestLike);
 
         const payload = await response.json();
         const graphDataOptions = { ...(options.graphDataOptions || {}) };
+        if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'visibleTypes')) {
+          const currentBridge = window.__TEKG_G6_BRIDGE;
+          if (currentBridge && typeof currentBridge.getVisibleTypes === 'function') {
+            graphDataOptions.visibleTypes = currentBridge.getVisibleTypes();
+          } else if (window.parent && window.parent !== window) {
+            const parentBridge = window.parent.__TEKG_G6_BRIDGE;
+            if (parentBridge && typeof parentBridge.getVisibleTypes === 'function') {
+              graphDataOptions.visibleTypes = parentBridge.getVisibleTypes();
+            }
+          }
+        }
+        if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'showAllLabels')) {
+          const currentBridge = window.__TEKG_G6_BRIDGE;
+          if (currentBridge && typeof currentBridge.getShowLabels === 'function') {
+            graphDataOptions.showAllLabels = currentBridge.getShowLabels();
+          } else if (window.parent && window.parent !== window) {
+            const parentBridge = window.parent.__TEKG_G6_BRIDGE;
+            if (parentBridge && typeof parentBridge.getShowLabels === 'function') {
+              graphDataOptions.showAllLabels = parentBridge.getShowLabels();
+            }
+          }
+        }
         if (request.queryType === 'disease_class') {
           graphDataOptions.synthesizeDiseaseClasses = false;
         }
