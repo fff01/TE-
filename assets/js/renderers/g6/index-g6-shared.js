@@ -932,7 +932,7 @@
 
         graph = new Graph({
           container,
-          autoFit: 'center',
+          autoFit: false,
           data,
           node: {
             style: {
