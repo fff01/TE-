@@ -1,0 +1,4390 @@
+XX
+ID   ALINE       repbase;    DNA;    MAM; 617 BP.
+KW   RTEX; Non-LTR Retrotransposon; Transposable Element; ALINE.
+XX
+ID   ALU         repbase;    DNA;    PRI; 312 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; Alu-J; Alu-Jo; AluJ; AluJo;
+KW   Repetitive sequence.
+XX
+ID   AluJb       repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-J; Alu-Jb; AluJ; AluJb; Repetitive sequence.
+XX
+ID   AluJo       repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-J; Alu-Jo; AluJ; AluJo; Repetitive sequence.
+XX
+ID   AluJr       repbase;    DNA;    PRI; 285 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluJr.
+XX
+ID   AluJr4      repbase;    DNA;    PRI; 285 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluJr4.
+XX
+ID   AluSc       repbase;    DNA;    PRI; 280 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Sc; AluSc; Repetitive sequence.
+XX
+ID   AluSc5      repbase;    DNA;    PRI; 280 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSc5.
+XX
+ID   AluSc8      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSc8.
+XX
+ID   AluSg       repbase;    DNA;    PRI; 281 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Sg; AluSg; Repetitive sequence.
+XX
+ID   AluSg1      repbase;    DNA;    PRI; 280 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; SINE1; AluSg; AluSg1.
+XX
+ID   AluSg4      repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSg4.
+XX
+ID   AluSg7      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSg7.
+XX
+ID   AluSp       repbase;    DNA;    PRI; 284 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Sp; AluSp; Repetitive sequence.
+XX
+ID   AluSq       repbase;    DNA;    PRI; 284 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Sq; AluSq; Repetitive sequence.
+XX
+ID   AluSq10     repbase;    DNA;    PRI; 286 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSq10.
+XX
+ID   AluSq2      repbase;    DNA;    PRI; 286 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSq2.
+XX
+ID   AluSq4      repbase;    DNA;    PRI; 285 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSq4.
+XX
+ID   AluSx       repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Sx; AluSx; Repetitive sequence.
+XX
+ID   AluSx1      repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSx1.
+XX
+ID   AluSx3      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSx3.
+XX
+ID   AluSx4      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSx4.
+XX
+ID   AluSz       repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-S; Alu-Sz; AluSz; Repetitive sequence.
+XX
+ID   AluSz6      repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluSz6.
+XX
+ID   AluY        repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Sb; Alu-Y; AluY; Repetitive sequence.
+XX
+ID   AluYa1      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Y; AluYa1; Repetitive sequence.
+XX
+ID   AluYa4      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Y; AluYa4; Repetitive sequence.
+XX
+ID   AluYa5      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Ya5; AluYa5; HS; PV; Repetitive sequence.
+XX
+ID   AluYa8      repbase;    DNA;    PRI; 281 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Ya8; AluYa8; HS-2; PV-minor;
+KW   Repetitive sequence.
+XX
+ID   AluYb10     repbase;    DNA;    PRI; 288 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYb10.
+XX
+ID   AluYb11     repbase;    DNA;    PRI; 289 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYb11.
+XX
+ID   AluYb3a1    repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Y; AluYb3a1; Repetitive sequence.
+XX
+ID   AluYb3a2    repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Y; AluYb3a2; Repetitive sequence.
+XX
+ID   AluYb8      repbase;    DNA;    PRI; 289 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Yb8; AluYb8; Repetitive sequence; Sb2.
+XX
+ID   AluYb8a1    repbase;    DNA;    PRI; 287 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYb8a1.
+XX
+ID   AluYb9      repbase;    DNA;    PRI; 289 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluSb2; AluYb8; AluYb9; Repetitive sequence.
+XX
+ID   AluYbc3a    repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; AluYc1; AluYb3a; AluYbc3a.
+XX
+ID   AluYc1      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluSb0; AluYa1; AluYc1; Repetitive sequence.
+XX
+ID   AluYc2      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluSb0; AluYa1; AluYc1; AluYc2;
+KW   Repetitive sequence.
+XX
+ID   AluYc5      repbase;    DNA;    PRI; 270 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; SINE1; AluYc5; AluMacYb2.
+XX
+ID   AluYd2      repbase;    DNA;    PRI; 270 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYb1; AluYc, AluYd2; AluYd2;
+KW   Repetitive sequence.
+XX
+ID   AluYd3      repbase;    DNA;    PRI; 270 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYb1; AluYc; AluYc2; AluYc3; AluYd3;
+KW   Repetitive sequence.
+XX
+ID   AluYd3a1    repbase;    DNA;    PRI; 271 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYb1; AluYc; AluYc3; AluYd3a1; AlyYc2;
+KW   Repetitive sequence.
+XX
+ID   AluYd8      repbase;    DNA;    PRI; 270 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALUYc6; AluYb1; AluYc; AluYc5; AluYd8;
+KW   Repetitive sequence.
+XX
+ID   AluYe2      repbase;    DNA;    PRI; 280 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; AluYe; AluYe2.
+XX
+ID   AluYe5      repbase;    DNA;    PRI; 281 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Alu-Yb5; AluYb5; AluYe; AluYe5;
+KW   Repetitive sequence.
+XX
+ID   AluYf1      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYf; AluYf1; Repetitive sequence.
+XX
+ID   AluYf2      repbase;    DNA;    PRI; 284 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; AluYf; AluYf2.
+XX
+ID   AluYf5      repbase;    DNA;    PRI; 281 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluYf5.
+XX
+ID   AluYg6      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYg; AluYg6; Repetitive sequence.
+XX
+ID   AluYh9      repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYh; AluYh9; Repetitive sequence.
+XX
+ID   AluYi6      repbase;    DNA;    PRI; 283 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYi; AluYi6; Repetitive sequence.
+XX
+ID   AluYk11     repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluYk11.
+XX
+ID   AluYk12     repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; AluYk12.
+XX
+ID   AluYk13     repbase;    DNA;    PRI; 282 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; AluYk13.
+XX
+ID   AmnSINE1_HS repbase;    DNA;    PRI; 576 BP.
+KW   SINE3/5S; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Interspersed repeat; SINE3; DeuSINE; conserved;
+KW   AmnSINE1_HS; CNE.
+XX
+ID   BLACKJACK   repbase;    DNA;    MAM; 2969 BP.
+KW   hAT; DNA transposon; Transposable Element; transposase; MER94;
+KW   MER114; BLACKJACK.
+XX
+ID   CHARLIE1    repbase;    DNA;    MAM; 2761 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie1;
+KW   DNA transposon fossil; MER64; hAT superfamily.
+XX
+ID   CHARLIE10   repbase;    DNA;    PRI; 2822 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE10;
+KW   DNA transposon fossil; MER1_type family; hAT family.
+XX
+ID   Charlie11   repbase;    DNA;    MAM; 2196 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie11; DNA;
+KW   hAT-Charlie.
+XX
+ID   Charlie12   repbase;    DNA;    PRI; 2873 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie12.
+XX
+ID   Charlie13a  repbase;    DNA;    MAM; 1514 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; hAT-Charlie;
+KW   Charlie13a.
+XX
+ID   Charlie13b  repbase;    DNA;    MAM; 512 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; hAT-Charlie;
+KW   Charlie13b.
+XX
+ID   Charlie15a  repbase;    DNA;    MAM; 224 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   DNA/MER1_type; Charlie15a.
+XX
+ID   Charlie16a  repbase;    DNA;    MAM; 342 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   DNA/MER1_type; Charlie16a.
+XX
+ID   Charlie17a  repbase;    DNA;    MAM; 219 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie17a.
+XX
+ID   Charlie18a  repbase;    DNA;    MAM; 342 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; hAT-Charlie;
+KW   Charlie18a.
+XX
+ID   Charlie19a  repbase;    DNA;    MAM; 386 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; hAT-Charlie;
+KW   Charlie19a.
+XX
+ID   CHARLIE1A   repbase;    DNA;    MAM; 1450 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie1a;
+KW   DNA transposon fossil; MER1_type family; MER64.
+XX
+ID   CHARLIE1B   repbase;    DNA;    MAM; 518 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie1b;
+KW   DNA transposon fossil; MER1_type family; MER64B.
+XX
+ID   CHARLIE2    repbase;    DNA;    MAM; 2760 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie2;
+KW   DNA transposon fossil; MER1_type (hAT) family.
+XX
+ID   Charlie21a  repbase;    DNA;    MAM; 1213 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA/MER1_type;
+KW   Charlie21a.
+XX
+ID   Charlie22a  repbase;    DNA;    MAM; 491 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie22a.
+XX
+ID   Charlie24   repbase;    DNA;    MAM; 2450 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; hAT-Charlie;
+KW   Charlie24.
+XX
+ID   Charlie25   repbase;    DNA;    MAM; 2524 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; hAT-Charlie;
+KW   Charlie25.
+XX
+ID   Charlie26a  repbase;    DNA;    MAM; 325 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   Charlie26a.
+XX
+ID   Charlie27   repbase;    DNA;    MAM; 1237 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   hAT family; Charlie27.
+XX
+ID   Charlie28   repbase;    DNA;    MAM; 948 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   hAT family; Charlie28.
+XX
+ID   CHARLIE2A   repbase;    DNA;    PRI; 2862 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie2; CHARLIE2A;
+KW   DNA transposon fossil; hAT superfamily.
+XX
+ID   CHARLIE2B   repbase;    DNA;    PRI; 2782 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie2; CHARLIE2B;
+KW   DNA transposon fossil; hAT superfamily.
+XX
+ID   CHARLIE3    repbase;    DNA;    PRI; 2710 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE3;
+KW   DNA transposon fossil; HAT supergroup; MER1.
+XX
+ID   CHARLIE4    repbase;    DNA;    MAM; 1961 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE4; MER80.
+XX
+ID   CHARLIE5    repbase;    DNA;    PRI; 2612 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE5; MER1 family;
+KW   MER3; MER33; hAT superfamily.
+XX
+ID   CHARLIE6    repbase;    DNA;    PRI; 3500 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE6;
+KW   DNA transposon fossil; hAT superfamily.
+XX
+ID   CHARLIE7    repbase;    DNA;    PRI; 2612 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE7;
+KW   DNA transposon fossil; hAT superfamily; MER100.
+XX
+ID   CHARLIE8    repbase;    DNA;    PRI; 2417 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE8;
+KW   DNA transposon fossil; MER102; hAT superfamily.
+XX
+ID   CHARLIE8A   repbase;    DNA;    MAM; 341 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   CHARLIE8A; MER102; nonautonomous DNA transposon; hAT superfamily.
+XX
+ID   CHARLIE9    repbase;    DNA;    PRI; 2757 BP.
+KW   hAT; DNA transposon; Transposable Element; CHARLIE9; MER112.
+XX
+ID   CHESHIRE    repbase;    DNA;    PRI; 2285 BP.
+KW   hAT; DNA transposon; Transposable Element; CHESHIRE; MER58;
+KW   hAT superfamily.
+XX
+ID   CHESHIRE_A  repbase;    DNA;    PRI; 224 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   DNA transposon fossil; hAT superfamily; MER58A; CHESHIRE_A.
+XX
+ID   CHESHIRE_B  repbase;    DNA;    PRI; 338 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   DNA transposon fossil; hAT superfamily; MER58B; CHESHIRE_B.
+XX
+ID   CR1L        repbase;    DNA;    VRT; 261 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; CR1L.
+XX
+ID   CR1_HS      repbase;    DNA;    PRI; 453 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; CR1_HS;
+KW   chicken repeat 1.
+XX
+ID   CR1_Mam     repbase;    DNA;    MAM; 2204 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   CR1_Mam.
+XX
+ID   DeuSINE     repbase;    DNA;    INV; 347 BP.
+KW   SINE3/5S; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; conserved; DeuSINE; CNE.
+XX
+ID   DNA1_Mam    repbase;    DNA;    MAM; 407 BP.
+KW   DNA transposon; Transposable Element; DNA; TcMar; DNA1_Mam.
+XX
+ID   ERV24B_Prim repbase;    DNA;    PRI; 7613 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV24B_Prim.
+XX
+ID   ERV24_Prim  repbase;    DNA;    PRI; 7575 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV24_Prim.
+XX
+ID   ERV3-16A3_I repbase;    DNA;    PRI; 5226 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of endogenous retrovirus; ERV3-16A3_I.
+XX
+ID   ERV3-16A3_LTR repbase;    DNA;    PRI; 422 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of endogenous retrovirus; ERV3-16A3_LTR.
+XX
+ID   ERVL        repbase;    DNA;    PRI; 5764 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; HERVL;
+KW   Internal part of endogenous retrovirus HERV-L; MLT2B.
+XX
+ID   ERVL-B4     repbase;    DNA;    MAM; 5714 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; ERVL-B4;
+KW   LTR retrotransposon.
+XX
+ID   ERVL-E      repbase;    DNA;    MAM; 5667 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; ERVL-E;
+KW   LTR retrotransposon.
+XX
+ID   ERVL47      repbase;    DNA;    PRI; 5246 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL47.
+XX
+ID   Eulor1      repbase;    DNA;    VRT; 357 BP.
+KW   Transposable Element; Nonautonomous; DNA; EULOR1; conserved; CNE.
+XX
+ID   Eulor10     repbase;    DNA;    VRT; 277 BP.
+KW   Transposable Element; Nonautonomous; DNA; Eulor10; conserved;
+KW   CNE.
+XX
+ID   Eulor11     repbase;    DNA;    VRT; 375 BP.
+KW   Transposable Element; Nonautonomous; DNA; Eulor11; conserved;
+KW   CNE.
+XX
+ID   Eulor12     repbase;    DNA;    VRT; 184 BP.
+KW   Transposable Element; Nonautonomous; DNA; Eulor11; Eulor12;
+KW   Interspersed repeat; conserved; CNE.
+XX
+ID   Eulor12B_CM repbase;    DNA;    VRT; 128 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; DNA;
+KW   conserved; Eulor11; Eulor12; CNE; Eulor12_CM; Eulor12B_CM.
+XX
+ID   Eulor12_CM  repbase;    DNA;    VRT; 168 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; DNA;
+KW   conserved; Eulor11; Eulor12; CNE; Eulor12_CM.
+XX
+ID   Eulor2A     repbase;    DNA;    VRT; 214 BP.
+KW   Transposable Element; Nonautonomous; conserved; EULOR2A; CNE.
+XX
+ID   Eulor2B     repbase;    DNA;    VRT; 273 BP.
+KW   Transposable Element; Nonautonomous; DNA; EULOR2A; EULOR2B;
+KW   conserved; non-autonomous; CNE.
+XX
+ID   Eulor2C     repbase;    DNA;    VRT; 169 BP.
+KW   Transposable Element; Nonautonomous; DNA; EULOR2A; EULOR2B;
+KW   Eulor2C; conserved; CNE.
+XX
+ID   Eulor3      repbase;    DNA;    VRT; 306 BP.
+KW   Transposable Element; Nonautonomous; DNA; Eulor3; conserved; CNE.
+XX
+ID   Eulor4      repbase;    DNA;    VRT; 424 BP.
+KW   Transposable Element; Nonautonomous; Eulor4; conserved; CNE.
+XX
+ID   Eulor5A     repbase;    DNA;    VRT; 316 BP.
+KW   Crypton; DNA transposon; Transposable Element; Nonautonomous; DNA;
+KW   conserved; non-autonomous; Eulor5; Eulor5A; CNE.
+XX
+ID   Eulor5B     repbase;    DNA;    VRT; 192 BP.
+KW   Crypton; DNA transposon; Transposable Element; Nonautonomous; DNA;
+KW   conserved; Eulor5B; CNE.
+XX
+ID   Eulor6A     repbase;    DNA;    VRT; 248 BP.
+KW   Crypton; DNA transposon; Transposable Element; Nonautonomous; DNA;
+KW   conserved; Eulor6; Eulor6A; CNE.
+XX
+ID   Eulor6B     repbase;    DNA;    VRT; 350 BP.
+KW   Crypton; DNA transposon; Transposable Element; Nonautonomous;
+KW   Interspersed repeat; DNA; conserved; Eulor6; Eulor6B; CNE.
+XX
+ID   Eulor6C     repbase;    DNA;    VRT; 208 BP.
+KW   Crypton; DNA transposon; Transposable Element; Nonautonomous;
+KW   Interspersed repeat; DNA; conserved; Eulor6; Eulor6C; CNE.
+XX
+ID   Eulor6D     repbase;    DNA;    VRT; 302 BP.
+KW   Crypton; DNA transposon; Transposable Element;
+KW   Interspersed repeat; DNA; conserved; Eulor6; Eulor6D; CNE.
+XX
+ID   Eulor6E     repbase;    DNA;    VRT; 292 BP.
+KW   Crypton; DNA transposon; Transposable Element; Nonautonomous;
+KW   Interspersed repeat; DNA; conserved; Eulor6; Eulor6E; CNE.
+XX
+ID   Eulor7      repbase;    DNA;    VRT; 197 BP.
+KW   Transposable Element; Nonautonomous; DNA; conserved; Eulor7; CNE.
+XX
+ID   Eulor8      repbase;    DNA;    VRT; 562 BP.
+KW   Transposable Element; Nonautonomous; DNA; Eulor8; TcMar;
+KW   conserved; CNE.
+XX
+ID   Eulor9A     repbase;    DNA;    VRT; 301 BP.
+KW   Transposable Element; Nonautonomous; DNA; conserved; Eulor9A;
+KW   CNE.
+XX
+ID   Eulor9B     repbase;    DNA;    VRT; 240 BP.
+KW   Transposable Element; Nonautonomous; DNA; Eulor9; Eulor9B;
+KW   Interspersed repeat; conserved; non-autonomous; CNE.
+XX
+ID   Eulor9C     repbase;    DNA;    VRT; 270 BP.
+KW   Transposable Element; Nonautonomous; DNA; Eulor9; Eulor9A;
+KW   Eulor9B; Eulor9C; Interspersed repeat; conserved; CNE.
+XX
+ID   EuthAT-1    repbase;    DNA;    MAM; 898 BP.
+KW   hAT; DNA transposon; Transposable Element; EuthAT-1.
+XX
+ID   EuthAT-2    repbase;    DNA;    MAM; 1956 BP.
+KW   hAT; DNA transposon; Transposable Element; EuthAT-2.
+XX
+ID   EuthAT-2B   repbase;    DNA;    MAM; 930 BP.
+KW   hAT; DNA transposon; Transposable Element; EuthAT-2; EuthAT-2B.
+XX
+ID   EuthAT-N1   repbase;    DNA;    MAM; 316 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   EuthAT-N1.
+XX
+ID   Eutr17      repbase;    DNA;    MAM; 343 BP.
+KW   hAT; DNA transposon; Transposable Element; Eutr17.
+XX
+ID   Eutr7       repbase;    DNA;    MAM; 277 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; Eutr7.
+XX
+ID   Eutr8       repbase;    DNA;    MAM; 255 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; Eutr8.
+XX
+ID   EUTREP1     repbase;    DNA;    MAM; 760 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   conserved; EUTREP1.
+XX
+ID   EUTREP10    repbase;    DNA;    MAM; 708 BP.
+KW   Endogenous Retrovirus; Transposable Element; EUTREP10; LTR106_Mam;
+KW   Repetitive element; conserved.
+XX
+ID   EUTREP13    repbase;    DNA;    MAM; 646 BP.
+KW   Endogenous Retrovirus; Transposable Element; EUTREP13; MamRep1151;
+KW   Repetitive element; conserved.
+XX
+ID   EUTREP3     repbase;    DNA;    MAM; 807 BP.
+KW   hAT; DNA transposon; Transposable Element; Charlie20a; EUTREP3;
+KW   Repetitive element; conserved.
+XX
+ID   EutTc1-N1   repbase;    DNA;    MAM; 492 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   EutTc1-N1.
+XX
+ID   FAM         repbase;    DNA;    PRI; 168 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; ALU monomer; FAM.
+XX
+ID   FLAM        repbase;    DNA;    PRI; 124 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; ALU monomer; FAM; FLA; FLAM.
+XX
+ID   FORDPREFECT repbase;    DNA;    PRI; 1683 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   FORDPREFECT; hAT family; ZAPHOD.
+XX
+ID   FORDPREFECT_A repbase;    DNA;    PRI; 508 BP.
+KW   hAT; DNA transposon; Transposable Element; AcHobo family;
+KW   DNA transposon fossil; FORDPREFECT_A.
+XX
+ID   FRAM        repbase;    DNA;    PRI; 156 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; ALU; ALU monomer; FAM; FRAM.
+XX
+ID   GOLEM       repbase;    DNA;    MAM; 3029 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; 35S; GOLEM;
+KW   MER17; MER29; MER7; MER7B; TIGGER3.
+XX
+ID   GOLEM_A     repbase;    DNA;    PRI; 335 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   35S; GOLEM; GOLEM_A; MER7; MER7A; nonautonomous DNA transposon.
+XX
+ID   GOLEM_B     repbase;    DNA;    MAM; 1205 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   35S; GOLEM; GOLEM_B; MER17; MER29; MER7; MER7B;
+KW   nonautonomous DNA transposon.
+XX
+ID   GOLEM_C     repbase;    DNA;    PRI; 323 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   35S; GOLEM; GOLEM_A; GOLEM_C; MER7; MER7A;
+KW   nonautonomous DNA transposon.
+XX
+ID   HAL1        repbase;    DNA;    MAM; 2510 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; HAL1;
+KW   LINE1-like element.
+XX
+ID   HAL1B       repbase;    DNA;    PRI; 1348 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; HAL1B;
+KW   L1 family; LINE.
+XX
+ID   HAL1M8      repbase;    DNA;    MAM; 2991 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; Nonautonomous;
+KW   HAL1; HAL1M8.
+XX
+ID   HARLEQUIN   repbase;    DNA;    PRI; 6896 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HARLEQUIN;
+KW   HERV17; HERVE; HERVI;
+KW   Internal sequence of endogenous retrovirus-like element; LTR2;
+KW   MER41I; MER4I; MER57I.
+XX
+ID   HARLEQUINLTR repbase;    DNA;    PRI; 463 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR2;
+KW   HARLEQUIN endogenous retrovirus; HARLEQUIN_LTR; HARLEQUINLTR.
+XX
+ID   Helitron1Nb_Mam repbase;    DNA;    MAM; 1116 BP.
+KW   Helitron; DNA transposon; Transposable Element; Nonautonomous;
+KW   RC/Helitron; Helitron1Nb_Mam.
+XX
+ID   Helitron3Na_Mam repbase;    DNA;    MAM; 486 BP.
+KW   Helitron; DNA transposon; Transposable Element; RC;
+KW   Helitron3Na_Mam.
+XX
+ID   HERV-Fc1    repbase;    DNA;    PRI; 4629 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; HERV-Fc1.
+XX
+ID   HERV-Fc1_LTR1 repbase;    DNA;    PRI; 346 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV-Fc1_LTR1.
+XX
+ID   HERV-Fc1_LTR2 repbase;    DNA;    PRI; 425 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV-Fc1_LTR2.
+XX
+ID   HERV-Fc1_LTR3 repbase;    DNA;    PRI; 476 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV-Fc1_LTR3.
+XX
+ID   HERV-Fc2    repbase;    DNA;    PRI; 7250 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; HERV-Fc2.
+XX
+ID   HERV-Fc2_LTR repbase;    DNA;    PRI; 374 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV-Fc2_LTR.
+XX
+ID   HERV-K14CI  repbase;    DNA;    PRI; 7434 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; gag; pol; env;
+KW   internal portion; HERVK superfamily; pro; HERVK14CI; LTR14C;
+KW   HERVK14C; HERV-K14CI.
+XX
+ID   HERV-K14I   repbase;    DNA;    PRI; 6096 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; gag; pol;
+KW   internal portion; HERV; HERVK superfamily; LTR14A; LTR14B; pro;
+KW   HML1; HERVK14I; HERV-K14I.
+XX
+ID   HERV15I     repbase;    DNA;    PRI; 8735 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Endogenous retrovirus HERV15; HERV15I; HERV15I.; HERV3; HERVE;
+KW   HSRIRT; LTR15; MMLV; RRHERV-I; an internal portion; env; gag;
+KW   pol.
+XX
+ID   HERV16      repbase;    DNA;    PRI; 4996 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERV16;
+KW   Internal sequence of endogenous retrovirus HERV.
+XX
+ID   HERV17      repbase;    DNA;    PRI; 8626 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR17;
+KW   Internal sequence of endogenous retrovirus HERV; HERV-W; HERV17.
+XX
+ID   HERV18      repbase;    DNA;    PRI; 6053 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERV18; HERVL; LTR18;
+KW   retroelement.
+XX
+ID   HERV19I     repbase;    DNA;    PRI; 5586 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 type;
+KW   HERV19I; Internal sequence of retrovirus-like element HERV19;
+KW   LTR19; MER4I group.
+XX
+ID   HERV1_I     repbase;    DNA;    PRI; 8801 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Internal sequence of human endogenous retrovirus; HERV1; HERV1_I.
+XX
+ID   HERV1_LTR   repbase;    DNA;    PRI; 508 BP.
+KW   Endogenous Retrovirus; Transposable Element; Long terminal repeat;
+KW   HERV1; Human endogenous retrovirus; HERV1_LTR.
+XX
+ID   HERV1_LTRa  repbase;    DNA;    PRI; 521 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   LTR; HERV1_LTRa.
+XX
+ID   HERV1_LTRb  repbase;    DNA;    PRI; 511 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   HERV1_LTRb.
+XX
+ID   HERV1_LTRc  repbase;    DNA;    PRI; 491 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   HERV1_LTRc.
+XX
+ID   HERV1_LTRd  repbase;    DNA;    PRI; 535 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   HERV1_LTRd.
+XX
+ID   HERV1_LTRe  repbase;    DNA;    PRI; 537 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   HERV1_LTRe.
+XX
+ID   HERV23      repbase;    DNA;    PRI; 4843 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERV23;
+KW   Internal sequence of retroviral-like element; LTR23; MER4 group.
+XX
+ID   HERV3       repbase;    DNA;    PRI; 8426 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Endogenous retrovirus class I; HERV3; LTR4.
+XX
+ID   HERV30I     repbase;    DNA;    PRI; 8257 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Endogenous retrovirus class I; HERV30; HERV30I; LTR30.
+XX
+ID   HERV35I     repbase;    DNA;    PRI; 6918 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   HERV35I; LTR35; MER4I-group; nonautonomous LTR retrotransposon;
+KW   Class I; Internal sequence of endogenous retrovirus; tRNA Pro.
+XX
+ID   HERV38I     repbase;    DNA;    PRI; 1786 BP.
+KW   Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   HERV38I; LTR retrotransposon; LTR38; MER4I-group;
+KW   non-autonomous retrovirus.
+XX
+ID   HERV39      repbase;    DNA;    PRI; 9084 BP.
+KW   Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   Class I; HERV39; LTR39; MER4I-group;
+KW   Nonautonomous endogenous retrovirus; env.
+XX
+ID   HERV46I     repbase;    DNA;    PRI; 6985 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERV46I;
+KW   Internal sequence of class I endogenous retrovirus LTR46.
+XX
+ID   HERV49I     repbase;    DNA;    PRI; 6331 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 type;
+KW   HERV49I; Internal sequence of retrovirus-like element; LTR49;
+KW   MER4I.
+XX
+ID   HERV4_I     repbase;    DNA;    PRI; 6539 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Internal sequence of human endogenous retrovirus; HERV4_I.
+XX
+ID   HERV4_LTR   repbase;    DNA;    PRI; 306 BP.
+KW   Endogenous Retrovirus; Transposable Element; Long terminal repeat;
+KW   Human endogenous retrovirus; HERV4_LTR.
+XX
+ID   HERV50_I    repbase;    DNA;    PRI; 8197 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV50;
+KW   HERV50_I.
+XX
+ID   HERV50_LTR  repbase;    DNA;    PRI; 409 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV50;
+KW   HERV50_LTR.
+XX
+ID   HERV52I     repbase;    DNA;    PRI; 3556 BP.
+KW   Endogenous Retrovirus; Transposable Element; ERVL type; HERV52;
+KW   HERV52I; Internal sequence of retrovirus-like element; LTR52.
+XX
+ID   HERV57I     repbase;    DNA;    PRI; 5343 BP.
+KW   Endogenous Retrovirus; Transposable Element; ERVL class; HERV57I;
+KW   Internal sequence of endogenous retrovirus; LTR47.
+XX
+ID   HERV9       repbase;    DNA;    PRI; 8399 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV9; HERV9;
+KW   Internal sequence of endogenous retrovirus HERV-pHE1/HERV9.
+XX
+ID   HERVE       repbase;    DNA;    PRI; 7813 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVE; LTR2;
+KW   env; gag; internal part; pol.
+XX
+ID   HERVE_a     repbase;    DNA;    PRI; 7847 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; HERVE_a;
+KW   HARLEQUIN; LTR2.
+XX
+ID   HERVFH19I   repbase;    DNA;    PRI; 7719 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERV.F; HERV19I;
+KW   HERVFH19I; LTR19; Phe-tRNA; RT; env; gag; integrase;
+KW   internal sequence; protease; Retrovirus.
+XX
+ID   HERVFH21I   repbase;    DNA;    MAM; 6529 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERVFH retrovirus;
+KW   HERVFH21I; HERVH; LTR21; internal sequence.
+XX
+ID   HERVG25     repbase;    DNA;    PRI; 6996 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERV17; HERV9;
+KW   HERVG25; Internal sequence of retrovirus-like element; LTR25;
+KW   MER4I-group.
+XX
+ID   HERVH       repbase;    DNA;    MAM; 7713 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVH; LTR7;
+KW   env; gag; pol.
+XX
+ID   HERVH48I    repbase;    DNA;    PRI; 6559 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERVH retrovirus;
+KW   HERVH48I; MER48; internal sequence.
+XX
+ID   HERVI       repbase;    DNA;    PRI; 7785 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV-I family;
+KW   HERVI; Internal part of retrovirus RTVL-I; LTR10; env; gag; pol.
+XX
+ID   HERVIP10F   repbase;    DNA;    PRI; 7737 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; C type;
+KW   HERVIP10E; HERVIP10F; LTR10F; RNase H; endonuclease; gag;
+KW   protease; reverse transcriptase; tRNA Ile/Pro.
+XX
+ID   HERVIP10FH  repbase;    DNA;    PRI; 5102 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   C type; HERVIP10F; HERVIP10FH; LTR10F;
+KW   Nonautonomous endogenous retrovirus; env; tRNA Ile/Pro.
+XX
+ID   HERVK       repbase;    DNA;    PRI; 7536 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR; protease;
+KW   gag protein; LTR5; HERVK; env protein; pol polyprotein; revertase;
+KW   ERVK.
+XX
+ID   HERVK11DI   repbase;    DNA;    PRI; 7752 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERV;
+KW   HERVK superfamily; HERVK11DI; MER11D.
+XX
+ID   HERVK11I    repbase;    DNA;    PRI; 7953 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERV;
+KW   HERVK superfamily; HERVK11I; MER11.
+XX
+ID   HERVK13I    repbase;    DNA;    PRI; 8116 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   HERVK superfamily; HERVK-T47D; HERVK13; HERVK13I; HML4; LTR13;
+KW   env; gag; pol; pro.
+XX
+ID   HERVK22I    repbase;    DNA;    MAM; 6823 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK22I;
+KW   LTR22; HERVK superfamily; LTR22C0.
+XX
+ID   HERVK3I     repbase;    DNA;    PRI; 7242 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   HERVK superfamily; HERVK3I; LTR3.
+XX
+ID   HERVK9I     repbase;    DNA;    PRI; 6021 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERV;
+KW   HERVK superfamily; HERVK9I; MER9.
+XX
+ID   HERVKC4     repbase;    DNA;    MAM; 5262 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   Endogenous retrovirus HERVK(C4); HERVKC4; LTR14; internal part.
+XX
+ID   HERVL       repbase;    DNA;    PRI; 5654 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERVL;
+KW   Internal part of endogenous retrovirus HERV-L; MLT2.
+XX
+ID   HERVL66I    repbase;    DNA;    MAM; 4329 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   HERVL superfamily; HERVL66I; LTR retrotransposon; LTR66; RT;
+KW   dUTPase; env; int.
+XX
+ID   HERVL68     repbase;    DNA;    MAM; 3037 BP.
+KW   Endogenous Retrovirus; Transposable Element; HERVL68; MER68;
+KW   Noncoding foamy-virus-like endogenous retrovirus.
+XX
+ID   HERVL74     repbase;    DNA;    PRI; 5685 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERVL74;
+KW   Internal part of endogenous retrovirus HERVL74; MER74.
+XX
+ID   HERVL_40    repbase;    DNA;    PRI; 5530 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Foamy-virus-like endogenous retrovirus; HERVL_40.
+XX
+ID   HERVP71A_I  repbase;    DNA;    PRI; 7590 BP.
+KW   Endogenous Retrovirus; Transposable Element; C/D type; HERVP;
+KW   HERVP71A_I; LTR71A; RNase H; endonuclease; gag; protease;
+KW   reverse transcriptase; tRNA Pro.
+XX
+ID   HERVS71     repbase;    DNA;    MAM; 8909 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Endogenous retrovirus S71; simian sarcoma virus; HERVHC2;
+KW   HERVS71.
+XX
+ID   HSMAR1      repbase;    DNA;    PRI; 1287 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   Cecropia subfamily mariner; HSMAR1; MARINER1.
+XX
+ID   HSMAR2      repbase;    DNA;    PRI; 1301 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   DNA transposon fossil; Irritans subfamily mariner; HUMAR1; HSMAR2;
+KW   MARINER2.
+XX
+ID   HSTC2       repbase;    DNA;    PRI; 1893 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; HSTC2; MER104D;
+KW   mariner/Tc1 superfamily; Tc2 family.
+XX
+ID   HUERS-P1    repbase;    DNA;    PRI; 6263 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; LTR8; MuLV; HUERS-P1.
+XX
+ID   HUERS-P2    repbase;    DNA;    PRI; 3088 BP.
+KW   Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   HUERS-P2; Nonautonomous retrovirus-like element.
+XX
+ID   HUERS-P3    repbase;    DNA;    PRI; 8919 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HUERS-P3;
+KW   HuRRS-P; LTR retroelement.
+XX
+ID   HUERS-P3B   repbase;    DNA;    PRI; 7418 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   Nonautonomous retrovirus-like element; HUERS-P3B.
+XX
+ID   IN25        repbase;    DNA;    PRI; 854 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; IN25; L1-25;
+KW   Repetitive sequence.
+XX
+ID   IndInd-1247 repbase;    DNA;    PRI; 2472 BP.
+KW   hAT; DNA transposon; Transposable Element; IndInd-1.247;
+KW   IndInd-1247.
+XX
+ID   Kanga1      repbase;    DNA;    MAM; 1745 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA; HSTC2;
+KW   Kanga1; TC2; mariner.
+XX
+ID   Kanga11a    repbase;    DNA;    MAM; 970 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA; TcMar-Tc2;
+KW   Kanga11a.
+XX
+ID   Kanga1d     repbase;    DNA;    MAM; 609 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Kanga1;
+KW   Kanga1d.
+XX
+ID   KANGA2_A    repbase;    DNA;    PRI; 885 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   DNA transposon fossil; KANGA2_A; Tc2 family.
+XX
+ID   L1          repbase;    DNA;    PRI; 5403 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   Interspersed repeat; L1 (subfamily L1PA2); LINE1.
+XX
+ID   L1HS        repbase;    DNA;    PRI; 6064 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   Repetitive sequence; reverse transcriptase; L1 (LINE) family;
+KW   L1P1; L1HS subfamily; L1HS; endonuclease domain.
+XX
+ID   L1M1B_5     repbase;    DNA;    PRI; 1263 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1-43_5; L1M1B_5; L1M3/4 LINE1; L1M3E_5; L1M3f_5; MER43.
+XX
+ID   L1M1_5      repbase;    DNA;    MAM; 3834 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1-43_5; L1M1_5; L1M3_5; MER43.
+XX
+ID   L1M2A1_5    repbase;    DNA;    PRI; 1842 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M2A1_5; L1M2_5.
+XX
+ID   L1M2A_5     repbase;    DNA;    PRI; 2233 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 family;
+KW   L1M2A_5; LINE.
+XX
+ID   L1M2B_5     repbase;    DNA;    PRI; 3252 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M2B_5; L1M2_5; L1M2_5B; MER62.
+XX
+ID   L1M2C_5     repbase;    DNA;    PRI; 4038 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M2A_5; L1M2B_5; L1M2C_5; L1M2_5; MER62.
+XX
+ID   L1M2_5      repbase;    DNA;    PRI; 4191 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M2_5; MER62.
+XX
+ID   L1M3A_5     repbase;    DNA;    MAM; 2728 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M3A_5.
+XX
+ID   L1M3B_5     repbase;    DNA;    PRI; 1175 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M3B_5.
+XX
+ID   L1M3C_5     repbase;    DNA;    PRI; 1625 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M3C_5.
+XX
+ID   L1M3DE_5    repbase;    DNA;    MAM; 2137 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M3DE_5; L1M3D_5.
+XX
+ID   L1M3D_5     repbase;    DNA;    MAM; 1375 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M3D_5.
+XX
+ID   L1M4B       repbase;    DNA;    PRI; 5024 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; 5'-end;
+KW   L1 repeat; L1M4B; L1M4B_5; L1M5_5; L1MB8_5; L1MB8_5A; LINE1.
+XX
+ID   L1M6B_5end  repbase;    DNA;    PRI; 173 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1M6B_5end.
+XX
+ID   L1M6_5end   repbase;    DNA;    MAM; 2515 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1M6_5end.
+XX
+ID   L1M7_5end   repbase;    DNA;    MAM; 2237 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1M7_5end.
+XX
+ID   L1MA1       repbase;    DNA;    PRI; 1049 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M1; L1MA1; L1MA1 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA10      repbase;    DNA;    MAM; 1069 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MA10; L1MA10 subfamily; Repetitive sequence.
+XX
+ID   L1MA2       repbase;    DNA;    PRI; 1051 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M1; L1MA2; L1MA2 subfamily; MER14;
+KW   Repetitive sequence.
+XX
+ID   L1MA3       repbase;    DNA;    PRI; 1058 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M1; L1MA3; L1MA3 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA4       repbase;    DNA;    PRI; 1047 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M1; L1MA4; L1MA4 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA4A      repbase;    DNA;    PRI; 1050 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M1; L1MA4A; L1MA4A subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA5       repbase;    DNA;    PRI; 1047 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M2; L1MA5; L1MA5 subfamily; MER27;
+KW   Repetitive sequence.
+XX
+ID   L1MA5A      repbase;    DNA;    PRI; 1044 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M2; L1MA5A; L1MA5A subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA6       repbase;    DNA;    PRI; 1047 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M2; L1MA6; L1MA6 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA7       repbase;    DNA;    PRI; 1038 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M2; L1MA7; L1MA7 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA8       repbase;    DNA;    PRI; 1540 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M2; L1MA8; L1MA8 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MA9       repbase;    DNA;    PRI; 1059 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M2; L1MA9; L1MA9 subfamily; MER32;
+KW   Repetitive sequence.
+XX
+ID   L1MA9_5     repbase;    DNA;    MAM; 2113 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1 subfamily; L1M6_5; L1MA9_5.
+XX
+ID   L1MB1       repbase;    DNA;    PRI; 915 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M3; L1MB1; L1MB1 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MB2       repbase;    DNA;    PRI; 918 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M3; L1MB2; L1MB2 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MB3       repbase;    DNA;    PRI; 930 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M3; L1MB3; L1MB3 subfamily; MER12;
+KW   Repetitive sequence.
+XX
+ID   L1MB3_5     repbase;    DNA;    PRI; 2500 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M4C_5; L1M7_5; L1MB3_5; L1P2_5.
+XX
+ID   L1MB4       repbase;    DNA;    PRI; 928 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M3; L1MB4; L1MB4 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MB4_5     repbase;    DNA;    MAM; 1795 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1MB3_5; L1MB4_5; L1MB6_5.
+XX
+ID   L1MB5       repbase;    DNA;    PRI; 921 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1MB5; L1MB5 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MB6_5     repbase;    DNA;    MAM; 1711 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1MB6_5; MER60.
+XX
+ID   L1MB7       repbase;    DNA;    MAM; 922 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MB7; L1MB7 subfamily; MER12;
+KW   Repetitive sequence.
+XX
+ID   L1MB8       repbase;    DNA;    PRI; 925 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1MB8; L1MB8 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MC1       repbase;    DNA;    PRI; 1080 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1MC1; L1MC1 subfamily; MER16;
+KW   Repetitive sequence.
+XX
+ID   L1MC2       repbase;    DNA;    PRI; 1091 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1MC2; L1MC2 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MC3       repbase;    DNA;    MAM; 2487 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MC3; L1MC3 subfamily; MER42A;
+KW   Repetitive sequence.
+XX
+ID   L1MC4       repbase;    DNA;    PRI; 2761 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MC4; L1MC4 subfamily; L1MC4a; MER42C;
+KW   Repetitive sequence.
+XX
+ID   L1MC4B      repbase;    DNA;    MAM; 1522 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   Repetitive sequence; LINE1; MER42C; MER42 family;
+KW   MER42c subfamily; L1MC4B.
+XX
+ID   L1MC4_5end  repbase;    DNA;    MAM; 2555 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1MC4_5end.
+XX
+ID   L1MC5       repbase;    DNA;    MAM; 2174 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MC5; L1MC5 subfamily; Repetitive sequence.
+XX
+ID   L1MCA_5     repbase;    DNA;    PRI; 2647 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L186; L1MCA_5;
+KW   LINE1 repeat.
+XX
+ID   L1MCB_5     repbase;    DNA;    PRI; 1197 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L186; L1MCB_5;
+KW   LINE1 repeat.
+XX
+ID   L1MCC_5     repbase;    DNA;    PRI; 1536 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1MCA_5;
+KW   L1MCB_5; L1MCC_5; LINE1 repeat.
+XX
+ID   L1MD1       repbase;    DNA;    PRI; 971 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MD1; L1MD1 subfamily; Repetitive sequence.
+XX
+ID   L1MD1_5     repbase;    DNA;    MAM; 1010 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M6_5; L1MD1_5; L1MD_5; MER79.
+XX
+ID   L1MD2       repbase;    DNA;    PRI; 1106 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1MD2; L1MD2 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1MD3       repbase;    DNA;    PRI; 1342 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MD3; L1MD3 subfamily; MER42B;
+KW   Repetitive sequence.
+XX
+ID   L1MDA_5     repbase;    DNA;    MAM; 3320 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1M6_5; L1MDA_5; L1MD_5; MER79.
+XX
+ID   L1MDB_5     repbase;    DNA;    PRI; 1422 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1MD; L1MDB_5;
+KW   L1MDE_5; L1ME.
+XX
+ID   L1ME1       repbase;    DNA;    PRI; 913 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1ME1; L1ME1 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1ME2       repbase;    DNA;    PRI; 911 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1ME2; L1ME2 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1ME3       repbase;    DNA;    PRI; 909 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1M4; L1ME3; L1ME3 subfamily; MER36; MER38;
+KW   Repetitive sequence.
+XX
+ID   L1ME3A      repbase;    DNA;    PRI; 1156 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   Repetitive sequence; L1 (LINE) family; L1M4; L1ME3A subfamily;
+KW   L1ME3A.
+XX
+ID   L1ME3C_3end repbase;    DNA;    MAM; 870 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1ME3C_3end.
+XX
+ID   L1ME3D_3end repbase;    DNA;    MAM; 989 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1ME3D_3end.
+XX
+ID   L1ME3E_3end repbase;    DNA;    MAM; 989 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1ME3E_3end.
+XX
+ID   L1ME3F_3end repbase;    DNA;    MAM; 990 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1ME3F_3end.
+XX
+ID   L1ME4       repbase;    DNA;    MAM; 596 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1MC5?; L1ME4; Repetitive sequence.
+XX
+ID   L1ME4A      repbase;    DNA;    PRI; 868 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1ME4A; L1ME4A subfamily; Repetitive sequence.
+XX
+ID   L1ME5       repbase;    DNA;    MAM; 507 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1ME4; L1ME5; L1ME5 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1ME5_3end  repbase;    DNA;    MAM; 941 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1ME5_3end.
+XX
+ID   L1MEA_5     repbase;    DNA;    PRI; 1089 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1MEA_5;
+KW   LINE1 repeat.
+XX
+ID   L1MEB_5     repbase;    DNA;    PRI; 1089 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1ME1B_5; L1MEB_5.
+XX
+ID   L1MEC_5     repbase;    DNA;    MAM; 2527 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1M4_5;
+KW   L1MEC_5; LINE1 repeat.
+XX
+ID   L1MED_5     repbase;    DNA;    PRI; 1615 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1MEC_5;
+KW   L1MED_5; LINE1 repeat; MER86.
+XX
+ID   L1MEE_5     repbase;    DNA;    PRI; 916 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1MEE_5.
+XX
+ID   L1MEe_5end  repbase;    DNA;    MAM; 1164 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1MEe_5end.
+XX
+ID   L1MEf_5end  repbase;    DNA;    MAM; 2217 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1MEf_5end.
+XX
+ID   L1MEg_5end  repbase;    DNA;    MAM; 2101 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1MEg_5end.
+XX
+ID   L1ME_ORF2   repbase;    DNA;    PRI; 3285 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1ME subfamily;
+KW   L1ME_ORF2; LINE1.
+XX
+ID   L1P4a_5end  repbase;    DNA;    PRI; 2596 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1P4a_5end.
+XX
+ID   L1P4b_5end  repbase;    DNA;    PRI; 1783 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1P4b_5end.
+XX
+ID   L1P4c_5end  repbase;    DNA;    PRI; 1583 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1P4c_5end.
+XX
+ID   L1P4d_5end  repbase;    DNA;    PRI; 2035 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1P4d_5end.
+XX
+ID   L1P4e_5end  repbase;    DNA;    PRI; 1391 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L1P4e_5end.
+XX
+ID   L1PA10      repbase;    DNA;    PRI; 915 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P4; L1PA10; L1PA10 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA11      repbase;    DNA;    PRI; 921 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P4; L1PA11; L1PA11 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA12      repbase;    DNA;    PRI; 915 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P4; L1PA12; L1PA12 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA12_5    repbase;    DNA;    PRI; 3072 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   5' end of primate L1 repeat; L1P5_5; L1PA12_5.
+XX
+ID   L1PA13      repbase;    DNA;    PRI; 910 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P4; L1PA13; L1PA13 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA13_5    repbase;    DNA;    PRI; 2278 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1PA13_5; L1PA15_5.
+XX
+ID   L1PA14      repbase;    DNA;    PRI; 908 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P4; L1PA14; L1PA14 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA14_5    repbase;    DNA;    PRI; 1772 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L1PA12_5; L1PA13_5; L1PA14_5; L1PREC2.
+XX
+ID   L1PA15      repbase;    DNA;    PRI; 912 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P4; L1PA15; L1PA15 subfamily; MER13;
+KW   Repetitive sequence.
+XX
+ID   L1PA16      repbase;    DNA;    PRI; 913 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P4; L1PA16; L1PA16 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA16_5    repbase;    DNA;    PRI; 4083 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 repeat;
+KW   L180; L1PA16_5.
+XX
+ID   L1PA17_5    repbase;    DNA;    PRI; 1734 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1PA16;
+KW   L1PA17_5; L1PB4; LINE1 repeat.
+XX
+ID   L1PA2       repbase;    DNA;    PRI; 902 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P1; L1PA2; L1PA2 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA3       repbase;    DNA;    PRI; 902 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P1; L1PA3; L1PA3 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA4       repbase;    DNA;    PRI; 902 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P2; L1PA4; L1PA4 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA5       repbase;    DNA;    PRI; 901 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P2; L1PA5; L1PA5 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA6       repbase;    DNA;    PRI; 901 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P2; L1PA6; L1PA6 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA7       repbase;    DNA;    PRI; 901 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1-J; L1P3; L1PA7; L1PA7 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PA7_5     repbase;    DNA;    PRI; 1727 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1P5A1;
+KW   L1PA7_5; Repetitive sequence.
+XX
+ID   L1PA8       repbase;    DNA;    PRI; 919 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P3; L1PA8; L1PA8 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PB1       repbase;    DNA;    PRI; 898 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P5; L1PB1; L1PB1 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PB2       repbase;    DNA;    PRI; 898 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P5; L1PB2; L1PB2 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PB2c      repbase;    DNA;    PRI; 6582 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1PB2c.
+XX
+ID   L1PB3       repbase;    DNA;    PRI; 901 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P5; L1PB3; L1PB3 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PB4       repbase;    DNA;    PRI; 903 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   L1 (LINE) family; L1P5; L1PB4; L1PB4 subfamily;
+KW   Repetitive sequence.
+XX
+ID   L1PBA1_5    repbase;    DNA;    PRI; 600 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; HGR; L1-25;
+KW   L1M2_5; L1PBA1_5; L1PBA_5; MER25; Repetitive sequence.
+XX
+ID   L1PBA_5     repbase;    DNA;    PRI; 3104 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; HGR; L1-25;
+KW   L1M2_5; L1PBA_5; MER25; Repetitive sequence.
+XX
+ID   L1PBB_5     repbase;    DNA;    PRI; 945 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; IN25;
+KW   L1 repeat; L1PBB_5.
+XX
+ID   L1PREC1     repbase;    DNA;    PRI; 6460 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 subfamily;
+KW   L1P3B_5; L1PA8A; L1PAXX_5; L1PREC1; LINE1; ORF1; ORF2;
+KW   endonuclease; reverse transcriptase.
+XX
+ID   L1PREC2     repbase;    DNA;    PRI; 8145 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; L1 subfamily;
+KW   L1P12_5; L1PA17_5; L1PREC1; L1PREC2; LINE1; ORF1; ORF2;
+KW   endonuclease; reverse transcriptase.
+XX
+ID   L1P_MA2     repbase;    DNA;    MAM; 7678 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element;
+KW   Interspersed repeat; L1 subfamily; L1M1_5; L1M3_5; L1MA2; L1P_MA2;
+KW   LINE1; MER14; MER43.
+XX
+ID   L2          repbase;    DNA;    MAM; 3419 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L2 family; MIR2; MIR2/LINE2; LINE2; L2A; L2.
+XX
+ID   L2B         repbase;    DNA;    MAM; 419 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element;
+KW   L2 (LINE) family; L2B; LINE2B subfamily; Repetitive sequence.
+XX
+ID   L2C         repbase;    DNA;    MAM; 473 BP.
+KW   L2; Non-LTR Retrotransposon; Transposable Element; L2C.
+XX
+ID   L2D         repbase;    DNA;    MAM; 307 BP.
+KW   L2; Non-LTR Retrotransposon; Transposable Element; L2D.
+XX
+ID   L3          repbase;    DNA;    PRI; 4489 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; CR1 clade; L3;
+KW   L3 family; LINE; LINE3.
+XX
+ID   L3b_3end    repbase;    DNA;    MAM; 482 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; LINE;
+KW   L3b_3end.
+XX
+ID   L4          repbase;    DNA;    MAM; 1960 BP.
+KW   RTEX; Non-LTR Retrotransposon; Transposable Element; RTE; L4.
+XX
+ID   L5          repbase;    DNA;    MAM; 2265 BP.
+KW   RTEX; Non-LTR Retrotransposon; Transposable Element; LINE; RTE;
+KW   L5.
+XX
+ID   LmeSINE1b   repbase;    DNA;    INV; 415 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Interspersed repeat; DeuSINE; conserved; LmeSINE1b;
+KW   CNE.
+XX
+ID   LmeSINE1c   repbase;    DNA;    INV; 404 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Interspersed repeat; DeuSINE; conserved; LmeSINE1c;
+KW   CNE.
+XX
+ID   LOOPER      repbase;    DNA;    PRI; 1556 BP.
+KW   DNA transposon; Transposable Element;
+KW   Putative autonomous DNA transposon; TTAA-superfamily; LOOPER.
+XX
+ID   LOR1        repbase;    DNA;    PRI; 495 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Repetitive sequence; putative LTR; LOR1.
+XX
+ID   LOR1a_LTR   repbase;    DNA;    PRI; 497 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LOR1;
+KW   LOR1a_LTR; LTR retrotransposon.
+XX
+ID   LOR1b_LTR   repbase;    DNA;    PRI; 461 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LOR1;
+KW   LOR1b_LTR; LTR retrotransposon; MER4 group.
+XX
+ID   LOR1I       repbase;    DNA;    PRI; 8120 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 class;
+KW   Internal sequence of retrovirus-like element; LOR1; LOR1I;
+KW   MER4I-group.
+XX
+ID   LTR06       repbase;    DNA;    PRI; 476 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR06.
+XX
+ID   LTR1        repbase;    DNA;    PRI; 785 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR1;
+KW   Long terminal repeat; provirus.
+XX
+ID   LTR104_Mam  repbase;    DNA;    MAM; 1509 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; LTR104_Mam.
+XX
+ID   LTR108d_Mam repbase;    DNA;    MAM; 544 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR108d_Mam.
+XX
+ID   LTR108e_Mam repbase;    DNA;    MAM; 548 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR108e_Mam.
+XX
+ID   LTR10A      repbase;    DNA;    MAM; 609 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR10; LTR10A;
+KW   Long terminal repeat of endogenous retrovirus.
+XX
+ID   LTR10B      repbase;    DNA;    PRI; 522 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   HERV-I endogenous retrovirus; LTR10B.
+XX
+ID   LTR10B1     repbase;    DNA;    PRI; 547 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR10B1.
+XX
+ID   LTR10B2     repbase;    DNA;    PRI; 503 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR10B2.
+XX
+ID   LTR10C      repbase;    DNA;    PRI; 586 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR10C;
+KW   Long terminal repeat related to the HERV-I endogenous retrovirus.
+XX
+ID   LTR10D      repbase;    DNA;    PRI; 513 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR10D;
+KW   Long terminal repeat related to the HERV-I endogenous retrovirus.
+XX
+ID   LTR10E      repbase;    DNA;    MAM; 637 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR10E.
+XX
+ID   LTR10F      repbase;    DNA;    PRI; 511 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVIP10F;
+KW   HERVIP10FH; LTR10F.
+XX
+ID   LTR10G      repbase;    DNA;    MAM; 523 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR10; LTR10G;
+KW   Long terminal repeat.
+XX
+ID   LTR11       repbase;    DNA;    PRI; 684 BP.
+KW   LTR Retrotransposon; Transposable Element; endogenous retrovirus;
+KW   LTR11; Long terminal repeat.
+XX
+ID   LTR12       repbase;    DNA;    PRI; 826 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR12;
+KW   Long terminal repeat; PTR5; PTR7.
+XX
+ID   LTR12B      repbase;    DNA;    PRI; 667 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR12; LTR12B;
+KW   PTR5; PTR7; Long terminal repeat.
+XX
+ID   LTR12C      repbase;    DNA;    PRI; 1577 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR12; LTR12C;
+KW   PTR5; PTR7; Long terminal repeat.
+XX
+ID   LTR12D      repbase;    DNA;    PRI; 1254 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV9; LTR;
+KW   LTR12; LTR12C; LTR12D; PTR5; PTR7.
+XX
+ID   LTR12E      repbase;    DNA;    PRI; 1322 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV9; LTR12;
+KW   LTR12C; LTR12D; LTR12E; PTR5; PTR7; Long terminal repeat.
+XX
+ID   LTR12F      repbase;    DNA;    PRI; 519 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR12F.
+XX
+ID   LTR13       repbase;    DNA;    PRI; 1007 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR13;
+KW   Long terminal repeat.
+XX
+ID   LTR13A      repbase;    DNA;    PRI; 966 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK13; LTR13;
+KW   LTR13A; Long terminal repeat.
+XX
+ID   LTR14       repbase;    DNA;    PRI; 548 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR of endogenous retrovirus HERVK(C4); LTR14.
+XX
+ID   LTR14A      repbase;    DNA;    PRI; 344 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR of endogenous retrovirus related to HERVK(C4); LTR14A.
+XX
+ID   LTR14B      repbase;    DNA;    PRI; 608 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR of endogenous retrovirus related to HERVK(C4); LTR14B.
+XX
+ID   LTR14C      repbase;    DNA;    PRI; 587 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   HERVK-superfamily; HERVK14CI; LTR; LTR14C.
+XX
+ID   LTR15       repbase;    DNA;    PRI; 493 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR15.
+XX
+ID   LTR16       repbase;    DNA;    PRI; 438 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR16.
+XX
+ID   LTR16A      repbase;    DNA;    MAM; 450 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR16A;
+KW   Long terminal repeat of endogenous retrovirus; MER71A.
+XX
+ID   LTR16A1     repbase;    DNA;    PRI; 457 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR16A1;
+KW   Long terminal repeat of endogenous retrovirus.
+XX
+ID   LTR16A2     repbase;    DNA;    PRI; 495 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of endogenous retrovirus; LTR16A2.
+XX
+ID   LTR16B      repbase;    DNA;    MAM; 463 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR16B.
+XX
+ID   LTR16B1     repbase;    DNA;    MAM; 480 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR16B1.
+XX
+ID   LTR16B2     repbase;    DNA;    MAM; 462 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR16B2.
+XX
+ID   LTR16C      repbase;    DNA;    PRI; 491 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR16; LTR16C;
+KW   Long terminal repeat of endogenous retrovirus.
+XX
+ID   LTR16D      repbase;    DNA;    PRI; 464 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR16B; LTR16D;
+KW   Long terminal repeat of endogenous retrovirus; MER71B.
+XX
+ID   LTR16D1     repbase;    DNA;    MAM; 675 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR16D1.
+XX
+ID   LTR16D2     repbase;    DNA;    MAM; 572 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR16D2.
+XX
+ID   LTR16E      repbase;    DNA;    PRI; 655 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL family;
+KW   LTR16E; Long terminal repeat.
+XX
+ID   LTR16E1     repbase;    DNA;    MAM; 538 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR16E1.
+XX
+ID   LTR16E2     repbase;    DNA;    MAM; 568 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR16E2.
+XX
+ID   LTR17       repbase;    DNA;    PRI; 780 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR17.
+XX
+ID   LTR18A      repbase;    DNA;    PRI; 357 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERV18; LTR;
+KW   LTR18 subfamily; LTR18A.
+XX
+ID   LTR18B      repbase;    DNA;    PRI; 614 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERV18; LTR;
+KW   LTR18 subfamily; LTR18B.
+XX
+ID   LTR18C      repbase;    DNA;    PRI; 345 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR18C.
+XX
+ID   LTR19A      repbase;    DNA;    PRI; 486 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   LTR19 subfamily; LTR19A.
+XX
+ID   LTR19B      repbase;    DNA;    PRI; 580 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   LTR19 subfamily; LTR19B.
+XX
+ID   LTR19C      repbase;    DNA;    PRI; 779 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; ERV1 family; LTR19C.
+XX
+ID   LTR1A1      repbase;    DNA;    PRI; 799 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR1A1.
+XX
+ID   LTR1A2      repbase;    DNA;    PRI; 837 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR1A2.
+XX
+ID   LTR1B       repbase;    DNA;    PRI; 826 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HUERS-P2; LTR1;
+KW   LTR1B; LTR27; LTR28; Long terminal repeat; MER52.
+XX
+ID   LTR1B0      repbase;    DNA;    PRI; 742 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR1B0.
+XX
+ID   LTR1B1      repbase;    DNA;    PRI; 863 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR1B1.
+XX
+ID   LTR1C       repbase;    DNA;    PRI; 760 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; MER61; LTR1; LTR20; LTR27; LTR28; MER61B;
+KW   MER61C; MER52A; MER52B; MER52C; LTR1B; LTR1C.
+XX
+ID   LTR1C1      repbase;    DNA;    PRI; 648 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR1C1.
+XX
+ID   LTR1C2      repbase;    DNA;    PRI; 783 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR1C2.
+XX
+ID   LTR1C3      repbase;    DNA;    PRI; 638 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR1C3.
+XX
+ID   LTR1D       repbase;    DNA;    PRI; 983 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR1; LTR1B;
+KW   LTR1D; LTR20; LTR27; LTR28; Long terminal repeat; MER52A; MER52B;
+KW   MER52C; MER61; MER61B; MER61C.
+XX
+ID   LTR1D1      repbase;    DNA;    PRI; 899 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR1D1.
+XX
+ID   LTR1E       repbase;    DNA;    PRI; 841 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR1E.
+XX
+ID   LTR1F       repbase;    DNA;    PRI; 776 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR1F.
+XX
+ID   LTR1F1      repbase;    DNA;    PRI; 729 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR1F1.
+XX
+ID   LTR1F2      repbase;    DNA;    PRI; 739 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR1F2.
+XX
+ID   LTR2        repbase;    DNA;    PRI; 449 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR2;
+KW   Long terminal repeat.
+XX
+ID   LTR21A      repbase;    DNA;    PRI; 505 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR21;
+KW   LTR21A.
+XX
+ID   LTR21B      repbase;    DNA;    PRI; 438 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR21;
+KW   LTR21B.
+XX
+ID   LTR21C      repbase;    DNA;    PRI; 511 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR21C.
+XX
+ID   LTR22       repbase;    DNA;    PRI; 571 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR22C; LTR22.
+XX
+ID   LTR22A      repbase;    DNA;    PRI; 454 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR; HERVK22I;
+KW   LTR22; HERVK22 endogenous retrovirus; LTR22A.
+XX
+ID   LTR22B      repbase;    DNA;    PRI; 542 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR; LTR22;
+KW   LTR22B.
+XX
+ID   LTR22B1     repbase;    DNA;    PRI; 526 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR22B1.
+XX
+ID   LTR22B2     repbase;    DNA;    PRI; 600 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR22B2.
+XX
+ID   LTR22C      repbase;    DNA;    PRI; 509 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR22; LTR22C_LTR; LTR22C.
+XX
+ID   LTR22C0     repbase;    DNA;    PRI; 502 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR; HERVK22I;
+KW   LTR22; LTR22C0.
+XX
+ID   LTR22C2     repbase;    DNA;    PRI; 496 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR22C2.
+XX
+ID   LTR22E      repbase;    DNA;    PRI; 507 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR22E.
+XX
+ID   LTR23       repbase;    DNA;    PRI; 437 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR23;
+KW   MER41I; MER4I; MER57I; MER65I.
+XX
+ID   LTR24       repbase;    DNA;    PRI; 490 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR24;
+KW   MER41I; MER4I; MER57I; MER65I.
+XX
+ID   LTR24B      repbase;    DNA;    PRI; 576 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR24;
+KW   LTR24B; MER41I; MER4I; MER57I; MER65I.
+XX
+ID   LTR24C      repbase;    DNA;    PRI; 635 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR24; LTR24B;
+KW   LTR24C.
+XX
+ID   LTR25       repbase;    DNA;    PRI; 794 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR25;
+KW   MER4I-MER41I-MER57I-MER65I group.
+XX
+ID   LTR25-int   repbase;    DNA;    PRI; 7188 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   LTR25-int.
+XX
+ID   LTR26       repbase;    DNA;    PRI; 603 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LOR1; LTR26;
+KW   LTR8; Long terminal repeat.
+XX
+ID   LTR26B      repbase;    DNA;    PRI; 531 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR26B_LTR; LTR26E; LTR26B.
+XX
+ID   LTR26C      repbase;    DNA;    PRI; 539 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR26C.
+XX
+ID   LTR26D      repbase;    DNA;    PRI; 604 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR26D.
+XX
+ID   LTR26E      repbase;    DNA;    PRI; 622 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR26; LTR26E;
+KW   Long terminal repeat; MER4I-group.
+XX
+ID   LTR27       repbase;    DNA;    PRI; 636 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR27;
+KW   MER4I-MER41I-MER57I-MER65I group.
+XX
+ID   LTR2752     repbase;    DNA;    PRI; 1263 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR27; LTR28;
+KW   LTR27B; LTR2752.
+XX
+ID   LTR27B      repbase;    DNA;    PRI; 594 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR27; LTR27B;
+KW   LTR28.
+XX
+ID   LTR27C      repbase;    DNA;    PRI; 767 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR27; LTR28;
+KW   LTR27C.
+XX
+ID   LTR27D      repbase;    DNA;    PRI; 615 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR27; LTR28;
+KW   LTR27D.
+XX
+ID   LTR27E      repbase;    DNA;    PRI; 1077 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR27; LTR28;
+KW   LTR27B; LTR27E.
+XX
+ID   LTR28       repbase;    DNA;    PRI; 1020 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-MER41I-MER57I-MER65I group; LTR28.
+XX
+ID   LTR28B      repbase;    DNA;    PRI; 974 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR28B.
+XX
+ID   LTR28C      repbase;    DNA;    PRI; 1129 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR28C.
+XX
+ID   LTR29       repbase;    DNA;    PRI; 622 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR29;
+KW   putative MER4I-MER41I-MER57I-MER65I group.
+XX
+ID   LTR2B       repbase;    DNA;    PRI; 490 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR2B;
+KW   endogenous retrovirus 4-14.
+XX
+ID   LTR2C       repbase;    DNA;    PRI; 462 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR2B; LTR2C;
+KW   endogenous retrovirus 4-14.
+XX
+ID   LTR3        repbase;    DNA;    PRI; 432 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK3; LTR3;
+KW   Long terminal repeat.
+XX
+ID   LTR30       repbase;    DNA;    PRI; 722 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR30;
+KW   Long terminal repeat.
+XX
+ID   LTR31       repbase;    DNA;    PRI; 619 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   endogenous retroelement; LTR31; Long terminal repeat.
+XX
+ID   LTR32       repbase;    DNA;    PRI; 471 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR32;
+KW   Long terminal repeat.
+XX
+ID   LTR33       repbase;    DNA;    MAM; 521 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR33;
+KW   Long terminal repeat of endogenous retrovirus; MER55.
+XX
+ID   LTR33A      repbase;    DNA;    MAM; 523 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR33; LTR33A;
+KW   Long terminal repeat; MER55.
+XX
+ID   LTR33B      repbase;    DNA;    MAM; 503 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   LTR33B.
+XX
+ID   LTR33C      repbase;    DNA;    MAM; 629 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; ERVL;
+KW   LTR33C.
+XX
+ID   LTR34       repbase;    DNA;    PRI; 699 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR34;
+KW   MER4I-group; retroelement.
+XX
+ID   LTR35       repbase;    DNA;    PRI; 652 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; retroelement; LTR35.
+XX
+ID   LTR35A      repbase;    DNA;    PRI; 547 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR35A.
+XX
+ID   LTR35B      repbase;    DNA;    PRI; 605 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; retroelement; LTR35; LTR35B.
+XX
+ID   LTR36       repbase;    DNA;    PRI; 612 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR36;
+KW   retroelement.
+XX
+ID   LTR37-int   repbase;    DNA;    MAM; 4060 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR37-int.
+XX
+ID   LTR37A      repbase;    DNA;    PRI; 426 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR37A;
+KW   Long terminal repeat; MER4-group family.
+XX
+ID   LTR37B      repbase;    DNA;    PRI; 468 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR37B;
+KW   Long terminal repeat; MER4-group family.
+XX
+ID   LTR38       repbase;    DNA;    PRI; 556 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR38;
+KW   MER4I-group; retroelement.
+XX
+ID   LTR38A1     repbase;    DNA;    PRI; 544 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR38;
+KW   LTR38A1.
+XX
+ID   LTR38B      repbase;    DNA;    PRI; 610 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR38B.
+XX
+ID   LTR38C      repbase;    DNA;    PRI; 711 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR38C.
+XX
+ID   LTR39       repbase;    DNA;    PRI; 794 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR39;
+KW   Long terminal repeat; MER4-group family.
+XX
+ID   LTR3A       repbase;    DNA;    PRI; 484 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR3; LTR3A_LTR; LTR3A.
+XX
+ID   LTR3B       repbase;    DNA;    PRI; 500 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK3; LTR3;
+KW   LTR3B; Long terminal repeat.
+XX
+ID   LTR4        repbase;    DNA;    PRI; 596 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ENV gene; LTR4;
+KW   pol gene; Long terminal repeat.
+XX
+ID   LTR40A      repbase;    DNA;    PRI; 519 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR40A;
+KW   Long terminal repeat of endogenous retrovirus.
+XX
+ID   LTR40A1     repbase;    DNA;    MAM; 584 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; ERVL;
+KW   Long terminal repeat of endogenous retrovirus; LTR40A; LTR40B;
+KW   LTR40C; LTR40A1.
+XX
+ID   LTR40B      repbase;    DNA;    PRI; 462 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR40B;
+KW   Long terminal repeat of endogenous retrovirus.
+XX
+ID   LTR40C      repbase;    DNA;    PRI; 465 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of endogenous retrovirus; LTR40A; LTR40B;
+KW   LTR40C.
+XX
+ID   LTR41       repbase;    DNA;    PRI; 719 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of endogenous retrovirus; LTR33; LTR41.
+XX
+ID   LTR41B      repbase;    DNA;    PRI; 892 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of endogenous retrovirus; LTR33; LTR41;
+KW   LTR41B.
+XX
+ID   LTR41C      repbase;    DNA;    PRI; 701 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR41C.
+XX
+ID   LTR42       repbase;    DNA;    PRI; 495 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR42;
+KW   Long terminal repeat of endogenous retrovirus.
+XX
+ID   LTR43       repbase;    DNA;    PRI; 602 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR43;
+KW   Long terminal repeat of retrovirus-like element.
+XX
+ID   LTR43B      repbase;    DNA;    PRI; 572 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR43; LTR43B;
+KW   Long terminal repeat of retrovirus-like element.
+XX
+ID   LTR43_I     repbase;    DNA;    PRI; 4798 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR43_I.
+XX
+ID   LTR44       repbase;    DNA;    PRI; 519 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR23;
+KW   LTR24; LTR44; MER4I-group.
+XX
+ID   LTR45       repbase;    DNA;    PRI; 525 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   endogenous retroelement; LTR14; LTR45; MER4I-group.
+XX
+ID   LTR45B      repbase;    DNA;    PRI; 489 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   endogenous retroelement; LTR45B; MER4I-group.
+XX
+ID   LTR45C      repbase;    DNA;    PRI; 539 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   endogenous retroelement; LTR45C.
+XX
+ID   LTR46       repbase;    DNA;    PRI; 461 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR46.
+XX
+ID   LTR47A      repbase;    DNA;    PRI; 452 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; subfamily LTR47A; LTR47A.
+XX
+ID   LTR47A2     repbase;    DNA;    PRI; 432 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR47A2.
+XX
+ID   LTR47B      repbase;    DNA;    PRI; 443 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR47B;
+KW   Long terminal repeat; subfamily LTR47B.
+XX
+ID   LTR47B2     repbase;    DNA;    PRI; 436 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR47B2.
+XX
+ID   LTR47B3     repbase;    DNA;    PRI; 464 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR47B3.
+XX
+ID   LTR47B4     repbase;    DNA;    PRI; 434 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR47B4.
+XX
+ID   LTR48       repbase;    DNA;    PRI; 787 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR48;
+KW   putative MER4I-MER41I-MER57I-MER65I group.
+XX
+ID   LTR48B      repbase;    DNA;    PRI; 676 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR48B;
+KW   putative MER4I-MER41I-MER57I-MER65I group.
+XX
+ID   LTR49       repbase;    DNA;    PRI; 595 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; retroelement; LTR49.
+XX
+ID   LTR5        repbase;    DNA;    PRI; 969 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR5;
+KW   Long terminal repeat.
+XX
+ID   LTR50       repbase;    DNA;    PRI; 795 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; LTR50;
+KW   Long terminal repeat.
+XX
+ID   LTR51       repbase;    DNA;    PRI; 671 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR51;
+KW   Long terminal repeat.
+XX
+ID   LTR52       repbase;    DNA;    PRI; 421 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; LTR52;
+KW   Long terminal repeat.
+XX
+ID   LTR53       repbase;    DNA;    PRI; 519 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; LTR53;
+KW   Long terminal repeat; MER54; MER74; MER88.
+XX
+ID   LTR53-int   repbase;    DNA;    MAM; 3329 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR53-int.
+XX
+ID   LTR53B      repbase;    DNA;    PRI; 533 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR53B.
+XX
+ID   LTR54       repbase;    DNA;    MAM; 510 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR54;
+KW   Long terminal repeat; MER51I; MER57I.
+XX
+ID   LTR54B      repbase;    DNA;    MAM; 498 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR54;
+KW   LTR54B; Long terminal repeat; MER51I; MER57I.
+XX
+ID   LTR55       repbase;    DNA;    PRI; 548 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Long terminal repeat; LTR55.
+XX
+ID   LTR56       repbase;    DNA;    PRI; 445 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR23;
+KW   LTR24; LTR56.
+XX
+ID   LTR57       repbase;    DNA;    PRI; 411 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR47A; LTR47B;
+KW   LTR57; Long terminal repeat; subfamily LTR57.
+XX
+ID   LTR58       repbase;    DNA;    PRI; 679 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR35;
+KW   LTR43; LTR58; MER41; MER4I-group; retroelement.
+XX
+ID   LTR59       repbase;    DNA;    PRI; 597 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR34;
+KW   LTR59; MER4; MER4I-group; MER79; retroelement.
+XX
+ID   LTR5A       repbase;    DNA;    PRI; 1033 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR5A_LTR; LTR5B; HERVK; LTR5A.
+XX
+ID   LTR5B       repbase;    DNA;    PRI; 1002 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR5B;
+KW   Long terminal repeat.
+XX
+ID   LTR5_Hs     repbase;    DNA;    PRI; 968 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR5; LTR5_Hs_LTR; LTR5_Hs.
+XX
+ID   LTR60       repbase;    DNA;    PRI; 586 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR60;
+KW   Long terminal repeat; MER50; TAR1; subtelomeric DNA.
+XX
+ID   LTR60B      repbase;    DNA;    PRI; 765 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR60B.
+XX
+ID   LTR61       repbase;    DNA;    PRI; 595 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR15; LTR4;
+KW   LTR61; Long terminal repeat.
+XX
+ID   LTR62       repbase;    DNA;    PRI; 719 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR62;
+KW   Long terminal repeat.
+XX
+ID   LTR64       repbase;    DNA;    PRI; 557 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR64;
+KW   Long terminal repeat.
+XX
+ID   LTR65       repbase;    DNA;    PRI; 669 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR65.
+XX
+ID   LTR66       repbase;    DNA;    PRI; 610 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   HERV-L-like endogenous retrovirus; HERVL66I; LTR66.
+XX
+ID   LTR67B      repbase;    DNA;    MAM; 620 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; ERVL;
+KW   Long terminal repeat; LTR67B.
+XX
+ID   LTR68       repbase;    DNA;    MAM; 740 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   LTR retrotransposon; LTR68; MER4I-group; MER67C.
+XX
+ID   LTR69       repbase;    DNA;    PRI; 588 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR69.
+XX
+ID   LTR6A       repbase;    DNA;    PRI; 564 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVHC2;
+KW   HERVS71; HSRVS713L; LTR6A.
+XX
+ID   LTR6B       repbase;    DNA;    PRI; 558 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVHC2;
+KW   HERVS71; HSRVS713L; LTR6B.
+XX
+ID   LTR6C       repbase;    DNA;    PRI; 649 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVS71;
+KW   LTR6C.
+XX
+ID   LTR6D       repbase;    DNA;    PRI; 583 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVS71;
+KW   LTR6D.
+XX
+ID   LTR70       repbase;    DNA;    PRI; 1286 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR23; LTR56;
+KW   LTR70; Long terminal repeat; MER67C.
+XX
+ID   LTR71A      repbase;    DNA;    PRI; 461 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVP71A_I;
+KW   LTR71A.
+XX
+ID   LTR71B      repbase;    DNA;    PRI; 610 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVP71B_I;
+KW   LTR71A; LTR71B.
+XX
+ID   LTR72       repbase;    DNA;    PRI; 519 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR72.
+XX
+ID   LTR72B      repbase;    DNA;    PRI; 500 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR72; LTR72B.
+XX
+ID   LTR73       repbase;    DNA;    PRI; 572 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR73;
+KW   MER41; MER4I; MER66.
+XX
+ID   LTR75       repbase;    DNA;    PRI; 562 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR75;
+KW   Long terminal repeat.
+XX
+ID   LTR75B      repbase;    DNA;    PRI; 608 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; LTR75B.
+XX
+ID   LTR75_1     repbase;    DNA;    MAM; 546 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR75_1.
+XX
+ID   LTR76       repbase;    DNA;    PRI; 675 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR15; LTR4;
+KW   LTR61; LTR76.
+XX
+ID   LTR77       repbase;    DNA;    PRI; 622 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR19;
+KW   LTR20; LTR25; LTR27; LTR28; LTR77; MER4I-group; MER52; MER61.
+XX
+ID   LTR77B      repbase;    DNA;    PRI; 700 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; LTR77B.
+XX
+ID   LTR78       repbase;    DNA;    MAM; 1304 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR78_LTR; LTR78.
+XX
+ID   LTR78B      repbase;    DNA;    PRI; 1296 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; LTR78; LTR78B.
+XX
+ID   LTR79       repbase;    DNA;    MAM; 527 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; ERVL;
+KW   LTR79.
+XX
+ID   LTR7A       repbase;    DNA;    PRI; 450 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; LTR7; LTR7A.
+XX
+ID   LTR7B       repbase;    DNA;    PRI; 464 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; LTR7; LTR7A; LTR7B.
+XX
+ID   LTR7C       repbase;    DNA;    PRI; 471 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; LTR7; LTR7A; LTR7B; LTR7C.
+XX
+ID   LTR7Y       repbase;    DNA;    PRI; 472 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR7B; ERV1; LTR7Y_LTR; LTR7Y.
+XX
+ID   LTR8        repbase;    DNA;    PRI; 691 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR8;
+KW   Long terminal repeat.
+XX
+ID   LTR80A      repbase;    DNA;    MAM; 583 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR80A_LTR; LTR80A.
+XX
+ID   LTR80B      repbase;    DNA;    MAM; 584 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR80B_LTR; LTR80B.
+XX
+ID   LTR81A      repbase;    DNA;    MAM; 1350 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR81A_LTR; LTR81A.
+XX
+ID   LTR81AB     repbase;    DNA;    PRI; 278 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; LTR81AB.
+XX
+ID   LTR81B      repbase;    DNA;    MAM; 1393 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR81B_LTR; LTR81B.
+XX
+ID   LTR81C      repbase;    DNA;    MAM; 1153 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR81C_LTR; LTR81C.
+XX
+ID   LTR82A      repbase;    DNA;    MAM; 872 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR82A_LTR; LTR82A.
+XX
+ID   LTR82B      repbase;    DNA;    MAM; 830 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR82B_LTR;
+KW   Low_complexity; LTR82B.
+XX
+ID   LTR83       repbase;    DNA;    MAM; 780 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR83_LTR; LTR83.
+XX
+ID   LTR84a      repbase;    DNA;    MAM; 757 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR84a_LTR; LTR84a.
+XX
+ID   LTR84b      repbase;    DNA;    MAM; 761 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR84b_LTR; LTR84b.
+XX
+ID   LTR85a      repbase;    DNA;    MAM; 702 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; Gypsy?; LTR;
+KW   LTR85a.
+XX
+ID   LTR85b      repbase;    DNA;    MAM; 784 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; LTR85b_LTR;
+KW   LTR85b.
+XX
+ID   LTR85c      repbase;    DNA;    MAM; 823 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; LTR85c_LTR;
+KW   LTR85c.
+XX
+ID   LTR86A1     repbase;    DNA;    MAM; 513 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR86A1_LTR; LTR86A1.
+XX
+ID   LTR86A2     repbase;    DNA;    MAM; 508 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR86A2_LTR; LTR86A2.
+XX
+ID   LTR86B1     repbase;    DNA;    MAM; 493 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR86B1_LTR; LTR86B1.
+XX
+ID   LTR86B2     repbase;    DNA;    MAM; 487 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR86B2_LTR; LTR86B2.
+XX
+ID   LTR86C      repbase;    DNA;    MAM; 621 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR86C_LTR; LTR86C.
+XX
+ID   LTR87       repbase;    DNA;    MAM; 624 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR87_LTR; LTR87.
+XX
+ID   LTR88a      repbase;    DNA;    MAM; 816 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; LTR88a_LTR;
+KW   LTR88a.
+XX
+ID   LTR88b      repbase;    DNA;    MAM; 837 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; LTR88b_LTR;
+KW   LTR88b.
+XX
+ID   LTR88c      repbase;    DNA;    MAM; 862 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; Gypsy?; LTR;
+KW   LTR88c.
+XX
+ID   LTR89       repbase;    DNA;    MAM; 879 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; LTR89_LTR; LTR89.
+XX
+ID   LTR8A       repbase;    DNA;    PRI; 727 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERV8I;
+KW   HUERS-P3; LTR8 subfamily; LTR8A; Long terminal repeat;
+KW   MER4I-group.
+XX
+ID   LTR8B       repbase;    DNA;    PRI; 820 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR8B.
+XX
+ID   LTR9        repbase;    DNA;    PRI; 612 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HUERS-P3;
+KW   HuRRS-P; LTR9; Long terminal repeat.
+XX
+ID   LTR90A      repbase;    DNA;    MAM; 976 BP.
+KW   LTR Retrotransposon; Transposable Element; LTR90A_LTR; LTR90A.
+XX
+ID   LTR90B      repbase;    DNA;    MAM; 796 BP.
+KW   LTR Retrotransposon; Transposable Element; LTR90B_LTR; LTR90B.
+XX
+ID   LTR91       repbase;    DNA;    PRI; 199 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR91.
+XX
+ID   LTR9A1      repbase;    DNA;    PRI; 728 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR9A1.
+XX
+ID   LTR9B       repbase;    DNA;    PRI; 644 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR from human endogenous retrovirus-like sequence; LTR9B.
+XX
+ID   LTR9C       repbase;    DNA;    PRI; 666 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR9C.
+XX
+ID   LTR9D       repbase;    DNA;    PRI; 645 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR9D.
+XX
+ID   MADE1       repbase;    DNA;    PRI; 80 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MADE1; Mrs.
+XX
+ID   MamGyp-int  repbase;    DNA;    MAM; 5103 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGyp-int.
+XX
+ID   MamGypLTR1a repbase;    DNA;    MAM; 784 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR1a_LTR;
+KW   MamGypLTR1a.
+XX
+ID   MamGypLTR1b repbase;    DNA;    MAM; 782 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR1b_LTR;
+KW   MamGypLTR1b.
+XX
+ID   MamGypLTR1c repbase;    DNA;    MAM; 803 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR1c_LTR;
+KW   MamGypLTR1c.
+XX
+ID   MamGypLTR1d repbase;    DNA;    MAM; 813 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR1d_LTR;
+KW   MamGypLTR1d.
+XX
+ID   MamGypLTR2  repbase;    DNA;    MAM; 1189 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR2_LTR;
+KW   MamGypLTR2.
+XX
+ID   MamGypLTR2b repbase;    DNA;    MAM; 922 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR2b_LTR;
+KW   MamGypLTR2b.
+XX
+ID   MamGypLTR2c repbase;    DNA;    MAM; 1068 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR2c_LTR;
+KW   MamGypLTR2c.
+XX
+ID   MamGypLTR3  repbase;    DNA;    MAM; 839 BP.
+KW   Gypsy; LTR Retrotransposon; Transposable Element; MamGypLTR3_LTR;
+KW   MamGypLTR3.
+XX
+ID   MamRep137   repbase;    DNA;    MAM; 444 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MamRep137;
+KW   mariner.
+XX
+ID   MamRep1527  repbase;    DNA;    MAM; 969 BP.
+KW   Transposable Element; LTR; MamRep1527.
+XX
+ID   MamRep1879  repbase;    DNA;    MAM; 216 BP.
+KW   hAT; DNA transposon; Transposable Element; MamRep1879.
+XX
+ID   MamRep1894  repbase;    DNA;    MAM; 123 BP.
+KW   hAT; DNA transposon; Transposable Element; MamRep1894.
+XX
+ID   MamRep38    repbase;    DNA;    MAM; 295 BP.
+KW   hAT; DNA transposon; Transposable Element; MamRep38.
+XX
+ID   MamRep4096  repbase;    DNA;    MAM; 426 BP.
+KW   hAT; DNA transposon; Transposable Element; MamRep4096.
+XX
+ID   MamRep434   repbase;    DNA;    MAM; 426 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MamRep434;
+KW   mariner.
+XX
+ID   MamRep488   repbase;    DNA;    MAM; 219 BP.
+KW   hAT; DNA transposon; Transposable Element; MamRep488.
+XX
+ID   MamRep564   repbase;    DNA;    MAM; 357 BP.
+KW   Transposable Element; Interspersed repeat; MamRep564.
+XX
+ID   MamRep605   repbase;    DNA;    MAM; 876 BP.
+KW   Transposable Element; Interspersed repeat; MamRep605.
+XX
+ID   MamSINE1    repbase;    DNA;    MAM; 290 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; tRNA; MamSINE1.
+XX
+ID   MamTip2     repbase;    DNA;    MAM; 305 BP.
+KW   hAT; DNA transposon; Transposable Element; MamTip2.
+XX
+ID   MARE1       repbase;    DNA;    MAM; 945 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MARE2; MARE1;
+KW   conserved; CNE.
+XX
+ID   MARE10      repbase;    DNA;    MAM; 181 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   Repetitive element; conserved; MARE10.
+XX
+ID   MARE3       repbase;    DNA;    MAM; 180 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; tRNA; SINE_SM; CYN-I; Rhin-1; conserved; MARE3;
+KW   CNE.
+XX
+ID   MARE5       repbase;    DNA;    MAM; 564 BP.
+KW   hAT; DNA transposon; Transposable Element; MARE5; conserved.
+XX
+ID   MARE6       repbase;    DNA;    MAM; 715 BP.
+KW   Tx1; Non-LTR Retrotransposon; Transposable Element;
+KW   Repetitive element; conserved; MARE6.
+XX
+ID   MARNA       repbase;    DNA;    PRI; 586 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MARNA.
+XX
+ID   MER101      repbase;    DNA;    PRI; 474 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; MER4-group family; MER101.
+XX
+ID   MER101B     repbase;    DNA;    PRI; 570 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; MER101; MER101B; MER4-group family.
+XX
+ID   MER101_I    repbase;    DNA;    PRI; 6639 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER101-int; MER101_I.
+XX
+ID   MER103      repbase;    DNA;    MAM; 166 BP.
+KW   DNA transposon; Transposable Element; MER103.
+XX
+ID   MER103B     repbase;    DNA;    PRI; 95 BP.
+KW   hAT; DNA transposon; Transposable Element; MER103B.
+XX
+ID   MER103C     repbase;    DNA;    PRI; 304 BP.
+KW   hAT; DNA transposon; Transposable Element; MER103C.
+XX
+ID   MER104      repbase;    DNA;    MAM; 180 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; HSTC2;
+KW   MER104; nonautonomous DNA transposon.
+XX
+ID   MER104A     repbase;    DNA;    MAM; 744 BP.
+KW   DNA transposon; Transposable Element; MER104A.
+XX
+ID   MER104B     repbase;    DNA;    MAM; 915 BP.
+KW   DNA transposon; Transposable Element; MER104B.
+XX
+ID   MER104C     repbase;    DNA;    MAM; 729 BP.
+KW   DNA transposon; Transposable Element; MER104C.
+XX
+ID   MER105      repbase;    DNA;    MAM; 204 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER105.
+XX
+ID   MER106      repbase;    DNA;    PRI; 236 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   MER106; hAT superfamily.
+XX
+ID   MER106B     repbase;    DNA;    PRI; 1059 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   MER106B; hAT superfamily.
+XX
+ID   MER107      repbase;    DNA;    PRI; 197 BP.
+KW   hAT; DNA transposon; Transposable Element; MER30; MER107.
+XX
+ID   MER110      repbase;    DNA;    PRI; 500 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER110;
+KW   retroelement.
+XX
+ID   MER110A     repbase;    DNA;    PRI; 468 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER110;
+KW   MER110A; retroelement.
+XX
+ID   MER110I     repbase;    DNA;    PRI; 4728 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 class;
+KW   Internal sequence of retrovirus-like element; MER110I.
+XX
+ID   MER112      repbase;    DNA;    PRI; 275 BP.
+KW   hAT; DNA transposon; Transposable Element; MER112.
+XX
+ID   MER113      repbase;    DNA;    PRI; 529 BP.
+KW   hAT; DNA transposon; Transposable Element; MER113.
+XX
+ID   MER113B     repbase;    DNA;    PRI; 302 BP.
+KW   hAT; DNA transposon; Transposable Element; MER113; MER113B.
+XX
+ID   MER115      repbase;    DNA;    MAM; 693 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   nonautonomous DNA transposon; MER115.
+XX
+ID   MER116      repbase;    DNA;    MAM; 84 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER116.
+XX
+ID   MER117      repbase;    DNA;    PRI; 197 BP.
+KW   hAT; DNA transposon; Transposable Element; MER117.
+XX
+ID   MER119      repbase;    DNA;    PRI; 583 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   MER119; MER1_type (hAT) family.
+XX
+ID   MER11A      repbase;    DNA;    PRI; 1126 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK; HERVK11;
+KW   LTR; MER11; MER11A; subfamily MER11A.
+XX
+ID   MER11B      repbase;    DNA;    PRI; 1236 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; ERVK; HERVK;
+KW   HERVK11; LTR; MER11; MER11B; subfamily MER11B.
+XX
+ID   MER11C      repbase;    DNA;    PRI; 1071 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK; HERVK11;
+KW   LTR; MER11; MER11C.
+XX
+ID   MER11D      repbase;    DNA;    PRI; 897 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK; HERVK11;
+KW   LTR; MER11; MER11D; subfamily MER11D.
+XX
+ID   MER121      repbase;    DNA;    MAM; 399 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER121.
+XX
+ID   MER123      repbase;    DNA;    VRT; 210 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; DNA; MER123;
+KW   conserved; CNE.
+XX
+ID   MER124      repbase;    DNA;    MAM; 397 BP.
+KW   Transposable Element; Nonautonomous; DNA; MER124; conserved; CNE.
+XX
+ID   MER125      repbase;    DNA;    VRT; 176 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; DNA; MER125;
+KW   conserved; CNE.
+XX
+ID   MER126      repbase;    DNA;    VRT; 308 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; DNA;
+KW   conserved; MER126; CNE.
+XX
+ID   MER127      repbase;    DNA;    VRT; 364 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   DNA; conserved; Tigger; MER127; CNE.
+XX
+ID   MER129      repbase;    DNA;    VRT; 469 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; LTR; MER129; conserved; CNE.
+XX
+ID   MER130      repbase;    DNA;    VRT; 475 BP.
+KW   Transposable Element; Nonautonomous; MER130; conserved; CNE.
+XX
+ID   MER131      repbase;    DNA;    VRT; 174 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; MER131; conserved; CNE.
+XX
+ID   MER132      repbase;    DNA;    VRT; 178 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   DNA; conserved; TcMar; MER132; CNE.
+XX
+ID   MER133A     repbase;    DNA;    VRT; 106 BP.
+KW   Transposable Element; Nonautonomous; DNA; MER133; MER133A;
+KW   conserved; CNE.
+XX
+ID   MER133B     repbase;    DNA;    VRT; 140 BP.
+KW   Transposable Element; DNA; Interspersed repeat; MER133; MER133A;
+KW   MER133B; conserved; CNE.
+XX
+ID   MER134      repbase;    DNA;    VRT; 213 BP.
+KW   Transposable Element; Nonautonomous; DNA; Interspersed repeat;
+KW   MER134; conserved; non-autonomous; CNE.
+XX
+ID   MER135      repbase;    DNA;    MAM; 228 BP.
+KW   Transposable Element; Nonautonomous; DNA; MER135; conserved; CNE.
+XX
+ID   MER136      repbase;    DNA;    VRT; 318 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; DNA; MER136;
+KW   conserved; CNE.
+XX
+ID   MER1A       repbase;    DNA;    PRI; 527 BP.
+KW   hAT; DNA transposon; Transposable Element;
+KW   Interspersed repetitive sequence; MER1; MER1A;
+KW   PAI-1/t-PA element.
+XX
+ID   MER1B       repbase;    DNA;    PRI; 337 BP.
+KW   hAT; DNA transposon; Transposable Element;
+KW   Interspersed repetitive sequence; MER1b.
+XX
+ID   MER2        repbase;    DNA;    MAM; 344 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   Interspersed repetitive sequence; MER2.
+XX
+ID   MER20       repbase;    DNA;    PRI; 218 BP.
+KW   hAT; DNA transposon; Transposable Element; MER20;
+KW   Repetitive sequence.
+XX
+ID   MER20B      repbase;    DNA;    PRI; 798 BP.
+KW   hAT; DNA transposon; Transposable Element; MER20; MER20B;
+KW   Repetitive sequence.
+XX
+ID   MER21       repbase;    DNA;    PRI; 933 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Repetitive sequence; MER21.
+XX
+ID   MER21A      repbase;    DNA;    PRI; 931 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER21;
+KW   Long terminal repeat of retrovirus-like element; MER21A.
+XX
+ID   MER21B      repbase;    DNA;    MAM; 863 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER21B.
+XX
+ID   MER21C      repbase;    DNA;    MAM; 935 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER21B; MER21C.
+XX
+ID   MER21C_BT   repbase;    DNA;    MAM; 958 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER21B; MER21C;
+KW   MER21C_BT.
+XX
+ID   MER21I      repbase;    DNA;    PRI; 4191 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 class;
+KW   Internal sequence of retrovirus-like element; MER21; MER21I;
+KW   MER4I-group.
+XX
+ID   MER25       repbase;    DNA;    MAM; 2136 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; LINE1; MER25;
+KW   Repetitive sequence.
+XX
+ID   MER28       repbase;    DNA;    PRI; 434 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   Repetitive sequence; MER28.
+XX
+ID   MER2B       repbase;    DNA;    MAM; 335 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER2; MER2B;
+KW   MER44A; MER44B; MER44C; MER44D; MER8; MER82; TIGGER7.
+XX
+ID   MER3        repbase;    DNA;    MAM; 209 BP.
+KW   hAT; DNA transposon; Transposable Element;
+KW   Interspersed repetitive sequence; MER3.
+XX
+ID   MER30       repbase;    DNA;    VRT; 230 BP.
+KW   hAT; DNA transposon; Transposable Element; MER30;
+KW   Repetitive sequence.
+XX
+ID   MER30B      repbase;    DNA;    PRI; 190 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   MER1_type family; MER30B.
+XX
+ID   MER31       repbase;    DNA;    PRI; 483 BP.
+KW   Endogenous Retrovirus; Transposable Element; LTR; MER31;
+KW   MER4I group; Repetitive sequence.
+XX
+ID   MER31A      repbase;    DNA;    MAM; 485 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER31A;
+KW   Repetitive sequence.
+XX
+ID   MER31B      repbase;    DNA;    PRI; 466 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER31B;
+KW   Repetitive sequence.
+XX
+ID   MER31_I     repbase;    DNA;    PRI; 4936 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of retrovirus-like element; MER4 group; MER31I;
+KW   MER31_I.
+XX
+ID   MER33       repbase;    DNA;    PRI; 324 BP.
+KW   hAT; DNA transposon; Transposable Element; MER33;
+KW   Repetitive sequence.
+XX
+ID   MER34       repbase;    DNA;    PRI; 546 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER34;
+KW   MER4I-group.
+XX
+ID   MER34-int   repbase;    DNA;    MAM; 8207 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER34-int.
+XX
+ID   MER34A      repbase;    DNA;    MAM; 571 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER34A.
+XX
+ID   MER34A1     repbase;    DNA;    MAM; 587 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER34A1.
+XX
+ID   MER34B      repbase;    DNA;    PRI; 599 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR34B;
+KW   MER34B; MER4I-group; retroelement.
+XX
+ID   MER34B_I    repbase;    DNA;    PRI; 5356 BP.
+KW   Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   Class I; MER34B; MER34B_I; MER4I-group;
+KW   Nonautonomous endogenous retrovirus.
+XX
+ID   MER34C      repbase;    DNA;    PRI; 551 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; retroelement; MER39; LTR48; LTR49; LTR34B; MER34C.
+XX
+ID   MER34C2     repbase;    DNA;    PRI; 555 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER34C2.
+XX
+ID   MER34D      repbase;    DNA;    PRI; 579 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER34D.
+XX
+ID   MER39       repbase;    DNA;    PRI; 707 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER39;
+KW   MER40; MER4I-group.
+XX
+ID   MER39B      repbase;    DNA;    PRI; 653 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER39B;
+KW   MER4I-group.
+XX
+ID   MER41A      repbase;    DNA;    PRI; 554 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER41A;
+KW   MER4I-group.
+XX
+ID   MER41B      repbase;    DNA;    PRI; 635 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER41; MER41B;
+KW   MER4I-group family.
+XX
+ID   MER41C      repbase;    DNA;    PRI; 554 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER41C;
+KW   MER4I-group family.
+XX
+ID   MER41D      repbase;    DNA;    PRI; 557 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER41d;
+KW   MER4I-group family.
+XX
+ID   MER41E      repbase;    DNA;    PRI; 595 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Long terminal repeat of retrovirus-like element; MER41E;
+KW   MER4I-group family.
+XX
+ID   MER41F      repbase;    DNA;    PRI; 387 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER41E; MER41F;
+KW   MER4I-group family.
+XX
+ID   MER41G      repbase;    DNA;    PRI; 885 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER41E; MER41F;
+KW   MER41G; MER4I-group family.
+XX
+ID   MER41I      repbase;    DNA;    PRI; 3944 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of retroviral-like element; MER41I;
+KW   MER4I group.
+XX
+ID   MER44A      repbase;    DNA;    PRI; 339 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER44; MER44A;
+KW   mariner/Tc1 superfamily; Repetitive sequence; TIGGER7.
+XX
+ID   MER44B      repbase;    DNA;    PRI; 550 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER44; MER44B;
+KW   mariner/Tc1 superfamily; Repetitive sequence; TIGGER7.
+XX
+ID   MER44C      repbase;    DNA;    PRI; 733 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER2 family;
+KW   MER44; MER44C; Repetitive sequence; TIGGER7.
+XX
+ID   MER44D      repbase;    DNA;    MAM; 705 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER2 family;
+KW   MER44B; MER44D; Repetitive sequence; TIGGER7.
+XX
+ID   MER45       repbase;    DNA;    PRI; 178 BP.
+KW   hAT; DNA transposon; Transposable Element; MER45;
+KW   Repetitive sequence.
+XX
+ID   MER45B      repbase;    DNA;    PRI; 1040 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; MER45B;
+KW   nonautonomous DNA transposon.
+XX
+ID   MER45C      repbase;    DNA;    PRI; 953 BP.
+KW   hAT; DNA transposon; Transposable Element; MER45C;
+KW   Repetitive sequence.
+XX
+ID   MER45R      repbase;    DNA;    PRI; 1581 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; MER45;
+KW   MER45R; nonautonomous DNA transposon.
+XX
+ID   MER46C      repbase;    DNA;    MAM; 338 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER46C;
+KW   mariner; ZOMBI_C.
+XX
+ID   MER47B      repbase;    DNA;    MAM; 418 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA; MER47B;
+KW   MER2_type.
+XX
+ID   MER47C      repbase;    DNA;    MAM; 97 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; mariner;
+KW   TIGGER5A; MER47C.
+XX
+ID   MER48       repbase;    DNA;    PRI; 398 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; HERVH48I; LTR;
+KW   MER48; retroelement; Retrovirus.
+XX
+ID   MER49       repbase;    DNA;    PRI; 923 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR-like sequence; MER4 subfamily; MER49; MER4I group;
+KW   retroelement.
+XX
+ID   MER4A       repbase;    DNA;    PRI; 660 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER4A;
+KW   MER4I group; retroelement.
+XX
+ID   MER4A1      repbase;    DNA;    PRI; 472 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4-group; MER4A; MER4A1; MER4B; retroelement.
+XX
+ID   MER4A1_LTR  repbase;    DNA;    PRI; 600 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER4A; MER4A1_LTR; MER4A1__LTR.
+XX
+ID   MER4B       repbase;    DNA;    PRI; 611 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER4B;
+KW   MER4I-group; retroelement.
+XX
+ID   MER4BI      repbase;    DNA;    PRI; 6758 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of retrovirus-like element; LTR39; MER4B;
+KW   MER4BI; MER4I-group.
+XX
+ID   MER4C       repbase;    DNA;    PRI; 465 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER4C;
+KW   MER4I-group; retroelement.
+XX
+ID   MER4CL34    repbase;    DNA;    PRI; 765 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; retroelement; MER4C; MER4CL34.
+XX
+ID   MER4D       repbase;    DNA;    PRI; 872 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4-group; MER4D; retroelement.
+XX
+ID   MER4D1      repbase;    DNA;    PRI; 900 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4-group; MER4D; MER4D1; retroelement.
+XX
+ID   MER4D_LTR   repbase;    DNA;    PRI; 903 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER4D1; MER4D_LTR.
+XX
+ID   MER4E       repbase;    DNA;    PRI; 766 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4-group; MER4E; retroelement.
+XX
+ID   MER4E1      repbase;    DNA;    PRI; 763 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER4E;
+KW   MER4E1; MER4I-group.
+XX
+ID   MER4I       repbase;    DNA;    PRI; 6387 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Repetitive sequence; internal portion; retroelement; MER4I.
+XX
+ID   MER50       repbase;    DNA;    PRI; 734 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER50.
+XX
+ID   MER50B      repbase;    DNA;    PRI; 697 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER50B.
+XX
+ID   MER50C      repbase;    DNA;    PRI; 782 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Long terminal repeat; MER50C.
+XX
+ID   MER50I      repbase;    DNA;    PRI; 7205 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   MER50; LTR retroelement; MER50I.
+XX
+ID   MER51A      repbase;    DNA;    PRI; 634 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER51;
+KW   MER51A.
+XX
+ID   MER51B      repbase;    DNA;    PRI; 371 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER51B.
+XX
+ID   MER51C      repbase;    DNA;    PRI; 640 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER51C.
+XX
+ID   MER51D      repbase;    DNA;    PRI; 657 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER51D.
+XX
+ID   MER51E      repbase;    DNA;    PRI; 482 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER51E.
+XX
+ID   MER51I      repbase;    DNA;    PRI; 7816 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   internal portion; MER51; Internal sequence of LTR-retroelement;
+KW   MER51I.
+XX
+ID   MER52A      repbase;    DNA;    PRI; 1755 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; MER52; MER52A; subfamily.
+XX
+ID   MER52AI     repbase;    DNA;    PRI; 7091 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 class;
+KW   Internal sequence of endogenous retrovirus; MER4I; MER52AI.
+XX
+ID   MER52B      repbase;    DNA;    PRI; 1746 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; subfamily; MER52; MER52B.
+XX
+ID   MER52C      repbase;    DNA;    PRI; 1278 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; MER52 subfamily; MER52C.
+XX
+ID   MER52D      repbase;    DNA;    PRI; 2123 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; MER52; MER52A; MER52B; MER52C; MER52D; subfamily.
+XX
+ID   MER53       repbase;    DNA;    PRI; 189 BP.
+KW   DNA transposon; Transposable Element; MER53; Repetitive sequence.
+XX
+ID   MER54       repbase;    DNA;    PRI; 902 BP.
+KW   Transposable Element; Interspersed repeat; MER54.
+XX
+ID   MER54A      repbase;    DNA;    PRI; 901 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL-74 group;
+KW   Interspersed repeat; MER54; MER54A.
+XX
+ID   MER54B      repbase;    DNA;    PRI; 793 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL-74 group;
+KW   Interspersed repeat; MER54 subfamily; MER54A; MER54B.
+XX
+ID   MER57A1     repbase;    DNA;    PRI; 432 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   MER4I-group family; LTR of retrovirus-like element; MER57B;
+KW   MER57A1.
+XX
+ID   MER57A_I    repbase;    DNA;    PRI; 6187 BP.
+KW   Endogenous Retrovirus; Transposable Element; Nonautonomous;
+KW   MER4I-group; MER57A; Class I;
+KW   Internal portion of non-autonomous endogenous retrovirus;
+KW   MER57A_I.
+XX
+ID   MER57B1     repbase;    DNA;    MAM; 401 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER57B1.
+XX
+ID   MER57B2     repbase;    DNA;    PRI; 403 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Repetitive sequence; MER4I-group; endogenous retroelement; MER57A;
+KW   MER57B2.
+XX
+ID   MER57C1     repbase;    DNA;    MAM; 385 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER57C1.
+XX
+ID   MER57C2     repbase;    DNA;    MAM; 434 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER57C2.
+XX
+ID   MER57D      repbase;    DNA;    MAM; 411 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER93; MER57D.
+XX
+ID   MER57E1     repbase;    DNA;    MAM; 373 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER57E1.
+XX
+ID   MER57E2     repbase;    DNA;    MAM; 402 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER93; MER93a_LTR; MER57E2.
+XX
+ID   MER57E3     repbase;    DNA;    MAM; 487 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER57E3.
+XX
+ID   MER57F      repbase;    DNA;    PRI; 435 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER93; MER57;
+KW   MER93B; MER57F.
+XX
+ID   MER57I      repbase;    DNA;    PRI; 7537 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of retrovirus-like element; MER4I-group;
+KW   MER57I.
+XX
+ID   MER58A      repbase;    DNA;    MAM; 224 BP.
+KW   hAT; DNA transposon; Transposable Element; CHESHIRE_A; MER58A.
+XX
+ID   MER58B      repbase;    DNA;    MAM; 341 BP.
+KW   hAT; DNA transposon; Transposable Element; CHESHIRE_B; MER58B.
+XX
+ID   MER58C      repbase;    DNA;    MAM; 215 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; MER1_type;
+KW   MER58C.
+XX
+ID   MER58D      repbase;    DNA;    MAM; 386 BP.
+KW   hAT; DNA transposon; Transposable Element; CHESHIRE; MER58D.
+XX
+ID   MER5A       repbase;    DNA;    MAM; 189 BP.
+KW   hAT; DNA transposon; Transposable Element; MER5; MER5A;
+KW   Repetitive sequence.
+XX
+ID   MER5A1      repbase;    DNA;    MAM; 160 BP.
+KW   hAT; DNA transposon; Transposable Element; MER5; MER5A; MER5A1;
+KW   Repetitive sequence.
+XX
+ID   MER5B       repbase;    DNA;    PRI; 178 BP.
+KW   hAT; DNA transposon; Transposable Element; MER5; MER5B;
+KW   Repetitive sequence.
+XX
+ID   MER5C       repbase;    DNA;    MAM; 324 BP.
+KW   hAT; DNA transposon; Transposable Element; MER5C;
+KW   Repetitive sequence.
+XX
+ID   MER5C1      repbase;    DNA;    MAM; 263 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; MER1_type;
+KW   MER5C1.
+XX
+ID   MER6        repbase;    DNA;    MAM; 865 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER2-group;
+KW   MER6; Repetitive sequence.
+XX
+ID   MER61A      repbase;    DNA;    PRI; 341 BP.
+KW   Endogenous Retrovirus; Transposable Element; LTR;
+KW   Repetitive sequence; MER4I-group; retroelement; MER61; MER61A.
+XX
+ID   MER61B      repbase;    DNA;    PRI; 425 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR of retrovirus-like element; MER4-group family; MER61B.
+XX
+ID   MER61C      repbase;    DNA;    PRI; 434 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR of retrovirus-like element; MER4-group family; MER61C.
+XX
+ID   MER61D      repbase;    DNA;    PRI; 501 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; MER61D; LTR20.
+XX
+ID   MER61E      repbase;    DNA;    PRI; 569 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; LTR20; MER61E; LTR20B.
+XX
+ID   MER61F      repbase;    DNA;    PRI; 676 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; LTR25;
+KW   LTR20B; LTR20C; MER61F.
+XX
+ID   MER61I      repbase;    DNA;    PRI; 5217 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   internal portion; MER61; LTR retroelement; MER61I.
+XX
+ID   MER63A      repbase;    DNA;    PRI; 211 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous;
+KW   nonautonomous DNA transposon; MER63A.
+XX
+ID   MER63B      repbase;    DNA;    PRI; 439 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous;
+KW   nonautonomous DNA transposon; MER63B.
+XX
+ID   MER63C      repbase;    DNA;    MAM; 930 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   nonautonomous DNA transposon; hAT superfamily; MER63C.
+XX
+ID   MER63D      repbase;    DNA;    PRI; 1061 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA transposon fossil;
+KW   hAT superfamily; MER63D.
+XX
+ID   MER65A      repbase;    DNA;    MAM; 445 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR of retrovirus-like element; MER4I-group family; MER65A.
+XX
+ID   MER65B      repbase;    DNA;    PRI; 531 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR of retrovirus-like element; MER4I-group family; MER65B.
+XX
+ID   MER65C      repbase;    DNA;    PRI; 461 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR of retrovirus-like element; MER4I-group family; MER65C.
+XX
+ID   MER65D      repbase;    DNA;    PRI; 473 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR of retrovirus-like element; MER4I-group family; MER65D.
+XX
+ID   MER65I      repbase;    DNA;    MAM; 4871 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of retroviral-like element; MER4 group; MER65I.
+XX
+ID   MER66A      repbase;    DNA;    PRI; 478 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element;
+KW   MER4I-group family; MER66A.
+XX
+ID   MER66B      repbase;    DNA;    PRI; 486 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER4I-group;
+KW   MER66B.
+XX
+ID   MER66C      repbase;    DNA;    PRI; 555 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Long terminal repeat of retrovirus-like element; MER41A; MER41B;
+KW   MER4I-group family; MER66A; MER66B; MER66C.
+XX
+ID   MER66D      repbase;    DNA;    PRI; 484 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; MER66D.
+XX
+ID   MER66_I     repbase;    DNA;    PRI; 6676 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of retroviral-like element; MER4 group; MER66I;
+KW   MER66_I.
+XX
+ID   MER67A      repbase;    DNA;    PRI; 543 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; MER67A; retroelement.
+XX
+ID   MER67B      repbase;    DNA;    PRI; 661 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; MER67B; retroelement.
+XX
+ID   MER67C      repbase;    DNA;    PRI; 710 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   MER4I-group; MER67B; MER67C; retroelement.
+XX
+ID   MER67D      repbase;    DNA;    PRI; 514 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER67D.
+XX
+ID   MER68A      repbase;    DNA;    MAM; 563 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Interspersed repeat; HERVL68; MER68A.
+XX
+ID   MER68B      repbase;    DNA;    PRI; 568 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Interspersed repeat; HERVL68; MER68B.
+XX
+ID   MER68C      repbase;    DNA;    PRI; 419 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER68C.
+XX
+ID   MER68_I     repbase;    DNA;    MAM; 2990 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERVL68;
+KW   LTR retrotransposon; MER68_I.
+XX
+ID   MER69A      repbase;    DNA;    MAM; 177 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER69A.
+XX
+ID   MER69B      repbase;    DNA;    MAM; 1226 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER69B.
+XX
+ID   MER69C      repbase;    DNA;    PRI; 2513 BP.
+KW   hAT; DNA transposon; Transposable Element; MER69; MER69C.
+XX
+ID   MER6A       repbase;    DNA;    PRI; 605 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER6; MER6A;
+KW   mariner.
+XX
+ID   MER6B       repbase;    DNA;    PRI; 210 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER2-group;
+KW   MER6B; Repetitive sequence.
+XX
+ID   MER6C       repbase;    DNA;    MAM; 202 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER6; MER6C;
+KW   mariner.
+XX
+ID   MER70A      repbase;    DNA;    PRI; 472 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER70A;
+KW   Repetitive element; putative LTR.
+XX
+ID   MER70B      repbase;    DNA;    PRI; 578 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER70B;
+KW   Repetitive element; putative LTR.
+XX
+ID   MER70C      repbase;    DNA;    PRI; 531 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; MER70C.
+XX
+ID   MER70_I     repbase;    DNA;    MAM; 5023 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; env; internal portion; RT; MER70A; MER70B;
+KW   int; ERVL group; HERVL70; MER70I; MER70_I.
+XX
+ID   MER72       repbase;    DNA;    PRI; 730 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   MER72; Repetitive element; putative LTR.
+XX
+ID   MER72B      repbase;    DNA;    PRI; 768 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   MER72; MER72B; Repetitive element; putative LTR.
+XX
+ID   MER73       repbase;    DNA;    PRI; 644 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; ERVL-74 group; MER73.
+XX
+ID   MER74       repbase;    DNA;    MAM; 624 BP.
+KW   Endogenous Retrovirus; Transposable Element; putative LTR;
+KW   retroelement; MER74.
+XX
+ID   MER74A      repbase;    DNA;    MAM; 558 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL-74 group;
+KW   Long terminal repeat; MER74A.
+XX
+ID   MER74B      repbase;    DNA;    PRI; 622 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL-74 group;
+KW   Long terminal repeat; MER74; MER74B.
+XX
+ID   MER74C      repbase;    DNA;    PRI; 460 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL-74 group;
+KW   Long terminal repeat; MER74C.
+XX
+ID   MER75       repbase;    DNA;    PRI; 514 BP.
+KW   piggyBac; DNA transposon; Transposable Element; Nonautonomous;
+KW   DNA transposon fossil; T2_type family; MER75.
+XX
+ID   MER75A      repbase;    DNA;    PRI; 77 BP.
+KW   piggyBac; DNA transposon; Transposable Element; DNA; MER75A.
+XX
+ID   MER75B      repbase;    DNA;    PRI; 242 BP.
+KW   DNA transposon; Transposable Element; DNA transposon fossil;
+KW   MER75; MER75B; T2_type family.
+XX
+ID   MER76       repbase;    DNA;    PRI; 688 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER76.
+XX
+ID   MER76-int   repbase;    DNA;    MAM; 6189 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; LTR;
+KW   MER76-int.
+XX
+ID   MER77       repbase;    DNA;    PRI; 605 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; MER21-group; MER77.
+XX
+ID   MER8        repbase;    DNA;    PRI; 239 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER8;
+KW   Repetitive sequence.
+XX
+ID   MER80       repbase;    DNA;    MAM; 508 BP.
+KW   hAT; DNA transposon; Transposable Element; hAT superfamily; MER80;
+KW   DNA transposon fossil; CHARLIE4A.
+XX
+ID   MER80B      repbase;    DNA;    PRI; 176 BP.
+KW   hAT; DNA transposon; Transposable Element; MER80B.
+XX
+ID   MER81       repbase;    DNA;    PRI; 114 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   hAT superfamily; MER81; nonautonomous DNA transposon.
+XX
+ID   MER82       repbase;    DNA;    MAM; 653 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER2 family; Putative non-autonomous DNA transposon; MER82.
+XX
+ID   MER83       repbase;    DNA;    PRI; 441 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER83;
+KW   retroelement.
+XX
+ID   MER83AI     repbase;    DNA;    PRI; 4285 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   LTR retroelement; MER83A; MER83AI.
+XX
+ID   MER83B      repbase;    DNA;    PRI; 378 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER83B;
+KW   MER83I; retroelement.
+XX
+ID   MER83BI     repbase;    DNA;    PRI; 4880 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; MER4I-group;
+KW   LTR retroelement; MER83B; MER83BI.
+XX
+ID   MER83C      repbase;    DNA;    PRI; 373 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER83C;
+KW   MER83I; retroelement.
+XX
+ID   MER84       repbase;    DNA;    PRI; 508 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER84;
+KW   retroelement.
+XX
+ID   MER84I      repbase;    DNA;    PRI; 4954 BP.
+KW   Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of endogenous retrovirus; MER4I-group; MER84I.
+XX
+ID   MER85       repbase;    DNA;    PRI; 140 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; MER85; MITE;
+KW   Putative non-autonomous DNA transposon.
+XX
+ID   MER87       repbase;    DNA;    PRI; 541 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat; MER4-group family; MER87.
+XX
+ID   MER87B      repbase;    DNA;    PRI; 509 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER87B.
+XX
+ID   MER88       repbase;    DNA;    PRI; 464 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat o; ERVL-73 family; MER88.
+XX
+ID   MER89       repbase;    DNA;    PRI; 559 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER89.
+XX
+ID   MER89I      repbase;    DNA;    PRI; 6801 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 class;
+KW   Internal sequence of retrovirus-like element; MER89I.
+XX
+ID   MER9        repbase;    DNA;    PRI; 511 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK9I; LTR;
+KW   MER9; PRE.
+XX
+ID   MER90       repbase;    DNA;    PRI; 615 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR; MER90;
+KW   retroelement.
+XX
+ID   MER90a_LTR  repbase;    DNA;    MAM; 614 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER90; MER90a_LTR.
+XX
+ID   MER91A      repbase;    DNA;    PRI; 196 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER91A;
+KW   Nonautonomous DNA transposon fossil.
+XX
+ID   MER91B      repbase;    DNA;    MAM; 184 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER91B;
+KW   Nonautonomous DNA transposon fossil.
+XX
+ID   MER91C      repbase;    DNA;    PRI; 140 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER91C;
+KW   Nonautonomous DNA transposon fossil.
+XX
+ID   MER92A      repbase;    DNA;    PRI; 412 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER92A.
+XX
+ID   MER92B      repbase;    DNA;    PRI; 636 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER92B.
+XX
+ID   MER92C      repbase;    DNA;    MAM; 554 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MER92C.
+XX
+ID   MER94       repbase;    DNA;    PRI; 134 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   BLACKJACK; hAT superfamily; MER114; MER81; MER94;
+KW   nonautonomous DNA transposon.
+XX
+ID   MER94B      repbase;    DNA;    PRI; 133 BP.
+KW   hAT; DNA transposon; Transposable Element;
+KW   nonautonomous DNA transposon; hAT superfamily; MER81; MER114;
+KW   BLACKJACK; MER94; MER94B; conserved; CNE.
+XX
+ID   MER95       repbase;    DNA;    PRI; 431 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; putative LTR;
+KW   MER95.
+XX
+ID   MER96       repbase;    DNA;    PRI; 175 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   hAT superfamily; MER96; Nonautonomous DNA transposon fossil.
+XX
+ID   MER96B      repbase;    DNA;    PRI; 434 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   hAT superfamily; MER96B; Nonautonomous DNA transposon fossil.
+XX
+ID   MER97A      repbase;    DNA;    PRI; 894 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER108;
+KW   MER97A; nonautonomous DNA transposon; hAT-like superfamily.
+XX
+ID   MER97B      repbase;    DNA;    PRI; 1053 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER108;
+KW   MER97B; nonautonomous DNA transposon; hAT superfamily.
+XX
+ID   MER97C      repbase;    DNA;    PRI; 1090 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; MER108;
+KW   MER97C; nonautonomous DNA transposon; hAT-superfamily.
+XX
+ID   MER97d      repbase;    DNA;    MAM; 1205 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; MER97d;
+KW   hAT-Tip100.
+XX
+ID   MER99       repbase;    DNA;    PRI; 828 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; MER99;
+KW   Putative non-autonomous DNA transposon.
+XX
+ID   MER9a1      repbase;    DNA;    PRI; 513 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR; ERVK;
+KW   MER9a1.
+XX
+ID   MER9a2      repbase;    DNA;    PRI; 513 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR; ERVK;
+KW   MER9a2.
+XX
+ID   MER9a3      repbase;    DNA;    PRI; 512 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; LTR; ERVK;
+KW   MER9a3.
+XX
+ID   MER9B       repbase;    DNA;    PRI; 499 BP.
+KW   ERV2; Endogenous Retrovirus; Transposable Element; HERVK9; LTR;
+KW   MER9; MER9B; the HERVK group.
+XX
+ID   Merlin1_HS  repbase;    DNA;    PRI; 1129 BP.
+KW   Merlin; DNA transposon; Transposable Element; 8-bp TSD;
+KW   Merlin/IS1016 superfamily; Merlin1_HS.
+XX
+ID   MERX        repbase;    DNA;    MAM; 756 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA; Tigger;
+KW   MERX.
+XX
+ID   MIR         repbase;    DNA;    MAM; 260 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; MIR; Repetitive DNA; MIR1; MER24; MB1.
+XX
+ID   MIR3        repbase;    DNA;    MAM; 224 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; MIR; MIR3; L3; tRNA-related.
+XX
+ID   MIRb        repbase;    DNA;    MAM; 268 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; MIR; MIRb; SINE2.
+XX
+ID   MIRc        repbase;    DNA;    MAM; 268 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; MIR; MIRc.
+XX
+ID   MLT-int     repbase;    DNA;    MAM; 1735 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MaLR family;
+KW   LTR retrotransposon; MLT1R; MLT1c subfamily; MLT1AR; MLT-int.
+XX
+ID   MLT1A0      repbase;    DNA;    MAM; 374 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   retrovirus-like MaLR element; MaLR family; MLT1A; MLT1A0.
+XX
+ID   MLT1A1      repbase;    DNA;    MAM; 410 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1A;
+KW   MLT1A1; MaLR family; retrovirus-like MaLR element.
+XX
+ID   MLT1B       repbase;    DNA;    MAM; 390 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER15; MER18;
+KW   MLT1B; retrovirus-like MaLR element.
+XX
+ID   MLT1C       repbase;    DNA;    MAM; 467 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1C;
+KW   MaLR family; STIR; retrovirus-like MaLR element.
+XX
+ID   MLT1C1      repbase;    DNA;    MAM; 504 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MLT1C1;
+KW   MLT1c subfamily; MaLR family; STIR.
+XX
+ID   MLT1C2      repbase;    DNA;    MAM; 461 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MLT1C2.
+XX
+ID   MLT1D       repbase;    DNA;    MAM; 505 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER26; MLT1D;
+KW   MaLR family; retrovirus-like MaLR element.
+XX
+ID   MLT1E       repbase;    DNA;    MAM; 593 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1E;
+KW   MaLR family; retrovirus-like MaLR element.
+XX
+ID   MLT1E1      repbase;    DNA;    MAM; 654 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1;
+KW   MLT1E; MLT1E1; MaLR family.
+XX
+ID   MLT1E1A     repbase;    DNA;    MAM; 698 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1E;
+KW   MLT1E1; MLT1E1A; MLT1E2; MaLR family.
+XX
+ID   MLT1E2      repbase;    DNA;    MAM; 626 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1;
+KW   MLT1E; MLT1E2; MaLR family.
+XX
+ID   MLT1F       repbase;    DNA;    MAM; 542 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1F;
+KW   MaLR family; retrovirus-like MaLR element.
+XX
+ID   MLT1F1      repbase;    DNA;    MAM; 567 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1F1;
+KW   retrovirus-like MaLR element.
+XX
+ID   MLT1F2      repbase;    DNA;    MAM; 523 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1E;
+KW   MLT1F1; MLT1F2; retrovirus-like MaLR element.
+XX
+ID   MLT1F_I     repbase;    DNA;    MAM; 1399 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MaLR family;
+KW   LTR retrotransposon; MLT1E; MLT1R; MLT1F1; MLT1CR; MLT1F2; MLT1FR;
+KW   MLT1F_I.
+XX
+ID   MLT1G       repbase;    DNA;    PRI; 512 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MLT1G;
+KW   MaLR family.
+XX
+ID   MLT1G1      repbase;    DNA;    PRI; 595 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1G;
+KW   MLT1G1; MaLR family.
+XX
+ID   MLT1G2      repbase;    DNA;    PRI; 590 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MLT1G; MLT1G2;
+KW   MaLR family.
+XX
+ID   MLT1G3      repbase;    DNA;    PRI; 530 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like element; MLT1G2; MLT1G3;
+KW   MaLR family.
+XX
+ID   MLT1H       repbase;    DNA;    PRI; 549 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1H;
+KW   MaLR family.
+XX
+ID   MLT1H1      repbase;    DNA;    PRI; 555 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1H1;
+KW   MaLR family.
+XX
+ID   MLT1H2      repbase;    DNA;    PRI; 484 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1; MLT1H;
+KW   MLT1H1; MLT1H2; MLTF; MaLR family.
+XX
+ID   MLT1H_I     repbase;    DNA;    MAM; 1472 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MLT1H_I.
+XX
+ID   MLT1I       repbase;    DNA;    PRI; 409 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1I.
+XX
+ID   MLT1J       repbase;    DNA;    MAM; 516 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1J.
+XX
+ID   MLT1J-int   repbase;    DNA;    MAM; 1387 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; ERVL-MaLR;
+KW   MLT1J-int.
+XX
+ID   MLT1J1      repbase;    DNA;    MAM; 446 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1J1;
+KW   MaLR family.
+XX
+ID   MLT1J2      repbase;    DNA;    MAM; 450 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MLT1J2.
+XX
+ID   MLT1K       repbase;    DNA;    PRI; 588 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat of retrovirus-like MaLR element; MER98;
+KW   MLT1K; MaLR family.
+XX
+ID   MLT1L       repbase;    DNA;    PRI; 615 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT1;
+KW   MLT1J; MLT1K; MLT1L; MaLR family.
+XX
+ID   MLT1M       repbase;    DNA;    MAM; 672 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; ERVL-MaLR;
+KW   MLT1M.
+XX
+ID   MLT1N2      repbase;    DNA;    PRI; 557 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR67; MLT1N2.
+XX
+ID   MLT1O       repbase;    DNA;    MAM; 441 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   retrovirus-like MaLR element; MaLR family; MLT1O.
+XX
+ID   MLT1_I      repbase;    DNA;    MAM; 1375 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MaLR family;
+KW   LTR retrotransposon; MLT1R; MLT1c subfamily; MLT1CR; MLT1_I.
+XX
+ID   MLT2A1      repbase;    DNA;    PRI; 444 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERV-L LTR;
+KW   Interspersed repeat; MER19; MLT2A1; MLT2A1..
+XX
+ID   MLT2A2      repbase;    DNA;    PRI; 549 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; HERV-L LTR;
+KW   Interspersed repeat; MER19; MLT2A1; MLT2A2.
+XX
+ID   MLT2B2      repbase;    DNA;    MAM; 503 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MLT2B2.
+XX
+ID   MLT2B3      repbase;    DNA;    MAM; 717 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; HERVL;
+KW   LTR; MLT2; MLT2B2; MLT2B3; RICKSHA.
+XX
+ID   MLT2B4      repbase;    DNA;    MAM; 557 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; ERVL; HERVL;
+KW   LTR; MLT2; MLT2B2; MLT2B3; MLT2B4; RICKSHA.
+XX
+ID   MLT2C2      repbase;    DNA;    PRI; 450 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Interspersed repeat; LTR; MLT2C2.
+XX
+ID   MLT2D       repbase;    DNA;    PRI; 388 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Interspersed repeat; MLT2D; MLT2D LTR.
+XX
+ID   MLT2E       repbase;    DNA;    MAM; 622 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR;
+KW   Long terminal repeat; MLT2E.
+XX
+ID   MLT2F       repbase;    DNA;    MAM; 661 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   HERVL endogenous retrovirus; LTR; Long terminal repeat; MLT2F.
+XX
+ID   MSTA        repbase;    DNA;    PRI; 428 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MSTA;
+KW   MaLR family; MstII; retrovirus-like MaLR element.
+XX
+ID   MSTA1       repbase;    DNA;    PRI; 465 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER10; MSTA1;
+KW   MSTA; MaLR family; MstII; non-LTR retrotransposon.
+XX
+ID   MSTA2       repbase;    DNA;    PRI; 457 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   LTR retrotransposon; MER10; MSTA1; MSTA2; MSTA; MaLR family;
+KW   MstII.
+XX
+ID   MSTB        repbase;    DNA;    PRI; 426 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MER10;
+KW   MSTA; MSTB; MstII; retrovirus-like MaLR element.
+XX
+ID   MSTB1       repbase;    DNA;    PRI; 432 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MER10; MSTA1;
+KW   MSTB1; MaLR family; MstII; retrovirus-like MaLR element.
+XX
+ID   MSTC        repbase;    DNA;    MAM; 428 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LTR; MSTC;
+KW   retrovirus-like MaLR element.
+XX
+ID   MSTD        repbase;    DNA;    PRI; 396 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element;
+KW   Long terminal repeat o; MSTD; MaLR family.
+XX
+ID   MST_I       repbase;    DNA;    MAM; 1651 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; MaLR family;
+KW   gag; LTR retrotransposon; MstII; MSTa subfamily; MER10;
+KW   MST-internal; MSTAR; MST_I.
+XX
+ID   ORSL        repbase;    DNA;    MAM; 275 BP.
+KW   hAT; DNA transposon; Transposable Element;
+KW   Origin of replication-like (ORS8) region; ORSL.
+XX
+ID   ORSL-2a     repbase;    DNA;    MAM; 342 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; ORSL-2a; Tip100.
+XX
+ID   ORSL-2b     repbase;    DNA;    MAM; 508 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; ORSL-2b; Tip100.
+XX
+ID   PABL_A      repbase;    DNA;    PRI; 660 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   retroelement; PAB; PABL_B; PABL_A.
+XX
+ID   PABL_AI     repbase;    DNA;    PRI; 5015 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Internal sequence of retrovirus-like element; MER4I-group;
+KW   ERV1 class; PABL_A; PABL_AI.
+XX
+ID   PABL_B      repbase;    DNA;    PRI; 667 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   retroelement; PAB; PABL_B.
+XX
+ID   PABL_BI     repbase;    DNA;    PRI; 7122 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; ERV1 class;
+KW   Internal sequence of endogenous retrovirus; PABL; PABL_BI.
+XX
+ID   PB1D11      repbase;    DNA;    MAM; 118 BP.
+KW   SINE1/7SL; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; PB1D11.
+XX
+ID   PRIMA41     repbase;    DNA;    PRI; 7756 BP.
+KW   Endogenous Retrovirus; Transposable Element; MER41C; MER4I-group;
+KW   PRIMA41.
+XX
+ID   PRIMA4_I    repbase;    DNA;    PRI; 8270 BP.
+KW   Endogenous Retrovirus; Transposable Element; Class I; MER4I-group;
+KW   PRIMA4; PRIMA4_I; PRIMA4_LTR; RNaseH; gag; leukemia retrovirus;
+KW   protease; reverse transcriptase.
+XX
+ID   PRIMA4_LTR  repbase;    DNA;    PRI; 594 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; Class I; LTR;
+KW   MER4A; MER4C; MER4I-group; PRIMA4_I; PRIMA4_LTR;
+KW   leukemia retrovirus.
+XX
+ID   PRIMAX_I    repbase;    DNA;    PRI; 4102 BP.
+KW   Endogenous Retrovirus; Transposable Element; Class I;
+KW   MER4I-group protease; PRIMA4_I; PRIMAX_I; RNaseH;
+KW   leukemia retrovirus; reverse transcriptase.
+XX
+ID   PrimLTR79   repbase;    DNA;    PRI; 503 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element; LTR;
+KW   PrimLTR79.
+XX
+ID   PTR5        repbase;    DNA;    PRI; 630 BP.
+KW   ERV1; Endogenous Retrovirus; Transposable Element;
+KW   Repetitive sequence; PTR5; LTR12;
+KW   endogenous retrovirus HERV9 internal sequence.
+XX
+ID   Retroposon-1_HS repbase;    DNA;    PRI; 4438 BP.
+KW   Non-LTR Retrotransposon; Transposable Element; retroposon;
+KW   Retroposon-1_HS.
+XX
+ID   RhiBie-1.49 repbase;    DNA;    PRI; 362 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; RhiBie-1.49.
+XX
+ID   RICKSHA     repbase;    DNA;    MAM; 2030 BP.
+KW   MuDR; DNA transposon; Transposable Element; Nonautonomous;
+KW   MUDR superfamily; Nonautonomous DNA transposon fossil; RICKSHA;
+KW   composite mobile element.
+XX
+ID   RICKSHA_0   repbase;    DNA;    MAM; 1708 BP.
+KW   MuDR; DNA transposon; Transposable Element; Nonautonomous;
+KW   MUDR superfamily; Nonautonomous DNA transposon fossil; RICKSHA;
+KW   RICKSHA_0.
+XX
+ID   Ricksha_a   repbase;    DNA;    MAM; 1181 BP.
+KW   MuDR; DNA transposon; Transposable Element; RICKSHA_0; Ricksha_a.
+XX
+ID   SVA_A       repbase;    DNA;    PRI; 1640 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; SINE-R; SVA; SVA_A.
+XX
+ID   SVA_B       repbase;    DNA;    PRI; 1383 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; SINE-R; SVA; SVA_B.
+XX
+ID   SVA_C       repbase;    DNA;    PRI; 1384 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; SINE-R; SVA; SVA_C.
+XX
+ID   SVA_D       repbase;    DNA;    PRI; 1386 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; SINE-R; SVA; SVA_D.
+XX
+ID   SVA_E       repbase;    DNA;    PRI; 1382 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; SINE-R; SVA; SVA_E.
+XX
+ID   SVA_F       repbase;    DNA;    PRI; 1375 BP.
+KW   SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; SINE-R; SVA; SVA_F.
+XX
+ID   THE1A       repbase;    DNA;    PRI; 355 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LRS; LTR;
+KW   MaLR family; O-repeat; THE1A; retrovirus-like MaLR element.
+XX
+ID   THE1B       repbase;    DNA;    PRI; 364 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LRS; LTR;
+KW   MaLR family; O-repeat; THE1B; retrovirus-like MaLR element.
+XX
+ID   THE1C       repbase;    DNA;    PRI; 375 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LRS; LTR;
+KW   MaLR family; O-repeat; retrovirus-like MaLR element; THE1C.
+XX
+ID   THE1D       repbase;    DNA;    PRI; 381 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; LRS; LTR;
+KW   MaLR family; O-repeat; retrovirus-like MaLR element; THE1A; THE1B;
+KW   THE1C; THE1D.
+XX
+ID   THE1_I      repbase;    DNA;    PRI; 1580 BP.
+KW   ERV3; Endogenous Retrovirus; Transposable Element; gag;
+KW   LTR retrotransposon; THR; THE1-internal; THE1BR; THE1_I.
+XX
+ID   THER1       repbase;    DNA;    MAM; 263 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; THER1; THER2; MIR; tRNA;
+KW   MIR_Mars.
+XX
+ID   THER2       repbase;    DNA;    MAM; 169 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Repetitive sequence; THER1; THER2; MIR; tRNA;
+KW   MIR3.
+XX
+ID   TIGGER1     repbase;    DNA;    PRI; 2418 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; MER37;
+KW   Repetitive sequence; Tigger1.
+XX
+ID   Tigger10    repbase;    DNA;    MAM; 1843 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA;
+KW   TcMar-Tigger; Tigger10.
+XX
+ID   Tigger12    repbase;    DNA;    MAM; 1959 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA;
+KW   TcMar-Tigger; Tigger12.
+XX
+ID   Tigger12A   repbase;    DNA;    MAM; 791 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA;
+KW   TcMar-Tigger; Tigger12A.
+XX
+ID   Tigger13a   repbase;    DNA;    MAM; 771 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; mariner;
+KW   Tigger13a.
+XX
+ID   Tigger14a   repbase;    DNA;    MAM; 329 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   conserved; Tigger14a; MER128; CNE.
+XX
+ID   Tigger15a   repbase;    DNA;    MAM; 715 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA;
+KW   TcMar-Tigger; Tigger15a.
+XX
+ID   Tigger16a   repbase;    DNA;    MAM; 933 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA; Tigger;
+KW   Tigger16a.
+XX
+ID   Tigger16b   repbase;    DNA;    MAM; 337 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; DNA; Tigger;
+KW   Tigger16b.
+XX
+ID   TIGGER2     repbase;    DNA;    PRI; 2718 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   Autonomous DNA transposon; TIGGER2; Tc1/mariner supergroup.
+XX
+ID   Tigger2b_Pri repbase;    DNA;    PRI; 1068 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; mariner;
+KW   TIGGER2; Tigger2b_Pri.
+XX
+ID   Tigger3b    repbase;    DNA;    PRI; 1231 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; GOLEM_B;
+KW   mariner; Tigger3b.
+XX
+ID   Tigger3c    repbase;    DNA;    PRI; 602 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; GOLEM; mariner;
+KW   Tigger3c.
+XX
+ID   Tigger3d    repbase;    DNA;    PRI; 321 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; GOLEM_C;
+KW   mariner; Tigger3d.
+XX
+ID   Tigger4a    repbase;    DNA;    PRI; 236 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; mariner;
+KW   Tigger4a; ZOMBI_A.
+XX
+ID   TIGGER5     repbase;    DNA;    PRI; 2302 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   DNA transposon fossil; MER2_type family; MER47; TIGGER3; TIGGER5.
+XX
+ID   TIGGER5A    repbase;    DNA;    MAM; 366 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER47; MER47A; Repetitive sequence; Tc1/mariner superfamily;
+KW   TIGGER3; TIGGER5A; TIR; nonautonomous DNA transposon.
+XX
+ID   TIGGER5_A   repbase;    DNA;    MAM; 351 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER47; MER47A; Repetitive sequence; Tc1/mariner superfamily;
+KW   TIGGER3; TIGGER3_A; TIGGER5_A; TIR; nonautonomous DNA transposon.
+XX
+ID   TIGGER5_B   repbase;    DNA;    MAM; 446 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER47; MER47B; Repetitive sequence; Tc1/mariner superfamily;
+KW   TIGGER3; TIGGER3_B; TIGGER5_B; TIR; nonautonomous DNA transposon.
+XX
+ID   TIGGER6A    repbase;    DNA;    MAM; 1106 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER97; Nonautonomous DNA transposon fossil; TIGGER6A;
+KW   mariner/Tc1 superfamily.
+XX
+ID   TIGGER6B    repbase;    DNA;    PRI; 1597 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER97; nonautonomous DNA transposon; TIGGER6B;
+KW   Tc1/mariner supergroup.
+XX
+ID   TIGGER7     repbase;    DNA;    PRI; 2487 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   Autonomous DNA transposon; MER44; TIGGER7;
+KW   Tc1/mariner supergroup.
+XX
+ID   TIGGER8     repbase;    DNA;    PRI; 666 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; TIGGER8.
+XX
+ID   TIGGER9     repbase;    DNA;    PRI; 659 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   DNA transposon fossil; MER111; mariner/Tc1 superfamily; TIGGER9.
+XX
+ID   Tigger9b    repbase;    DNA;    MAM; 624 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; mariner;
+KW   Tigger9b.
+XX
+ID   UCON1       repbase;    DNA;    VRT; 236 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON1;
+KW   conserved; CNE.
+XX
+ID   UCON10      repbase;    DNA;    VRT; 435 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON10;
+KW   conserved; CNE.
+XX
+ID   UCON100     repbase;    DNA;    MAM; 122 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   conserved; UCON100.
+XX
+ID   UCON104     repbase;    DNA;    MAM; 177 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   UCON104; conserved.
+XX
+ID   UCON107     repbase;    DNA;    MAM; 205 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   UCON107; conserved.
+XX
+ID   UCON11      repbase;    DNA;    VRT; 382 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON11;
+KW   conserved; CNE.
+XX
+ID   UCON12      repbase;    DNA;    VRT; 298 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat;
+KW   conserved; UCON12; CNE.
+XX
+ID   UCON12A     repbase;    DNA;    VRT; 369 BP.
+KW   Transposable Element; UCON12A.
+XX
+ID   UCON13      repbase;    DNA;    VRT; 513 BP.
+KW   Neptune; Penelope; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Interspersed repeat; LINE; conserved; UCON13; CNE.
+XX
+ID   UCON132a    repbase;    DNA;    MAM; 153 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   UCON132a; conserved.
+XX
+ID   UCON132b    repbase;    DNA;    MAM; 148 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   UCON132b; conserved.
+XX
+ID   UCON14      repbase;    DNA;    VRT; 347 BP.
+KW   Transposable Element; Nonautonomous; DNA; Interspersed repeat;
+KW   UCON14; conserved; CNE.
+XX
+ID   UCON15      repbase;    DNA;    VRT; 340 BP.
+KW   Transposable Element; nonautonomous; Interspersed repeat;
+KW   conserved; CNE; UCON15.
+XX
+ID   UCON16      repbase;    DNA;    VRT; 289 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON16;
+KW   conserved; CNE.
+XX
+ID   UCON17      repbase;    DNA;    VRT; 460 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON17;
+KW   conserved; CNE.
+XX
+ID   UCON18      repbase;    DNA;    VRT; 333 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON18;
+KW   conserved; CNE.
+XX
+ID   UCON19      repbase;    DNA;    VRT; 361 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON19;
+KW   conserved; CNE.
+XX
+ID   UCON2       repbase;    DNA;    VRT; 282 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON2;
+KW   conserved; CNE.
+XX
+ID   UCON20      repbase;    DNA;    VRT; 699 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON20;
+KW   conserved; CNE.
+XX
+ID   UCON21      repbase;    DNA;    VRT; 330 BP.
+KW   Transposable Element; Nonautonomous; DNA; Interspersed repeat;
+KW   UCON21; conserved; CNE.
+XX
+ID   UCON22      repbase;    DNA;    VRT; 340 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON22;
+KW   conserved; CNE.
+XX
+ID   UCON23      repbase;    DNA;    VRT; 154 BP.
+KW   Transposable Element; Nonautonomous; DNA; Interspersed repeat;
+KW   UCON23; conserved; CNE.
+XX
+ID   UCON24      repbase;    DNA;    VRT; 384 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON24;
+KW   conserved; CNE.
+XX
+ID   UCON25      repbase;    DNA;    VRT; 137 BP.
+KW   Transposable Element; Nonautonomous; conserved;
+KW   Interspersed repeat; UCON25; CNE.
+XX
+ID   UCON26      repbase;    DNA;    VRT; 343 BP.
+KW   Transposable Element; Nonautonomous; UCON26; conserved; CNE.
+XX
+ID   UCON27      repbase;    DNA;    VRT; 1268 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON27;
+KW   conserved; CNE.
+XX
+ID   UCON28      repbase;    DNA;    VRT; 280 BP.
+KW   Transposable Element; Nonautonomous; conserved;
+KW   Interspersed repeat; UCON28; CNE.
+XX
+ID   UCON28a     repbase;    DNA;    VRT; 807 BP.
+KW   Transposable Element; UCON28a; conserved; CNE.
+XX
+ID   UCON28b     repbase;    DNA;    VRT; 575 BP.
+KW   Transposable Element; UCON28b.
+XX
+ID   UCON28c     repbase;    DNA;    VRT; 568 BP.
+KW   Transposable Element; UCON28c.
+XX
+ID   UCON29      repbase;    DNA;    VRT; 437 BP.
+KW   Kolobok; DNA transposon; Transposable Element; Nonautonomous;
+KW   Interspersed repeat; DNA; conserved; UCON29; CNE.
+XX
+ID   UCON3       repbase;    DNA;    VRT; 172 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; Interspersed repeat; conserved; UCON3; CNE.
+XX
+ID   UCON31      repbase;    DNA;    VRT; 384 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON31;
+KW   conserved; CNE.
+XX
+ID   UCON34      repbase;    DNA;    MAM; 125 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   conserved; UCON34.
+XX
+ID   UCON39      repbase;    DNA;    MAM; 182 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element;
+KW   Repetitive element; conserved; UCON39.
+XX
+ID   UCON4       repbase;    DNA;    VRT; 310 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON4;
+KW   conserved; CNE.
+XX
+ID   UCON42      repbase;    DNA;    MAM; 315 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   UCON42; conserved.
+XX
+ID   UCON49      repbase;    DNA;    MAM; 141 BP.
+KW   L2; Non-LTR Retrotransposon; Transposable Element;
+KW   Repetitive element; UCON49; conserved.
+XX
+ID   UCON5       repbase;    DNA;    VRT; 405 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON5;
+KW   conserved; CNE.
+XX
+ID   UCON50      repbase;    DNA;    MAM; 133 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   UCON50; conserved.
+XX
+ID   UCON51      repbase;    DNA;    MAM; 99 BP.
+KW   LTR Retrotransposon; Transposable Element; Repetitive element;
+KW   conserved; UCON51.
+XX
+ID   UCON52      repbase;    DNA;    MAM; 122 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous;
+KW   Repetitive element; UCON52; conserved.
+XX
+ID   UCON55      repbase;    DNA;    MAM; 170 BP.
+KW   SINE2/tRNA; SINE; Non-LTR Retrotransposon; Transposable Element;
+KW   Nonautonomous; UCON55; conserved.
+XX
+ID   UCON6       repbase;    DNA;    VRT; 301 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON6;
+KW   conserved; CNE.
+XX
+ID   UCON7       repbase;    DNA;    VRT; 393 BP.
+KW   Transposable Element; Nonautonomous; DNA; Interspersed repeat;
+KW   UCON7; conserved; CNE.
+XX
+ID   UCON74      repbase;    DNA;    MAM; 659 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   UCON74; conserved.
+XX
+ID   UCON78      repbase;    DNA;    MAM; 147 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; UCON78;
+KW   conserved.
+XX
+ID   UCON79      repbase;    DNA;    MAM; 171 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   UCON79; conserved.
+XX
+ID   UCON8       repbase;    DNA;    VRT; 381 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON8;
+KW   conserved; CNE.
+XX
+ID   UCON81      repbase;    DNA;    MAM; 84 BP.
+KW   hAT; DNA transposon; Transposable Element; Repetitive element;
+KW   conserved; UCON81.
+XX
+ID   UCON82      repbase;    DNA;    MAM; 148 BP.
+KW   RTE; Non-LTR Retrotransposon; Transposable Element;
+KW   Repetitive element; conserved; UCON82.
+XX
+ID   UCON84      repbase;    DNA;    MAM; 234 BP.
+KW   Harbinger; DNA transposon; Transposable Element; Nonautonomous;
+KW   Repetitive element; conserved; UCON84.
+XX
+ID   UCON86      repbase;    DNA;    MAM; 190 BP.
+KW   L2; Non-LTR Retrotransposon; Transposable Element;
+KW   Repetitive element; UCON86; conserved.
+XX
+ID   UCON9       repbase;    DNA;    VRT; 323 BP.
+KW   Transposable Element; Nonautonomous; Interspersed repeat; UCON9;
+KW   conserved; CNE.
+XX
+ID   UCON95      repbase;    DNA;    MAM; 144 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; UCON95;
+KW   conserved.
+XX
+ID   UCON99      repbase;    DNA;    MAM; 100 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; UCON99;
+KW   conserved.
+XX
+ID   X10a_DNA    repbase;    DNA;    MAM; 78 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   conserved; X10a_DNA.
+XX
+ID   X10b_DNA    repbase;    DNA;    MAM; 176 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   X10b_DNA; conserved.
+XX
+ID   X11_DNA     repbase;    DNA;    MAM; 426 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; X11_DNA;
+KW   conserved.
+XX
+ID   X11_LINE    repbase;    DNA;    MAM; 275 BP.
+KW   RTE; Non-LTR Retrotransposon; Transposable Element; Nonautonomous;
+KW   X11_LINE; conserved.
+XX
+ID   X12_DNA     repbase;    DNA;    MAM; 307 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   X12_DNA; conserved.
+XX
+ID   X12_LINE    repbase;    DNA;    MAM; 194 BP.
+KW   Vingi; Non-LTR Retrotransposon; Transposable Element; X12_LINE;
+KW   conserved.
+XX
+ID   X13_DNA     repbase;    DNA;    MAM; 507 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; X13_DNA;
+KW   conserved.
+XX
+ID   X13_LINE    repbase;    DNA;    MAM; 191 BP.
+KW   Non-LTR Retrotransposon; Transposable Element; X13_LINE;
+KW   conserved.
+XX
+ID   X15_DNA     repbase;    DNA;    MAM; 193 BP.
+KW   hAT; DNA transposon; Transposable Element; X15_DNA; conserved.
+XX
+ID   X15_LINE    repbase;    DNA;    MAM; 223 BP.
+KW   L2; Non-LTR Retrotransposon; Transposable Element; X15_LINE;
+KW   conserved.
+XX
+ID   X17_LINE    repbase;    DNA;    MAM; 296 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; X17_LINE;
+KW   conserved.
+XX
+ID   X18_DNA     repbase;    DNA;    MAM; 337 BP.
+KW   DNA transposon; Transposable Element; X18_DNA; conserved.
+XX
+ID   X18_LINE    repbase;    DNA;    MAM; 227 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; X18_LINE;
+KW   conserved.
+XX
+ID   X19_LINE    repbase;    DNA;    MAM; 224 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; X19_LINE;
+KW   conserved.
+XX
+ID   X1_DNA      repbase;    DNA;    MAM; 606 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; X1_DNA;
+KW   conserved.
+XX
+ID   X1_LINE     repbase;    DNA;    VRT; 645 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; LINE; X1_LINE;
+KW   conserved; CNE.
+XX
+ID   X1_LR       repbase;    DNA;    MAM; 162 BP.
+KW   LTR Retrotransposon; Transposable Element; X1_LR; conserved.
+XX
+ID   X20_DNA     repbase;    DNA;    MAM; 199 BP.
+KW   DNA transposon; Transposable Element; X20_DNA; conserved.
+XX
+ID   X20_LINE    repbase;    DNA;    MAM; 253 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; X20_LINE;
+KW   conserved.
+XX
+ID   X21_DNA     repbase;    DNA;    MAM; 159 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; X21_DNA;
+KW   conserved.
+XX
+ID   X21_LINE    repbase;    DNA;    MAM; 185 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; conserved;
+KW   X21_LINE.
+XX
+ID   X22_DNA     repbase;    DNA;    MAM; 149 BP.
+KW   DNA transposon; Transposable Element; X22_DNA; conserved.
+XX
+ID   X23_DNA     repbase;    DNA;    MAM; 218 BP.
+KW   DNA transposon; Transposable Element; X23_DNA; conserved.
+XX
+ID   X24_DNA     repbase;    DNA;    MAM; 173 BP.
+KW   DNA transposon; Transposable Element; X24_DNA; conserved.
+XX
+ID   X24_LINE    repbase;    DNA;    MAM; 269 BP.
+KW   L2; Non-LTR Retrotransposon; Transposable Element; X24_LINE;
+KW   conserved.
+XX
+ID   X25_DNA     repbase;    DNA;    MAM; 189 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; conserved;
+KW   X25_DNA.
+XX
+ID   X26_DNA     repbase;    DNA;    MAM; 551 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; X26_DNA;
+KW   conserved.
+XX
+ID   X27_DNA     repbase;    DNA;    MAM; 339 BP.
+KW   DNA transposon; Transposable Element; X27_DNA; conserved.
+XX
+ID   X28_DNA     repbase;    DNA;    MAM; 388 BP.
+KW   hAT; DNA transposon; Transposable Element; conserved; X28_DNA.
+XX
+ID   X29a_DNA    repbase;    DNA;    MAM; 360 BP.
+KW   DNA transposon; Transposable Element; X29a_DNA; conserved.
+XX
+ID   X29b_DNA    repbase;    DNA;    MAM; 386 BP.
+KW   DNA transposon; Transposable Element; X29b_DNA; conserved.
+XX
+ID   X2a_DNA     repbase;    DNA;    MAM; 155 BP.
+KW   DNA transposon; Transposable Element; Nonautonomous; X2a_DNA;
+KW   conserved.
+XX
+ID   X2b_DNA     repbase;    DNA;    MAM; 189 BP.
+KW   DNA transposon; Transposable Element; X2b_DNA; conserved.
+XX
+ID   X2_LINE     repbase;    DNA;    VRT; 193 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; conserved;
+KW   X2_LINE; CNE.
+XX
+ID   X2_LR       repbase;    DNA;    MAM; 179 BP.
+KW   LTR Retrotransposon; Transposable Element; X2_LR; conserved.
+XX
+ID   X30_DNA     repbase;    DNA;    MAM; 287 BP.
+KW   DNA transposon; Transposable Element; X30_DNA; conserved.
+XX
+ID   X31_DNA     repbase;    DNA;    MAM; 313 BP.
+KW   hAT; DNA transposon; Transposable Element; conserved; X31_DNA.
+XX
+ID   X32_DNA     repbase;    DNA;    MAM; 336 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   X32_DNA; conserved.
+XX
+ID   X33a_DNA    repbase;    DNA;    MAM; 366 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   X33a_DNA; conserved.
+XX
+ID   X34_DNA     repbase;    DNA;    MAM; 166 BP.
+KW   DNA transposon; Transposable Element; X34_DNA; conserved.
+XX
+ID   X3_LINE     repbase;    DNA;    MAM; 233 BP.
+KW   Non-LTR Retrotransposon; Transposable Element; conserved; X3_LINE;
+KW   CNE.
+XX
+ID   X3_LR       repbase;    DNA;    MAM; 178 BP.
+KW   LTR Retrotransposon; Transposable Element; X3_LR; conserved.
+XX
+ID   X4a_DNA     repbase;    DNA;    MAM; 215 BP.
+KW   DNA transposon; Transposable Element; X4a_DNA; conserved.
+XX
+ID   X4b_DNA     repbase;    DNA;    MAM; 399 BP.
+KW   DNA transposon; Transposable Element; X4b_DNA; conserved.
+XX
+ID   X4_LINE     repbase;    DNA;    VRT; 306 BP.
+KW   R4; Non-LTR Retrotransposon; Transposable Element; conserved;
+KW   X4_LINE; CNE.
+XX
+ID   X4_LR       repbase;    DNA;    MAM; 331 BP.
+KW   LTR Retrotransposon; Transposable Element; X4_LR; conserved.
+XX
+ID   X5a_DNA     repbase;    DNA;    MAM; 176 BP.
+KW   DNA transposon; Transposable Element; X5a_DNA; conserved.
+XX
+ID   X5A_LINE    repbase;    DNA;    VRT; 230 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; Nonautonomous;
+KW   conserved; X5A_LINE; CNE.
+XX
+ID   X5b_DNA     repbase;    DNA;    MAM; 187 BP.
+KW   DNA transposon; Transposable Element; X5b_DNA; conserved.
+XX
+ID   X5B_LINE    repbase;    DNA;    VRT; 185 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element;
+KW   Interspersed repeat; conserved; X5_LINE; X5B_LINE; CNE.
+XX
+ID   X6a_DNA     repbase;    DNA;    MAM; 350 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; conserved;
+KW   X6a_DNA.
+XX
+ID   X6A_LINE    repbase;    DNA;    VRT; 258 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; conserved;
+KW   X6A_LINE; CNE.
+XX
+ID   X6b_DNA     repbase;    DNA;    MAM; 243 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; conserved;
+KW   X6b_DNA.
+XX
+ID   X6B_LINE    repbase;    DNA;    VRT; 290 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element;
+KW   Interspersed repeat; conserved; X6B_LINE; CNE.
+XX
+ID   X7A_LINE    repbase;    DNA;    VRT; 267 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; Nonautonomous;
+KW   conserved; X7A_LINE; CNE.
+XX
+ID   X7B_LINE    repbase;    DNA;    VRT; 250 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element;
+KW   Interspersed repeat; conserved; X7B_LINE; CNE.
+XX
+ID   X7C_LINE    repbase;    DNA;    VRT; 236 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element;
+KW   Interspersed repeat; conserved; X7C_LINE; CNE.
+XX
+ID   X7D_LINE    repbase;    DNA;    VRT; 159 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element;
+KW   Interspersed repeat; conserved; X7D_LINE; CNE.
+XX
+ID   X7_DNA      repbase;    DNA;    MAM; 328 BP.
+KW   hAT; DNA transposon; Transposable Element; Nonautonomous; X7_DNA;
+KW   conserved.
+XX
+ID   X8_LINE     repbase;    DNA;    VRT; 296 BP.
+KW   CR1; Non-LTR Retrotransposon; Transposable Element; Nonautonomous;
+KW   X8_LINE.
+XX
+ID   X9a_DNA     repbase;    DNA;    MAM; 326 BP.
+KW   DNA transposon; Transposable Element; X9a_DNA; conserved.
+XX
+ID   X9b_DNA     repbase;    DNA;    MAM; 317 BP.
+KW   DNA transposon; Transposable Element; X9b_DNA; conserved.
+XX
+ID   X9c_DNA     repbase;    DNA;    MAM; 287 BP.
+KW   DNA transposon; Transposable Element; X9c_DNA; conserved.
+XX
+ID   X9_LINE     repbase;    DNA;    VRT; 159 BP.
+KW   L1; Non-LTR Retrotransposon; Transposable Element; Nonautonomous;
+KW   Interspersed repeat; conserved; X9_LINE; CNE.
+XX
+ID   ZAPHOD      repbase;    DNA;    PRI; 4023 BP.
+KW   DNA transposon; Transposable Element; MER115; MER118; ZAPHOD.
+XX
+ID   Zaphod3     repbase;    DNA;    MAM; 2623 BP.
+KW   hAT; DNA transposon; Transposable Element; DNA; Zaphod3;
+KW   hAT-Tip100.
+XX
+ID   ZOMBI       repbase;    DNA;    MAM; 2806 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; TIRs;
+KW   TA target; MER46; TIGGER4; ZOMBI.
+XX
+ID   ZOMBI_A     repbase;    DNA;    PRI; 234 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   nonautonomous DNA transposon; MER46; ZOMBI_A.
+XX
+ID   ZOMBI_B     repbase;    DNA;    MAM; 468 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   nonautonomous DNA transposon; MER46; ZOMBI_B.
+XX
+ID   ZOMBI_C     repbase;    DNA;    MAM; 333 BP.
+KW   Mariner/Tc1; DNA transposon; Transposable Element; Nonautonomous;
+KW   MER46; ZOMBI; ZOMBI_C; nonautonomous DNA transposon.
