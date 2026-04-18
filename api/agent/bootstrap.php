@@ -98,12 +98,12 @@ function tekg_agent_substr(string $value, int $start, ?int $length = null): stri
     return $length === null ? substr($value, $start) : substr($value, $start, $length);
 }
 
-function tekg_agent_detect_language(string $question, string $fallback = 'en'): string
+function tekg_agent_detect_language(string $question, string $fallback = 'english'): string
 {
     if (preg_match('/[\x{4e00}-\x{9fff}]/u', $question)) {
-        return 'zh';
+        return 'chinese';
     }
-    return in_array($fallback, ['zh', 'en'], true) ? $fallback : 'en';
+    return in_array($fallback, ['chinese', 'english'], true) ? $fallback : 'english';
 }
 
 function tekg_agent_make_session_id(): string

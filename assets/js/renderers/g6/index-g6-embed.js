@@ -66,7 +66,7 @@
     initialQuery: String(params.get('q') || '').trim(),
     initialQueryType: String(params.get('type') || '').trim(),
     initialClassQuery: String(params.get('class') || '').trim(),
-    initialLang: params.get('lang') === 'zh' ? 'zh' : 'en',
+    initialLang: 'en',
     syncRouteState: ({ query, queryType, classQuery, keyNodeLevel, fixedView, showLabels, lang }) => {
       const next = new URLSearchParams(window.location.search);
       if (query) next.set('q', query);
@@ -77,7 +77,6 @@
       else next.delete('class');
       next.set('key_level', String(keyNodeLevel));
       next.set('fixed', fixedView ? '1' : '0');
-      next.set('lang', lang === 'zh' ? 'zh' : 'en');
       next.set('show_labels', showLabels ? '1' : '0');
       window.history.replaceState({}, '', `${window.location.pathname}?${next.toString()}`);
     },

@@ -6,7 +6,6 @@ $protoSubtitle = 'Interactive graph preview';
 require __DIR__ . '/head.php';
 
 $siteLang = site_lang();
-$siteRenderer = site_renderer();
 $queryParams = $_GET;
 unset($queryParams['lang'], $queryParams['renderer']);
 
@@ -15,12 +14,12 @@ $g6PreviewVersion = max(
     (int)@filemtime(__DIR__ . '/assets/css/tekg_runtime.css'),
     (int)@filemtime(__DIR__ . '/assets/js/renderers/g6/index-g6-qa.js')
 );
-$graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'preview-graphonly']));
-$qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_merge($queryParams, ['embed' => 'qa-overlay']));
+$graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, null, array_merge($queryParams, ['embed' => 'preview-graphonly']));
+$qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, null, array_merge($queryParams, ['embed' => 'qa-overlay']));
 ?>
       <link rel="stylesheet" href="/TE-/assets/css/pages/preview.css">
 
-      <section class="preview-stage" id="previewStage" data-renderer="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
+      <section class="preview-stage" id="previewStage">
         <button class="preview-fullscreen-btn" id="previewFullscreenBtn" type="button" aria-label="Enter fullscreen preview">
           Fullscreen
         </button>

@@ -18,81 +18,25 @@
     const initialElements = JSON.parse(JSON.stringify(demoData.elements || []));
     const el = id => document.getElementById(id);
     const nodeDetails = el('node-details'), searchInput = el('node-search'), nav = el('search-results-nav'), prevBtn = el('prev-result'), nextBtn = el('next-result'), resultCounter = el('result-counter'), resultName = el('result-name'), chatMessages = el('chat-messages'), userInput = el('user-question'), sendBtn = el('send-question');
-    let currentLang = pageParams.get('lang') === 'zh' ? 'zh' : 'en', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', currentModelProvider = 'qwen', currentCustomPrompt = '', customPromptDraft = '', currentCustomDepth = {rows:12,references:8}, customDepthDraft = {rows:12,references:8}, customEditorOpen = false, customEditorMode = 'prompt', previousAnswerStyleBeforeCustom = 'simple', previousAnswerDepthBeforeCustom = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree', currentKeyNodeLevel = 1;
-    let terminologyNames = {zh:{}, en:{}}, terminologyNameLookup = {zh:{}, en:{}}, terminologyRelations = {zh:{}, en:{}};
-    let ui = {zh:{},en:{}}; 
-    const typeLabel = {zh:{TE:'转座元件',Disease:'疾病',Function:'功能/机制',Paper:'文献'},en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
-    const relLabel = {zh:{SUBFAMILY_OF:'包含','与...相关':'与…相关','不导致':'不导致','促进':'促进','介导':'介导','报道':'报道','影响':'影响','执行':'执行','参与':'参与','调控':'调控'},en:{SUBFAMILY_OF:'contains','与...相关':'associated with','不导致':'does not cause','促进':'promotes','介导':'mediates','报道':'reports','影响':'affects','执行':'executes','参与':'participates in','调控':'regulates'}};
-    Object.assign(relLabel.zh, {
-      '导致': '导致',
-      '利用': '利用',
-      '抑制': '抑制',
-      '触发': '触发',
-      '诱导': '诱导',
-      '增加风险': '增加风险',
-      '调节': '调节',
-      '促成': '促成',
-      '发生': '发生',
-      '激活': '激活',
-      '破坏': '破坏',
-      '产生': '产生',
-      '充当': '充当',
-      '使能': '使能',
-      '解释': '解释',
-      '提供': '提供',
-      '易感': '易感',
-      '被调控': '被调控',
-      '改变': '改变',
-      '缺失': '缺失',
-      '表现为': '表现为',
-      '表征': '表征'
-    });
-    Object.assign(relLabel.en, {
-      '导致': 'leads to',
-      '利用': 'uses',
-      '抑制': 'inhibits',
-      '触发': 'triggers',
-      '诱导': 'induces',
-      '增加风险': 'increases risk of',
-      '调节': 'modulates',
-      '促成': 'facilitates',
-      '发生': 'occurs in',
-      '激活': 'activates',
-      '破坏': 'disrupts',
-      '产生': 'produces',
-      '充当': 'acts as',
-      '使能': 'enables',
-      '解释': 'explains',
-      '提供': 'provides',
-      '易感': 'predisposes to',
-      '被调控': 'is regulated by',
-      '改变': 'alters',
-      '缺失': 'lacks',
-      '表现为': 'manifests as',
-      '表征': 'characterizes'
-    });
-    const nameMap = {zh:{},en:{}};
-    const descMap = {zh:{},en:{}};
-    let teDescMap = {zh:{}, en:{}};
+    let currentLang = 'en', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', currentModelProvider = 'qwen', currentCustomPrompt = '', customPromptDraft = '', currentCustomDepth = {rows:12,references:8}, customDepthDraft = {rows:12,references:8}, customEditorOpen = false, customEditorMode = 'prompt', previousAnswerStyleBeforeCustom = 'simple', previousAnswerDepthBeforeCustom = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree', currentKeyNodeLevel = 1;
+    let terminologyNames = {en:{}}, terminologyNameLookup = {en:{}}, terminologyRelations = {en:{}};
+    let ui = {en:{}}; 
+    const typeLabel = {en:{TE:'Transposable Element',Disease:'Disease',Function:'Function/Mechanism',Paper:'Paper'}};
+    const relLabel = {en:{SUBFAMILY_OF:'contains','��...���':'associated with','������':'does not cause','�ٽ�':'promotes','�鵼':'mediates','����':'reports','Ӱ��':'affects','ִ��':'executes','����':'participates in','����':'regulates','����':'leads to','����':'uses','����':'inhibits','����':'triggers','�յ�':'induces','���ӷ���':'increases risk of','����':'modulates','�ٳ�':'facilitates','����':'occurs in','����':'activates','�ƻ�':'disrupts','����':'produces','�䵱':'acts as','ʹ��':'enables','����':'explains','�ṩ':'provides','�׸�':'predisposes to','������':'is regulated by','�ı�':'alters','ȱʧ':'lacks','����Ϊ':'manifests as','����':'characterizes'}};
+    const nameMap = {en:{}};
+    const descMap = {en:{}};
+    let teDescMap = {en:{}};
     let entityDescMap = {
-      zh: {Disease:{}, Function:{}},
       en: {Disease:{}, Function:{}}
     };
-    let localQaTemplates = {zh:{}, en:{}};
+    let localQaTemplates = {en:{}};
     const DISPLAY_NAME_OVERRIDES = {
-      zh: {
-        'L1':'LINE1',
-        'LINE-1':'LINE1',
-        'LINE（长散在核元件）':'LINE',
-        'SINE（短散在核元件）':'SINE'
-      },
       en: {
         'L1':'LINE1',
-        'LINE-1':'LINE1',
-        '人类转座子':'TE'
+        'LINE-1':'LINE1'
       }
     };
-    const getTypeColor = t => ({TE:'#2563eb',Disease:'#ef4444',Function:'#10b981',Paper:'#f59e0b'}[t] || '#94a3b8');
+        const getTypeColor = t => ({TE:'#2563eb',Disease:'#ef4444',Function:'#10b981',Paper:'#f59e0b'}[t] || '#94a3b8');
     function getTreeDepthColor(depth){
       if(depth <= 0) return '#163a8a';
       if(depth === 1) return '#1d4ed8';
@@ -103,8 +47,8 @@
     function containsChinese(text){return /[\u4e00-\u9fff]/.test(text || '');}
     function getType(type){return (typeLabel[currentLang] && typeLabel[currentLang][type]) || type;}
     function rebuildTerminologyIndexes(){
-      terminologyNameLookup = {zh:{}, en:{}};
-      ['zh','en'].forEach(lang=>{
+      terminologyNameLookup = {en:{}};
+      ['en'].forEach(lang=>{
         const source = terminologyNames[lang] || {};
         Object.keys(source).forEach(key=>{
           terminologyNameLookup[lang][key] = source[key];
@@ -114,7 +58,7 @@
     }
     function mergeTerminology(payload){
       if(!payload || typeof payload !== 'object') return;
-      ['zh','en'].forEach(lang=>{
+      ['en'].forEach(lang=>{
         terminologyNames[lang] = Object.assign({}, terminologyNames[lang] || {}, payload.names?.[lang] || {});
         terminologyRelations[lang] = Object.assign({}, terminologyRelations[lang] || {}, payload.relations?.[lang] || {});
       });
@@ -144,12 +88,11 @@
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         teDescMap = {
-          zh: Object.assign({}, payload?.zh || {}),
           en: Object.assign({}, payload?.en || {})
         };
       }catch(err){
         console.warn('Failed to load TE descriptions:', err);
-        teDescMap = {zh:{}, en:{}};
+        teDescMap = {en:{}};
       }
     }
     async function loadEntityDescriptions(){
@@ -158,10 +101,6 @@
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         entityDescMap = {
-          zh: {
-            Disease: Object.assign({}, payload?.zh?.Disease || {}),
-            Function: Object.assign({}, payload?.zh?.Function || {})
-          },
           en: {
             Disease: Object.assign({}, payload?.en?.Disease || {}),
             Function: Object.assign({}, payload?.en?.Function || {})
@@ -169,7 +108,7 @@
         };
       }catch(err){
         console.warn('Failed to load entity descriptions:', err);
-        entityDescMap = {zh:{Disease:{}, Function:{}}, en:{Disease:{}, Function:{}}};
+        entityDescMap = {en:{Disease:{}, Function:{}}};
       }
     }
     async function loadUiText(){
@@ -178,12 +117,11 @@
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         ui = {
-          zh: Object.assign({}, payload?.zh || {}),
           en: Object.assign({}, payload?.en || {})
         };
       }catch(err){
         console.warn('Failed to load UI text:', err);
-        ui = {zh:{}, en:{}};
+        ui = {en:{}};
       }
     }
     async function loadLocalQaTemplates(){
@@ -192,12 +130,11 @@
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         localQaTemplates = {
-          zh: Object.assign({}, payload?.zh || {}),
           en: Object.assign({}, payload?.en || {})
         };
       }catch(err){
         console.warn('Failed to load local QA templates:', err);
-        localQaTemplates = {zh:{}, en:{}};
+        localQaTemplates = {en:{}};
       }
     }
     function getLocalQaTemplate(key, fallback=''){
@@ -220,17 +157,13 @@
     function getRel(rel){return lookupMappedRelation(rel);}
     function getPaperDisplayName(name, pmid=''){
       const mapped = lookupMappedName(name);
-      if(mapped) return mapped;
-      if(currentLang==='zh') return pmid ? `文献 PMID:${pmid}` : '文献节点';
-      if(containsChinese(name)) return pmid ? `Paper PMID:${pmid}` : 'Paper node';
+      if(mapped) return mapped;      if(containsChinese(name)) return pmid ? `Paper PMID:${pmid}` : 'Paper node';
       return name;
     }
-    function getName(name,type,description='',pmid=''){
-      if(currentLang==='zh' && (name === 'LINE' || name === 'SINE')) return name;
-      const mapped = lookupMappedName(name);
+    function getName(name,type,description='',pmid=''){      const mapped = lookupMappedName(name);
       if(mapped) return mapped;
       if(type==='Paper') return getPaperDisplayName(name, pmid);
-      if(currentLang==='en' && containsChinese(name)) return `${getType(type)} node`;
+      if(containsChinese(name)) return `${getType(type)} node`;
       return name;
     }
     const inferType = name => {
@@ -255,30 +188,23 @@
       const key = String(getDisplayNameKey(name) || '').trim();
       const mapped = teDescMap[currentLang] && teDescMap[currentLang][key] ? String(teDescMap[currentLang][key]).trim() : '';
       if(mapped && !isBrokenDescription(mapped)) return mapped;
-      if(currentLang==='en'){
-        const rawDesc = String(description || '').trim();
-        if(rawDesc && !isBrokenDescription(rawDesc) && !isTreeImportDescription(rawDesc)) return rawDesc;
-      }
-      if(currentLang==='zh'){
-        return `${getName(name,'TE')} 是当前知识图谱中的转座元件节点。当前页面主要展示它在 TE 谱系结构以及相关机制、疾病和文献证据中的位置。`;
-      }
+      const rawDesc = String(description || '').trim();
+      if(rawDesc && !isBrokenDescription(rawDesc) && !isTreeImportDescription(rawDesc)) return rawDesc;
       return `${getName(name,'TE')} is a transposable element node in the current knowledge graph. The current page mainly shows its position within TE lineage structure and related mechanism, disease, and literature evidence.`;
     }
     function getEntityDesc(name,type,description=''){
       const key = String(name || '').trim();
       const mapped = entityDescMap[currentLang]?.[type]?.[key] ? String(entityDescMap[currentLang][type][key]).trim() : '';
       if(mapped && !isBrokenDescription(mapped)) return mapped;
-      if(currentLang==='en'){
-        const rawDesc = String(description || '').trim();
-        if(rawDesc && !isBrokenDescription(rawDesc)) return rawDesc;
-      }
+      const rawDesc = String(description || '').trim();
+      if(rawDesc && !isBrokenDescription(rawDesc)) return rawDesc;
       return '';
     }
     function buildDefaultDesc(name,type,pmid=''){
       if(type==='TE') return getTeDesc(name,'');
-      if(type==='Function') return currentLang==='zh' ? `${getName(name,type,'',pmid)} \u662f\u5f53\u524d\u77e5\u8bc6\u56fe\u8c31\u4e2d\u7684\u529f\u80fd\u6216\u673a\u5236\u8282\u70b9\u3002` : `${getName(name,type,'',pmid)} is a function or mechanism node in the current graph.`;
-      if(type==='Disease') return currentLang==='zh' ? `${getName(name,type,'',pmid)} \u662f\u5f53\u524d\u77e5\u8bc6\u56fe\u8c31\u4e2d\u7684\u75be\u75c5\u8282\u70b9\u3002` : `${getName(name,type,'',pmid)} is a disease node in the current graph.`;
-      if(type==='Paper') return currentLang==='zh' ? `\u8be5\u8282\u70b9\u8868\u793a\u652f\u6491\u5f53\u524d\u56fe\u8c31\u5173\u7cfb\u7684\u6587\u732e\u8bb0\u5f55${pmid ? `\uff08PMID: ${pmid}\uff09` : ''}\u3002` : `This node represents a literature record supporting the current graph knowledge${pmid ? ` (PMID: ${pmid})` : ''}.`;
+      if(type==='Function') return `${getName(name,type,'',pmid)} is a function or mechanism node in the current graph.`;
+      if(type==='Disease') return `${getName(name,type,'',pmid)} is a disease node in the current graph.`;
+      if(type==='Paper') return `This node represents a literature record supporting the current graph knowledge${pmid ? ` (PMID: ${pmid})` : ''}.`;
       return '';
     }
     function getDesc(name,type,description='',pmid=''){

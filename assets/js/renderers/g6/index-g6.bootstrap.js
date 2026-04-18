@@ -8,8 +8,6 @@
   const initialClassQuery = String(params.get('class') || '').trim();
 
   const els = {
-    zhBtn: document.getElementById('lang-zh'),
-    enBtn: document.getElementById('lang-en'),
     title: document.getElementById('page-title'),
     badge: document.getElementById('page-badge'),
     graphTitle: document.getElementById('graph-title'),
@@ -58,27 +56,6 @@
       graphError: (message) => `Failed: ${message || 'unknown error'}`,
       legendTitle: 'Entity Legend',
     },
-    zh: {
-      pageTitle: 'TEKG G6 Workspace',
-      badge: '\u4ee5\u5206\u7c7b\u6811\u4e3a\u9ed8\u8ba4\u5165\u53e3\u7684 G6 \u9884\u89c8',
-      graphTitle: 'G6 Graph Workspace',
-      searchPlaceholder: '\u641c\u7d22 LINE1\u3001L1HS\u3001\u75be\u75c5\u6216\u529f\u80fd',
-      showNamesOn: '\u663e\u793a\u540d\u5b57\uff1a\u5f00',
-      showNamesOff: '\u663e\u793a\u540d\u5b57\uff1a\u5173',
-      fixedOn: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5f00',
-      fixedOff: '\u56fa\u5b9a\u89c6\u56fe\uff1a\u5173',
-      back: '\u8fd4\u56de',
-      backTo: (label) => `\u8fd4\u56de\u5230 ${label}`,
-      backToTree: '\u8fd4\u56de\u5230\u5206\u7c7b\u6811',
-      reset: '\u91cd\u7f6e',
-      keyNodeLevel: (level) => `\u5173\u952e\u8282\u70b9\u5c42\u6570\uff1a${level}`,
-      treeDetail:
-        '<strong>\u5c1a\u672a\u9009\u4e2d\u8282\u70b9</strong>\u70b9\u51fb\u4e00\u4e2a TE \u8282\u70b9\u67e5\u770b\u8be6\u60c5\uff0c\u518d\u6b21\u70b9\u51fb\u53ef\u8fdb\u5165\u52a8\u6001\u56fe\u3002',
-      loadingDetail: (query) => buildLoadingDetailHtml(`\u6b63\u5728\u4e3a ${escapeHtml(query)} \u51c6\u5907 G6 \u52a8\u6001\u56fe\u3002`),
-      loadingOverlay: (query) => `\u6b63\u5728\u51c6\u5907 ${escapeHtml(query)} ...`,
-      graphError: (message) => `\u5931\u8d25\uff1a${message || '\u672a\u77e5\u9519\u8bef'}`,
-      legendTitle: '\u5b9e\u4f53\u56fe\u4f8b',
-    },
   };
 
   let currentMode = 'tree';
@@ -93,7 +70,7 @@
   let dynamicFrame = null;
   let dynamicBridgePromise = null;
 
-  window.currentLang = params.get('lang') === 'zh' ? 'zh' : 'en';
+  window.currentLang = 'en';
   window.fixedView = false;
   window.showLabels = false;
   window.currentKeyNodeLevel = 1;
@@ -573,8 +550,6 @@
 
   function updateButtons() {
     const t = textSet();
-    if (els.zhBtn) els.zhBtn.classList.toggle('active', window.currentLang === 'zh');
-    if (els.enBtn) els.enBtn.classList.toggle('active', window.currentLang === 'en');
     if (els.title) els.title.textContent = t.pageTitle;
     if (els.badge) els.badge.textContent = t.badge;
     if (els.graphTitle) els.graphTitle.textContent = t.graphTitle;
@@ -588,13 +563,6 @@
     if (els.levelMinus) els.levelMinus.disabled = window.currentKeyNodeLevel <= 1;
     if (els.levelPlus) els.levelPlus.disabled = window.currentKeyNodeLevel >= 10;
     updateBackButton();
-  }
-
-  function syncLangParam() {
-    const next = new URL(window.location.href);
-    next.searchParams.set('lang', window.currentLang);
-    if (!embedMode) next.searchParams.set('renderer', 'g6');
-    window.history.replaceState({}, '', next.toString());
   }
 
   function showTreeSurface() {
@@ -645,8 +613,6 @@
   function buildDynamicFrameSrc(requestLike = buildCurrentGraphRequest()) {
     const request = normalizeGraphRequest(requestLike);
     const url = new URL('index_g6_embed.html', window.location.href);
-    url.searchParams.set('renderer', 'g6');
-    url.searchParams.set('lang', window.currentLang);
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
     url.searchParams.set('show_labels', window.showLabels ? '1' : '0');
@@ -933,23 +899,14 @@
   }
 
   function buildDiseaseClassTreeConfigLegacy(classQuery) {
-    const isZh = window.currentLang === 'zh';
-    const typeLabels = isZh
-      ? {
-          DiseaseClass: '\u75be\u75c5\u5927\u7c7b',
-          DiseaseCategory: '\u75be\u75c5\u5206\u7c7b',
-          Disease: '\u75be\u75c5',
-        }
-      : {
-          DiseaseClass: 'Disease Class',
-          DiseaseCategory: 'Disease Category',
-          Disease: 'Disease',
-        };
+    const typeLabels = {
+      DiseaseClass: 'Disease Class',
+      DiseaseCategory: 'Disease Category',
+      Disease: 'Disease',
+    };
 
     return {
-      defaultDetailHtml: isZh
-        ? `<strong>${escapeHtml(classQuery)}</strong><br>\u5f53\u524d\u4e3a\u75be\u75c5\u5206\u7c7b\u6811\u89c6\u56fe\u3002\u70b9\u51fb\u5206\u7c7b\u8282\u70b9\u67e5\u770b\u5c42\u7ea7\uff0c\u70b9\u51fb\u75be\u75c5\u53f6\u5b50\u53ef\u8fdb\u5165\u666e\u901a\u52a8\u6001\u56fe\u3002`
-        : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
+      defaultDetailHtml: `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
       buildLabel(data, nodeId) {
         return truncateDiseaseTreeLabel(data.displayLabel || data.rawLabel || nodeId || '', data);
       },
@@ -992,23 +949,14 @@
       if (text.length <= limit) return text;
       return `${text.slice(0, Math.max(1, limit - 1)).trimEnd()}…`;
     };
-    const isZh = window.currentLang === 'zh';
-    const typeLabels = isZh
-      ? {
-          DiseaseClass: '\u75be\u75c5\u5927\u7c7b',
-          DiseaseCategory: '\u75be\u75c5\u5206\u7c7b',
-          Disease: '\u75be\u75c5',
-        }
-      : {
-          DiseaseClass: 'Disease Class',
-          DiseaseCategory: 'Disease Category',
-          Disease: 'Disease',
-        };
+    const typeLabels = {
+      DiseaseClass: 'Disease Class',
+      DiseaseCategory: 'Disease Category',
+      Disease: 'Disease',
+    };
 
     return {
-      defaultDetailHtml: isZh
-        ? `<strong>${escapeHtml(classQuery)}</strong><br>\u5f53\u524d\u4e3a\u75be\u75c5\u5206\u7c7b\u6811\u89c6\u56fe\u3002\u70b9\u51fb\u5206\u7c7b\u8282\u70b9\u67e5\u770b\u5c42\u7ea7\uff0c\u70b9\u51fb\u75be\u75c5\u53f6\u5b50\u53ef\u8fdb\u5165\u666e\u901a\u52a8\u6001\u56fe\u3002`
-        : `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
+      defaultDetailHtml: `<strong>${escapeHtml(classQuery)}</strong><br>This disease-class tree is active. Click a disease leaf to open the dynamic graph.`,
       buildLabel(data, nodeId) {
         return truncateDiseaseTreeLabel(data.displayLabel || data.rawLabel || nodeId || '', data);
       },
@@ -1357,61 +1305,6 @@
       });
     }
 
-    if (els.zhBtn) {
-      els.zhBtn.addEventListener('click', () => {
-        window.currentLang = 'zh';
-        syncLangParam();
-        updateButtons();
-        notifyStateChange();
-        if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-          return;
-        }
-        if (currentMode === 'disease_class_tree' && currentGraphClassQuery) {
-          renderDiseaseClassTree({
-            query: currentGraphClassQuery,
-            queryType: 'disease_class',
-            classQuery: currentGraphClassQuery,
-          }, { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-          return;
-        }
-        renderDefaultTree().catch((error) => {
-          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-        });
-      });
-    }
-
-    if (els.enBtn) {
-      els.enBtn.addEventListener('click', () => {
-        window.currentLang = 'en';
-        syncLangParam();
-        updateButtons();
-        notifyStateChange();
-        if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-          return;
-        }
-        if (currentMode === 'disease_class_tree' && currentGraphClassQuery) {
-          renderDiseaseClassTree({
-            query: currentGraphClassQuery,
-            queryType: 'disease_class',
-            classQuery: currentGraphClassQuery,
-          }, { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-          return;
-        }
-        renderDefaultTree().catch((error) => {
-          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-        });
-      });
-    }
   }
 
   window.__TEKG_G6_GRAPH_HOST = {

@@ -15,7 +15,6 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $analysis = $context['analysis'] ?? [];
-        $language = (string)($analysis['language'] ?? 'en');
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
         $teEntities = array_values(array_filter($entities, static fn(array $item): bool => ($item['type'] ?? '') === 'TE'));
         $diseaseEntities = array_values(array_filter($entities, static fn(array $item): bool => ($item['type'] ?? '') === 'Disease'));
@@ -38,7 +37,7 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
                 $evidence[] = (string)$entity['label'] . ' classification path: ' . implode(' -> ', $path);
                 $previewItems[] = [
                     'title' => (string)$entity['label'],
-                    'meta' => implode(' → ', $path),
+                    'meta' => implode(' -> ', $path),
                 ];
             }
         }
@@ -55,22 +54,16 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
             }
         }
 
-        $displaySummary = $language === 'zh'
-            ? ($results === []
-                ? '分类树这一轮没有提供额外补充信息。'
-                : '我补充解析了当前实体的分类上下文，这有助于确定它在树中的位置，但不是这轮回答的核心证据。')
-            : ($results === []
-                ? 'The tree lookup did not add extra context in this round.'
-                : 'I resolved the classification context of the current entities. This helps with lineage background, although it is not the core evidence for the answer.');
+        $displaySummary = $results === []
+            ? 'The tree lookup did not add extra context in this round.'
+            : 'I resolved the classification context of the current entities. This helps with lineage background, although it is not the core evidence for the answer.';
 
         return [
             'plugin_name' => $this->getName(),
             'status' => $results === [] ? 'empty' : 'ok',
             'query_summary' => 'Resolved TE and disease classification tree context.',
             'results' => $results,
-            'display_label' => $language === 'zh'
-                ? '解析了 ' . count($results) . ' 条分类路径'
-                : 'Resolved ' . count($results) . ' classification paths',
+            'display_label' => 'Resolved ' . count($results) . ' classification paths',
             'display_summary' => $displaySummary,
             'display_details' => [
                 'summary' => $displaySummary,
@@ -78,9 +71,7 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
                 'evidence_items' => $evidence,
                 'citations' => [],
                 'raw_preview' => $results,
-                'result_message' => $language === 'zh'
-                    ? '这些分类信息可以帮助我判断它属于哪一支，但如果问题更偏机制，我仍然会优先使用关系和文献证据。'
-                    : 'These tree paths help locate the entity in its lineage, but mechanism questions still rely more on relation and literature evidence.',
+                'result_message' => 'These tree paths help locate the entity in its lineage, but mechanism questions still rely more on relation and literature evidence.',
             ],
             'result_counts' => [
                 'paths' => count($results),

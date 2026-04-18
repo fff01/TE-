@@ -256,7 +256,7 @@
     let currentQuery = String(options.initialQuery || '').trim();
     let currentQueryType = normalizeQueryType(options.initialQueryType);
     let currentClassQuery = String(options.initialClassQuery || '').trim();
-    let currentLang = options.initialLang === 'zh' ? 'zh' : 'en';
+    let currentLang = 'en';
     let currentShowAllLabels = options.initialShowAllLabels === true;
 
     if (currentQueryType === 'disease_class') {
@@ -872,7 +872,7 @@
           keyNodeLevel: currentKeyNodeLevel,
           fixedView,
           showLabels: currentShowAllLabels,
-          lang: currentLang,
+          lang: 'en',
         });
       }
       hooks.setMode('dynamic', {
@@ -1165,7 +1165,7 @@
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
         showLabels: currentShowAllLabels,
-        lang: currentLang,
+          lang: 'en',
       });
       return Promise.resolve(fixedView);
     }
@@ -1185,8 +1185,8 @@
       return loadGraph(buildCurrentRequest());
     }
 
-    function setLanguage(lang) {
-      currentLang = lang === 'zh' ? 'zh' : 'en';
+    function setLanguage(_lang) {
+      currentLang = 'en';
       hooks.syncRouteState({
         query: currentQuery,
         queryType: currentQueryType,
@@ -1194,7 +1194,7 @@
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
         showLabels: currentShowAllLabels,
-        lang: currentLang,
+        lang: 'en',
       });
       if (!currentQuery) return Promise.resolve();
       return loadGraph(buildCurrentRequest());

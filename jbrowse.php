@@ -341,8 +341,6 @@ function jbrowse_write_gff3_cache(string $cachePath, array $rows): void
 }
 
 $siteLang = site_lang();
-$siteRenderer = site_renderer();
-
 $root = __DIR__;
 $jbrowseDir = TEKG_JBROWSE_FS_DIR;
 $repeatsDir = $jbrowseDir . '/repeats';
@@ -438,9 +436,9 @@ if ($isEmbedded) {
           <?php if (!$isEmbedded): ?>
           <h1 class="jbrowse-title">JBrowse</h1>
           <div class="jbrowse-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
             <span>/</span>
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/genomic.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Genomic</a>
+            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/genomic.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Genomic</a>
             <span>/</span>
             <span>JBrowse</span>
           </div>
@@ -561,4 +559,3 @@ if ($isEmbedded) {
     require __DIR__ . '/foot.php';
 }
 ?>
-

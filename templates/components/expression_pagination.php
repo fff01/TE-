@@ -6,7 +6,6 @@
 <div class="expression-pagination">
   <form method="get" action="<?= htmlspecialchars('/TE-/expression.php#expressionResults', ENT_QUOTES, 'UTF-8') ?>" class="expression-page-size">
     <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang, ENT_QUOTES, 'UTF-8') ?>">
-    <input type="hidden" name="renderer" value="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="keyword" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="dataset_key" value="<?= htmlspecialchars((string)($datasetKey ?? ''), ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="top_context" value="<?= htmlspecialchars($topContext, ENT_QUOTES, 'UTF-8') ?>">
@@ -26,7 +25,6 @@
 
   <form method="get" action="<?= htmlspecialchars('/TE-/expression.php#expressionResults', ENT_QUOTES, 'UTF-8') ?>" class="expression-page-jump">
     <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang, ENT_QUOTES, 'UTF-8') ?>">
-    <input type="hidden" name="renderer" value="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="keyword" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="dataset_key" value="<?= htmlspecialchars((string)($datasetKey ?? ''), ENT_QUOTES, 'UTF-8') ?>">
     <input type="hidden" name="top_context" value="<?= htmlspecialchars($topContext, ENT_QUOTES, 'UTF-8') ?>">

@@ -1,7 +1,6 @@
 (() => {
           const header = document.getElementById('protoHeader');
           const stage = document.getElementById('previewStage');
-          const rendererMode = String((stage && stage.dataset.renderer) || 'g6');
           const fullscreenBtn = document.getElementById('previewFullscreenBtn');
           const graphFrame = document.getElementById('preview-graph-frame');
           const qaFrame = document.getElementById('preview-qa-frame');
@@ -207,7 +206,6 @@
           }
 
           function bindGraphRelay() {
-            if (rendererMode !== 'g6') return;
             try {
               const graphWin = graphFrame.contentWindow;
               if (!graphWin || graphWin === boundGraphWindow) return;
@@ -218,9 +216,7 @@
 
           function ensureQaLoaded() {
             if (qaLoaded) {
-              if (rendererMode === 'g6') {
-                relayStateToQa();
-              }
+              relayStateToQa();
               return;
             }
             qaLoaded = true;
@@ -270,21 +266,12 @@
           });
 
           graphFrame.addEventListener('load', () => {
-            if (rendererMode === 'g6') {
-              setTimeout(bindGraphRelay, 250);
-              setTimeout(relayStateToQa, 450);
-            } else {
-              setTimeout(() => resizeEmbeddedCytFrame(graphFrame, 55), 120);
-              setTimeout(() => resizeEmbeddedCytFrame(graphFrame, 55), 420);
-            }
+            setTimeout(bindGraphRelay, 250);
+            setTimeout(relayStateToQa, 450);
           });
 
           qaFrame.addEventListener('load', () => {
-            if (rendererMode === 'g6') {
-              setTimeout(relayStateToQa, 250);
-            } else {
-              setTimeout(() => resizeEmbeddedCytFrame(qaFrame, 30), 120);
-            }
+            setTimeout(relayStateToQa, 250);
           });
 
           fab.addEventListener('pointerdown', (event) => {

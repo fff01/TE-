@@ -376,31 +376,55 @@
     const payload = detail.payload || {};
     const resultCounts = payload.result_counts || {};
     const countLines = Object.keys(resultCounts).map((key) => `${key}: ${resultCounts[key]}`);
+    const pluginName = String(detail.plugin_name || detail.title || '');
+    const isLiteraturePlugin = pluginName === 'Literature Plugin';
+    const isGraphPlugin = pluginName === 'Graph Plugin';
 
     inspectorTitle.textContent = detail.title || ui.plugin_details || 'Plugin Details';
-    inspectorBody.innerHTML = [
+    const sections = [
       buildInspectorSection(ui.inspector_summary || 'Summary', `
         <div class="agent-detail-meta">
           ${detail.summary ? `<p>${escapeHtml(detail.summary)}</p>` : ''}
           ${countLines.length ? `<p>${escapeHtml(countLines.join(' · '))}</p>` : ''}
         </div>
       `),
-      buildInspectorSection(ui.inspector_evidence || 'Evidence', formatInspectorList(
-        payload.evidence_items || payload.display_details?.evidence_items || [],
-        ui.tool_empty_evidence || 'No evidence items were returned for this tool call.',
-      )),
-      buildInspectorSection(ui.inspector_citations || 'Citations', formatInspectorList(
-        payload.citations || payload.display_details?.citations || [],
-        ui.tool_empty_citations || 'No citations were returned for this tool call.',
-      )),
-      buildInspectorSection(ui.inspector_data || 'Returned Data', payload.raw_preview
-        ? `<pre class="agent-detail-pre">${escapeHtml(JSON.stringify(payload.raw_preview, null, 2))}</pre>`
-        : `<div class="agent-detail-empty">${escapeHtml(ui.tool_empty_data || 'No result payload was returned.')}</div>`),
-      buildInspectorSection(ui.inspector_errors || 'Errors', formatInspectorList(
-        payload.errors || payload.display_details?.errors || [],
-        ui.tool_empty_errors || 'No plugin errors were reported.',
-      )),
-    ].join('');
+    ];
+
+    if (isLiteraturePlugin) {
+      sections.push(
+        buildInspectorSection(ui.inspector_citations || 'Citations', formatInspectorList(
+          payload.citations || payload.display_details?.citations || [],
+          ui.tool_empty_citations || 'No citations were returned for this tool call.',
+        )),
+      );
+    } else if (isGraphPlugin) {
+      sections.push(
+        buildInspectorSection(ui.inspector_evidence || 'Evidence', formatInspectorList(
+          payload.evidence_items || payload.display_details?.evidence_items || [],
+          ui.tool_empty_evidence || 'No evidence items were returned for this tool call.',
+        )),
+      );
+    } else {
+      sections.push(
+        buildInspectorSection(ui.inspector_evidence || 'Evidence', formatInspectorList(
+          payload.evidence_items || payload.display_details?.evidence_items || [],
+          ui.tool_empty_evidence || 'No evidence items were returned for this tool call.',
+        )),
+        buildInspectorSection(ui.inspector_citations || 'Citations', formatInspectorList(
+          payload.citations || payload.display_details?.citations || [],
+          ui.tool_empty_citations || 'No citations were returned for this tool call.',
+        )),
+        buildInspectorSection(ui.inspector_data || 'Returned Data', payload.raw_preview
+          ? `<pre class="agent-detail-pre">${escapeHtml(JSON.stringify(payload.raw_preview, null, 2))}</pre>`
+          : `<div class="agent-detail-empty">${escapeHtml(ui.tool_empty_data || 'No result payload was returned.')}</div>`),
+        buildInspectorSection(ui.inspector_errors || 'Errors', formatInspectorList(
+          payload.errors || payload.display_details?.errors || [],
+          ui.tool_empty_errors || 'No plugin errors were reported.',
+        )),
+      );
+    }
+
+    inspectorBody.innerHTML = sections.join('');
 
     inspector.setAttribute('aria-hidden', 'false');
     app.classList.add('is-inspector-open');

@@ -102,7 +102,6 @@ function exd_render_section(string $id,string $title,array $dataset,string $metr
 <?php }
 
 $siteLang=site_lang();
-$siteRenderer=site_renderer();
 $teQuery=trim((string)($_GET['te']??''));
 $metric=tekg_expression_normalize_metric((string)($_GET['metric']??'median'));
 $chart=exd_chart_type((string)($_GET['chart']??'bar'));
@@ -123,10 +122,9 @@ require __DIR__ . '/head.php';
   <div class="proto-container">
     <div id="expressionDetailPage">
       <section class="detail-toolbar">
-        <a class="detail-back" href="<?= htmlspecialchars(site_url_with_state('/TE-/expression.php',$siteLang,$siteRenderer),ENT_QUOTES,'UTF-8') ?>">&larr; Back To Expression</a>
+        <a class="detail-back" href="<?= htmlspecialchars(site_url_with_state('/TE-/expression.php',$siteLang),ENT_QUOTES,'UTF-8') ?>">&larr; Back To Expression</a>
         <form class="detail-search-form" method="get" action="<?= htmlspecialchars('/TE-/expression_detail.php',ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang,ENT_QUOTES,'UTF-8') ?>">
-          <input type="hidden" name="renderer" value="<?= htmlspecialchars($siteRenderer,ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="metric" value="<?= htmlspecialchars($metric,ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="chart" value="<?= htmlspecialchars($chart,ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="sort" value="<?= htmlspecialchars($sort,ENT_QUOTES,'UTF-8') ?>">
@@ -154,7 +152,6 @@ require __DIR__ . '/head.php';
               </nav>
               <form class="detail-controls" method="get" action="<?= htmlspecialchars('/TE-/expression_detail.php',ENT_QUOTES,'UTF-8') ?>">
                 <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang,ENT_QUOTES,'UTF-8') ?>">
-                <input type="hidden" name="renderer" value="<?= htmlspecialchars($siteRenderer,ENT_QUOTES,'UTF-8') ?>">
                 <input type="hidden" name="te" value="<?= htmlspecialchars($teQuery,ENT_QUOTES,'UTF-8') ?>">
                 <div class="detail-controls-title">Display Controls</div>
                 <div class="detail-control-group">

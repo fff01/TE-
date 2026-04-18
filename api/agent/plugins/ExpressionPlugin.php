@@ -12,7 +12,6 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $analysis = $context['analysis'] ?? [];
-        $language = (string)($analysis['language'] ?? 'en');
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
 
         $teNames = [];
@@ -77,29 +76,23 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
                 $primary = $datasetSummaries[0];
                 $previewItems[] = [
                     'title' => $teName,
-                    'meta' => $primary['dataset_label'] . ' · ' . $primary['top_context'],
+                    'meta' => $primary['dataset_label'] . ' | ' . $primary['top_context'],
                 ];
             } catch (Throwable $error) {
                 $errors[] = $teName . ': ' . $error->getMessage();
             }
         }
 
-        $displaySummary = $language === 'zh'
-            ? ($results === []
-                ? '表达数据库这一轮没有给出足够有用的补充信息。'
-                : '我补充查看了表达数据，主要记录了这些 TE 在不同数据集中的高表达 context。')
-            : ($results === []
-                ? 'The expression database did not add useful context in this round.'
-                : 'I also checked the expression datasets and captured the top contexts for the recognized TEs.');
+        $displaySummary = $results === []
+            ? 'The expression database did not add useful context in this round.'
+            : 'I also checked the expression datasets and captured the top contexts for the recognized TEs.';
 
         return [
             'plugin_name' => $this->getName(),
             'status' => $results === [] && $errors === [] ? 'empty' : ($errors === [] ? 'ok' : 'partial'),
             'query_summary' => 'Summarized expression datasets and top contexts for the recognized TE entities.',
             'results' => $results,
-            'display_label' => $language === 'zh'
-                ? '整理了 ' . count($results) . ' 个表达摘要'
-                : 'Summarized ' . count($results) . ' expression profiles',
+            'display_label' => 'Summarized ' . count($results) . ' expression profiles',
             'display_summary' => $displaySummary,
             'display_details' => [
                 'summary' => $displaySummary,
@@ -107,9 +100,7 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
                 'evidence_items' => $evidence,
                 'citations' => [],
                 'raw_preview' => $results,
-                'result_message' => $language === 'zh'
-                    ? '这些表达结果更适合作为背景补充，而不是直接回答机制问题。'
-                    : 'These expression summaries are better used as supporting context than as the core mechanism evidence.',
+                'result_message' => 'These expression summaries are better used as supporting context than as the core mechanism evidence.',
             ],
             'result_counts' => [
                 'profiles' => count($results),

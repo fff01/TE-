@@ -5,7 +5,7 @@ $protoCurrentPath = '/TE-/about.php';
 $protoSubtitle = 'Overview of the TE-KG interface and public workflows';
 require __DIR__ . '/head.php';
 
-$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', ['embed' => 'home-preview']);
+$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, ['embed' => 'home-preview']);
 ?>
       <link rel="stylesheet" href="/TE-/assets/css/pages/about.css">
 

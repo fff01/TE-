@@ -1011,8 +1011,8 @@ function tekg_jbrowse_lookup_proto(string $query, string $type = 'all', ?array $
         number_format(((int) ($locus['start'] ?? 0)) + 1),
         number_format((int) ($locus['end'] ?? 0))
     );
-    $entry['browser_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), 'g6', $browserParams);
-    $entry['config_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), 'g6', $browserParams + ['format' => 'config']);
+    $entry['browser_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), null, $browserParams);
+    $entry['config_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), null, $browserParams + ['format' => 'config']);
     return $entry;
 }
 
@@ -1046,7 +1046,6 @@ function tekg_request_scalar_proto(array $source, string $key, string $default =
 }
 
 $siteLang = site_lang();
-$siteRenderer = site_renderer();
 $query = tekg_request_scalar_proto($_GET, 'q', '');
 $type = tekg_request_scalar_proto($_GET, 'type', 'all');
 $repbase = tekg_repbase_lookup_proto($query);
@@ -1056,11 +1055,11 @@ $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
 $karyotypeHitMap = tekg_karyotype_bin_hit_map_proto($genomeDistribution, $jbrowseSession);
 $classificationSession = tekg_tree_classification_lookup_proto($query, $type, $repbase, $dfamSequence);
-$searchGraphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', array_filter([
+$searchGraphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, null, array_filter([
     'embed' => 'search-result',
     'q' => $query !== '' ? $query : null,
 ], static fn ($value) => $value !== null && $value !== ''));
-$browseBackUrl = site_url_with_state('/TE-/browse.php', $siteLang, $siteRenderer);
+$browseBackUrl = site_url_with_state('/TE-/browse.php', $siteLang);
 $detailSections = [
     ['id' => 'search-summary-panel', 'label' => 'Summary'],
     ['id' => 'search-graph-panel', 'label' => 'Local Graph'],
@@ -1087,7 +1086,6 @@ require __DIR__ . '/head.php';
               <form id="search-form" class="detail-search-form" method="GET">
                 <input type="hidden" name="type" value="all">
                 <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang, ENT_QUOTES, 'UTF-8') ?>">
-                <input type="hidden" name="renderer" value="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
                 <div class="detail-search-box">
                   <svg class="detail-search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"></circle><path d="m20 20-3.8-3.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>
                   <input id="search-query" class="query-control" type="text" name="q" value="<?= htmlspecialchars($query, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search a TE, disease, function, or PMID">

@@ -175,7 +175,7 @@ function tekg_browse_load_rows(): array
 }
 
 require __DIR__ . '/head.php';
-$browseSearchUrl = site_url_with_state('/TE-/search.php', $siteLang, $siteRenderer);
+$browseSearchUrl = site_url_with_state('/TE-/search.php', $siteLang);
 $browseRows = tekg_browse_load_rows();
 ?>
       <link rel="stylesheet" href="/TE-/assets/css/pages/browse.css">
@@ -186,7 +186,7 @@ $browseRows = tekg_browse_load_rows();
             <h1 class="browse-page-title">Browse</h1>
             <p class="browse-intro">This browse view is designed as a lightweight catalog-style entry point inspired by Dfam. It prioritizes scanning, filtering, and shortlisting TE records in a clean table layout before users move into deeper search or graph exploration.</p>
             <div class="browse-crumbs">
-              <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+              <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
               <span>/</span>
               <span>Browse</span>
             </div>

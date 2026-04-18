@@ -4,66 +4,42 @@ declare(strict_types=1);
 require_once __DIR__ . '/site_i18n.php';
 
 $pageTitle = 'TE-KG Academic Agent';
-$activePage = '';
+$activePage = 'agent';
 $protoCurrentPath = '/TE-/agent.php';
 $protoSubtitle = 'Traceable academic research assistant';
 
 $ui = [
-    'page_title' => site_t(['en' => 'Academic Agent', 'zh' => '学术智能体']),
-    'start_title' => site_t(['en' => 'Choose a mode and start chatting', 'zh' => '选择模式并开始对话']),
-    'quick_mode' => site_t(['en' => 'Quick QA', 'zh' => '快速问答']),
-    'agent_mode' => site_t(['en' => 'Agent', 'zh' => '智能体']),
-    'message_label' => site_t(['en' => 'Message', 'zh' => '消息']),
-    'placeholder_agent' => site_t([
-        'en' => 'Ask about TEs, disease mechanisms, papers, expression, or genomic loci...',
-        'zh' => '询问 TE、疾病机制、文献、表达或基因组位点……',
-    ]),
-    'placeholder_quick' => site_t([
-        'en' => 'Quick QA is coming soon. Switch back to Agent mode to use the academic workflow.',
-        'zh' => '快速问答稍后接入，请切回智能体模式使用当前学术工作流。',
-    ]),
-    'quick_mode_notice' => site_t([
-        'en' => 'Quick QA is not available yet. Please switch back to Agent mode.',
-        'zh' => '快速问答暂未接入，请切回智能体模式。',
-    ]),
-    'plugin_details' => site_t(['en' => 'Plugin Details', 'zh' => '工具详情']),
-    'no_tool_selected' => site_t(['en' => 'No tool selected', 'zh' => '尚未选择工具']),
-    'inspector_hint' => site_t([
-        'en' => 'Click a tool event inside the thinking trace to inspect query details, evidence, citations, and returned data.',
-        'zh' => '点击思考过程中的工具事件，可在这里查看查询摘要、证据、引用和返回数据。',
-    ]),
-    'thinking_title' => site_t(['en' => 'Deep thinking', 'zh' => '深度思考']),
-    'thinking_running' => site_t(['en' => 'Running...', 'zh' => '进行中…']),
-    'thinking_done' => site_t(['en' => 'Done', 'zh' => '已完成']),
-    'send_label' => site_t(['en' => 'Send message', 'zh' => '发送消息']),
-    'inspector_summary' => site_t(['en' => 'Summary', 'zh' => '摘要']),
-    'inspector_evidence' => site_t(['en' => 'Evidence', 'zh' => '证据']),
-    'inspector_citations' => site_t(['en' => 'Citations', 'zh' => '引用']),
-    'inspector_data' => site_t(['en' => 'Returned Data', 'zh' => '返回数据']),
-    'inspector_errors' => site_t(['en' => 'Errors', 'zh' => '错误信息']),
-    'tool_status' => site_t(['en' => 'Status', 'zh' => '状态']),
-    'tool_latency' => site_t(['en' => 'Latency', 'zh' => '耗时']),
-    'tool_query' => site_t(['en' => 'Query', 'zh' => '查询摘要']),
-    'tool_empty_citations' => site_t([
-        'en' => 'No citations were returned for this tool call.',
-        'zh' => '本次工具调用没有返回引用。',
-    ]),
-    'tool_empty_evidence' => site_t([
-        'en' => 'No evidence items were returned for this tool call.',
-        'zh' => '本次工具调用没有返回证据条目。',
-    ]),
-    'tool_empty_data' => site_t([
-        'en' => 'No result payload was returned.',
-        'zh' => '本次工具调用没有返回结果数据。',
-    ]),
-    'tool_empty_errors' => site_t([
-        'en' => 'No plugin errors were reported.',
-        'zh' => '本次工具调用没有报告错误。',
-    ]),
-    'tool_open_hint' => site_t([
-        'en' => 'Click to inspect details',
-        'zh' => '点击查看详情',
-    ]),
+    'page_title' => 'Academic Agent',
+    'start_title' => 'Choose a mode and start chatting',
+    'quick_mode' => 'Quick QA',
+    'agent_mode' => 'Agent',
+    'message_label' => 'Message',
+    'placeholder_agent' => 'Ask about TEs, disease mechanisms, papers, expression, or genomic loci...',
+    'placeholder_quick' => 'Quick QA is coming soon. Switch back to Agent mode to use the academic workflow.',
+    'quick_mode_notice' => 'Quick QA is not available yet. Please switch back to Agent mode.',
+    'plugin_details' => 'Plugin Details',
+    'no_tool_selected' => 'No tool selected',
+    'inspector_hint' => 'Click a tool event inside the thinking trace to inspect query details, evidence, citations, and returned data.',
+    'thinking_title' => 'Deep thinking',
+    'thinking_running' => 'Running...',
+    'thinking_done' => 'Done',
+    'send_label' => 'Send message',
+    'inspector_summary' => 'Summary',
+    'inspector_evidence' => 'Evidence',
+    'inspector_citations' => 'Citations',
+    'inspector_data' => 'Returned Data',
+    'inspector_errors' => 'Errors',
+    'tool_status' => 'Status',
+    'tool_latency' => 'Latency',
+    'tool_query' => 'Query',
+    'tool_empty_citations' => 'No citations were returned for this tool call.',
+    'tool_empty_evidence' => 'No evidence items were returned for this tool call.',
+    'tool_empty_data' => 'No result payload was returned.',
+    'tool_empty_errors' => 'No plugin errors were reported.',
+    'tool_open_hint' => 'Click to inspect details',
+    'graph_button' => 'Knowledge Graph',
+    'graph_popup_title' => 'Knowledge Graph View',
+    'graph_popup_empty' => 'No graph subgraph is available for this tool call.',
 ];
 
 $local = [];
@@ -86,7 +62,20 @@ require __DIR__ . '/head.php';
     <div class="agent-chat-scroll" id="agentChatScroll">
       <div class="agent-conversation" id="agentConversation">
         <section class="agent-empty-state" id="agentEmptyState">
-          <div class="agent-empty-mark" aria-hidden="true">✦</div>
+          <div class="agent-empty-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" class="agent-empty-mark-icon">
+              <defs>
+                <linearGradient id="agentMarkGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6d88ff"></stop>
+                  <stop offset="100%" stop-color="#4e69ea"></stop>
+                </linearGradient>
+              </defs>
+              <path d="M32 8c10.8 0 19.7 8.4 20.5 19 4.5 1.2 7.7 5.2 7.7 9.9 0 5.7-4.6 10.3-10.3 10.3h-2.1c-2 4.5-6.5 7.7-11.8 7.7-5 0-9.4-2.8-11.6-7a10 10 0 0 1-9.7-9.9c0-5.1 3.8-9.3 8.7-9.8C24.7 17 27.8 8 32 8Z" fill="url(#agentMarkGradient)"/>
+              <path d="M24 29.5 32 35l8-5.5M24.8 38.2l-4.6 3.4m23-3.4 4.6 3.4M28 38.2v7.3m8-7.3v7.3" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="24.2" cy="28.6" r="2.1" fill="#fff"/>
+              <circle cx="39.8" cy="28.6" r="2.1" fill="#fff"/>
+            </svg>
+          </div>
           <h1 class="agent-empty-title"><?= htmlspecialchars($ui['start_title'], ENT_QUOTES, 'UTF-8') ?></h1>
           <div class="agent-mode-switch" id="agentModeSwitch" role="tablist" aria-label="<?= htmlspecialchars($ui['page_title'], ENT_QUOTES, 'UTF-8') ?>">
             <button type="button" class="agent-mode-button" data-mode="quick"><?= htmlspecialchars($ui['quick_mode'], ENT_QUOTES, 'UTF-8') ?></button>
@@ -110,7 +99,7 @@ require __DIR__ . '/head.php';
         <div class="agent-composer-actions">
           <span id="agentStatus" class="agent-status" aria-live="polite"></span>
           <button id="agentSubmit" class="agent-submit" type="submit" aria-label="<?= htmlspecialchars($ui['send_label'], ENT_QUOTES, 'UTF-8') ?>">
-            <span aria-hidden="true">↑</span>
+            <span aria-hidden="true">&#8593;</span>
           </button>
         </div>
       </div>
@@ -123,7 +112,7 @@ require __DIR__ . '/head.php';
         <p class="agent-inspector-eyebrow"><?= htmlspecialchars($ui['plugin_details'], ENT_QUOTES, 'UTF-8') ?></p>
         <h3 id="agentInspectorTitle"><?= htmlspecialchars($ui['no_tool_selected'], ENT_QUOTES, 'UTF-8') ?></h3>
       </div>
-      <button type="button" class="agent-inspector-close" id="agentInspectorClose" aria-label="Close details">×</button>
+      <button type="button" class="agent-inspector-close" id="agentInspectorClose" aria-label="Close details">&times;</button>
     </div>
     <div class="agent-inspector-body" id="agentInspectorBody">
       <div class="agent-inspector-placeholder">

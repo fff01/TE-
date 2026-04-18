@@ -2,7 +2,6 @@
 require_once __DIR__ . '/site_i18n.php';
 
 $siteLang = site_lang();
-$siteRenderer = site_renderer();
 $activePage = $activePage ?? 'home';
 $pageTitle = $pageTitle ?? 'TE-KG';
 $protoBasePath = '/TE-';
@@ -13,6 +12,7 @@ $navItems = [
     'home' => ['label' => 'Home', 'href' => $protoBasePath . '/index.php'],
     'browse' => ['label' => 'Browse', 'href' => $protoBasePath . '/browse.php'],
     'preview' => ['label' => 'TE-KG', 'href' => $protoBasePath . '/preview.php'],
+    'agent' => ['label' => 'Agent', 'href' => $protoBasePath . '/agent.php'],
     'genomic' => ['label' => 'Genomic', 'href' => $protoBasePath . '/genomic.php'],
     'expression' => ['label' => 'Expression', 'href' => $protoBasePath . '/expression.php'],
     'epigenetics' => ['label' => 'Epigenetics', 'href' => $protoBasePath . '/epigenetics.php'],
@@ -20,13 +20,9 @@ $navItems = [
     'about' => ['label' => 'About', 'href' => $protoBasePath . '/about.php'],
 ];
 
-$currentQueryParams = $_GET;
-unset($currentQueryParams['lang'], $currentQueryParams['renderer']);
-$zhUrl = site_url_with_state($protoCurrentPath, 'zh', $siteRenderer, $currentQueryParams);
-$enUrl = site_url_with_state($protoCurrentPath, 'en', $siteRenderer, $currentQueryParams);
 ?>
 <!DOCTYPE html>
-<html lang="<?= $siteLang === 'zh' ? 'zh-CN' : 'en' ?>">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,14 +44,9 @@ $enUrl = site_url_with_state($protoCurrentPath, 'en', $siteRenderer, $currentQue
         <div class="proto-header-right">
           <nav class="proto-nav" aria-label="Primary">
             <?php foreach ($navItems as $key => $item): ?>
-              <a class="proto-nav-link<?= $activePage === $key ? ' is-active' : '' ?>" href="<?= htmlspecialchars(site_url_with_state($item['href'], $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
+              <a class="proto-nav-link<?= $activePage === $key ? ' is-active' : '' ?>" href="<?= htmlspecialchars(site_url_with_state($item['href']), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></a>
             <?php endforeach; ?>
           </nav>
-
-          <div class="proto-control-group is-hidden" aria-label="Language switch">
-            <a class="proto-control<?= $siteLang === 'zh' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($zhUrl, ENT_QUOTES, 'UTF-8') ?>">涓枃</a>
-            <a class="proto-control<?= $siteLang === 'en' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($enUrl, ENT_QUOTES, 'UTF-8') ?>">English</a>
-          </div>
 
         </div>
       </div>

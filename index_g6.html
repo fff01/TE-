@@ -484,10 +484,6 @@
     const __tekgCompactEmbed = __tekgEmbedMode === 'home-preview' || __tekgEmbedMode === 'search-result';
     const __tekgGraphOnlyEmbed = __tekgEmbedMode === 'preview-graphonly';
     const __tekgQaOverlayEmbed = __tekgEmbedMode === 'qa-overlay';
-    if (__tekgG6Url.searchParams.get('renderer') !== 'g6') {
-      __tekgG6Url.searchParams.set('renderer', 'g6');
-      window.history.replaceState({}, '', __tekgG6Url.toString());
-    }
     if (__tekgCompactEmbed) {
       document.body.classList.add('tekg-g6-compact-embed');
     }

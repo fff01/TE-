@@ -157,18 +157,18 @@ foreach ($datasetMeta as $meta) {
 $overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into browsing, graph exploration, genomic, expression, epigenetics, download, and project information.';
 
 $quickLinks = [
-    ['title' => 'Home', 'href' => site_url_with_state('/TE-/index.php', $siteLang, $siteRenderer), 'icon' => 'home'],
-    ['title' => 'Browse', 'href' => site_url_with_state('/TE-/browse.php', $siteLang, $siteRenderer), 'icon' => 'browse'],
-    ['title' => 'TE-KG', 'href' => site_url_with_state('/TE-/preview.php', $siteLang, $siteRenderer), 'icon' => 'preview'],
-    ['title' => 'Genomic', 'href' => site_url_with_state('/TE-/genomic.php', $siteLang, $siteRenderer), 'icon' => 'genomic'],
-    ['title' => 'Expression', 'href' => site_url_with_state('/TE-/expression.php', $siteLang, $siteRenderer), 'icon' => 'expression'],
-    ['title' => 'Epigenetics', 'href' => site_url_with_state('/TE-/epigenetics.php', $siteLang, $siteRenderer), 'icon' => 'epigenetics'],
-    ['title' => 'Download', 'href' => site_url_with_state('/TE-/download.php', $siteLang, $siteRenderer), 'icon' => 'download'],
-    ['title' => 'About', 'href' => site_url_with_state('/TE-/about.php', $siteLang, $siteRenderer), 'icon' => 'about'],
+    ['title' => 'Home', 'href' => site_url_with_state('/TE-/index.php', $siteLang), 'icon' => 'home'],
+    ['title' => 'Browse', 'href' => site_url_with_state('/TE-/browse.php', $siteLang), 'icon' => 'browse'],
+    ['title' => 'TE-KG', 'href' => site_url_with_state('/TE-/preview.php', $siteLang), 'icon' => 'preview'],
+    ['title' => 'Genomic', 'href' => site_url_with_state('/TE-/genomic.php', $siteLang), 'icon' => 'genomic'],
+    ['title' => 'Expression', 'href' => site_url_with_state('/TE-/expression.php', $siteLang), 'icon' => 'expression'],
+    ['title' => 'Epigenetics', 'href' => site_url_with_state('/TE-/epigenetics.php', $siteLang), 'icon' => 'epigenetics'],
+    ['title' => 'Download', 'href' => site_url_with_state('/TE-/download.php', $siteLang), 'icon' => 'download'],
+    ['title' => 'About', 'href' => site_url_with_state('/TE-/about.php', $siteLang), 'icon' => 'about'],
 ];
 
 $homeGraphQuery = 'LINE1';
-$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', [
+$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, [
     'embed' => 'home-preview',
     'q' => $homeGraphQuery,
     'type' => 'TE',
@@ -182,7 +182,7 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, 'g6', [
             <div class="hero-content">
               <h1>Overview</h1>
               <p><?= htmlspecialchars($overviewCopy, ENT_QUOTES, 'UTF-8') ?></p>
-              <a class="learn-more" href="<?= htmlspecialchars(site_url_with_state('/TE-/about.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Learn More...</a>
+              <a class="learn-more" href="<?= htmlspecialchars(site_url_with_state('/TE-/about.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Learn More...</a>
             </div>
             <div class="hero-figure">
               <div class="hero-figure-frame">

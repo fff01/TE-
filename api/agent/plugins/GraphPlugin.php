@@ -16,7 +16,6 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $analysis = $context['analysis'] ?? [];
-        $language = (string)($analysis['language'] ?? 'en');
         $intent = (string)($analysis['intent'] ?? 'relationship');
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
         $targetTypes = is_array($analysis['requested_target_types'] ?? null) ? $analysis['requested_target_types'] : [];
@@ -27,27 +26,27 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         try {
             if (count($teEntities) >= 2) {
                 $rows = $this->queryTePairRelationship((string)$teEntities[0]['label'], (string)$teEntities[1]['label']);
-                return $this->finish($started, $language, $intent, 'Compared two TE entities in the local graph.', $rows);
+                return $this->finish($started, $intent, 'Compared two TE entities in the local graph.', $rows);
             }
 
             if ($teEntities !== [] && $diseaseEntities !== []) {
                 $rows = $this->queryDiseasePair((string)$teEntities[0]['label'], (string)$diseaseEntities[0]['label']);
-                return $this->finish($started, $language, $intent, 'Queried a TE-disease evidence pair in the local graph.', $rows);
+                return $this->finish($started, $intent, 'Queried a TE-disease evidence pair in the local graph.', $rows);
             }
 
             if ($teEntities !== []) {
                 $rows = $this->queryTypedRelations((string)$teEntities[0]['label'], $this->normalizeTargetTypes($targetTypes, $intent));
-                return $this->finish($started, $language, $intent, 'Collected structured relations from the local graph.', $rows);
+                return $this->finish($started, $intent, 'Collected structured relations from the local graph.', $rows);
             }
 
             if (($analysis['asks_for_mechanism'] ?? false) && ($analysis['question_keywords'] ?? []) !== []) {
                 $rows = $this->queryCancerAssociatedTes();
-                return $this->finish($started, $language, $intent, 'Collected mechanism-related TE candidates from the local graph.', $rows);
+                return $this->finish($started, $intent, 'Collected mechanism-related TE candidates from the local graph.', $rows);
             }
 
-            return $this->finish($started, $language, $intent, 'No graph entity candidates were recognized for this question.', []);
+            return $this->finish($started, $intent, 'No graph entity candidates were recognized for this question.', []);
         } catch (Throwable $error) {
-            return $this->finish($started, $language, $intent, 'Graph query failed.', [], [$error->getMessage()]);
+            return $this->finish($started, $intent, 'Graph query failed.', [], [$error->getMessage()]);
         }
     }
 
@@ -169,7 +168,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         return $this->neo4j->run($cypher);
     }
 
-    private function finish(float $started, string $language, string $intent, string $querySummary, array $rows, array $errors = []): array
+    private function finish(float $started, string $intent, string $querySummary, array $rows, array $errors = []): array
     {
         $grouped = [];
         $evidenceItems = [];
@@ -199,12 +198,9 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             $resultCounts[$type] = $count;
         }
 
-        $displayLabel = $language === 'zh'
-            ? '查询到了 ' . count($rows) . ' 条关系'
-            : 'Queried ' . count($rows) . ' graph relations';
-
-        $displaySummary = $this->buildDisplaySummary($language, $intent, $grouped, count($rows), $errors);
-        $resultMessage = $this->buildResultMessage($language, $intent, $grouped, $evidenceItems, count($rows));
+        $displayLabel = 'Queried ' . count($rows) . ' graph relations';
+        $displaySummary = $this->buildDisplaySummary($intent, $grouped, count($rows), $errors);
+        $resultMessage = $this->buildResultMessage($intent, $grouped, count($rows));
 
         return [
             'plugin_name' => $this->getName(),
@@ -232,41 +228,27 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         ];
     }
 
-    private function buildDisplaySummary(string $language, string $intent, array $grouped, int $count, array $errors): string
+    private function buildDisplaySummary(string $intent, array $grouped, int $count, array $errors): string
     {
         if ($errors !== []) {
-            return $language === 'zh' ? '图谱关系检索时出现错误。' : 'The graph query failed.';
+            return 'The graph query failed.';
         }
         if ($count === 0) {
-            return $language === 'zh'
-                ? '这轮结构化关系没有给出足够直接的命中，我需要再从别的证据源补足。'
-                : 'The structured graph did not provide enough direct hits in this round, so more evidence is still needed.';
+            return 'The structured graph did not provide enough direct hits in this round, so more evidence is still needed.';
         }
         $types = implode(', ', array_keys($grouped));
-        if ($language === 'zh') {
-            return $intent === 'mechanism'
-                ? '我先从本地图谱里抓到了 ' . $count . ' 条结构化关系，重点落在 ' . $types . ' 这些类型上。'
-                : '本地图谱返回了 ' . $count . ' 条结构化关系，主要覆盖 ' . $types . '。';
-        }
         return $intent === 'mechanism'
             ? 'I first collected ' . $count . ' structured relations from the local graph, mainly across ' . $types . '.'
             : 'The local graph returned ' . $count . ' structured relations, mainly across ' . $types . '.';
     }
 
-    private function buildResultMessage(string $language, string $intent, array $grouped, array $evidenceItems, int $count): string
+    private function buildResultMessage(string $intent, array $grouped, int $count): string
     {
         if ($count === 0) {
-            return $language === 'zh'
-                ? '图谱里这一轮没有给出足够强的直接关系，我接下来需要转向文献或其他上下文来补足。'
-                : 'The graph did not provide enough direct relations in this round, so I need to supplement it with literature or other context.';
+            return 'The graph did not provide enough direct relations in this round, so I need to supplement it with literature or other context.';
         }
 
         $topTypes = array_slice(array_keys($grouped), 0, 4);
-        if ($language === 'zh') {
-            return $intent === 'mechanism'
-                ? '这些关系说明当前更值得优先沿着 ' . implode('、', $topTypes) . ' 这些方向继续整理机制链。'
-                : '这些关系已经足够提供一轮结构化判断，我会优先沿着 ' . implode('、', $topTypes) . ' 这些方向继续展开。';
-        }
         return $intent === 'mechanism'
             ? 'These relations suggest that the next mechanism draft should focus on ' . implode(', ', $topTypes) . '.'
             : 'These relations are enough for a first structured judgment, especially along ' . implode(', ', $topTypes) . '.';
@@ -345,33 +327,32 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         return $unique;
     }
 
-    private function resolveTargetType(array $row): string
-    {
-        $targetType = trim((string)($row['target_type'] ?? ''));
-        if ($targetType !== '') {
-            return $targetType;
-        }
-        $labels = array_values(array_filter((array)($row['target_labels'] ?? []), static fn($item): bool => is_string($item) && trim($item) !== ''));
-        return $labels[0] ?? 'Unknown';
-    }
-
     private function normalizeTargetTypes(array $targetTypes, string $intent): array
     {
-        $normalized = [];
-        foreach ($targetTypes as $type) {
-            $trimmed = trim((string)$type);
-            if ($trimmed !== '') {
-                $normalized[] = $trimmed;
+        $allowed = ['Disease', 'Function', 'Paper', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate', 'TE'];
+        $targetTypes = array_values(array_intersect($allowed, array_values(array_unique(array_map('strval', $targetTypes)))));
+        if ($targetTypes !== []) {
+            return $targetTypes;
+        }
+        return match ($intent) {
+            'literature' => ['Paper'],
+            'mechanism' => ['Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Disease'],
+            default => ['Disease', 'Function', 'Paper'],
+        };
+    }
+
+    private function resolveTargetType(array $row): string
+    {
+        if (!empty($row['target_type'])) {
+            return (string)$row['target_type'];
+        }
+        $labels = array_map('strval', (array)($row['target_labels'] ?? []));
+        foreach (['Disease', 'Function', 'Paper', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate', 'TE'] as $candidate) {
+            if (in_array($candidate, $labels, true)) {
+                return $candidate;
             }
         }
-        if ($normalized === [] && $intent === 'mechanism') {
-            $normalized = ['Function', 'Gene', 'Mutation', 'Protein', 'RNA', 'Disease'];
-        }
-        if ($normalized === []) {
-            $normalized = ['Disease', 'Function', 'Paper'];
-        }
-        $allowed = ['Carbohydrate', 'Disease', 'DiseaseCategory', 'Function', 'Gene', 'Lipid', 'Mutation', 'Paper', 'Peptide', 'Pharmaceutical', 'Protein', 'RNA', 'TE', 'Toxin'];
-        return array_values(array_intersect($allowed, array_values(array_unique($normalized)))) ?: ['Disease', 'Function', 'Paper'];
+        return 'Unknown';
     }
 
     private function cypherNormalizedNameExpr(string $alias): string

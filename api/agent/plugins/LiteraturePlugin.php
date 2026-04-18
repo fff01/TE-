@@ -18,7 +18,6 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $analysis = $context['analysis'] ?? [];
-        $language = (string)($analysis['language'] ?? 'en');
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
         $graphResult = $context['plugin_results']['Graph Plugin'] ?? [];
         $localCitations = $this->collectLocalCitations($graphResult, $entities);
@@ -35,7 +34,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 $result = $this->searchPubMed($term);
                 $pubmedTotalCount += (int)($result['total_count'] ?? 0);
                 $pubmedCitations = array_merge($pubmedCitations, (array)($result['citations'] ?? []));
-                $evidenceItems[] = ($language === 'zh' ? 'PubMed 检索词：' : 'PubMed query: ') . $term;
+                $evidenceItems[] = 'PubMed query: ' . $term;
             } catch (Throwable $error) {
                 $errors[] = 'PubMed query failed for "' . $term . '": ' . $error->getMessage();
             }
@@ -48,7 +47,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         foreach (array_slice($citations, 0, 5) as $citation) {
             $previewItems[] = [
                 'title' => (string)($citation['title'] ?? 'Untitled record'),
-                'meta' => trim(implode(' · ', array_filter([
+                'meta' => trim(implode(' | ', array_filter([
                     (string)($citation['source'] ?? ''),
                     (string)($citation['journal'] ?? ''),
                     (string)($citation['year'] ?? ''),
@@ -58,8 +57,8 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
             ];
         }
 
-        $displaySummary = $this->buildDisplaySummary($language, $pubmedTotalCount, $reviewedCount, $localCount, $queryTerms !== []);
-        $resultMessage = $this->buildResultMessage($language, $citations, $pubmedTotalCount);
+        $displaySummary = $this->buildDisplaySummary($pubmedTotalCount, $reviewedCount, $localCount, $queryTerms !== []);
+        $resultMessage = $this->buildResultMessage($citations, $pubmedTotalCount);
 
         return [
             'plugin_name' => $this->getName(),
@@ -74,9 +73,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 'reviewed_citation_count' => $reviewedCount,
                 'citations' => $citations,
             ],
-            'display_label' => $language === 'zh'
-                ? '查阅了 ' . $reviewedCount . ' 篇文献摘要'
-                : 'Reviewed ' . $reviewedCount . ' literature records',
+            'display_label' => 'Reviewed ' . $reviewedCount . ' literature records',
             'display_summary' => $displaySummary,
             'display_details' => [
                 'summary' => $displaySummary,
@@ -280,31 +277,18 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         return tekg_agent_strlen($abstract) > 280 ? tekg_agent_substr($abstract, 0, 277) . '...' : $abstract;
     }
 
-    private function buildDisplaySummary(string $language, int $pubmedTotalCount, int $reviewedCount, int $localCount, bool $usedPubMed): string
+    private function buildDisplaySummary(int $pubmedTotalCount, int $reviewedCount, int $localCount, bool $usedPubMed): string
     {
-        if ($language === 'zh') {
-            if ($usedPubMed) {
-                return '我先把本地图谱里的文献线索合并起来，再去 PubMed 外部检索，累计找到 ' . $pubmedTotalCount . ' 个候选结果，并筛选出 ' . $reviewedCount . ' 篇值得继续综合的摘要。';
-            }
-            return '这轮主要使用了本地图谱里的文献线索，当前整理出 ' . $localCount . ' 条可直接引用的记录。';
-        }
         if ($usedPubMed) {
             return 'I combined the local paper evidence with an external PubMed search, found ' . $pubmedTotalCount . ' candidate records, and reviewed ' . $reviewedCount . ' abstracts that were worth carrying into the answer.';
         }
         return 'This round mainly relied on local graph literature evidence and assembled ' . $localCount . ' directly citable records.';
     }
 
-    private function buildResultMessage(string $language, array $citations, int $pubmedTotalCount): string
+    private function buildResultMessage(array $citations, int $pubmedTotalCount): string
     {
         if ($citations === []) {
-            return $language === 'zh'
-                ? '这一轮没有拿到足够稳定的文献证据，我后面需要更多本地关系或更具体的检索词。'
-                : 'This round did not yield stable literature evidence, so I will need stronger local context or more specific search terms.';
-        }
-        if ($language === 'zh') {
-            return $pubmedTotalCount > 0
-                ? '这些文献主要集中在机制、癌症相关性和致病证据上，足够支撑后面的综合回答。'
-                : '现有本地文献已经能支撑一轮回答，我会优先使用这些可追溯证据。';
+            return 'This round did not yield stable literature evidence, so I will need stronger local context or more specific search terms.';
         }
         return $pubmedTotalCount > 0
             ? 'These papers mainly cover mechanism, cancer relevance, and disease evidence, which is enough to support the next synthesis step.'

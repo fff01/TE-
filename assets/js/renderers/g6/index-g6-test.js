@@ -35,12 +35,12 @@
     initialClassQuery: String(url.searchParams.get('class') || '').trim(),
     initialKeyNodeLevel: Math.max(1, Math.min(10, Number(url.searchParams.get('key_level')) || 1)),
     initialFixedView: url.searchParams.get('fixed') === '1',
-    initialLang: url.searchParams.get('lang') === 'zh' ? 'zh' : 'en',
+    initialLang: 'en',
     getQuery: () => (queryInput?.value || '').trim(),
     setQueryUi: (query) => {
       if (queryInput) queryInput.value = query;
     },
-    syncRouteState: ({ query, queryType, classQuery, keyNodeLevel, fixedView, lang }) => {
+    syncRouteState: ({ query, queryType, classQuery, keyNodeLevel, fixedView }) => {
       const next = new URL(window.location.href);
       if (query) next.searchParams.set('q', query);
       else next.searchParams.delete('q');
@@ -50,7 +50,6 @@
       else next.searchParams.delete('class');
       next.searchParams.set('key_level', String(keyNodeLevel));
       next.searchParams.set('fixed', fixedView ? '1' : '0');
-      next.searchParams.set('lang', lang === 'zh' ? 'zh' : 'en');
       window.history.replaceState({}, '', next.toString());
     },
     setStatus,

@@ -11,7 +11,7 @@ require __DIR__ . '/head.php';
         <div class="proto-container">
           <h1 class="module-title">Epigenetics</h1>
           <div class="module-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
             <span>/</span>
             <span>Epigenetics</span>
           </div>

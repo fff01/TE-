@@ -1,6 +1,5 @@
 ﻿<form class="expression-panel" method="get" action="<?= htmlspecialchars('/TE-/expression.php', ENT_QUOTES, 'UTF-8') ?>">
   <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang, ENT_QUOTES, 'UTF-8') ?>">
-  <input type="hidden" name="renderer" value="<?= htmlspecialchars($siteRenderer, ENT_QUOTES, 'UTF-8') ?>">
   <input type="hidden" name="value_mode" value="<?= htmlspecialchars($valueMode, ENT_QUOTES, 'UTF-8') ?>">
   <h3>Filters</h3>
   <div class="expression-filter-grid">
@@ -42,7 +41,7 @@
 
     <div class="expression-filter-actions">
       <button class="expression-filter-btn is-primary" type="submit">Apply</button>
-      <a class="expression-filter-btn" href="<?= htmlspecialchars(site_url_with_state('/TE-/expression.php', $siteLang, $siteRenderer), ENT_QUOTES, 'UTF-8') ?>">Reset</a>
+      <a class="expression-filter-btn" href="<?= htmlspecialchars(site_url_with_state('/TE-/expression.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Reset</a>
     </div>
   </div>
 </form>

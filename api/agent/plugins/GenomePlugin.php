@@ -12,7 +12,6 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $analysis = $context['analysis'] ?? [];
-        $language = (string)($analysis['language'] ?? 'en');
         $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
 
         $results = [];
@@ -31,7 +30,7 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
             $chrom = (string)($locus['chrom'] ?? '');
             $start = (int)($locus['start'] ?? 0);
             $end = (int)($locus['end'] ?? 0);
-            $jbrowseUrl = site_url_with_state('/TE-/jbrowse.php', site_lang(), site_renderer(), [
+            $jbrowseUrl = site_url_with_state('/TE-/jbrowse.php', null, null, [
                 'te' => $label,
                 'chr' => $chrom,
                 'start' => $start,
@@ -54,22 +53,16 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
             }
         }
 
-        $displaySummary = $language === 'zh'
-            ? ($results === []
-                ? '基因组位点这一轮没有提供额外补充信息。'
-                : '我定位到了代表性的基因组位点和浏览器入口，可作为后续验证位置证据的补充。')
-            : ($results === []
-                ? 'The genome lookup did not add extra context in this round.'
-                : 'I located representative genomic loci and browser entry points that can be used as supporting genomic context.');
+        $displaySummary = $results === []
+            ? 'The genome lookup did not add extra context in this round.'
+            : 'I located representative genomic loci and browser entry points that can be used as supporting genomic context.';
 
         return [
             'plugin_name' => $this->getName(),
             'status' => $results === [] ? 'empty' : 'ok',
             'query_summary' => 'Loaded representative genomic hits and browser loci for recognized TE entities.',
             'results' => $results,
-            'display_label' => $language === 'zh'
-                ? '定位了 ' . count($results) . ' 个基因组位点'
-                : 'Resolved ' . count($results) . ' genomic loci',
+            'display_label' => 'Resolved ' . count($results) . ' genomic loci',
             'display_summary' => $displaySummary,
             'display_details' => [
                 'summary' => $displaySummary,
@@ -77,9 +70,7 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
                 'evidence_items' => $evidence,
                 'citations' => [],
                 'raw_preview' => $results,
-                'result_message' => $language === 'zh'
-                    ? '这些位点信息更适合作为基因组背景或浏览器入口。'
-                    : 'These loci are most useful as genomic context or browser entry points.',
+                'result_message' => 'These loci are most useful as genomic context or browser entry points.',
             ],
             'result_counts' => [
                 'loci' => count($results),

@@ -1,80 +1,51 @@
 <?php
+declare(strict_types=1);
 
 if (!function_exists('site_lang')) {
     function site_lang(): string
     {
-        static $lang = null;
-        if ($lang !== null) {
-            return $lang;
-        }
-
-        $requested = strtolower(trim((string) ($_GET['lang'] ?? '')));
-        if (in_array($requested, ['zh', 'en'], true)) {
-            $lang = $requested;
-            if (!headers_sent()) {
-                setcookie('site_lang', $lang, time() + 86400 * 30, '/');
-            }
-            $_COOKIE['site_lang'] = $lang;
-            return $lang;
-        }
-
-        $cookie = strtolower(trim((string) ($_COOKIE['site_lang'] ?? '')));
-        $lang = in_array($cookie, ['zh', 'en'], true) ? $cookie : 'en';
-        return $lang;
+        return 'en';
     }
 }
 
 if (!function_exists('site_renderer')) {
     function site_renderer(): string
     {
-        static $renderer = null;
-        if ($renderer !== null) {
-            return $renderer;
-        }
-
-        $renderer = 'g6';
-        if (!headers_sent()) {
-            setcookie('site_renderer', $renderer, time() + 86400 * 30, '/');
-        }
-        $_COOKIE['site_renderer'] = $renderer;
-        return $renderer;
+        return 'g6';
     }
 }
 
 if (!function_exists('site_t')) {
-    function site_t(array $messages, ?string $lang = null): string
+    function site_t(array|string $messages, ?string $lang = null): string
     {
-        $lang = $lang ?? site_lang();
-        return (string) ($messages[$lang] ?? $messages['en'] ?? $messages['zh'] ?? reset($messages) ?? '');
+        if (is_string($messages)) {
+            return $messages;
+        }
+
+        return (string)($messages['en'] ?? reset($messages) ?? '');
     }
 }
 
 if (!function_exists('site_url_with_lang')) {
     function site_url_with_lang(string $href, ?string $lang = null): string
     {
-        $lang = $lang ?? site_lang();
-        $separator = str_contains($href, '?') ? '&' : '?';
-        return $href . $separator . 'lang=' . rawurlencode($lang);
+        return $href;
     }
 }
 
 if (!function_exists('site_url_with_state')) {
     function site_url_with_state(string $href, ?string $lang = null, ?string $renderer = null, array $extraParams = []): string
     {
-        $lang = $lang ?? site_lang();
-        $renderer = 'g6';
-
         $parts = parse_url($href);
-        $path = (string) ($parts['path'] ?? $href);
+        $path = (string)($parts['path'] ?? $href);
         $params = [];
         if (!empty($parts['query'])) {
             parse_str($parts['query'], $params);
         }
 
-        $params = array_merge($params, $extraParams, [
-            'lang' => $lang,
-            'renderer' => $renderer,
-        ]);
+        $params = array_merge($params, $extraParams);
+
+        unset($params['lang'], $params['renderer']);
 
         $query = http_build_query($params);
         return $path . ($query !== '' ? '?' . $query : '');

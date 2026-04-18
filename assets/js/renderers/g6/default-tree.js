@@ -79,10 +79,6 @@
     return document.getElementById(id);
   }
 
-  function getCurrentLang() {
-    return typeof currentLang === 'string' ? currentLang : 'en';
-  }
-
   function escapeHtml(text) {
     return String(text || '')
       .replace(/&/g, '&amp;')
@@ -127,9 +123,7 @@
   }
 
   function buildDefaultTreeConfig() {
-    const defaultDetailHtml = getCurrentLang() === 'zh'
-      ? '<strong>尚未选中节点</strong>当前为 G6 树图视图。'
-      : 'G6 indented default-tree view is active.';
+    const defaultDetailHtml = 'G6 indented default-tree view is active.';
 
     return {
       defaultDetailHtml,
@@ -821,9 +815,7 @@
     const resetBtn = getEl('reset-graph');
     if (resetBtn) resetBtn.addEventListener('click', () => setTimeout(renderDefaultTree, 0));
 
-    const zhBtn = getEl('lang-zh');
     const enBtn = getEl('lang-en');
-    if (zhBtn) zhBtn.addEventListener('click', () => setTimeout(renderDefaultTree, 0));
     if (enBtn) enBtn.addEventListener('click', () => setTimeout(renderDefaultTree, 0));
 
     window.addEventListener('resize', () => {

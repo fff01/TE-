@@ -132,10 +132,6 @@
     return document.getElementById(id);
   }
 
-  function getCurrentLang() {
-    return typeof currentLang === 'string' ? currentLang : 'en';
-  }
-
   function getNameSafe(label, type, description, pmid) {
     if (typeof getName === 'function') return getName(label || '', type || 'Unknown', description || '', pmid || '');
     return String(label || '');
@@ -167,9 +163,7 @@
     const detailEl = getEl('node-details');
     if (!detailEl) return;
     if (!datum) {
-      detailEl.textContent = getCurrentLang() === 'zh'
-        ? 'G6 鍔ㄦ€佸浘宸叉縺娲汇€?
-        : 'G6 dynamic graph is active.';
+      detailEl.textContent = 'G6 dynamic graph is active.';
       return;
     }
 
@@ -179,7 +173,7 @@
     }
 
     if (datum.kind === 'edge') {
-      detailEl.innerHTML = `<strong>${datum.sourceLabel}</strong> 鈫?${datum.relation} 鈫?<strong>${datum.targetLabel}</strong><br>${datum.evidence}`;
+      detailEl.innerHTML = `<strong>${datum.sourceLabel}</strong> -> ${datum.relation} -> <strong>${datum.targetLabel}</strong><br>${datum.evidence}`;
       return;
     }
 
@@ -191,16 +185,6 @@
   }
 
   function buildComboDescription(type, nodeCount) {
-    const lang = getCurrentLang();
-    if (lang === 'zh') {
-      const map = {
-        TE: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓浆搴у厓浠惰妭鐐广€俙,
-        Disease: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓柧鐥呰妭鐐广€俙,
-        Function: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓姛鑳芥垨鏈哄埗鑺傜偣銆俙,
-        Paper: `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓枃鐚妭鐐广€俙,
-      };
-      return map[type] || `褰撳墠鍒嗙粍鍖呭惈 ${nodeCount} 涓妭鐐广€俙;
-    }
     const map = {
       TE: `This group contains ${nodeCount} transposable element nodes.`,
       Disease: `This group contains ${nodeCount} disease nodes.`,
@@ -218,7 +202,6 @@
     };
     return map[type] || `This group contains ${nodeCount} nodes.`;
   }
-
   function buildDiseaseComboLabel(diseaseClass) {
     return String(diseaseClass || 'Disease');
   }
@@ -436,7 +419,7 @@
             relation: getRelSafe(edge.relation || edge.relationType || ''),
             sourceLabel: source.data.label,
             targetLabel: target.data.label,
-            evidence: edge.evidence || (Array.isArray(edge.pmids) && edge.pmids.length ? `PMID: ${edge.pmids.join(', ')}` : (getCurrentLang() === 'zh' ? '褰撳墠鏈檮璇佹嵁銆? : 'No evidence attached.')),
+            evidence: edge.evidence || (Array.isArray(edge.pmids) && edge.pmids.length ? `PMID: ${edge.pmids.join(', ')}` : 'No evidence attached.'),
           },
         };
       });
@@ -941,12 +924,7 @@
   function bindTriggers() {
     if (isBound) return;
     isBound = true;
-    const zhBtn = getEl('lang-zh');
-    const enBtn = getEl('lang-en');
-    if (zhBtn) zhBtn.addEventListener('click', () => setTimeout(rerenderLast, 0));
-    if (enBtn) enBtn.addEventListener('click', () => setTimeout(rerenderLast, 0));
   }
-
   bindTriggers();
   window.__TEKG_G6_TYPE_META = Object.freeze({
     order: Object.freeze([...TYPE_ORDER]),

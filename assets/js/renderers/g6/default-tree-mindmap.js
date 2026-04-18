@@ -78,10 +78,6 @@
     return document.getElementById(id);
   }
 
-  function getCurrentLang() {
-    return typeof currentLang === 'string' ? currentLang : 'en';
-  }
-
   function escapeHtml(text) {
     return String(text || '')
       .replace(/&/g, '&amp;')
@@ -130,9 +126,7 @@
   }
 
   function buildDefaultTreeConfig() {
-    const defaultDetailHtml = getCurrentLang() === 'zh'
-      ? '<strong>尚未选中节点</strong>当前为 G6 思维导图树视图。'
-      : 'G6 mindmap tree view is active.';
+    const defaultDetailHtml = 'G6 mindmap tree view is active.';
 
     return {
       defaultDetailHtml,
