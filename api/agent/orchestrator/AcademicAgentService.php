@@ -45,6 +45,7 @@ final class TekgAcademicAgentService
         }
 
         $answerLanguage = tekg_agent_detect_language($question, trim((string)($payload['language'] ?? 'english')));
+        $processLanguage = 'english';
         $model = trim((string)($payload['model'] ?? ($this->config['deepseek_model'] ?? 'deepseek-chat')));
         $sessionId = trim((string)($payload['session_id'] ?? ''));
         if ($sessionId === '') {
@@ -65,7 +66,7 @@ final class TekgAcademicAgentService
         $detailCounter = 0;
         $eventSequence = 0;
 
-        $this->emitThoughtFlow($emit, $sessionId, $model, $answerLanguage, $analysis, $planning, $eventSequence);
+        $this->emitThoughtFlow($emit, $sessionId, $model, $processLanguage, $analysis, $planning, $eventSequence);
 
         $reasoningTrace[] = [
             'step' => 'planning',
@@ -87,7 +88,7 @@ final class TekgAcademicAgentService
                 'plugin_name' => $pluginName,
                 'message' => $this->narrateEvent(
                     $model,
-                    $answerLanguage,
+                    $processLanguage,
                     [
                         'type' => 'tool_selected',
                         'plugin_name' => $pluginName,
@@ -103,7 +104,7 @@ final class TekgAcademicAgentService
                 'plugin_name' => $pluginName,
                 'message' => $this->narrateEvent(
                     $model,
-                    $answerLanguage,
+                    $processLanguage,
                     [
                         'type' => 'tool_start',
                         'plugin_name' => $pluginName,
@@ -133,7 +134,7 @@ final class TekgAcademicAgentService
                 'plugin_name' => $pluginName,
                 'message' => $this->narrateEvent(
                     $model,
-                    $answerLanguage,
+                    $processLanguage,
                     [
                         'type' => 'tool_progress',
                         'plugin_name' => $pluginName,
@@ -151,7 +152,7 @@ final class TekgAcademicAgentService
                 'summary' => (string)($result['display_summary'] ?? $result['query_summary'] ?? ''),
                 'message' => $this->narrateEvent(
                     $model,
-                    $answerLanguage,
+                    $processLanguage,
                     [
                         'type' => 'tool_result',
                         'plugin_name' => $pluginName,
@@ -182,7 +183,7 @@ final class TekgAcademicAgentService
                     'plugin_name' => $pluginName,
                     'message' => $this->narrateEvent(
                         $model,
-                        $answerLanguage,
+                        $processLanguage,
                         [
                             'type' => 'reflection',
                             'plugin_name' => $pluginName,
@@ -204,7 +205,7 @@ final class TekgAcademicAgentService
                     'plugin_name' => 'Citation Resolver',
                     'message' => $this->narrateEvent(
                         $model,
-                        $answerLanguage,
+                        $processLanguage,
                         [
                             'type' => 'tool_selected',
                             'plugin_name' => 'Citation Resolver',
@@ -220,7 +221,7 @@ final class TekgAcademicAgentService
                     'plugin_name' => 'Citation Resolver',
                     'message' => $this->narrateEvent(
                         $model,
-                        $answerLanguage,
+                        $processLanguage,
                         [
                             'type' => 'tool_start',
                             'plugin_name' => 'Citation Resolver',
@@ -249,7 +250,7 @@ final class TekgAcademicAgentService
                     'plugin_name' => 'Citation Resolver',
                     'message' => $this->narrateEvent(
                         $model,
-                        $answerLanguage,
+                        $processLanguage,
                         [
                             'type' => 'tool_progress',
                             'plugin_name' => 'Citation Resolver',
@@ -267,7 +268,7 @@ final class TekgAcademicAgentService
                     'summary' => (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''),
                     'message' => $this->narrateEvent(
                         $model,
-                        $answerLanguage,
+                        $processLanguage,
                         [
                             'type' => 'tool_result',
                             'plugin_name' => 'Citation Resolver',
@@ -299,7 +300,7 @@ final class TekgAcademicAgentService
             'session_id' => $sessionId,
             'message' => $this->narrateEvent(
                 $model,
-                $answerLanguage,
+                $processLanguage,
                 [
                     'type' => 'synthesizing',
                     'planning' => $planning,
@@ -375,7 +376,7 @@ final class TekgAcademicAgentService
         return $response;
     }
 
-    private function emitThoughtFlow(?callable $emit, string $sessionId, string $model, string $answerLanguage, array $analysis, array $planning, int &$eventSequence): void
+    private function emitThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $analysis, array $planning, int &$eventSequence): void
     {
         $entities = array_values(array_filter(array_map(function (array $entity): string {
             $label = trim((string)($entity['canonical_label'] ?? $entity['label'] ?? ''));
@@ -391,7 +392,7 @@ final class TekgAcademicAgentService
         $analysisLines = [
             $this->narrateEvent(
                 $model,
-                $answerLanguage,
+                $processLanguage,
                 [
                     'type' => 'analysis',
                     'focus' => 'entities',
@@ -401,7 +402,7 @@ final class TekgAcademicAgentService
             ),
             $this->narrateEvent(
                 $model,
-                $answerLanguage,
+                $processLanguage,
                 [
                     'type' => 'analysis',
                     'focus' => 'intent',
@@ -435,7 +436,7 @@ final class TekgAcademicAgentService
                 'session_id' => $sessionId,
                 'message' => $this->narrateEvent(
                     $model,
-                    $answerLanguage,
+                    $processLanguage,
                     ['type' => 'planning_step', 'focus' => 'knowledge_gap', 'gap' => $gap],
                     $fallback
                 ),
@@ -449,7 +450,7 @@ final class TekgAcademicAgentService
                 'session_id' => $sessionId,
                 'message' => $this->narrateEvent(
                     $model,
-                    $answerLanguage,
+                    $processLanguage,
                     ['type' => 'planning_step', 'focus' => 'subtask', 'subtask' => $subtask],
                     (string)$subtask
                 ),

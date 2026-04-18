@@ -38,7 +38,7 @@ final class TekgAgentLlmClient
         }
 
         $messages = [
-            ['role' => 'system', 'content' => $this->narratorSystemPrompt($language)],
+            ['role' => 'system', 'content' => $this->narratorSystemPrompt('english')],
             ['role' => 'user', 'content' => $this->buildNarratorPrompt($event)],
         ];
 

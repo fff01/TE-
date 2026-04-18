@@ -223,19 +223,19 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         $keywords = is_array($analysis['question_keywords'] ?? null) ? $analysis['question_keywords'] : [];
         if (($analysis['compare_mode'] ?? false) && count($diseaseLabels) >= 2 && $teLabels !== []) {
             return [
-                $this->composeQueryTerm($teLabels[0], $diseaseLabels[0], $keywords),
-                $this->composeQueryTerm($teLabels[0], $diseaseLabels[1], $keywords),
+                $this->composeQueryTerm($teLabels[0], $diseaseLabels[0], $keywords, (string)($analysis['intent'] ?? 'relationship')),
+                $this->composeQueryTerm($teLabels[0], $diseaseLabels[1], $keywords, (string)($analysis['intent'] ?? 'relationship')),
             ];
         }
 
-        $term = $this->composeQueryTerm($teLabels[0] ?? '', $diseaseLabels[0] ?? '', $keywords);
+        $term = $this->composeQueryTerm($teLabels[0] ?? '', $diseaseLabels[0] ?? '', $keywords, (string)($analysis['intent'] ?? 'relationship'));
         if ($term !== '') {
             return [$term];
         }
         return [trim($question)];
     }
 
-    private function composeQueryTerm(string $te, string $disease, array $keywords): string
+    private function composeQueryTerm(string $te, string $disease, array $keywords, string $intent = 'relationship'): string
     {
         $parts = [];
         if ($te !== '') {
@@ -244,10 +244,49 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         if ($disease !== '') {
             $parts[] = '"' . $disease . '"';
         }
+        $normalizedKeywords = [];
         foreach ($keywords as $keyword) {
+            $normalized = $this->normalizeKeywordForQuery((string)$keyword);
+            if ($normalized !== '' && !in_array($normalized, $normalizedKeywords, true)) {
+                $normalizedKeywords[] = $normalized;
+            }
+        }
+        if ($normalizedKeywords === []) {
+            $fallback = $this->fallbackKeywordForIntent($intent);
+            if ($fallback !== '') {
+                $normalizedKeywords[] = $fallback;
+            }
+        }
+        foreach ($normalizedKeywords as $keyword) {
             $parts[] = '"' . $keyword . '"';
         }
         return implode(' AND ', array_filter($parts));
+    }
+
+    private function normalizeKeywordForQuery(string $keyword): string
+    {
+        $value = trim($keyword);
+        if ($value === '') {
+            return '';
+        }
+        if (!preg_match('/^[A-Za-z0-9 _\\-\\/]+$/', $value)) {
+            return '';
+        }
+        return $value;
+    }
+
+    private function fallbackKeywordForIntent(string $intent): string
+    {
+        return match ($intent) {
+            'sequence' => 'sequence',
+            'mechanism' => 'mechanism',
+            'literature' => 'evidence',
+            'classification' => 'classification',
+            'expression' => 'expression',
+            'genome' => 'genome',
+            'comparison' => 'comparison',
+            default => '',
+        };
     }
 
     private function searchPubMed(string $term): array

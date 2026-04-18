@@ -52,6 +52,7 @@ require __DIR__ . '/head.php';
 ?>
 <link rel="stylesheet" href="/TE-/assets/css/pages/agent.css">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://unpkg.com/@antv/g6@5/dist/g6.min.js"></script>
 
 <section class="agent-app is-pristine" id="agentApp" data-mode="agent">
   <div class="agent-chat-shell">
@@ -98,6 +99,20 @@ require __DIR__ . '/head.php';
       </div>
     </div>
   </aside>
+
+  <section class="agent-graph-popup" id="agentGraphPopup" aria-hidden="true">
+    <div class="agent-graph-popup-head" id="agentGraphPopupHandle">
+      <div class="agent-graph-popup-headcopy">
+        <p class="agent-graph-popup-eyebrow"><?= htmlspecialchars($ui['graph_button'], ENT_QUOTES, 'UTF-8') ?></p>
+        <h3 id="agentGraphPopupTitle"><?= htmlspecialchars($ui['graph_popup_title'], ENT_QUOTES, 'UTF-8') ?></h3>
+      </div>
+      <button type="button" class="agent-graph-popup-close" id="agentGraphPopupClose" aria-label="Close graph view">&times;</button>
+    </div>
+    <div class="agent-graph-popup-body">
+      <div class="agent-graph-popup-empty" id="agentGraphPopupEmpty"><?= htmlspecialchars($ui['graph_popup_empty'], ENT_QUOTES, 'UTF-8') ?></div>
+      <div class="agent-graph-popup-canvas" id="agentGraphPopupCanvas"></div>
+    </div>
+  </section>
 </section>
 
 <script id="agent-page-config" type="application/json"><?= json_encode([

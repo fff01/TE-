@@ -34,6 +34,12 @@
   const inspectorTitle = document.getElementById('agentInspectorTitle');
   const inspectorBody = document.getElementById('agentInspectorBody');
   const inspectorClose = document.getElementById('agentInspectorClose');
+  const graphPopup = document.getElementById('agentGraphPopup');
+  const graphPopupHandle = document.getElementById('agentGraphPopupHandle');
+  const graphPopupTitle = document.getElementById('agentGraphPopupTitle');
+  const graphPopupClose = document.getElementById('agentGraphPopupClose');
+  const graphPopupEmpty = document.getElementById('agentGraphPopupEmpty');
+  const graphPopupCanvas = document.getElementById('agentGraphPopupCanvas');
 
   let currentMode = 'agent';
   let sessionId = '';
@@ -45,6 +51,14 @@
 
   let activeAbortController = null;
   let turnCounter = 0;
+  let graphPopupState = {
+    graph: null,
+    dragPointerId: null,
+    dragStartX: 0,
+    dragStartY: 0,
+    startLeft: 72,
+    startTop: 120,
+  };
 
   const toolDetailStore = new Map();
   const turnStore = new Map();
@@ -121,6 +135,13 @@
   function mergeTurnCitations(turn, citations) {
     if (!turn) return;
     turn.citations = dedupeCitations([...(turn.citations || []), ...(Array.isArray(citations) ? citations : [])]);
+  }
+
+  function normalizeGraphElements(value) {
+    if (!value || typeof value !== 'object') return { nodes: [], edges: [] };
+    const nodes = Array.isArray(value.nodes) ? value.nodes.filter((item) => item && item.id) : [];
+    const edges = Array.isArray(value.edges) ? value.edges.filter((item) => item && item.id && item.source && item.target) : [];
+    return { nodes, edges };
   }
 
   function enhanceAnswerCitations(turn, answerNode) {
@@ -383,6 +404,141 @@
     `;
   }
 
+  function graphPayloadFromDetail(detail) {
+    const payload = detail && detail.payload && typeof detail.payload === 'object' ? detail.payload : {};
+    return normalizeGraphElements(
+      payload.graph_elements
+      || payload.raw_preview?.graph_elements
+      || payload.display_details?.graph_elements
+      || payload.results?.graph_elements
+      || null
+    );
+  }
+
+  function ensureGraphPopupPosition() {
+    if (!graphPopup) return;
+    if (!graphPopup.style.left) graphPopup.style.left = '72px';
+    if (!graphPopup.style.top) graphPopup.style.top = '120px';
+  }
+
+  function destroyPopupGraph() {
+    if (graphPopupState.graph && typeof graphPopupState.graph.destroy === 'function') {
+      graphPopupState.graph.destroy();
+    }
+    graphPopupState.graph = null;
+  }
+
+  function buildGraphPopupData(elements) {
+    const nodes = elements.nodes.map((node) => ({
+      id: String(node.id),
+      data: {
+        label: String(node.displayLabel || node.label || node.id || ''),
+        type: String(node.nodeType || 'Unknown'),
+        description: String(node.description || ''),
+      },
+      style: {
+        labelText: String(node.displayLabel || node.label || node.id || ''),
+        labelPlacement: 'bottom',
+        size: 28,
+        fill: String(({
+          TE: '#5c74f0',
+          Disease: '#d96474',
+          Function: '#f0a63d',
+          Gene: '#3cae7a',
+          Protein: '#38a7b8',
+          RNA: '#7b68ee',
+          Mutation: '#c45ddb',
+          Paper: '#60728e',
+        })[String(node.nodeType || '')] || '#8aa0c8'),
+        stroke: '#ffffff',
+        lineWidth: 2,
+      },
+    }));
+    const edges = elements.edges.map((edge) => ({
+      id: String(edge.id),
+      source: String(edge.source),
+      target: String(edge.target),
+      data: {
+        label: String(edge.label || edge.relationType || ''),
+      },
+      style: {
+        stroke: '#c8d3ea',
+        lineWidth: 1.6,
+        labelText: String(edge.label || edge.relationType || ''),
+        labelBackground: true,
+        labelBackgroundFill: '#ffffff',
+        labelBackgroundRadius: 6,
+        labelFill: '#5a6780',
+        endArrow: true,
+      },
+    }));
+    return { nodes, edges };
+  }
+
+  function renderGraphPopup(detail) {
+    if (!graphPopup || !graphPopupCanvas || !graphPopupEmpty || !graphPopupTitle) return;
+    const elements = graphPayloadFromDetail(detail);
+    const hasGraph = elements.nodes.length > 0 && elements.edges.length > 0;
+
+    graphPopupTitle.textContent = detail && detail.title ? `${detail.title} · ${ui.graph_popup_title || 'Knowledge Graph View'}` : (ui.graph_popup_title || 'Knowledge Graph View');
+
+    if (!window.G6 || typeof window.G6.Graph !== 'function' || !hasGraph) {
+      destroyPopupGraph();
+      graphPopupCanvas.innerHTML = '';
+      graphPopupEmpty.classList.remove('is-hidden');
+      graphPopupEmpty.textContent = hasGraph
+        ? 'G6 graph runtime is unavailable on this page.'
+        : (ui.graph_popup_empty || 'No graph subgraph is available for this tool call.');
+      return;
+    }
+
+    graphPopupEmpty.classList.add('is-hidden');
+    const width = graphPopupCanvas.clientWidth || 720;
+    const height = graphPopupCanvas.clientHeight || 420;
+    const graphData = buildGraphPopupData(elements);
+
+    destroyPopupGraph();
+    graphPopupCanvas.innerHTML = '';
+    const GraphClass = window.G6.Graph;
+    graphPopupState.graph = new GraphClass({
+      container: graphPopupCanvas,
+      width,
+      height,
+      autoFit: 'view',
+      data: graphData,
+      layout: {
+        type: 'force',
+        preventOverlap: true,
+        nodeSize: 38,
+        linkDistance: 160,
+      },
+      behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
+      node: {
+        type: 'circle',
+      },
+      edge: {
+        type: 'line',
+      },
+    });
+    graphPopupState.graph.render();
+  }
+
+  function openGraphPopup(detailId) {
+    const detail = toolDetailStore.get(detailId);
+    if (!detail || !graphPopup) return;
+    ensureGraphPopupPosition();
+    renderGraphPopup(detail);
+    graphPopup.setAttribute('aria-hidden', 'false');
+    app.classList.add('is-graph-popup-open');
+  }
+
+  function closeGraphPopup() {
+    if (!graphPopup) return;
+    graphPopup.setAttribute('aria-hidden', 'true');
+    app.classList.remove('is-graph-popup-open');
+    destroyPopupGraph();
+  }
+
   function openInspector(detailId) {
     const detail = toolDetailStore.get(detailId);
     if (!detail) return;
@@ -412,7 +568,11 @@
         )),
       );
     } else if (isGraphPlugin) {
+      const graphElements = graphPayloadFromDetail(detail);
       sections.push(
+        buildInspectorSection(ui.graph_button || 'Knowledge Graph', graphElements.nodes.length && graphElements.edges.length
+          ? `<button type="button" class="agent-graph-launch" data-graph-detail-id="${escapeHtml(String(detailId))}">${escapeHtml(ui.graph_button || 'Knowledge Graph')}</button>`
+          : `<div class="agent-detail-empty">${escapeHtml(ui.graph_popup_empty || 'No graph subgraph is available for this tool call.')}</div>`),
         buildInspectorSection(ui.inspector_evidence || 'Evidence', formatInspectorList(
           payload.evidence_items || payload.display_details?.evidence_items || [],
           ui.tool_empty_evidence || 'No evidence items were returned for this tool call.',
@@ -659,7 +819,38 @@
     openInspector(String(toolEvent.dataset.detailId || ''));
   });
 
+  inspectorBody.addEventListener('click', (event) => {
+    const graphButton = event.target.closest('[data-graph-detail-id]');
+    if (!graphButton) return;
+    openGraphPopup(String(graphButton.dataset.graphDetailId || ''));
+  });
+
   inspectorClose.addEventListener('click', closeInspector);
+  graphPopupClose.addEventListener('click', closeGraphPopup);
+
+  graphPopupHandle.addEventListener('pointerdown', (event) => {
+    if (!graphPopup) return;
+    graphPopupState.dragPointerId = event.pointerId;
+    graphPopupState.dragStartX = event.clientX;
+    graphPopupState.dragStartY = event.clientY;
+    graphPopupState.startLeft = graphPopup.offsetLeft;
+    graphPopupState.startTop = graphPopup.offsetTop;
+    graphPopupHandle.setPointerCapture(event.pointerId);
+  });
+
+  graphPopupHandle.addEventListener('pointermove', (event) => {
+    if (!graphPopup || graphPopupState.dragPointerId !== event.pointerId) return;
+    const nextLeft = Math.max(12, graphPopupState.startLeft + (event.clientX - graphPopupState.dragStartX));
+    const nextTop = Math.max(88, graphPopupState.startTop + (event.clientY - graphPopupState.dragStartY));
+    graphPopup.style.left = `${nextLeft}px`;
+    graphPopup.style.top = `${nextTop}px`;
+  });
+
+  graphPopupHandle.addEventListener('pointerup', (event) => {
+    if (graphPopupState.dragPointerId !== event.pointerId) return;
+    graphPopupState.dragPointerId = null;
+    graphPopupHandle.releasePointerCapture(event.pointerId);
+  });
 
   form.addEventListener('submit', submitQuestion);
   setMode();

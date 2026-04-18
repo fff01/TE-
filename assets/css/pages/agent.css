@@ -519,6 +519,115 @@
   line-height: 1.62;
 }
 
+.agent-graph-launch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border: 1px solid #cfdaef;
+  border-radius: 999px;
+  background: #f7faff;
+  color: #3e5ed4;
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.agent-graph-launch:hover {
+  background: #eef4ff;
+  border-color: #b9c8ec;
+}
+
+.agent-graph-popup {
+  position: fixed;
+  top: 120px;
+  left: 72px;
+  width: min(760px, calc(100vw - 120px));
+  height: min(560px, calc(100vh - 180px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border: 1px solid #dbe2f1;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.985);
+  box-shadow: 0 26px 54px rgba(33, 47, 79, 0.18);
+  z-index: 40;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.agent-app.is-graph-popup-open .agent-graph-popup {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.agent-graph-popup-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid #e2e7f2;
+  cursor: move;
+  user-select: none;
+}
+
+.agent-graph-popup-headcopy {
+  min-width: 0;
+}
+
+.agent-graph-popup-eyebrow {
+  margin: 0 0 4px;
+  color: #7a88a2;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.agent-graph-popup-head h3 {
+  margin: 0;
+  color: #1c2638;
+  font-size: 1.2rem;
+}
+
+.agent-graph-popup-close {
+  border: 0;
+  background: transparent;
+  color: #60728e;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.agent-graph-popup-body {
+  position: relative;
+  min-height: 0;
+}
+
+.agent-graph-popup-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #78869f;
+  font-size: 0.98rem;
+  padding: 24px;
+  text-align: center;
+}
+
+.agent-graph-popup-empty.is-hidden {
+  display: none;
+}
+
+.agent-graph-popup-canvas {
+  width: 100%;
+  height: 100%;
+}
+
 .agent-turn.is-pending .agent-answer:empty::before {
   content: "";
   display: block;
@@ -578,6 +687,13 @@
 
   .agent-user-bubble {
     max-width: 82%;
+  }
+
+  .agent-graph-popup {
+    left: 20px;
+    right: 20px;
+    width: auto;
+    height: min(58vh, 520px);
   }
 }
 
