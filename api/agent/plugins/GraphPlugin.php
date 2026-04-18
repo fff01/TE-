@@ -70,17 +70,20 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
                 $targetType,
                 $this->cypherNormalizedNameExpr('t')
             );
-            foreach ($this->entityCandidates($entity) as $candidate) {
-                $candidateRows = $this->neo4j->run($cypher, ['entity' => $candidate]);
-                if ($candidateRows === []) {
-                    continue;
+            foreach ($this->entityCandidateGroups($entity) as $mode => $candidates) {
+                foreach ($candidates as $candidate) {
+                    $candidateRows = $this->neo4j->run($cypher, ['entity' => $candidate]);
+                    if ($candidateRows === []) {
+                        continue;
+                    }
+                    foreach ($candidateRows as $row) {
+                        $row['target_type'] = $targetType;
+                        $row['matched_alias'] = $candidate;
+                        $row['alias_mode'] = $mode;
+                        $rows[] = $row;
+                    }
+                    break 2;
                 }
-                foreach ($candidateRows as $row) {
-                    $row['target_type'] = $targetType;
-                    $row['matched_alias'] = $candidate;
-                    $rows[] = $row;
-                }
-                break;
             }
         }
         return $rows;
@@ -101,17 +104,23 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
                           coalesce(r.evidence, []) AS evidence
                    LIMIT 20";
 
-        foreach ($this->entityCandidates($teEntity) as $teCandidate) {
-            foreach ($this->entityCandidates($diseaseEntity) as $diseaseCandidate) {
-                $rows = $this->neo4j->run($cypher, ['te' => $teCandidate, 'disease' => $diseaseCandidate]);
-                if ($rows === []) {
-                    continue;
+        foreach ($this->entityCandidateGroups($teEntity) as $teMode => $teCandidates) {
+            foreach ($teCandidates as $teCandidate) {
+                foreach ($this->entityCandidateGroups($diseaseEntity) as $diseaseMode => $diseaseCandidates) {
+                    foreach ($diseaseCandidates as $diseaseCandidate) {
+                        $rows = $this->neo4j->run($cypher, ['te' => $teCandidate, 'disease' => $diseaseCandidate]);
+                        if ($rows === []) {
+                            continue;
+                        }
+                        foreach ($rows as &$row) {
+                            $row['matched_alias'] = $teCandidate;
+                            $row['matched_disease_alias'] = $diseaseCandidate;
+                            $row['alias_mode'] = $teMode === 'strict' && $diseaseMode === 'strict' ? 'strict' : 'broad';
+                        }
+                        unset($row);
+                        return $rows;
+                    }
                 }
-                foreach ($rows as &$row) {
-                    $row['matched_alias'] = $teCandidate;
-                }
-                unset($row);
-                return $rows;
             }
         }
         return [];
@@ -119,47 +128,60 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
 
     private function queryTePairRelationship(array $leftEntity, array $rightEntity): array
     {
-        $leftCandidates = $this->entityCandidates($leftEntity);
-        $rightCandidates = $this->entityCandidates($rightEntity);
+        foreach ($this->entityCandidateGroups($leftEntity) as $leftMode => $leftCandidates) {
+            foreach ($leftCandidates as $left) {
+                foreach ($this->entityCandidateGroups($rightEntity) as $rightMode => $rightCandidates) {
+                    foreach ($rightCandidates as $right) {
+                        $rows = $this->neo4j->run(
+                            "MATCH (a:TE)-[:SUBFAMILY_OF*1..4]->(b:TE)
+                             WHERE {$this->cypherNormalizedNameExpr('a')} = toLower(trim(\$left))
+                               AND {$this->cypherNormalizedNameExpr('b')} = toLower(trim(\$right))
+                             RETURN coalesce(a.name,'') AS source_name,
+                                    ['TE'] AS target_labels,
+                                    'TE' AS target_type,
+                                    coalesce(b.name,'') AS target_name,
+                                    'SUBFAMILY_OF' AS relation_type,
+                                    'Tree lineage relationship' AS relation_description,
+                                    [] AS pmids,
+                                    [] AS evidence
+                             LIMIT 5",
+                            ['left' => $left, 'right' => $right]
+                        );
+                        if ($rows !== []) {
+                            foreach ($rows as &$row) {
+                                $row['matched_alias'] = $left;
+                                $row['matched_right_alias'] = $right;
+                                $row['alias_mode'] = $leftMode === 'strict' && $rightMode === 'strict' ? 'strict' : 'broad';
+                            }
+                            unset($row);
+                            return $rows;
+                        }
 
-        foreach ($leftCandidates as $left) {
-            foreach ($rightCandidates as $right) {
-                $rows = $this->neo4j->run(
-                    "MATCH (a:TE)-[:SUBFAMILY_OF*1..4]->(b:TE)
-                     WHERE {$this->cypherNormalizedNameExpr('a')} = toLower(trim(\$left))
-                       AND {$this->cypherNormalizedNameExpr('b')} = toLower(trim(\$right))
-                     RETURN coalesce(a.name,'') AS source_name,
-                            ['TE'] AS target_labels,
-                            'TE' AS target_type,
-                            coalesce(b.name,'') AS target_name,
-                            'SUBFAMILY_OF' AS relation_type,
-                            'Tree lineage relationship' AS relation_description,
-                            [] AS pmids,
-                            [] AS evidence
-                     LIMIT 5",
-                    ['left' => $left, 'right' => $right]
-                );
-                if ($rows !== []) {
-                    return $rows;
-                }
-
-                $rows = $this->neo4j->run(
-                    "MATCH (b:TE)-[:SUBFAMILY_OF*1..4]->(a:TE)
-                     WHERE {$this->cypherNormalizedNameExpr('a')} = toLower(trim(\$left))
-                       AND {$this->cypherNormalizedNameExpr('b')} = toLower(trim(\$right))
-                     RETURN coalesce(a.name,'') AS source_name,
-                            ['TE'] AS target_labels,
-                            'TE' AS target_type,
-                            coalesce(b.name,'') AS target_name,
-                            'HAS_SUBFAMILY' AS relation_type,
-                            'Tree lineage relationship' AS relation_description,
-                            [] AS pmids,
-                            [] AS evidence
-                     LIMIT 5",
-                    ['left' => $left, 'right' => $right]
-                );
-                if ($rows !== []) {
-                    return $rows;
+                        $rows = $this->neo4j->run(
+                            "MATCH (b:TE)-[:SUBFAMILY_OF*1..4]->(a:TE)
+                             WHERE {$this->cypherNormalizedNameExpr('a')} = toLower(trim(\$left))
+                               AND {$this->cypherNormalizedNameExpr('b')} = toLower(trim(\$right))
+                             RETURN coalesce(a.name,'') AS source_name,
+                                    ['TE'] AS target_labels,
+                                    'TE' AS target_type,
+                                    coalesce(b.name,'') AS target_name,
+                                    'HAS_SUBFAMILY' AS relation_type,
+                                    'Tree lineage relationship' AS relation_description,
+                                    [] AS pmids,
+                                    [] AS evidence
+                             LIMIT 5",
+                            ['left' => $left, 'right' => $right]
+                        );
+                        if ($rows !== []) {
+                            foreach ($rows as &$row) {
+                                $row['matched_alias'] = $left;
+                                $row['matched_right_alias'] = $right;
+                                $row['alias_mode'] = $leftMode === 'strict' && $rightMode === 'strict' ? 'strict' : 'broad';
+                            }
+                            unset($row);
+                            return $rows;
+                        }
+                    }
                 }
             }
         }
@@ -199,7 +221,22 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             $grouped[$targetType] = ($grouped[$targetType] ?? 0) + 1;
             $sentence = $this->rowSentence($row);
             if ($sentence !== '') {
-                $evidenceItems[] = $sentence;
+                $evidenceItems[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    $sentence,
+                    trim((string)($row['source_name'] ?? '')),
+                    (($row['alias_mode'] ?? 'strict') === 'strict') ? 'high' : 'medium',
+                    [
+                        'relation_type' => (string)($row['relation_type'] ?? ''),
+                        'matched_alias' => (string)($row['matched_alias'] ?? ''),
+                        'target_type' => $targetType,
+                    ],
+                    [
+                        'title' => trim((string)($row['source_name'] ?? '')) !== '' ? trim((string)($row['source_name'] ?? '')) : $sentence,
+                        'meta' => trim($targetType . ' | ' . (string)($row['relation_type'] ?? 'related_to')),
+                        'body' => $sentence,
+                    ]
+                );
                 if (count($previewItems) < 5) {
                     $previewItems[] = ['title' => $sentence, 'meta' => $targetType];
                 }
@@ -207,11 +244,12 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             $citations = array_merge($citations, $this->rowCitations($row, $pmidTitleMap));
         }
 
-        $evidenceItems = array_values(array_unique($evidenceItems));
         $citations = $this->citationResolver->normalizeMany($citations, 'local_graph');
         $resultCounts = [
             'relations' => count($rows),
             'entity_types' => count($grouped),
+            'strict_matches' => count(array_filter($rows, static fn(array $row): bool => ($row['alias_mode'] ?? 'strict') === 'strict')),
+            'broad_matches' => count(array_filter($rows, static fn(array $row): bool => ($row['alias_mode'] ?? 'strict') === 'broad')),
         ];
         foreach ($grouped as $type => $count) {
             $resultCounts[$type] = $count;
@@ -220,6 +258,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         $displayLabel = 'Queried ' . count($rows) . ' graph relations';
         $displaySummary = $this->buildDisplaySummary($intent, $grouped, count($rows), $errors);
         $resultMessage = $this->buildResultMessage($intent, $grouped, count($rows));
+        $graphElements = $this->buildGraphElements($rows);
 
         return [
             'plugin_name' => $this->getName(),
@@ -228,6 +267,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             'results' => [
                 'rows' => $rows,
                 'by_type' => $grouped,
+                'graph_elements' => $graphElements,
             ],
             'display_label' => $displayLabel,
             'display_summary' => $displaySummary,
@@ -236,7 +276,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
                 'preview_items' => $previewItems,
                 'evidence_items' => $evidenceItems,
                 'citations' => $citations,
-                'raw_preview' => ['rows' => $rows, 'by_type' => $grouped],
+                'raw_preview' => ['rows' => $rows, 'by_type' => $grouped, 'graph_elements' => $graphElements],
                 'result_message' => $resultMessage,
             ],
             'result_counts' => $resultCounts,
@@ -253,7 +293,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             return 'The graph query failed.';
         }
         if ($count === 0) {
-            return 'The structured graph did not provide enough direct hits under the current canonical label, so the next step should rely on aliases or external evidence.';
+            return 'The structured graph did not provide enough direct hits under the current strict alias chain, so the next step should rely on broader aliases or external evidence.';
         }
         $types = implode(', ', array_keys($grouped));
         return $intent === 'mechanism'
@@ -377,30 +417,55 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         return 'Unknown';
     }
 
-    private function entityCandidates(array $entity): array
+    private function entityCandidateGroups(array $entity): array
     {
-        $candidates = [];
-        foreach ([
-            (string)($entity['matched_alias'] ?? ''),
-            (string)($entity['canonical_label'] ?? $entity['label'] ?? ''),
-            (string)($entity['label'] ?? ''),
-        ] as $candidate) {
-            $candidate = trim($candidate);
-            if ($candidate !== '') {
-                $candidates[] = $candidate;
-            }
-        }
-        foreach ((array)($entity['aliases'] ?? []) as $alias) {
-            $value = trim((string)$alias);
-            if ($value !== '') {
-                $candidates[] = $value;
-            }
-        }
-        return array_values(array_unique($candidates));
+        return tekg_agent_entity_candidate_groups($entity);
     }
 
     private function cypherNormalizedNameExpr(string $alias): string
     {
         return "replace(replace(replace(toLower(trim(coalesce($alias.name,''))), '-', ''), '_', ''), ' ', '')";
+    }
+
+    private function buildGraphElements(array $rows): array
+    {
+        $nodes = [];
+        $edges = [];
+        foreach ($rows as $index => $row) {
+            $source = trim((string)($row['source_name'] ?? ''));
+            $target = trim((string)($row['target_name'] ?? ''));
+            if ($source === '' || $target === '') {
+                continue;
+            }
+            $sourceId = 'graph:' . md5('node:' . $source . ':TE');
+            $targetType = $this->resolveTargetType($row);
+            $targetId = 'graph:' . md5('node:' . $target . ':' . $targetType);
+            $nodes[$sourceId] = [
+                'id' => $sourceId,
+                'label' => $source,
+                'displayLabel' => $source,
+                'nodeType' => 'TE',
+                'description' => 'Source TE entity in the current graph result set.',
+            ];
+            $nodes[$targetId] = [
+                'id' => $targetId,
+                'label' => $target,
+                'displayLabel' => $target,
+                'nodeType' => $targetType,
+                'description' => trim((string)($row['relation_description'] ?? '')),
+            ];
+            $edges[] = [
+                'id' => 'graph-edge-' . $index,
+                'source' => $sourceId,
+                'target' => $targetId,
+                'label' => trim((string)($row['relation_type'] ?? 'related_to')),
+                'relationType' => trim((string)($row['relation_type'] ?? 'related_to')),
+            ];
+        }
+
+        return [
+            'nodes' => array_values($nodes),
+            'edges' => $edges,
+        ];
     }
 }

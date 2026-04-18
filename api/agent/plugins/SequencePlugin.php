@@ -46,6 +46,7 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
                 'title' => $name,
                 'meta' => trim(implode(' | ', array_filter([
                     $match['entity_label'] !== $name ? 'matched from ' . $match['entity_label'] : '',
+                    ($match['alias_mode'] ?? 'strict') === 'broad' ? 'broad alias match' : 'strict alias match',
                     $length !== null ? $length . ' bp' : '',
                     $headline,
                 ]))),
@@ -56,9 +57,31 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
                 ]))),
             ];
 
-            $evidenceItems[] = $name . ' maps to a Repbase-backed sequence record' .
+            $evidenceItems[] = tekg_agent_make_evidence_item(
+                $this->getName(),
+                $name . ' maps to a Repbase-backed sequence record' .
                 ($length !== null ? ' with a consensus length of ' . $length . ' bp' : '') .
-                ($structureHints !== '' ? ' and structure hints including ' . $structureHints : '') . '.';
+                ($structureHints !== '' ? ' and structure hints including ' . $structureHints : '') . '.',
+                $name,
+                (($match['alias_mode'] ?? 'strict') === 'strict') ? 'high' : 'medium',
+                [
+                    'matched_alias' => (string)($match['matched_alias'] ?? ''),
+                    'alias_mode' => (string)($match['alias_mode'] ?? 'strict'),
+                    'repbase_name' => (string)($match['repbase_name'] ?? ''),
+                    'length' => $length,
+                ],
+                [
+                    'title' => $name,
+                    'meta' => trim(implode(' | ', array_filter([
+                        $length !== null ? $length . ' bp' : '',
+                        $headline,
+                    ]))),
+                    'body' => trim(implode(' | ', array_filter([
+                        $structureHints !== '' ? 'Structure: ' . $structureHints : '',
+                        $sequencePreview !== '' ? 'Sequence: ' . $sequencePreview : '',
+                    ]))),
+                ]
+            );
 
             foreach ((array)($entry['references'] ?? []) as $reference) {
                 if (!is_array($reference)) {
@@ -100,6 +123,8 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
             ],
             'result_counts' => [
                 'matched_records' => count($matches),
+                'strict_matches' => count(array_filter($matches, static fn(array $match): bool => (($match['alias_mode'] ?? 'strict') === 'strict'))),
+                'broad_matches' => count(array_filter($matches, static fn(array $match): bool => (($match['alias_mode'] ?? 'strict') === 'broad'))),
             ],
             'evidence_items' => $evidenceItems,
             'citations' => $citations,
@@ -139,55 +164,76 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
 
     private function resolveEntry(array $chain, array $dataset): ?array
     {
-        $candidates = [];
         $canonical = trim((string)($chain['canonical_label'] ?? $chain['label'] ?? ''));
-        if ($canonical !== '') {
-            $candidates[] = $canonical;
-        }
-        foreach ((array)($chain['aliases'] ?? []) as $alias) {
-            $value = trim((string)$alias);
-            if ($value !== '') {
-                $candidates[] = $value;
-            }
-        }
-        $candidates = array_values(array_unique($candidates));
 
         $dbToRepbase = is_array($dataset['db_to_repbase'] ?? null) ? $dataset['db_to_repbase'] : [];
         $entriesByName = is_array($dataset['entries_by_name'] ?? null) ? $dataset['entries_by_name'] : [];
 
-        foreach ($candidates as $candidate) {
-            $repbaseName = trim((string)($dbToRepbase[$candidate] ?? ''));
-            if ($repbaseName !== '' && isset($entriesByName[$repbaseName])) {
-                return [
-                    'entity_label' => $canonical !== '' ? $canonical : $candidate,
-                    'matched_alias' => $candidate,
-                    'repbase_name' => $repbaseName,
-                    'entry' => $entriesByName[$repbaseName],
-                ];
-            }
-            if (isset($entriesByName[$candidate])) {
-                return [
-                    'entity_label' => $canonical !== '' ? $canonical : $candidate,
-                    'matched_alias' => $candidate,
-                    'repbase_name' => $candidate,
-                    'entry' => $entriesByName[$candidate],
-                ];
-            }
-            $normalizedCandidate = tekg_agent_normalize_lookup_token($candidate);
-            foreach ($entriesByName as $name => $entry) {
-                if (tekg_agent_normalize_lookup_token((string)$name) === $normalizedCandidate) {
+        foreach (tekg_agent_entity_candidate_groups($chain) as $mode => $candidates) {
+            foreach ($candidates as $candidate) {
+                $repbaseName = trim((string)($dbToRepbase[$candidate] ?? ''));
+                if ($repbaseName !== '' && isset($entriesByName[$repbaseName])) {
+                    $enriched = $this->enrichEntry($entriesByName[$repbaseName]);
                     return [
                         'entity_label' => $canonical !== '' ? $canonical : $candidate,
                         'matched_alias' => $candidate,
-                        'repbase_name' => $name,
-                        'entry' => $entry,
+                        'alias_mode' => $mode,
+                        'repbase_name' => $repbaseName,
+                        'length' => $enriched['length'] ?? null,
+                        'keywords' => $enriched['keywords'] ?? [],
+                        'structure_hints' => $enriched['structure_hints'] ?? [],
+                        'sequence_preview' => $enriched['sequence_preview'] ?? '',
+                        'entry' => $enriched,
                     ];
                 }
+                if (isset($entriesByName[$candidate])) {
+                    $enriched = $this->enrichEntry($entriesByName[$candidate]);
+                    return [
+                        'entity_label' => $canonical !== '' ? $canonical : $candidate,
+                        'matched_alias' => $candidate,
+                        'alias_mode' => $mode,
+                        'repbase_name' => $candidate,
+                        'length' => $enriched['length'] ?? null,
+                        'keywords' => $enriched['keywords'] ?? [],
+                        'structure_hints' => $enriched['structure_hints'] ?? [],
+                        'sequence_preview' => $enriched['sequence_preview'] ?? '',
+                        'entry' => $enriched,
+                    ];
+                }
+                $normalizedCandidate = tekg_agent_normalize_lookup_token($candidate);
+                foreach ($entriesByName as $name => $entry) {
+                    if (tekg_agent_normalize_lookup_token((string)$name) === $normalizedCandidate) {
+                        $enriched = $this->enrichEntry($entry);
+                        return [
+                            'entity_label' => $canonical !== '' ? $canonical : $candidate,
+                            'matched_alias' => $candidate,
+                            'alias_mode' => $mode,
+                            'repbase_name' => $name,
+                            'length' => $enriched['length'] ?? null,
+                            'keywords' => $enriched['keywords'] ?? [],
+                            'structure_hints' => $enriched['structure_hints'] ?? [],
+                            'sequence_preview' => $enriched['sequence_preview'] ?? '',
+                            'entry' => $enriched,
+                        ];
+                    }
+                }
             }
-
         }
 
         return null;
+    }
+
+    private function enrichEntry(array $entry): array
+    {
+        $length = $this->extractLength($entry);
+        $keywords = array_values(array_slice(is_array($entry['keywords'] ?? null) ? $entry['keywords'] : [], 0, 8));
+        $structureHints = $this->structureHints($entry);
+        $sequencePreview = $this->sequencePreview((string)($entry['sequence'] ?? ''));
+        $entry['length'] = $length;
+        $entry['keywords'] = $keywords;
+        $entry['structure_hints'] = $structureHints !== '' ? array_values(array_filter(array_map('trim', explode(',', $structureHints)))) : [];
+        $entry['sequence_preview'] = $sequencePreview;
+        return $entry;
     }
 
     private function extractLength(array $entry): ?int

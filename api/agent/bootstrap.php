@@ -47,6 +47,11 @@ function tekg_agent_pubmed_cache_dir(): string
     return tekg_agent_ensure_dir(TEKG_DATA_FS_DIR . '/cache/agent/pubmed');
 }
 
+function tekg_agent_session_cache_dir(): string
+{
+    return tekg_agent_ensure_dir(TEKG_DATA_FS_DIR . '/cache/agent/sessions');
+}
+
 function tekg_agent_entity_alias_map(): array
 {
     static $map = null;
@@ -127,6 +132,41 @@ function tekg_agent_make_session_id(): string
     }
 }
 
+function tekg_agent_session_file(string $sessionId): string
+{
+    return rtrim(tekg_agent_session_cache_dir(), '/\\') . '/' . preg_replace('/[^a-zA-Z0-9_\-]+/', '_', $sessionId) . '.json';
+}
+
+function tekg_agent_load_session_memory(string $sessionId): array
+{
+    $path = tekg_agent_session_file($sessionId);
+    if (!is_file($path)) {
+        return [
+            'topic_entities' => [],
+            'last_intent' => '',
+            'confirmed_claims' => [],
+            'citations' => [],
+            'failed_aliases' => [],
+            'tool_history' => [],
+        ];
+    }
+    $decoded = json_decode((string)file_get_contents($path), true);
+    return is_array($decoded) ? $decoded : [
+        'topic_entities' => [],
+        'last_intent' => '',
+        'confirmed_claims' => [],
+        'citations' => [],
+        'failed_aliases' => [],
+        'tool_history' => [],
+    ];
+}
+
+function tekg_agent_save_session_memory(string $sessionId, array $memory): void
+{
+    $path = tekg_agent_session_file($sessionId);
+    file_put_contents($path, json_encode($memory, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+}
+
 function tekg_agent_json_response(int $status, array $payload): void
 {
     http_response_code($status);
@@ -187,6 +227,131 @@ function tekg_agent_http_request(string $url, string $method = 'GET', array $hea
         }
     }
     return ['status' => $status, 'body' => (string)$raw];
+}
+
+function tekg_agent_entity_candidate_groups(array $entity): array
+{
+    $strict = [];
+    $broad = [];
+
+    foreach ([
+        (string)($entity['matched_alias'] ?? ''),
+        (string)($entity['canonical_label'] ?? $entity['label'] ?? ''),
+        (string)($entity['label'] ?? ''),
+    ] as $candidate) {
+        $candidate = trim($candidate);
+        if ($candidate !== '') {
+            $strict[] = $candidate;
+        }
+    }
+
+    foreach ((array)($entity['aliases'] ?? []) as $alias) {
+        $value = trim((string)$alias);
+        if ($value !== '') {
+            $strict[] = $value;
+        }
+    }
+
+    foreach ((array)($entity['broad_aliases'] ?? []) as $alias) {
+        $value = trim((string)$alias);
+        if ($value !== '') {
+            $broad[] = $value;
+        }
+    }
+
+    $strict = array_values(array_unique($strict));
+    $broad = array_values(array_filter(array_unique($broad), static fn(string $value): bool => !in_array($value, $strict, true)));
+
+    return [
+        'strict' => $strict,
+        'broad' => $broad,
+    ];
+}
+
+function tekg_agent_support_strength(string $level): string
+{
+    $value = strtolower(trim($level));
+    return in_array($value, ['high', 'medium', 'low'], true) ? $value : 'medium';
+}
+
+function tekg_agent_make_evidence_item(
+    string $sourcePlugin,
+    string $claim,
+    string $entityScope = '',
+    string $supportStrength = 'medium',
+    array $rawSourceRef = [],
+    array $display = []
+): array {
+    $title = trim((string)($display['title'] ?? ''));
+    $meta = trim((string)($display['meta'] ?? ''));
+    $body = trim((string)($display['body'] ?? ''));
+
+    if ($title === '') {
+        $title = $entityScope !== '' ? $entityScope : $sourcePlugin;
+    }
+    if ($body === '') {
+        $body = $claim;
+    }
+
+    return [
+        'source_plugin' => $sourcePlugin,
+        'entity_scope' => trim($entityScope),
+        'claim' => trim($claim),
+        'support_strength' => tekg_agent_support_strength($supportStrength),
+        'raw_source_ref' => $rawSourceRef,
+        'title' => $title,
+        'meta' => $meta,
+        'body' => $body,
+    ];
+}
+
+function tekg_agent_normalize_evidence_item(mixed $item, string $defaultPlugin = 'Unknown'): ?array
+{
+    if (is_string($item)) {
+        $value = trim($item);
+        if ($value === '') {
+            return null;
+        }
+        return tekg_agent_make_evidence_item($defaultPlugin, $value);
+    }
+
+    if (!is_array($item)) {
+        return null;
+    }
+
+    if (isset($item['claim']) || isset($item['source_plugin'])) {
+        return tekg_agent_make_evidence_item(
+            (string)($item['source_plugin'] ?? $defaultPlugin),
+            (string)($item['claim'] ?? $item['body'] ?? $item['title'] ?? ''),
+            (string)($item['entity_scope'] ?? ''),
+            (string)($item['support_strength'] ?? 'medium'),
+            (array)($item['raw_source_ref'] ?? []),
+            [
+                'title' => (string)($item['title'] ?? ''),
+                'meta' => (string)($item['meta'] ?? ''),
+                'body' => (string)($item['body'] ?? ''),
+            ]
+        );
+    }
+
+    $title = trim((string)($item['title'] ?? $item['label'] ?? $item['name'] ?? ''));
+    $body = trim((string)($item['body'] ?? $item['summary'] ?? $item['text'] ?? ''));
+    if ($title === '' && $body === '') {
+        return null;
+    }
+
+    return tekg_agent_make_evidence_item(
+        $defaultPlugin,
+        $body !== '' ? $body : $title,
+        '',
+        'medium',
+        [],
+        [
+            'title' => $title,
+            'meta' => (string)($item['meta'] ?? ''),
+            'body' => $body,
+        ]
+    );
 }
 
 interface TekgAgentPluginInterface

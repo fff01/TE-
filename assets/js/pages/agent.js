@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const configNode = document.getElementById('agent-page-config');
   if (!configNode) return;
 
@@ -271,7 +271,7 @@
     button.dataset.detailId = toolId;
     button.title = ui.tool_open_hint || 'Click to inspect details';
     button.innerHTML = `
-      <span class="agent-tool-event-icon">◎</span>
+      <span class="agent-tool-event-icon">•</span>
       <span class="agent-tool-event-label">${escapeHtml(label)}</span>
     `;
     wrapper.appendChild(button);
@@ -376,7 +376,7 @@
       buildInspectorSection(ui.inspector_summary || 'Summary', `
         <div class="agent-detail-meta">
           ${detail.summary ? `<p>${escapeHtml(detail.summary)}</p>` : ''}
-          ${countLines.length ? `<p>${escapeHtml(countLines.join(' · '))}</p>` : ''}
+          ${countLines.length ? `<p>${escapeHtml(countLines.join(' | '))}</p>` : ''}
         </div>
       `),
     ];
@@ -619,3 +619,4 @@
   form.addEventListener('submit', submitQuestion);
   setMode();
 })();
+

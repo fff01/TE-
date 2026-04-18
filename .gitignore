@@ -1,6 +1,6 @@
 # Large local datasets
 data/
-
+reference/
 # Large reference or genome files
 *.fa
 *.fasta

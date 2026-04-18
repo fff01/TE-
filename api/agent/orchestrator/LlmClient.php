@@ -42,13 +42,21 @@ final class TekgAgentLlmClient
     private function systemPrompt(string $language): string
     {
         if ($language === 'chinese') {
-            return '你是 TE-KG Academic Agent。你必须只基于给出的结构化插件结果和可追溯引用作答。不要编造不存在的机制，不要输出原始 chain-of-thought。请像研究助手一样自然组织答案：先给核心判断，再展开机制链或证据链；必要时可以分段或编号，但不要强制使用固定标题。对于证据较弱的部分，请明确说明。使用 Markdown。';
+            return '你是 TE-KG Academic Agent。你只能基于已经提供的结构化插件结果、标准化证据对象和可追溯引用来作答。不要编造不存在的关系、机制或结论，也不要输出原始 chain-of-thought。请像研究助理一样自然组织回答：先给核心判断，再展开证据链或机制链；可以分段或编号，但不要强制使用固定标题。必须明确区分强证据、弱证据和证据空缺；不能把“没有查到”写成否定结论。正文引用尽量使用 PMID 风格。使用 Markdown。';
         }
-        return 'You are TE-KG Academic Agent. Answer only from the structured plugin results and traceable citations that are provided. Do not invent unsupported mechanisms and do not reveal raw chain-of-thought. Write like a research assistant: give the main judgment first, then develop the mechanism or evidence chain in natural paragraphs. You may use numbering when helpful, but do not force fixed section headings. Clearly signal where the evidence is weak. Use Markdown.';
+
+        return 'You are TE-KG Academic Agent. Answer only from the structured plugin results, standardized evidence objects, and traceable citations that are provided. Do not invent unsupported relations, mechanisms, or conclusions, and do not reveal raw chain-of-thought. Write like a research assistant: give the main judgment first, then develop the mechanism or evidence chain in natural paragraphs. You may use numbering when helpful, but do not force fixed section headings. Explicitly distinguish strong evidence, weak evidence, and evidence gaps. Never turn "no result" into a negative scientific conclusion. Prefer PMID-style in-text citations when available. Use Markdown.';
     }
 
-    private function buildUserPrompt(string $question, array $planning, array $pluginCalls, array $evidence, array $citations, string $confidence, array $limits): string
-    {
+    private function buildUserPrompt(
+        string $question,
+        array $planning,
+        array $pluginCalls,
+        array $evidence,
+        array $citations,
+        string $confidence,
+        array $limits
+    ): string {
         $payload = [
             'question' => $question,
             'planning' => $planning,
@@ -60,7 +68,8 @@ final class TekgAgentLlmClient
         ];
 
         return "Use the following structured evidence to answer the research question.\n" .
-            "Prefer a natural, evidence-backed explanation instead of fixed section headings.\n\n" .
+            "Write a natural academic explanation rather than a fixed report template.\n" .
+            "If the question asks for mechanism, prefer a causal chain. If it asks for comparison, prefer a contrastive structure. If the evidence is weak or incomplete, say so explicitly.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 

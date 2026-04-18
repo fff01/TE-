@@ -40,7 +40,18 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 $result = $this->searchPubMed($term);
                 $pubmedTotalCount += (int)($result['total_count'] ?? 0);
                 $pubmedCitations = array_merge($pubmedCitations, (array)($result['citations'] ?? []));
-                $evidenceItems[] = 'Searched PubMed with: ' . $term;
+                $evidenceItems[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    'Searched PubMed with the query "' . $term . '".',
+                    $term,
+                    'medium',
+                    ['query_term' => $term],
+                    [
+                        'title' => 'PubMed query',
+                        'meta' => $term,
+                        'body' => 'External literature search executed for this query.',
+                    ]
+                );
             } catch (Throwable $error) {
                 $errors[] = 'PubMed query failed for "' . $term . '": ' . $error->getMessage();
             }
@@ -53,6 +64,8 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
 
         $reviewedCount = count($citations);
         $localCount = count($localCitations);
+        $strictLocalHits = count(array_filter($localCitations, static fn(array $citation): bool => (($citation['match_mode'] ?? 'strict') === 'strict')));
+        $broadLocalHits = count(array_filter($localCitations, static fn(array $citation): bool => (($citation['match_mode'] ?? 'strict') === 'broad')));
 
         foreach (array_slice($citations, 0, 5) as $citation) {
             $previewItems[] = [
@@ -66,6 +79,31 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 'url' => (string)($citation['url'] ?? ''),
                 'body' => trim((string)($citation['abstract_summary'] ?? '')),
             ];
+            $title = trim((string)($citation['title'] ?? ''));
+            $pmid = trim((string)($citation['pmid'] ?? ''));
+            $evidenceItems[] = tekg_agent_make_evidence_item(
+                $this->getName(),
+                $title !== ''
+                    ? 'Literature evidence includes "' . $title . '"' . ($pmid !== '' ? ' (PMID ' . $pmid . ').' : '.')
+                    : ($pmid !== '' ? 'Literature evidence includes PMID ' . $pmid . '.' : 'A literature record was selected for synthesis.'),
+                $title !== '' ? $title : ($pmid !== '' ? 'PMID ' . $pmid : 'Literature record'),
+                ($citation['source'] ?? '') === 'pubmed' ? 'medium' : 'high',
+                [
+                    'pmid' => $pmid,
+                    'source' => (string)($citation['source'] ?? ''),
+                    'query_term' => (string)($citation['query_term'] ?? ''),
+                ],
+                [
+                    'title' => $title !== '' ? $title : ($pmid !== '' ? 'PMID ' . $pmid : 'Literature record'),
+                    'meta' => trim(implode(' | ', array_filter([
+                        (string)($citation['source'] ?? ''),
+                        (string)($citation['journal'] ?? ''),
+                        (string)($citation['year'] ?? ''),
+                    ]))),
+                    'body' => trim((string)($citation['abstract_summary'] ?? '')),
+                    'url' => (string)($citation['url'] ?? ''),
+                ]
+            );
         }
 
         $displaySummary = $this->buildDisplaySummary($pubmedTotalCount, $reviewedCount, $localCount, $queryTerms !== []);
@@ -89,7 +127,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
             'display_details' => [
                 'summary' => $displaySummary,
                 'preview_items' => $previewItems,
-                'evidence_items' => array_values(array_unique($evidenceItems)),
+                'evidence_items' => $evidenceItems,
                 'citations' => $citations,
                 'raw_preview' => [
                     'query_terms' => $queryTerms,
@@ -102,10 +140,12 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
             ],
             'result_counts' => [
                 'local_hits' => $localCount,
+                'strict_local_hits' => $strictLocalHits,
+                'broad_local_hits' => $broadLocalHits,
                 'pubmed_candidates' => $pubmedTotalCount,
                 'reviewed' => $reviewedCount,
             ],
-            'evidence_items' => array_values(array_unique($evidenceItems)),
+            'evidence_items' => $evidenceItems,
             'citations' => $citations,
             'errors' => $errors,
             'latency_ms' => (int)round((microtime(true) - $started) * 1000),
@@ -121,17 +161,24 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
 
         $rows = [];
         foreach ($entities as $entity) {
-            $candidates = $this->entityCandidates($entity);
+            $candidateGroups = $this->entityCandidateGroups($entity);
             $type = (string)($entity['type'] ?? 'TE');
             $sourceLabel = $type === 'Disease' ? 'Disease' : 'TE';
             $cypher = "MATCH (a:$sourceLabel)-[r]->(p:Paper)
                        WHERE replace(replace(replace(toLower(trim(coalesce(a.name,''))), '-', ''), '_', ''), ' ', '') = replace(replace(replace(toLower(trim(\$entity)), '-', ''), '_', ''), ' ', '')
                        RETURN coalesce(p.pmid,'') AS pmid, coalesce(p.name,'') AS title, '' AS year, '' AS journal";
-            foreach ($candidates as $candidate) {
-                $candidateRows = $this->neo4j->run($cypher, ['entity' => $candidate]);
-                if ($candidateRows !== []) {
-                    $rows = array_merge($rows, $candidateRows);
-                    break;
+            foreach ($candidateGroups as $mode => $candidates) {
+                foreach ($candidates as $candidate) {
+                    $candidateRows = $this->neo4j->run($cypher, ['entity' => $candidate]);
+                    if ($candidateRows === []) {
+                        continue;
+                    }
+                    foreach ($candidateRows as $candidateRow) {
+                        $candidateRow['matched_alias'] = $candidate;
+                        $candidateRow['match_mode'] = $mode;
+                        $rows[] = $candidateRow;
+                    }
+                    break 2;
                 }
             }
         }
@@ -143,6 +190,8 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                 'title' => trim((string)($row['title'] ?? '')),
                 'year' => trim((string)($row['year'] ?? '')),
                 'journal' => trim((string)($row['journal'] ?? '')),
+                'matched_alias' => trim((string)($row['matched_alias'] ?? '')),
+                'match_mode' => trim((string)($row['match_mode'] ?? 'strict')),
             ];
         }
 
@@ -325,25 +374,8 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
         return (string)$response['body'];
     }
 
-    private function entityCandidates(array $entity): array
+    private function entityCandidateGroups(array $entity): array
     {
-        $candidates = [];
-        foreach ([
-            (string)($entity['matched_alias'] ?? ''),
-            (string)($entity['canonical_label'] ?? $entity['label'] ?? ''),
-            (string)($entity['label'] ?? ''),
-        ] as $candidate) {
-            $candidate = trim($candidate);
-            if ($candidate !== '') {
-                $candidates[] = $candidate;
-            }
-        }
-        foreach ((array)($entity['aliases'] ?? []) as $alias) {
-            $value = trim((string)$alias);
-            if ($value !== '') {
-                $candidates[] = $value;
-            }
-        }
-        return array_values(array_unique($candidates));
+        return tekg_agent_entity_candidate_groups($entity);
     }
 }

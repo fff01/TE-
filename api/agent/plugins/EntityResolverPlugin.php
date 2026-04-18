@@ -29,26 +29,51 @@ final class TekgAgentEntityResolverPlugin implements TekgAgentPluginInterface
                 is_array($chain['aliases'] ?? null) ? $chain['aliases'] : []
             ))));
             $matchedAlias = trim((string)($chain['matched_alias'] ?? ''));
+            $broadAliases = array_values(array_unique(array_filter(array_map(
+                static fn($value): string => trim((string)$value),
+                is_array($chain['broad_aliases'] ?? null) ? $chain['broad_aliases'] : []
+            ))));
+            $confidence = (float)($chain['confidence'] ?? 0.0);
+            $usedBroadAlias = (bool)($chain['used_broad_alias'] ?? false);
             $aliasCount += count($aliases);
 
             if ($canonical === '') {
                 continue;
             }
 
-            $evidenceItems[] = $matchedAlias !== '' && tekg_agent_lower($matchedAlias) !== tekg_agent_lower($canonical)
+            $claim = $matchedAlias !== '' && tekg_agent_lower($matchedAlias) !== tekg_agent_lower($canonical)
                 ? 'Resolved "' . $matchedAlias . '" to the canonical ' . $type . ' entity ' . $canonical . '.'
-                : 'Resolved the ' . $type . ' entity ' . $canonical . ' with ' . count($aliases) . ' alias variants.';
+                : 'Resolved the ' . $type . ' entity ' . $canonical . ' with ' . count($aliases) . ' strict alias variants.';
+            $evidenceItems[] = tekg_agent_make_evidence_item(
+                $this->getName(),
+                $claim,
+                $canonical,
+                $usedBroadAlias ? 'low' : 'high',
+                [
+                    'matched_alias' => $matchedAlias,
+                    'used_broad_alias' => $usedBroadAlias,
+                    'confidence' => $confidence,
+                ],
+                [
+                    'title' => $canonical,
+                    'meta' => trim($type . ($matchedAlias !== '' ? ' | matched via ' . $matchedAlias : '') . ' | confidence ' . number_format($confidence, 2)),
+                    'body' => $aliases !== [] ? 'Strict aliases: ' . implode(', ', $aliases) : '',
+                ]
+            );
 
             $previewItems[] = [
                 'title' => $canonical,
-                'meta' => trim($type . ($matchedAlias !== '' ? ' | matched via ' . $matchedAlias : '')),
-                'body' => $aliases !== [] ? 'Aliases: ' . implode(', ', $aliases) : '',
+                'meta' => trim($type . ($matchedAlias !== '' ? ' | matched via ' . $matchedAlias : '') . ' | confidence ' . number_format($confidence, 2)),
+                'body' => trim(
+                    ($aliases !== [] ? 'Strict aliases: ' . implode(', ', $aliases) : '') .
+                    ($broadAliases !== [] ? ($aliases !== [] ? ' | ' : '') . 'Broad aliases: ' . implode(', ', $broadAliases) : '')
+                ),
             ];
         }
 
         $resolvedCount = count($previewItems);
         $summary = $resolvedCount > 0
-            ? 'I resolved ' . $resolvedCount . ' entities and prepared ' . $aliasCount . ' alias variants so the downstream plugins can retry stable names when needed.'
+            ? 'I resolved ' . $resolvedCount . ' entities and prepared ' . $aliasCount . ' strict alias variants so the downstream plugins can retry stable names before considering broad aliases.'
             : 'No stable named entities were resolved from the question, so downstream plugins will have to rely on broader keyword context.';
 
         return [
