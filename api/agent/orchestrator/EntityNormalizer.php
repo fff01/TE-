@@ -31,15 +31,15 @@ final class TekgAgentEntityNormalizer
             'requested_target_types' => $targetTypes,
             'question_keywords' => $keywords,
             'question_tokens' => $tokens,
-            'asks_for_papers' => $this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'literature', 'citation', 'citations']),
-            'asks_for_expression' => $this->containsAny($question, ['expression', 'expressed', 'cell line', 'cell lines', 'tissue', 'context', 'transcriptome']),
-            'asks_for_genome' => $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate']),
-            'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'lineage', 'taxonomy']),
-            'asks_for_sequence' => $this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'orfs', 'utr', 'promoter', 'motif', 'structure', 'annotation']),
+            'asks_for_papers' => $this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'literature', 'citation', 'citations', '文献', '论文', '参考文献', '引用', 'pmid']),
+            'asks_for_expression' => $this->containsAny($question, ['expression', 'expressed', 'cell line', 'cell lines', 'tissue', 'context', 'transcriptome', '表达', '组织', '细胞系', '转录组']),
+            'asks_for_genome' => $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate', '基因组', '基因组浏览器', '位点', '位置', '染色体', '坐标']),
+            'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'lineage', 'taxonomy', '分类', '亚家族', '家族', '树', '谱系']),
+            'asks_for_sequence' => $this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'orfs', 'utr', 'promoter', 'motif', 'structure', 'annotation', '序列', '共识序列', '长度', '结构', '注释', '启动子', '基序']),
             'asks_for_mechanism' => $intent === 'mechanism',
-            'compare_mode' => $this->containsAny($question, ['compare', 'versus', 'vs', 'difference']),
+            'compare_mode' => $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异']),
             'needs_external_literature' => $intent === 'mechanism'
-                || $this->containsAny($question, ['recent', 'latest', 'evidence', 'paper', 'papers', 'pubmed', 'literature'])
+                || $this->containsAny($question, ['recent', 'latest', 'evidence', 'paper', 'papers', 'pubmed', 'literature', '最新', '证据', '文献', '论文'])
                 || count($normalizedEntities) <= 1,
         ];
     }
@@ -182,25 +182,25 @@ final class TekgAgentEntityNormalizer
 
     private function detectIntent(string $question): string
     {
-        if ($this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to'])) {
+        if ($this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to', '机制', '为什么', '如何', '导致', '通路', '因果'])) {
             return 'mechanism';
         }
-        if ($this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'evidence', 'literature', 'citation'])) {
+        if ($this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'evidence', 'literature', 'citation', '文献', '论文', '参考文献', '引用', '证据'])) {
             return 'literature';
         }
-        if ($this->containsAny($question, ['expression', 'expressed', 'cell line', 'tissue', 'transcriptome'])) {
+        if ($this->containsAny($question, ['expression', 'expressed', 'cell line', 'tissue', 'transcriptome', '表达', '组织', '细胞系', '转录组'])) {
             return 'expression';
         }
-        if ($this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate'])) {
+        if ($this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate', '基因组', '浏览器', '位点', '位置', '染色体', '坐标'])) {
             return 'genome';
         }
-        if ($this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'utr', 'motif', 'structure', 'annotation'])) {
+        if ($this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'utr', 'motif', 'structure', 'annotation', '序列', '共识序列', '长度', '结构', '注释', '启动子'])) {
             return 'sequence';
         }
-        if ($this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'taxonomy', 'lineage'])) {
+        if ($this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'taxonomy', 'lineage', '分类', '亚家族', '家族', '树', '谱系'])) {
             return 'classification';
         }
-        if ($this->containsAny($question, ['compare', 'versus', 'vs', 'difference'])) {
+        if ($this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异'])) {
             return 'comparison';
         }
         return 'relationship';
@@ -210,8 +210,8 @@ final class TekgAgentEntityNormalizer
     {
         $entityCount = count($entities);
         $targetCount = count($targetTypes);
-        $hasMechanismWords = $this->containsAny($question, ['how', 'why', 'mechanism', 'pathway', 'causal', 'lead to', 'result in']);
-        $hasCompareWords = $this->containsAny($question, ['compare', 'versus', 'vs', 'difference']);
+        $hasMechanismWords = $this->containsAny($question, ['how', 'why', 'mechanism', 'pathway', 'causal', 'lead to', 'result in', '机制', '为什么', '如何', '导致', '通路']);
+        $hasCompareWords = $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异']);
 
         if ($intent === 'mechanism' || $hasMechanismWords) {
             return 'mechanism_chain';
@@ -229,18 +229,18 @@ final class TekgAgentEntityNormalizer
     {
         $mapping = [
             'Carbohydrate' => ['carbohydrate', 'carbohydrates'],
-            'Disease' => ['disease', 'diseases', 'illness', 'phenotype', 'cancer', 'carcinoma'],
-            'DiseaseCategory' => ['diseasecategory', 'disease category', 'disease class', 'disease classes'],
-            'Function' => ['function', 'functions', 'role', 'mechanism', 'activity', 'retrotransposition'],
-            'Gene' => ['gene', 'genes'],
-            'Lipid' => ['lipid', 'lipids'],
-            'Mutation' => ['mutation', 'mutations', 'variant', 'variants', 'insertion'],
-            'Paper' => ['paper', 'papers', 'literature', 'reference', 'references', 'pubmed', 'citation'],
-            'Peptide' => ['peptide', 'peptides'],
-            'Pharmaceutical' => ['drug', 'drugs', 'pharmaceutical', 'pharmaceuticals'],
-            'Protein' => ['protein', 'proteins', 'orf1p', 'orf2p', 'reverse transcriptase'],
-            'RNA' => ['rna', 'rnas', 'mrna', 'lncrna'],
-            'TE' => ['transposable element', 'transposable elements', 'te', 'tes', 'retrotransposon'],
+            'Disease' => ['disease', 'diseases', 'illness', 'phenotype', 'cancer', 'carcinoma', '疾病', '癌症', '肿瘤', '表型'],
+            'DiseaseCategory' => ['diseasecategory', 'disease category', 'disease class', 'disease classes', '疾病分类', '疾病类别'],
+            'Function' => ['function', 'functions', 'role', 'mechanism', 'activity', 'retrotransposition', '功能', '机制', '作用', '活性', '逆转录转座'],
+            'Gene' => ['gene', 'genes', '基因'],
+            'Lipid' => ['lipid', 'lipids', '脂质'],
+            'Mutation' => ['mutation', 'mutations', 'variant', 'variants', 'insertion', '突变', '变异', '插入'],
+            'Paper' => ['paper', 'papers', 'literature', 'reference', 'references', 'pubmed', 'citation', '文献', '论文', '参考文献', '引用'],
+            'Peptide' => ['peptide', 'peptides', '肽'],
+            'Pharmaceutical' => ['drug', 'drugs', 'pharmaceutical', 'pharmaceuticals', '药物'],
+            'Protein' => ['protein', 'proteins', 'orf1p', 'orf2p', 'reverse transcriptase', '蛋白', '逆转录酶'],
+            'RNA' => ['rna', 'rnas', 'mrna', 'lncrna', 'rna', '转录本'],
+            'TE' => ['transposable element', 'transposable elements', 'te', 'tes', 'retrotransposon', '转座子', '转座元件'],
             'Toxin' => ['toxin', 'toxins'],
         ];
 
@@ -292,6 +292,13 @@ final class TekgAgentEntityNormalizer
             'consensus',
             'orf1p',
             'orf2p',
+            '机制',
+            '癌症',
+            '表达',
+            '序列',
+            '结构',
+            '文献',
+            '分类',
         ] as $keyword) {
             if ($this->containsAny($question, [$keyword])) {
                 $keywords[] = $keyword;

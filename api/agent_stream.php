@@ -35,6 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 header('Content-Type: text/event-stream; charset=utf-8');
 header('Cache-Control: no-cache, no-transform');
 header('X-Accel-Buffering: no');
+header('Connection: keep-alive');
+header('Content-Encoding: none');
+
+@ini_set('output_buffering', '0');
+@ini_set('zlib.output_compression', '0');
+@ini_set('implicit_flush', '1');
+if (function_exists('apache_setenv')) {
+    @apache_setenv('no-gzip', '1');
+}
 
 while (ob_get_level() > 0) {
     @ob_end_flush();
@@ -43,8 +52,13 @@ ob_implicit_flush(true);
 
 $emit = static function (array $event): void {
     echo 'data: ' . json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n\n";
+    @ob_flush();
     @flush();
 };
+
+echo ':' . str_repeat(' ', 2048) . "\n\n";
+@ob_flush();
+@flush();
 
 try {
     $raw = file_get_contents('php://input');

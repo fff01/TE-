@@ -30,6 +30,32 @@ final class TekgAgentLlmClient
         return $this->callProvider($provider, $model, $messages);
     }
 
+    public function narrateEvent(string $model, string $language, array $event): ?string
+    {
+        $provider = $this->inferProvider($model);
+        if (!$this->canCallModel($provider)) {
+            return null;
+        }
+
+        $messages = [
+            ['role' => 'system', 'content' => $this->narratorSystemPrompt($language)],
+            ['role' => 'user', 'content' => $this->buildNarratorPrompt($event)],
+        ];
+
+        try {
+            if (!empty($this->config['llm_relay_url'])) {
+                $response = $this->callRelay($provider, $model, $messages, false);
+            } else {
+                $response = $this->callProvider($provider, $model, $messages, false);
+            }
+        } catch (Throwable) {
+            return null;
+        }
+
+        $content = trim((string)($response['content'] ?? ''));
+        return $content !== '' ? $content : null;
+    }
+
     private function inferProvider(string $model): string
     {
         $value = strtolower(trim($model));
@@ -46,6 +72,15 @@ final class TekgAgentLlmClient
         }
 
         return 'You are TE-KG Academic Agent. Answer only from the structured plugin results, standardized evidence objects, and traceable citations that are provided. Do not invent unsupported relations, mechanisms, or conclusions, and do not reveal raw chain-of-thought. Write like a research assistant: give the main judgment first, then develop the mechanism or evidence chain in natural paragraphs. You may use numbering when helpful, but do not force fixed section headings. Explicitly distinguish strong evidence, weak evidence, and evidence gaps. Never turn "no result" into a negative scientific conclusion. Prefer PMID-style in-text citations when available. Use Markdown.';
+    }
+
+    private function narratorSystemPrompt(string $language): string
+    {
+        if ($language === 'chinese') {
+            return '你是 TE-KG Agent 的过程叙述器。你只能基于提供的真实事件对象写 1 到 2 句简短过程说明。只能描述已经真实发生的事情，不能补脑，不能编造额外步骤，不能暴露原始 chain-of-thought。语气自然、克制、研究型。';
+        }
+
+        return 'You are the TE-KG Agent process narrator. Write 1 to 2 short sentences that describe only the real execution event that is provided. Do not invent extra steps, do not speculate, and do not reveal raw chain-of-thought. Keep the tone concise, natural, and research-oriented.';
     }
 
     private function buildUserPrompt(
@@ -73,14 +108,21 @@ final class TekgAgentLlmClient
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
-    private function callRelay(string $provider, string $model, array $messages): array
+    private function buildNarratorPrompt(array $event): string
+    {
+        return "Summarize this execution event for the user in 1 to 2 short sentences.\n" .
+            "Only describe what really happened in this event.\n\n" .
+            json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function callRelay(string $provider, string $model, array $messages, bool $enableThinking = true): array
     {
         $payload = [
             'provider' => $provider,
             'model' => $model,
             'messages' => $messages,
             'temperature' => 0.2,
-            'enable_thinking' => true,
+            'enable_thinking' => $enableThinking,
         ];
         $decoded = $this->httpJson((string)$this->config['llm_relay_url'], $payload, []);
         $response = $decoded['response'] ?? [];
@@ -94,7 +136,7 @@ final class TekgAgentLlmClient
         ];
     }
 
-    private function callProvider(string $provider, string $model, array $messages): array
+    private function callProvider(string $provider, string $model, array $messages, bool $enableThinking = true): array
     {
         $url = $provider === 'qwen' ? (string)($this->config['dashscope_url'] ?? '') : (string)($this->config['deepseek_url'] ?? '');
         $key = $provider === 'qwen' ? (string)($this->config['dashscope_key'] ?? '') : (string)($this->config['deepseek_key'] ?? '');
@@ -106,7 +148,7 @@ final class TekgAgentLlmClient
             'model' => $model,
             'messages' => $messages,
             'temperature' => 0.2,
-            'enable_thinking' => true,
+            'enable_thinking' => $enableThinking,
         ], [
             'Authorization: Bearer ' . $key,
         ]);
@@ -119,6 +161,17 @@ final class TekgAgentLlmClient
             'content' => trim($content),
             'error' => $content !== '' ? null : 'Provider returned an empty response.',
         ];
+    }
+
+    private function canCallModel(string $provider): bool
+    {
+        if (!empty($this->config['llm_relay_url'])) {
+            return true;
+        }
+
+        $url = $provider === 'qwen' ? (string)($this->config['dashscope_url'] ?? '') : (string)($this->config['deepseek_url'] ?? '');
+        $key = $provider === 'qwen' ? (string)($this->config['dashscope_key'] ?? '') : (string)($this->config['deepseek_key'] ?? '');
+        return $url !== '' && $key !== '';
     }
 
     private function httpJson(string $url, array $payload, array $headers): array

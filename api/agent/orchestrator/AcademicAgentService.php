@@ -63,13 +63,9 @@ final class TekgAcademicAgentService
         $pluginCalls = [];
         $reasoningTrace = [];
         $detailCounter = 0;
+        $eventSequence = 0;
 
-        $this->emit($emit, [
-            'type' => 'planning',
-            'session_id' => $sessionId,
-            'message' => $planning['narrative'],
-            'payload' => $planning,
-        ]);
+        $this->emitThoughtFlow($emit, $sessionId, $model, $answerLanguage, $analysis, $planning, $eventSequence);
 
         $reasoningTrace[] = [
             'step' => 'planning',
@@ -85,11 +81,36 @@ final class TekgAcademicAgentService
                 continue;
             }
 
-            $this->emit($emit, [
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'tool_selected',
+                'session_id' => $sessionId,
+                'plugin_name' => $pluginName,
+                'message' => $this->narrateEvent(
+                    $model,
+                    $answerLanguage,
+                    [
+                        'type' => 'tool_selected',
+                        'plugin_name' => $pluginName,
+                        'planning' => $planning,
+                    ],
+                    $this->toolSelectedMessage($pluginName, $planning)
+                ),
+            ]);
+            $this->emitHeartbeat($emit, $eventSequence, $sessionId);
+            $this->emitEvent($emit, $eventSequence, [
                 'type' => 'tool_start',
                 'session_id' => $sessionId,
                 'plugin_name' => $pluginName,
-                'message' => $this->toolStartMessage($pluginName, $planning),
+                'message' => $this->narrateEvent(
+                    $model,
+                    $answerLanguage,
+                    [
+                        'type' => 'tool_start',
+                        'plugin_name' => $pluginName,
+                        'planning' => $planning,
+                    ],
+                    $this->toolStartMessage($pluginName, $planning)
+                ),
             ]);
 
             $result = $plugin->run([
@@ -106,20 +127,38 @@ final class TekgAcademicAgentService
             $detailId = 'tool-' . (++$detailCounter);
             $payloadForUi = $this->toolPayloadForUi($result);
 
-            $this->emit($emit, [
+            $this->emitEvent($emit, $eventSequence, [
                 'type' => 'tool_progress',
                 'session_id' => $sessionId,
                 'plugin_name' => $pluginName,
-                'message' => (string)($result['display_summary'] ?? $result['query_summary'] ?? ''),
+                'message' => $this->narrateEvent(
+                    $model,
+                    $answerLanguage,
+                    [
+                        'type' => 'tool_progress',
+                        'plugin_name' => $pluginName,
+                        'result' => $result,
+                    ],
+                    (string)($result['display_summary'] ?? $result['query_summary'] ?? '')
+                ),
             ]);
 
-            $this->emit($emit, [
+            $this->emitEvent($emit, $eventSequence, [
                 'type' => 'tool_result',
                 'session_id' => $sessionId,
                 'plugin_name' => $pluginName,
                 'display_label' => (string)($result['display_label'] ?? $pluginName),
                 'summary' => (string)($result['display_summary'] ?? $result['query_summary'] ?? ''),
-                'message' => (string)(($result['display_details']['result_message'] ?? '') ?: ''),
+                'message' => $this->narrateEvent(
+                    $model,
+                    $answerLanguage,
+                    [
+                        'type' => 'tool_result',
+                        'plugin_name' => $pluginName,
+                        'result' => $result,
+                    ],
+                    (string)(($result['display_details']['result_message'] ?? '') ?: ($result['display_summary'] ?? $result['query_summary'] ?? ''))
+                ),
                 'detail_payload_id' => $detailId,
                 'payload' => $payloadForUi,
             ]);
@@ -134,16 +173,61 @@ final class TekgAcademicAgentService
             foreach ($this->maybeAppendPlugins($analysis, $planning, $pluginName, $result, $pluginQueue) as $additionalPlugin) {
                 $pluginQueue[] = $additionalPlugin;
             }
+
+            $reflection = $this->reflectionMessage($pluginName, $result, $pluginQueue, $index);
+            if ($reflection !== '') {
+                $this->emitEvent($emit, $eventSequence, [
+                    'type' => 'reflection',
+                    'session_id' => $sessionId,
+                    'plugin_name' => $pluginName,
+                    'message' => $this->narrateEvent(
+                        $model,
+                        $answerLanguage,
+                        [
+                            'type' => 'reflection',
+                            'plugin_name' => $pluginName,
+                            'result' => $result,
+                            'remaining_tools' => array_slice($pluginQueue, $index + 1),
+                        ],
+                        $reflection
+                    ),
+                ]);
+            }
         }
 
         if ($this->shouldRunCitationResolver($pluginResults)) {
             $citationPlugin = $this->plugins['Citation Resolver'] ?? null;
             if ($citationPlugin instanceof TekgAgentPluginInterface) {
-                $this->emit($emit, [
+                $this->emitEvent($emit, $eventSequence, [
+                    'type' => 'tool_selected',
+                    'session_id' => $sessionId,
+                    'plugin_name' => 'Citation Resolver',
+                    'message' => $this->narrateEvent(
+                        $model,
+                        $answerLanguage,
+                        [
+                            'type' => 'tool_selected',
+                            'plugin_name' => 'Citation Resolver',
+                            'planning' => $planning,
+                        ],
+                        $this->toolSelectedMessage('Citation Resolver', $planning)
+                    ),
+                ]);
+                $this->emitHeartbeat($emit, $eventSequence, $sessionId);
+                $this->emitEvent($emit, $eventSequence, [
                     'type' => 'tool_start',
                     'session_id' => $sessionId,
                     'plugin_name' => 'Citation Resolver',
-                    'message' => $this->toolStartMessage('Citation Resolver', $planning),
+                    'message' => $this->narrateEvent(
+                        $model,
+                        $answerLanguage,
+                        [
+                            'type' => 'tool_start',
+                            'plugin_name' => 'Citation Resolver',
+                            'planning' => $planning,
+                        ],
+                        $this->toolStartMessage('Citation Resolver', $planning)
+                    ),
                 ]);
 
                 $citationResult = $citationPlugin->run([
@@ -159,20 +243,38 @@ final class TekgAcademicAgentService
                 $detailId = 'tool-' . (++$detailCounter);
                 $payloadForUi = $this->toolPayloadForUi($citationResult);
 
-                $this->emit($emit, [
+                $this->emitEvent($emit, $eventSequence, [
                     'type' => 'tool_progress',
                     'session_id' => $sessionId,
                     'plugin_name' => 'Citation Resolver',
-                    'message' => (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''),
+                    'message' => $this->narrateEvent(
+                        $model,
+                        $answerLanguage,
+                        [
+                            'type' => 'tool_progress',
+                            'plugin_name' => 'Citation Resolver',
+                            'result' => $citationResult,
+                        ],
+                        (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? '')
+                    ),
                 ]);
 
-                $this->emit($emit, [
+                $this->emitEvent($emit, $eventSequence, [
                     'type' => 'tool_result',
                     'session_id' => $sessionId,
                     'plugin_name' => 'Citation Resolver',
                     'display_label' => (string)($citationResult['display_label'] ?? 'Citation Resolver'),
                     'summary' => (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''),
-                    'message' => (string)(($citationResult['display_details']['result_message'] ?? '') ?: ''),
+                    'message' => $this->narrateEvent(
+                        $model,
+                        $answerLanguage,
+                        [
+                            'type' => 'tool_result',
+                            'plugin_name' => 'Citation Resolver',
+                            'result' => $citationResult,
+                        ],
+                        (string)(($citationResult['display_details']['result_message'] ?? '') ?: ($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''))
+                    ),
                     'detail_payload_id' => $detailId,
                     'payload' => $payloadForUi,
                 ]);
@@ -192,11 +294,22 @@ final class TekgAcademicAgentService
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
 
         $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence);
-        $this->emit($emit, [
+        $this->emitEvent($emit, $eventSequence, [
             'type' => 'synthesizing',
             'session_id' => $sessionId,
-            'message' => $synthesizingMessage,
+            'message' => $this->narrateEvent(
+                $model,
+                $answerLanguage,
+                [
+                    'type' => 'synthesizing',
+                    'planning' => $planning,
+                    'plugin_results' => $pluginResults,
+                    'evidence_count' => count($evidence),
+                ],
+                $synthesizingMessage
+            ),
         ]);
+        $this->emitHeartbeat($emit, $eventSequence, $sessionId);
 
         try {
             $llm = $this->llm->complete($model, $question, $answerLanguage, $planning, $pluginCalls, $evidence, $citations, $confidence, $limits);
@@ -244,13 +357,13 @@ final class TekgAcademicAgentService
         $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence);
         tekg_agent_save_session_memory($sessionId, $updatedMemory);
 
-        $this->emit($emit, [
+        $this->emitEvent($emit, $eventSequence, [
             'type' => 'answer',
             'session_id' => $sessionId,
             'language' => $answerLanguage,
             'message' => $answer,
         ]);
-        $this->emit($emit, [
+        $this->emitEvent($emit, $eventSequence, [
             'type' => 'done',
             'session_id' => $sessionId,
             'payload' => [
@@ -260,6 +373,89 @@ final class TekgAcademicAgentService
         ]);
 
         return $response;
+    }
+
+    private function emitThoughtFlow(?callable $emit, string $sessionId, string $model, string $answerLanguage, array $analysis, array $planning, int &$eventSequence): void
+    {
+        $entities = array_values(array_filter(array_map(function (array $entity): string {
+            $label = trim((string)($entity['canonical_label'] ?? $entity['label'] ?? ''));
+            $type = trim((string)($entity['entity_type'] ?? ''));
+            $matchedAlias = trim((string)($entity['matched_alias'] ?? ''));
+            if ($label === '') {
+                return '';
+            }
+            $aliasPart = $matchedAlias !== '' ? ' via ' . $matchedAlias : ' directly';
+            return $label . ($type !== '' ? ' (' . $type . ')' : '') . $aliasPart;
+        }, (array)($analysis['normalized_entities'] ?? []))));
+
+        $analysisLines = [
+            $this->narrateEvent(
+                $model,
+                $answerLanguage,
+                [
+                    'type' => 'analysis',
+                    'focus' => 'entities',
+                    'entities' => $analysis['normalized_entities'] ?? [],
+                ],
+                'Recognized entities: ' . ($entities === [] ? 'none yet.' : implode(', ', $entities) . '.')
+            ),
+            $this->narrateEvent(
+                $model,
+                $answerLanguage,
+                [
+                    'type' => 'analysis',
+                    'focus' => 'intent',
+                    'intent' => $analysis['intent'] ?? '',
+                    'complexity' => $analysis['complexity'] ?? '',
+                ],
+                'Question type: ' . (string)($analysis['intent'] ?? 'relationship') . '. Complexity: ' . (string)($analysis['complexity'] ?? 'simple_lookup') . '.'
+            ),
+        ];
+
+        foreach ($analysisLines as $line) {
+            if ($line === '') {
+                continue;
+            }
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'analysis',
+                'session_id' => $sessionId,
+                'message' => $line,
+                'payload' => [
+                    'intent' => $analysis['intent'] ?? '',
+                    'complexity' => $analysis['complexity'] ?? '',
+                    'normalized_entities' => $analysis['normalized_entities'] ?? [],
+                ],
+            ]);
+        }
+
+        foreach ((array)($planning['knowledge_gaps'] ?? []) as $gap) {
+            $fallback = 'Current knowledge gap: ' . (string)($gap['gap_type'] ?? 'unknown') . ' because ' . tekg_agent_lower((string)($gap['why_needed'] ?? 'it is still needed')) . '.';
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'planning_step',
+                'session_id' => $sessionId,
+                'message' => $this->narrateEvent(
+                    $model,
+                    $answerLanguage,
+                    ['type' => 'planning_step', 'focus' => 'knowledge_gap', 'gap' => $gap],
+                    $fallback
+                ),
+                'payload' => $gap,
+            ]);
+        }
+
+        foreach ((array)($planning['subtasks'] ?? []) as $subtask) {
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'planning_step',
+                'session_id' => $sessionId,
+                'message' => $this->narrateEvent(
+                    $model,
+                    $answerLanguage,
+                    ['type' => 'planning_step', 'focus' => 'subtask', 'subtask' => $subtask],
+                    (string)$subtask
+                ),
+                'payload' => ['subtask' => $subtask],
+            ]);
+        }
     }
 
     private function buildPlan(string $question, array $analysis, array $sessionMemory): array
@@ -531,11 +727,80 @@ final class TekgAcademicAgentService
         };
     }
 
+    private function toolSelectedMessage(string $pluginName, array $planning): string
+    {
+        $gapNames = array_values(array_filter(array_map(
+            static fn(array $gap): string => trim((string)($gap['gap_type'] ?? '')),
+            (array)($planning['knowledge_gaps'] ?? [])
+        )));
+        $gapText = $gapNames === [] ? 'the current evidence gap' : implode(', ', $gapNames);
+
+        return match ($pluginName) {
+            'Entity Resolver' => 'I will stabilize entity names first so later evidence lookup does not drift across aliases.',
+            'Graph Plugin' => 'I will check the local graph first because it is the strongest initial layer for ' . $gapText . '.',
+            'Literature Plugin' => 'I will add literature evidence now because the current question still needs direct citation support.',
+            'Tree Plugin' => 'I will use the lineage tree now because classification context is still missing.',
+            'Expression Plugin' => 'I will inspect the expression layer now because expression context is still relevant.',
+            'Genome Plugin' => 'I will inspect the genome layer now because locus-level context is still relevant.',
+            'Sequence Plugin' => 'I will inspect the sequence layer now because sequence-level facts are still required.',
+            'Citation Resolver' => 'I will normalize the citation layer now so the final answer can cite stable records.',
+            default => 'I will use the next tool that best addresses the current evidence gap.',
+        };
+    }
+
     private function synthesizingMessage(array $planning, array $pluginResults, array $evidence): string
     {
         $used = implode(', ', array_keys($pluginResults));
         $gapCount = count((array)($planning['knowledge_gaps'] ?? []));
         return 'I am now synthesizing the resolved entities, ' . $gapCount . ' identified knowledge gaps, and ' . count($evidence) . ' evidence items into a coherent answer. Tools used: ' . $used . '.';
+    }
+
+    private function reflectionMessage(string $pluginName, array $result, array $pluginQueue, int $currentIndex): string
+    {
+        $remaining = array_values(array_slice($pluginQueue, $currentIndex + 1));
+        $remainingText = $remaining === [] ? 'No additional tools are currently queued.' : 'Next queued tools: ' . implode(', ', $remaining) . '.';
+        $counts = (array)($result['result_counts'] ?? []);
+        $status = trim((string)($result['status'] ?? 'ok'));
+        $summary = trim((string)($result['display_summary'] ?? $result['query_summary'] ?? ''));
+
+        if ($status !== '' && $status !== 'ok') {
+            return 'This tool did not produce a strong result. ' . $remainingText;
+        }
+
+        if ($summary !== '') {
+            return $summary . ' ' . $remainingText;
+        }
+
+        if ($counts !== []) {
+            return 'This tool returned ' . implode(', ', array_map(
+                static fn(string $key, $value): string => $key . '=' . (string)$value,
+                array_keys($counts),
+                array_values($counts)
+            )) . '. ' . $remainingText;
+        }
+
+        return $remainingText;
+    }
+
+    private function narrateEvent(string $model, string $language, array $event, string $fallback): string
+    {
+        $narrated = $this->llm->narrateEvent($model, $language, $event);
+        return $narrated !== null && trim($narrated) !== '' ? trim($narrated) : $fallback;
+    }
+
+    private function emitEvent(?callable $emit, int &$eventSequence, array $event): void
+    {
+        $event['sequence'] = ++$eventSequence;
+        $this->emit($emit, $event);
+    }
+
+    private function emitHeartbeat(?callable $emit, int &$eventSequence, string $sessionId): void
+    {
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'heartbeat',
+            'session_id' => $sessionId,
+            'message' => '',
+        ]);
     }
 
     private function aggregateEvidence(array $pluginResults): array

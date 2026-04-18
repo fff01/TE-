@@ -236,6 +236,8 @@
       node,
       question,
       startedAt: performance.now(),
+      timerId: null,
+      finalized: false,
       language: 'en',
       toolIds: [],
       evidence: [],
@@ -246,6 +248,22 @@
     turnStore.set(turnId, turn);
     scrollConversationToBottom(true);
     return turn;
+  }
+
+  function startThinkingTimer(turn) {
+    stopThinkingTimer(turn);
+    turn.timerId = window.setInterval(() => {
+      if (!turn.finalized) {
+        updateThinkingMeta(turn, false);
+      }
+    }, 150);
+  }
+
+  function stopThinkingTimer(turn) {
+    if (turn && turn.timerId) {
+      window.clearInterval(turn.timerId);
+      turn.timerId = null;
+    }
   }
 
   function createThinkingLine(turn, text, variant = 'bullet') {
@@ -322,6 +340,11 @@
   }
 
   function finalizeTurn(turn) {
+    if (!turn || turn.finalized) {
+      return;
+    }
+    turn.finalized = true;
+    stopThinkingTimer(turn);
     turn.node.classList.remove('is-pending');
     updateThinkingMeta(turn, true);
     scrollConversationToBottom(true);
@@ -429,13 +452,21 @@
   function handleStreamEvent(turn, event) {
     if (!event || typeof event !== 'object') return;
 
-    if (event.type === 'planning') {
+    if (event.type === 'analysis') {
       createThinkingLine(turn, String(event.message || ''), 'bullet');
       updateThinkingMeta(turn, false);
       return;
     }
 
-    if (event.type === 'tool_start') {
+    if (event.type === 'planning' || event.type === 'planning_step') {
+      if (event.message) {
+        createThinkingLine(turn, String(event.message), 'bullet');
+      }
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
+    if (event.type === 'tool_selected' || event.type === 'tool_start') {
       if (event.message) {
         createThinkingLine(turn, String(event.message), 'bullet');
       }
@@ -460,6 +491,14 @@
       return;
     }
 
+    if (event.type === 'reflection') {
+      if (event.message) {
+        createThinkingLine(turn, String(event.message), 'bullet');
+      }
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
     if (event.type === 'synthesizing') {
       createThinkingLine(turn, String(event.message || ''), 'bullet');
       updateThinkingMeta(turn, false);
@@ -473,6 +512,11 @@
 
     if (event.type === 'error') {
       createThinkingLine(turn, String(event.message || 'The request failed.'), 'error');
+      return;
+    }
+
+    if (event.type === 'heartbeat') {
+      updateThinkingMeta(turn, false);
       return;
     }
 
@@ -548,6 +592,7 @@
     }
 
     const turn = createTurn(question);
+    startThinkingTimer(turn);
     const abortController = new AbortController();
     activeAbortController = abortController;
 
