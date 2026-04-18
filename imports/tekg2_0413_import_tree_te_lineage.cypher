@@ -1,4 +1,4 @@
-// Generated from tree.txt. Only links TE nodes that already exist in the graph.
+// Generated from tree_rmsk_repbase_4.18.txt. Only links TE nodes that already exist in the graph.
 // Missing tree nodes are reported separately and are intentionally not created here.
 
 UNWIND [
@@ -20,9 +20,7 @@ UNWIND [
   {child: "HERVI-int", parent: "HERV", child_tree_label: "HERVI-int", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "HERVK", parent: "HERV", child_tree_label: "HERVK", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "HERVK-int", parent: "HERV", child_tree_label: "HERVK-int", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
-  {child: "HERVK14C", parent: "HERV", child_tree_label: "HERVK14C", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "HERVK22-int", parent: "HERV", child_tree_label: "HERVK22-int", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
-  {child: "HERVK9", parent: "HERV", child_tree_label: "HERVK9", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "HERVKC4-int", parent: "HERV", child_tree_label: "HERVKC4-int", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "HERVL", parent: "HERV", child_tree_label: "HERVL", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "HERVL-int", parent: "HERV", child_tree_label: "HERVL-int", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
@@ -42,6 +40,7 @@ UNWIND [
   {child: "LTR22", parent: "HERV", child_tree_label: "LTR22", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "LTR3", parent: "HERV", child_tree_label: "LTR3", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "LTR5", parent: "HERV", child_tree_label: "LTR5", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
+  {child: "LTR7", parent: "HERV", child_tree_label: "LTR7", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "LTR70", parent: "HERV", child_tree_label: "LTR70", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "LTR78", parent: "HERV", child_tree_label: "LTR78", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "LTR7A", parent: "HERV", child_tree_label: "LTR7A", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
@@ -61,6 +60,7 @@ UNWIND [
   {child: "MER51B", parent: "HERV", child_tree_label: "MER51B", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "MER52A", parent: "HERV", child_tree_label: "MER52A", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "MER57E3", parent: "HERV", child_tree_label: "MER57E3", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
+  {child: "MLT1A", parent: "HERV", child_tree_label: "MLT1A", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "MLT1A1", parent: "HERV", child_tree_label: "MLT1A1", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "MLT1F1", parent: "HERV", child_tree_label: "MLT1F1", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
   {child: "MLT1H", parent: "HERV", child_tree_label: "MLT1H", parent_tree_label: "HERV (Human Endogenous Retrovirus)"},
@@ -78,8 +78,8 @@ UNWIND [
 ] AS row
 MATCH (child:TE {name: row.child})
 MATCH (parent:TE {name: row.parent})
-MERGE (child)-[r:SUBFAMILY_OF]->(parent)
-SET r.source = 'tree_0413_reference',
+MERGE (child)-[r:SUBFAMILY_OF {tree_variant: 'rmsk_repbase'}]->(parent)
+SET r.source = 'tree_0413_rmsk_repbase',
     r.tree_reference = true,
     r.child_tree_label = row.child_tree_label,
     r.parent_tree_label = row.parent_tree_label;

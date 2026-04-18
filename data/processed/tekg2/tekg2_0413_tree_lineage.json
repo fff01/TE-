@@ -1,5 +1,5 @@
 {
-  "source_tree": "D:\\wamp64\\www\\TE-\\transposon_tree\\tree.txt",
+  "source_tree": "D:\\wamp64\\www\\TE-\\transposon_tree\\tree_rmsk_repbase_4.18.txt",
   "matched_te_count": 74,
   "edge_count": 73,
   "edges": [
@@ -112,21 +112,9 @@
       "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
     },
     {
-      "child": "HERVK14C",
-      "parent": "HERV",
-      "child_tree_label": "HERVK14C",
-      "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
-    },
-    {
       "child": "HERVK22-int",
       "parent": "HERV",
       "child_tree_label": "HERVK22-int",
-      "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
-    },
-    {
-      "child": "HERVK9",
-      "parent": "HERV",
-      "child_tree_label": "HERVK9",
       "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
     },
     {
@@ -244,6 +232,12 @@
       "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
     },
     {
+      "child": "LTR7",
+      "parent": "HERV",
+      "child_tree_label": "LTR7",
+      "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
+    },
+    {
       "child": "LTR70",
       "parent": "HERV",
       "child_tree_label": "LTR70",
@@ -355,6 +349,12 @@
       "child": "MER57E3",
       "parent": "HERV",
       "child_tree_label": "MER57E3",
+      "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
+    },
+    {
+      "child": "MLT1A",
+      "parent": "HERV",
+      "child_tree_label": "MLT1A",
       "parent_tree_label": "HERV (Human Endogenous Retrovirus)"
     },
     {

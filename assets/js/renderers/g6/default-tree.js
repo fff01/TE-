@@ -79,6 +79,25 @@
     return document.getElementById(id);
   }
 
+  function getCurrentTreeVariantKey() {
+    return String(window.__TEKG_TREE_VARIANT || window.GRAPH_DEMO_DATA?.tree_default_variant || 'rmsk_repbase').trim() || 'rmsk_repbase';
+  }
+
+  function getCurrentTreeVariantPayload() {
+    const variants = window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.tree_variants && typeof window.GRAPH_DEMO_DATA.tree_variants === 'object'
+      ? window.GRAPH_DEMO_DATA.tree_variants
+      : {};
+    return variants[getCurrentTreeVariantKey()] || null;
+  }
+
+  function getCurrentTreeElements() {
+    const variantPayload = getCurrentTreeVariantPayload();
+    if (variantPayload && Array.isArray(variantPayload.elements) && variantPayload.elements.length) {
+      return variantPayload.elements;
+    }
+    return window.GRAPH_DEMO_DATA?.elements || [];
+  }
+
   function escapeHtml(text) {
     return String(text || '')
       .replace(/&/g, '&amp;')
@@ -203,7 +222,7 @@
     const parentOf = new Map();
     let detectedRootId = null;
 
-    for (const item of (window.GRAPH_DEMO_DATA?.elements || [])) {
+    for (const item of getCurrentTreeElements()) {
       const data = item && item.data ? item.data : null;
       if (!data || data.source) continue;
       nodes.set(data.id, {
@@ -217,12 +236,12 @@
     }
 
     const getY = (id) => {
-      const matched = (window.GRAPH_DEMO_DATA?.elements || []).find((item) => item?.data?.id === id);
+      const matched = getCurrentTreeElements().find((item) => item?.data?.id === id);
       return matched?.position?.y ?? 0;
     };
 
     const edges = [];
-    for (const item of (window.GRAPH_DEMO_DATA?.elements || [])) {
+    for (const item of getCurrentTreeElements()) {
       const data = item && item.data ? item.data : null;
       if (!data || !data.source || !data.target) continue;
       if (!nodes.has(data.source) || !nodes.has(data.target)) continue;

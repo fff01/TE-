@@ -45,6 +45,8 @@
       fixedOn: 'Fixed view: On',
       fixedOff: 'Fixed view: Off',
       back: 'Back',
+      switchTree: 'Switch tree',
+      switchTreeTo: (label) => `Switch tree: ${label}`,
       backTo: (label) => `Back to ${label}`,
       backToTree: 'Back to tree',
       reset: 'Reset',
@@ -63,6 +65,7 @@
   let currentGraphQuery = '';
   let currentGraphQueryType = '';
   let currentGraphClassQuery = '';
+  let currentTreeVariant = String(window.GRAPH_DEMO_DATA?.tree_default_variant || 'rmsk_repbase').trim() || 'rmsk_repbase';
   let currentSelectedNode = null;
   let currentAnswerGraphElements = [];
   let currentQueryGraphElements = [];
@@ -274,6 +277,7 @@
       query: currentGraphQuery,
       queryType: currentGraphQueryType,
       classQuery: currentGraphClassQuery,
+      treeVariant: currentTreeVariant,
       fixedView: !!window.fixedView,
       showLabels: !!window.showLabels,
       keyNodeLevel: window.currentKeyNodeLevel,
@@ -387,7 +391,7 @@
 
   function stateSignature(state) {
     if (!state || typeof state !== 'object') return 'none';
-    if (state.kind === 'tree') return 'tree';
+    if (state.kind === 'tree') return `tree|${state.treeVariant || currentTreeVariant || 'rmsk_repbase'}`;
     if (state.kind === 'disease_class_tree') {
       return [
         'disease_class_tree',
@@ -420,7 +424,7 @@
 
   function captureCurrentGraphState() {
     if (currentMode === 'tree') {
-      return { kind: 'tree' };
+      return { kind: 'tree', treeVariant: currentTreeVariant };
     }
 
     if (currentMode === 'disease_class_tree') {
@@ -482,9 +486,61 @@
       : `Back to ${label}`;
   }
 
+  function getTreeVariants() {
+    const variants = window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.tree_variants && typeof window.GRAPH_DEMO_DATA.tree_variants === 'object'
+      ? window.GRAPH_DEMO_DATA.tree_variants
+      : {};
+    return Object.keys(variants).map((key) => ({ key, ...(variants[key] || {}) }));
+  }
+
+  function getCurrentTreeVariantPayload() {
+    const variants = window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.tree_variants && typeof window.GRAPH_DEMO_DATA.tree_variants === 'object'
+      ? window.GRAPH_DEMO_DATA.tree_variants
+      : {};
+    return variants[currentTreeVariant] || null;
+  }
+
+  function getNextTreeVariantKey() {
+    const variants = getTreeVariants();
+    if (!variants.length) return currentTreeVariant;
+    const currentIndex = Math.max(0, variants.findIndex((item) => item.key === currentTreeVariant));
+    return variants[(currentIndex + 1) % variants.length].key;
+  }
+
+  function buildTreeVariantDetailHtml() {
+    const payload = getCurrentTreeVariantPayload();
+    const label = payload && payload.label ? String(payload.label) : 'Tree';
+    const summary = payload && payload.summary ? String(payload.summary) : 'Tree data is active.';
+    const sourceTree = payload && payload.source_tree ? String(payload.source_tree) : '';
+    const counts = payload && payload.counts && typeof payload.counts === 'object' ? payload.counts : {};
+    const matched = Number(counts.matched_nodes || 0);
+    const edges = Number(counts.lineage_edges || 0);
+    const lines = [
+      `<strong>${escapeHtml(label)}</strong>`,
+      `<br>${escapeHtml(summary)}`,
+    ];
+    if (sourceTree) lines.push(`<br><span class="meta">Source: ${escapeHtml(sourceTree)}</span>`);
+    lines.push(`<br><span class="meta">Matched TE nodes: ${matched} | Lineage edges: ${edges}</span>`);
+    lines.push('<br>Click a TE node to inspect it, then click again to enter the dynamic graph.');
+    return lines.join('');
+  }
+
   function updateBackButton() {
     if (!els.backBtn) return;
-    els.backBtn.disabled = graphHistory.length === 0;
+    els.backBtn.hidden = false;
+    if (currentMode === 'tree') {
+      const nextVariant = getTreeVariants().length > 1 ? getTreeVariants().find((item) => item.key === getNextTreeVariantKey()) : null;
+      els.backBtn.disabled = false;
+      els.backBtn.classList.toggle('is-inactive', !nextVariant);
+      if (els.backText) {
+        els.backText.textContent = nextVariant
+          ? (typeof textSet().switchTreeTo === 'function' ? textSet().switchTreeTo(nextVariant.label || nextVariant.key) : `Switch tree: ${nextVariant.label || nextVariant.key}`)
+          : (textSet().switchTree || 'Switch tree');
+      }
+      return;
+    }
+    els.backBtn.disabled = false;
+    els.backBtn.classList.toggle('is-inactive', graphHistory.length === 0);
     if (els.backText) {
       const previousState = graphHistory.length ? graphHistory[graphHistory.length - 1] : null;
       els.backText.textContent = previousState ? describeHistoryState(previousState) : (textSet().back || 'Back');
@@ -1021,7 +1077,7 @@
     if (!state || typeof state !== 'object') return false;
 
     if (state.kind === 'tree') {
-      return renderDefaultTree({ pushHistory: false });
+      return renderDefaultTree({ pushHistory: false, variant: state.treeVariant || currentTreeVariant });
     }
 
     if (state.kind === 'disease_class_tree') {
@@ -1062,7 +1118,16 @@
     return restoreGraphState(previousState);
   }
 
+  async function cycleTreeVariant() {
+    const nextKey = getNextTreeVariantKey();
+    if (!nextKey || nextKey === currentTreeVariant) return false;
+    return renderDefaultTree({ pushHistory: false, variant: nextKey });
+  }
+
   async function renderDefaultTree(options = {}) {
+    const requestedVariant = String(options && options.variant ? options.variant : currentTreeVariant).trim() || currentTreeVariant;
+    currentTreeVariant = requestedVariant;
+    window.__TEKG_TREE_VARIANT = currentTreeVariant;
     if (options.pushHistory === true && currentMode !== 'tree') {
       pushCurrentStateToHistory();
     }
@@ -1086,7 +1151,7 @@
       setGraphLoading(false);
     }
 
-    setDetail(textSet().treeDetail);
+    setDetail(buildTreeVariantDetailHtml());
     notifyStateChange();
   }
 
@@ -1240,7 +1305,10 @@
 
     if (els.backBtn) {
       els.backBtn.addEventListener('click', () => {
-        goBackGraph().catch((error) => {
+        if (currentMode === 'tree' && getTreeVariants().length <= 1) return;
+        if (currentMode !== 'tree' && graphHistory.length === 0) return;
+        const action = currentMode === 'tree' ? cycleTreeVariant() : goBackGraph();
+        Promise.resolve(action).catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
       });

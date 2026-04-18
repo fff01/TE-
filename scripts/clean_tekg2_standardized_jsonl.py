@@ -3,6 +3,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from tekg2_entity_overrides import apply_record_overrides
 
 ENTITY_GROUP_ALIASES = {
     "transposons": "transposons",
@@ -206,12 +207,17 @@ def clean_record(record: dict):
         "entities": deduped_entities,
         "relations": relations,
     }
+    cleaned_record, override_stats = apply_record_overrides(cleaned_record)
     return cleaned_record, {
         "unknown_groups": entity_stats["unknown_groups"],
         "entity_dropped_missing_name": entity_stats["dropped_missing_name"] + post_alias_missing,
         "entity_duplicates_merged": entity_stats["duplicates_merged"] + post_alias_duplicates,
         "relation_dropped_missing_endpoint": dropped_missing_endpoint,
         "relation_duplicates_merged": relation_duplicates_merged,
+        "entity_override_count": override_stats.get("entity_override_count", 0),
+        "entity_rename_count": override_stats.get("entity_rename_count", 0),
+        "entity_regroup_count": override_stats.get("entity_regroup_count", 0),
+        "relation_endpoint_override_count": override_stats.get("relation_endpoint_override_count", 0),
     }
 
 
@@ -226,6 +232,10 @@ def clean_jsonl(input_file: Path, output_file: Path, report_file: Path):
     merged_entity_duplicates = 0
     dropped_bad_relations = 0
     merged_relation_duplicates = 0
+    entity_override_count = 0
+    entity_rename_count = 0
+    entity_regroup_count = 0
+    relation_endpoint_override_count = 0
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
     with input_file.open("r", encoding="utf-8") as src, output_file.open("w", encoding="utf-8") as dst:
@@ -250,6 +260,10 @@ def clean_jsonl(input_file: Path, output_file: Path, report_file: Path):
             merged_entity_duplicates += stats["entity_duplicates_merged"]
             dropped_bad_relations += stats["relation_dropped_missing_endpoint"]
             merged_relation_duplicates += stats["relation_duplicates_merged"]
+            entity_override_count += stats["entity_override_count"]
+            entity_rename_count += stats["entity_rename_count"]
+            entity_regroup_count += stats["entity_regroup_count"]
+            relation_endpoint_override_count += stats["relation_endpoint_override_count"]
 
             for group in stats["unknown_groups"]:
                 unknown_group_counter[group] += 1
@@ -272,8 +286,12 @@ def clean_jsonl(input_file: Path, output_file: Path, report_file: Path):
         "relation_type_counts_top20": relation_type_counter.most_common(20),
         "dropped_entity_items_missing_name": dropped_missing_name,
         "merged_entity_duplicates": merged_entity_duplicates,
+        "entity_override_count": entity_override_count,
+        "entity_rename_count": entity_rename_count,
+        "entity_regroup_count": entity_regroup_count,
         "dropped_relations_missing_endpoint": dropped_bad_relations,
         "merged_relation_duplicates": merged_relation_duplicates,
+        "relation_endpoint_override_count": relation_endpoint_override_count,
         "unknown_entity_groups": dict(unknown_group_counter),
     }
     report_file.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

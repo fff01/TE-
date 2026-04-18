@@ -6,19 +6,25 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TREE_FILE = ROOT / "transposon_tree" / "tree.txt"
 SEED_FILE = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_seed.json"
 PROCESSED_DIR = ROOT / "data" / "processed" / "tekg2"
 IMPORTS_DIR = ROOT / "imports"
 
-JSON_OUT = PROCESSED_DIR / "tekg2_0413_tree_lineage.json"
-CSV_OUT = PROCESSED_DIR / "tekg2_0413_tree_lineage.csv"
-MISSING_JSON = PROCESSED_DIR / "tekg2_0413_tree_missing_nodes.json"
-REPORT_JSON = PROCESSED_DIR / "tekg2_0413_tree_lineage_report.json"
-CYPHER_OUT = IMPORTS_DIR / "tekg2_0413_import_tree_te_lineage.cypher"
-
 ROOT_LABEL = "Transposable Elements - Human"
 META_PREFIXES = ("Order:", "Superfamily:", "Family:")
+
+TREE_SPECS = {
+    "rmsk_repbase": {
+        "tree_file": ROOT / "transposon_tree" / "tree_rmsk_repbase_4.18.txt",
+        "stem": "tekg2_0413_tree_rmsk_repbase",
+        "legacy_default": True,
+    },
+    "all": {
+        "tree_file": ROOT / "transposon_tree" / "tree_all_4.18.txt",
+        "stem": "tekg2_0413_tree_all",
+        "legacy_default": False,
+    },
+}
 
 
 def norm(value: str) -> str:
@@ -30,13 +36,30 @@ def norm_key(value: str) -> str:
 
 
 def count_depth(line: str) -> int:
-    prefix = re.match(r"^[\u2502\u251c\u2514\u2500 ]*", line)
-    raw = prefix.group(0) if prefix else ""
-    return raw.count("\u2502")
+    depth = 0
+    index = 0
+    while True:
+        if line.startswith("\u2502   ", index) or line.startswith("    ", index):
+            depth += 1
+            index += 4
+            continue
+        if line.startswith("\u251c\u2500\u2500 ", index) or line.startswith("\u2514\u2500\u2500 ", index):
+            depth += 1
+            index += 4
+        break
+    return depth
 
 
 def strip_prefix(line: str) -> str:
-    return re.sub(r"^[\u2502\u251c\u2514\u2500 ]*", "", line).strip()
+    index = 0
+    while True:
+        if line.startswith("\u2502   ", index) or line.startswith("    ", index):
+            index += 4
+            continue
+        if line.startswith("\u251c\u2500\u2500 ", index) or line.startswith("\u2514\u2500\u2500 ", index):
+            index += 4
+        break
+    return line[index:].strip()
 
 
 def choose_canonical_name(content: str) -> tuple[str, str]:
@@ -96,7 +119,7 @@ def parse_tree_lines(tree_path: Path):
                 continue
             depth = count_depth(line)
             content = strip_prefix(line)
-            if not content:
+            if not content or re.fullmatch(r"[\u2502\u251c\u2514\u2500]+", content):
                 continue
 
             canonical_name, original_label = choose_canonical_name(content)
@@ -118,13 +141,8 @@ def parse_tree_lines(tree_path: Path):
     return nodes
 
 
-def main() -> None:
-    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
-    IMPORTS_DIR.mkdir(parents=True, exist_ok=True)
-
-    te_name_map = load_te_names(SEED_FILE)
-    parsed_nodes = parse_tree_lines(TREE_FILE)
-
+def build_payloads(tree_path: Path, te_name_map: dict[str, str]) -> tuple[dict, dict, dict]:
+    parsed_nodes = parse_tree_lines(tree_path)
     node_by_line = {node["line"]: node for node in parsed_nodes}
     matched_lines = set()
     missing_nodes = []
@@ -173,22 +191,15 @@ def main() -> None:
             current_parent = parent_node
 
     lineage_payload = {
-        "source_tree": str(TREE_FILE),
+        "source_tree": str(tree_path),
         "matched_te_count": len({edge["child"] for edge in edges.values()} | {edge["parent"] for edge in edges.values()}),
         "edge_count": len(edges),
         "edges": sorted(edges.values(), key=lambda item: (item["parent"].casefold(), item["child"].casefold())),
     }
-    JSON_OUT.write_text(json.dumps(lineage_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-    with CSV_OUT.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle)
-        writer.writerow(["child", "parent", "relation", "child_tree_label", "parent_tree_label"])
-        for edge in lineage_payload["edges"]:
-            writer.writerow([edge["child"], edge["parent"], "SUBFAMILY_OF", edge["child_tree_label"], edge["parent_tree_label"]])
 
     missing_name_counter = Counter(item["tree_name"] for item in missing_nodes)
     missing_payload = {
-        "source_tree": str(TREE_FILE),
+        "source_tree": str(tree_path),
         "missing_node_count": len(missing_nodes),
         "missing_unique_name_count": len(missing_name_counter),
         "missing_name_counts": [
@@ -197,10 +208,45 @@ def main() -> None:
         ],
         "missing_nodes": sorted(missing_nodes, key=lambda item: (item["tree_name"].casefold(), item["line"])),
     }
-    MISSING_JSON.write_text(json.dumps(missing_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    report = {
+        "source_files": {
+            "tree_file": str(tree_path.relative_to(ROOT)),
+            "seed_file": str(SEED_FILE.relative_to(ROOT)),
+        },
+        "counts": {
+            "seed_te_count": len(te_name_map),
+            "parsed_tree_lines": len(parsed_nodes),
+            "matched_tree_node_lines": len(matched_lines),
+            "missing_tree_node_lines": len(missing_nodes),
+            "missing_tree_node_unique_names": len(missing_name_counter),
+            "lineage_edges": len(edges),
+        },
+        "meta_node_summary": dict(meta_counter),
+    }
+    return lineage_payload, missing_payload, report
+
+
+def write_outputs(tree_key: str, spec: dict, lineage_payload: dict, missing_payload: dict, report: dict) -> dict:
+    stem = spec["stem"]
+    json_out = PROCESSED_DIR / f"{stem}_lineage.json"
+    csv_out = PROCESSED_DIR / f"{stem}_lineage.csv"
+    missing_json = PROCESSED_DIR / f"{stem}_missing_nodes.json"
+    report_json = PROCESSED_DIR / f"{stem}_lineage_report.json"
+    cypher_out = IMPORTS_DIR / f"import_{stem}_lineage.cypher"
+
+    json_out.write_text(json.dumps(lineage_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    with csv_out.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(["child", "parent", "relation", "child_tree_label", "parent_tree_label"])
+        for edge in lineage_payload["edges"]:
+            writer.writerow([edge["child"], edge["parent"], "SUBFAMILY_OF", edge["child_tree_label"], edge["parent_tree_label"]])
+
+    missing_json.write_text(json.dumps(missing_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     cypher_blocks = [
-        f"// Generated from {TREE_FILE.name}. Only links TE nodes that already exist in the graph.",
+        f"// Generated from {Path(lineage_payload['source_tree']).name}. Only links TE nodes that already exist in the graph.",
         "// Missing tree nodes are reported separately and are intentionally not created here.",
         "",
         "UNWIND [",
@@ -224,39 +270,65 @@ def main() -> None:
             "] AS row",
             "MATCH (child:TE {name: row.child})",
             "MATCH (parent:TE {name: row.parent})",
-            "MERGE (child)-[r:SUBFAMILY_OF]->(parent)",
-            "SET r.source = 'tree_0413_reference',",
+            f"MERGE (child)-[r:SUBFAMILY_OF {{tree_variant: '{tree_key}'}}]->(parent)",
+            f"SET r.source = 'tree_0413_{tree_key}',",
             "    r.tree_reference = true,",
             "    r.child_tree_label = row.child_tree_label,",
             "    r.parent_tree_label = row.parent_tree_label;",
             "",
         ]
     )
-    CYPHER_OUT.write_text("\n".join(cypher_blocks), encoding="utf-8")
+    cypher_out.write_text("\n".join(cypher_blocks), encoding="utf-8")
 
-    report = {
-        "source_files": {
-            "tree_file": str(TREE_FILE.relative_to(ROOT)),
-            "seed_file": str(SEED_FILE.relative_to(ROOT)),
-        },
-        "generated_files": {
-            "lineage_json": str(JSON_OUT.relative_to(ROOT)),
-            "lineage_csv": str(CSV_OUT.relative_to(ROOT)),
-            "missing_json": str(MISSING_JSON.relative_to(ROOT)),
-            "lineage_cypher": str(CYPHER_OUT.relative_to(ROOT)),
-        },
-        "counts": {
-            "seed_te_count": len(te_name_map),
-            "parsed_tree_lines": len(parsed_nodes),
-            "matched_tree_node_lines": len(matched_lines),
-            "missing_tree_node_lines": len(missing_nodes),
-            "missing_tree_node_unique_names": len(missing_name_counter),
-            "lineage_edges": len(edges),
-        },
-        "meta_node_summary": dict(meta_counter),
+    report["generated_files"] = {
+        "lineage_json": str(json_out.relative_to(ROOT)),
+        "lineage_csv": str(csv_out.relative_to(ROOT)),
+        "missing_json": str(missing_json.relative_to(ROOT)),
+        "lineage_cypher": str(cypher_out.relative_to(ROOT)),
     }
-    REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(report, ensure_ascii=False, indent=2))
+    report_json.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+    # Preserve the old default output names for the clean canonical tree.
+    if spec.get("legacy_default"):
+        legacy_map = {
+            PROCESSED_DIR / "tekg2_0413_tree_lineage.json": json_out,
+            PROCESSED_DIR / "tekg2_0413_tree_lineage.csv": csv_out,
+            PROCESSED_DIR / "tekg2_0413_tree_missing_nodes.json": missing_json,
+            PROCESSED_DIR / "tekg2_0413_tree_lineage_report.json": report_json,
+            IMPORTS_DIR / "tekg2_0413_import_tree_te_lineage.cypher": cypher_out,
+        }
+        for legacy_path, source_path in legacy_map.items():
+            legacy_path.write_text(source_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+    return {
+        "tree_key": tree_key,
+        "tree_file": str(spec["tree_file"].relative_to(ROOT)),
+        "lineage_json": str(json_out.relative_to(ROOT)),
+        "lineage_csv": str(csv_out.relative_to(ROOT)),
+        "missing_json": str(missing_json.relative_to(ROOT)),
+        "report_json": str(report_json.relative_to(ROOT)),
+        "lineage_cypher": str(cypher_out.relative_to(ROOT)),
+        "counts": report["counts"],
+    }
+
+
+def main() -> None:
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    IMPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    te_name_map = load_te_names(SEED_FILE)
+    manifest = {
+        "seed_file": str(SEED_FILE.relative_to(ROOT)),
+        "tree_variants": [],
+    }
+
+    for tree_key, spec in TREE_SPECS.items():
+        lineage_payload, missing_payload, report = build_payloads(spec["tree_file"], te_name_map)
+        manifest["tree_variants"].append(write_outputs(tree_key, spec, lineage_payload, missing_payload, report))
+
+    manifest_path = PROCESSED_DIR / "tekg2_0413_tree_lineage_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(manifest, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

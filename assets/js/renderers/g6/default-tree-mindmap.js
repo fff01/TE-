@@ -63,7 +63,6 @@
   const DEFAULT_H_GAP = 112;
   const COMPACT_H_GAP = 52;
   const V_GAP = 12;
-  const MAX_EXPAND_CHILDREN = 6;
   const INITIAL_ROOT_LEFT_SHIFT = 120;
 
   let g6Graph = null;
@@ -76,6 +75,25 @@
 
   function getEl(id) {
     return document.getElementById(id);
+  }
+
+  function getCurrentTreeVariantKey() {
+    return String(window.__TEKG_TREE_VARIANT || window.GRAPH_DEMO_DATA?.tree_default_variant || 'rmsk_repbase').trim() || 'rmsk_repbase';
+  }
+
+  function getCurrentTreeVariantPayload() {
+    const variants = window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.tree_variants && typeof window.GRAPH_DEMO_DATA.tree_variants === 'object'
+      ? window.GRAPH_DEMO_DATA.tree_variants
+      : {};
+    return variants[getCurrentTreeVariantKey()] || null;
+  }
+
+  function getCurrentTreeElements() {
+    const variantPayload = getCurrentTreeVariantPayload();
+    if (variantPayload && Array.isArray(variantPayload.elements) && variantPayload.elements.length) {
+      return variantPayload.elements;
+    }
+    return window.GRAPH_DEMO_DATA?.elements || [];
   }
 
   function escapeHtml(text) {
@@ -219,7 +237,7 @@
     const parentOf = new Map();
     let detectedRootId = null;
 
-    for (const item of (window.GRAPH_DEMO_DATA?.elements || [])) {
+    for (const item of getCurrentTreeElements()) {
       const data = item && item.data ? item.data : null;
       if (!data || data.source) continue;
       nodes.set(data.id, {
@@ -233,12 +251,12 @@
     }
 
     const getY = (id) => {
-      const matched = (window.GRAPH_DEMO_DATA?.elements || []).find((item) => item?.data?.id === id);
+      const matched = getCurrentTreeElements().find((item) => item?.data?.id === id);
       return matched?.position?.y ?? 0;
     };
 
     const edges = [];
-    for (const item of (window.GRAPH_DEMO_DATA?.elements || [])) {
+    for (const item of getCurrentTreeElements()) {
       const data = item && item.data ? item.data : null;
       if (!data || !data.source || !data.target) continue;
       if (!nodes.has(data.source) || !nodes.has(data.target)) continue;
@@ -338,7 +356,7 @@
   }
 
 
-  function buildVisibleGraphData(root, viewportWidth, viewportHeight) {
+  function buildVisibleGraphData(root, viewportWidth, viewportHeight, options = {}) {
     const nodes = [];
     const edges = [];
     let rowIndex = 0;
@@ -425,10 +443,14 @@
 
     const ys = nodes.map((node) => node.style.y);
     const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    const contentHeight = Math.max(0, maxY - minY);
-    const availableHeight = Math.max(0, viewportHeight - top - bottom);
-    const offsetY = top + Math.max(0, (availableHeight - contentHeight) / 2) - minY;
+    let offsetY = top - minY;
+    const centerNodeId = String(options.centerNodeId || '').trim();
+    if (centerNodeId) {
+      const centerNode = nodes.find((node) => String(node.id || '') === centerNodeId);
+      if (centerNode) {
+        offsetY = (viewportHeight / 2) - Number(centerNode.style.y || 0);
+      }
+    }
 
     nodes.forEach((node) => {
       const depth = node.style.__depth || 0;
@@ -441,9 +463,9 @@
     return { nodes, edges };
   }
 
-  async function rerenderFromStateTree() {
+  async function rerenderFromStateTree(options = {}) {
     if (!stateTreeRoot || !lastRenderOptions) return;
-    await renderTreeData(stateTreeRoot, lastRenderOptions);
+    await renderTreeData(stateTreeRoot, { ...lastRenderOptions, ...options });
   }
 
   class TEKGMindmapNode extends BaseNode {
@@ -491,7 +513,7 @@
     getCountStyle(attributes) {
       const { collapsed, color } = attributes;
       const directChildren = this.directChildCount;
-      if (!collapsed || directChildren === 0 || directChildren >= MAX_EXPAND_CHILDREN) return false;
+      if (!collapsed || directChildren === 0) return false;
       const [width, height] = this.getSize(attributes);
       return {
         backgroundFill: color,
@@ -502,7 +524,7 @@
         fontSize: 11,
         text: '+',
         textAlign: 'center',
-        x: width + 12,
+        x: width + 4,
         y: Math.round(height * 0.5),
       };
     }
@@ -519,7 +541,7 @@
     getCollapseStyle(attributes) {
       const { showIcon, color } = attributes;
       const directChildren = this.directChildCount;
-      if (!this.isShowCollapse(attributes) || directChildren >= MAX_EXPAND_CHILDREN) return false;
+      if (!this.isShowCollapse(attributes)) return false;
       const [width, height] = this.getSize(attributes);
       return {
         backgroundFill: color,
@@ -531,7 +553,7 @@
         text: '-',
         textAlign: 'center',
         visibility: showIcon ? 'visible' : 'hidden',
-        x: width + 12,
+        x: width + 4,
         y: Math.round(height * 0.5),
       };
     }
@@ -617,13 +639,8 @@
       this.status = 'busy';
       const { id, collapsed } = event;
       const stateNode = findTreeStateNode(stateTreeRoot, id);
-      const children = Array.isArray(stateNode?.children) ? stateNode.children : [];
-      if (!collapsed && children.length >= MAX_EXPAND_CHILDREN) {
-        this.status = 'idle';
-        return;
-      }
       setTreeCollapsed(stateNode, collapsed);
-      await rerenderFromStateTree();
+      await rerenderFromStateTree({ centerNodeId: id });
       this.status = 'idle';
     };
   }
@@ -739,7 +756,7 @@
 
       destroyGraph();
       host.innerHTML = '';
-      const visibleData = buildVisibleGraphData(treeData, width, height);
+      const visibleData = buildVisibleGraphData(treeData, width, height, options);
 
       const graph = new Graph({
         container: host,
@@ -797,7 +814,12 @@
         },
         behaviors: [
           'drag-canvas',
-          'zoom-canvas',
+          {
+            type: 'scroll-canvas',
+            key: 'scroll-canvas',
+            direction: 'y',
+            sensitivity: 1,
+          },
           'tekg-mindmap-collapse-expand-tree',
           {
             type: 'click-select',
