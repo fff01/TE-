@@ -47,6 +47,18 @@ function tekg_agent_pubmed_cache_dir(): string
     return tekg_agent_ensure_dir(TEKG_DATA_FS_DIR . '/cache/agent/pubmed');
 }
 
+function tekg_agent_entity_alias_map(): array
+{
+    static $map = null;
+    if (is_array($map)) {
+        return $map;
+    }
+    $path = __DIR__ . '/config/entity_alias_map.php';
+    $loaded = is_file($path) ? require $path : [];
+    $map = is_array($loaded) ? $loaded : [];
+    return $map;
+}
+
 function tekg_agent_config(): array
 {
     static $config = null;

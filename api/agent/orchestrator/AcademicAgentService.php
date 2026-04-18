@@ -5,6 +5,7 @@ final class TekgAcademicAgentService
 {
     private TekgAgentEntityNormalizer $normalizer;
     private TekgAgentLlmClient $llm;
+    private TekgAgentCitationResolver $citationResolver;
     /** @var array<string,TekgAgentPluginInterface> */
     private array $plugins;
 
@@ -13,12 +14,16 @@ final class TekgAcademicAgentService
         $neo4j = new TekgAgentNeo4jClient($config);
         $this->normalizer = new TekgAgentEntityNormalizer();
         $this->llm = new TekgAgentLlmClient($config);
+        $this->citationResolver = new TekgAgentCitationResolver();
         $this->plugins = [
-            'Graph Plugin' => new TekgAgentGraphPlugin($neo4j),
-            'Literature Plugin' => new TekgAgentLiteraturePlugin($neo4j, $config),
+            'Entity Resolver' => new TekgAgentEntityResolverPlugin(),
+            'Graph Plugin' => new TekgAgentGraphPlugin($neo4j, $this->citationResolver),
+            'Literature Plugin' => new TekgAgentLiteraturePlugin($neo4j, $config, $this->citationResolver),
             'Tree Plugin' => new TekgAgentTreePlugin(),
             'Expression Plugin' => new TekgAgentExpressionPlugin(),
             'Genome Plugin' => new TekgAgentGenomePlugin(),
+            'Sequence Plugin' => new TekgAgentSequencePlugin(),
+            'Citation Resolver' => new TekgAgentCitationResolverPlugin($this->citationResolver),
         ];
     }
 
@@ -129,6 +134,56 @@ final class TekgAcademicAgentService
             }
         }
 
+        if ($this->shouldRunCitationResolver($pluginResults)) {
+            $citationPlugin = $this->plugins['Citation Resolver'] ?? null;
+            if ($citationPlugin instanceof TekgAgentPluginInterface) {
+                $this->emit($emit, [
+                    'type' => 'tool_start',
+                    'session_id' => $sessionId,
+                    'plugin_name' => 'Citation Resolver',
+                    'message' => $this->toolStartMessage('Citation Resolver'),
+                ]);
+
+                $citationResult = $citationPlugin->run([
+                    'question' => $question,
+                    'analysis' => $analysis,
+                    'plugin_results' => $pluginResults,
+                    'planning' => $planning,
+                    'config' => $this->config,
+                ]);
+
+                $pluginResults['Citation Resolver'] = $citationResult;
+                $pluginCalls[] = $citationResult;
+                $detailId = 'tool-' . (++$detailCounter);
+                $payloadForUi = $this->toolPayloadForUi($citationResult);
+
+                $this->emit($emit, [
+                    'type' => 'tool_progress',
+                    'session_id' => $sessionId,
+                    'plugin_name' => 'Citation Resolver',
+                    'message' => (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''),
+                ]);
+
+                $this->emit($emit, [
+                    'type' => 'tool_result',
+                    'session_id' => $sessionId,
+                    'plugin_name' => 'Citation Resolver',
+                    'display_label' => (string)($citationResult['display_label'] ?? 'Citation Resolver'),
+                    'summary' => (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''),
+                    'message' => (string)(($citationResult['display_details']['result_message'] ?? '') ?: ''),
+                    'detail_payload_id' => $detailId,
+                    'payload' => $payloadForUi,
+                ]);
+
+                $reasoningTrace[] = [
+                    'step' => 'querying_plugins',
+                    'title' => 'Citation Resolver',
+                    'status' => (string)($citationResult['status'] ?? 'ok'),
+                    'details' => (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''),
+                ];
+            }
+        }
+
         $evidence = $this->aggregateEvidence($pluginResults);
         $citations = $this->aggregateCitations($pluginResults);
         $limits = $this->aggregateLimits($pluginResults);
@@ -204,7 +259,7 @@ final class TekgAcademicAgentService
     private function buildPlan(string $question, array $analysis): array
     {
         $entities = array_map(
-            static fn(array $entity): string => (string)$entity['label'] . ' (' . (string)$entity['type'] . ')',
+            static fn(array $entity): string => (string)($entity['canonical_label'] ?? $entity['label'] ?? '') . ' (' . (string)($entity['type'] ?? '') . ')',
             (array)($analysis['normalized_entities'] ?? [])
         );
         $needs = $this->knowledgeNeeds($analysis);
@@ -212,6 +267,7 @@ final class TekgAcademicAgentService
         return [
             'question_type' => (string)($analysis['intent'] ?? 'relationship'),
             'key_entities' => $entities,
+            'alias_chains' => (array)($analysis['alias_chains'] ?? []),
             'requested_target_types' => (array)($analysis['requested_target_types'] ?? []),
             'required_evidence' => $needs,
             'summary' => 'Question: ' . $question . '; intent=' . (string)($analysis['intent'] ?? 'relationship') . '; entities=' . ($entities === [] ? 'none recognized' : implode(', ', $entities)),
@@ -221,13 +277,19 @@ final class TekgAcademicAgentService
 
     private function initialPluginQueue(array $analysis): array
     {
-        $queue = [];
+        $queue = ['Entity Resolver'];
         $intent = (string)($analysis['intent'] ?? 'relationship');
+
+        if (($analysis['asks_for_sequence'] ?? false) || $intent === 'sequence') {
+            $queue[] = 'Sequence Plugin';
+        }
 
         if (in_array($intent, ['mechanism', 'relationship', 'comparison', 'literature'], true)) {
             $queue[] = 'Graph Plugin';
         }
-        if (($analysis['asks_for_papers'] ?? false) || ($analysis['needs_external_literature'] ?? false) || in_array($intent, ['mechanism', 'literature', 'comparison'], true)) {
+        if (($analysis['asks_for_papers'] ?? false)
+            || in_array($intent, ['mechanism', 'literature', 'comparison'], true)
+            || (($analysis['needs_external_literature'] ?? false) && $intent !== 'sequence')) {
             $queue[] = 'Literature Plugin';
         }
         if (($analysis['asks_for_classification'] ?? false) || $intent === 'classification') {
@@ -239,10 +301,9 @@ final class TekgAcademicAgentService
         if (($analysis['asks_for_genome'] ?? false) || $intent === 'genome') {
             $queue[] = 'Genome Plugin';
         }
-        if ($queue === []) {
+        if (!in_array('Graph Plugin', $queue, true) && ($analysis['normalized_entities'] ?? []) !== []) {
             $queue[] = 'Graph Plugin';
         }
-
         return array_values(array_unique($queue));
     }
 
@@ -266,6 +327,9 @@ final class TekgAcademicAgentService
             if (($analysis['asks_for_genome'] ?? false) && !in_array('Genome Plugin', $queue, true)) {
                 $append[] = 'Genome Plugin';
             }
+            if (($analysis['asks_for_sequence'] ?? false) && !in_array('Sequence Plugin', $queue, true)) {
+                $append[] = 'Sequence Plugin';
+            }
             if ($intent === 'mechanism' && $relationCount < 4 && !in_array('Literature Plugin', $queue, true)) {
                 $append[] = 'Literature Plugin';
             }
@@ -282,28 +346,34 @@ final class TekgAcademicAgentService
     {
         $intent = (string)($analysis['intent'] ?? 'relationship');
         $entityText = $entities === [] ? 'No stable named entities were recognized yet.' : implode(', ', $entities);
+        $aliasChains = is_array($analysis['alias_chains'] ?? null) ? $analysis['alias_chains'] : [];
 
         $lead = match ($intent) {
-            'mechanism' => 'This is a mechanism-style question, so I first need to see which kinds of causal evidence are missing before deciding whether to start with graph relations or literature.',
-            'literature' => 'This question explicitly asks for evidence and papers, so I will first check the local graph and then decide whether PubMed is needed.',
-            'classification' => 'This question is about classification and lineage, so I will resolve the tree context first and then decide whether more relation evidence is needed.',
-            'expression' => 'This question is mainly about expression context, so I will start with the expression layer and then decide whether more evidence is needed.',
-            default => 'I will first see whether the local graph already contains direct relations, and then decide what knowledge is still missing.',
+            'mechanism' => 'This is a mechanism-style question, so I first need to resolve the right TE aliases, then see which causal relation types and literature evidence are missing.',
+            'literature' => 'This question explicitly asks for evidence and papers, so I will resolve stable aliases first and then check local graph citations before deciding whether PubMed is needed.',
+            'classification' => 'This question is about classification and lineage, so I will resolve the entity aliases first and then place them in the tree context.',
+            'expression' => 'This question is mainly about expression context, so I will resolve stable entity names first and then inspect the expression layer.',
+            'sequence' => 'This question is about sequence or structure, so I will resolve the TE aliases first and then match them against the Repbase-backed sequence records.',
+            default => 'I will first resolve the entity aliases, then check whether the local graph already contains enough direct relations.',
         };
 
         return $lead . "\n\n" .
             'Recognized entities: ' . $entityText . "\n" .
+            'Alias chains prepared: ' . count($aliasChains) . "\n" .
             'Current knowledge gaps: ' . implode(', ', $needs) . '.';
     }
 
     private function toolStartMessage(string $pluginName): string
     {
         return match ($pluginName) {
+            'Entity Resolver' => 'I will resolve canonical entities and alias chains first so the downstream tools can retry stable names when needed.',
             'Graph Plugin' => 'I will start with the local graph to see which relation types are most useful for the answer.',
             'Literature Plugin' => 'Next I will add local literature and PubMed evidence to see which mechanisms still need support.',
             'Tree Plugin' => 'I will also resolve the tree context so the entities can be placed in their lineage.',
             'Expression Plugin' => 'I will inspect the expression layer to see whether it adds useful biological context.',
             'Genome Plugin' => 'I will also inspect genomic loci and browser entry points in case locus-level context is useful.',
+            'Sequence Plugin' => 'I will match the recognized TE names against the Repbase-backed sequence records to recover sequence, length, and structure hints.',
+            'Citation Resolver' => 'I will normalize and format the citation records so the final answer uses stable evidence references.',
             default => 'Calling a tool.',
         };
     }
@@ -311,12 +381,12 @@ final class TekgAcademicAgentService
     private function synthesizingMessage(array $pluginResults): string
     {
         $used = implode(', ', array_keys($pluginResults));
-        return 'I am now synthesizing the structured relations, literature, and supporting context into a coherent answer. Tools used: ' . $used . '.';
+        return 'I am now synthesizing the resolved aliases, structured relations, literature, and sequence context into a coherent answer. Tools used: ' . $used . '.';
     }
 
     private function knowledgeNeeds(array $analysis): array
     {
-        $needs = [];
+        $needs = ['entity normalization'];
         $intent = (string)($analysis['intent'] ?? 'relationship');
         if ($intent === 'mechanism') {
             $needs[] = 'structured relations';
@@ -334,7 +404,10 @@ final class TekgAcademicAgentService
         if (($analysis['asks_for_genome'] ?? false)) {
             $needs[] = 'genomic loci';
         }
-        if ($needs === []) {
+        if (($analysis['asks_for_sequence'] ?? false) || $intent === 'sequence') {
+            $needs[] = 'sequence and structure context';
+        }
+        if ($needs === ['entity normalization']) {
             $needs[] = 'structured relations';
         }
         return array_values(array_unique($needs));
@@ -356,13 +429,17 @@ final class TekgAcademicAgentService
 
     private function aggregateCitations(array $pluginResults): array
     {
+        if (isset($pluginResults['Citation Resolver']['citations']) && is_array($pluginResults['Citation Resolver']['citations'])) {
+            return $this->citationResolver->normalizeMany($pluginResults['Citation Resolver']['citations']);
+        }
+
         $all = [];
         foreach ($pluginResults as $result) {
             foreach ((array)($result['citations'] ?? []) as $citation) {
                 $all[] = $citation;
             }
         }
-        return $this->dedupeCitations($all);
+        return $this->citationResolver->normalizeMany($all);
     }
 
     private function aggregateLimits(array $pluginResults): array
@@ -387,10 +464,10 @@ final class TekgAcademicAgentService
                 $okPlugins++;
             }
         }
-        if ($okPlugins >= 2 && count($evidence) >= 4 && count($citations) >= 3) {
+        if ($okPlugins >= 3 && count($evidence) >= 5 && count($citations) >= 3) {
             return 'high';
         }
-        if ($okPlugins >= 1 && (count($evidence) >= 2 || count($citations) >= 1)) {
+        if ($okPlugins >= 2 && (count($evidence) >= 3 || count($citations) >= 1)) {
             return 'medium';
         }
         return 'low';
@@ -400,11 +477,14 @@ final class TekgAcademicAgentService
     {
         $intent = (string)($analysis['intent'] ?? 'relationship');
         $paragraphs = [];
+        $entity = $this->firstEntityLabel($analysis);
 
-        if ($intent === 'mechanism') {
-            $paragraphs[] = 'Based on the current graph and literature evidence, **' . $this->firstEntityLabel($analysis) . '** is more likely to contribute through multiple parallel mechanisms rather than through a single isolated event.';
+        if ($intent === 'sequence') {
+            $paragraphs[] = 'I could not reach the model layer, so this fallback answer is based on the Repbase-backed sequence records that were matched for **' . $entity . '**.';
+        } elseif ($intent === 'mechanism') {
+            $paragraphs[] = 'Based on the current graph, literature, and sequence-aware evidence, **' . $entity . '** is more likely to contribute through multiple parallel mechanisms rather than through a single isolated event.';
         } else {
-            $paragraphs[] = 'Based on the current structured relations and literature evidence, here is a traceable summary.';
+            $paragraphs[] = 'Based on the current structured relations, literature, and supporting sequence evidence, here is a traceable summary.';
         }
 
         $graph = $pluginResults['Graph Plugin']['results']['rows'] ?? [];
@@ -419,67 +499,62 @@ final class TekgAcademicAgentService
                 }
             }
             if ($top !== []) {
-                $paragraphs[] = 'The most useful structured lines of evidence in this round were: ' . implode('; ', $top) . '.';
+                $paragraphs[] = 'The local graph most directly supports these links: ' . implode('; ', $top) . '.';
+            }
+        }
+
+        $sequenceMatches = $pluginResults['Sequence Plugin']['results']['matched_records'] ?? [];
+        if (is_array($sequenceMatches) && $sequenceMatches !== []) {
+            $parts = [];
+            foreach (array_slice($sequenceMatches, 0, 2) as $match) {
+                $entry = is_array($match['entry'] ?? null) ? $match['entry'] : [];
+                $name = trim((string)($entry['name'] ?? $match['repbase_name'] ?? ''));
+                $headline = trim((string)($entry['sequence_summary']['headline'] ?? ''));
+                if ($name !== '') {
+                    $parts[] = trim($name . ($headline !== '' ? ' (' . $headline . ')' : ''));
+                }
+            }
+            if ($parts !== []) {
+                $paragraphs[] = 'The sequence layer matched Repbase-backed records for ' . implode(', ', $parts) . ', which adds consensus length and annotation context.';
             }
         }
 
         if ($citations !== []) {
-            $paragraphs[] = 'I prioritized these supporting records: ' . implode('; ', array_map(
-                static fn(array $citation): string => trim((string)($citation['title'] ?? 'Untitled')) . (trim((string)($citation['pmid'] ?? '')) !== '' ? ' (PMID: ' . trim((string)$citation['pmid']) . ')' : ''),
-                array_slice($citations, 0, 5)
-            )) . '.';
+            $formatted = [];
+            foreach (array_slice($citations, 0, 5) as $citation) {
+                $title = trim((string)($citation['title'] ?? ''));
+                $pmid = trim((string)($citation['pmid'] ?? ''));
+                $formatted[] = $title !== '' ? $title . ($pmid !== '' ? ' (PMID: ' . $pmid . ')' : '') : ('PMID: ' . $pmid);
+            }
+            if ($formatted !== []) {
+                $paragraphs[] = 'Useful references include ' . implode('; ', $formatted) . '.';
+            }
         }
 
         if ($limits !== []) {
-            $paragraphs[] = 'The main limits of this answer are: ' . implode('; ', $limits);
+            $paragraphs[] = 'Current limits: ' . implode(' ', array_slice($limits, 0, 3));
         }
 
         return implode("\n\n", $paragraphs);
     }
 
-    private function toolPayloadForUi(array $result): array
-    {
-        $details = is_array($result['display_details'] ?? null) ? $result['display_details'] : [];
-        return [
-            'result_counts' => (array)($result['result_counts'] ?? []),
-            'evidence_items' => (array)($details['evidence_items'] ?? $result['evidence_items'] ?? []),
-            'citations' => (array)($details['citations'] ?? $result['citations'] ?? []),
-            'preview_items' => (array)($details['preview_items'] ?? []),
-            'raw_preview' => $details['raw_preview'] ?? ($result['results'] ?? null),
-            'errors' => (array)($result['errors'] ?? []),
-        ];
-    }
-
-    private function dedupeCitations(array $citations): array
-    {
-        $seen = [];
-        $unique = [];
-        foreach ($citations as $citation) {
-            $key = trim((string)($citation['pmid'] ?? ''));
-            if ($key === '') {
-                $key = tekg_agent_lower(trim((string)($citation['title'] ?? '')));
-            }
-            if ($key === '' || isset($seen[$key])) {
-                continue;
-            }
-            $seen[$key] = true;
-            $unique[] = $citation;
-        }
-        return $unique;
-    }
-
     private function firstEntityLabel(array $analysis): string
     {
         $entities = (array)($analysis['normalized_entities'] ?? []);
-        if ($entities !== []) {
-            return (string)($entities[0]['label'] ?? 'The queried entity');
+        if ($entities === []) {
+            return 'the recognized TE';
         }
-        return 'the queried entity';
+        $first = $entities[0];
+        return (string)($first['canonical_label'] ?? $first['label'] ?? 'the recognized TE');
     }
 
     private function inferProvider(string $model): string
     {
-        return str_contains(tekg_agent_lower($model), 'qwen') ? 'qwen' : 'deepseek';
+        $value = strtolower(trim($model));
+        if (str_contains($value, 'qwen')) {
+            return 'qwen';
+        }
+        return 'deepseek';
     }
 
     private function emit(?callable $emit, array $event): void
@@ -487,5 +562,32 @@ final class TekgAcademicAgentService
         if ($emit !== null) {
             $emit($event);
         }
+    }
+
+    private function shouldRunCitationResolver(array $pluginResults): bool
+    {
+        foreach ($pluginResults as $pluginName => $result) {
+            if (in_array($pluginName, ['Entity Resolver', 'Citation Resolver'], true)) {
+                continue;
+            }
+            if ((array)($result['citations'] ?? []) !== []) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function toolPayloadForUi(array $result): array
+    {
+        return [
+            'summary' => (string)($result['display_details']['summary'] ?? $result['display_summary'] ?? ''),
+            'preview_items' => array_values((array)($result['display_details']['preview_items'] ?? [])),
+            'evidence_items' => array_values((array)($result['display_details']['evidence_items'] ?? [])),
+            'citations' => array_values((array)($result['display_details']['citations'] ?? $result['citations'] ?? [])),
+            'raw_preview' => $result['display_details']['raw_preview'] ?? null,
+            'errors' => array_values((array)($result['errors'] ?? [])),
+            'result_counts' => (array)($result['result_counts'] ?? []),
+            'display_details' => (array)($result['display_details'] ?? []),
+        ];
     }
 }

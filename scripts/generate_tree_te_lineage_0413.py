@@ -10,7 +10,21 @@ SEED_FILE = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_seed.json"
 PROCESSED_DIR = ROOT / "data" / "processed" / "tekg2"
 IMPORTS_DIR = ROOT / "imports"
 
-ROOT_LABEL = "Transposable Elements - Human"
+ROOT_LABEL = "TE - Human (Mobile element)"
+LEGACY_ROOT_LABELS = {
+    "Transposable Elements - Human",
+    "Transposable Elements (Mobile element) - Human",
+    "Mobile genetic element",
+}
+FLATTEN_ROOT_CHILD_LABELS = {
+    "Transposable Elements (Mobile element) - Human",
+}
+ROOT_BUCKET_LABEL = "others"
+ROOT_PRIMARY_LABELS = {
+    ROOT_BUCKET_LABEL,
+    "Class I: Retrotransposons",
+    "Class II: DNA Transposons",
+}
 META_PREFIXES = ("Order:", "Superfamily:", "Family:")
 
 TREE_SPECS = {
@@ -20,7 +34,7 @@ TREE_SPECS = {
         "legacy_default": True,
     },
     "all": {
-        "tree_file": ROOT / "transposon_tree" / "tree_all_4.18.txt",
+        "tree_file": ROOT / "transposon_tree" / "tree_all_4.18_2.txt",
         "stem": "tekg2_0413_tree_all",
         "legacy_default": False,
     },
@@ -64,7 +78,7 @@ def strip_prefix(line: str) -> str:
 
 def choose_canonical_name(content: str) -> tuple[str, str]:
     content = norm(content)
-    if content == ROOT_LABEL:
+    if content == ROOT_LABEL or content in LEGACY_ROOT_LABELS:
         return "TE", content
 
     if re.match(r"^Class\s+\S+:", content):
@@ -89,6 +103,7 @@ def is_meta_node(original_label: str) -> bool:
     original_label = norm(original_label)
     return (
         original_label == ROOT_LABEL
+        or original_label in LEGACY_ROOT_LABELS
         or original_label.startswith(META_PREFIXES)
         or bool(re.match(r"^Class\s+\S+:", original_label))
         or original_label.startswith("Subclass ")
@@ -112,13 +127,26 @@ def parse_tree_lines(tree_path: Path):
     nodes = []
     stack: dict[int, dict] = {}
 
-    with tree_path.open("r", encoding="utf-8") as handle:
-        for line_no, raw_line in enumerate(handle, start=1):
+    raw_text = None
+    for encoding in ("utf-8", "utf-8-sig", "gb18030"):
+        try:
+            candidate = tree_path.read_text(encoding=encoding)
+        except UnicodeDecodeError:
+            continue
+        if "鈹" in candidate and encoding != "gb18030":
+            continue
+        raw_text = candidate
+        break
+    if raw_text is None:
+        raw_text = tree_path.read_text(encoding="utf-8", errors="replace")
+
+    for line_no, raw_line in enumerate(raw_text.splitlines(), start=1):
             line = raw_line.rstrip("\r\n")
             if not line.strip():
                 continue
             depth = count_depth(line)
             content = strip_prefix(line)
+            content = re.sub(r"^[\u2502\u251c\u2514\u2500]+", "", content).strip()
             if not content or re.fullmatch(r"[\u2502\u251c\u2514\u2500]+", content):
                 continue
 
@@ -138,6 +166,41 @@ def parse_tree_lines(tree_path: Path):
             stack[depth] = node
             for higher in [key for key in list(stack.keys()) if key > depth]:
                 del stack[higher]
+
+    root_line = None
+    for node in nodes:
+        if node["depth"] == 0:
+            root_line = node["line"]
+            break
+    if root_line is not None:
+        for node in nodes:
+            if node["parent_line"] is None:
+                continue
+            if node["parent_line"] == root_line and norm(node["original_label"]) in FLATTEN_ROOT_CHILD_LABELS:
+                flatten_line = node["line"]
+                for child in nodes:
+                    if child["parent_line"] == flatten_line:
+                        child["parent_line"] = root_line
+                        child["parent_canonical_name"] = "TE"
+                        child["parent_original_label"] = ROOT_LABEL
+        root_bucket_line = next(
+            (
+                node["line"]
+                for node in nodes
+                if node["parent_line"] == root_line and norm(node["original_label"]) == ROOT_BUCKET_LABEL
+            ),
+            None,
+        )
+        if root_bucket_line is not None:
+            for node in nodes:
+                if node["parent_line"] != root_line:
+                    continue
+                label = norm(node["original_label"])
+                if label in ROOT_PRIMARY_LABELS or label in FLATTEN_ROOT_CHILD_LABELS:
+                    continue
+                node["parent_line"] = root_bucket_line
+                node["parent_canonical_name"] = ROOT_BUCKET_LABEL
+                node["parent_original_label"] = ROOT_BUCKET_LABEL
     return nodes
 
 

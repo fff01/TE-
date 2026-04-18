@@ -15,17 +15,33 @@ TREE_SPECS = {
         "summary": "A cleaner canonical tree built from RMSK and Repbase names only.",
     },
     "all": {
-        "tree_file": PROJECT_ROOT / "transposon_tree" / "tree_all_4.18.txt",
+        "tree_file": PROJECT_ROOT / "transposon_tree" / "tree_all_4.18_2.txt",
         "label": "All TE Tree",
         "summary": "An expanded tree that also includes database-only and less standardized TE names.",
     },
 }
 
-ROOT_LABEL = "Transposable Elements - Human"
+ROOT_LABEL = "TE - Human (Mobile element)"
+LEGACY_ROOT_LABELS = {
+    "Transposable Elements - Human",
+    "Transposable Elements (Mobile element) - Human",
+    "Mobile genetic element",
+}
+FLATTEN_ROOT_CHILD_LABELS = {
+    "Transposable Elements (Mobile element) - Human",
+}
+ROOT_BUCKET_LABEL = "others"
+ROOT_PRIMARY_LABELS = {
+    ROOT_BUCKET_LABEL,
+    "Class I: Retrotransposons",
+    "Class II: DNA Transposons",
+}
 META_PREFIXES = ("Order:", "Superfamily:", "Family:")
 DISPLAY_LABEL_OVERRIDES = {
     "TE": ROOT_LABEL,
     "L1": "LINE1",
+    "Retrotransposons": "Class I: Retrotransposons",
+    "DNA Transposons": "Class II: DNA Transposons",
 }
 QUERY_LABEL_OVERRIDES = {
     "L1": "LINE1",
@@ -72,7 +88,7 @@ def strip_prefix(line: str) -> str:
 
 def choose_canonical_name(content: str) -> tuple[str, str]:
     content = norm(content)
-    if content == ROOT_LABEL:
+    if content == ROOT_LABEL or content in LEGACY_ROOT_LABELS:
         return "TE", content
 
     if re.match(r"^Class\s+\S+:", content):
@@ -97,6 +113,7 @@ def is_meta_node(original_label: str) -> bool:
     original_label = norm(original_label)
     return (
         original_label == ROOT_LABEL
+        or original_label in LEGACY_ROOT_LABELS
         or original_label.startswith(META_PREFIXES)
         or bool(re.match(r"^Class\s+\S+:", original_label))
         or original_label.startswith("Subclass ")
@@ -116,13 +133,26 @@ def parse_tree_lines(tree_path: Path):
     nodes = []
     stack: dict[int, dict] = {}
 
-    with tree_path.open("r", encoding="utf-8") as handle:
-        for line_no, raw_line in enumerate(handle, start=1):
+    raw_text = None
+    for encoding in ("utf-8", "utf-8-sig", "gb18030"):
+        try:
+            candidate = tree_path.read_text(encoding=encoding)
+        except UnicodeDecodeError:
+            continue
+        if "鈹" in candidate and encoding != "gb18030":
+            continue
+        raw_text = candidate
+        break
+    if raw_text is None:
+        raw_text = tree_path.read_text(encoding="utf-8", errors="replace")
+
+    for line_no, raw_line in enumerate(raw_text.splitlines(), start=1):
             line = raw_line.rstrip("\r\n")
             if not line.strip():
                 continue
             depth = count_depth(line)
             content = strip_prefix(line)
+            content = re.sub(r"^[\u2502\u251c\u2514\u2500]+", "", content).strip()
             if not content or re.fullmatch(r"[\u2502\u251c\u2514\u2500]+", content):
                 continue
 
@@ -141,6 +171,39 @@ def parse_tree_lines(tree_path: Path):
             stack[depth] = node
             for higher in [key for key in list(stack.keys()) if key > depth]:
                 del stack[higher]
+
+    root_line = None
+    for node in nodes:
+        if node["depth"] == 0:
+            root_line = node["line"]
+            break
+    if root_line is not None:
+        for node in nodes:
+            if node["parent_line"] is None:
+                continue
+            if node["parent_line"] == root_line and norm(node["original_label"]) in FLATTEN_ROOT_CHILD_LABELS:
+                flatten_line = node["line"]
+                for child in nodes:
+                    if child["parent_line"] == flatten_line:
+                        child["parent_line"] = root_line
+                        child["parent_canonical_name"] = "TE"
+        root_bucket_line = next(
+            (
+                node["line"]
+                for node in nodes
+                if node["parent_line"] == root_line and norm(node["original_label"]) == ROOT_BUCKET_LABEL
+            ),
+            None,
+        )
+        if root_bucket_line is not None:
+            for node in nodes:
+                if node["parent_line"] != root_line:
+                    continue
+                label = norm(node["original_label"])
+                if label in ROOT_PRIMARY_LABELS or label in FLATTEN_ROOT_CHILD_LABELS:
+                    continue
+                node["parent_line"] = root_bucket_line
+                node["parent_canonical_name"] = ROOT_BUCKET_LABEL
     return nodes
 
 
@@ -188,14 +251,23 @@ def load_existing_demo() -> dict:
 def build_tree_variant_payload(tree_path: Path, te_name_map: dict[str, str], label: str, summary: str) -> dict:
     parsed_nodes = parse_tree_lines(tree_path)
     node_by_line = {node["line"]: node for node in parsed_nodes}
+    root_line = next((node["line"] for node in parsed_nodes if node["depth"] == 0), None)
 
     included_lines = {node["line"] for node in parsed_nodes}
     node_records = {}
     children_by_parent: dict[str, list[str]] = {}
     root_id = ""
 
+    skip_lines = {
+        node["line"]
+        for node in parsed_nodes
+        if node["parent_line"] == root_line and norm(node["original_label"]) in FLATTEN_ROOT_CHILD_LABELS
+    }
+
     for node in parsed_nodes:
         line_no = node["line"]
+        if line_no in skip_lines:
+            continue
         canonical_name = norm(node["canonical_name"])
         original_label = norm(node["original_label"])
         is_root = node["depth"] == 0
@@ -238,6 +310,8 @@ def build_tree_variant_payload(tree_path: Path, te_name_map: dict[str, str], lab
     edge_records = []
     for node in parsed_nodes:
         if node["parent_line"] is None:
+            continue
+        if node["line"] in skip_lines or node["parent_line"] in skip_lines:
             continue
         if node["line"] not in included_lines or node["parent_line"] not in included_lines:
             continue

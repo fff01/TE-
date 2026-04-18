@@ -355,7 +355,7 @@ function tekg_expression_fetch_browse_page(array $filters = [], int $page = 1, i
             'min_global_median' => $filters['min_global_median'] ?? null,
         ],
         'sort' => tekg_expression_normalize_sort($sort),
-        'chart' => strtolower(trim($chartType)) === 'box' ? 'box' : 'bar',
+        'chart' => 'bar',
     ];
 }
 

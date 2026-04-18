@@ -1,5 +1,4 @@
 ﻿<form class="expression-panel" method="get" action="<?= htmlspecialchars('/TE-/expression.php', ENT_QUOTES, 'UTF-8') ?>">
-  <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang, ENT_QUOTES, 'UTF-8') ?>">
   <input type="hidden" name="value_mode" value="<?= htmlspecialchars($valueMode, ENT_QUOTES, 'UTF-8') ?>">
   <h3>Filters</h3>
   <div class="expression-filter-grid">

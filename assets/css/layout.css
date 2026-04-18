@@ -9,11 +9,14 @@
     * { box-sizing: border-box; }
 
     html {
+      margin: 0;
+      padding: 0;
       scroll-behavior: smooth;
     }
 
     body {
       margin: 0;
+      padding: 0;
       font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
       color: var(--header-text);
       background: #ffffff;
@@ -26,12 +29,15 @@
 
     .proto-shell {
       min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
 
     .proto-header {
       position: sticky;
       top: 0;
       z-index: 100;
+      margin: 0;
       background: var(--header-blue);
       border-bottom: 1px solid rgba(255,255,255,0.12);
       transition: background-color 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;

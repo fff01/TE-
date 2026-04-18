@@ -34,9 +34,8 @@
   const inspectorTitle = document.getElementById('agentInspectorTitle');
   const inspectorBody = document.getElementById('agentInspectorBody');
   const inspectorClose = document.getElementById('agentInspectorClose');
-  const modeSwitch = document.getElementById('agentModeSwitch');
 
-  let currentMode = config.defaultMode === 'quick' ? 'quick' : 'agent';
+  let currentMode = 'agent';
   let sessionId = '';
   try {
     sessionId = window.localStorage.getItem(storageKey) || '';
@@ -198,19 +197,11 @@
     app.classList.remove('is-pristine');
   }
 
-  function setMode(nextMode) {
-    currentMode = nextMode === 'quick' ? 'quick' : 'agent';
+  function setMode() {
+    currentMode = 'agent';
     app.dataset.mode = currentMode;
-    document.querySelectorAll('.agent-mode-button').forEach((button) => {
-      button.classList.toggle('is-active', button.dataset.mode === currentMode);
-    });
-    if (currentMode === 'quick') {
-      questionInput.placeholder = ui.placeholder_quick || 'Quick QA is coming soon.';
-      composerHintNode.textContent = ui.quick_mode_notice || '';
-    } else {
-      questionInput.placeholder = ui.placeholder_agent || 'Ask the academic agent...';
-      composerHintNode.textContent = '';
-    }
+    questionInput.placeholder = ui.placeholder_agent || 'Ask the academic agent...';
+    composerHintNode.textContent = '';
   }
 
   function formatElapsed(ms) {
@@ -552,11 +543,6 @@
       questionInput.focus();
       return;
     }
-    if (currentMode === 'quick') {
-      setStatus(ui.quick_mode_notice || 'Quick QA is not available yet. Please switch back to Agent mode.');
-      return;
-    }
-
     if (activeAbortController) {
       activeAbortController.abort();
     }
@@ -630,14 +616,6 @@
 
   inspectorClose.addEventListener('click', closeInspector);
 
-  if (modeSwitch) {
-    modeSwitch.addEventListener('click', (event) => {
-      const button = event.target.closest('.agent-mode-button');
-      if (!button) return;
-      setMode(button.dataset.mode || 'agent');
-    });
-  }
-
   form.addEventListener('submit', submitQuestion);
-  setMode(currentMode);
+  setMode();
 })();

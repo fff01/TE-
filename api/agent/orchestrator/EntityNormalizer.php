@@ -6,6 +6,8 @@ final class TekgAgentEntityNormalizer
     private ?array $teNames = null;
     private ?array $treeNames = null;
     private ?array $diseaseNames = null;
+    private ?array $teAliasIndex = null;
+    private ?array $diseaseAliasIndex = null;
 
     public function analyze(string $question, string $language = ''): array
     {
@@ -14,20 +16,23 @@ final class TekgAgentEntityNormalizer
         $intent = $this->detectIntent($question);
         $targetTypes = $this->detectTargetTypes($question, $intent);
         $keywords = $this->extractKeywords($question);
+        $aliasChains = $this->buildAliasChains($normalizedEntities);
 
         return [
             'language' => $language,
             'intent' => $intent,
             'normalized_entities' => $normalizedEntities,
+            'alias_chains' => $aliasChains,
             'requested_target_types' => $targetTypes,
-            'asks_for_papers' => $this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'literature', '文献', '论文', '证据']),
-            'asks_for_expression' => $this->containsAny($question, ['expression', 'expressed', 'cell line', 'tissue', 'context', '表达']),
-            'asks_for_genome' => $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', '基因组', '染色体', '位点']),
-            'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', '哪几类', '属于哪类', '分类', '谱系']),
+            'asks_for_papers' => $this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'literature', 'citation', 'citations']),
+            'asks_for_expression' => $this->containsAny($question, ['expression', 'expressed', 'cell line', 'cell lines', 'tissue', 'context', 'transcriptome']),
+            'asks_for_genome' => $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate']),
+            'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'lineage', 'taxonomy']),
+            'asks_for_sequence' => $this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'orfs', 'utr', 'promoter', 'motif', 'structure', 'annotation']),
             'asks_for_mechanism' => $intent === 'mechanism',
-            'compare_mode' => $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '区别']),
+            'compare_mode' => $this->containsAny($question, ['compare', 'versus', 'vs', 'difference']),
             'needs_external_literature' => $intent === 'mechanism'
-                || $this->containsAny($question, ['最新', 'recent', 'latest', 'evidence', 'paper', 'papers', '文献', '论文'])
+                || $this->containsAny($question, ['recent', 'latest', 'evidence', 'paper', 'papers', 'pubmed', 'literature'])
                 || count($normalizedEntities) <= 1,
             'question_keywords' => $keywords,
             'question_tokens' => preg_split('/\s+/u', trim($question)) ?: [],
@@ -37,88 +42,115 @@ final class TekgAgentEntityNormalizer
     private function collectEntities(string $question): array
     {
         $results = [];
-        $blockedGeneric = [
-            'te', 'line', 'ltr', 'sine', 'rna', 'gene', 'protein', 'mutation', 'disease', 'diseases', 'function', 'functions', 'paper', 'papers',
-        ];
-        $aliases = [
-            'line1' => ['type' => 'TE', 'label' => 'LINE-1'],
-            'line-1' => ['type' => 'TE', 'label' => 'LINE-1'],
-            'l1' => ['type' => 'TE', 'label' => 'LINE-1'],
-            'l1hs' => ['type' => 'TE', 'label' => 'L1HS'],
-            'sva' => ['type' => 'TE', 'label' => 'SVA'],
-            'alu' => ['type' => 'TE', 'label' => 'Alu'],
-            'al' . 'z' . 'heimers disease' => ['type' => 'Disease', 'label' => "Al" . "z" . "heimer's disease"],
-            'al' . 'z' . 'heimer disease' => ['type' => 'Disease', 'label' => "Al" . "z" . "heimer's disease"],
-            'parkinsonism' => ['type' => 'Disease', 'label' => 'Parkinsonism'],
-            'cancer' => ['type' => 'Disease', 'label' => 'Cancer'],
-            'carcinoma' => ['type' => 'Disease', 'label' => 'Carcinoma'],
-        ];
+        $results = array_merge($results, $this->matchFromAliasIndex($question, $this->loadTeAliasIndex(), 'TE'));
+        $results = array_merge($results, $this->matchFromAliasIndex($question, $this->loadDiseaseAliasIndex(), 'Disease'));
 
-        foreach ($aliases as $needle => $entity) {
-            if ($this->questionContainsEntity($question, $needle)) {
-                $results[] = $entity;
-            }
-        }
-
-        if ($this->containsAny($question, ['human transposons', 'human transposable elements', '人类转座子', '转座子分为哪几类'])) {
-            $results[] = ['type' => 'TE', 'label' => 'TE'];
-        }
-
-        foreach ($this->loadTeNames() as $name) {
-            if (tekg_agent_strlen($name) < 3) {
-                continue;
-            }
-            if (in_array(tekg_agent_normalize_lookup_token($name), $blockedGeneric, true)) {
-                continue;
-            }
-            if ($this->questionContainsEntity($question, $name)) {
-                $results[] = ['type' => 'TE', 'label' => $name];
-            }
-        }
-
-        foreach ($this->loadDiseaseNames() as $name) {
-            if (tekg_agent_strlen($name) < 5) {
-                continue;
-            }
-            if (in_array(tekg_agent_normalize_lookup_token($name), $blockedGeneric, true)) {
-                continue;
-            }
-            if ($this->questionContainsEntity($question, $name)) {
-                $results[] = ['type' => 'Disease', 'label' => $name];
-            }
+        if ($this->containsAny($question, ['human transposons', 'human transposable elements', 'transposable elements'])) {
+            $results[] = $this->makeEntity('TE', 'TE', 'Transposable elements', ['TE', 'Transposable elements', 'Human transposons'], 'Transposable elements');
         }
 
         $seen = [];
         $unique = [];
         foreach ($results as $entity) {
-            $key = ($entity['type'] ?? '') . '::' . tekg_agent_normalize_lookup_token((string)($entity['label'] ?? ''));
+            $key = ($entity['type'] ?? '') . '::' . tekg_agent_normalize_lookup_token((string)($entity['canonical_label'] ?? $entity['label'] ?? ''));
             if (isset($seen[$key])) {
                 continue;
             }
             $seen[$key] = true;
             $unique[] = $entity;
         }
+
+        usort($unique, static function (array $left, array $right): int {
+            $leftLabel = (string)($left['canonical_label'] ?? $left['label'] ?? '');
+            $rightLabel = (string)($right['canonical_label'] ?? $right['label'] ?? '');
+            return strcasecmp($leftLabel, $rightLabel);
+        });
+
         return $unique;
+    }
+
+    private function buildAliasChains(array $entities): array
+    {
+        $chains = [];
+        foreach ($entities as $entity) {
+            if (!is_array($entity)) {
+                continue;
+            }
+            $chains[] = [
+                'type' => (string)($entity['type'] ?? ''),
+                'canonical_label' => (string)($entity['canonical_label'] ?? $entity['label'] ?? ''),
+                'display_label' => (string)($entity['display_label'] ?? $entity['label'] ?? ''),
+                'matched_alias' => (string)($entity['matched_alias'] ?? ''),
+                'aliases' => array_values(array_unique(array_filter(array_map(
+                    static fn($value): string => trim((string)$value),
+                    is_array($entity['aliases'] ?? null) ? $entity['aliases'] : []
+                )))),
+            ];
+        }
+        return $chains;
+    }
+
+    private function matchFromAliasIndex(string $question, array $index, string $type): array
+    {
+        $results = [];
+        $blockedGeneric = [
+            'te', 'tes', 'line', 'lines', 'ltr', 'sine', 'dna', 'rna', 'protein', 'proteins', 'gene', 'genes',
+            'disease', 'diseases', 'function', 'functions', 'paper', 'papers', 'mutation', 'mutations',
+        ];
+        foreach ($index as $canonical => $aliases) {
+            if (in_array(tekg_agent_normalize_lookup_token($canonical), $blockedGeneric, true)) {
+                continue;
+            }
+            foreach ($aliases as $alias) {
+                if (in_array(tekg_agent_normalize_lookup_token((string)$alias), $blockedGeneric, true)) {
+                    continue;
+                }
+                if (!$this->questionContainsEntity($question, $alias)) {
+                    continue;
+                }
+                $results[] = $this->makeEntity($type, $canonical, $canonical, $aliases, $alias);
+                break;
+            }
+        }
+        return $results;
+    }
+
+    private function makeEntity(string $type, string $canonical, string $displayLabel, array $aliases, string $matchedAlias): array
+    {
+        return [
+            'type' => $type,
+            'label' => $canonical,
+            'canonical_label' => $canonical,
+            'display_label' => $displayLabel,
+            'aliases' => array_values(array_unique(array_filter(array_map(
+                static fn($value): string => trim((string)$value),
+                $aliases
+            )))),
+            'matched_alias' => $matchedAlias,
+        ];
     }
 
     private function detectIntent(string $question): string
     {
-        if ($this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', '导致', '机制', '原因', '因果', '路线', '如何'])) {
+        if ($this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to'])) {
             return 'mechanism';
         }
-        if ($this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'evidence', '文献', '论文', '证据'])) {
+        if ($this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'evidence', 'literature', 'citation'])) {
             return 'literature';
         }
-        if ($this->containsAny($question, ['expression', 'expressed', 'cell line', 'tissue', '表达'])) {
+        if ($this->containsAny($question, ['expression', 'expressed', 'cell line', 'tissue', 'transcriptome'])) {
             return 'expression';
         }
-        if ($this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', '基因组', '染色体', '位点'])) {
+        if ($this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate'])) {
             return 'genome';
         }
-        if ($this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', '哪几类', '属于哪类', '分类', '谱系'])) {
+        if ($this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'utr', 'motif', 'structure', 'annotation'])) {
+            return 'sequence';
+        }
+        if ($this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'taxonomy', 'lineage'])) {
             return 'classification';
         }
-        if ($this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '区别'])) {
+        if ($this->containsAny($question, ['compare', 'versus', 'vs', 'difference'])) {
             return 'comparison';
         }
         return 'relationship';
@@ -127,20 +159,20 @@ final class TekgAgentEntityNormalizer
     private function detectTargetTypes(string $question, string $intent): array
     {
         $mapping = [
-            'Carbohydrate' => ['carbohydrate', 'carbohydrates', '糖', '糖类'],
-            'Disease' => ['disease', 'diseases', 'illness', 'phenotype', '疾病'],
-            'DiseaseCategory' => ['diseasecategory', 'disease category', 'disease class', 'disease classes', '疾病分类', '疾病类别'],
-            'Function' => ['function', 'functions', 'role', 'mechanism', 'activity', '功能', '机制'],
-            'Gene' => ['gene', 'genes', '基因'],
-            'Lipid' => ['lipid', 'lipids', '脂质', '脂类'],
-            'Mutation' => ['mutation', 'mutations', 'variant', 'variants', '突变', '变异'],
-            'Paper' => ['paper', 'papers', 'literature', 'reference', 'references', 'pubmed', '论文', '文献'],
-            'Peptide' => ['peptide', 'peptides', '肽', '多肽'],
-            'Pharmaceutical' => ['drug', 'drugs', 'pharmaceutical', 'pharmaceuticals', '药物'],
-            'Protein' => ['protein', 'proteins', 'orf1p', 'orf2p', '蛋白', '蛋白质'],
-            'RNA' => ['rna', 'rnas', 'mrna', 'lncrna', 'rna-like'],
-            'TE' => ['transposable element', 'transposable elements', 'te', 'tes', '转座子', '转座元件'],
-            'Toxin' => ['toxin', 'toxins', '毒素'],
+            'Carbohydrate' => ['carbohydrate', 'carbohydrates'],
+            'Disease' => ['disease', 'diseases', 'illness', 'phenotype', 'cancer', 'carcinoma'],
+            'DiseaseCategory' => ['diseasecategory', 'disease category', 'disease class', 'disease classes'],
+            'Function' => ['function', 'functions', 'role', 'mechanism', 'activity', 'retrotransposition'],
+            'Gene' => ['gene', 'genes'],
+            'Lipid' => ['lipid', 'lipids'],
+            'Mutation' => ['mutation', 'mutations', 'variant', 'variants', 'insertion'],
+            'Paper' => ['paper', 'papers', 'literature', 'reference', 'references', 'pubmed', 'citation'],
+            'Peptide' => ['peptide', 'peptides'],
+            'Pharmaceutical' => ['drug', 'drugs', 'pharmaceutical', 'pharmaceuticals'],
+            'Protein' => ['protein', 'proteins', 'orf1p', 'orf2p', 'reverse transcriptase'],
+            'RNA' => ['rna', 'rnas', 'mrna', 'lncrna'],
+            'TE' => ['transposable element', 'transposable elements', 'te', 'tes', 'retrotransposon'],
+            'Toxin' => ['toxin', 'toxins'],
         ];
 
         $targets = [];
@@ -153,7 +185,9 @@ final class TekgAgentEntityNormalizer
         if ($targets === [] && $intent === 'mechanism') {
             $targets = ['Function', 'Gene', 'Mutation', 'Protein', 'RNA', 'Disease'];
         }
-
+        if ($targets === [] && $intent === 'sequence') {
+            $targets = ['TE'];
+        }
         if ($targets === []) {
             $targets = ['Disease', 'Function', 'Paper'];
         }
@@ -174,7 +208,7 @@ final class TekgAgentEntityNormalizer
             'carcinoma',
             'tumor',
             'tumour',
-            'al' . 'z' . 'heimer',
+            'alzheimer',
             'parkinson',
             'aging',
             'metastasis',
@@ -182,6 +216,10 @@ final class TekgAgentEntityNormalizer
             'p53',
             'mutation',
             'expression',
+            'sequence',
+            'consensus',
+            'orf1p',
+            'orf2p',
         ] as $keyword) {
             if ($this->containsAny($question, [$keyword])) {
                 $keywords[] = $keyword;
@@ -217,6 +255,88 @@ final class TekgAgentEntityNormalizer
         return (bool)preg_match('/(?<![a-z0-9])' . $quoted . '(?![a-z0-9])/u', $questionLower);
     }
 
+    private function loadTeAliasIndex(): array
+    {
+        if (is_array($this->teAliasIndex)) {
+            return $this->teAliasIndex;
+        }
+
+        $index = [];
+        foreach ($this->loadTeNames() as $name) {
+            $index[$name] = $this->generateAliases($name);
+        }
+
+        foreach (tekg_agent_entity_alias_map() as $rule) {
+            if (!is_array($rule) || (string)($rule['entity_type'] ?? '') !== 'TE') {
+                continue;
+            }
+            $canonical = trim((string)($rule['canonical_label'] ?? ''));
+            if ($canonical === '') {
+                continue;
+            }
+            $aliases = array_merge(
+                is_array($rule['aliases'] ?? null) ? $rule['aliases'] : [],
+                is_array($rule['broad_aliases'] ?? null) ? $rule['broad_aliases'] : []
+            );
+            $index[$canonical] = array_values(array_unique(array_merge($index[$canonical] ?? [$canonical], array_map('strval', $aliases))));
+        }
+
+        $this->teAliasIndex = $index;
+        return $this->teAliasIndex;
+    }
+
+    private function loadDiseaseAliasIndex(): array
+    {
+        if (is_array($this->diseaseAliasIndex)) {
+            return $this->diseaseAliasIndex;
+        }
+
+        $index = [];
+        foreach ($this->loadDiseaseNames() as $name) {
+            $index[$name] = $this->generateAliases($name);
+        }
+
+        foreach (tekg_agent_entity_alias_map() as $rule) {
+            if (!is_array($rule) || (string)($rule['entity_type'] ?? '') !== 'Disease') {
+                continue;
+            }
+            $canonical = trim((string)($rule['canonical_label'] ?? ''));
+            if ($canonical === '') {
+                continue;
+            }
+            $aliases = array_merge(
+                is_array($rule['aliases'] ?? null) ? $rule['aliases'] : [],
+                is_array($rule['broad_aliases'] ?? null) ? $rule['broad_aliases'] : []
+            );
+            $index[$canonical] = array_values(array_unique(array_merge($index[$canonical] ?? [$canonical], array_map('strval', $aliases))));
+        }
+
+        $this->diseaseAliasIndex = $index;
+        return $this->diseaseAliasIndex;
+    }
+
+    private function generateAliases(string $label): array
+    {
+        $label = trim($label);
+        if ($label === '') {
+            return [];
+        }
+        $aliases = [$label];
+        if (str_contains($label, '_')) {
+            $aliases[] = str_replace('_', '-', $label);
+            $aliases[] = str_replace('_', ' ', $label);
+        }
+        if (str_contains($label, '-')) {
+            $aliases[] = str_replace('-', '', $label);
+            $aliases[] = str_replace('-', ' ', $label);
+        }
+        if (str_contains($label, ' ')) {
+            $aliases[] = str_replace(' ', '', $label);
+            $aliases[] = str_replace(' ', '-', $label);
+        }
+        return array_values(array_unique(array_filter($aliases)));
+    }
+
     private function loadTeNames(): array
     {
         if (is_array($this->teNames)) {
@@ -246,11 +366,18 @@ final class TekgAgentEntityNormalizer
         if (is_array($this->treeNames)) {
             return $this->treeNames;
         }
-        $path = TEKG_DATA_FS_DIR . '/processed/tree_te_lineage.json';
+        $paths = [
+            TEKG_DATA_FS_DIR . '/processed/tree_te_lineage.json',
+            TEKG_DATA_FS_DIR . '/processed/tekg2_0413_tree_rmsk_repbase_lineage.json',
+            TEKG_DATA_FS_DIR . '/processed/tekg2_0413_tree_all_lineage.json',
+        ];
         $names = [];
-        if (is_file($path)) {
+        foreach ($paths as $path) {
+            if (!is_file($path)) {
+                continue;
+            }
             $decoded = json_decode((string)file_get_contents($path), true);
-            foreach (($decoded['nodes'] ?? []) as $node) {
+            foreach ((array)($decoded['nodes'] ?? []) as $node) {
                 $name = trim((string)($node['name'] ?? ''));
                 if ($name !== '') {
                     $names[] = $name;

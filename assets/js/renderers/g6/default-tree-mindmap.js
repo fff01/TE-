@@ -817,7 +817,6 @@
           {
             type: 'scroll-canvas',
             key: 'scroll-canvas',
-            direction: 'y',
             sensitivity: 1,
           },
           'tekg-mindmap-collapse-expand-tree',
