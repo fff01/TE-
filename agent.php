@@ -46,7 +46,7 @@ if (is_file(__DIR__ . '/api/config.local.php')) {
     }
 }
 
-$defaultAgentModel = trim((string)($local['deepseek_model'] ?? 'deepseek-chat'));
+$defaultAgentModel = trim((string)($local['deepseek_reasoner_model'] ?? $local['deepseek_model'] ?? 'deepseek-reasoner'));
 
 require __DIR__ . '/head.php';
 ?>

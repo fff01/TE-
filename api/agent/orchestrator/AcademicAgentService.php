@@ -49,7 +49,9 @@ final class TekgAcademicAgentService
 
         $answerLanguage = tekg_agent_detect_language($question, trim((string)($payload['language'] ?? 'english')));
         $processLanguage = 'english';
-        $model = trim((string)($payload['model'] ?? ($this->config['deepseek_model'] ?? 'deepseek-chat')));
+        $coreModel = $this->resolveCoreModel($payload);
+        $expertModel = $this->resolveExpertModel($payload);
+        $narratorModel = $this->resolveNarratorModel($payload);
         $sessionId = trim((string)($payload['session_id'] ?? ''));
         if ($sessionId === '') {
             $sessionId = tekg_agent_make_session_id();
@@ -69,6 +71,7 @@ final class TekgAcademicAgentService
         $reasoningTrace = [];
         $detailCounter = 0;
         $eventSequence = 0;
+        $workflowState = $this->initialWorkflowState();
         $collectionState = $this->initialCollectionState($analysis, $planning, $routingPolicy, $pluginQueue);
         $sufficiencyDecision = [
             'is_sufficient' => false,
@@ -77,7 +80,11 @@ final class TekgAcademicAgentService
             'recommended_next_experts' => array_values((array)($collectionState['remaining_candidates'] ?? [])),
         ];
 
-        $this->emitThoughtFlow($emit, $sessionId, $model, $processLanguage, $analysis, $planning, $eventSequence);
+        $this->activateWorkflowStage($workflowState, 'Understanding', null, $emit, $eventSequence, $sessionId);
+        $this->emitAnalysisThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $analysis, $eventSequence);
+        $this->activateWorkflowStage($workflowState, 'Planning', 'Understanding', $emit, $eventSequence, $sessionId);
+        $this->emitPlanningThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $planning, $eventSequence);
+        $this->activateWorkflowStage($workflowState, 'Collecting', 'Planning', $emit, $eventSequence, $sessionId);
 
         $reasoningTrace[] = [
             'step' => 'planning',
@@ -93,12 +100,17 @@ final class TekgAcademicAgentService
                 continue;
             }
 
+            if (($workflowState['current_stage'] ?? '') !== 'Collecting') {
+                $previousStage = ($workflowState['current_stage'] ?? '') === 'Executing' ? 'Executing' : null;
+                $this->activateWorkflowStage($workflowState, 'Collecting', $previousStage, $emit, $eventSequence, $sessionId);
+            }
+            $this->activateWorkflowStage($workflowState, 'Executing', 'Collecting', $emit, $eventSequence, $sessionId);
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'tool_selected',
                 'session_id' => $sessionId,
                 'plugin_name' => $pluginName,
                 'message' => $this->narrateEvent(
-                    $model,
+                    $narratorModel,
                     $processLanguage,
                     [
                         'type' => 'tool_selected',
@@ -114,7 +126,7 @@ final class TekgAcademicAgentService
                 'session_id' => $sessionId,
                 'plugin_name' => $pluginName,
                 'message' => $this->narrateEvent(
-                    $model,
+                    $narratorModel,
                     $processLanguage,
                     [
                         'type' => 'tool_start',
@@ -130,7 +142,7 @@ final class TekgAcademicAgentService
                 'analysis' => $analysis,
                 'plugin_results' => $pluginResults,
                 'planning' => $planning,
-                'config' => $this->config,
+                'config' => $this->expertConfig($expertModel),
             ]);
             $result = $this->augmentPluginResult($pluginName, $result, $analysis, $planning);
 
@@ -146,7 +158,7 @@ final class TekgAcademicAgentService
                 'session_id' => $sessionId,
                 'plugin_name' => $pluginName,
                 'message' => $this->narrateEvent(
-                    $model,
+                    $narratorModel,
                     $processLanguage,
                     [
                         'type' => 'tool_progress',
@@ -164,7 +176,7 @@ final class TekgAcademicAgentService
                 'display_label' => (string)($result['display_label'] ?? $pluginName),
                 'summary' => (string)($result['display_summary'] ?? $result['query_summary'] ?? ''),
                 'message' => $this->narrateEvent(
-                    $model,
+                    $narratorModel,
                     $processLanguage,
                     [
                         'type' => 'tool_result',
@@ -189,7 +201,7 @@ final class TekgAcademicAgentService
             }
 
             $sufficiencyDecision = $this->evaluateSufficiency(
-                $model,
+                $coreModel,
                 $question,
                 $analysis,
                 $planning,
@@ -218,7 +230,7 @@ final class TekgAcademicAgentService
                     'inputs_used' => ['collection_state', 'compressed_result', 'routing_policy'],
                     'outputs_changed' => ['sufficiency_decision', 'remaining_candidates', 'closed_gaps'],
                     'message' => $this->narrateEvent(
-                        $model,
+                        $narratorModel,
                         $processLanguage,
                         [
                             'type' => 'reflection',
@@ -236,6 +248,15 @@ final class TekgAcademicAgentService
                 ]);
             }
 
+            if (($sufficiencyDecision['is_sufficient'] ?? false) !== true
+                && (
+                    array_values((array)($sufficiencyDecision['recommended_next_experts'] ?? [])) !== []
+                    || array_slice($pluginQueue, $index + 1) !== []
+                )
+            ) {
+                $this->activateWorkflowStage($workflowState, 'Collecting', 'Executing', $emit, $eventSequence, $sessionId);
+            }
+
             if (($sufficiencyDecision['is_sufficient'] ?? false) === true
                 && ((bool)($routingPolicy['stop_conditions']['stop_on_sufficient'] ?? true))
             ) {
@@ -246,12 +267,16 @@ final class TekgAcademicAgentService
         if ($this->shouldRunCitationResolver($pluginResults)) {
             $citationPlugin = $this->plugins['Citation Resolver'] ?? null;
             if ($citationPlugin instanceof TekgAgentPluginInterface) {
+                if (($workflowState['current_stage'] ?? '') !== 'Executing') {
+                    $fromStage = ($workflowState['current_stage'] ?? '') === 'Collecting' ? 'Collecting' : null;
+                    $this->activateWorkflowStage($workflowState, 'Executing', $fromStage, $emit, $eventSequence, $sessionId);
+                }
                 $this->emitEvent($emit, $eventSequence, [
                     'type' => 'tool_selected',
                     'session_id' => $sessionId,
                     'plugin_name' => 'Citation Resolver',
                     'message' => $this->narrateEvent(
-                        $model,
+                        $narratorModel,
                         $processLanguage,
                         [
                             'type' => 'tool_selected',
@@ -267,7 +292,7 @@ final class TekgAcademicAgentService
                     'session_id' => $sessionId,
                     'plugin_name' => 'Citation Resolver',
                     'message' => $this->narrateEvent(
-                        $model,
+                        $narratorModel,
                         $processLanguage,
                         [
                             'type' => 'tool_start',
@@ -283,8 +308,9 @@ final class TekgAcademicAgentService
                     'analysis' => $analysis,
                     'plugin_results' => $pluginResults,
                     'planning' => $planning,
-                    'config' => $this->config,
+                    'config' => $this->expertConfig($expertModel),
                 ]);
+                $citationResult = $this->augmentPluginResult('Citation Resolver', $citationResult, $analysis, $planning);
 
                 $pluginResults['Citation Resolver'] = $citationResult;
                 $pluginCalls[] = $citationResult;
@@ -296,7 +322,7 @@ final class TekgAcademicAgentService
                     'session_id' => $sessionId,
                     'plugin_name' => 'Citation Resolver',
                     'message' => $this->narrateEvent(
-                        $model,
+                        $narratorModel,
                         $processLanguage,
                         [
                             'type' => 'tool_progress',
@@ -314,7 +340,7 @@ final class TekgAcademicAgentService
                     'display_label' => (string)($citationResult['display_label'] ?? 'Citation Resolver'),
                     'summary' => (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? ''),
                     'message' => $this->narrateEvent(
-                        $model,
+                        $narratorModel,
                         $processLanguage,
                         [
                             'type' => 'tool_result',
@@ -341,8 +367,9 @@ final class TekgAcademicAgentService
         $limits = $this->aggregateLimits($pluginResults, $evidence);
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
         $synthesizedEvidence = $this->buildSynthesizedEvidence($pluginResults, $evidence);
+        $this->activateWorkflowStage($workflowState, 'Integrating', (string)($workflowState['current_stage'] ?? 'Executing'), $emit, $eventSequence, $sessionId);
         $answerStructure = $this->generateAnswerStructure(
-            $model,
+            $coreModel,
             $question,
             $analysis,
             $planning,
@@ -360,7 +387,7 @@ final class TekgAcademicAgentService
             'inputs_used' => ['compressed_results', 'citation_bundle'],
             'outputs_changed' => ['supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure'],
             'message' => $this->narrateEvent(
-                $model,
+                $narratorModel,
                 $processLanguage,
                 [
                     'type' => 'synthesizing',
@@ -377,10 +404,11 @@ final class TekgAcademicAgentService
             ],
         ]);
         $this->emitHeartbeat($emit, $eventSequence, $sessionId);
+        $this->activateWorkflowStage($workflowState, 'Writing', 'Integrating', $emit, $eventSequence, $sessionId);
 
         try {
             $llm = $this->llm->writeStructuredAnswer(
-                $model,
+                $coreModel,
                 $answerLanguage,
                 $question,
                 $analysis,
@@ -407,6 +435,10 @@ final class TekgAcademicAgentService
             ? (string)($llm['content'] ?? '')
             : $this->fallbackAnswer($analysis, $planning, $pluginResults, $evidence, $citations, $limits);
 
+        $workflowState['stage_statuses']['Writing'] = 'done';
+        $workflowState['current_stage'] = 'Writing';
+        $workflowState['complete'] = true;
+
         $reasoningTrace[] = [
             'step' => 'synthesizing',
             'title' => 'Synthesis',
@@ -419,8 +451,13 @@ final class TekgAcademicAgentService
             'mode' => trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
             'language' => $answerLanguage,
             'session_id' => $sessionId,
-            'model' => $model,
-            'model_provider' => $llm['provider'] ?? $this->inferProvider($model),
+            'model' => $coreModel,
+            'model_provider' => $llm['provider'] ?? $this->inferProvider($coreModel),
+            'models' => [
+                'core' => $coreModel,
+                'expert' => $expertModel,
+                'narrator' => $narratorModel,
+            ],
             'analysis' => $analysis,
             'answer' => $answer,
             'reasoning_trace' => $reasoningTrace,
@@ -435,6 +472,7 @@ final class TekgAcademicAgentService
             'sufficiency_decision' => $sufficiencyDecision,
             'answer_structure' => $answerStructure,
             'synthesized_evidence' => $synthesizedEvidence,
+            'workflow_state' => $workflowState,
             'node_contracts' => tekg_agent_node_contracts(),
             'node_payloads' => tekg_agent_json_safe($this->buildNodePayloads(
                 $question,
@@ -453,6 +491,7 @@ final class TekgAcademicAgentService
         $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence, $collectionState, $synthesizedEvidence);
         tekg_agent_save_session_memory($sessionId, $updatedMemory);
 
+        $this->completeWorkflowStage($workflowState, 'Writing', $emit, $eventSequence, $sessionId);
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'answer',
             'session_id' => $sessionId,
@@ -471,7 +510,7 @@ final class TekgAcademicAgentService
         return $response;
     }
 
-    private function emitThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $analysis, array $planning, int &$eventSequence): void
+    private function emitAnalysisThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $analysis, int &$eventSequence): void
     {
         $entities = array_values(array_filter(array_map(function (array $entity): string {
             $label = trim((string)($entity['canonical_label'] ?? $entity['label'] ?? ''));
@@ -523,7 +562,10 @@ final class TekgAcademicAgentService
                 ],
             ]);
         }
+    }
 
+    private function emitPlanningThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $planning, int &$eventSequence): void
+    {
         foreach ((array)($planning['knowledge_gaps'] ?? []) as $gap) {
             $fallback = 'Current knowledge gap: ' . (string)($gap['gap_type'] ?? 'unknown') . ' because ' . tekg_agent_lower((string)($gap['why_needed'] ?? 'it is still needed')) . '.';
             $this->emitEvent($emit, $eventSequence, [
@@ -552,6 +594,111 @@ final class TekgAcademicAgentService
                 'payload' => ['subtask' => $subtask],
             ]);
         }
+    }
+
+    private function resolveCoreModel(array $payload): string
+    {
+        return trim((string)($payload['model'] ?? $this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-reasoner'));
+    }
+
+    private function resolveExpertModel(array $payload): string
+    {
+        return trim((string)($payload['expert_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
+    }
+
+    private function resolveNarratorModel(array $payload): string
+    {
+        return trim((string)($payload['narrator_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
+    }
+
+    private function expertConfig(string $expertModel): array
+    {
+        $config = $this->config;
+        $config['deepseek_model'] = $expertModel;
+        return $config;
+    }
+
+    private function initialWorkflowState(): array
+    {
+        return [
+            'current_stage' => '',
+            'stage_statuses' => array_fill_keys($this->workflowStageOrder(), 'pending'),
+            'traversed_edges' => [],
+            'complete' => false,
+        ];
+    }
+
+    private function workflowStageOrder(): array
+    {
+        return ['Understanding', 'Planning', 'Collecting', 'Executing', 'Integrating', 'Writing'];
+    }
+
+    private function activateWorkflowStage(
+        array &$workflowState,
+        string $stage,
+        ?string $fromStage,
+        ?callable $emit,
+        int &$eventSequence,
+        string $sessionId
+    ): void {
+        $current = (string)($workflowState['current_stage'] ?? '');
+        if ($current !== '' && $current !== $stage && (($workflowState['stage_statuses'][$current] ?? '') === 'active')) {
+            $workflowState['stage_statuses'][$current] = 'done';
+        }
+
+        if ($fromStage !== null && $fromStage !== '' && $fromStage !== $stage) {
+            $workflowState['traversed_edges'] = array_values(array_unique(array_merge(
+                (array)($workflowState['traversed_edges'] ?? []),
+                [$fromStage . '->' . $stage]
+            )));
+        }
+
+        $workflowState['stage_statuses'][$stage] = 'active';
+        $workflowState['current_stage'] = $stage;
+        $workflowState['complete'] = false;
+
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'stage_state',
+            'session_id' => $sessionId,
+            'node' => $this->nodeNameForWorkflowStage($stage),
+            'source' => $this->nodeNameForWorkflowStage($stage),
+            'message' => $stage,
+            'payload' => $workflowState,
+        ]);
+    }
+
+    private function completeWorkflowStage(
+        array &$workflowState,
+        string $stage,
+        ?callable $emit,
+        int &$eventSequence,
+        string $sessionId
+    ): void {
+        $workflowState['stage_statuses'][$stage] = 'done';
+        $workflowState['current_stage'] = $stage;
+        $workflowState['complete'] = true;
+
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'stage_state',
+            'session_id' => $sessionId,
+            'node' => $this->nodeNameForWorkflowStage($stage),
+            'source' => $this->nodeNameForWorkflowStage($stage),
+            'message' => $stage,
+            'payload' => $workflowState,
+        ]);
+    }
+
+    private function nodeNameForWorkflowStage(string $stage): string
+    {
+        return match ($stage) {
+            'Understanding' => 'Question Understanding Node',
+            'Planning' => 'Planning Node',
+            'Collecting' => 'Evidence Collection Node',
+            'Executing' => 'Expert Execution Layer',
+            'Integrating' => 'Evidence Synthesis Node',
+            'Writing' => 'Answer Writer Node',
+            default => 'AcademicAgentService',
+        };
     }
 
     private function buildPlan(string $question, array $analysis, array $sessionMemory): array

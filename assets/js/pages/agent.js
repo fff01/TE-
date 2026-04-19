@@ -62,6 +62,22 @@
 
   const toolDetailStore = new Map();
   const turnStore = new Map();
+  const WORKFLOW_STAGES = [
+    { id: 'Understanding', number: 1, label: 'Understanding' },
+    { id: 'Planning', number: 2, label: 'Planning' },
+    { id: 'Collecting', number: 3, label: 'Collecting' },
+    { id: 'Executing', number: 4, label: 'Executing' },
+    { id: 'Integrating', number: 5, label: 'Integrating' },
+    { id: 'Writing', number: 6, label: 'Writing' },
+  ];
+  const WORKFLOW_FORWARD_EDGES = [
+    'Understanding->Planning',
+    'Planning->Collecting',
+    'Collecting->Executing',
+    'Executing->Integrating',
+    'Integrating->Writing',
+  ];
+  const WORKFLOW_BACK_EDGE = 'Executing->Collecting';
 
   function escapeHtml(value) {
     return String(value || '')
@@ -234,6 +250,81 @@
     return seconds < 1 ? `${seconds.toFixed(1)}s` : `${(Math.round(seconds * 10) / 10).toFixed(1)}s`;
   }
 
+  function defaultWorkflowState() {
+    const stageStatuses = {};
+    WORKFLOW_STAGES.forEach((stage, index) => {
+      stageStatuses[stage.id] = index === 0 ? 'active' : 'pending';
+    });
+    return {
+      current_stage: 'Understanding',
+      stage_statuses: stageStatuses,
+      traversed_edges: [],
+      complete: false,
+    };
+  }
+
+  function createWorkflowMarkup() {
+    const main = WORKFLOW_STAGES.map((stage, index) => {
+      const node = `
+        <div class="agent-stage" data-stage="${escapeHtml(stage.id)}">
+          <span class="agent-stage-circle">${escapeHtml(String(stage.number))}</span>
+          <span class="agent-stage-label">${escapeHtml(stage.label)}</span>
+        </div>
+      `;
+      if (index === WORKFLOW_STAGES.length - 1) {
+        return node;
+      }
+      return `${node}<div class="agent-stage-arrow" data-edge="${escapeHtml(WORKFLOW_FORWARD_EDGES[index])}" aria-hidden="true"></div>`;
+    }).join('');
+
+    return `
+      <div class="agent-workflow" data-role="workflow">
+        <div class="agent-workflow-main">${main}</div>
+        <div class="agent-workflow-backtrack">
+          <div class="agent-stage-arrow is-backward" data-edge="${escapeHtml(WORKFLOW_BACK_EDGE)}" aria-hidden="true"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function applyWorkflowState(turn) {
+    const workflowNode = turn.node.querySelector('[data-role="workflow"]');
+    if (!workflowNode) return;
+    const workflow = turn.workflow || defaultWorkflowState();
+    const stageStatuses = workflow.stage_statuses || {};
+    const traversed = new Set(Array.isArray(workflow.traversed_edges) ? workflow.traversed_edges : []);
+
+    workflowNode.querySelectorAll('[data-stage]').forEach((node) => {
+      const stage = String(node.dataset.stage || '');
+      const status = String(stageStatuses[stage] || 'pending');
+      node.classList.remove('is-pending', 'is-active', 'is-done');
+      node.classList.add(`is-${status}`);
+    });
+
+    workflowNode.querySelectorAll('[data-edge]').forEach((edge) => {
+      const key = String(edge.dataset.edge || '');
+      edge.classList.toggle('is-traversed', traversed.has(key));
+    });
+  }
+
+  function setWorkflowState(turn, payload) {
+    if (!turn) return;
+    const next = defaultWorkflowState();
+    const incomingStatuses = payload && typeof payload === 'object' ? payload.stage_statuses : null;
+    if (incomingStatuses && typeof incomingStatuses === 'object') {
+      WORKFLOW_STAGES.forEach((stage) => {
+        const status = String(incomingStatuses[stage.id] || next.stage_statuses[stage.id] || 'pending');
+        next.stage_statuses[stage.id] = ['pending', 'active', 'done'].includes(status) ? status : 'pending';
+      });
+    }
+    next.current_stage = String((payload && payload.current_stage) || next.current_stage || 'Understanding');
+    next.traversed_edges = Array.isArray(payload && payload.traversed_edges) ? payload.traversed_edges.slice() : [];
+    next.complete = !!(payload && payload.complete);
+    turn.workflow = next;
+    turn.currentStage = next.current_stage || turn.currentStage || 'Understanding';
+    applyWorkflowState(turn);
+  }
+
   function createTurn(question) {
     ensureConversationStarted();
     const turnId = `turn-${++turnCounter}`;
@@ -248,8 +339,9 @@
         <section class="agent-thinking" data-role="thinking">
           <div class="agent-thinking-head">
             <span class="agent-thinking-title">${escapeHtml(ui.thinking_title || 'Deep thinking')}</span>
-            <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml(ui.thinking_running || 'Running...')}</span>
+            <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml('Understanding')}</span>
           </div>
+          ${createWorkflowMarkup()}
           <div class="agent-thinking-body" data-role="thinking-body"></div>
         </section>
         <section class="agent-answer" data-role="answer"></section>
@@ -269,8 +361,11 @@
       citations: [],
       limits: [],
       answer: '',
+      currentStage: 'Understanding',
+      workflow: defaultWorkflowState(),
     };
     turnStore.set(turnId, turn);
+    applyWorkflowState(turn);
     scrollConversationToBottom(true);
     return turn;
   }
@@ -350,9 +445,10 @@
   function updateThinkingMeta(turn, done) {
     const meta = turn.node.querySelector('[data-role="thinking-meta"]');
     const elapsed = formatElapsed(performance.now() - turn.startedAt);
+    const stageLabel = String(turn.currentStage || 'Understanding');
     meta.textContent = done
       ? `${ui.thinking_done || 'Done'} · ${elapsed}`
-      : `${ui.thinking_running || 'Running...'} · ${elapsed}`;
+      : `${stageLabel} · ${elapsed}`;
   }
 
   function setAnswer(turn, markdown, language) {
@@ -377,6 +473,14 @@
       return;
     }
     turn.finalized = true;
+    if (turn.workflow && !turn.workflow.complete) {
+      turn.workflow.stage_statuses = turn.workflow.stage_statuses || {};
+      turn.workflow.stage_statuses.Writing = 'done';
+      turn.workflow.current_stage = 'Writing';
+      turn.workflow.complete = true;
+      turn.currentStage = 'Writing';
+      applyWorkflowState(turn);
+    }
     const answerNode = turn.node.querySelector('[data-role="answer"]');
     if (answerNode && !answerNode.textContent.trim() && turn.answer) {
       setAnswer(turn, turn.answer, turn.language || 'en');
@@ -629,6 +733,12 @@
   function handleStreamEvent(turn, event) {
     if (!event || typeof event !== 'object') return;
 
+    if (event.type === 'stage_state') {
+      setWorkflowState(turn, event.payload && typeof event.payload === 'object' ? event.payload : {});
+      updateThinkingMeta(turn, false);
+      return;
+    }
+
     if (event.type === 'analysis') {
       createThinkingLine(turn, String(event.message || ''), 'bullet');
       updateThinkingMeta(turn, false);
@@ -774,7 +884,7 @@
     activeAbortController = abortController;
 
     setLoading(true);
-    setStatus(ui.thinking_running || 'Running...');
+    setStatus('');
     questionInput.value = '';
 
     try {
