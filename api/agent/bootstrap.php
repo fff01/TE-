@@ -64,6 +64,22 @@ function tekg_agent_entity_alias_map(): array
     return $map;
 }
 
+function tekg_agent_routing_policy(): array
+{
+    static $policy = null;
+    if (is_array($policy)) {
+        return $policy;
+    }
+    $path = __DIR__ . '/config/agent_routing_policy.json';
+    if (!is_file($path)) {
+        $policy = [];
+        return $policy;
+    }
+    $decoded = json_decode((string)file_get_contents($path), true);
+    $policy = is_array($decoded) ? $decoded : [];
+    return $policy;
+}
+
 function tekg_agent_config(): array
 {
     static $config = null;
@@ -78,6 +94,7 @@ function tekg_agent_config(): array
         'deepseek_url' => trim((string)($local['deepseek_url'] ?? tekg_agent_env_value(['DEEPSEEK_API_URL'], 'https://api.deepseek.com/v1/chat/completions'))),
         'deepseek_key' => trim((string)($local['deepseek_key'] ?? tekg_agent_env_value(['DEEPSEEK_API_KEY'], ''))),
         'deepseek_model' => trim((string)($local['deepseek_model'] ?? tekg_agent_env_value(['DEEPSEEK_MODEL'], 'deepseek-chat'))),
+        'deepseek_reasoner_model' => trim((string)($local['deepseek_reasoner_model'] ?? tekg_agent_env_value(['DEEPSEEK_REASONER_MODEL'], 'deepseek-reasoner'))),
         'llm_relay_url' => trim((string)($local['llm_relay_url'] ?? tekg_agent_env_value(['BIOLOGY_LLM_RELAY_URL', 'LLM_RELAY_URL'], ''))),
         'ssl_verify' => (bool)($local['ssl_verify'] ?? false),
         'neo4j_url' => trim((string)($local['neo4j_url'] ?? tekg_agent_env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg21/tx/commit'))),
@@ -137,28 +154,40 @@ function tekg_agent_session_file(string $sessionId): string
     return rtrim(tekg_agent_session_cache_dir(), '/\\') . '/' . preg_replace('/[^a-zA-Z0-9_\-]+/', '_', $sessionId) . '.json';
 }
 
-function tekg_agent_load_session_memory(string $sessionId): array
+function tekg_agent_default_session_memory(): array
 {
-    $path = tekg_agent_session_file($sessionId);
-    if (!is_file($path)) {
-        return [
-            'topic_entities' => [],
-            'last_intent' => '',
-            'confirmed_claims' => [],
-            'citations' => [],
-            'failed_aliases' => [],
-            'tool_history' => [],
-        ];
-    }
-    $decoded = json_decode((string)file_get_contents($path), true);
-    return is_array($decoded) ? $decoded : [
+    return [
         'topic_entities' => [],
         'last_intent' => '',
         'confirmed_claims' => [],
         'citations' => [],
         'failed_aliases' => [],
         'tool_history' => [],
+        'resolved_entities' => [],
+        'active_gaps' => [],
+        'closed_gaps' => [],
+        'failed_queries' => [],
+        'weak_claims' => [],
+        'strong_claims' => [],
+        'claim_status_by_source' => [],
+        'expert_attempts' => [],
+        'compression_notes' => [],
+        'next_step_hints' => [],
+        'session_snapshot' => [],
     ];
+}
+
+function tekg_agent_load_session_memory(string $sessionId): array
+{
+    $path = tekg_agent_session_file($sessionId);
+    if (!is_file($path)) {
+        return tekg_agent_default_session_memory();
+    }
+    $decoded = json_decode((string)file_get_contents($path), true);
+    if (!is_array($decoded)) {
+        return tekg_agent_default_session_memory();
+    }
+    return array_replace(tekg_agent_default_session_memory(), $decoded);
 }
 
 function tekg_agent_save_session_memory(string $sessionId, array $memory): void
@@ -388,14 +417,14 @@ function tekg_agent_node_contracts(): array
         ],
         'Evidence Collection Node' => [
             'input' => ['question', 'analysis', 'planning', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle'],
-            'output' => ['collection_state', 'active_expert', 'sufficiency_decision', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle'],
+            'output' => ['collection_state', 'active_expert', 'sufficiency_decision', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle', 'compressed_result'],
         ],
         'Evidence Synthesis Node' => [
-            'input' => ['question', 'analysis', 'planning', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle'],
+            'input' => ['question', 'analysis', 'planning', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle', 'compressed_result'],
             'output' => ['supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters'],
         ],
         'Answer Structuring Node' => [
-            'input' => ['question', 'analysis', 'planning', 'collected_results', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters'],
+            'input' => ['question', 'analysis', 'planning', 'collected_results', 'compressed_result', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters'],
             'output' => ['answer_structure'],
         ],
         'Answer Writer Node' => [

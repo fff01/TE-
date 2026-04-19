@@ -7,6 +7,7 @@
             "id": 1,
             "name": "Question Understanding Node",
             "kind": "core",
+            "model": "deepseek-reasoner",
             "description": "Parse the user question, detect intent and complexity, and run entity normalization inside the node when needed. There is no separate entity expert.",
             "inputs": [
                 "question"
@@ -24,6 +25,7 @@
             "id": 2,
             "name": "Planning Node",
             "kind": "core",
+            "model": "deepseek-reasoner",
             "description": "Build knowledge gaps, subtasks, and the first-pass expert activation plan.",
             "inputs": [
                 "question",
@@ -43,6 +45,7 @@
             "id": 3,
             "name": "Evidence Collection Node",
             "kind": "controller",
+            "model": "deepseek-reasoner",
             "description": "MoE-style controller that activates one expert at a time, merges JSON outputs, and explicitly decides whether the current evidence is sufficient or whether more experts must be activated.",
             "inputs": [
                 "question",
@@ -89,6 +92,7 @@
             "id": 4,
             "name": "Local Graph Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Graph Plugin for local TE-centered neighborhoods and entity-pair relations.",
             "inputs": [
                 "question",
@@ -108,6 +112,7 @@
             "id": 5,
             "name": "Graph Analytics Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Graph Analytics Plugin for topology, ranking, counts, and graph-wide structure questions.",
             "inputs": [
                 "question",
@@ -126,6 +131,7 @@
             "id": 6,
             "name": "Cypher Explorer Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Cypher Explorer Plugin with validated read-only aggregation queries when fixed graph tools are not enough.",
             "inputs": [
                 "question",
@@ -145,6 +151,7 @@
             "id": 7,
             "name": "Literature Retrieval Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Literature Plugin to retrieve local graph citations and PubMed metadata.",
             "inputs": [
                 "question",
@@ -164,6 +171,7 @@
             "id": 8,
             "name": "Literature Reading Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Literature Reading Plugin to cluster claims, conflicts, and missing evidence from the reviewed citation set.",
             "inputs": [
                 "question",
@@ -184,6 +192,7 @@
             "id": 9,
             "name": "Tree Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Tree Plugin for family, subfamily, and lineage context.",
             "inputs": [
                 "question",
@@ -202,6 +211,7 @@
             "id": 10,
             "name": "Expression Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Expression Plugin for tissue and cell-context evidence.",
             "inputs": [
                 "question",
@@ -220,6 +230,7 @@
             "id": 11,
             "name": "Genome Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Genome Plugin for locus-level and browser context.",
             "inputs": [
                 "question",
@@ -238,6 +249,7 @@
             "id": 12,
             "name": "Sequence Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Sequence Plugin for Repbase-backed sequence facts, length, and structure hints.",
             "inputs": [
                 "question",
@@ -256,6 +268,7 @@
             "id": 13,
             "name": "Citation Resolver Expert",
             "kind": "expert",
+            "model": "deepseek-chat",
             "description": "Runs Citation Resolver to normalize and deduplicate citation records.",
             "inputs": [
                 "collected_results",
@@ -273,6 +286,7 @@
             "id": 14,
             "name": "Evidence Synthesis Node",
             "kind": "core",
+            "model": "deepseek-reasoner",
             "description": "Organize the collected evidence into supported claims, conflicts, missing-evidence notes, and claim clusters. This node does not decide whether evidence is sufficient; that stays in Evidence Collection Node.",
             "inputs": [
                 "question",
@@ -307,6 +321,7 @@
             "id": 15,
             "name": "Answer Structuring Node",
             "kind": "core",
+            "model": "deepseek-reasoner",
             "description": "A larger reasoning node that receives all expert outputs and the synthesis output, then organizes the answer outline as answer_structure.",
             "inputs": [
                 "question",
@@ -340,6 +355,7 @@
             "id": 16,
             "name": "Answer Writer Node",
             "kind": "core",
+            "model": "deepseek-reasoner",
             "description": "Generate the final academic answer from answer_structure and the validated evidence/citation bundle.",
             "inputs": [
                 "question",
@@ -362,6 +378,7 @@
             "id": 17,
             "name": "Process Narrator Node",
             "kind": "core",
+            "model": "deepseek-chat",
             "description": "Generate front-end thinking trace lines from real execution events only.",
             "inputs": [
                 "event_stream",

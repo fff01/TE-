@@ -1,0 +1,186 @@
+{
+  "default_question_type": "relationship",
+  "question_types": {
+    "relationship": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Graph Plugin",
+        "Literature Plugin",
+        "Literature Reading Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_any_plugins": [
+          "Graph Plugin",
+          "Literature Plugin"
+        ],
+        "min_evidence_items": 1
+      },
+      "stop_conditions": {
+        "max_experts": 4,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": []
+    },
+    "mechanism": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Graph Plugin",
+        "Literature Plugin",
+        "Literature Reading Plugin",
+        "Sequence Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_all_plugins": [
+          "Graph Plugin",
+          "Literature Plugin"
+        ],
+        "min_evidence_items": 2,
+        "min_citations": 1
+      },
+      "stop_conditions": {
+        "max_experts": 5,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": [
+        "Citation Resolver"
+      ]
+    },
+    "literature": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Literature Plugin",
+        "Literature Reading Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_all_plugins": [
+          "Literature Plugin"
+        ],
+        "min_citations": 1
+      },
+      "stop_conditions": {
+        "max_experts": 3,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": []
+    },
+    "classification": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Tree Plugin",
+        "Literature Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_any_plugins": [
+          "Tree Plugin"
+        ]
+      },
+      "stop_conditions": {
+        "max_experts": 3,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": []
+    },
+    "expression": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Expression Plugin",
+        "Literature Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_any_plugins": [
+          "Expression Plugin"
+        ]
+      },
+      "stop_conditions": {
+        "max_experts": 3,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": []
+    },
+    "genome": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Genome Plugin",
+        "Literature Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_any_plugins": [
+          "Genome Plugin"
+        ]
+      },
+      "stop_conditions": {
+        "max_experts": 3,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": []
+    },
+    "sequence": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Sequence Plugin",
+        "Literature Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_any_plugins": [
+          "Sequence Plugin"
+        ],
+        "allow_explicit_empty_from": [
+          "Sequence Plugin"
+        ]
+      },
+      "stop_conditions": {
+        "max_experts": 3,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": []
+    },
+    "graph_analytics": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Graph Analytics Plugin",
+        "Cypher Explorer Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_any_plugins": [
+          "Graph Analytics Plugin",
+          "Cypher Explorer Plugin"
+        ],
+        "require_sortable_statistics": true
+      },
+      "stop_conditions": {
+        "max_experts": 3,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": true,
+      "forbidden_shortcuts": []
+    },
+    "comparison": {
+      "candidate_experts": [
+        "Entity Resolver",
+        "Graph Plugin",
+        "Literature Plugin",
+        "Literature Reading Plugin"
+      ],
+      "minimum_evidence_gate": {
+        "require_any_plugins": [
+          "Graph Plugin",
+          "Literature Plugin"
+        ],
+        "min_evidence_items": 2
+      },
+      "stop_conditions": {
+        "max_experts": 4,
+        "stop_on_sufficient": true
+      },
+      "cypher_explorer_fallback": false,
+      "forbidden_shortcuts": []
+    }
+  }
+}

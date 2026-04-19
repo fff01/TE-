@@ -62,12 +62,20 @@ final class TekgAcademicAgentService
         $analysis['session_memory'] = $sessionMemory;
 
         $planning = $this->buildPlan($question, $analysis, $sessionMemory);
-        $pluginQueue = $this->initialPluginQueue($analysis, $planning);
+        $routingPolicy = $this->routingPolicyFor($analysis);
+        $pluginQueue = $this->initialPluginQueue($analysis, $planning, $routingPolicy);
         $pluginResults = [];
         $pluginCalls = [];
         $reasoningTrace = [];
         $detailCounter = 0;
         $eventSequence = 0;
+        $collectionState = $this->initialCollectionState($analysis, $planning, $routingPolicy, $pluginQueue);
+        $sufficiencyDecision = [
+            'is_sufficient' => false,
+            'reason' => 'No expert evidence has been collected yet.',
+            'missing_dimensions' => array_values((array)($collectionState['active_gaps'] ?? [])),
+            'recommended_next_experts' => array_values((array)($collectionState['remaining_candidates'] ?? [])),
+        ];
 
         $this->emitThoughtFlow($emit, $sessionId, $model, $processLanguage, $analysis, $planning, $eventSequence);
 
@@ -124,9 +132,11 @@ final class TekgAcademicAgentService
                 'planning' => $planning,
                 'config' => $this->config,
             ]);
+            $result = $this->augmentPluginResult($pluginName, $result, $analysis, $planning);
 
             $pluginResults[$pluginName] = $result;
             $pluginCalls[] = $result;
+            $collectionState = $this->updateCollectionState($collectionState, $pluginName, $result);
 
             $detailId = 'tool-' . (++$detailCounter);
             $payloadForUi = $this->toolPayloadForUi($result);
@@ -178,12 +188,35 @@ final class TekgAcademicAgentService
                 $pluginQueue[] = $additionalPlugin;
             }
 
+            $sufficiencyDecision = $this->evaluateSufficiency(
+                $model,
+                $question,
+                $analysis,
+                $planning,
+                $pluginResults,
+                $collectionState,
+                $routingPolicy
+            );
+            $collectionState['sufficiency_decision'] = $sufficiencyDecision;
+            foreach (array_values((array)($sufficiencyDecision['recommended_next_experts'] ?? [])) as $recommendedPlugin) {
+                if ($recommendedPlugin !== ''
+                    && !in_array($recommendedPlugin, $pluginQueue, true)
+                    && !in_array($recommendedPlugin, array_keys($pluginResults), true)
+                ) {
+                    $pluginQueue[] = $recommendedPlugin;
+                }
+            }
+
             $reflection = $this->reflectionMessage($pluginName, $result, $pluginQueue, $index);
             if ($reflection !== '') {
                 $this->emitEvent($emit, $eventSequence, [
                     'type' => 'reflection',
                     'session_id' => $sessionId,
                     'plugin_name' => $pluginName,
+                    'node' => 'Evidence Collection Node',
+                    'source' => 'Evidence Collection Node',
+                    'inputs_used' => ['collection_state', 'compressed_result', 'routing_policy'],
+                    'outputs_changed' => ['sufficiency_decision', 'remaining_candidates', 'closed_gaps'],
                     'message' => $this->narrateEvent(
                         $model,
                         $processLanguage,
@@ -191,11 +224,22 @@ final class TekgAcademicAgentService
                             'type' => 'reflection',
                             'plugin_name' => $pluginName,
                             'result' => $result,
+                            'sufficiency_decision' => $sufficiencyDecision,
                             'remaining_tools' => array_slice($pluginQueue, $index + 1),
                         ],
-                        $reflection
+                        $reflection . ' Sufficiency: ' . (string)($sufficiencyDecision['reason'] ?? '')
                     ),
+                    'payload' => [
+                        'collection_state' => $collectionState,
+                        'sufficiency_decision' => $sufficiencyDecision,
+                    ],
                 ]);
+            }
+
+            if (($sufficiencyDecision['is_sufficient'] ?? false) === true
+                && ((bool)($routingPolicy['stop_conditions']['stop_on_sufficient'] ?? true))
+            ) {
+                break;
             }
         }
 
@@ -296,11 +340,25 @@ final class TekgAcademicAgentService
         $citations = $this->aggregateCitations($pluginResults);
         $limits = $this->aggregateLimits($pluginResults, $evidence);
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
+        $synthesizedEvidence = $this->buildSynthesizedEvidence($pluginResults, $evidence);
+        $answerStructure = $this->generateAnswerStructure(
+            $model,
+            $question,
+            $analysis,
+            $planning,
+            $synthesizedEvidence,
+            $citations,
+            $sufficiencyDecision
+        );
 
         $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence);
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'synthesizing',
             'session_id' => $sessionId,
+            'node' => 'Evidence Synthesis Node',
+            'source' => 'Evidence Synthesis Node',
+            'inputs_used' => ['compressed_results', 'citation_bundle'],
+            'outputs_changed' => ['supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure'],
             'message' => $this->narrateEvent(
                 $model,
                 $processLanguage,
@@ -309,14 +367,31 @@ final class TekgAcademicAgentService
                     'planning' => $planning,
                     'plugin_results' => $pluginResults,
                     'evidence_count' => count($evidence),
+                    'answer_structure' => $answerStructure,
                 ],
                 $synthesizingMessage
             ),
+            'payload' => [
+                'synthesized_evidence' => $synthesizedEvidence,
+                'answer_structure' => $answerStructure,
+            ],
         ]);
         $this->emitHeartbeat($emit, $eventSequence, $sessionId);
 
         try {
-            $llm = $this->llm->complete($model, $question, $answerLanguage, $planning, $pluginCalls, $evidence, $citations, $confidence, $limits);
+            $llm = $this->llm->writeStructuredAnswer(
+                $model,
+                $answerLanguage,
+                $question,
+                $analysis,
+                $answerStructure,
+                (array)($synthesizedEvidence['supported_claims'] ?? []),
+                (array)($synthesizedEvidence['conflicting_claims'] ?? []),
+                (array)($synthesizedEvidence['missing_evidence'] ?? []),
+                $citations,
+                $confidence,
+                $limits
+            );
         } catch (Throwable $error) {
             $llm = [
                 'ok' => false,
@@ -356,11 +431,26 @@ final class TekgAcademicAgentService
             'confidence' => $confidence,
             'limits' => array_values(array_unique($limits)),
             'planning' => $planning,
+            'collection_state' => $collectionState,
+            'sufficiency_decision' => $sufficiencyDecision,
+            'answer_structure' => $answerStructure,
+            'synthesized_evidence' => $synthesizedEvidence,
             'node_contracts' => tekg_agent_node_contracts(),
-            'node_payloads' => tekg_agent_json_safe($this->buildNodePayloads($question, $analysis, $planning, $pluginResults, $evidence, $citations)),
+            'node_payloads' => tekg_agent_json_safe($this->buildNodePayloads(
+                $question,
+                $analysis,
+                $planning,
+                $pluginResults,
+                $evidence,
+                $citations,
+                $collectionState,
+                $sufficiencyDecision,
+                $answerStructure,
+                $synthesizedEvidence
+            )),
         ];
 
-        $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence);
+        $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence, $collectionState, $synthesizedEvidence);
         tekg_agent_save_session_memory($sessionId, $updatedMemory);
 
         $this->emitEvent($emit, $eventSequence, [
@@ -684,9 +774,39 @@ final class TekgAcademicAgentService
         return array_values(array_unique(array_filter($subtasks)));
     }
 
-    private function initialPluginQueue(array $analysis, array $planning): array
+    private function initialCollectionState(array $analysis, array $planning, array $routingPolicy, array $pluginQueue): array
     {
-        $queue = array_map(static fn(array $item): string => (string)$item['plugin'], (array)($planning['tool_plan'] ?? []));
+        return [
+            'executed_experts' => [],
+            'remaining_candidates' => array_values(array_filter($pluginQueue, static fn(string $plugin): bool => $plugin !== 'Entity Resolver')),
+            'closed_gaps' => [],
+            'active_gaps' => array_values(array_map(
+                static fn(array $gap): string => (string)($gap['gap_type'] ?? ''),
+                (array)($planning['knowledge_gaps'] ?? [])
+            )),
+            'evidence_count' => 0,
+            'citation_count' => 0,
+            'question_type' => (string)($analysis['intent'] ?? 'relationship'),
+            'routing_policy' => $routingPolicy,
+        ];
+    }
+
+    private function routingPolicyFor(array $analysis): array
+    {
+        $policy = tekg_agent_routing_policy();
+        $questionTypes = is_array($policy['question_types'] ?? null) ? $policy['question_types'] : [];
+        $intent = (string)($analysis['intent'] ?? ($policy['default_question_type'] ?? 'relationship'));
+        $selected = is_array($questionTypes[$intent] ?? null) ? $questionTypes[$intent] : (is_array($questionTypes['relationship'] ?? null) ? $questionTypes['relationship'] : []);
+        $selected['question_type'] = $intent;
+        return $selected;
+    }
+
+    private function initialPluginQueue(array $analysis, array $planning, array $routingPolicy): array
+    {
+        $queue = array_values(array_filter(array_map('strval', (array)($routingPolicy['candidate_experts'] ?? []))));
+        if ($queue === []) {
+            $queue = array_map(static fn(array $item): string => (string)$item['plugin'], (array)($planning['tool_plan'] ?? []));
+        }
         $intent = (string)($analysis['intent'] ?? 'relationship');
         if ($queue === []) {
             $queue = $intent === 'graph_analytics'
@@ -700,6 +820,283 @@ final class TekgAcademicAgentService
             $queue[] = 'Graph Analytics Plugin';
         }
         return array_values(array_unique($queue));
+    }
+
+    private function augmentPluginResult(string $pluginName, array $result, array $analysis, array $planning): array
+    {
+        $rawResult = tekg_agent_json_safe((array)($result['results'] ?? []));
+        $result['raw_result'] = $rawResult;
+        $result['compressed_result'] = $this->compressPluginResult($pluginName, $result, $analysis, $planning);
+        return $result;
+    }
+
+    private function compressPluginResult(string $pluginName, array $result, array $analysis, array $planning): array
+    {
+        $rawResult = tekg_agent_json_safe((array)($result['results'] ?? []));
+        $evidenceItems = [];
+        foreach ((array)($result['evidence_items'] ?? []) as $item) {
+            $normalized = tekg_agent_normalize_evidence_item($item, $pluginName);
+            if ($normalized !== null) {
+                $evidenceItems[] = $normalized;
+            }
+        }
+
+        $keyFindings = [];
+        foreach (array_slice($evidenceItems, 0, 5) as $item) {
+            $claim = trim((string)($item['claim'] ?? ''));
+            if ($claim !== '') {
+                $keyFindings[] = $claim;
+            }
+        }
+        if ($keyFindings === []) {
+            foreach (array_slice((array)($result['display_details']['preview_items'] ?? []), 0, 5) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $title = trim((string)($item['title'] ?? ''));
+                if ($title !== '') {
+                    $keyFindings[] = $title;
+                }
+            }
+        }
+        if ($keyFindings === []) {
+            $summary = trim((string)($result['display_summary'] ?? $result['query_summary'] ?? ''));
+            if ($summary !== '') {
+                $keyFindings[] = $summary;
+            }
+        }
+
+        $limitations = array_values(array_filter(array_map(
+            static fn($value): string => trim((string)$value),
+            (array)($result['errors'] ?? [])
+        )));
+        if (in_array((string)($result['status'] ?? ''), ['empty', 'error'], true)) {
+            $limitations[] = trim((string)($result['display_summary'] ?? $result['query_summary'] ?? ''));
+        }
+
+        $previewItems = array_values(array_slice((array)($result['display_details']['preview_items'] ?? []), 0, 8));
+        $citationPreview = array_values(array_slice((array)($result['citations'] ?? []), 0, 12));
+        $evidencePreview = array_values(array_map(
+            static fn(array $item): array => [
+                'claim' => (string)($item['claim'] ?? ''),
+                'title' => (string)($item['title'] ?? ''),
+                'meta' => (string)($item['meta'] ?? ''),
+                'support_strength' => (string)($item['support_strength'] ?? 'medium'),
+            ],
+            array_slice($evidenceItems, 0, 8)
+        ));
+
+        $carryForward = [
+            'plugin_name' => $pluginName,
+            'status' => (string)($result['status'] ?? 'unknown'),
+            'query_summary' => (string)($result['query_summary'] ?? ''),
+            'display_summary' => (string)($result['display_summary'] ?? ''),
+            'result_counts' => (array)($result['result_counts'] ?? []),
+            'preview_items' => $previewItems,
+            'evidence_preview' => $evidencePreview,
+            'citations' => $citationPreview,
+        ];
+
+        if ($pluginName === 'Cypher Explorer Plugin') {
+            $cypherResult = (array)($rawResult['cypher_result'] ?? []);
+            $carryForward['query_purpose'] = (string)($cypherResult['query_intent'] ?? 'graph_exploration');
+            $carryForward['result_shape'] = [
+                'row_count' => (int)($cypherResult['result_counts']['rows'] ?? 0),
+                'columns' => (array)($cypherResult['column_schema'] ?? []),
+            ];
+            $carryForward['top_rows'] = array_slice((array)($cypherResult['rows'] ?? []), 0, 10);
+            $carryForward['why_it_matters'] = $keyFindings[0] ?? trim((string)($result['display_summary'] ?? ''));
+        } else {
+            $carryForward['raw_result_excerpt'] = $this->rawResultExcerpt($rawResult);
+        }
+
+        return tekg_agent_json_safe([
+            'key_findings' => array_values(array_unique(array_filter($keyFindings))),
+            'coverage' => [
+                'question_type' => (string)($analysis['intent'] ?? 'relationship'),
+                'status' => (string)($result['status'] ?? 'unknown'),
+                'result_counts' => (array)($result['result_counts'] ?? []),
+                'required_evidence' => (array)($planning['required_evidence'] ?? []),
+                'latency_ms' => (int)($result['latency_ms'] ?? 0),
+            ],
+            'limitations' => array_values(array_unique(array_filter($limitations))),
+            'candidate_claims' => array_values(array_unique(array_filter(array_map(
+                static fn(array $item): string => trim((string)($item['claim'] ?? '')),
+                array_slice($evidenceItems, 0, 10)
+            )))),
+            'carry_forward_fields' => $carryForward,
+        ]);
+    }
+
+    private function rawResultExcerpt(array $rawResult): array
+    {
+        $excerpt = [];
+        foreach ($rawResult as $key => $value) {
+            if (is_array($value)) {
+                $excerpt[$key] = array_slice($value, 0, 10);
+                continue;
+            }
+            $excerpt[$key] = $value;
+        }
+        return tekg_agent_json_safe($excerpt);
+    }
+
+    private function updateCollectionState(array $collectionState, string $pluginName, array $result): array
+    {
+        $collectionState['executed_experts'] = array_values(array_unique(array_merge(
+            (array)($collectionState['executed_experts'] ?? []),
+            [$pluginName]
+        )));
+        $collectionState['remaining_candidates'] = array_values(array_filter(
+            (array)($collectionState['remaining_candidates'] ?? []),
+            static fn(string $candidate): bool => $candidate !== $pluginName
+        ));
+        $collectionState['evidence_count'] = (int)($collectionState['evidence_count'] ?? 0) + count((array)($result['evidence_items'] ?? []));
+        $collectionState['citation_count'] = (int)($collectionState['citation_count'] ?? 0) + count((array)($result['citations'] ?? []));
+        if (in_array((string)($result['status'] ?? ''), ['ok', 'partial'], true)) {
+            $collectionState['closed_gaps'] = array_values(array_unique(array_merge(
+                (array)($collectionState['closed_gaps'] ?? []),
+                [(string)$pluginName]
+            )));
+        }
+        return $collectionState;
+    }
+
+    private function evaluateSufficiency(
+        string $model,
+        string $question,
+        array $analysis,
+        array $planning,
+        array $pluginResults,
+        array $collectionState,
+        array $routingPolicy
+    ): array {
+        $hardGate = $this->evaluateMinimumEvidenceGate($pluginResults, $routingPolicy);
+        if (!$hardGate['passed']) {
+            return [
+                'is_sufficient' => false,
+                'reason' => $hardGate['reason'],
+                'missing_dimensions' => $hardGate['missing_dimensions'],
+                'recommended_next_experts' => $this->recommendedNextExperts($routingPolicy, $pluginResults, $hardGate['missing_dimensions']),
+            ];
+        }
+
+        $payload = [
+            'question' => $question,
+            'analysis' => $analysis,
+            'planning' => $planning,
+            'collection_state' => $collectionState,
+            'plugin_results' => $this->compressedPluginResults($pluginResults),
+            'minimum_evidence_gate' => $routingPolicy['minimum_evidence_gate'] ?? [],
+        ];
+        $generated = $this->llm->assessSufficiency($model, $payload);
+        if (is_array($generated)) {
+            return [
+                'is_sufficient' => (bool)($generated['is_sufficient'] ?? false),
+                'reason' => trim((string)($generated['reason'] ?? 'The sufficiency assessor returned no reason.')),
+                'missing_dimensions' => array_values(array_map('strval', (array)($generated['missing_dimensions'] ?? []))),
+                'recommended_next_experts' => array_values(array_map('strval', (array)($generated['recommended_next_experts'] ?? []))),
+            ];
+        }
+
+        return [
+            'is_sufficient' => true,
+            'reason' => 'The minimum evidence gate passed and no further model-driven expansion was available.',
+            'missing_dimensions' => [],
+            'recommended_next_experts' => [],
+        ];
+    }
+
+    private function evaluateMinimumEvidenceGate(array $pluginResults, array $routingPolicy): array
+    {
+        $gate = (array)($routingPolicy['minimum_evidence_gate'] ?? []);
+        $missing = [];
+
+        foreach ((array)($gate['require_all_plugins'] ?? []) as $pluginName) {
+            if (!isset($pluginResults[$pluginName])) {
+                $missing[] = 'required plugin ' . $pluginName . ' has not run';
+                continue;
+            }
+            if (!in_array((string)($pluginResults[$pluginName]['status'] ?? ''), ['ok', 'partial'], true)) {
+                $allowExplicitEmpty = in_array($pluginName, (array)($gate['allow_explicit_empty_from'] ?? []), true);
+                if (!$allowExplicitEmpty || (string)($pluginResults[$pluginName]['status'] ?? '') !== 'empty') {
+                    $missing[] = 'required plugin ' . $pluginName . ' did not return usable results';
+                }
+            }
+        }
+
+        $requireAny = array_values((array)($gate['require_any_plugins'] ?? []));
+        if ($requireAny !== []) {
+            $matched = false;
+            foreach ($requireAny as $pluginName) {
+                if (!isset($pluginResults[$pluginName])) {
+                    continue;
+                }
+                $status = (string)($pluginResults[$pluginName]['status'] ?? '');
+                if (in_array($status, ['ok', 'partial'], true)) {
+                    $matched = true;
+                    break;
+                }
+                if (in_array($pluginName, (array)($gate['allow_explicit_empty_from'] ?? []), true) && $status === 'empty') {
+                    $matched = true;
+                    break;
+                }
+            }
+            if (!$matched) {
+                $missing[] = 'none of the preferred experts produced a usable result';
+            }
+        }
+
+        $evidenceCount = 0;
+        $citationCount = 0;
+        foreach ($pluginResults as $result) {
+            $evidenceCount += count((array)($result['evidence_items'] ?? []));
+            $citationCount += count((array)($result['citations'] ?? []));
+        }
+        if ((int)($gate['min_evidence_items'] ?? 0) > $evidenceCount) {
+            $missing[] = 'insufficient evidence items';
+        }
+        if ((int)($gate['min_citations'] ?? 0) > $citationCount) {
+            $missing[] = 'insufficient traceable citations';
+        }
+        if ((bool)($gate['require_sortable_statistics'] ?? false)) {
+            $hasSortable = false;
+            foreach (['Graph Analytics Plugin', 'Cypher Explorer Plugin'] as $pluginName) {
+                $rows = (array)($pluginResults[$pluginName]['results']['analytics_result']['top_k'] ?? $pluginResults[$pluginName]['results']['cypher_result']['rows'] ?? []);
+                if ($rows !== []) {
+                    $hasSortable = true;
+                    break;
+                }
+            }
+            if (!$hasSortable) {
+                $missing[] = 'no sortable graph statistics were collected';
+            }
+        }
+
+        return [
+            'passed' => $missing === [],
+            'reason' => $missing === [] ? 'The minimum evidence gate has been satisfied.' : 'The minimum evidence gate is still missing required dimensions.',
+            'missing_dimensions' => $missing,
+        ];
+    }
+
+    private function recommendedNextExperts(array $routingPolicy, array $pluginResults, array $missingDimensions): array
+    {
+        $executed = array_keys($pluginResults);
+        $candidates = array_values(array_filter(
+            array_map('strval', (array)($routingPolicy['candidate_experts'] ?? [])),
+            static fn(string $plugin): bool => $plugin !== 'Citation Resolver'
+        ));
+        $recommended = [];
+        foreach ($candidates as $plugin) {
+            if (!in_array($plugin, $executed, true)) {
+                $recommended[] = $plugin;
+            }
+        }
+        if (($routingPolicy['cypher_explorer_fallback'] ?? false) && !in_array('Cypher Explorer Plugin', $executed, true)) {
+            $recommended[] = 'Cypher Explorer Plugin';
+        }
+        return array_values(array_unique($recommended));
     }
 
     private function maybeAppendPlugins(array $analysis, array $planning, string $pluginName, array $result, array $queue): array
@@ -869,6 +1266,12 @@ final class TekgAcademicAgentService
 
     private function emitEvent(?callable $emit, int &$eventSequence, array $event): void
     {
+        $event['node'] = (string)($event['node'] ?? $this->defaultNodeForEvent((string)($event['type'] ?? 'event')));
+        $event['source'] = (string)($event['source'] ?? ($event['plugin_name'] ?? $event['node']));
+        $event['inputs_used'] = array_values((array)($event['inputs_used'] ?? []));
+        $event['outputs_changed'] = array_values((array)($event['outputs_changed'] ?? []));
+        $event['message_payload'] = $event['message_payload'] ?? ($event['payload'] ?? []);
+        $event['display_text'] = (string)($event['display_text'] ?? ($event['message'] ?? ''));
         $event['sequence'] = ++$eventSequence;
         $this->emit($emit, $event);
     }
@@ -878,8 +1281,23 @@ final class TekgAcademicAgentService
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'heartbeat',
             'session_id' => $sessionId,
+            'node' => 'Process Narrator Node',
+            'source' => 'Process Narrator Node',
             'message' => '',
         ]);
+    }
+
+    private function defaultNodeForEvent(string $type): string
+    {
+        return match ($type) {
+            'analysis' => 'Question Understanding Node',
+            'planning_step' => 'Planning Node',
+            'tool_selected', 'tool_start', 'tool_progress', 'tool_result', 'reflection' => 'Evidence Collection Node',
+            'synthesizing' => 'Evidence Synthesis Node',
+            'answer' => 'Answer Writer Node',
+            'heartbeat', 'done', 'error' => 'Process Narrator Node',
+            default => 'AcademicAgentService',
+        };
     }
 
     private function aggregateEvidence(array $pluginResults): array
@@ -911,6 +1329,135 @@ final class TekgAcademicAgentService
         });
 
         return $unique;
+    }
+
+    private function compressedPluginResults(array $pluginResults): array
+    {
+        $compressed = [];
+        foreach ($pluginResults as $pluginName => $result) {
+            $compressed[$pluginName] = [
+                'plugin_name' => $pluginName,
+                'status' => (string)($result['status'] ?? 'unknown'),
+                'compressed_result' => (array)($result['compressed_result'] ?? []),
+            ];
+        }
+        return $compressed;
+    }
+
+    private function buildSynthesizedEvidence(array $pluginResults, array $evidence): array
+    {
+        $supportedClaims = [];
+        $conflictingClaims = [];
+        $missingEvidence = [];
+        $claimClusters = [];
+
+        $literatureSynthesis = (array)($pluginResults['Literature Reading Plugin']['results'] ?? []);
+        if ($literatureSynthesis !== []) {
+            $supportedClaims = array_values(array_map('strval', (array)($literatureSynthesis['supported_claims'] ?? [])));
+            $conflictingClaims = array_values(array_map('strval', (array)($literatureSynthesis['conflicting_claims'] ?? [])));
+            $missingEvidence = array_values(array_map('strval', (array)($literatureSynthesis['missing_evidence'] ?? [])));
+            $claimClusters = array_values((array)($literatureSynthesis['claim_clusters'] ?? []));
+        }
+
+        if ($supportedClaims === []) {
+            foreach (array_slice($evidence, 0, 8) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $claim = trim((string)($item['claim'] ?? ''));
+                if ($claim !== '') {
+                    $supportedClaims[] = $claim;
+                }
+            }
+        }
+
+        if ($claimClusters === []) {
+            foreach (array_slice($evidence, 0, 6) as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $claim = trim((string)($item['claim'] ?? ''));
+                if ($claim === '') {
+                    continue;
+                }
+                $claimClusters[] = [
+                    'claim' => $claim,
+                    'summary' => trim((string)($item['body'] ?? $claim)),
+                    'citations' => [],
+                ];
+            }
+        }
+
+        return [
+            'supported_claims' => array_values(array_unique(array_filter($supportedClaims))),
+            'conflicting_claims' => array_values(array_unique(array_filter($conflictingClaims))),
+            'missing_evidence' => array_values(array_unique(array_filter($missingEvidence))),
+            'claim_clusters' => $claimClusters,
+        ];
+    }
+
+    private function generateAnswerStructure(
+        string $model,
+        string $question,
+        array $analysis,
+        array $planning,
+        array $synthesizedEvidence,
+        array $citations,
+        array $sufficiencyDecision
+    ): array {
+        $payload = [
+            'question' => $question,
+            'analysis' => $analysis,
+            'planning' => [
+                'question_type' => (string)($planning['question_type'] ?? ''),
+                'complexity' => (string)($planning['complexity'] ?? ''),
+                'required_evidence' => (array)($planning['required_evidence'] ?? []),
+            ],
+            'supported_claims' => (array)($synthesizedEvidence['supported_claims'] ?? []),
+            'conflicting_claims' => (array)($synthesizedEvidence['conflicting_claims'] ?? []),
+            'missing_evidence' => (array)($synthesizedEvidence['missing_evidence'] ?? []),
+            'citation_count' => count($citations),
+            'sufficiency_decision' => $sufficiencyDecision,
+        ];
+        $generated = $this->llm->generateAnswerStructure($model, $payload);
+        if (is_array($generated) && $this->isValidAnswerStructure($generated)) {
+            return $generated;
+        }
+        return $this->fallbackAnswerStructure($analysis, $synthesizedEvidence);
+    }
+
+    private function isValidAnswerStructure(array $structure): bool
+    {
+        return trim((string)($structure['response_mode'] ?? '')) !== ''
+            && is_array($structure['section_plan'] ?? null)
+            && is_array($structure['claim_order'] ?? null)
+            && is_array($structure['uncertainty_notes'] ?? null);
+    }
+
+    private function fallbackAnswerStructure(array $analysis, array $synthesizedEvidence): array
+    {
+        $intent = (string)($analysis['intent'] ?? 'relationship');
+        $responseMode = match ($intent) {
+            'mechanism' => 'mechanism_chain',
+            'comparison' => 'contrastive',
+            'literature' => 'literature_support',
+            'classification' => 'lineage_explanation',
+            'graph_analytics' => 'ranking_summary',
+            default => 'evidence_summary',
+        };
+
+        return [
+            'response_mode' => $responseMode,
+            'opening_claim' => (string)($synthesizedEvidence['supported_claims'][0] ?? 'State the strongest supported claim first.'),
+            'section_plan' => [
+                'Main judgment',
+                'Supporting evidence',
+                'Evidence gaps and limits',
+            ],
+            'claim_order' => array_values(array_slice((array)($synthesizedEvidence['supported_claims'] ?? []), 0, 6)),
+            'citation_policy' => 'Use PMID-style in-text citations when available.',
+            'uncertainty_notes' => array_values(array_slice((array)($synthesizedEvidence['missing_evidence'] ?? []), 0, 4)),
+        ];
     }
 
     private function aggregateCitations(array $pluginResults): array
@@ -1017,17 +1564,53 @@ final class TekgAcademicAgentService
         return implode("\n\n", array_filter($paragraphs));
     }
 
-    private function updateSessionMemory(array $memory, array $analysis, array $planning, array $pluginResults, array $citations, array $evidence): array
+    private function updateSessionMemory(
+        array $memory,
+        array $analysis,
+        array $planning,
+        array $pluginResults,
+        array $citations,
+        array $evidence,
+        array $collectionState,
+        array $synthesizedEvidence
+    ): array
     {
+        $memory = array_replace(tekg_agent_default_session_memory(), $memory);
         $memory['topic_entities'] = array_values(array_unique(array_map(
             static fn(array $entity): string => (string)($entity['canonical_label'] ?? $entity['label'] ?? ''),
             (array)($analysis['normalized_entities'] ?? [])
         )));
         $memory['last_intent'] = (string)($analysis['intent'] ?? '');
+        $memory['resolved_entities'] = array_values(array_map(
+            static fn(array $entity): array => [
+                'label' => (string)($entity['canonical_label'] ?? $entity['label'] ?? ''),
+                'type' => (string)($entity['entity_type'] ?? $entity['type'] ?? ''),
+                'confidence' => (float)($entity['confidence'] ?? 0.0),
+            ],
+            (array)($analysis['normalized_entities'] ?? [])
+        ));
+        $memory['active_gaps'] = array_values((array)($collectionState['active_gaps'] ?? []));
+        $memory['closed_gaps'] = array_values((array)($collectionState['closed_gaps'] ?? []));
         $memory['confirmed_claims'] = array_values(array_unique(array_map(
             static fn(array $item): string => (string)($item['claim'] ?? ''),
             array_slice($evidence, 0, 8)
         )));
+        $memory['strong_claims'] = array_values(array_unique(array_map(
+            static fn(array $item): string => (string)($item['claim'] ?? ''),
+            array_filter($evidence, static fn(array $item): bool => (string)($item['support_strength'] ?? '') === 'high')
+        )));
+        $memory['weak_claims'] = array_values(array_unique(array_map(
+            static fn(array $item): string => (string)($item['claim'] ?? ''),
+            array_filter($evidence, static fn(array $item): bool => in_array((string)($item['support_strength'] ?? ''), ['low', 'medium'], true))
+        )));
+        $memory['claim_status_by_source'] = tekg_agent_json_safe(array_map(
+            static fn(array $item): array => [
+                'claim' => (string)($item['claim'] ?? ''),
+                'source_plugin' => (string)($item['source_plugin'] ?? ''),
+                'support_strength' => (string)($item['support_strength'] ?? 'medium'),
+            ],
+            array_slice($evidence, 0, 16)
+        ));
         $memory['citations'] = array_values(array_slice(array_map(
             static fn(array $citation): string => (string)($citation['pmid'] ?? $citation['title'] ?? ''),
             $citations
@@ -1040,6 +1623,48 @@ final class TekgAcademicAgentService
             static fn(array $item): string => (string)($item['plugin'] ?? ''),
             (array)($planning['tool_plan'] ?? [])
         ), -10));
+        $memory['expert_attempts'] = tekg_agent_json_safe(array_map(
+            static fn(string $pluginName, array $result): array => [
+                'plugin' => $pluginName,
+                'status' => (string)($result['status'] ?? 'unknown'),
+                'latency_ms' => (int)($result['latency_ms'] ?? 0),
+            ],
+            array_keys($pluginResults),
+            array_values($pluginResults)
+        ));
+        $memory['failed_queries'] = tekg_agent_json_safe(array_values(array_filter(array_map(
+            static fn(string $pluginName, array $result): ?array => in_array((string)($result['status'] ?? ''), ['empty', 'error'], true)
+                ? [
+                    'plugin' => $pluginName,
+                    'status' => (string)($result['status'] ?? ''),
+                    'summary' => (string)($result['display_summary'] ?? $result['query_summary'] ?? ''),
+                ]
+                : null,
+            array_keys($pluginResults),
+            array_values($pluginResults)
+        ))));
+        $memory['compression_notes'] = tekg_agent_json_safe(array_values(array_filter(array_map(
+            static fn(array $result): ?array => isset($result['compressed_result'])
+                ? [
+                    'plugin' => (string)($result['plugin_name'] ?? ''),
+                    'key_findings' => (array)($result['compressed_result']['key_findings'] ?? []),
+                    'limitations' => (array)($result['compressed_result']['limitations'] ?? []),
+                ]
+                : null,
+            array_values($pluginResults)
+        ))));
+        $memory['next_step_hints'] = tekg_agent_json_safe(array_values(array_slice(array_filter([
+            (array)($planning['subtasks'] ?? []),
+            (array)($collectionState['remaining_candidates'] ?? []),
+            (array)($synthesizedEvidence['missing_evidence'] ?? []),
+        ]), 0, 3)));
+        $memory['session_snapshot'] = tekg_agent_json_safe([
+            'intent' => (string)($analysis['intent'] ?? ''),
+            'resolved_entities' => $memory['resolved_entities'],
+            'closed_gaps' => $memory['closed_gaps'],
+            'strong_claims' => array_slice((array)$memory['strong_claims'], 0, 6),
+            'next_step_hints' => $memory['next_step_hints'],
+        ]);
 
         return $memory;
     }
@@ -1118,6 +1743,8 @@ final class TekgAcademicAgentService
             'preview_items' => array_values((array)($result['display_details']['preview_items'] ?? [])),
             'evidence_items' => $evidenceItems,
             'citations' => array_values((array)($result['display_details']['citations'] ?? $result['citations'] ?? [])),
+            'compressed_result' => (array)($result['compressed_result'] ?? []),
+            'raw_result' => (array)($result['raw_result'] ?? []),
             'raw_preview' => $result['display_details']['raw_preview'] ?? null,
             'errors' => array_values((array)($result['errors'] ?? [])),
             'result_counts' => (array)($result['result_counts'] ?? []),
@@ -1131,7 +1758,11 @@ final class TekgAcademicAgentService
         array $planning,
         array $pluginResults,
         array $evidence,
-        array $citations
+        array $citations,
+        array $collectionState = [],
+        array $sufficiencyDecision = [],
+        array $answerStructure = [],
+        array $synthesizedEvidence = []
     ): array {
         $collectedResults = [];
         foreach ($pluginResults as $result) {
@@ -1163,31 +1794,35 @@ final class TekgAcademicAgentService
             static fn(array $item): string => trim((string)($item['claim'] ?? '')),
             array_slice($evidence, 0, 10)
         )));
-        $synthesisOutput = [
+        $synthesisOutput = $synthesizedEvidence !== [] ? $synthesizedEvidence : [
             'supported_claims' => $supportedClaims,
             'conflicting_claims' => [],
             'missing_evidence' => [],
             'claim_clusters' => [],
         ];
-        $sufficiencyDecision = [
-            'is_sufficient' => count($evidence) > 0 || count($pluginResults) >= 2,
-            'reason' => count($evidence) > 0
-                ? 'At least one evidence item has been collected.'
-                : (count($pluginResults) >= 2
-                    ? 'Multiple experts have already returned results, so the controller can now decide whether to stop or continue.'
-                    : 'More expert outputs are still needed before the controller should stop.'),
-        ];
-        $answerStructure = [
-            'opening' => 'State the strongest answer first.',
-            'sections' => array_values(array_filter([
-                isset($collectedResults['graph_result']) ? 'Structured graph evidence' : null,
-                isset($collectedResults['analytics_result']) ? 'Graph analytics summary' : null,
-                isset($collectedResults['literature_result']) ? 'Literature evidence' : null,
-                isset($collectedResults['literature_synthesis']) ? 'Claim consistency and gaps' : null,
-                isset($collectedResults['sequence_result']) ? 'Sequence-backed facts' : null,
-            ])),
-            'citation_style' => 'PMID-backed references only',
-        ];
+        if ($sufficiencyDecision === []) {
+            $sufficiencyDecision = [
+                'is_sufficient' => count($evidence) > 0 || count($pluginResults) >= 2,
+                'reason' => count($evidence) > 0
+                    ? 'At least one evidence item has been collected.'
+                    : (count($pluginResults) >= 2
+                        ? 'Multiple experts have already returned results, so the controller can now decide whether to stop or continue.'
+                        : 'More expert outputs are still needed before the controller should stop.'),
+            ];
+        }
+        if ($answerStructure === []) {
+            $answerStructure = [
+                'opening' => 'State the strongest answer first.',
+                'sections' => array_values(array_filter([
+                    isset($collectedResults['graph_result']) ? 'Structured graph evidence' : null,
+                    isset($collectedResults['analytics_result']) ? 'Graph analytics summary' : null,
+                    isset($collectedResults['literature_result']) ? 'Literature evidence' : null,
+                    isset($collectedResults['literature_synthesis']) ? 'Claim consistency and gaps' : null,
+                    isset($collectedResults['sequence_result']) ? 'Sequence-backed facts' : null,
+                ])),
+                'citation_style' => 'PMID-backed references only',
+            ];
+        }
 
         return [
             'Question Understanding Node' => [

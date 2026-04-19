@@ -109,6 +109,63 @@ final class TekgAgentLlmClient
         return null;
     }
 
+    public function assessSufficiency(string $model, array $payload): ?array
+    {
+        return $this->generateJson(
+            $model,
+            'Assess whether the currently collected evidence is sufficient to answer the question. ' .
+            'Return JSON with keys is_sufficient (boolean), reason (string), missing_dimensions (array of strings), recommended_next_experts (array of strings). ' .
+            'Do not recommend experts that already ran successfully unless the payload explicitly indicates that their result was empty or weak.',
+            $payload
+        );
+    }
+
+    public function generateAnswerStructure(string $model, array $payload): ?array
+    {
+        return $this->generateJson(
+            $model,
+            'Build an answer_structure JSON object for a TE-KG academic answer. ' .
+            'Return JSON with keys response_mode, opening_claim, section_plan, claim_order, citation_policy, uncertainty_notes. ' .
+            'section_plan and claim_order must be arrays of strings. uncertainty_notes must be an array of strings.',
+            $payload
+        );
+    }
+
+    public function writeStructuredAnswer(
+        string $model,
+        string $language,
+        string $question,
+        array $analysis,
+        array $answerStructure,
+        array $supportedClaims,
+        array $conflictingClaims,
+        array $missingEvidence,
+        array $citations,
+        string $confidence,
+        array $limits
+    ): array {
+        $provider = $this->inferProvider($model);
+        $messages = [
+            ['role' => 'system', 'content' => $this->systemPrompt($language)],
+            ['role' => 'user', 'content' => $this->buildStructuredAnswerPrompt(
+                $question,
+                $analysis,
+                $answerStructure,
+                $supportedClaims,
+                $conflictingClaims,
+                $missingEvidence,
+                $citations,
+                $confidence,
+                $limits
+            )],
+        ];
+
+        if (!empty($this->config['llm_relay_url'])) {
+            return $this->callRelay($provider, $model, $messages);
+        }
+        return $this->callProvider($provider, $model, $messages);
+    }
+
     private function inferProvider(string $model): string
     {
         $value = strtolower(trim($model));
@@ -166,6 +223,35 @@ final class TekgAgentLlmClient
         return "Summarize this execution event for the user in 1 to 2 short sentences.\n" .
             "Only describe what really happened in this event.\n\n" .
             json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function buildStructuredAnswerPrompt(
+        string $question,
+        array $analysis,
+        array $answerStructure,
+        array $supportedClaims,
+        array $conflictingClaims,
+        array $missingEvidence,
+        array $citations,
+        string $confidence,
+        array $limits
+    ): string {
+        $payload = [
+            'question' => $question,
+            'analysis' => $analysis,
+            'answer_structure' => $answerStructure,
+            'supported_claims' => $supportedClaims,
+            'conflicting_claims' => $conflictingClaims,
+            'missing_evidence' => $missingEvidence,
+            'citations' => $citations,
+            'confidence' => $confidence,
+            'limits' => $limits,
+        ];
+
+        return "Write the final answer only from the structured answer plan and evidence below.\n" .
+            "Follow answer_structure strictly. Do not improvise extra sections outside section_plan unless needed for one short limitation note.\n" .
+            "Do not restate raw JSON. Convert the plan into a natural academic answer.\n\n" .
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
     private function callRelay(string $provider, string $model, array $messages, bool $enableThinking = true): array

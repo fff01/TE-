@@ -98,6 +98,7 @@
         <span class="workflow-lab__node-id">${node.id}</span>
         <h4 class="workflow-lab__node-name">${escapeHtml(node.name || '')}</h4>
         <p class="workflow-lab__node-kind">${escapeHtml(node.kind || '')}</p>
+        <p class="workflow-lab__node-kind">${escapeHtml(node.model || '')}</p>
       `;
       element.addEventListener('click', () => {
         state.selectedNodeId = Number(node.id);
@@ -150,6 +151,7 @@
     els.detail.innerHTML = `
       <h4>${escapeHtml(String(node.id))}. ${escapeHtml(node.name || '')}</h4>
       <p><strong>Kind:</strong> ${escapeHtml(node.kind || '')}</p>
+      <p><strong>Model:</strong> ${escapeHtml(node.model || 'not assigned')}</p>
       <p>${escapeHtml(node.description || '')}</p>
       <div class="workflow-lab__detail-code"><strong>Inputs</strong>\n${escapeJson(node.inputs || [])}</div>
       <div class="workflow-lab__detail-code"><strong>Outputs</strong>\n${escapeJson(node.outputs || [])}</div>
