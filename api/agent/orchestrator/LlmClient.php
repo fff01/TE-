@@ -56,6 +56,59 @@ final class TekgAgentLlmClient
         return $content !== '' ? $content : null;
     }
 
+    public function generateJson(string $model, string $instruction, array $payload): ?array
+    {
+        $provider = $this->inferProvider($model);
+        if (!$this->canCallModel($provider)) {
+            return null;
+        }
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => 'Return only valid JSON. Do not use Markdown fences. Do not add explanatory text outside the JSON object.',
+            ],
+            [
+                'role' => 'user',
+                'content' => $instruction . "\n\n" . json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT),
+            ],
+        ];
+
+        try {
+            $response = !empty($this->config['llm_relay_url'])
+                ? $this->callRelay($provider, $model, $messages, false)
+                : $this->callProvider($provider, $model, $messages, false);
+        } catch (Throwable) {
+            return null;
+        }
+
+        $content = trim((string)($response['content'] ?? ''));
+        if ($content === '') {
+            return null;
+        }
+
+        $decoded = json_decode($content, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        if (preg_match('/```(?:json)?\s*(\{.*\}|\[.*\])\s*```/si', $content, $matches) === 1) {
+            $decoded = json_decode((string)$matches[1], true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        if (preg_match('/(\{.*\}|\[.*\])/si', $content, $matches) === 1) {
+            $decoded = json_decode((string)$matches[1], true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return null;
+    }
+
     private function inferProvider(string $model): string
     {
         $value = strtolower(trim($model));

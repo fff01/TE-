@@ -7,6 +7,7 @@ $pageTitle = $pageTitle ?? 'TE-KG';
 $protoBasePath = '/TE-';
 $protoCurrentPath = $protoCurrentPath ?? ($protoBasePath . '/index.php');
 $protoSubtitle = $protoSubtitle ?? 'Transposable Elements Knowledge Graph';
+$pageExtraStylesheets = is_array($pageExtraStylesheets ?? null) ? $pageExtraStylesheets : [];
 
 $navItems = [
     'home' => ['label' => 'Home', 'href' => $protoBasePath . '/index.php'],
@@ -28,6 +29,9 @@ $navItems = [
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
   <link rel="stylesheet" href="/TE-/assets/css/layout.css">
+  <?php foreach ($pageExtraStylesheets as $stylesheet): ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars((string)$stylesheet, ENT_QUOTES, 'UTF-8') ?>">
+  <?php endforeach; ?>
 </head>
 <body>
   <div class="proto-shell">

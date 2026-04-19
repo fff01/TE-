@@ -18,7 +18,10 @@ final class TekgAcademicAgentService
         $this->plugins = [
             'Entity Resolver' => new TekgAgentEntityResolverPlugin(),
             'Graph Plugin' => new TekgAgentGraphPlugin($neo4j, $this->citationResolver),
+            'Graph Analytics Plugin' => new TekgAgentGraphAnalyticsPlugin($neo4j),
+            'Cypher Explorer Plugin' => new TekgAgentCypherExplorerPlugin($neo4j, $this->llm, $config),
             'Literature Plugin' => new TekgAgentLiteraturePlugin($neo4j, $config, $this->citationResolver),
+            'Literature Reading Plugin' => new TekgAgentLiteratureReadingPlugin($this->llm, $config),
             'Tree Plugin' => new TekgAgentTreePlugin(),
             'Expression Plugin' => new TekgAgentExpressionPlugin(),
             'Genome Plugin' => new TekgAgentGenomePlugin(),
@@ -353,6 +356,8 @@ final class TekgAcademicAgentService
             'confidence' => $confidence,
             'limits' => array_values(array_unique($limits)),
             'planning' => $planning,
+            'node_contracts' => tekg_agent_node_contracts(),
+            'node_payloads' => tekg_agent_json_safe($this->buildNodePayloads($question, $analysis, $planning, $pluginResults, $evidence, $citations)),
         ];
 
         $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence);
@@ -565,6 +570,33 @@ final class TekgAcademicAgentService
             ];
         }
 
+        if (($analysis['asks_for_graph_analytics'] ?? false) || $intent === 'graph_analytics') {
+            $gaps[] = [
+                'gap_type' => 'graph analytics',
+                'why_needed' => 'This question asks for global graph statistics, ranking, structure, or topology rather than a single local entity neighborhood.',
+                'priority' => 92,
+                'candidate_tools' => ['Graph Analytics Plugin'],
+            ];
+        }
+
+        if (($analysis['asks_for_cypher_explorer'] ?? false) || ($analysis['asks_for_graph_structure'] ?? false)) {
+            $gaps[] = [
+                'gap_type' => 'graph exploration',
+                'why_needed' => 'This question may require exploratory read-only Cypher beyond the fixed entity-neighborhood templates.',
+                'priority' => 76,
+                'candidate_tools' => ['Cypher Explorer Plugin'],
+            ];
+        }
+
+        if (in_array($intent, ['literature', 'mechanism', 'comparison'], true) || ($analysis['needs_external_literature'] ?? false)) {
+            $gaps[] = [
+                'gap_type' => 'literature synthesis',
+                'why_needed' => 'Retrieved citations still need to be grouped into supported claims, conflicts, and evidence gaps.',
+                'priority' => 72,
+                'candidate_tools' => ['Literature Reading Plugin'],
+            ];
+        }
+
         if (count($gaps) === 1) {
             $gaps[] = [
                 'gap_type' => 'structured relations',
@@ -582,6 +614,19 @@ final class TekgAcademicAgentService
     {
         $plan = [];
         $seen = [];
+        $preferredOrder = [
+            'Entity Resolver' => 10,
+            'Graph Analytics Plugin' => 20,
+            'Graph Plugin' => 30,
+            'Cypher Explorer Plugin' => 40,
+            'Literature Plugin' => 50,
+            'Literature Reading Plugin' => 60,
+            'Tree Plugin' => 70,
+            'Expression Plugin' => 80,
+            'Genome Plugin' => 90,
+            'Sequence Plugin' => 100,
+            'Citation Resolver' => 110,
+        ];
         $plan[] = [
             'plugin' => 'Entity Resolver',
             'reason' => 'Resolve canonical entities, alias chains, and broad alias fallback boundaries.',
@@ -607,6 +652,12 @@ final class TekgAcademicAgentService
                 'reason' => 'External literature may be needed if the graph does not yield enough direct support.',
             ];
         }
+
+        usort($plan, static function (array $left, array $right) use ($preferredOrder): int {
+            $leftOrder = $preferredOrder[(string)($left['plugin'] ?? '')] ?? 999;
+            $rightOrder = $preferredOrder[(string)($right['plugin'] ?? '')] ?? 999;
+            return $leftOrder <=> $rightOrder;
+        });
 
         return $plan;
     }
@@ -638,10 +689,15 @@ final class TekgAcademicAgentService
         $queue = array_map(static fn(array $item): string => (string)$item['plugin'], (array)($planning['tool_plan'] ?? []));
         $intent = (string)($analysis['intent'] ?? 'relationship');
         if ($queue === []) {
-            $queue = ['Entity Resolver', 'Graph Plugin'];
+            $queue = $intent === 'graph_analytics'
+                ? ['Entity Resolver', 'Graph Analytics Plugin']
+                : ['Entity Resolver', 'Graph Plugin'];
         }
         if ($intent === 'mechanism' && !in_array('Graph Plugin', $queue, true)) {
             $queue[] = 'Graph Plugin';
+        }
+        if ($intent === 'graph_analytics' && !in_array('Graph Analytics Plugin', $queue, true)) {
+            $queue[] = 'Graph Analytics Plugin';
         }
         return array_values(array_unique($queue));
     }
@@ -656,8 +712,21 @@ final class TekgAcademicAgentService
             if ($relationCount === 0 && !in_array('Literature Plugin', $queue, true)) {
                 $append[] = 'Literature Plugin';
             }
+            if (($analysis['asks_for_graph_analytics'] ?? false) && !in_array('Graph Analytics Plugin', $queue, true)) {
+                $append[] = 'Graph Analytics Plugin';
+            }
+            if (($analysis['asks_for_cypher_explorer'] ?? false) && !in_array('Cypher Explorer Plugin', $queue, true)) {
+                $append[] = 'Cypher Explorer Plugin';
+            }
             if ($relationCount < 3 && $intent === 'mechanism' && !in_array('Sequence Plugin', $queue, true) && ($analysis['asks_for_sequence'] ?? false)) {
                 $append[] = 'Sequence Plugin';
+            }
+        }
+
+        if ($pluginName === 'Graph Analytics Plugin') {
+            $topRows = (int)($result['result_counts']['top_k'] ?? 0);
+            if ($topRows === 0 && !in_array('Cypher Explorer Plugin', $queue, true)) {
+                $append[] = 'Cypher Explorer Plugin';
             }
         }
 
@@ -665,6 +734,9 @@ final class TekgAcademicAgentService
             $reviewedCount = (int)($result['result_counts']['reviewed'] ?? 0);
             if ($reviewedCount === 0 && ($analysis['asks_for_classification'] ?? false) && !in_array('Tree Plugin', $queue, true)) {
                 $append[] = 'Tree Plugin';
+            }
+            if ($reviewedCount > 0 && !in_array('Literature Reading Plugin', $queue, true)) {
+                $append[] = 'Literature Reading Plugin';
             }
         }
 
@@ -718,7 +790,10 @@ final class TekgAcademicAgentService
         return match ($pluginName) {
             'Entity Resolver' => 'I will resolve canonical entities, strict aliases, and broad alias boundaries first so the downstream tools can avoid unstable name matching.',
             'Graph Plugin' => 'I will start with the local graph and check whether it already contains enough structured relations to support the current task.',
+            'Graph Analytics Plugin' => 'I will run a graph analytics query now because this question asks for global structure, ranking, or topology rather than a single local entity neighborhood.',
+            'Cypher Explorer Plugin' => 'I will generate a read-only Cypher query to explore graph patterns that are not covered by the fixed neighborhood templates.',
             'Literature Plugin' => 'Next I will add local paper evidence and PubMed support if the current structured relations are not strong enough on their own.',
+            'Literature Reading Plugin' => 'I will synthesize the retrieved citations into grouped claims, conflicts, and remaining evidence gaps.',
             'Tree Plugin' => 'I will place the recognized entities in their lineage to recover classification context where needed.',
             'Expression Plugin' => 'I will inspect the expression layer to see whether it contributes useful supporting biological context.',
             'Genome Plugin' => 'I will check whether representative loci and browser entry points exist for the current TE entities.',
@@ -739,7 +814,10 @@ final class TekgAcademicAgentService
         return match ($pluginName) {
             'Entity Resolver' => 'I will stabilize entity names first so later evidence lookup does not drift across aliases.',
             'Graph Plugin' => 'I will check the local graph first because it is the strongest initial layer for ' . $gapText . '.',
+            'Graph Analytics Plugin' => 'I will use graph analytics now because this question is about ranking, counts, or global graph structure.',
+            'Cypher Explorer Plugin' => 'I will use the Cypher Explorer now because the fixed plugins may not cover the required graph pattern or aggregation.',
             'Literature Plugin' => 'I will add literature evidence now because the current question still needs direct citation support.',
+            'Literature Reading Plugin' => 'I will synthesize the retrieved citations now so later steps receive grouped claims instead of a flat citation list.',
             'Tree Plugin' => 'I will use the lineage tree now because classification context is still missing.',
             'Expression Plugin' => 'I will inspect the expression layer now because expression context is still relevant.',
             'Genome Plugin' => 'I will inspect the genome layer now because locus-level context is still relevant.',
@@ -1044,6 +1122,217 @@ final class TekgAcademicAgentService
             'errors' => array_values((array)($result['errors'] ?? [])),
             'result_counts' => (array)($result['result_counts'] ?? []),
             'display_details' => (array)($result['display_details'] ?? []),
+        ];
+    }
+
+    private function buildNodePayloads(
+        string $question,
+        array $analysis,
+        array $planning,
+        array $pluginResults,
+        array $evidence,
+        array $citations
+    ): array {
+        $collectedResults = [];
+        foreach ($pluginResults as $result) {
+            $pluginName = (string)($result['plugin_name'] ?? '');
+            if ($pluginName === 'Graph Plugin') {
+                $collectedResults['graph_result'] = $result;
+            } elseif ($pluginName === 'Graph Analytics Plugin') {
+                $collectedResults['analytics_result'] = $result;
+            } elseif ($pluginName === 'Cypher Explorer Plugin') {
+                $collectedResults['cypher_result'] = $result;
+            } elseif ($pluginName === 'Literature Plugin') {
+                $collectedResults['literature_result'] = $result;
+            } elseif ($pluginName === 'Literature Reading Plugin') {
+                $collectedResults['literature_synthesis'] = $result;
+            } elseif ($pluginName === 'Tree Plugin') {
+                $collectedResults['tree_result'] = $result;
+            } elseif ($pluginName === 'Expression Plugin') {
+                $collectedResults['expression_result'] = $result;
+            } elseif ($pluginName === 'Genome Plugin') {
+                $collectedResults['genome_result'] = $result;
+            } elseif ($pluginName === 'Sequence Plugin') {
+                $collectedResults['sequence_result'] = $result;
+            } elseif ($pluginName === 'Citation Resolver') {
+                $collectedResults['citation_result'] = $result;
+            }
+        }
+
+        $supportedClaims = array_values(array_filter(array_map(
+            static fn(array $item): string => trim((string)($item['claim'] ?? '')),
+            array_slice($evidence, 0, 10)
+        )));
+        $synthesisOutput = [
+            'supported_claims' => $supportedClaims,
+            'conflicting_claims' => [],
+            'missing_evidence' => [],
+            'claim_clusters' => [],
+        ];
+        $sufficiencyDecision = [
+            'is_sufficient' => count($evidence) > 0 || count($pluginResults) >= 2,
+            'reason' => count($evidence) > 0
+                ? 'At least one evidence item has been collected.'
+                : (count($pluginResults) >= 2
+                    ? 'Multiple experts have already returned results, so the controller can now decide whether to stop or continue.'
+                    : 'More expert outputs are still needed before the controller should stop.'),
+        ];
+        $answerStructure = [
+            'opening' => 'State the strongest answer first.',
+            'sections' => array_values(array_filter([
+                isset($collectedResults['graph_result']) ? 'Structured graph evidence' : null,
+                isset($collectedResults['analytics_result']) ? 'Graph analytics summary' : null,
+                isset($collectedResults['literature_result']) ? 'Literature evidence' : null,
+                isset($collectedResults['literature_synthesis']) ? 'Claim consistency and gaps' : null,
+                isset($collectedResults['sequence_result']) ? 'Sequence-backed facts' : null,
+            ])),
+            'citation_style' => 'PMID-backed references only',
+        ];
+
+        return [
+            'Question Understanding Node' => [
+                'input' => ['question' => $question],
+                'output' => [
+                    'analysis' => $analysis,
+                    'entity_resolution' => (array)($analysis['normalized_entities'] ?? []),
+                ],
+            ],
+            'Planning Node' => [
+                'input' => [
+                    'question' => $question,
+                    'analysis' => $analysis,
+                    'entity_resolution' => (array)($analysis['normalized_entities'] ?? []),
+                    'session_context' => (array)($planning['session_context'] ?? []),
+                ],
+                'output' => ['planning' => $planning],
+            ],
+            'Evidence Collection Node' => [
+                'input' => [
+                    'question' => $question,
+                    'analysis' => $analysis,
+                    'planning' => $planning,
+                    'graph_result' => $collectedResults['graph_result'] ?? null,
+                    'analytics_result' => $collectedResults['analytics_result'] ?? null,
+                    'cypher_result' => $collectedResults['cypher_result'] ?? null,
+                    'literature_result' => $collectedResults['literature_result'] ?? null,
+                    'literature_synthesis' => $collectedResults['literature_synthesis'] ?? null,
+                    'tree_result' => $collectedResults['tree_result'] ?? null,
+                    'expression_result' => $collectedResults['expression_result'] ?? null,
+                    'genome_result' => $collectedResults['genome_result'] ?? null,
+                    'sequence_result' => $collectedResults['sequence_result'] ?? null,
+                    'citation_result' => $collectedResults['citation_result'] ?? null,
+                    'collected_results' => $collectedResults,
+                    'evidence_bundle' => $evidence,
+                    'citation_bundle' => $citations,
+                ],
+                'output' => [
+                    'collection_state' => [
+                        'tool_plan' => array_values((array)($planning['tool_plan'] ?? [])),
+                        'executed_plugins' => array_values(array_map(
+                            static fn(array $item): string => (string)($item['plugin_name'] ?? ''),
+                            $pluginResults
+                        )),
+                        'evidence_count' => count($evidence),
+                        'citation_count' => count($citations),
+                    ],
+                    'active_expert' => (array)($planning['tool_plan'][0] ?? []),
+                    'sufficiency_decision' => $sufficiencyDecision,
+                    'graph_result' => $collectedResults['graph_result'] ?? null,
+                    'analytics_result' => $collectedResults['analytics_result'] ?? null,
+                    'cypher_result' => $collectedResults['cypher_result'] ?? null,
+                    'literature_result' => $collectedResults['literature_result'] ?? null,
+                    'literature_synthesis' => $collectedResults['literature_synthesis'] ?? null,
+                    'tree_result' => $collectedResults['tree_result'] ?? null,
+                    'expression_result' => $collectedResults['expression_result'] ?? null,
+                    'genome_result' => $collectedResults['genome_result'] ?? null,
+                    'sequence_result' => $collectedResults['sequence_result'] ?? null,
+                    'citation_result' => $collectedResults['citation_result'] ?? null,
+                    'collected_results' => $collectedResults,
+                    'evidence_bundle' => $evidence,
+                    'citation_bundle' => $citations,
+                ],
+            ],
+            'Evidence Synthesis Node' => [
+                'input' => [
+                    'question' => $question,
+                    'analysis' => $analysis,
+                    'planning' => $planning,
+                    'graph_result' => $collectedResults['graph_result'] ?? null,
+                    'analytics_result' => $collectedResults['analytics_result'] ?? null,
+                    'cypher_result' => $collectedResults['cypher_result'] ?? null,
+                    'literature_result' => $collectedResults['literature_result'] ?? null,
+                    'literature_synthesis' => $collectedResults['literature_synthesis'] ?? null,
+                    'tree_result' => $collectedResults['tree_result'] ?? null,
+                    'expression_result' => $collectedResults['expression_result'] ?? null,
+                    'genome_result' => $collectedResults['genome_result'] ?? null,
+                    'sequence_result' => $collectedResults['sequence_result'] ?? null,
+                    'citation_result' => $collectedResults['citation_result'] ?? null,
+                    'collected_results' => $collectedResults,
+                    'evidence_bundle' => $evidence,
+                    'citation_bundle' => $citations,
+                ],
+                'output' => $synthesisOutput,
+            ],
+            'Answer Structuring Node' => [
+                'input' => array_merge(
+                    [
+                        'question' => $question,
+                        'analysis' => $analysis,
+                        'planning' => $planning,
+                        'collected_results' => $collectedResults,
+                    ],
+                    $collectedResults,
+                    $synthesisOutput
+                ),
+                'output' => ['answer_structure' => $answerStructure],
+            ],
+            'Answer Writer Node' => [
+                'input' => [
+                    'question' => $question,
+                    'analysis' => $analysis,
+                    'answer_structure' => $answerStructure,
+                    'supported_claims' => $synthesisOutput['supported_claims'],
+                    'conflicting_claims' => $synthesisOutput['conflicting_claims'],
+                    'missing_evidence' => $synthesisOutput['missing_evidence'],
+                    'citation_bundle' => $citations,
+                ],
+                'output' => ['answer' => null],
+            ],
+            'Process Narrator Node' => [
+                'input' => [
+                    'event_stream' => [],
+                    'analysis' => $analysis,
+                    'entity_resolution' => (array)($analysis['normalized_entities'] ?? []),
+                    'planning' => $planning,
+                    'collection_state' => [
+                        'tool_plan' => array_values((array)($planning['tool_plan'] ?? [])),
+                        'executed_plugins' => array_values(array_map(
+                            static fn(array $item): string => (string)($item['plugin_name'] ?? ''),
+                            $pluginResults
+                        )),
+                    ],
+                    'active_expert' => (array)($planning['tool_plan'][0] ?? []),
+                    'sufficiency_decision' => $sufficiencyDecision,
+                    'graph_result' => $collectedResults['graph_result'] ?? null,
+                    'analytics_result' => $collectedResults['analytics_result'] ?? null,
+                    'cypher_result' => $collectedResults['cypher_result'] ?? null,
+                    'literature_result' => $collectedResults['literature_result'] ?? null,
+                    'literature_synthesis' => $collectedResults['literature_synthesis'] ?? null,
+                    'tree_result' => $collectedResults['tree_result'] ?? null,
+                    'expression_result' => $collectedResults['expression_result'] ?? null,
+                    'genome_result' => $collectedResults['genome_result'] ?? null,
+                    'sequence_result' => $collectedResults['sequence_result'] ?? null,
+                    'citation_result' => $collectedResults['citation_result'] ?? null,
+                    'supported_claims' => $synthesisOutput['supported_claims'],
+                    'conflicting_claims' => $synthesisOutput['conflicting_claims'],
+                    'missing_evidence' => $synthesisOutput['missing_evidence'],
+                    'claim_clusters' => $synthesisOutput['claim_clusters'],
+                    'collected_results' => $collectedResults,
+                    'answer_structure' => $answerStructure,
+                    'answer' => null,
+                ],
+                'output' => ['trace_event' => null],
+            ],
         ];
     }
 }

@@ -80,9 +80,13 @@
       return '';
     }
     if (window.marked && typeof window.marked.parse === 'function') {
-      return window.marked.parse(source);
+      try {
+        return window.marked.parse(source);
+      } catch (_error) {
+        return `<p>${escapeHtml(source).replace(/\n+/g, '<br>')}</p>`;
+      }
     }
-    return `<p>${escapeHtml(source)}</p>`;
+    return `<p>${escapeHtml(source).replace(/\n+/g, '<br>')}</p>`;
   }
 
   function setStatus(text) {
@@ -355,8 +359,16 @@
     turn.answer = String(markdown || '');
     turn.language = language || turn.language || 'en';
     const answerNode = turn.node.querySelector('[data-role="answer"]');
-    answerNode.innerHTML = renderMarkdown(turn.answer);
-    enhanceAnswerCitations(turn, answerNode);
+    try {
+      answerNode.innerHTML = renderMarkdown(turn.answer);
+    } catch (_error) {
+      answerNode.innerHTML = `<p>${escapeHtml(turn.answer).replace(/\n+/g, '<br>')}</p>`;
+    }
+    try {
+      enhanceAnswerCitations(turn, answerNode);
+    } catch (_error) {
+      // Keep the rendered answer even if citation enhancement fails.
+    }
     scrollConversationToBottom();
   }
 
@@ -365,6 +377,10 @@
       return;
     }
     turn.finalized = true;
+    const answerNode = turn.node.querySelector('[data-role="answer"]');
+    if (answerNode && !answerNode.textContent.trim() && turn.answer) {
+      setAnswer(turn, turn.answer, turn.language || 'en');
+    }
     stopThinkingTimer(turn);
     turn.node.classList.remove('is-pending');
     updateThinkingMeta(turn, true);
@@ -534,6 +550,7 @@
 
   function closeGraphPopup() {
     if (!graphPopup) return;
+    graphPopupState.dragPointerId = null;
     graphPopup.setAttribute('aria-hidden', 'true');
     app.classList.remove('is-graph-popup-open');
     destroyPopupGraph();
@@ -826,10 +843,24 @@
   });
 
   inspectorClose.addEventListener('click', closeInspector);
-  graphPopupClose.addEventListener('click', closeGraphPopup);
+  graphPopupClose.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeGraphPopup();
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeGraphPopup();
+      closeInspector();
+    }
+  });
 
   graphPopupHandle.addEventListener('pointerdown', (event) => {
     if (!graphPopup) return;
+    if (event.target && event.target.closest && event.target.closest('.agent-graph-popup-close')) {
+      return;
+    }
     graphPopupState.dragPointerId = event.pointerId;
     graphPopupState.dragStartX = event.clientX;
     graphPopupState.dragStartY = event.clientY;

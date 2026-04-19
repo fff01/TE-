@@ -37,8 +37,12 @@ final class TekgAgentEntityNormalizer
             'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'lineage', 'taxonomy', '分类', '亚家族', '家族', '树', '谱系']),
             'asks_for_sequence' => $this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'orfs', 'utr', 'promoter', 'motif', 'structure', 'annotation', '序列', '共识序列', '长度', '结构', '注释', '启动子', '基序']),
             'asks_for_mechanism' => $intent === 'mechanism',
+            'asks_for_graph_analytics' => $intent === 'graph_analytics' || $this->containsAny($question, ['topology', 'topological', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'relation type', 'relation types', 'distribution', '最多', '最大', '拓扑', '结构', '关联度', '连接最多', '分布', '关系类型']),
+            'asks_for_cypher_explorer' => $this->containsAny($question, ['cypher', 'pattern', 'patterns', 'graph exploration', 'explore the graph', 'path', 'paths', 'schema', '统计', '模式', '路径', '探索图谱', '探索知识图谱']),
+            'asks_for_graph_structure' => $this->containsAny($question, ['topology', 'topological', 'graph structure', 'relation type', 'distribution', 'degree', 'central', '结构', '拓扑', '中心性', '度数', '关系类型']),
             'compare_mode' => $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异']),
             'needs_external_literature' => $intent === 'mechanism'
+                || $intent === 'graph_analytics'
                 || $this->containsAny($question, ['recent', 'latest', 'evidence', 'paper', 'papers', 'pubmed', 'literature', '最新', '证据', '文献', '论文'])
                 || count($normalizedEntities) <= 1,
         ];
@@ -182,6 +186,9 @@ final class TekgAgentEntityNormalizer
 
     private function detectIntent(string $question): string
     {
+        if ($this->containsAny($question, ['topology', 'topological', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'relation type', 'relation types', 'distribution', '最多', '最大', '拓扑', '结构', '关联度', '关系类型'])) {
+            return 'graph_analytics';
+        }
         if ($this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to', '机制', '为什么', '如何', '导致', '通路', '因果'])) {
             return 'mechanism';
         }
@@ -212,9 +219,13 @@ final class TekgAgentEntityNormalizer
         $targetCount = count($targetTypes);
         $hasMechanismWords = $this->containsAny($question, ['how', 'why', 'mechanism', 'pathway', 'causal', 'lead to', 'result in', '机制', '为什么', '如何', '导致', '通路']);
         $hasCompareWords = $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异']);
+        $hasAnalyticsWords = $this->containsAny($question, ['topology', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'relation type', 'distribution', '最多', '最大', '拓扑', '结构', '关联度']);
 
         if ($intent === 'mechanism' || $hasMechanismWords) {
             return 'mechanism_chain';
+        }
+        if ($intent === 'graph_analytics' || $hasAnalyticsWords) {
+            return 'multi_evidence_synthesis';
         }
         if ($hasCompareWords || $intent === 'comparison' || $entityCount >= 2) {
             return 'multi_evidence_synthesis';
@@ -231,7 +242,7 @@ final class TekgAgentEntityNormalizer
             'Carbohydrate' => ['carbohydrate', 'carbohydrates'],
             'Disease' => ['disease', 'diseases', 'illness', 'phenotype', 'cancer', 'carcinoma', '疾病', '癌症', '肿瘤', '表型'],
             'DiseaseCategory' => ['diseasecategory', 'disease category', 'disease class', 'disease classes', '疾病分类', '疾病类别'],
-            'Function' => ['function', 'functions', 'role', 'mechanism', 'activity', 'retrotransposition', '功能', '机制', '作用', '活性', '逆转录转座'],
+            'Function' => ['function', 'functions', 'role', 'mechanism', 'activity', 'retrotransposition', '功能', '机制', '作用', '活性', '逆转座'],
             'Gene' => ['gene', 'genes', '基因'],
             'Lipid' => ['lipid', 'lipids', '脂质'],
             'Mutation' => ['mutation', 'mutations', 'variant', 'variants', 'insertion', '突变', '变异', '插入'],
@@ -239,7 +250,7 @@ final class TekgAgentEntityNormalizer
             'Peptide' => ['peptide', 'peptides', '肽'],
             'Pharmaceutical' => ['drug', 'drugs', 'pharmaceutical', 'pharmaceuticals', '药物'],
             'Protein' => ['protein', 'proteins', 'orf1p', 'orf2p', 'reverse transcriptase', '蛋白', '逆转录酶'],
-            'RNA' => ['rna', 'rnas', 'mrna', 'lncrna', 'rna', '转录本'],
+            'RNA' => ['rna', 'rnas', 'mrna', 'lncrna', '转录本'],
             'TE' => ['transposable element', 'transposable elements', 'te', 'tes', 'retrotransposon', '转座子', '转座元件'],
             'Toxin' => ['toxin', 'toxins'],
         ];
@@ -260,8 +271,11 @@ final class TekgAgentEntityNormalizer
         if ($targets === [] && $intent === 'classification') {
             $targets = ['TE'];
         }
+        if ($targets === [] && $intent === 'graph_analytics') {
+            $targets = ['Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Paper', 'TE'];
+        }
         if ($targets === []) {
-            $targets = ['Disease', 'Function', 'Paper'];
+            $targets = ['Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Paper', 'TE'];
         }
 
         return array_values(array_unique($targets));
@@ -292,6 +306,15 @@ final class TekgAgentEntityNormalizer
             'consensus',
             'orf1p',
             'orf2p',
+            'topology',
+            'graph structure',
+            'relation type',
+            'distribution',
+            'highest degree',
+            'most associated',
+            'cypher',
+            'pattern',
+            'path',
             '机制',
             '癌症',
             '表达',
@@ -299,6 +322,12 @@ final class TekgAgentEntityNormalizer
             '结构',
             '文献',
             '分类',
+            '拓扑',
+            '关系类型',
+            '分布',
+            '统计',
+            '模式',
+            '路径',
         ] as $keyword) {
             if ($this->containsAny($question, [$keyword])) {
                 $keywords[] = $keyword;

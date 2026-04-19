@@ -354,6 +354,61 @@ function tekg_agent_normalize_evidence_item(mixed $item, string $defaultPlugin =
     );
 }
 
+function tekg_agent_json_safe(mixed $value): mixed
+{
+    if (is_array($value)) {
+        $normalized = [];
+        foreach ($value as $key => $item) {
+            $normalized[$key] = tekg_agent_json_safe($item);
+        }
+        return $normalized;
+    }
+
+    if (is_object($value)) {
+        return tekg_agent_json_safe(get_object_vars($value));
+    }
+
+    if (is_scalar($value) || $value === null) {
+        return $value;
+    }
+
+    return (string)$value;
+}
+
+function tekg_agent_node_contracts(): array
+{
+    return [
+        'Question Understanding Node' => [
+            'input' => ['question'],
+            'output' => ['analysis', 'entity_resolution'],
+        ],
+        'Planning Node' => [
+            'input' => ['question', 'analysis', 'entity_resolution', 'session_context'],
+            'output' => ['planning'],
+        ],
+        'Evidence Collection Node' => [
+            'input' => ['question', 'analysis', 'planning', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle'],
+            'output' => ['collection_state', 'active_expert', 'sufficiency_decision', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle'],
+        ],
+        'Evidence Synthesis Node' => [
+            'input' => ['question', 'analysis', 'planning', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'collected_results', 'evidence_bundle', 'citation_bundle'],
+            'output' => ['supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters'],
+        ],
+        'Answer Structuring Node' => [
+            'input' => ['question', 'analysis', 'planning', 'collected_results', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters'],
+            'output' => ['answer_structure'],
+        ],
+        'Answer Writer Node' => [
+            'input' => ['question', 'analysis', 'answer_structure', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'citation_bundle'],
+            'output' => ['answer'],
+        ],
+        'Process Narrator Node' => [
+            'input' => ['event_stream', 'analysis', 'entity_resolution', 'planning', 'collection_state', 'active_expert', 'sufficiency_decision', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure', 'answer'],
+            'output' => ['trace_event'],
+        ],
+    ];
+}
+
 interface TekgAgentPluginInterface
 {
     public function getName(): string;

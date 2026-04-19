@@ -399,7 +399,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         return match ($intent) {
             'literature' => ['Paper'],
             'mechanism' => ['Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Disease'],
-            default => ['Disease', 'Function', 'Paper'],
+            default => ['Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Paper', 'TE'],
         };
     }
 
