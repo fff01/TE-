@@ -50,8 +50,12 @@ try {
     $state = tekg_agent_create_run_state($runId, $runPayload);
     tekg_agent_save_run_state($runId, $state);
 
-    $workerScript = __DIR__ . '/agent_run_worker.php';
-    $spawned = tekg_agent_spawn_background_php([$workerScript, '--run-id=' . $runId]);
+    $kickoffPath = tekg_agent_run_kickoff_path($runId);
+    $spawned = tekg_agent_fire_and_forget_local_request($kickoffPath);
+    if (!$spawned) {
+        $workerScript = __DIR__ . '/agent_run_worker.php';
+        $spawned = tekg_agent_spawn_background_php([$workerScript, '--run-id=' . $runId]);
+    }
     if (!$spawned) {
         $state['status'] = 'failed';
         $state['error'] = 'The background worker could not be started.';
@@ -68,16 +72,20 @@ try {
         exit;
     }
 
-    if (!tekg_agent_wait_for_run_start($runId, 3000)) {
+    if (!tekg_agent_wait_for_run_start($runId, 12000)) {
         $state = tekg_agent_load_run_state($runId) ?? $state;
         $state['status'] = 'failed';
-        $state['error'] = 'The Agent worker did not acknowledge startup in time.';
-        $state['failure_reason'] = 'The Agent worker did not acknowledge startup in time.';
+        $reason = trim((string)($state['failure_reason'] ?? $state['error'] ?? ''));
+        if ($reason === '') {
+            $reason = 'The Agent worker did not acknowledge startup in time.';
+        }
+        $state['error'] = $reason;
+        $state['failure_reason'] = $reason;
         $state['finished_at'] = gmdate('c');
         tekg_agent_save_run_state($runId, $state);
         tekg_agent_json_response(500, [
             'ok' => false,
-            'error' => 'The Agent worker did not acknowledge startup in time.',
+            'error' => $reason,
             'run_id' => $runId,
             'request_id' => $requestId,
             'session_id' => $sessionId,

@@ -714,3 +714,9 @@
 [2026-04-20 10:34:20] answer:template_query {"rows":12}
 [2026-04-20 10:34:20] answer:prepared {"rows":4,"refs":4,"intent":"te_to_disease","depth":"shallow"}
 [2026-04-20 10:34:20] answer:done {"mode":"template_rag+structured_local"}
+[2026-04-20 15:05:27] answer:start {"question":"LINE-1是如何导致癌症的？\n\n[Current G6 graph context]\nMode: Tree\nCenter node: None\nSelected node: None\nKey-node level: 1\nFixed view: Off","question_raw":"LINE-1是如何导致癌症的？","graph_state":{"mode":"tree","query":"","query_type":"","class_query":"","fixed_view":false,"key_node_level":1,"selected_node":{"id":"","label":"","type":""},"current_elements":[]},"language":"en","style":"simple","depth":"shallow"}
+[2026-04-20 15:05:27] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-04-20 15:05:27] answer:intent {"entity":"LINE1","secondary_entity":null,"disease":null,"intent":"te_to_disease","target_type":null}
+[2026-04-20 15:05:27] answer:template_query {"rows":15}
+[2026-04-20 15:05:27] answer:prepared {"rows":4,"refs":4,"intent":"te_to_disease","depth":"shallow"}
+[2026-04-20 15:05:28] answer:done {"mode":"template_rag+structured_local"}

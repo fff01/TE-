@@ -305,6 +305,50 @@ function tekg_agent_spawn_background_php(array $arguments): bool
     return (int)$code === 0;
 }
 
+function tekg_agent_run_kickoff_path(string $runId): string
+{
+    $scriptName = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? '/TE-/api/agent_runs.php'));
+    $apiDir = rtrim(str_replace('\\', '/', dirname($scriptName)), '/.');
+    if ($apiDir === '') {
+        $apiDir = '/api';
+    }
+    return $apiDir . '/agent_run_kickoff.php?run_id=' . rawurlencode($runId);
+}
+
+function tekg_agent_fire_and_forget_local_request(string $path): bool
+{
+    $hostHeader = trim((string)($_SERVER['HTTP_HOST'] ?? '127.0.0.1'));
+    $https = !empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off';
+    $defaultPort = $https ? 443 : 80;
+    $hostForHeader = $hostHeader !== '' ? $hostHeader : '127.0.0.1';
+    $socketHost = '127.0.0.1';
+    $port = $defaultPort;
+
+    if (strpos($hostForHeader, ':') !== false) {
+        [$headerHost, $headerPort] = explode(':', $hostForHeader, 2);
+        $hostForHeader = trim($headerHost) !== '' ? trim($headerHost) : '127.0.0.1';
+        $port = is_numeric($headerPort) ? (int)$headerPort : $defaultPort;
+    }
+
+    $transport = $https ? 'ssl://' : '';
+    $errno = 0;
+    $errstr = '';
+    $fp = @fsockopen($transport . $socketHost, $port, $errno, $errstr, 1.5);
+    if (!is_resource($fp)) {
+        return false;
+    }
+
+    stream_set_blocking($fp, false);
+    $request =
+        "GET {$path} HTTP/1.1\r\n"
+        . "Host: {$hostForHeader}" . ($port !== $defaultPort ? ':' . $port : '') . "\r\n"
+        . "Connection: Close\r\n"
+        . "User-Agent: TEKG-Agent-Kickoff/1.0\r\n\r\n";
+    $written = @fwrite($fp, $request);
+    @fclose($fp);
+    return $written !== false;
+}
+
 function tekg_agent_wait_for_run_start(string $runId, int $timeoutMs = 2500): bool
 {
     $deadline = microtime(true) + max(100, $timeoutMs) / 1000;
