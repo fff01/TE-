@@ -1082,13 +1082,15 @@ final class TekgAcademicAgentService
         $questionTypes = is_array($policy['question_types'] ?? null) ? $policy['question_types'] : [];
         $intent = (string)($analysis['intent'] ?? ($policy['default_question_type'] ?? 'relationship'));
         $selected = is_array($questionTypes[$intent] ?? null) ? $questionTypes[$intent] : (is_array($questionTypes['relationship'] ?? null) ? $questionTypes['relationship'] : []);
-        $selected['question_type'] = $intent;
-        return $selected;
+        return $this->normalizeRoutingPolicy($selected, $intent);
     }
 
     private function initialPluginQueue(array $analysis, array $planning, array $routingPolicy): array
     {
-        $queue = array_values(array_filter(array_map('strval', (array)($routingPolicy['candidate_experts'] ?? []))));
+        $queue = array_values(array_filter(array_map('strval', (array)($routingPolicy['primary_path'] ?? []))));
+        if ($queue === []) {
+            $queue = array_values(array_filter(array_map('strval', (array)($routingPolicy['candidate_experts'] ?? []))));
+        }
         if ($queue === []) {
             $queue = array_map(static fn(array $item): string => (string)$item['plugin'], (array)($planning['tool_plan'] ?? []));
         }
@@ -1104,7 +1106,9 @@ final class TekgAcademicAgentService
         if ($intent === 'graph_analytics' && !in_array('Graph Analytics Plugin', $queue, true)) {
             $queue[] = 'Graph Analytics Plugin';
         }
-        return array_values(array_unique($queue));
+        $forbidden = array_values(array_filter(array_map('strval', (array)($routingPolicy['forbidden_path'] ?? []))));
+        $queue = array_values(array_unique(array_filter($queue, static fn(string $plugin): bool => $plugin !== '' && !in_array($plugin, $forbidden, true))));
+        return $queue;
     }
 
     private function augmentPluginResult(string $pluginName, array $result, array $analysis, array $planning): array
@@ -1256,6 +1260,11 @@ final class TekgAcademicAgentService
         array $collectionState,
         array $routingPolicy
     ): array {
+        $hardStop = $this->evaluateHardStopCondition($analysis, $pluginResults, $routingPolicy);
+        if ($hardStop !== null) {
+            return $hardStop;
+        }
+
         $hardGate = $this->evaluateMinimumEvidenceGate($pluginResults, $routingPolicy);
         if (!$hardGate['passed']) {
             return [
@@ -1263,6 +1272,15 @@ final class TekgAcademicAgentService
                 'reason' => $hardGate['reason'],
                 'missing_dimensions' => $hardGate['missing_dimensions'],
                 'recommended_next_experts' => $this->recommendedNextExperts($routingPolicy, $pluginResults, $hardGate['missing_dimensions']),
+            ];
+        }
+
+        if ($this->isHardStopIntent((string)($analysis['intent'] ?? ''))) {
+            return [
+                'is_sufficient' => true,
+                'reason' => 'The primary plugin returned enough evidence for this question type, so the route stopped at the minimal path.',
+                'missing_dimensions' => [],
+                'recommended_next_experts' => [],
             ];
         }
 
@@ -1375,10 +1393,11 @@ final class TekgAcademicAgentService
     private function recommendedNextExperts(array $routingPolicy, array $pluginResults, array $missingDimensions): array
     {
         $executed = array_keys($pluginResults);
-        $candidates = array_values(array_filter(
-            array_map('strval', (array)($routingPolicy['candidate_experts'] ?? [])),
-            static fn(string $plugin): bool => $plugin !== 'Citation Resolver'
-        ));
+        $forbidden = array_values(array_filter(array_map('strval', (array)($routingPolicy['forbidden_path'] ?? []))));
+        $candidates = array_values(array_filter(array_map('strval', array_merge(
+            (array)($routingPolicy['fallback_path'] ?? []),
+            (array)($routingPolicy['candidate_experts'] ?? [])
+        )), static fn(string $plugin): bool => $plugin !== '' && $plugin !== 'Citation Resolver' && !in_array($plugin, $forbidden, true)));
         $recommended = [];
         foreach ($candidates as $plugin) {
             if (!in_array($plugin, $executed, true)) {
@@ -1432,6 +1451,69 @@ final class TekgAcademicAgentService
         }
 
         return array_values(array_unique($append));
+    }
+
+    private function normalizeRoutingPolicy(array $selected, string $intent): array
+    {
+        $primaryPath = array_values(array_filter(array_map('strval', (array)($selected['primary_path'] ?? []))));
+        $fallbackPath = array_values(array_filter(array_map('strval', (array)($selected['fallback_path'] ?? []))));
+        $forbiddenPath = array_values(array_filter(array_map('strval', (array)($selected['forbidden_path'] ?? []))));
+        $candidateExperts = array_values(array_filter(array_map('strval', (array)($selected['candidate_experts'] ?? []))));
+        if ($candidateExperts === []) {
+            $candidateExperts = array_values(array_unique(array_merge($primaryPath, $fallbackPath)));
+        }
+
+        $selected['question_type'] = $intent;
+        $selected['primary_path'] = $primaryPath;
+        $selected['fallback_path'] = $fallbackPath;
+        $selected['forbidden_path'] = $forbiddenPath;
+        $selected['candidate_experts'] = $candidateExperts;
+        return $selected;
+    }
+
+    private function isHardStopIntent(string $intent): bool
+    {
+        return in_array($intent, ['sequence', 'relationship', 'classification', 'expression', 'genome', 'graph_analytics'], true);
+    }
+
+    private function evaluateHardStopCondition(array $analysis, array $pluginResults, array $routingPolicy): ?array
+    {
+        $intent = (string)($analysis['intent'] ?? '');
+        $hardStop = (array)($routingPolicy['hard_stop_conditions'] ?? []);
+        $primaryPlugin = trim((string)($hardStop['primary_plugin'] ?? ''));
+        if ($primaryPlugin === '' || !isset($pluginResults[$primaryPlugin])) {
+            return null;
+        }
+
+        $result = (array)$pluginResults[$primaryPlugin];
+        $status = (string)($result['status'] ?? '');
+        $allowedStatuses = array_values(array_filter(array_map('strval', (array)($hardStop['allow_statuses'] ?? ['ok', 'partial']))));
+        if (!in_array($status, $allowedStatuses, true)) {
+            return null;
+        }
+
+        $countKey = trim((string)($hardStop['min_result_count_key'] ?? ''));
+        if ($countKey !== '') {
+            $countValue = (int)($result['result_counts'][$countKey] ?? 0);
+            $minCount = max(1, (int)($hardStop['min_result_count'] ?? 1));
+            if ($countValue < $minCount) {
+                return null;
+            }
+        }
+
+        if ((bool)($hardStop['require_sortable_statistics'] ?? false)) {
+            $rows = (array)($result['results']['analytics_result']['top_k'] ?? $result['results']['cypher_result']['rows'] ?? []);
+            if ($rows === []) {
+                return null;
+            }
+        }
+
+        return [
+            'is_sufficient' => true,
+            'reason' => 'The primary path has already produced enough evidence for this question type.',
+            'missing_dimensions' => [],
+            'recommended_next_experts' => [],
+        ];
     }
 
     private function planningNarrative(array $analysis, array $knowledgeGaps, array $subtasks, array $sessionMemory): string

@@ -136,6 +136,8 @@ require __DIR__ . '/head.php';
 <script id="agent-page-config" type="application/json"><?= json_encode([
     'apiUrl' => '/TE-/api/agent.php',
     'streamApiUrl' => '/TE-/api/agent_stream.php',
+    'agentRunCreateUrl' => '/TE-/api/agent_runs.php',
+    'agentRunStatusUrl' => '/TE-/api/agent_run_status.php',
     'deepThinkStreamApiUrl' => '/TE-/api/deep_think_stream.php',
     'defaultModel' => $defaultAgentModel,
     'defaultMode' => 'deepthink',

@@ -114,6 +114,12 @@
     statusNode.textContent = text || '';
   }
 
+  function makeAbortError(message) {
+    const error = new Error(message || 'The request was cancelled.');
+    error.name = 'AbortError';
+    return error;
+  }
+
   function setLoading(loading) {
     submitButton.disabled = !!loading;
     questionInput.disabled = !!loading;
@@ -338,11 +344,11 @@
 
   function defaultWorkflowState() {
     const stageStatuses = {};
-    WORKFLOW_STAGES.forEach((stage, index) => {
-      stageStatuses[stage.id] = index === 0 ? 'active' : 'pending';
+    WORKFLOW_STAGES.forEach((stage) => {
+      stageStatuses[stage.id] = 'pending';
     });
     return {
-      current_stage: 'Understanding',
+      current_stage: '',
       stage_statuses: stageStatuses,
       traversed_edges: [],
       complete: false,
@@ -428,9 +434,9 @@
     next.traversed_edges = Array.isArray(payload && payload.traversed_edges) ? payload.traversed_edges.slice() : [];
     next.complete = !!(payload && payload.complete);
     turn.workflow = next;
-    turn.currentStage = next.current_stage || turn.currentStage || 'Understanding';
-    applyWorkflowState(turn);
-  }
+      turn.currentStage = next.current_stage || turn.currentStage || '';
+      applyWorkflowState(turn);
+    }
 
   function createTurn(question, options = {}) {
     ensureConversationStarted();
@@ -448,7 +454,7 @@
         <section class="agent-thinking" data-role="thinking">
           <div class="agent-thinking-head">
             <span class="agent-thinking-title">${escapeHtml(ui.thinking_title || 'Deep thinking')}</span>
-            <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml('Understanding')}</span>
+              <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml('Starting')}</span>
           </div>
           ${showWorkflow ? createWorkflowMarkup() : ''}
           <div class="agent-thinking-body" data-role="thinking-body"></div>
@@ -477,9 +483,9 @@
       writingFailed: false,
       failureReason: '',
       mode,
-      currentStage: 'Understanding',
-      workflow: showWorkflow ? defaultWorkflowState() : null,
-    };
+        currentStage: '',
+        workflow: showWorkflow ? defaultWorkflowState() : null,
+      };
     turnStore.set(turnId, turn);
     if (showWorkflow) {
       applyWorkflowState(turn);
@@ -564,7 +570,7 @@
     const meta = turn.node.querySelector('[data-role="thinking-meta"]');
     if (!meta) return;
     const elapsed = formatElapsed(performance.now() - turn.startedAt);
-    const stageLabel = String(turn.currentStage || 'Understanding');
+    const stageLabel = String(turn.currentStage || 'Starting');
     meta.textContent = done
       ? `${ui.thinking_done || 'Done'} · ${elapsed}`
       : `${stageLabel} · ${elapsed}`;
@@ -1012,6 +1018,131 @@
     }
   }
 
+  async function readJsonResponse(response) {
+    const payload = await response.json().catch(() => null);
+    if (!response.ok || !payload || typeof payload !== 'object') {
+      const message = payload && payload.error
+        ? String(payload.error)
+        : `Request failed with HTTP ${response.status}`;
+      throw new Error(message);
+    }
+    return payload;
+  }
+
+  function syncRunIdentity(turn, runState) {
+    if (!turn || !runState || typeof runState !== 'object') return;
+    if (runState.request_id) {
+      turn.requestId = String(runState.request_id);
+    }
+    if (runState.session_id) {
+      sessionId = String(runState.session_id);
+      try {
+        window.localStorage.setItem(storageKey, sessionId);
+      } catch (_error) {}
+    }
+  }
+
+  async function waitFor(ms, signal) {
+    if (signal && signal.aborted) {
+      throw makeAbortError();
+    }
+    await new Promise((resolve, reject) => {
+      const timeoutId = window.setTimeout(resolve, ms);
+      if (!signal) {
+        return;
+      }
+      const onAbort = () => {
+        window.clearTimeout(timeoutId);
+        signal.removeEventListener('abort', onAbort);
+        reject(makeAbortError());
+      };
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+  }
+
+  async function pollAgentRun(turn, runId, abortController) {
+    let afterSequence = 0;
+    const statusUrlBase = config.agentRunStatusUrl || '/TE-/api/agent_run_status.php';
+    const startupDeadline = performance.now() + 6000;
+
+    while (true) {
+      if (abortController.signal.aborted) {
+        throw makeAbortError();
+      }
+      const statusUrl = new URL(statusUrlBase, window.location.origin);
+      statusUrl.searchParams.set('run_id', runId);
+      statusUrl.searchParams.set('after', String(afterSequence));
+
+      const response = await fetch(statusUrl.toString(), {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        signal: abortController.signal,
+      });
+      const payload = await readJsonResponse(response);
+      const runState = payload.run && typeof payload.run === 'object' ? payload.run : {};
+      syncRunIdentity(turn, runState);
+
+      const events = Array.isArray(payload.events) ? payload.events.slice().sort((left, right) => {
+        return Number(left && left.sequence ? left.sequence : 0) - Number(right && right.sequence ? right.sequence : 0);
+      }) : [];
+      events.forEach((streamEvent) => {
+        afterSequence = Math.max(afterSequence, Number(streamEvent && streamEvent.sequence ? streamEvent.sequence : 0));
+        handleStreamEvent(turn, streamEvent);
+      });
+
+      if (runState.workflow_state && typeof runState.workflow_state === 'object' && turn.workflow) {
+        setWorkflowState(turn, runState.workflow_state);
+      }
+
+      if (
+        runState.status === 'pending'
+        && Number(runState.events_count || 0) === 0
+        && performance.now() >= startupDeadline
+      ) {
+        throw new Error(`The Agent worker did not start${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
+      }
+
+      if (runState.status === 'completed' || runState.status === 'failed') {
+        if (!turn.receivedDone) {
+          handleStreamEvent(turn, {
+            type: runState.status === 'failed' && !runState.answer ? 'error' : 'done',
+            request_id: runState.request_id || turn.requestId || '',
+            session_id: runState.session_id || sessionId || '',
+            message: runState.error || runState.failure_reason || '',
+            payload: {
+              answer: runState.answer || '',
+              language: runState.language || turn.language || 'en',
+              writing_failed: !!runState.writing_failed,
+              failure_stage: runState.failure_stage || '',
+              failure_reason: runState.failure_reason || runState.error || '',
+              used_plugins: Array.isArray(runState.used_plugins) ? runState.used_plugins : [],
+              workflow_state: runState.workflow_state || null,
+            },
+          });
+          if (!turn.receivedDone) {
+            handleStreamEvent(turn, {
+              type: 'done',
+              request_id: runState.request_id || turn.requestId || '',
+              session_id: runState.session_id || sessionId || '',
+              payload: {
+                answer: runState.answer || '',
+                language: runState.language || turn.language || 'en',
+                writing_failed: !!runState.writing_failed,
+                failure_stage: runState.failure_stage || '',
+                failure_reason: runState.failure_reason || runState.error || '',
+                used_plugins: Array.isArray(runState.used_plugins) ? runState.used_plugins : [],
+                workflow_state: runState.workflow_state || null,
+              },
+            });
+          }
+        }
+        return runState;
+      }
+
+      await waitFor(900, abortController.signal);
+    }
+  }
+
   function parseStreamChunk(chunk) {
     const lines = String(chunk || '')
       .split(/\r?\n/)
@@ -1044,9 +1175,9 @@
     activeAbortController = abortController;
 
     try {
-      const response = await fetch(config.streamApiUrl || '/TE-/api/agent_stream.php', {
+      const response = await fetch(config.agentRunCreateUrl || '/TE-/api/agent_runs.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
           question,
           model: String(config.defaultModel || 'deepseek-chat').trim(),
@@ -1056,28 +1187,29 @@
         signal: abortController.signal,
       });
 
-      if (!response.ok || !response.body) {
-        throw new Error(`Streaming request failed with HTTP ${response.status}`);
+      const payload = await readJsonResponse(response);
+      const runId = String(payload.run_id || '').trim();
+      if (!runId) {
+        throw new Error('The Agent run could not be created.');
+      }
+      turn.runId = runId;
+      if (payload.request_id) {
+        turn.requestId = String(payload.request_id);
+      }
+      if (payload.session_id) {
+        sessionId = String(payload.session_id);
+        try {
+          window.localStorage.setItem(storageKey, sessionId);
+        } catch (_error) {}
       }
 
-      await readEventStream(response, (streamEvent) => {
-        if (streamEvent.request_id) {
-          turn.requestId = String(streamEvent.request_id);
-        }
-        if (streamEvent.session_id) {
-          sessionId = String(streamEvent.session_id);
-          try {
-            window.localStorage.setItem(storageKey, sessionId);
-          } catch (_error) {}
-        }
-        handleStreamEvent(turn, streamEvent);
-      });
+      await pollAgentRun(turn, runId, abortController);
 
       if (!turn.receivedDone) {
-        throw new Error(`The answer stream ended before a final done event was received${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
+        throw new Error(`The Agent run ended before a final done event was received${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
       }
       if ((!turn.answer || !String(turn.answer).trim()) && !String(turn.pendingAnswer || '').trim() && !turn.writingFailed) {
-        throw new Error(`The backend completed without returning a final answer${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
+        throw new Error(`The Agent run completed without returning a final answer${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
       }
 
       finalizeTurn(turn);
