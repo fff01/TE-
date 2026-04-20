@@ -173,6 +173,41 @@ final class TekgAgentLlmClient
         return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
     }
 
+    public function writeDirectAnswer(
+        string $model,
+        string $language,
+        string $question,
+        array $analysis,
+        array $supportedClaims,
+        array $conflictingClaims,
+        array $missingEvidence,
+        array $citations,
+        string $confidence,
+        array $limits,
+        ?int $timeout = null
+    ): array {
+        $provider = $this->inferProvider($model);
+        $messages = [
+            ['role' => 'system', 'content' => $this->systemPrompt($language)],
+            ['role' => 'user', 'content' => $this->buildDirectAnswerPrompt(
+                $question,
+                $analysis,
+                $supportedClaims,
+                $conflictingClaims,
+                $missingEvidence,
+                $citations,
+                $confidence,
+                $limits
+            )],
+        ];
+
+        $effectiveTimeout = $timeout ?? (int)($this->config['llm_answer_timeout'] ?? 40);
+        if (!empty($this->config['llm_relay_url'])) {
+            return $this->callRelay($provider, $model, $messages, true, $effectiveTimeout, 'answer');
+        }
+        return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
+    }
+
     private function inferProvider(string $model): string
     {
         $value = strtolower(trim($model));
@@ -258,6 +293,34 @@ final class TekgAgentLlmClient
         return "Write the final answer only from the structured answer plan and evidence below.\n" .
             "Follow answer_structure strictly. Do not improvise extra sections outside section_plan unless needed for one short limitation note.\n" .
             "Do not restate raw JSON. Convert the plan into a natural academic answer.\n\n" .
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function buildDirectAnswerPrompt(
+        string $question,
+        array $analysis,
+        array $supportedClaims,
+        array $conflictingClaims,
+        array $missingEvidence,
+        array $citations,
+        string $confidence,
+        array $limits
+    ): string {
+        $payload = [
+            'question' => $question,
+            'analysis' => $analysis,
+            'supported_claims' => $supportedClaims,
+            'conflicting_claims' => $conflictingClaims,
+            'missing_evidence' => $missingEvidence,
+            'citations' => $citations,
+            'confidence' => $confidence,
+            'limits' => $limits,
+        ];
+
+        return "Write the final answer directly from the evidence below.\n" .
+            "Start with the main conclusion, then add the most important supporting facts.\n" .
+            "Keep the answer concise for simple factual questions, and only mention uncertainty if the evidence is incomplete or conflicting.\n" .
+            "Do not invent unsupported details and do not restate raw JSON.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 

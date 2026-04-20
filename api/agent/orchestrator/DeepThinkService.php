@@ -73,6 +73,7 @@ final class TekgDeepThinkService
         $analysis['answer_language'] = $answerLanguage;
         $analysis['language'] = 'english';
         $analysis['session_memory'] = $sessionMemory;
+        $writingModel = $this->resolveWritingModel($payload, $analysis);
 
         $eventSequence = 0;
         $detailCounter = 0;
@@ -100,7 +101,7 @@ final class TekgDeepThinkService
         );
         $pluginResults['Entity Resolver'] = $entityResult;
 
-        $maxSteps = max(2, min(5, (int)($payload['max_plugin_steps'] ?? 4)));
+        $maxSteps = $this->maxPluginSteps($payload, $analysis);
         for ($step = 0; $step < $maxSteps; $step++) {
             $decision = $this->decideNextPlugin($question, $analysis, $pluginResults, $model, $requestId);
             $nextPlugin = trim((string)($decision['next_plugin'] ?? ''));
@@ -201,7 +202,7 @@ final class TekgDeepThinkService
             'node' => 'Deep Think',
             'source' => 'Deep Think',
             'inputs_used' => ['plugin_results', 'evidence_bundle', 'citation_bundle'],
-            'outputs_changed' => ['supported_claims', 'answer_structure'],
+            'outputs_changed' => ['supported_claims', 'answer'],
             'message' => $this->narrateEvent(
                 $narratorModel,
                 $processLanguage,
@@ -218,49 +219,35 @@ final class TekgDeepThinkService
             ],
         ]);
 
-        $answerStructure = $this->generateAnswerStructure(
-            $model,
-            $question,
-            $analysis,
-            $synthesizedEvidence,
-            $citations,
-            [
-                'is_sufficient' => true,
-                'reason' => 'Deep Think finished its lightweight tool loop.',
-                'missing_dimensions' => [],
-            ],
-            $requestId
-        );
-
         $writingStartedAt = microtime(true);
         $this->logDiagnostic($requestId, 'deepthink_answer_generation_started', [
-            'model' => $model,
-            'response_mode' => (string)($answerStructure['response_mode'] ?? ''),
+            'model' => $writingModel,
+            'path' => 'direct_answer',
+            'intent' => (string)($analysis['intent'] ?? 'relationship'),
         ]);
 
         $answer = '';
         $writingFailed = false;
         $failureReason = '';
         try {
-            $llm = $this->llm->writeStructuredAnswer(
-                $model,
+            $llm = $this->llm->writeDirectAnswer(
+                $writingModel,
                 $answerLanguage,
                 $question,
                 $this->analysisForWriting($analysis),
-                $answerStructure,
                 $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 6),
                 $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 3),
                 $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 4),
                 $this->lightweightCitations($citations, 8),
                 $confidence,
                 $limits,
-                max(20, (int)($runtimeConfig['llm_answer_timeout'] ?? 40))
+                $this->answerTimeoutForModel($runtimeConfig, $writingModel)
             );
         } catch (Throwable $error) {
             $llm = [
                 'ok' => false,
-                'provider' => $this->inferProvider($model),
-                'model' => $model,
+                'provider' => $this->inferProvider($writingModel),
+                'model' => $writingModel,
                 'content' => '',
                 'error' => $error->getMessage(),
             ];
@@ -315,7 +302,12 @@ final class TekgDeepThinkService
             'request_id' => $requestId,
             'session_id' => $sessionId,
             'language' => $answerLanguage,
-            'model' => $model,
+            'model' => $writingModel,
+            'models' => [
+                'reasoner' => $model,
+                'narrator' => $narratorModel,
+                'writer' => $writingModel,
+            ],
             'analysis' => $analysis,
             'answer' => $answer,
             'writing_failed' => $writingFailed,
@@ -325,7 +317,6 @@ final class TekgDeepThinkService
             'plugin_calls' => array_values($pluginResults),
             'evidence' => $evidence,
             'citations' => $citations,
-            'answer_structure' => $answerStructure,
             'synthesized_evidence' => $synthesizedEvidence,
             'confidence' => $confidence,
             'timings' => $timings,
@@ -384,6 +375,49 @@ final class TekgDeepThinkService
     private function resolveNarratorModel(array $payload, string $fallbackModel): string
     {
         return trim((string)($payload['narrator_model'] ?? $fallbackModel));
+    }
+
+    private function resolveAnswerStructureModel(array $payload, array $analysis): string
+    {
+        if (trim((string)($payload['answer_structure_model'] ?? '')) !== '') {
+            return trim((string)$payload['answer_structure_model']);
+        }
+        $intent = (string)($analysis['intent'] ?? 'relationship');
+        return $this->isSimpleIntent($intent)
+            ? trim((string)($this->config['deepseek_model'] ?? 'deepseek-chat'))
+            : trim((string)($this->config['deepseek_model'] ?? $this->config['deepseek_reasoner_model'] ?? 'deepseek-chat'));
+    }
+
+    private function resolveWritingModel(array $payload, array $analysis): string
+    {
+        if (trim((string)($payload['writing_model'] ?? '')) !== '') {
+            return trim((string)$payload['writing_model']);
+        }
+        $intent = (string)($analysis['intent'] ?? 'relationship');
+        return $this->isSimpleIntent($intent)
+            ? trim((string)($this->config['deepseek_model'] ?? 'deepseek-chat'))
+            : trim((string)($this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-reasoner'));
+    }
+
+    private function answerTimeoutForModel(array $runtimeConfig, string $model): int
+    {
+        $provider = $this->inferProvider($model);
+        if ($provider === 'deepseek' && stripos($model, 'reasoner') !== false) {
+            return max(25, min(35, (int)($runtimeConfig['llm_answer_reasoner_timeout'] ?? $runtimeConfig['llm_answer_timeout'] ?? 35)));
+        }
+        return max(12, min(20, (int)($runtimeConfig['llm_answer_chat_timeout'] ?? 18)));
+    }
+
+    private function maxPluginSteps(array $payload, array $analysis): int
+    {
+        $intent = (string)($analysis['intent'] ?? 'relationship');
+        $default = $this->isSimpleIntent($intent) ? 2 : 4;
+        return max(1, min(5, (int)($payload['max_plugin_steps'] ?? $default)));
+    }
+
+    private function isSimpleIntent(string $intent): bool
+    {
+        return in_array($intent, ['sequence', 'relationship', 'classification', 'expression', 'genome'], true);
     }
 
     private function lightweightPlanning(array $analysis): array
@@ -535,12 +569,31 @@ final class TekgDeepThinkService
 
     private function decideNextPlugin(string $question, array $analysis, array $pluginResults, string $model, string $requestId): array
     {
+        $hardDecision = $this->hardStopDecision($analysis, $pluginResults);
+        if ($hardDecision !== null) {
+            return $hardDecision;
+        }
+
         $candidates = $this->candidatePluginOrder($analysis, $pluginResults);
         if ($candidates === []) {
             return [
                 'done' => true,
                 'next_plugin' => '',
                 'reason' => 'No remaining plugins are required for this question type.',
+            ];
+        }
+
+        if ($this->shouldBypassRouter($analysis)) {
+            $fallback = $candidates[0] ?? '';
+            $this->logDiagnostic($requestId, 'deepthink_router_bypassed', [
+                'intent' => (string)($analysis['intent'] ?? 'relationship'),
+                'next_plugin' => $fallback,
+                'candidates' => $candidates,
+            ]);
+            return [
+                'done' => false,
+                'next_plugin' => $fallback,
+                'reason' => 'I will continue with the next highest-priority plugin for this simple question type.',
             ];
         }
 
@@ -599,20 +652,96 @@ final class TekgDeepThinkService
         ];
     }
 
+    private function hardStopDecision(array $analysis, array $pluginResults): ?array
+    {
+        $intent = (string)($analysis['intent'] ?? 'relationship');
+
+        if ($intent === 'sequence' && $this->pluginHasUsableResult($pluginResults, 'Sequence Plugin')) {
+            return [
+                'done' => true,
+                'next_plugin' => '',
+                'reason' => 'The sequence layer already returned a direct usable hit, so no extra evidence layer is needed for this simple sequence question.',
+            ];
+        }
+        if ($intent === 'genome' && $this->pluginHasUsableResult($pluginResults, 'Genome Plugin')) {
+            return [
+                'done' => true,
+                'next_plugin' => '',
+                'reason' => 'The genome layer already returned a direct usable hit, so no extra evidence layer is needed for this simple locus question.',
+            ];
+        }
+        if ($intent === 'expression' && $this->pluginHasUsableResult($pluginResults, 'Expression Plugin')) {
+            return [
+                'done' => true,
+                'next_plugin' => '',
+                'reason' => 'The expression layer already returned a direct usable hit, so no extra evidence layer is needed for this simple expression question.',
+            ];
+        }
+        if ($intent === 'classification' && $this->pluginHasUsableResult($pluginResults, 'Tree Plugin')) {
+            return [
+                'done' => true,
+                'next_plugin' => '',
+                'reason' => 'The classification layer already returned a direct usable hit, so no extra evidence layer is needed for this lineage question.',
+            ];
+        }
+        if ($intent === 'relationship' && $this->pluginHasUsableResult($pluginResults, 'Graph Plugin') && !($analysis['asks_for_papers'] ?? false)) {
+            return [
+                'done' => true,
+                'next_plugin' => '',
+                'reason' => 'The local graph already returned direct structured relations, so no extra evidence layer is needed for this simple relationship question.',
+            ];
+        }
+
+        return null;
+    }
+
+    private function pluginHasUsableResult(array $pluginResults, string $pluginName): bool
+    {
+        if (!isset($pluginResults[$pluginName])) {
+            return false;
+        }
+        $result = (array)$pluginResults[$pluginName];
+        $status = (string)($result['status'] ?? '');
+        if (!in_array($status, ['ok', 'partial'], true)) {
+            return false;
+        }
+        foreach ((array)($result['result_counts'] ?? []) as $value) {
+            if ((int)$value > 0) {
+                return true;
+            }
+        }
+        return !empty($result['evidence_items']) || !empty($result['results']);
+    }
+
+    private function shouldBypassRouter(array $analysis): bool
+    {
+        $intent = (string)($analysis['intent'] ?? 'relationship');
+        if (!$this->isSimpleIntent($intent)) {
+            return false;
+        }
+        return !($analysis['asks_for_papers'] ?? false);
+    }
+
     private function candidatePluginOrder(array $analysis, array $pluginResults): array
     {
         $intent = (string)($analysis['intent'] ?? 'relationship');
         $order = match ($intent) {
-            'sequence' => ['Sequence Plugin', 'Literature Plugin'],
-            'genome' => ['Genome Plugin', 'Literature Plugin'],
-            'expression' => ['Expression Plugin', 'Literature Plugin'],
-            'classification' => ['Tree Plugin', 'Literature Plugin'],
+            'sequence' => ['Sequence Plugin'],
+            'genome' => ['Genome Plugin'],
+            'expression' => ['Expression Plugin'],
+            'classification' => ['Tree Plugin'],
             'literature' => ['Literature Plugin', 'Literature Reading Plugin'],
             'graph_analytics' => ['Graph Analytics Plugin', 'Cypher Explorer Plugin'],
             'mechanism' => ['Graph Plugin', 'Literature Plugin', 'Literature Reading Plugin'],
             'comparison' => ['Graph Plugin', 'Literature Plugin', 'Literature Reading Plugin'],
-            default => ['Graph Plugin', 'Literature Plugin', 'Literature Reading Plugin'],
+            default => ['Graph Plugin'],
         };
+
+        if (($analysis['asks_for_papers'] ?? false) || $intent === 'literature') {
+            if (!in_array('Literature Plugin', $order, true)) {
+                $order[] = 'Literature Plugin';
+            }
+        }
 
         if (($analysis['asks_for_graph_analytics'] ?? false) && !in_array('Graph Analytics Plugin', $order, true)) {
             array_unshift($order, 'Graph Analytics Plugin');
@@ -704,8 +833,34 @@ final class TekgDeepThinkService
 
     private function narrateEvent(string $model, string $language, array $event, string $fallback): string
     {
+        if ($this->shouldUseDeterministicNarration($event)) {
+            return $fallback;
+        }
         $narrated = $this->llm->narrateEvent($model, $language, $event);
         return $narrated !== null && trim($narrated) !== '' ? trim($narrated) : $fallback;
+    }
+
+    private function shouldUseDeterministicNarration(array $event): bool
+    {
+        $type = (string)($event['type'] ?? '');
+        if ($type === '') {
+            return true;
+        }
+
+        if (in_array($type, ['tool_selected', 'tool_result', 'reflection', 'synthesizing'], true)) {
+            return true;
+        }
+
+        if ($type !== 'analysis') {
+            return false;
+        }
+
+        $intent = (string)($event['intent'] ?? '');
+        if ($intent === '' && isset($event['entities'])) {
+            return true;
+        }
+
+        return $this->isSimpleIntent($intent);
     }
 
     private function emitEvent(?callable $emit, int &$eventSequence, array $event): void

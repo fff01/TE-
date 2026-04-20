@@ -708,3 +708,9 @@
 [2026-04-20 09:05:48] answer:intent {"entity":"L1HS","secondary_entity":null,"disease":null,"intent":null,"target_type":null}
 [2026-04-20 09:05:48] answer:prepared {"rows":4,"refs":2,"intent":null,"depth":"shallow"}
 [2026-04-20 09:05:48] answer:done {"mode":"neighbor_fallback+structured_local"}
+[2026-04-20 10:34:19] answer:start {"question":"L1HS related diseases\n\n[Current G6 graph context]\nMode: Tree\nCenter node: None\nSelected node: None\nKey-node level: 1\nFixed view: Off","question_raw":"L1HS related diseases","graph_state":{"mode":"tree","query":"","query_type":"","class_query":"","fixed_view":false,"key_node_level":1,"selected_node":{"id":"","label":"","type":""},"current_elements":[]},"language":"en","style":"simple","depth":"shallow"}
+[2026-04-20 10:34:19] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-04-20 10:34:19] answer:intent {"entity":"L1HS","secondary_entity":null,"disease":null,"intent":"te_to_disease","target_type":"Disease"}
+[2026-04-20 10:34:20] answer:template_query {"rows":12}
+[2026-04-20 10:34:20] answer:prepared {"rows":4,"refs":4,"intent":"te_to_disease","depth":"shallow"}
+[2026-04-20 10:34:20] answer:done {"mode":"template_rag+structured_local"}
