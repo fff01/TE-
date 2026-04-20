@@ -69,6 +69,12 @@ foreach ($cases as $case) {
         $result['question_type_ok'] = $result['expected_question_type'] === '' || $result['question_type'] === $result['expected_question_type'];
         $result['sufficiency_decision'] = tekg_agent_json_safe((array)($response['sufficiency_decision'] ?? []));
         $result['answer_structure'] = tekg_agent_json_safe((array)($response['answer_structure'] ?? []));
+        $result['models'] = tekg_agent_json_safe((array)($response['models'] ?? []));
+        $result['timings'] = tekg_agent_json_safe((array)($response['timings'] ?? []));
+        $result['writing_failed'] = (bool)($response['writing_failed'] ?? false);
+        $result['failure_stage'] = (string)($response['failure_stage'] ?? '');
+        $result['failure_reason'] = (string)($response['failure_reason'] ?? '');
+        $result['answer_length'] = tekg_agent_strlen((string)($response['answer'] ?? ''));
         $result['expected_response_mode'] = (string)($case['expected_response_mode'] ?? '');
         $result['response_mode_ok'] = $result['expected_response_mode'] === ''
             || (string)($result['answer_structure']['response_mode'] ?? '') === $result['expected_response_mode'];

@@ -2298,6 +2298,79 @@ final class QaService
         return trim($label);
     }
 
+    private function prepareRowsForAnswer(array $rows, ?string $intent, string $answerStyle, string $answerDepth, int $customRows = 0): array
+    {
+        $normalized = $this->normalizeRows($rows, $intent);
+        $limit = $this->fallbackRowLimit($answerStyle, $answerDepth, $customRows);
+        return array_slice($normalized, 0, max(1, $limit));
+    }
+
+    private function extractReferences(array $rows): array
+    {
+        $references = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $target = trim((string)($row[0] ?? ''));
+            $relationPmids = array_values(array_unique(array_filter(array_map(
+                static fn ($value) => trim((string)$value),
+                is_array($row[2] ?? null) ? $row[2] : []
+            ), static fn ($value) => $value !== '')));
+            $evidenceItems = is_array($row[3] ?? null) ? $row[3] : [];
+
+            foreach ($relationPmids as $pmid) {
+                $key = 'pmid|' . $pmid;
+                if (!isset($references[$key])) {
+                    $references[$key] = [
+                        'title' => $target !== '' ? $target : ('PMID ' . $pmid),
+                        'pmids' => [$pmid],
+                    ];
+                }
+            }
+
+            foreach ($evidenceItems as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $title = trim((string)($item['title'] ?? ''));
+                $itemPmids = array_values(array_unique(array_filter(array_map(
+                    static fn ($value) => trim((string)$value),
+                    is_array($item['pmids'] ?? null) ? $item['pmids'] : []
+                ), static fn ($value) => $value !== '')));
+                $key = 'title|' . mb_strtolower($title) . '|' . implode(',', $itemPmids);
+                if (!isset($references[$key])) {
+                    $references[$key] = [
+                        'title' => $title !== '' ? $title : ($target !== '' ? $target : 'Reference'),
+                        'pmids' => $itemPmids,
+                    ];
+                }
+            }
+        }
+
+        return array_values($references);
+    }
+
+    private function prepareReferencesForAnswer(array $references, ?string $intent, string $answerStyle, string $answerDepth, int $customReferences = 0): array
+    {
+        $limit = $this->fallbackReferenceLimit($answerStyle, $answerDepth, $customReferences);
+        return array_slice(array_values($references), 0, max(1, $limit));
+    }
+
+    private function extractFallbackTarget(array $row): string
+    {
+        $target = trim((string)($row[0] ?? ''));
+        if ($target !== '') {
+            return $target;
+        }
+        $predicate = trim((string)($row[1] ?? ''));
+        if ($predicate !== '') {
+            return $predicate;
+        }
+        return 'the queried target';
+    }
+
     private function polishAnswer(string $answer, string $language): string
     {
         $answer = preg_replace('/

@@ -52,6 +52,11 @@ function tekg_agent_session_cache_dir(): string
     return tekg_agent_ensure_dir(TEKG_DATA_FS_DIR . '/cache/agent/sessions');
 }
 
+function tekg_agent_diagnostics_dir(): string
+{
+    return tekg_agent_ensure_dir(TEKG_DATA_FS_DIR . '/cache/agent/diagnostics');
+}
+
 function tekg_agent_entity_alias_map(): array
 {
     static $map = null;
@@ -97,6 +102,12 @@ function tekg_agent_config(): array
         'deepseek_reasoner_model' => trim((string)($local['deepseek_reasoner_model'] ?? tekg_agent_env_value(['DEEPSEEK_REASONER_MODEL'], 'deepseek-reasoner'))),
         'llm_relay_url' => trim((string)($local['llm_relay_url'] ?? tekg_agent_env_value(['BIOLOGY_LLM_RELAY_URL', 'LLM_RELAY_URL'], ''))),
         'ssl_verify' => (bool)($local['ssl_verify'] ?? false),
+        'agent_execution_timeout' => (int)($local['agent_execution_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_EXECUTION_TIMEOUT'], '300')),
+        'llm_narrator_timeout' => (int)($local['llm_narrator_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_NARRATOR_TIMEOUT'], '6')),
+        'llm_json_timeout' => (int)($local['llm_json_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_JSON_TIMEOUT'], '15')),
+        'llm_answer_timeout' => (int)($local['llm_answer_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_ANSWER_TIMEOUT'], '20')),
+        'llm_answer_chat_timeout' => (int)($local['llm_answer_chat_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_ANSWER_CHAT_TIMEOUT'], '18')),
+        'llm_answer_reasoner_timeout' => (int)($local['llm_answer_reasoner_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_ANSWER_REASONER_TIMEOUT'], '35')),
         'neo4j_url' => trim((string)($local['neo4j_url'] ?? tekg_agent_env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg21/tx/commit'))),
         'neo4j_user' => trim((string)($local['neo4j_user'] ?? tekg_agent_env_value(['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'))),
         'neo4j_password' => trim((string)($local['neo4j_password'] ?? tekg_agent_env_value(['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD'], ''))),
@@ -146,6 +157,15 @@ function tekg_agent_make_session_id(): string
         return bin2hex(random_bytes(16));
     } catch (Throwable $_) {
         return md5((string)microtime(true) . '::' . (string)mt_rand());
+    }
+}
+
+function tekg_agent_make_request_id(): string
+{
+    try {
+        return 'req_' . bin2hex(random_bytes(8));
+    } catch (Throwable $_) {
+        return 'req_' . md5((string)microtime(true) . '::' . (string)mt_rand());
     }
 }
 
@@ -203,8 +223,30 @@ function tekg_agent_json_response(int $status, array $payload): void
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
 }
 
-function tekg_agent_http_request(string $url, string $method = 'GET', array $headers = [], ?string $body = null, int $timeout = 45, bool $sslVerify = false): array
+function tekg_agent_append_diagnostic_log(string $requestId, string $event, array $payload = []): void
 {
+    $record = [
+        'ts' => gmdate('c'),
+        'request_id' => $requestId,
+        'event' => $event,
+        'payload' => tekg_agent_json_safe($payload),
+    ];
+    $path = rtrim(tekg_agent_diagnostics_dir(), '/\\') . '/answer-chain.jsonl';
+    @file_put_contents($path, json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL, FILE_APPEND | LOCK_EX);
+}
+
+function tekg_agent_http_request(
+    string $url,
+    string $method = 'GET',
+    array $headers = [],
+    ?string $body = null,
+    int $timeout = 45,
+    bool $sslVerify = false,
+    ?string $requestId = null,
+    ?string $stage = null
+): array
+{
+    $startedAt = microtime(true);
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
@@ -224,11 +266,31 @@ function tekg_agent_http_request(string $url, string $method = 'GET', array $hea
         if ($raw === false) {
             $error = curl_error($ch) ?: 'Unknown HTTP transport error';
             curl_close($ch);
+            if ($requestId !== null) {
+                tekg_agent_append_diagnostic_log($requestId, 'http_request_error', [
+                    'stage' => $stage,
+                    'url' => $url,
+                    'timeout' => $timeout,
+                    'error' => $error,
+                    'duration_ms' => (int)round((microtime(true) - $startedAt) * 1000),
+                ]);
+            }
             throw new RuntimeException($error);
         }
         $status = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        return ['status' => $status, 'body' => (string)$raw];
+        $result = ['status' => $status, 'body' => (string)$raw];
+        if ($requestId !== null) {
+            tekg_agent_append_diagnostic_log($requestId, 'http_request_complete', [
+                'stage' => $stage,
+                'url' => $url,
+                'timeout' => $timeout,
+                'status' => $status,
+                'duration_ms' => (int)round((microtime(true) - $startedAt) * 1000),
+                'body_length' => strlen((string)$raw),
+            ]);
+        }
+        return $result;
     }
 
     $context = stream_context_create([
@@ -246,6 +308,15 @@ function tekg_agent_http_request(string $url, string $method = 'GET', array $hea
     ]);
     $raw = @file_get_contents($url, false, $context);
     if ($raw === false) {
+        if ($requestId !== null) {
+            tekg_agent_append_diagnostic_log($requestId, 'http_request_error', [
+                'stage' => $stage,
+                'url' => $url,
+                'timeout' => $timeout,
+                'error' => 'HTTP request failed.',
+                'duration_ms' => (int)round((microtime(true) - $startedAt) * 1000),
+            ]);
+        }
         throw new RuntimeException('HTTP request failed.');
     }
     $status = 200;
@@ -255,7 +326,18 @@ function tekg_agent_http_request(string $url, string $method = 'GET', array $hea
             break;
         }
     }
-    return ['status' => $status, 'body' => (string)$raw];
+    $result = ['status' => $status, 'body' => (string)$raw];
+    if ($requestId !== null) {
+        tekg_agent_append_diagnostic_log($requestId, 'http_request_complete', [
+            'stage' => $stage,
+            'url' => $url,
+            'timeout' => $timeout,
+            'status' => $status,
+            'duration_ms' => (int)round((microtime(true) - $startedAt) * 1000),
+            'body_length' => strlen((string)$raw),
+        ]);
+    }
+    return $result;
 }
 
 function tekg_agent_entity_candidate_groups(array $entity): array

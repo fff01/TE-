@@ -29,6 +29,10 @@
   const composerHintNode = document.getElementById('agentComposerHint');
   const conversationNode = document.getElementById('agentConversation');
   const emptyStateNode = document.getElementById('agentEmptyState');
+  const emptyTitleNode = document.getElementById('agentEmptyTitle');
+  const modePickerNode = document.getElementById('agentModePicker');
+  const modeDeepThinkButton = document.getElementById('modeDeepThink');
+  const modeAgentButton = document.getElementById('modeAgent');
   const chatScroll = document.getElementById('agentChatScroll');
   const inspector = document.getElementById('agentInspector');
   const inspectorTitle = document.getElementById('agentInspectorTitle');
@@ -41,7 +45,8 @@
   const graphPopupEmpty = document.getElementById('agentGraphPopupEmpty');
   const graphPopupCanvas = document.getElementById('agentGraphPopupCanvas');
 
-  let currentMode = 'agent';
+  let currentMode = String(config.defaultMode || 'deepthink').trim().toLowerCase() === 'agent' ? 'agent' : 'deepthink';
+  let modeLocked = false;
   let sessionId = '';
   try {
     sessionId = window.localStorage.getItem(storageKey) || '';
@@ -238,11 +243,46 @@
     app.classList.remove('is-pristine');
   }
 
-  function setMode() {
-    currentMode = 'agent';
+  function modeTitle(mode) {
+    if (mode === 'agent') {
+      return ui.start_title_agent || ui.start_title || 'Use Agent to start chatting';
+    }
+    return ui.start_title_deepthink || ui.start_title || 'Use Deep Think to start chatting';
+  }
+
+  function setMode(mode, options = {}) {
+    const nextMode = mode === 'agent' ? 'agent' : 'deepthink';
+    if (modeLocked && !options.force) {
+      return;
+    }
+    currentMode = nextMode;
     app.dataset.mode = currentMode;
-    questionInput.placeholder = ui.placeholder_agent || 'Ask the academic agent...';
+    app.dataset.modeLocked = modeLocked ? 'true' : 'false';
+    questionInput.placeholder = currentMode === 'agent'
+      ? (ui.placeholder_agent || 'Ask the academic agent...')
+      : (ui.placeholder_deepthink || 'Ask Deep Think...');
     composerHintNode.textContent = '';
+
+    if (emptyTitleNode) {
+      emptyTitleNode.textContent = modeTitle(currentMode);
+    }
+    if (modeDeepThinkButton) {
+      const active = currentMode === 'deepthink';
+      modeDeepThinkButton.classList.toggle('is-active', active);
+      modeDeepThinkButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    if (modeAgentButton) {
+      const active = currentMode === 'agent';
+      modeAgentButton.classList.toggle('is-active', active);
+      modeAgentButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+  }
+
+  function lockMode() {
+    modeLocked = true;
+    app.dataset.modeLocked = 'true';
+    if (modeDeepThinkButton) modeDeepThinkButton.disabled = true;
+    if (modeAgentButton) modeAgentButton.disabled = true;
   }
 
   function formatElapsed(ms) {
@@ -265,6 +305,9 @@
 
   function createWorkflowMarkup() {
     const main = WORKFLOW_STAGES.map((stage, index) => {
+      const edgeClass = WORKFLOW_FORWARD_EDGES[index] === 'Collecting->Executing'
+        ? 'agent-stage-arrow is-collect-execute'
+        : 'agent-stage-arrow';
       const node = `
         <div class="agent-stage" data-stage="${escapeHtml(stage.id)}">
           <span class="agent-stage-circle">${escapeHtml(String(stage.number))}</span>
@@ -274,25 +317,34 @@
       if (index === WORKFLOW_STAGES.length - 1) {
         return node;
       }
-      return `${node}<div class="agent-stage-arrow" data-edge="${escapeHtml(WORKFLOW_FORWARD_EDGES[index])}" aria-hidden="true"></div>`;
+      return `${node}<div class="${edgeClass}" data-edge="${escapeHtml(WORKFLOW_FORWARD_EDGES[index])}" aria-hidden="true"></div>`;
     }).join('');
 
     return `
       <div class="agent-workflow" data-role="workflow">
         <div class="agent-workflow-main">${main}</div>
-        <div class="agent-workflow-backtrack">
-          <div class="agent-stage-arrow is-backward" data-edge="${escapeHtml(WORKFLOW_BACK_EDGE)}" aria-hidden="true"></div>
-        </div>
       </div>
     `;
   }
 
   function applyWorkflowState(turn) {
+    if (!turn || !turn.workflow) return;
     const workflowNode = turn.node.querySelector('[data-role="workflow"]');
     if (!workflowNode) return;
     const workflow = turn.workflow || defaultWorkflowState();
     const stageStatuses = workflow.stage_statuses || {};
     const traversed = new Set(Array.isArray(workflow.traversed_edges) ? workflow.traversed_edges : []);
+    WORKFLOW_FORWARD_EDGES.forEach((edgeKey, index) => {
+      const leftStage = WORKFLOW_STAGES[index] && WORKFLOW_STAGES[index].id;
+      const rightStage = WORKFLOW_STAGES[index + 1] && WORKFLOW_STAGES[index + 1].id;
+      const leftStatus = String(stageStatuses[leftStage] || 'pending');
+      const rightStatus = String(stageStatuses[rightStage] || 'pending');
+      const leftReached = leftStatus === 'done';
+      const rightReached = rightStatus === 'done' || rightStatus === 'active';
+      if (leftReached && rightReached) {
+        traversed.add(edgeKey);
+      }
+    });
 
     workflowNode.querySelectorAll('[data-stage]').forEach((node) => {
       const stage = String(node.dataset.stage || '');
@@ -303,12 +355,21 @@
 
     workflowNode.querySelectorAll('[data-edge]').forEach((edge) => {
       const key = String(edge.dataset.edge || '');
-      edge.classList.toggle('is-traversed', traversed.has(key));
+      edge.classList.remove('is-traversed', 'is-backward');
+      const isCollectExecute = key === 'Collecting->Executing';
+      const showBackward = isCollectExecute
+        && traversed.has(WORKFLOW_BACK_EDGE)
+        && String(workflow.current_stage || '') === 'Collecting';
+      if (showBackward) {
+        edge.classList.add('is-traversed', 'is-backward');
+      } else if (traversed.has(key)) {
+        edge.classList.add('is-traversed');
+      }
     });
   }
 
   function setWorkflowState(turn, payload) {
-    if (!turn) return;
+    if (!turn || !turn.workflow) return;
     const next = defaultWorkflowState();
     const incomingStatuses = payload && typeof payload === 'object' ? payload.stage_statuses : null;
     if (incomingStatuses && typeof incomingStatuses === 'object') {
@@ -325,8 +386,10 @@
     applyWorkflowState(turn);
   }
 
-  function createTurn(question) {
+  function createTurn(question, options = {}) {
     ensureConversationStarted();
+    const showWorkflow = options.showWorkflow !== false;
+    const mode = options.mode === 'agent' ? 'agent' : 'deepthink';
     const turnId = `turn-${++turnCounter}`;
     const node = document.createElement('article');
     node.className = 'agent-turn is-pending';
@@ -341,7 +404,7 @@
             <span class="agent-thinking-title">${escapeHtml(ui.thinking_title || 'Deep thinking')}</span>
             <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml('Understanding')}</span>
           </div>
-          ${createWorkflowMarkup()}
+          ${showWorkflow ? createWorkflowMarkup() : ''}
           <div class="agent-thinking-body" data-role="thinking-body"></div>
         </section>
         <section class="agent-answer" data-role="answer"></section>
@@ -361,11 +424,20 @@
       citations: [],
       limits: [],
       answer: '',
+      pendingAnswer: '',
+      requestId: '',
+      receivedAnswer: false,
+      receivedDone: false,
+      writingFailed: false,
+      failureReason: '',
+      mode,
       currentStage: 'Understanding',
-      workflow: defaultWorkflowState(),
+      workflow: showWorkflow ? defaultWorkflowState() : null,
     };
     turnStore.set(turnId, turn);
-    applyWorkflowState(turn);
+    if (showWorkflow) {
+      applyWorkflowState(turn);
+    }
     scrollConversationToBottom(true);
     return turn;
   }
@@ -444,6 +516,7 @@
 
   function updateThinkingMeta(turn, done) {
     const meta = turn.node.querySelector('[data-role="thinking-meta"]');
+    if (!meta) return;
     const elapsed = formatElapsed(performance.now() - turn.startedAt);
     const stageLabel = String(turn.currentStage || 'Understanding');
     meta.textContent = done
@@ -451,8 +524,15 @@
       : `${stageLabel} · ${elapsed}`;
   }
 
+  function setTurnStage(turn, stage) {
+    if (!turn || !stage) return;
+    turn.currentStage = String(stage);
+    updateThinkingMeta(turn, false);
+  }
+
   function setAnswer(turn, markdown, language) {
     turn.answer = String(markdown || '');
+    turn.pendingAnswer = turn.answer;
     turn.language = language || turn.language || 'en';
     const answerNode = turn.node.querySelector('[data-role="answer"]');
     try {
@@ -468,6 +548,15 @@
     scrollConversationToBottom();
   }
 
+  function setAnswerFailure(turn, message) {
+    const answerNode = turn.node.querySelector('[data-role="answer"]');
+    const text = String(message || 'The final writing node failed, so no academic answer was emitted for this run.');
+    turn.answer = '';
+    turn.pendingAnswer = '';
+    answerNode.innerHTML = `<div class="agent-answer-failure"><p>${escapeHtml(text)}</p></div>`;
+    scrollConversationToBottom();
+  }
+
   function finalizeTurn(turn) {
     if (!turn || turn.finalized) {
       return;
@@ -475,15 +564,22 @@
     turn.finalized = true;
     if (turn.workflow && !turn.workflow.complete) {
       turn.workflow.stage_statuses = turn.workflow.stage_statuses || {};
-      turn.workflow.stage_statuses.Writing = 'done';
+      WORKFLOW_STAGES.forEach((stage) => {
+        turn.workflow.stage_statuses[stage.id] = 'done';
+      });
       turn.workflow.current_stage = 'Writing';
       turn.workflow.complete = true;
       turn.currentStage = 'Writing';
       applyWorkflowState(turn);
     }
     const answerNode = turn.node.querySelector('[data-role="answer"]');
-    if (answerNode && !answerNode.textContent.trim() && turn.answer) {
-      setAnswer(turn, turn.answer, turn.language || 'en');
+    if (answerNode && !answerNode.textContent.trim()) {
+      const fallbackAnswer = String(turn.answer || turn.pendingAnswer || '');
+      if (fallbackAnswer.trim()) {
+        setAnswer(turn, fallbackAnswer, turn.language || 'en');
+      } else if (turn.writingFailed) {
+        setAnswerFailure(turn, turn.failureReason || 'The final writing node failed, so no academic answer was emitted for this run.');
+      }
     }
     stopThinkingTimer(turn);
     turn.node.classList.remove('is-pending');
@@ -734,71 +830,80 @@
     if (!event || typeof event !== 'object') return;
 
     if (event.type === 'stage_state') {
-      setWorkflowState(turn, event.payload && typeof event.payload === 'object' ? event.payload : {});
-      updateThinkingMeta(turn, false);
+      if (turn.workflow) {
+        setWorkflowState(turn, event.payload && typeof event.payload === 'object' ? event.payload : {});
+      }
       return;
     }
 
     if (event.type === 'analysis') {
+      setTurnStage(turn, 'Understanding');
       createThinkingLine(turn, String(event.message || ''), 'bullet');
-      updateThinkingMeta(turn, false);
       return;
     }
 
     if (event.type === 'planning' || event.type === 'planning_step') {
+      setTurnStage(turn, 'Planning');
       if (event.message) {
         createThinkingLine(turn, String(event.message), 'bullet');
       }
-      updateThinkingMeta(turn, false);
       return;
     }
 
     if (event.type === 'tool_selected' || event.type === 'tool_start') {
+      setTurnStage(turn, 'Executing');
       if (event.message) {
         createThinkingLine(turn, String(event.message), 'bullet');
       }
-      updateThinkingMeta(turn, false);
       return;
     }
 
     if (event.type === 'tool_progress') {
+      setTurnStage(turn, 'Executing');
       if (event.message) {
         createThinkingLine(turn, String(event.message), 'bullet');
       }
-      updateThinkingMeta(turn, false);
       return;
     }
 
     if (event.type === 'tool_result') {
+      setTurnStage(turn, 'Executing');
       createToolEvent(turn, event);
       if (event.message) {
         createThinkingLine(turn, String(event.message), 'bullet');
       }
-      updateThinkingMeta(turn, false);
       return;
     }
 
     if (event.type === 'reflection') {
+      setTurnStage(turn, turn.workflow ? 'Collecting' : 'Collecting');
       if (event.message) {
         createThinkingLine(turn, String(event.message), 'bullet');
       }
-      updateThinkingMeta(turn, false);
       return;
     }
 
     if (event.type === 'synthesizing') {
+      setTurnStage(turn, 'Integrating');
       createThinkingLine(turn, String(event.message || ''), 'bullet');
-      updateThinkingMeta(turn, false);
       return;
     }
 
     if (event.type === 'answer') {
+      setTurnStage(turn, 'Writing');
+      turn.receivedAnswer = true;
+      turn.pendingAnswer = String(event.message || '');
       setAnswer(turn, String(event.message || ''), String(event.language || turn.language || 'en'));
       return;
     }
 
     if (event.type === 'error') {
+      setTurnStage(turn, 'Writing');
       createThinkingLine(turn, String(event.message || 'The request failed.'), 'error');
+      if (event.payload && typeof event.payload === 'object' && event.payload.writing_failed) {
+        turn.writingFailed = true;
+        turn.failureReason = String(event.payload.failure_reason || event.message || '');
+      }
       return;
     }
 
@@ -808,6 +913,22 @@
     }
 
     if (event.type === 'done') {
+      setTurnStage(turn, 'Writing');
+      turn.receivedDone = true;
+      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+      turn.writingFailed = !!payload.writing_failed;
+      turn.failureReason = String(payload.failure_reason || turn.failureReason || '');
+      if (payload.answer) {
+        turn.pendingAnswer = String(payload.answer || '');
+      }
+      if ((!turn.answer || !String(turn.answer).trim()) && turn.pendingAnswer) {
+        setAnswer(turn, String(turn.pendingAnswer || ''), String(payload.language || turn.language || 'en'));
+      } else if (turn.writingFailed) {
+        setAnswerFailure(turn, turn.failureReason || 'The final writing node failed, so no academic answer was emitted for this run.');
+      }
+      if (payload.workflow_state && typeof payload.workflow_state === 'object') {
+        setWorkflowState(turn, payload.workflow_state);
+      }
       finalizeTurn(turn);
     }
   }
@@ -866,26 +987,15 @@
     }
   }
 
-  async function submitQuestion(event) {
-    event.preventDefault();
-    const question = String(questionInput.value || '').trim();
-    if (!question) {
-      setStatus('Please enter a question.');
-      questionInput.focus();
-      return;
-    }
+  async function submitAgentQuestion(question) {
     if (activeAbortController) {
       activeAbortController.abort();
     }
 
-    const turn = createTurn(question);
+    const turn = createTurn(question, { showWorkflow: true, mode: 'agent' });
     startThinkingTimer(turn);
     const abortController = new AbortController();
     activeAbortController = abortController;
-
-    setLoading(true);
-    setStatus('');
-    questionInput.value = '';
 
     try {
       const response = await fetch(config.streamApiUrl || '/TE-/api/agent_stream.php', {
@@ -905,6 +1015,9 @@
       }
 
       await readEventStream(response, (streamEvent) => {
+        if (streamEvent.request_id) {
+          turn.requestId = String(streamEvent.request_id);
+        }
         if (streamEvent.session_id) {
           sessionId = String(streamEvent.session_id);
           try {
@@ -914,8 +1027,14 @@
         handleStreamEvent(turn, streamEvent);
       });
 
+      if (!turn.receivedDone) {
+        throw new Error(`The answer stream ended before a final done event was received${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
+      }
+      if ((!turn.answer || !String(turn.answer).trim()) && !String(turn.pendingAnswer || '').trim() && !turn.writingFailed) {
+        throw new Error(`The backend completed without returning a final answer${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
+      }
+
       finalizeTurn(turn);
-      setStatus('');
     } catch (error) {
       const message = error && error.name === 'AbortError'
         ? 'The request was cancelled.'
@@ -923,11 +1042,101 @@
       handleStreamEvent(turn, { type: 'error', message });
       setAnswer(turn, message, 'en');
       finalizeTurn(turn);
-      setStatus('The request failed.');
+      throw error;
     } finally {
       if (activeAbortController === abortController) {
         activeAbortController = null;
       }
+    }
+  }
+
+  async function submitDeepThinkQuestion(question) {
+    if (activeAbortController) {
+      activeAbortController.abort();
+    }
+
+    const turn = createTurn(question, { showWorkflow: false, mode: 'deepthink' });
+    startThinkingTimer(turn);
+    const abortController = new AbortController();
+    activeAbortController = abortController;
+
+    try {
+      const response = await fetch(config.deepThinkStreamApiUrl || '/TE-/api/deep_think_stream.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        body: JSON.stringify({
+          question,
+          model: String(config.defaultModel || 'deepseek-reasoner').trim(),
+          mode: 'deepthink',
+          session_id: sessionId || undefined,
+        }),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error(`Deep Think request failed with HTTP ${response.status}`);
+      }
+
+      await readEventStream(response, (streamEvent) => {
+        if (streamEvent.request_id) {
+          turn.requestId = String(streamEvent.request_id);
+        }
+        if (streamEvent.session_id) {
+          sessionId = String(streamEvent.session_id);
+          try {
+            window.localStorage.setItem(storageKey, sessionId);
+          } catch (_error) {}
+        }
+        handleStreamEvent(turn, streamEvent);
+      });
+
+      if (!turn.receivedDone) {
+        throw new Error(`The Deep Think stream ended before a final done event was received${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
+      }
+      if ((!turn.answer || !String(turn.answer).trim()) && !String(turn.pendingAnswer || '').trim() && !turn.writingFailed) {
+        throw new Error(`Deep Think completed without returning a final answer${turn.requestId ? ` (request ${turn.requestId})` : ''}.`);
+      }
+
+      finalizeTurn(turn);
+    } catch (error) {
+      const message = error && error.name === 'AbortError'
+        ? 'The request was cancelled.'
+        : (error && error.message ? error.message : (ui.deepthink_error || 'Deep Think failed.'));
+      handleStreamEvent(turn, { type: 'error', message });
+      setAnswer(turn, message, 'en');
+      finalizeTurn(turn);
+      throw error;
+    } finally {
+      if (activeAbortController === abortController) {
+        activeAbortController = null;
+      }
+    }
+  }
+
+  async function submitQuestion(event) {
+    event.preventDefault();
+    const question = String(questionInput.value || '').trim();
+    if (!question) {
+      setStatus('Please enter a question.');
+      questionInput.focus();
+      return;
+    }
+
+    lockMode();
+    setLoading(true);
+    setStatus('');
+    questionInput.value = '';
+
+    try {
+      if (currentMode === 'agent') {
+        await submitAgentQuestion(question);
+      } else {
+        await submitDeepThinkQuestion(question);
+      }
+      setStatus('');
+    } catch (_error) {
+      setStatus(currentMode === 'agent' ? 'The request failed.' : (ui.deepthink_error || 'Deep Think failed.'));
+    } finally {
       setLoading(false);
       questionInput.focus();
     }
@@ -939,6 +1148,15 @@
       form.requestSubmit();
     }
   });
+
+  if (modePickerNode) {
+    modePickerNode.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-mode-choice]');
+      if (!button || modeLocked) return;
+      setMode(String(button.dataset.modeChoice || 'deepthink'));
+      questionInput.focus();
+    });
+  }
 
   conversationNode.addEventListener('click', (event) => {
     const toolEvent = event.target.closest('.agent-tool-event');
@@ -994,6 +1212,6 @@
   });
 
   form.addEventListener('submit', submitQuestion);
-  setMode();
+  setMode(currentMode, { force: true });
 })();
 

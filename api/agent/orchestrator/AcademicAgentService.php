@@ -47,11 +47,30 @@ final class TekgAcademicAgentService
             throw new InvalidArgumentException('Question is required.');
         }
 
+        $requestId = trim((string)($payload['request_id'] ?? ''));
+        if ($requestId === '') {
+            $requestId = tekg_agent_make_request_id();
+        }
+        $startedAt = microtime(true);
+        $runtimeConfig = $this->runtimeConfig($payload, $requestId);
+        $this->llm = new TekgAgentLlmClient($runtimeConfig);
+        $this->applyExecutionBudget($runtimeConfig);
+        $this->logDiagnostic($requestId, 'request_started', [
+            'question' => $question,
+            'mode' => (string)($payload['mode'] ?? 'academic'),
+            'execution_timeout' => (int)($runtimeConfig['agent_execution_timeout'] ?? 0),
+            'llm_json_timeout' => (int)($runtimeConfig['llm_json_timeout'] ?? 0),
+            'llm_answer_timeout' => (int)($runtimeConfig['llm_answer_timeout'] ?? 0),
+            'llm_narrator_timeout' => (int)($runtimeConfig['llm_narrator_timeout'] ?? 0),
+        ]);
+
         $answerLanguage = tekg_agent_detect_language($question, trim((string)($payload['language'] ?? 'english')));
         $processLanguage = 'english';
         $coreModel = $this->resolveCoreModel($payload);
+        $sufficiencyModel = $this->resolveSufficiencyModel($payload);
         $expertModel = $this->resolveExpertModel($payload);
         $narratorModel = $this->resolveNarratorModel($payload);
+        $answerStructureModel = $this->resolveAnswerStructureModel($payload);
         $sessionId = trim((string)($payload['session_id'] ?? ''));
         if ($sessionId === '') {
             $sessionId = tekg_agent_make_session_id();
@@ -85,6 +104,12 @@ final class TekgAcademicAgentService
         $this->activateWorkflowStage($workflowState, 'Planning', 'Understanding', $emit, $eventSequence, $sessionId);
         $this->emitPlanningThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $planning, $eventSequence);
         $this->activateWorkflowStage($workflowState, 'Collecting', 'Planning', $emit, $eventSequence, $sessionId);
+        $this->logDiagnostic($requestId, 'planning_completed', [
+            'intent' => (string)($analysis['intent'] ?? ''),
+            'complexity' => (string)($analysis['complexity'] ?? ''),
+            'plugin_queue' => $pluginQueue,
+            'knowledge_gaps' => (array)($planning['knowledge_gaps'] ?? []),
+        ]);
 
         $reasoningTrace[] = [
             'step' => 'planning',
@@ -120,23 +145,6 @@ final class TekgAcademicAgentService
                     $this->toolSelectedMessage($pluginName, $planning)
                 ),
             ]);
-            $this->emitHeartbeat($emit, $eventSequence, $sessionId);
-            $this->emitEvent($emit, $eventSequence, [
-                'type' => 'tool_start',
-                'session_id' => $sessionId,
-                'plugin_name' => $pluginName,
-                'message' => $this->narrateEvent(
-                    $narratorModel,
-                    $processLanguage,
-                    [
-                        'type' => 'tool_start',
-                        'plugin_name' => $pluginName,
-                        'planning' => $planning,
-                    ],
-                    $this->toolStartMessage($pluginName, $planning)
-                ),
-            ]);
-
             $result = $plugin->run([
                 'question' => $question,
                 'analysis' => $analysis,
@@ -145,6 +153,12 @@ final class TekgAcademicAgentService
                 'config' => $this->expertConfig($expertModel),
             ]);
             $result = $this->augmentPluginResult($pluginName, $result, $analysis, $planning);
+            $this->logDiagnostic($requestId, 'plugin_completed', [
+                'plugin_name' => $pluginName,
+                'status' => (string)($result['status'] ?? 'unknown'),
+                'result_counts' => (array)($result['result_counts'] ?? []),
+                'latency_ms' => (int)($result['latency_ms'] ?? 0),
+            ]);
 
             $pluginResults[$pluginName] = $result;
             $pluginCalls[] = $result;
@@ -152,22 +166,6 @@ final class TekgAcademicAgentService
 
             $detailId = 'tool-' . (++$detailCounter);
             $payloadForUi = $this->toolPayloadForUi($result);
-
-            $this->emitEvent($emit, $eventSequence, [
-                'type' => 'tool_progress',
-                'session_id' => $sessionId,
-                'plugin_name' => $pluginName,
-                'message' => $this->narrateEvent(
-                    $narratorModel,
-                    $processLanguage,
-                    [
-                        'type' => 'tool_progress',
-                        'plugin_name' => $pluginName,
-                        'result' => $result,
-                    ],
-                    (string)($result['display_summary'] ?? $result['query_summary'] ?? '')
-                ),
-            ]);
 
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'tool_result',
@@ -201,7 +199,7 @@ final class TekgAcademicAgentService
             }
 
             $sufficiencyDecision = $this->evaluateSufficiency(
-                $coreModel,
+                $sufficiencyModel,
                 $question,
                 $analysis,
                 $planning,
@@ -210,6 +208,12 @@ final class TekgAcademicAgentService
                 $routingPolicy
             );
             $collectionState['sufficiency_decision'] = $sufficiencyDecision;
+            $this->logDiagnostic($requestId, 'sufficiency_evaluated', [
+                'plugin_name' => $pluginName,
+                'is_sufficient' => (bool)($sufficiencyDecision['is_sufficient'] ?? false),
+                'reason' => (string)($sufficiencyDecision['reason'] ?? ''),
+                'recommended_next_experts' => (array)($sufficiencyDecision['recommended_next_experts'] ?? []),
+            ]);
             foreach (array_values((array)($sufficiencyDecision['recommended_next_experts'] ?? [])) as $recommendedPlugin) {
                 if ($recommendedPlugin !== ''
                     && !in_array($recommendedPlugin, $pluginQueue, true)
@@ -286,23 +290,6 @@ final class TekgAcademicAgentService
                         $this->toolSelectedMessage('Citation Resolver', $planning)
                     ),
                 ]);
-                $this->emitHeartbeat($emit, $eventSequence, $sessionId);
-                $this->emitEvent($emit, $eventSequence, [
-                    'type' => 'tool_start',
-                    'session_id' => $sessionId,
-                    'plugin_name' => 'Citation Resolver',
-                    'message' => $this->narrateEvent(
-                        $narratorModel,
-                        $processLanguage,
-                        [
-                            'type' => 'tool_start',
-                            'plugin_name' => 'Citation Resolver',
-                            'planning' => $planning,
-                        ],
-                        $this->toolStartMessage('Citation Resolver', $planning)
-                    ),
-                ]);
-
                 $citationResult = $citationPlugin->run([
                     'question' => $question,
                     'analysis' => $analysis,
@@ -316,22 +303,6 @@ final class TekgAcademicAgentService
                 $pluginCalls[] = $citationResult;
                 $detailId = 'tool-' . (++$detailCounter);
                 $payloadForUi = $this->toolPayloadForUi($citationResult);
-
-                $this->emitEvent($emit, $eventSequence, [
-                    'type' => 'tool_progress',
-                    'session_id' => $sessionId,
-                    'plugin_name' => 'Citation Resolver',
-                    'message' => $this->narrateEvent(
-                        $narratorModel,
-                        $processLanguage,
-                        [
-                            'type' => 'tool_progress',
-                            'plugin_name' => 'Citation Resolver',
-                            'result' => $citationResult,
-                        ],
-                        (string)($citationResult['display_summary'] ?? $citationResult['query_summary'] ?? '')
-                    ),
-                ]);
 
                 $this->emitEvent($emit, $eventSequence, [
                     'type' => 'tool_result',
@@ -367,16 +338,29 @@ final class TekgAcademicAgentService
         $limits = $this->aggregateLimits($pluginResults, $evidence);
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
         $synthesizedEvidence = $this->buildSynthesizedEvidence($pluginResults, $evidence);
+        $writingModel = $this->resolveWritingModel($analysis, $payload, $pluginResults);
         $this->activateWorkflowStage($workflowState, 'Integrating', (string)($workflowState['current_stage'] ?? 'Executing'), $emit, $eventSequence, $sessionId);
+        $answerStructureStartedAt = microtime(true);
+        $this->logDiagnostic($requestId, 'answer_structure_started', [
+            'model' => $answerStructureModel,
+            'supported_claim_count' => count((array)($synthesizedEvidence['supported_claims'] ?? [])),
+            'citation_count' => count($citations),
+        ]);
         $answerStructure = $this->generateAnswerStructure(
-            $coreModel,
+            $answerStructureModel,
             $question,
             $analysis,
-            $planning,
             $synthesizedEvidence,
             $citations,
-            $sufficiencyDecision
+            $sufficiencyDecision,
+            $requestId
         );
+        $answerStructureDurationMs = (int)round((microtime(true) - $answerStructureStartedAt) * 1000);
+        $this->logDiagnostic($requestId, 'answer_structure_completed', [
+            'response_mode' => (string)($answerStructure['response_mode'] ?? ''),
+            'section_count' => count((array)($answerStructure['section_plan'] ?? [])),
+            'duration_ms' => $answerStructureDurationMs,
+        ]);
 
         $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence);
         $this->emitEvent($emit, $eventSequence, [
@@ -403,37 +387,64 @@ final class TekgAcademicAgentService
                 'answer_structure' => $answerStructure,
             ],
         ]);
-        $this->emitHeartbeat($emit, $eventSequence, $sessionId);
         $this->activateWorkflowStage($workflowState, 'Writing', 'Integrating', $emit, $eventSequence, $sessionId);
 
+        $supportedClaimsForWriting = $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 6);
+        $conflictingClaimsForWriting = $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 3);
+        $missingEvidenceForWriting = $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 4);
+        $citationsForWriting = $this->lightweightCitations($citations, 8);
+        $analysisForWriting = $this->analysisForWriting($analysis);
+        $this->logDiagnostic($requestId, 'answer_generation_started', [
+            'model' => $writingModel,
+            'response_mode' => (string)($answerStructure['response_mode'] ?? ''),
+            'citation_count' => count($citations),
+            'confidence' => $confidence,
+        ]);
+        $answer = '';
+        $writingFailed = false;
+        $failureReason = '';
+        $writingStartedAt = microtime(true);
         try {
             $llm = $this->llm->writeStructuredAnswer(
-                $coreModel,
+                $writingModel,
                 $answerLanguage,
                 $question,
-                $analysis,
+                $analysisForWriting,
                 $answerStructure,
-                (array)($synthesizedEvidence['supported_claims'] ?? []),
-                (array)($synthesizedEvidence['conflicting_claims'] ?? []),
-                (array)($synthesizedEvidence['missing_evidence'] ?? []),
-                $citations,
+                $supportedClaimsForWriting,
+                $conflictingClaimsForWriting,
+                $missingEvidenceForWriting,
+                $citationsForWriting,
                 $confidence,
-                $limits
+                $limits,
+                $this->answerTimeoutForModel($writingModel)
             );
         } catch (Throwable $error) {
             $llm = [
                 'ok' => false,
-                'provider' => $this->inferProvider($model),
-                'model' => $model,
+                'provider' => $this->inferProvider($writingModel),
+                'model' => $writingModel,
                 'content' => '',
                 'error' => $error->getMessage(),
             ];
-            $limits[] = 'The model service is currently unavailable, so the response fell back to a deterministic structured summary.';
+            $this->logDiagnostic($requestId, 'answer_generation_error', [
+                'error' => $error->getMessage(),
+            ]);
         }
 
-        $answer = ($llm['ok'] ?? false)
-            ? (string)($llm['content'] ?? '')
-            : $this->fallbackAnswer($analysis, $planning, $pluginResults, $evidence, $citations, $limits);
+        if (($llm['ok'] ?? false) === true) {
+            $answer = trim((string)($llm['content'] ?? ''));
+        }
+        if ($answer === '') {
+            $writingFailed = true;
+            $failureReason = trim((string)($llm['error'] ?? 'The final writing node did not return usable content.'));
+        }
+        $this->logDiagnostic($requestId, 'answer_generation_completed', [
+            'llm_ok' => (bool)($llm['ok'] ?? false),
+            'writing_failed' => $writingFailed,
+            'writing_duration_ms' => (int)round((microtime(true) - $writingStartedAt) * 1000),
+            'answer_length' => tekg_agent_strlen($answer),
+        ]);
 
         $workflowState['stage_statuses']['Writing'] = 'done';
         $workflowState['current_stage'] = 'Writing';
@@ -442,24 +453,31 @@ final class TekgAcademicAgentService
         $reasoningTrace[] = [
             'step' => 'synthesizing',
             'title' => 'Synthesis',
-            'status' => ($llm['ok'] ?? false) ? 'done' : 'fallback',
+            'status' => $writingFailed ? 'failed' : 'done',
             'details' => $synthesizingMessage,
         ];
 
         $response = [
             'question' => $question,
             'mode' => trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
+            'request_id' => $requestId,
             'language' => $answerLanguage,
             'session_id' => $sessionId,
-            'model' => $coreModel,
-            'model_provider' => $llm['provider'] ?? $this->inferProvider($coreModel),
+            'model' => $writingModel,
+            'model_provider' => $llm['provider'] ?? $this->inferProvider($writingModel),
             'models' => [
                 'core' => $coreModel,
+                'sufficiency' => $sufficiencyModel,
                 'expert' => $expertModel,
                 'narrator' => $narratorModel,
+                'answer_structure' => $answerStructureModel,
+                'writer' => $writingModel,
             ],
             'analysis' => $analysis,
             'answer' => $answer,
+            'writing_failed' => $writingFailed,
+            'failure_stage' => $writingFailed ? 'Writing' : '',
+            'failure_reason' => $failureReason,
             'reasoning_trace' => $reasoningTrace,
             'used_plugins' => array_map(static fn(array $call): string => (string)($call['plugin_name'] ?? ''), $pluginCalls),
             'plugin_calls' => $pluginCalls,
@@ -472,6 +490,10 @@ final class TekgAcademicAgentService
             'sufficiency_decision' => $sufficiencyDecision,
             'answer_structure' => $answerStructure,
             'synthesized_evidence' => $synthesizedEvidence,
+            'timings' => [
+                'answer_structure_ms' => $answerStructureDurationMs,
+                'writing_ms' => (int)round((microtime(true) - $writingStartedAt) * 1000),
+            ],
             'workflow_state' => $workflowState,
             'node_contracts' => tekg_agent_node_contracts(),
             'node_payloads' => tekg_agent_json_safe($this->buildNodePayloads(
@@ -492,22 +514,102 @@ final class TekgAcademicAgentService
         tekg_agent_save_session_memory($sessionId, $updatedMemory);
 
         $this->completeWorkflowStage($workflowState, 'Writing', $emit, $eventSequence, $sessionId);
-        $this->emitEvent($emit, $eventSequence, [
-            'type' => 'answer',
-            'session_id' => $sessionId,
-            'language' => $answerLanguage,
-            'message' => $answer,
+        $this->logDiagnostic($requestId, 'answer_event_emitting', [
+            'answer_length' => tekg_agent_strlen($answer),
+            'writing_failed' => $writingFailed,
+            'workflow_complete' => true,
         ]);
+        if (!$writingFailed) {
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'answer',
+                'request_id' => $requestId,
+                'session_id' => $sessionId,
+                'language' => $answerLanguage,
+                'message' => $answer,
+            ]);
+        } else {
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'error',
+                'request_id' => $requestId,
+                'session_id' => $sessionId,
+                'node' => 'Answer Writer Node',
+                'source' => 'Answer Writer Node',
+                'message' => 'The final writing node failed, so no academic answer was emitted for this run.',
+                'payload' => [
+                    'writing_failed' => true,
+                    'failure_stage' => 'Writing',
+                    'failure_reason' => $failureReason,
+                ],
+            ]);
+        }
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'done',
+            'request_id' => $requestId,
             'session_id' => $sessionId,
             'payload' => [
                 'confidence' => $confidence,
                 'used_plugins' => $response['used_plugins'],
+                'answer' => $answer,
+                'language' => $answerLanguage,
+                'writing_failed' => $writingFailed,
+                'failure_stage' => $writingFailed ? 'Writing' : '',
+                'failure_reason' => $failureReason,
+                'workflow_state' => $workflowState,
             ],
+        ]);
+        $this->logDiagnostic($requestId, 'request_completed', [
+            'duration_ms' => (int)round((microtime(true) - $startedAt) * 1000),
+            'used_plugins' => $response['used_plugins'],
+            'answer_length' => tekg_agent_strlen($answer),
         ]);
 
         return $response;
+    }
+
+    private function runtimeConfig(array $payload, string $requestId): array
+    {
+        $config = $this->config;
+        $config['request_id'] = $requestId;
+
+        $executionTimeout = (int)($payload['execution_timeout'] ?? $config['agent_execution_timeout'] ?? 300);
+        $config['agent_execution_timeout'] = max(90, $executionTimeout);
+        $config['llm_narrator_timeout'] = max(4, (int)($config['llm_narrator_timeout'] ?? 6));
+        $config['llm_json_timeout'] = max(10, (int)($config['llm_json_timeout'] ?? 15));
+        $config['llm_answer_timeout'] = max(15, (int)($config['llm_answer_timeout'] ?? 20));
+        $config['llm_answer_chat_timeout'] = max(15, (int)($config['llm_answer_chat_timeout'] ?? 18));
+        $config['llm_answer_reasoner_timeout'] = max(25, (int)($config['llm_answer_reasoner_timeout'] ?? 35));
+
+        if (isset($payload['llm_json_timeout'])) {
+            $config['llm_json_timeout'] = max(5, (int)$payload['llm_json_timeout']);
+        }
+        if (isset($payload['llm_answer_timeout'])) {
+            $config['llm_answer_timeout'] = max(5, (int)$payload['llm_answer_timeout']);
+        }
+        if (isset($payload['llm_answer_chat_timeout'])) {
+            $config['llm_answer_chat_timeout'] = max(5, (int)$payload['llm_answer_chat_timeout']);
+        }
+        if (isset($payload['llm_answer_reasoner_timeout'])) {
+            $config['llm_answer_reasoner_timeout'] = max(5, (int)$payload['llm_answer_reasoner_timeout']);
+        }
+        if (isset($payload['llm_narrator_timeout'])) {
+            $config['llm_narrator_timeout'] = max(2, (int)$payload['llm_narrator_timeout']);
+        }
+
+        return $config;
+    }
+
+    private function applyExecutionBudget(array $config): void
+    {
+        $timeout = max(60, (int)($config['agent_execution_timeout'] ?? 240));
+        @ini_set('max_execution_time', (string)$timeout);
+        if (function_exists('set_time_limit')) {
+            @set_time_limit($timeout);
+        }
+    }
+
+    private function logDiagnostic(string $requestId, string $event, array $payload = []): void
+    {
+        tekg_agent_append_diagnostic_log($requestId, $event, $payload);
     }
 
     private function emitAnalysisThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $analysis, int &$eventSequence): void
@@ -566,7 +668,7 @@ final class TekgAcademicAgentService
 
     private function emitPlanningThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $planning, int &$eventSequence): void
     {
-        foreach ((array)($planning['knowledge_gaps'] ?? []) as $gap) {
+        foreach (array_slice((array)($planning['knowledge_gaps'] ?? []), 0, 2) as $gap) {
             $fallback = 'Current knowledge gap: ' . (string)($gap['gap_type'] ?? 'unknown') . ' because ' . tekg_agent_lower((string)($gap['why_needed'] ?? 'it is still needed')) . '.';
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'planning_step',
@@ -581,7 +683,7 @@ final class TekgAcademicAgentService
             ]);
         }
 
-        foreach ((array)($planning['subtasks'] ?? []) as $subtask) {
+        foreach (array_slice((array)($planning['subtasks'] ?? []), 0, 3) as $subtask) {
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'planning_step',
                 'session_id' => $sessionId,
@@ -601,6 +703,11 @@ final class TekgAcademicAgentService
         return trim((string)($payload['model'] ?? $this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-reasoner'));
     }
 
+    private function resolveSufficiencyModel(array $payload): string
+    {
+        return trim((string)($payload['sufficiency_model'] ?? $this->resolveCoreModel($payload)));
+    }
+
     private function resolveExpertModel(array $payload): string
     {
         return trim((string)($payload['expert_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
@@ -609,6 +716,35 @@ final class TekgAcademicAgentService
     private function resolveNarratorModel(array $payload): string
     {
         return trim((string)($payload['narrator_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
+    }
+
+    private function resolveAnswerStructureModel(array $payload): string
+    {
+        return trim((string)($payload['answer_structure_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
+    }
+
+    private function resolveWritingModel(array $analysis, array $payload, array $pluginResults): string
+    {
+        if (trim((string)($payload['writing_model'] ?? '')) !== '') {
+            return trim((string)$payload['writing_model']);
+        }
+
+        $intent = (string)($analysis['intent'] ?? 'relationship');
+        $reasonerIntents = ['mechanism', 'comparison', 'graph_analytics'];
+        if (in_array($intent, $reasonerIntents, true) || isset($pluginResults['Cypher Explorer Plugin'])) {
+            return trim((string)($this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-reasoner'));
+        }
+
+        return trim((string)($this->config['deepseek_model'] ?? 'deepseek-chat'));
+    }
+
+    private function answerTimeoutForModel(string $model): int
+    {
+        $provider = $this->inferProvider($model);
+        if ($provider === 'deepseek' && stripos($model, 'reasoner') !== false) {
+            return max(25, min(35, (int)($this->config['llm_answer_reasoner_timeout'] ?? 35)));
+        }
+        return max(15, min(20, (int)($this->config['llm_answer_chat_timeout'] ?? 18)));
     }
 
     private function expertConfig(string $expertModel): array
@@ -643,7 +779,9 @@ final class TekgAcademicAgentService
     ): void {
         $current = (string)($workflowState['current_stage'] ?? '');
         if ($current !== '' && $current !== $stage && (($workflowState['stage_statuses'][$current] ?? '') === 'active')) {
-            $workflowState['stage_statuses'][$current] = 'done';
+            $workflowState['stage_statuses'][$current] = ($current === 'Executing' && $stage === 'Collecting')
+                ? 'pending'
+                : 'done';
         }
 
         if ($fromStage !== null && $fromStage !== '' && $fromStage !== $stage) {
@@ -1130,13 +1268,20 @@ final class TekgAcademicAgentService
 
         $payload = [
             'question' => $question,
-            'analysis' => $analysis,
-            'planning' => $planning,
+            'analysis' => [
+                'intent' => (string)($analysis['intent'] ?? ''),
+                'complexity' => (string)($analysis['complexity'] ?? ''),
+                'normalized_entities' => array_slice((array)($analysis['normalized_entities'] ?? []), 0, 4),
+            ],
+            'planning' => [
+                'question_type' => (string)($planning['question_type'] ?? ''),
+                'required_evidence' => array_values((array)($planning['required_evidence'] ?? [])),
+            ],
             'collection_state' => $collectionState,
             'plugin_results' => $this->compressedPluginResults($pluginResults),
             'minimum_evidence_gate' => $routingPolicy['minimum_evidence_gate'] ?? [],
         ];
-        $generated = $this->llm->assessSufficiency($model, $payload);
+        $generated = $this->llm->assessSufficiency($model, $payload, max(10, (int)($this->config['llm_json_timeout'] ?? 15)));
         if (is_array($generated)) {
             return [
                 'is_sufficient' => (bool)($generated['is_sufficient'] ?? false),
@@ -1250,10 +1395,12 @@ final class TekgAcademicAgentService
     {
         $append = [];
         $intent = (string)($analysis['intent'] ?? 'relationship');
+        $simpleQuestion = in_array($intent, ['sequence', 'relationship', 'classification', 'expression', 'genome'], true);
+        $explicitLiteratureNeed = (bool)($analysis['asks_for_papers'] ?? false) || in_array($intent, ['literature', 'mechanism', 'comparison'], true);
 
         if ($pluginName === 'Graph Plugin') {
             $relationCount = (int)($result['result_counts']['relations'] ?? 0);
-            if ($relationCount === 0 && !in_array('Literature Plugin', $queue, true)) {
+            if ($relationCount === 0 && $explicitLiteratureNeed && !in_array('Literature Plugin', $queue, true)) {
                 $append[] = 'Literature Plugin';
             }
             if (($analysis['asks_for_graph_analytics'] ?? false) && !in_array('Graph Analytics Plugin', $queue, true)) {
@@ -1279,15 +1426,8 @@ final class TekgAcademicAgentService
             if ($reviewedCount === 0 && ($analysis['asks_for_classification'] ?? false) && !in_array('Tree Plugin', $queue, true)) {
                 $append[] = 'Tree Plugin';
             }
-            if ($reviewedCount > 0 && !in_array('Literature Reading Plugin', $queue, true)) {
+            if ($reviewedCount > 0 && !$simpleQuestion && $explicitLiteratureNeed && !in_array('Literature Reading Plugin', $queue, true)) {
                 $append[] = 'Literature Reading Plugin';
-            }
-        }
-
-        foreach ((array)($planning['tool_plan'] ?? []) as $plannedTool) {
-            $plugin = (string)($plannedTool['plugin'] ?? '');
-            if ($plugin !== '' && !in_array($plugin, $queue, true) && !in_array($plugin, $append, true)) {
-                $append[] = $plugin;
             }
         }
 
@@ -1413,6 +1553,9 @@ final class TekgAcademicAgentService
 
     private function emitEvent(?callable $emit, int &$eventSequence, array $event): void
     {
+        if (!isset($event['request_id']) && !empty($this->config['request_id'])) {
+            $event['request_id'] = (string)$this->config['request_id'];
+        }
         $event['node'] = (string)($event['node'] ?? $this->defaultNodeForEvent((string)($event['type'] ?? 'event')));
         $event['source'] = (string)($event['source'] ?? ($event['plugin_name'] ?? $event['node']));
         $event['inputs_used'] = array_values((array)($event['inputs_used'] ?? []));
@@ -1547,38 +1690,58 @@ final class TekgAcademicAgentService
         string $model,
         string $question,
         array $analysis,
-        array $planning,
         array $synthesizedEvidence,
         array $citations,
-        array $sufficiencyDecision
+        array $sufficiencyDecision,
+        string $requestId
     ): array {
-        $payload = [
-            'question' => $question,
-            'analysis' => $analysis,
-            'planning' => [
-                'question_type' => (string)($planning['question_type'] ?? ''),
-                'complexity' => (string)($planning['complexity'] ?? ''),
-                'required_evidence' => (array)($planning['required_evidence'] ?? []),
-            ],
-            'supported_claims' => (array)($synthesizedEvidence['supported_claims'] ?? []),
-            'conflicting_claims' => (array)($synthesizedEvidence['conflicting_claims'] ?? []),
-            'missing_evidence' => (array)($synthesizedEvidence['missing_evidence'] ?? []),
-            'citation_count' => count($citations),
-            'sufficiency_decision' => $sufficiencyDecision,
-        ];
-        $generated = $this->llm->generateAnswerStructure($model, $payload);
-        if (is_array($generated) && $this->isValidAnswerStructure($generated)) {
-            return $generated;
+        $payload = $this->buildAnswerStructurePayload($question, $analysis, $synthesizedEvidence, $citations, $sufficiencyDecision);
+        try {
+            $generated = $this->llm->generateAnswerStructure($model, $payload, max(10, min(15, (int)($this->config['llm_json_timeout'] ?? 15))));
+        } catch (Throwable $error) {
+            $this->logDiagnostic($requestId, 'answer_structure_error', [
+                'error' => $error->getMessage(),
+            ]);
+            $generated = null;
         }
+        if (is_array($generated)) {
+            $normalized = $this->normalizeAnswerStructure($generated);
+            if ($this->isValidAnswerStructure($normalized)) {
+                return $normalized;
+            }
+        }
+        $this->logDiagnostic($requestId, 'answer_structure_fallback', [
+            'reason' => 'model_generation_failed_or_invalid',
+        ]);
         return $this->fallbackAnswerStructure($analysis, $synthesizedEvidence);
     }
 
     private function isValidAnswerStructure(array $structure): bool
     {
-        return trim((string)($structure['response_mode'] ?? '')) !== ''
+        return in_array(trim((string)($structure['response_mode'] ?? '')), [
+            'mechanism_chain',
+            'contrastive',
+            'literature_support',
+            'lineage_explanation',
+            'ranking_summary',
+            'evidence_summary',
+            'declarative',
+        ], true)
             && is_array($structure['section_plan'] ?? null)
             && is_array($structure['claim_order'] ?? null)
             && is_array($structure['uncertainty_notes'] ?? null);
+    }
+
+    private function normalizeAnswerStructure(array $structure): array
+    {
+        $normalized = $structure;
+        $normalized['response_mode'] = trim((string)($structure['response_mode'] ?? ''));
+        $normalized['opening_claim'] = trim((string)($structure['opening_claim'] ?? ''));
+        $normalized['citation_policy'] = trim((string)($structure['citation_policy'] ?? ''));
+        $normalized['section_plan'] = array_values(array_filter(array_map('strval', (array)($structure['section_plan'] ?? []))));
+        $normalized['claim_order'] = array_values(array_filter(array_map('strval', (array)($structure['claim_order'] ?? []))));
+        $normalized['uncertainty_notes'] = array_values(array_filter(array_map('strval', (array)($structure['uncertainty_notes'] ?? []))));
+        return $normalized;
     }
 
     private function fallbackAnswerStructure(array $analysis, array $synthesizedEvidence): array
@@ -1605,6 +1768,71 @@ final class TekgAcademicAgentService
             'citation_policy' => 'Use PMID-style in-text citations when available.',
             'uncertainty_notes' => array_values(array_slice((array)($synthesizedEvidence['missing_evidence'] ?? []), 0, 4)),
         ];
+    }
+
+    private function buildAnswerStructurePayload(
+        string $question,
+        array $analysis,
+        array $synthesizedEvidence,
+        array $citations,
+        array $sufficiencyDecision
+    ): array {
+        return [
+            'question' => $question,
+            'intent' => (string)($analysis['intent'] ?? ''),
+            'complexity' => (string)($analysis['complexity'] ?? ''),
+            'normalized_entities' => array_slice((array)($analysis['normalized_entities'] ?? []), 0, 4),
+            'supported_claims' => $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 6),
+            'conflicting_claims' => $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 3),
+            'missing_evidence' => $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 4),
+            'citation_count' => count($citations),
+            'sufficiency_decision' => [
+                'is_sufficient' => (bool)($sufficiencyDecision['is_sufficient'] ?? false),
+                'reason' => (string)($sufficiencyDecision['reason'] ?? ''),
+                'missing_dimensions' => array_slice(array_values(array_map('strval', (array)($sufficiencyDecision['missing_dimensions'] ?? []))), 0, 4),
+            ],
+        ];
+    }
+
+    private function analysisForWriting(array $analysis): array
+    {
+        return [
+            'intent' => (string)($analysis['intent'] ?? ''),
+            'complexity' => (string)($analysis['complexity'] ?? ''),
+            'normalized_entities' => array_slice((array)($analysis['normalized_entities'] ?? []), 0, 4),
+            'requested_target_types' => array_slice((array)($analysis['requested_target_types'] ?? []), 0, 6),
+        ];
+    }
+
+    private function limitClaimTexts(array $claims, int $limit): array
+    {
+        $clean = [];
+        foreach ($claims as $claim) {
+            $text = trim((string)$claim);
+            if ($text === '') {
+                continue;
+            }
+            $clean[] = $text;
+        }
+        return array_values(array_slice(array_unique($clean), 0, $limit));
+    }
+
+    private function lightweightCitations(array $citations, int $limit): array
+    {
+        $light = [];
+        foreach (array_slice($citations, 0, $limit) as $citation) {
+            if (!is_array($citation)) {
+                continue;
+            }
+            $light[] = [
+                'pmid' => (string)($citation['pmid'] ?? ''),
+                'title' => (string)($citation['title'] ?? ''),
+                'journal' => (string)($citation['journal'] ?? $citation['source'] ?? ''),
+                'year' => (string)($citation['year'] ?? ''),
+                'url' => (string)($citation['url'] ?? ''),
+            ];
+        }
+        return $light;
     }
 
     private function aggregateCitations(array $pluginResults): array
@@ -1666,49 +1894,6 @@ final class TekgAcademicAgentService
             return 'medium';
         }
         return 'low';
-    }
-
-    private function fallbackAnswer(array $analysis, array $planning, array $pluginResults, array $evidence, array $citations, array $limits): string
-    {
-        $intent = (string)($analysis['intent'] ?? 'relationship');
-        $entity = $this->firstEntityLabel($analysis);
-        $paragraphs = [];
-
-        if ($intent === 'mechanism') {
-            $paragraphs[] = 'The model layer is currently unavailable, so this answer is a deterministic synthesis of the strongest graph, literature, and supporting domain evidence that was collected for **' . $entity . '**.';
-        } elseif ($intent === 'sequence') {
-            $paragraphs[] = 'The model layer is currently unavailable, so this fallback answer is based on the Repbase-backed sequence evidence that could be collected for **' . $entity . '**.';
-        } else {
-            $paragraphs[] = 'The model layer is currently unavailable, so this is a deterministic summary of the strongest evidence gathered for the current question.';
-        }
-
-        if ($evidence !== []) {
-            $claims = [];
-            foreach (array_slice($evidence, 0, 5) as $item) {
-                $claims[] = trim((string)($item['claim'] ?? ''));
-            }
-            if ($claims !== []) {
-                $paragraphs[] = 'The most directly supported findings are: ' . implode(' ', $claims);
-            }
-        }
-
-        if ($citations !== []) {
-            $formatted = [];
-            foreach (array_slice($citations, 0, 5) as $citation) {
-                $title = trim((string)($citation['title'] ?? ''));
-                $pmid = trim((string)($citation['pmid'] ?? ''));
-                $formatted[] = $title !== '' ? $title . ($pmid !== '' ? ' (PMID: ' . $pmid . ')' : '') : ('PMID: ' . $pmid);
-            }
-            if ($formatted !== []) {
-                $paragraphs[] = 'Useful references include ' . implode('; ', $formatted) . '.';
-            }
-        }
-
-        if ($limits !== []) {
-            $paragraphs[] = 'Current limits: ' . implode(' ', array_slice($limits, 0, 3));
-        }
-
-        return implode("\n\n", array_filter($paragraphs));
     }
 
     private function updateSessionMemory(

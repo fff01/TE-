@@ -10,9 +10,15 @@ $protoSubtitle = 'Traceable academic research assistant';
 
 $ui = [
     'page_title' => 'Academic Agent',
-    'start_title' => 'Start chatting with the academic agent',
+    'start_title' => 'Start a conversation',
+    'start_title_deepthink' => 'Use Deep Think to start chatting',
+    'start_title_agent' => 'Use Agent to start chatting',
+    'start_subtitle' => 'Choose a mode, then send your first message below.',
     'message_label' => 'Message',
     'placeholder_agent' => 'Ask about TEs, disease mechanisms, papers, expression, or genomic loci...',
+    'placeholder_deepthink' => 'Ask Deep Think about sequences, graph relations, papers, expression, loci, or topology...',
+    'mode_deepthink' => 'Deep Think',
+    'mode_agent' => 'Agent',
     'plugin_details' => 'Plugin Details',
     'no_tool_selected' => 'No tool selected',
     'inspector_hint' => 'Click a tool event inside the thinking trace to inspect query details, evidence, citations, and returned data.',
@@ -36,6 +42,7 @@ $ui = [
     'graph_button' => 'Knowledge Graph',
     'graph_popup_title' => 'Knowledge Graph View',
     'graph_popup_empty' => 'No graph subgraph is available for this tool call.',
+    'deepthink_error' => 'Deep Think failed.',
 ];
 
 $local = [];
@@ -54,12 +61,23 @@ require __DIR__ . '/head.php';
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://unpkg.com/@antv/g6@5/dist/g6.min.js"></script>
 
-<section class="agent-app is-pristine" id="agentApp" data-mode="agent">
+<section class="agent-app is-pristine" id="agentApp" data-mode="deepthink" data-mode-locked="false">
   <div class="agent-chat-shell">
     <div class="agent-chat-scroll" id="agentChatScroll">
       <div class="agent-conversation" id="agentConversation">
         <section class="agent-empty-state" id="agentEmptyState">
-          <h1 class="agent-empty-title"><?= htmlspecialchars($ui['start_title'], ENT_QUOTES, 'UTF-8') ?></h1>
+          <div class="agent-mode-hero" id="agentModeHero">
+            <h1 class="agent-empty-title" id="agentEmptyTitle"><?= htmlspecialchars($ui['start_title_deepthink'], ENT_QUOTES, 'UTF-8') ?></h1>
+            <p class="agent-empty-subtitle"><?= htmlspecialchars($ui['start_subtitle'], ENT_QUOTES, 'UTF-8') ?></p>
+            <div class="agent-mode-picker" id="agentModePicker" role="tablist" aria-label="Chat mode">
+              <button type="button" class="agent-mode-pill is-active" id="modeDeepThink" data-mode-choice="deepthink" aria-pressed="true">
+                <?= htmlspecialchars($ui['mode_deepthink'], ENT_QUOTES, 'UTF-8') ?>
+              </button>
+              <button type="button" class="agent-mode-pill" id="modeAgent" data-mode-choice="agent" aria-pressed="false">
+                <?= htmlspecialchars($ui['mode_agent'], ENT_QUOTES, 'UTF-8') ?>
+              </button>
+            </div>
+          </div>
         </section>
       </div>
     </div>
@@ -118,8 +136,9 @@ require __DIR__ . '/head.php';
 <script id="agent-page-config" type="application/json"><?= json_encode([
     'apiUrl' => '/TE-/api/agent.php',
     'streamApiUrl' => '/TE-/api/agent_stream.php',
+    'deepThinkStreamApiUrl' => '/TE-/api/deep_think_stream.php',
     'defaultModel' => $defaultAgentModel,
-    'defaultMode' => 'agent',
+    'defaultMode' => 'deepthink',
     'ui' => $ui,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
 <script src="/TE-/assets/js/pages/agent.js"></script>

@@ -44,9 +44,9 @@ final class TekgAgentLlmClient
 
         try {
             if (!empty($this->config['llm_relay_url'])) {
-                $response = $this->callRelay($provider, $model, $messages, false);
+                $response = $this->callRelay($provider, $model, $messages, false, (int)($this->config['llm_narrator_timeout'] ?? 8), 'narrator');
             } else {
-                $response = $this->callProvider($provider, $model, $messages, false);
+                $response = $this->callProvider($provider, $model, $messages, false, (int)($this->config['llm_narrator_timeout'] ?? 8), 'narrator');
             }
         } catch (Throwable) {
             return null;
@@ -56,7 +56,7 @@ final class TekgAgentLlmClient
         return $content !== '' ? $content : null;
     }
 
-    public function generateJson(string $model, string $instruction, array $payload): ?array
+    public function generateJson(string $model, string $instruction, array $payload, ?int $timeout = null, string $stage = 'json'): ?array
     {
         $provider = $this->inferProvider($model);
         if (!$this->canCallModel($provider)) {
@@ -75,9 +75,10 @@ final class TekgAgentLlmClient
         ];
 
         try {
+            $effectiveTimeout = $timeout ?? (int)($this->config['llm_json_timeout'] ?? 20);
             $response = !empty($this->config['llm_relay_url'])
-                ? $this->callRelay($provider, $model, $messages, false)
-                : $this->callProvider($provider, $model, $messages, false);
+                ? $this->callRelay($provider, $model, $messages, false, $effectiveTimeout, $stage)
+                : $this->callProvider($provider, $model, $messages, false, $effectiveTimeout, $stage);
         } catch (Throwable) {
             return null;
         }
@@ -109,25 +110,29 @@ final class TekgAgentLlmClient
         return null;
     }
 
-    public function assessSufficiency(string $model, array $payload): ?array
+    public function assessSufficiency(string $model, array $payload, ?int $timeout = null): ?array
     {
         return $this->generateJson(
             $model,
             'Assess whether the currently collected evidence is sufficient to answer the question. ' .
             'Return JSON with keys is_sufficient (boolean), reason (string), missing_dimensions (array of strings), recommended_next_experts (array of strings). ' .
             'Do not recommend experts that already ran successfully unless the payload explicitly indicates that their result was empty or weak.',
-            $payload
+            $payload,
+            $timeout,
+            'sufficiency'
         );
     }
 
-    public function generateAnswerStructure(string $model, array $payload): ?array
+    public function generateAnswerStructure(string $model, array $payload, ?int $timeout = null): ?array
     {
         return $this->generateJson(
             $model,
             'Build an answer_structure JSON object for a TE-KG academic answer. ' .
             'Return JSON with keys response_mode, opening_claim, section_plan, claim_order, citation_policy, uncertainty_notes. ' .
             'section_plan and claim_order must be arrays of strings. uncertainty_notes must be an array of strings.',
-            $payload
+            $payload,
+            $timeout,
+            'answer_structure'
         );
     }
 
@@ -142,7 +147,8 @@ final class TekgAgentLlmClient
         array $missingEvidence,
         array $citations,
         string $confidence,
-        array $limits
+        array $limits,
+        ?int $timeout = null
     ): array {
         $provider = $this->inferProvider($model);
         $messages = [
@@ -160,10 +166,11 @@ final class TekgAgentLlmClient
             )],
         ];
 
+        $effectiveTimeout = $timeout ?? (int)($this->config['llm_answer_timeout'] ?? 40);
         if (!empty($this->config['llm_relay_url'])) {
-            return $this->callRelay($provider, $model, $messages);
+            return $this->callRelay($provider, $model, $messages, true, $effectiveTimeout, 'answer');
         }
-        return $this->callProvider($provider, $model, $messages);
+        return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
     }
 
     private function inferProvider(string $model): string
@@ -254,7 +261,14 @@ final class TekgAgentLlmClient
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
-    private function callRelay(string $provider, string $model, array $messages, bool $enableThinking = true): array
+    private function callRelay(
+        string $provider,
+        string $model,
+        array $messages,
+        bool $enableThinking = true,
+        int $timeout = 90,
+        string $stage = 'llm'
+    ): array
     {
         $payload = [
             'provider' => $provider,
@@ -263,7 +277,7 @@ final class TekgAgentLlmClient
             'temperature' => 0.2,
             'enable_thinking' => $enableThinking,
         ];
-        $decoded = $this->httpJson((string)$this->config['llm_relay_url'], $payload, []);
+        $decoded = $this->httpJson((string)$this->config['llm_relay_url'], $payload, [], $timeout, $stage);
         $response = $decoded['response'] ?? [];
         $content = (string)($response['choices'][0]['message']['content'] ?? '');
         return [
@@ -275,7 +289,14 @@ final class TekgAgentLlmClient
         ];
     }
 
-    private function callProvider(string $provider, string $model, array $messages, bool $enableThinking = true): array
+    private function callProvider(
+        string $provider,
+        string $model,
+        array $messages,
+        bool $enableThinking = true,
+        int $timeout = 90,
+        string $stage = 'llm'
+    ): array
     {
         $url = $provider === 'qwen' ? (string)($this->config['dashscope_url'] ?? '') : (string)($this->config['deepseek_url'] ?? '');
         $key = $provider === 'qwen' ? (string)($this->config['dashscope_key'] ?? '') : (string)($this->config['deepseek_key'] ?? '');
@@ -290,7 +311,7 @@ final class TekgAgentLlmClient
             'enable_thinking' => $enableThinking,
         ], [
             'Authorization: Bearer ' . $key,
-        ]);
+        ], $timeout, $stage);
 
         $content = (string)($decoded['choices'][0]['message']['content'] ?? '');
         return [
@@ -313,11 +334,20 @@ final class TekgAgentLlmClient
         return $url !== '' && $key !== '';
     }
 
-    private function httpJson(string $url, array $payload, array $headers): array
+    private function httpJson(string $url, array $payload, array $headers, int $timeout = 90, string $stage = 'llm'): array
     {
         $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $allHeaders = array_merge(['Content-Type: application/json', 'Accept: application/json'], $headers);
-        $response = tekg_agent_http_request($url, 'POST', $allHeaders, $body, 90, (bool)($this->config['ssl_verify'] ?? false));
+        $response = tekg_agent_http_request(
+            $url,
+            'POST',
+            $allHeaders,
+            $body,
+            $timeout,
+            (bool)($this->config['ssl_verify'] ?? false),
+            trim((string)($this->config['request_id'] ?? '')) !== '' ? (string)$this->config['request_id'] : null,
+            'llm_' . $stage
+        );
         $decoded = json_decode((string)$response['body'], true);
         if (!is_array($decoded)) {
             throw new RuntimeException('LLM provider returned invalid JSON.');

@@ -17,7 +17,7 @@ require_once __DIR__ . '/agent/plugins/ExpressionPlugin.php';
 require_once __DIR__ . '/agent/plugins/GenomePlugin.php';
 require_once __DIR__ . '/agent/plugins/SequencePlugin.php';
 require_once __DIR__ . '/agent/plugins/CitationResolverPlugin.php';
-require_once __DIR__ . '/agent/orchestrator/AcademicAgentService.php';
+require_once __DIR__ . '/agent/orchestrator/DeepThinkService.php';
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -42,7 +42,6 @@ header('Connection: keep-alive');
 header('Content-Encoding: none');
 @ini_set('display_errors', '0');
 @ini_set('html_errors', '0');
-
 @ini_set('output_buffering', '0');
 @ini_set('zlib.output_compression', '0');
 @ini_set('implicit_flush', '1');
@@ -72,7 +71,7 @@ register_shutdown_function(static function () use (&$requestId, $emit): void {
         return;
     }
     if ($requestId !== null) {
-        tekg_agent_append_diagnostic_log($requestId, 'shutdown_fatal', [
+        tekg_agent_append_diagnostic_log($requestId, 'deepthink_shutdown_fatal', [
             'type' => (int)($lastError['type'] ?? 0),
             'message' => (string)($lastError['message'] ?? ''),
             'file' => (string)($lastError['file'] ?? ''),
@@ -82,7 +81,7 @@ register_shutdown_function(static function () use (&$requestId, $emit): void {
     $emit([
         'type' => 'error',
         'request_id' => $requestId,
-        'message' => 'The request terminated unexpectedly before the final answer could be delivered.',
+        'message' => 'The Deep Think request terminated unexpectedly before the final answer could be delivered.',
     ]);
     $emit([
         'type' => 'done',
@@ -107,11 +106,11 @@ try {
         $payload['request_id'] = $requestId;
     }
 
-    $service = new TekgAcademicAgentService(tekg_agent_config());
+    $service = new TekgDeepThinkService(tekg_agent_config());
     $service->stream($payload, $emit);
 } catch (Throwable $error) {
     if ($requestId !== null) {
-        tekg_agent_append_diagnostic_log($requestId, 'stream_exception', [
+        tekg_agent_append_diagnostic_log($requestId, 'deepthink_stream_exception', [
             'error' => $error->getMessage(),
         ]);
     }
