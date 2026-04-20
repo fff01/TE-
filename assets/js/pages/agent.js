@@ -185,39 +185,85 @@
       textNodes.push(walker.currentNode);
     }
 
-    const markerPattern = /\[\^(\d+)\]/g;
+    const markerPattern = /\[(?:\^)?(\d+)\]/g;
+    const pmidPattern = /\bPMID[:\s]+(\d{4,9})\b/gi;
     textNodes.forEach((textNode) => {
+      if (textNode.parentElement && textNode.parentElement.closest('a')) {
+        return;
+      }
       const text = textNode.nodeValue || '';
       markerPattern.lastIndex = 0;
-      if (!markerPattern.test(text)) {
+      pmidPattern.lastIndex = 0;
+      if (!markerPattern.test(text) && !pmidPattern.test(text)) {
         return;
       }
 
       const fragment = document.createDocumentFragment();
       let lastIndex = 0;
+      const replacements = [];
+
       markerPattern.lastIndex = 0;
       let match;
       while ((match = markerPattern.exec(text)) !== null) {
-        const start = match.index;
+        const citationIndex = Math.max(0, Number.parseInt(match[1], 10) - 1);
+        const citation = turn.citations[citationIndex] || {};
+        replacements.push({
+          start: match.index,
+          end: markerPattern.lastIndex,
+          build() {
+            const anchor = document.createElement('a');
+            anchor.className = 'agent-inline-citation';
+            anchor.href = normalizeCitationUrl(citation);
+            anchor.target = '_blank';
+            anchor.rel = 'noopener noreferrer';
+            anchor.textContent = String(citationIndex + 1);
+            anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
+            anchor.dataset.citationTitle = normalizeCitationTitle(citation);
+
+            const sup = document.createElement('sup');
+            sup.appendChild(anchor);
+            return sup;
+          },
+        });
+      }
+
+      pmidPattern.lastIndex = 0;
+      while ((match = pmidPattern.exec(text)) !== null) {
+        const pmid = String(match[1] || '').trim();
+        if (!pmid) {
+          continue;
+        }
+        const citation = (turn.citations || []).find((item) => String(item && item.pmid ? item.pmid : '').trim() === pmid) || { pmid };
+        replacements.push({
+          start: match.index,
+          end: pmidPattern.lastIndex,
+          build() {
+            const anchor = document.createElement('a');
+            anchor.className = 'agent-inline-citation';
+            anchor.href = normalizeCitationUrl(citation);
+            anchor.target = '_blank';
+            anchor.rel = 'noopener noreferrer';
+            anchor.textContent = `PMID ${pmid}`;
+            anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
+            anchor.dataset.citationTitle = normalizeCitationTitle(citation);
+            return anchor;
+          },
+        });
+      }
+
+      replacements.sort((left, right) => left.start - right.start);
+      let cursor = 0;
+      for (const replacement of replacements) {
+        if (replacement.start < cursor) {
+          continue;
+        }
+        const start = replacement.start;
         if (start > lastIndex) {
           fragment.appendChild(document.createTextNode(text.slice(lastIndex, start)));
         }
-
-        const citationIndex = Math.max(0, Number.parseInt(match[1], 10) - 1);
-        const citation = turn.citations[citationIndex] || {};
-        const anchor = document.createElement('a');
-        anchor.className = 'agent-inline-citation';
-        anchor.href = normalizeCitationUrl(citation);
-        anchor.target = '_blank';
-        anchor.rel = 'noopener noreferrer';
-        anchor.textContent = String(citationIndex + 1);
-        anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
-        anchor.dataset.citationTitle = normalizeCitationTitle(citation);
-
-        const sup = document.createElement('sup');
-        sup.appendChild(anchor);
-        fragment.appendChild(sup);
-        lastIndex = markerPattern.lastIndex;
+        fragment.appendChild(replacement.build());
+        lastIndex = replacement.end;
+        cursor = replacement.end;
       }
 
       if (lastIndex < text.length) {

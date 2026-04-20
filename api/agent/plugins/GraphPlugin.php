@@ -245,6 +245,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
         }
 
         $citations = $this->citationResolver->normalizeMany($citations, 'local_graph');
+        $citations = $this->backfillCitationTitles($citations, $pmidTitleMap);
         $resultCounts = [
             'relations' => count($rows),
             'entity_types' => count($grouped),
@@ -377,7 +378,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             "MATCH (p:Paper)
              WHERE coalesce(p.pmid,'') IN \$pmids
              RETURN coalesce(p.pmid,'') AS pmid, coalesce(p.name,'') AS title",
-            ['pmids' => array_keys($pmids)]
+            ['pmids' => array_values(array_map('strval', array_keys($pmids)))]
         );
         foreach ($rows as $row) {
             $pmid = trim((string)($row['pmid'] ?? ''));
@@ -387,6 +388,51 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             }
         }
         return $map;
+    }
+
+    private function backfillCitationTitles(array $citations, array $pmidTitleMap): array
+    {
+        $missingPmids = [];
+        foreach ($citations as $citation) {
+            if (!is_array($citation)) {
+                continue;
+            }
+            $pmid = trim((string)($citation['pmid'] ?? ''));
+            $title = trim((string)($citation['title'] ?? ''));
+            if ($pmid !== '' && $title === '' && !isset($pmidTitleMap[$pmid])) {
+                $missingPmids[$pmid] = true;
+            }
+        }
+
+        if ($missingPmids !== []) {
+            $rows = $this->neo4j->run(
+                "MATCH (p:Paper)
+                 WHERE coalesce(p.pmid,'') IN \$pmids
+                 RETURN coalesce(p.pmid,'') AS pmid, coalesce(p.name,'') AS title",
+                ['pmids' => array_values(array_map('strval', array_keys($missingPmids)))]
+            );
+            foreach ($rows as $row) {
+                $pmid = trim((string)($row['pmid'] ?? ''));
+                $title = trim((string)($row['title'] ?? ''));
+                if ($pmid !== '' && $title !== '') {
+                    $pmidTitleMap[$pmid] = $title;
+                }
+            }
+        }
+
+        foreach ($citations as &$citation) {
+            if (!is_array($citation)) {
+                continue;
+            }
+            $pmid = trim((string)($citation['pmid'] ?? ''));
+            $title = trim((string)($citation['title'] ?? ''));
+            if ($pmid !== '' && $title === '' && isset($pmidTitleMap[$pmid])) {
+                $citation['title'] = $pmidTitleMap[$pmid];
+            }
+        }
+        unset($citation);
+
+        return $citations;
     }
 
     private function normalizeTargetTypes(array $targetTypes, string $intent): array

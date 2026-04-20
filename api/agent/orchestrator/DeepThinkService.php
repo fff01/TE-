@@ -1312,8 +1312,13 @@ final class TekgDeepThinkService
             if (!is_array($citation)) {
                 continue;
             }
+            $pmid = trim((string)($citation['pmid'] ?? ''));
             $title = trim((string)($citation['title'] ?? ''));
             $year = trim((string)($citation['year'] ?? ''));
+            if ($pmid !== '') {
+                $labels[] = trim('PMID ' . $pmid . ($title !== '' ? ': ' . $title : '') . ($year !== '' ? ' (' . $year . ')' : ''));
+                continue;
+            }
             $labels[] = trim($title . ($year !== '' ? ' (' . $year . ')' : ''));
         }
         return implode('; ', array_filter($labels));
