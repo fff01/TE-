@@ -13,9 +13,11 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
+        $question = trim((string)($context['question'] ?? ''));
         $analysis = is_array($context['analysis'] ?? null) ? $context['analysis'] : [];
         $chains = is_array($analysis['alias_chains'] ?? null) ? $analysis['alias_chains'] : [];
         $dataset = $this->loadDataset();
+        $showFullSequence = $this->wantsFullSequence($question);
 
         $matches = [];
         foreach ($chains as $chain) {
@@ -40,6 +42,7 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
             $headline = trim((string)($entry['sequence_summary']['headline'] ?? ''));
             $keywords = array_values(array_slice(is_array($entry['keywords'] ?? null) ? $entry['keywords'] : [], 0, 6));
             $structureHints = $this->structureHints($entry);
+            $sequence = preg_replace('/\s+/u', '', (string)($entry['sequence'] ?? '')) ?? '';
             $sequencePreview = $this->sequencePreview((string)($entry['sequence'] ?? ''));
 
             $previewItems[] = [
@@ -53,7 +56,7 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
                 'body' => trim(implode(' | ', array_filter([
                     $structureHints !== '' ? 'Structure: ' . $structureHints : '',
                     $keywords !== [] ? 'Keywords: ' . implode(', ', array_map('strval', $keywords)) : '',
-                    $sequencePreview !== '' ? 'Sequence: ' . $sequencePreview : '',
+                    $showFullSequence && $sequence !== '' ? 'Sequence: ' . $sequence : ($sequencePreview !== '' ? 'Sequence: ' . $sequencePreview : ''),
                 ]))),
             ];
 
@@ -78,7 +81,7 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
                     ]))),
                     'body' => trim(implode(' | ', array_filter([
                         $structureHints !== '' ? 'Structure: ' . $structureHints : '',
-                        $sequencePreview !== '' ? 'Sequence: ' . $sequencePreview : '',
+                        $showFullSequence && $sequence !== '' ? 'Sequence: ' . $sequence : ($sequencePreview !== '' ? 'Sequence: ' . $sequencePreview : ''),
                     ]))),
                 ]
             );
@@ -114,6 +117,15 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
             'display_details' => [
                 'summary' => $summary,
                 'preview_items' => $previewItems,
+                'full_sequences' => array_values(array_map(static function (array $match): array {
+                    $entry = (array)($match['entry'] ?? []);
+                    $sequence = preg_replace('/\s+/u', '', (string)($entry['sequence'] ?? '')) ?? '';
+                    return [
+                        'title' => (string)($entry['name'] ?? $match['repbase_name'] ?? ''),
+                        'length' => isset($entry['length']) ? (int)$entry['length'] : null,
+                        'sequence' => $sequence,
+                    ];
+                }, $matches)),
                 'evidence_items' => $evidenceItems,
                 'citations' => $citations,
                 'raw_preview' => ['matched_records' => $matches],
@@ -273,5 +285,23 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
     private function extractYear(string $journal): string
     {
         return preg_match('/\b(19|20)\d{2}\b/', $journal, $matches) === 1 ? $matches[0] : '';
+    }
+
+    private function wantsFullSequence(string $question): bool
+    {
+        $normalized = tekg_agent_lower($question);
+        foreach ([
+            '完整序列',
+            '完整的序列',
+            'full sequence',
+            'complete sequence',
+            'entire sequence',
+            'full-length sequence',
+        ] as $needle) {
+            if (str_contains($normalized, tekg_agent_lower($needle))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

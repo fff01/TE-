@@ -184,6 +184,7 @@ final class TekgAgentLlmClient
         array $citations,
         string $confidence,
         array $limits,
+        array $extraContext = [],
         ?int $timeout = null
     ): array {
         $provider = $this->inferProvider($model);
@@ -197,7 +198,8 @@ final class TekgAgentLlmClient
                 $missingEvidence,
                 $citations,
                 $confidence,
-                $limits
+                $limits,
+                $extraContext
             )],
         ];
 
@@ -206,6 +208,43 @@ final class TekgAgentLlmClient
             return $this->callRelay($provider, $model, $messages, true, $effectiveTimeout, 'answer');
         }
         return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
+    }
+
+    public function writeEvidenceSummary(
+        string $model,
+        string $language,
+        string $question,
+        array $analysis,
+        array $supportedClaims,
+        array $conflictingClaims,
+        array $missingEvidence,
+        array $citations,
+        string $confidence,
+        array $limits,
+        string $hint = '',
+        ?int $timeout = null
+    ): array {
+        $provider = $this->inferProvider($model);
+        $messages = [
+            ['role' => 'system', 'content' => $this->systemPrompt($language)],
+            ['role' => 'user', 'content' => $this->buildEvidenceSummaryPrompt(
+                $question,
+                $analysis,
+                $supportedClaims,
+                $conflictingClaims,
+                $missingEvidence,
+                $citations,
+                $confidence,
+                $limits,
+                $hint
+            )],
+        ];
+
+        $effectiveTimeout = $timeout ?? min(12, (int)($this->config['llm_answer_timeout'] ?? 12));
+        if (!empty($this->config['llm_relay_url'])) {
+            return $this->callRelay($provider, $model, $messages, true, $effectiveTimeout, 'answer_summary');
+        }
+        return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer_summary');
     }
 
     private function inferProvider(string $model): string
@@ -304,7 +343,8 @@ final class TekgAgentLlmClient
         array $missingEvidence,
         array $citations,
         string $confidence,
-        array $limits
+        array $limits,
+        array $extraContext
     ): string {
         $payload = [
             'question' => $question,
@@ -315,12 +355,43 @@ final class TekgAgentLlmClient
             'citations' => $citations,
             'confidence' => $confidence,
             'limits' => $limits,
+            'extra_context' => $extraContext,
         ];
 
         return "Write the final answer directly from the evidence below.\n" .
             "Start with the main conclusion, then add the most important supporting facts.\n" .
             "Keep the answer concise for simple factual questions, and only mention uncertainty if the evidence is incomplete or conflicting.\n" .
+            "If extra_context includes a full sequence and the user explicitly asked for the complete sequence, reproduce that sequence verbatim in the answer.\n" .
             "Do not invent unsupported details and do not restate raw JSON.\n\n" .
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function buildEvidenceSummaryPrompt(
+        string $question,
+        array $analysis,
+        array $supportedClaims,
+        array $conflictingClaims,
+        array $missingEvidence,
+        array $citations,
+        string $confidence,
+        array $limits,
+        string $hint
+    ): string {
+        $payload = [
+            'question' => $question,
+            'analysis' => $analysis,
+            'supported_claims' => $supportedClaims,
+            'conflicting_claims' => $conflictingClaims,
+            'missing_evidence' => $missingEvidence,
+            'citations' => $citations,
+            'confidence' => $confidence,
+            'limits' => $limits,
+            'hint' => $hint,
+        ];
+
+        return "Write a short evidence-based summary in no more than 3 sentences.\n" .
+            "Do not repeat a full sequence and do not enumerate the full list again if it has already been shown separately.\n" .
+            "Focus on the main conclusion and the most important supporting fact.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 

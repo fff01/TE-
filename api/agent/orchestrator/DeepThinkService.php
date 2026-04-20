@@ -220,45 +220,69 @@ final class TekgDeepThinkService
         ]);
 
         $writingStartedAt = microtime(true);
-        $this->logDiagnostic($requestId, 'deepthink_answer_generation_started', [
-            'model' => $writingModel,
-            'path' => 'direct_answer',
-            'intent' => (string)($analysis['intent'] ?? 'relationship'),
-        ]);
-
         $answer = '';
         $writingFailed = false;
         $failureReason = '';
-        try {
-            $llm = $this->llm->writeDirectAnswer(
+        $deterministicAnswer = $this->buildDeterministicAnswer($question, $answerLanguage, $analysis, $pluginResults, $citations);
+        if ($deterministicAnswer !== null) {
+            $answer = $deterministicAnswer['body'];
+            $this->logDiagnostic($requestId, 'deepthink_answer_generation_started', [
+                'model' => 'deterministic+summary',
+                'path' => (string)($deterministicAnswer['path'] ?? 'deterministic'),
+                'intent' => (string)($analysis['intent'] ?? 'relationship'),
+            ]);
+            $summary = $this->writeDeterministicSummary(
                 $writingModel,
                 $answerLanguage,
                 $question,
-                $this->analysisForWriting($analysis),
-                $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 6),
-                $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 3),
-                $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 4),
-                $this->lightweightCitations($citations, 8),
+                $analysis,
+                $synthesizedEvidence,
+                $citations,
                 $confidence,
                 $limits,
-                $this->answerTimeoutForModel($runtimeConfig, $writingModel)
+                (string)($deterministicAnswer['summary_hint'] ?? '')
             );
-        } catch (Throwable $error) {
-            $llm = [
-                'ok' => false,
-                'provider' => $this->inferProvider($writingModel),
+            if ($summary !== '') {
+                $answer .= ($answerLanguage === 'chinese' ? "\n\n简要总结：\n" : "\n\nSummary:\n") . $summary;
+            }
+        } else {
+            $this->logDiagnostic($requestId, 'deepthink_answer_generation_started', [
                 'model' => $writingModel,
-                'content' => '',
-                'error' => $error->getMessage(),
-            ];
-        }
+                'path' => 'direct_answer',
+                'intent' => (string)($analysis['intent'] ?? 'relationship'),
+            ]);
+            try {
+                $llm = $this->llm->writeDirectAnswer(
+                    $writingModel,
+                    $answerLanguage,
+                    $question,
+                    $this->analysisForWriting($analysis),
+                    $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 6),
+                    $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 3),
+                    $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 4),
+                    $this->lightweightCitations($citations, 8),
+                    $confidence,
+                    $limits,
+                    $this->extraWritingContext($question, $analysis, $pluginResults),
+                    $this->answerTimeoutForModel($runtimeConfig, $writingModel)
+                );
+            } catch (Throwable $error) {
+                $llm = [
+                    'ok' => false,
+                    'provider' => $this->inferProvider($writingModel),
+                    'model' => $writingModel,
+                    'content' => '',
+                    'error' => $error->getMessage(),
+                ];
+            }
 
-        if (($llm['ok'] ?? false) === true) {
-            $answer = trim((string)($llm['content'] ?? ''));
-        }
-        if ($answer === '') {
-            $writingFailed = true;
-            $failureReason = trim((string)($llm['error'] ?? 'The Deep Think writer did not return usable content.'));
+            if (($llm['ok'] ?? false) === true) {
+                $answer = trim((string)($llm['content'] ?? ''));
+            }
+            if ($answer === '') {
+                $writingFailed = true;
+                $failureReason = trim((string)($llm['error'] ?? 'The Deep Think writer did not return usable content.'));
+            }
         }
 
         $timings = [
@@ -1173,6 +1197,230 @@ final class TekgDeepThinkService
             'normalized_entities' => array_slice((array)($analysis['normalized_entities'] ?? []), 0, 4),
             'requested_target_types' => array_slice((array)($analysis['requested_target_types'] ?? []), 0, 6),
         ];
+    }
+
+    private function extraWritingContext(string $question, array $analysis, array $pluginResults): array
+    {
+        $context = [];
+
+        if (($analysis['intent'] ?? '') === 'sequence' && $this->wantsFullSequenceOutput($question)) {
+            $matched = (array)($pluginResults['Sequence Plugin']['results']['matched_records'] ?? []);
+            $fullSequences = [];
+            foreach (array_slice($matched, 0, 1) as $match) {
+                if (!is_array($match)) {
+                    continue;
+                }
+                $entry = (array)($match['entry'] ?? []);
+                $sequence = preg_replace('/\s+/u', '', (string)($entry['sequence'] ?? '')) ?? '';
+                if ($sequence === '') {
+                    continue;
+                }
+                $fullSequences[] = [
+                    'label' => (string)($entry['name'] ?? $match['repbase_name'] ?? $match['entity_label'] ?? ''),
+                    'length' => isset($entry['length']) ? (int)$entry['length'] : null,
+                    'sequence' => $sequence,
+                ];
+            }
+            if ($fullSequences !== []) {
+                $context['full_sequences'] = $fullSequences;
+            }
+        }
+
+        return $context;
+    }
+
+    private function wantsFullSequenceOutput(string $question): bool
+    {
+        $normalized = tekg_agent_lower($question);
+        foreach ([
+            '完整序列',
+            '完整的序列',
+            'full sequence',
+            'complete sequence',
+            'entire sequence',
+            'full-length sequence',
+        ] as $needle) {
+            if (str_contains($normalized, tekg_agent_lower($needle))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function buildDeterministicAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?array
+    {
+        $sequence = $this->buildDirectFullSequenceAnswer($question, $answerLanguage, $analysis, $pluginResults, $citations);
+        if ($sequence !== null) {
+            return [
+                'path' => 'direct_full_sequence',
+                'body' => $sequence,
+                'summary_hint' => 'Provide only a short summary after the full sequence. Do not repeat the sequence itself.',
+            ];
+        }
+
+        $relationships = $this->buildDirectRelationshipAnswer($question, $answerLanguage, $analysis, $pluginResults, $citations);
+        if ($relationships !== null) {
+            return [
+                'path' => 'direct_full_relationship_list',
+                'body' => $relationships,
+                'summary_hint' => 'Provide only a short summary after the full relationship list. Do not enumerate the full list again.',
+            ];
+        }
+
+        return null;
+    }
+
+    private function buildDirectFullSequenceAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?string
+    {
+        if (($analysis['intent'] ?? '') !== 'sequence') {
+            return null;
+        }
+
+        $matched = (array)($pluginResults['Sequence Plugin']['results']['matched_records'] ?? []);
+        $first = $matched[0] ?? null;
+        if (!is_array($first)) {
+            return null;
+        }
+        $entry = (array)($first['entry'] ?? []);
+        $label = (string)($entry['name'] ?? $first['repbase_name'] ?? $first['entity_label'] ?? 'the TE');
+        $sequence = preg_replace('/\s+/u', '', (string)($entry['sequence'] ?? '')) ?? '';
+        if ($sequence === '') {
+            return null;
+        }
+        $length = isset($entry['length']) ? (int)$entry['length'] : strlen($sequence);
+        $citationText = $this->formatSequenceCitations($citations);
+
+        if ($answerLanguage === 'chinese') {
+            $prefix = "是的，{$label} 有完整的序列信息。\n\n";
+            $prefix .= "当前匹配到的共识序列长度为 {$length} bp。下面给出完整序列：\n\n";
+            $body = "```text\n{$sequence}\n```\n";
+            $suffix = $citationText !== '' ? "\n参考来源：{$citationText}" : '';
+            return $prefix . $body . $suffix;
+        }
+
+        $prefix = "Yes. {$label} has a complete sequence record.\n\n";
+        $prefix .= "The matched consensus sequence length is {$length} bp. The full sequence is shown below:\n\n";
+        $body = "```text\n{$sequence}\n```\n";
+        $suffix = $citationText !== '' ? "\nSources: {$citationText}" : '';
+        return $prefix . $body . $suffix;
+    }
+
+    private function formatSequenceCitations(array $citations): string
+    {
+        $labels = [];
+        foreach (array_slice($citations, 0, 3) as $citation) {
+            if (!is_array($citation)) {
+                continue;
+            }
+            $title = trim((string)($citation['title'] ?? ''));
+            $year = trim((string)($citation['year'] ?? ''));
+            $labels[] = trim($title . ($year !== '' ? ' (' . $year . ')' : ''));
+        }
+        return implode('; ', array_filter($labels));
+    }
+
+    private function buildDirectRelationshipAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?string
+    {
+        if (($analysis['intent'] ?? '') !== 'relationship') {
+            return null;
+        }
+        $rows = (array)($pluginResults['Graph Plugin']['results']['rows'] ?? []);
+        if ($rows === []) {
+            return null;
+        }
+
+        $groupedLines = [];
+        $sourceLabel = '';
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $targetType = trim((string)($row['target_type'] ?? ''));
+            $targetLabels = array_map('strval', (array)($row['target_labels'] ?? []));
+            $resolvedType = $targetType !== '' ? $targetType : (string)($targetLabels[0] ?? 'Unknown');
+            $sourceLabel = $sourceLabel !== '' ? $sourceLabel : trim((string)($row['source_name'] ?? ''));
+            $target = trim((string)($row['target_name'] ?? ''));
+            $relation = trim((string)($row['relation_type'] ?? 'related_to'));
+            $description = trim((string)($row['relation_description'] ?? ''));
+            if ($target === '') {
+                continue;
+            }
+            $groupedLines[$resolvedType][] = [
+                'target' => $target,
+                'relation' => $relation,
+                'description' => $description,
+            ];
+        }
+
+        if ($groupedLines === []) {
+            return null;
+        }
+
+        if ($sourceLabel === '') {
+            $sourceLabel = 'the TE';
+        }
+
+        $citationText = $this->formatSequenceCitations($citations);
+        $bodyLines = [];
+        foreach ($groupedLines as $targetType => $items) {
+            $bodyLines[] = '### ' . $targetType;
+            foreach ($items as $item) {
+                $line = '- ' . $item['target'] . ' [' . $item['relation'] . ']';
+                if ($item['description'] !== '') {
+                    $line .= ' ' . $item['description'];
+                }
+                $bodyLines[] = $line;
+            }
+            $bodyLines[] = '';
+        }
+        while ($bodyLines !== [] && end($bodyLines) === '') {
+            array_pop($bodyLines);
+        }
+
+        if ($answerLanguage === 'chinese') {
+            $prefix = "以下是当前图谱中 {$sourceLabel} 的全部已连接关系：\n\n";
+            $suffix = $citationText !== '' ? "\n参考来源：{$citationText}" : '';
+            return $prefix . implode("\n", $bodyLines) . $suffix;
+        }
+
+        $prefix = "Below is the full relationship list currently connected to {$sourceLabel} in the graph:\n\n";
+        $suffix = $citationText !== '' ? "\nSources: {$citationText}" : '';
+        return $prefix . implode("\n", $bodyLines) . $suffix;
+    }
+
+    private function writeDeterministicSummary(
+        string $writingModel,
+        string $answerLanguage,
+        string $question,
+        array $analysis,
+        array $synthesizedEvidence,
+        array $citations,
+        string $confidence,
+        array $limits,
+        string $hint
+    ): string {
+        try {
+            $summaryResult = $this->llm->writeEvidenceSummary(
+                $writingModel,
+                $answerLanguage,
+                $question,
+                $this->analysisForWriting($analysis),
+                $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 4),
+                $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 2),
+                $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 2),
+                $this->lightweightCitations($citations, 4),
+                $confidence,
+                $limits,
+                $hint,
+                min(10, $this->answerTimeoutForModel($this->config, $writingModel))
+            );
+        } catch (Throwable) {
+            return '';
+        }
+        if (($summaryResult['ok'] ?? false) !== true) {
+            return '';
+        }
+        return trim((string)($summaryResult['content'] ?? ''));
     }
 
     private function limitClaimTexts(array $claims, int $limit): array
