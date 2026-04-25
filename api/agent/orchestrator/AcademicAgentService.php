@@ -729,6 +729,10 @@ final class TekgAcademicAgentService
             return trim((string)$payload['writing_model']);
         }
 
+        if (trim((string)($this->config['agent_writing_model'] ?? '')) !== '') {
+            return trim((string)($this->config['agent_writing_model'] ?? ''));
+        }
+
         $intent = (string)($analysis['intent'] ?? 'relationship');
         $reasonerIntents = ['mechanism', 'comparison', 'graph_analytics'];
         if (in_array($intent, $reasonerIntents, true) || isset($pluginResults['Cypher Explorer Plugin'])) {

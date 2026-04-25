@@ -2,11 +2,13 @@
 return [
     'dashscope_key' => getenv('DASHSCOPE_API_KEY_BIOLOGY') ?: getenv('DASHSCOPE_API_KEY') ?: '',
     'dashscope_model' => 'qwen3.5-35b-a3b',
+    'agent_writing_model' => 'qwen3.6-flash-2026-04-16',
     'deepseek_model' => 'deepseek-chat',
     'deepseek_reasoner_model' => 'deepseek-reasoner',
     'dashscope_url' => 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
     'ssl_verify' => false,
     'llm_relay_url' => 'http://127.0.0.1:18087/chat',
+    'llm_answer_chat_timeout' => 40,
     'neo4j_url' => 'http://127.0.0.1:7474/db/tekg21/tx/commit',
     'neo4j_user' => 'neo4j',
     'neo4j_password' => 'xjss9577',
