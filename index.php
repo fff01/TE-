@@ -129,6 +129,31 @@ $datasetMeta = [
     ],
 ];
 
+$classDatasetStats = [
+    [
+        'key' => 'class-i',
+        'label' => 'Class I: Retrotransposons',
+        'count' => 1140,
+        'color' => '#4f86df',
+        'description' => 'Retrotransposons',
+    ],
+    [
+        'key' => 'class-ii',
+        'label' => 'Class II: DNA Transposons',
+        'count' => 440,
+        'color' => '#b7d4ff',
+        'description' => 'DNA Transposons',
+    ],
+];
+$classDatasetTotal = array_sum(array_map(static fn(array $item): int => (int) $item['count'], $classDatasetStats));
+$classDatasetStats = array_map(
+    static function (array $item) use ($classDatasetTotal): array {
+        $item['percentage'] = $classDatasetTotal > 0 ? ((float) $item['count'] / (float) $classDatasetTotal) * 100.0 : 0.0;
+        return $item;
+    },
+    $classDatasetStats
+);
+
 $datasetItems = [];
 foreach ($datasetMeta as $meta) {
     $bucket = $meta['bucket'];
@@ -244,6 +269,58 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, [
                 <div class="status-item status-item--primary" data-status-item="<?= htmlspecialchars($primaryDatasetItem['key'], ENT_QUOTES, 'UTF-8') ?>" style="--status-gradient: <?= htmlspecialchars($primaryDatasetItem['gradient'], ENT_QUOTES, 'UTF-8') ?>; --status-shadow: <?= htmlspecialchars($primaryDatasetItem['shadow'], ENT_QUOTES, 'UTF-8') ?>; --status-text: <?= htmlspecialchars($primaryDatasetItem['text'], ENT_QUOTES, 'UTF-8') ?>;">
                   <button class="status-trigger" type="button" data-status-trigger="<?= htmlspecialchars($primaryDatasetItem['key'], ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false">
                     <div class="status-badge status-badge--ring">
+                      <svg class="status-ring-chart" viewBox="0 0 360 360" role="img" aria-label="TE class distribution ring chart">
+                        <?php
+                        $cx = 180.0;
+                        $cy = 180.0;
+                        $outerR = 168.0;
+                        $innerR = 102.0;
+                        $startAngle = -90.0;
+                        foreach ($classDatasetStats as $item):
+                            $sweep = 360.0 * ((float) $item['percentage'] / 100.0);
+                            $endAngle = $startAngle + $sweep;
+                            $largeArc = $sweep > 180.0 ? 1 : 0;
+                            $startRad = deg2rad($startAngle);
+                            $endRad = deg2rad($endAngle);
+                            $x1 = $cx + $outerR * cos($startRad);
+                            $y1 = $cy + $outerR * sin($startRad);
+                            $x2 = $cx + $outerR * cos($endRad);
+                            $y2 = $cy + $outerR * sin($endRad);
+                            $ix2 = $cx + $innerR * cos($endRad);
+                            $iy2 = $cy + $innerR * sin($endRad);
+                            $ix1 = $cx + $innerR * cos($startRad);
+                            $iy1 = $cy + $innerR * sin($startRad);
+                            $path = sprintf(
+                                'M %.4F %.4F A %.4F %.4F 0 %d 1 %.4F %.4F L %.4F %.4F A %.4F %.4F 0 %d 0 %.4F %.4F Z',
+                                $x1,
+                                $y1,
+                                $outerR,
+                                $outerR,
+                                $largeArc,
+                                $x2,
+                                $y2,
+                                $ix2,
+                                $iy2,
+                                $innerR,
+                                $innerR,
+                                $largeArc,
+                                $ix1,
+                                $iy1
+                            );
+                        ?>
+                        <path
+                          class="status-ring-segment"
+                          d="<?= htmlspecialchars($path, ENT_QUOTES, 'UTF-8') ?>"
+                          fill="<?= htmlspecialchars($item['color'], ENT_QUOTES, 'UTF-8') ?>"
+                          data-label="<?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>"
+                          data-count="<?= htmlspecialchars((string) $item['count'], ENT_QUOTES, 'UTF-8') ?>"
+                          data-percentage="<?= htmlspecialchars(number_format((float) $item['percentage'], 1), ENT_QUOTES, 'UTF-8') ?>"
+                        ></path>
+                        <?php
+                            $startAngle = $endAngle;
+                        endforeach;
+                        ?>
+                      </svg>
                       <div class="status-badge-center">
                         <div class="status-count"><?= number_format($primaryDatasetItem['count']) ?></div>
                         <div class="status-name"><?= htmlspecialchars($primaryDatasetItem['label'], ENT_QUOTES, 'UTF-8') ?></div>
@@ -261,6 +338,7 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, [
                     </div>
                   </div>
                 </div>
+
                 <div class="status-cluster status-cluster--right">
                   <?php foreach ($rightDatasetItems as $item): ?>
                     <div class="status-item status-item--orbit" data-status-item="<?= htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8') ?>" style="--status-gradient: <?= htmlspecialchars($item['gradient'], ENT_QUOTES, 'UTF-8') ?>; --status-shadow: <?= htmlspecialchars($item['shadow'], ENT_QUOTES, 'UTF-8') ?>; --status-text: <?= htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8') ?>;">
@@ -282,6 +360,11 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, [
                       </div>
                     </div>
                   <?php endforeach; ?>
+                </div>
+
+                <div class="status-tooltip" id="statusTooltip" hidden>
+                  <div class="status-tooltip-title"></div>
+                  <div class="status-tooltip-meta"></div>
                 </div>
               </div>
             <?php endif; ?>

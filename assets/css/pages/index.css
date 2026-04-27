@@ -170,23 +170,29 @@
         .status-badge--ring {
           position: relative;
           border: 0;
-          background:
-            radial-gradient(circle at center, #ffffff 0 30%, transparent 30.5% 100%),
-            conic-gradient(from 200deg, #dbe9ff 0deg, #5f92ea 150deg, #7eb2ff 290deg, #dbe9ff 360deg);
+          overflow: hidden;
           box-shadow:
             0 22px 44px rgba(31, 74, 140, 0.14),
             inset 0 0 0 8px rgba(255, 255, 255, 0.92);
-          overflow: hidden;
         }
 
-        .status-badge--ring::before {
-          content: "";
+        .status-ring-chart {
           position: absolute;
-          inset: 68px;
-          border-radius: 50%;
-          background:
-            radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.96), rgba(244, 249, 255, 0.92) 60%, rgba(227, 238, 255, 0.92) 100%);
-          box-shadow: inset 0 0 0 1px rgba(163, 190, 233, 0.42);
+          inset: 0;
+          width: 100%;
+          height: 100%;
+        }
+
+        .status-ring-segment {
+          cursor: pointer;
+          transition: transform 0.18s ease, opacity 0.18s ease, filter 0.18s ease;
+          transform-origin: 180px 180px;
+        }
+
+        .status-ring-segment:hover {
+          transform: scale(1.08);
+          opacity: 1;
+          filter: saturate(1.05) brightness(1.02);
         }
 
         .status-badge-center {
@@ -199,6 +205,7 @@
           justify-items: center;
           gap: 10px;
           padding: 58px;
+          pointer-events: none;
         }
 
         .status-count {
@@ -289,6 +296,38 @@
           font-size: 14px;
           font-weight: 600;
           line-height: 1.4;
+        }
+
+        .status-tooltip {
+          position: absolute;
+          min-width: 210px;
+          padding: 12px 14px;
+          border-radius: 14px;
+          background: rgba(20, 35, 62, 0.95);
+          box-shadow: 0 18px 32px rgba(13, 27, 48, 0.18);
+          color: #ffffff;
+          pointer-events: none;
+          z-index: 8;
+          opacity: 0;
+          transform: translate(-50%, -115%);
+          transition: opacity 0.12s ease;
+        }
+
+        .status-tooltip.is-visible {
+          opacity: 1;
+        }
+
+        .status-tooltip-title {
+          font-size: 14px;
+          font-weight: 700;
+          line-height: 1.45;
+        }
+
+        .status-tooltip-meta {
+          margin-top: 4px;
+          font-size: 13px;
+          line-height: 1.5;
+          color: rgba(255, 255, 255, 0.86);
         }
 
         .links-section {
