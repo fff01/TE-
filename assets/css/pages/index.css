@@ -100,15 +100,42 @@
           letter-spacing: 0.04em;
         }
 
-        .status-grid {
+        .status-layout {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 24px;
-          align-items: start;
+          justify-items: center;
+        }
+
+        .status-orbit {
+          position: relative;
+          width: min(100%, 1120px);
+          min-height: 660px;
         }
 
         .status-item {
           text-align: center;
+        }
+
+        .status-cluster {
+          position: absolute;
+          top: 50%;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 20px 18px;
+          width: 318px;
+          transform: translateY(-50%);
+        }
+
+        .status-cluster--left {
+          left: 24px;
+        }
+
+        .status-cluster--right {
+          right: 24px;
+        }
+
+        .status-item--orbit {
+          position: relative;
+          width: 100%;
         }
 
         .status-trigger {
@@ -121,30 +148,86 @@
         }
 
         .status-badge {
-          width: 160px;
-          height: 160px;
-          margin: 0 auto 14px;
+          width: 126px;
+          height: 126px;
+          margin: 0 auto 12px;
           border-radius: 50%;
           background: var(--status-gradient, linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%));
-          border: 8px solid #f8fbff;
+          border: 7px solid #f8fbff;
           box-shadow: var(--status-shadow, 0 4px 14px rgba(30, 74, 142, 0.12));
           display: grid;
           align-content: center;
           justify-items: center;
-          gap: 8px;
+          gap: 6px;
+        }
+
+        .status-item--primary .status-badge {
+          width: 360px;
+          height: 360px;
+          margin-bottom: 0;
+        }
+
+        .status-badge--ring {
+          position: relative;
+          border: 0;
+          background:
+            radial-gradient(circle at center, #ffffff 0 30%, transparent 30.5% 100%),
+            conic-gradient(from 200deg, #dbe9ff 0deg, #5f92ea 150deg, #7eb2ff 290deg, #dbe9ff 360deg);
+          box-shadow:
+            0 22px 44px rgba(31, 74, 140, 0.14),
+            inset 0 0 0 8px rgba(255, 255, 255, 0.92);
+          overflow: hidden;
+        }
+
+        .status-badge--ring::before {
+          content: "";
+          position: absolute;
+          inset: 68px;
+          border-radius: 50%;
+          background:
+            radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.96), rgba(244, 249, 255, 0.92) 60%, rgba(227, 238, 255, 0.92) 100%);
+          box-shadow: inset 0 0 0 1px rgba(163, 190, 233, 0.42);
+        }
+
+        .status-badge-center {
+          position: relative;
+          z-index: 1;
+          width: 100%;
+          height: 100%;
+          display: grid;
+          align-content: center;
+          justify-items: center;
+          gap: 10px;
+          padding: 58px;
         }
 
         .status-count {
-          font-size: 34px;
+          font-size: 26px;
           line-height: 1;
           font-weight: 800;
           color: var(--status-text, #214b8d);
         }
 
+        .status-item--primary .status-count {
+          font-size: 62px;
+        }
+
         .status-name {
-          font-size: 16px;
+          font-size: 13px;
           font-weight: 700;
           color: var(--status-text, #214b8d);
+        }
+
+        .status-item--primary .status-name {
+          font-size: 24px;
+        }
+
+        .status-item--primary {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 2;
         }
 
         .status-panel {
@@ -152,6 +235,24 @@
           overflow: hidden;
           transition: max-height 0.26s ease;
           margin-top: 18px;
+        }
+
+        .status-item--orbit .status-panel {
+          position: absolute;
+          top: calc(100% + 4px);
+          left: 50%;
+          width: 220px;
+          transform: translateX(-50%);
+          z-index: 5;
+        }
+
+        .status-item--primary .status-panel {
+          position: absolute;
+          top: calc(100% + 10px);
+          left: 50%;
+          width: 280px;
+          transform: translateX(-50%);
+          z-index: 5;
         }
 
         .status-item.is-open .status-panel {
@@ -239,16 +340,50 @@
           .hero-row {
             grid-template-columns: 1fr;
           }
+
+          .status-orbit {
+            min-height: 900px;
+          }
+
+          .status-cluster {
+            position: static;
+            width: 100%;
+            transform: none;
+          }
+
+          .status-cluster--left,
+          .status-cluster--right {
+            position: absolute;
+            left: 50%;
+            width: min(100%, 720px);
+            transform: translateX(-50%);
+          }
+
+          .status-cluster--left {
+            top: 0;
+          }
+
+          .status-cluster--right {
+            bottom: 0;
+          }
         }
 
         @media (max-width: 992px) {
-          .status-grid,
           .link-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
           }
 
           .hero-content h1 {
             font-size: 44px;
+          }
+
+          .status-orbit {
+            min-height: 980px;
+          }
+
+          .status-cluster {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: min(100%, 520px);
           }
         }
 
@@ -257,7 +392,6 @@
             padding: 0 18px;
           }
 
-          .status-grid,
           .link-grid {
             grid-template-columns: 1fr;
           }
@@ -266,8 +400,45 @@
             font-size: 34px;
           }
 
+          .status-orbit {
+            min-height: auto;
+            display: grid;
+            gap: 18px;
+          }
+
+          .status-cluster {
+            position: static;
+            grid-template-columns: 1fr;
+            width: 100%;
+          }
+
+          .status-cluster--left,
+          .status-cluster--right,
+          .status-item--orbit,
+          .status-item--primary {
+            position: static;
+            transform: none;
+            width: auto;
+          }
+
+          .status-item--orbit .status-panel,
+          .status-item--primary .status-panel {
+            position: static;
+            width: auto;
+            transform: none;
+          }
+
           .status-badge {
-            width: 160px;
-            height: 160px;
+            width: 144px;
+            height: 144px;
+          }
+
+          .status-item--primary .status-badge {
+            width: min(82vw, 260px);
+            height: min(82vw, 260px);
+          }
+
+          .status-item--primary .status-count {
+            font-size: 42px;
           }
         }
