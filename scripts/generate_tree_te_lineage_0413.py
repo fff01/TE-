@@ -3,9 +3,9 @@ import json
 import re
 from collections import Counter
 from pathlib import Path
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 SEED_FILE = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_seed.json"
 PROCESSED_DIR = ROOT / "data" / "processed" / "tekg2"
 IMPORTS_DIR = ROOT / "imports"

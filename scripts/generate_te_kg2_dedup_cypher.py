@@ -1,10 +1,9 @@
 import json
-from pathlib import Path
-
+from path_helpers import imports_path
 from normalize_te_kg2_graph import DISEASE_ALIASES, FUNCTION_ALIASES
 
 
-OUTPUT_FILE = Path("imports/te_kg2_dedup_merge.cypher")
+OUTPUT_FILE = imports_path("te_kg2_dedup_merge.cypher")
 
 
 def cypher_string(value: str) -> str:

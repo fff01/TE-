@@ -1,15 +1,14 @@
 import json
 import re
 from collections import Counter
-from pathlib import Path
-
+from path_helpers import data_path
 from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
 from semantic_aliases import EXTRA_DISEASE_ALIASES, EXTRA_FUNCTION_ALIASES, EXTRA_TE_ALIASES
 
-INPUT_FILE = Path("data/raw/te_kg2.jsonl")
-NORMALIZED_JSONL = Path("data/processed/te_kg2_normalized_output.jsonl")
-GRAPH_SEED_JSON = Path("data/processed/te_kg2_graph_seed.json")
-REPORT_JSON = Path("data/processed/te_kg2_normalization_report.json")
+INPUT_FILE = data_path("raw", "te_kg2.jsonl")
+NORMALIZED_JSONL = data_path("processed", "te_kg2_normalized_output.jsonl")
+GRAPH_SEED_JSON = data_path("processed", "te_kg2_graph_seed.json")
+REPORT_JSON = data_path("processed", "te_kg2_normalization_report.json")
 
 
 RELATION_ALIASES = {

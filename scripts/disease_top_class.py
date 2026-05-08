@@ -4,9 +4,9 @@ import re
 from pathlib import Path
 
 from semantic_aliases import EXTRA_DISEASE_ALIASES
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 FOUND_CSV = ROOT / "archive" / "processing_history" / "tmp_icd11_csv" / "Found.csv"
 NOT_FOUND_CSV = ROOT / "archive" / "processing_history" / "tmp_icd11_csv" / "Not Found.csv"
 OUTPUT_JSON = ROOT / "data" / "processed" / "disease_top_class_map.json"

@@ -1,15 +1,19 @@
 ﻿<?php
+require_once __DIR__ . '/path_config.php';
 $pageTitle = 'TE-KG Download';
 $activePage = 'download';
-$protoCurrentPath = '/TE-/download.php';
+$protoCurrentPath = tekg_app_url('download.php');
 $protoSubtitle = 'Public graph datasets currently exposed through the site';
+$pageExtraStylesheets = [
+    tekg_assets_url('css/pages/download.css'),
+];
 require __DIR__ . '/head.php';
 
 $downloadItems = [
     [
         'dataset' => 'Cancer Cell Line expression matrix',
         'filename' => 'CCLE_TE_normalized_count.tsv',
-        'path' => '/TE-/new_data/bulk_expression_web/cancer_cell_line/CCLE_TE_normalized_count.tsv',
+        'path' => tekg_app_url('new_data/bulk_expression_web/cancer_cell_line/CCLE_TE_normalized_count.tsv'),
         'format' => 'TSV',
         'used_in' => 'Expression browse, detail summary, and Plotly views',
         'description' => 'Raw bulk expression matrix for the cancer cell line cohort used to derive Cancer Cell Line expression summaries and charts.',
@@ -17,7 +21,7 @@ $downloadItems = [
     [
         'dataset' => 'Cancer Cell Line metadata',
         'filename' => 'CCLE_meta.csv',
-        'path' => '/TE-/new_data/bulk_expression_web/cancer_cell_line/CCLE_meta.csv',
+        'path' => tekg_app_url('new_data/bulk_expression_web/cancer_cell_line/CCLE_meta.csv'),
         'format' => 'CSV',
         'used_in' => 'Expression dataset preprocessing',
         'description' => 'Metadata mapping each cancer cell line run to its cohort label for aggregation and plotting.',
@@ -25,7 +29,7 @@ $downloadItems = [
     [
         'dataset' => 'Normal Cell Line expression matrix',
         'filename' => 'Normal_cell_line_TE_normalized_count.tsv',
-        'path' => '/TE-/new_data/bulk_expression_web/normal_cell_line/Normal_cell_line_TE_normalized_count.tsv',
+        'path' => tekg_app_url('new_data/bulk_expression_web/normal_cell_line/Normal_cell_line_TE_normalized_count.tsv'),
         'format' => 'TSV',
         'used_in' => 'Expression browse, detail summary, and Plotly views',
         'description' => 'Raw bulk expression matrix for normal cell line contexts used in the public Expression module.',
@@ -33,7 +37,7 @@ $downloadItems = [
     [
         'dataset' => 'Normal Cell Line metadata',
         'filename' => 'Normal_cell_line_meta.csv',
-        'path' => '/TE-/new_data/bulk_expression_web/normal_cell_line/Normal_cell_line_meta.csv',
+        'path' => tekg_app_url('new_data/bulk_expression_web/normal_cell_line/Normal_cell_line_meta.csv'),
         'format' => 'CSV',
         'used_in' => 'Expression dataset preprocessing',
         'description' => 'Metadata mapping normal cell line runs to their cell type labels.',
@@ -41,7 +45,7 @@ $downloadItems = [
     [
         'dataset' => 'Normal Tissue expression matrix',
         'filename' => 'Normal_tissue_TE_normalized_count.tsv',
-        'path' => '/TE-/new_data/bulk_expression_web/normal_tissue/Normal_tissue_TE_normalized_count.tsv',
+        'path' => tekg_app_url('new_data/bulk_expression_web/normal_tissue/Normal_tissue_TE_normalized_count.tsv'),
         'format' => 'TSV',
         'used_in' => 'Expression browse, detail summary, and Plotly views',
         'description' => 'Raw bulk expression matrix for normal tissue contexts used in the public Expression module.',
@@ -49,7 +53,7 @@ $downloadItems = [
     [
         'dataset' => 'Normal Tissue metadata',
         'filename' => 'Normal_tissue_meta.csv',
-        'path' => '/TE-/new_data/bulk_expression_web/normal_tissue/Normal_tissue_meta.csv',
+        'path' => tekg_app_url('new_data/bulk_expression_web/normal_tissue/Normal_tissue_meta.csv'),
         'format' => 'CSV',
         'used_in' => 'Expression dataset preprocessing',
         'description' => 'Metadata mapping normal tissue runs to their organ labels.',
@@ -57,7 +61,7 @@ $downloadItems = [
     [
         'dataset' => 'Graph seed',
         'filename' => 'te_kg2_graph_seed.json',
-        'path' => '/TE-/data/processed/te_kg2_graph_seed.json',
+        'path' => tekg_data_url('processed/te_kg2_graph_seed.json'),
         'format' => 'JSON',
         'used_in' => 'Database import and graph preview',
         'description' => 'Canonical TE, disease, function, and paper nodes together with the core graph relations used by the current public graph.',
@@ -65,7 +69,7 @@ $downloadItems = [
     [
         'dataset' => 'Normalized graph extraction',
         'filename' => 'te_kg2_normalized_output.jsonl',
-        'path' => '/TE-/data/processed/te_kg2_normalized_output.jsonl',
+        'path' => tekg_data_url('processed/te_kg2_normalized_output.jsonl'),
         'format' => 'JSONL',
         'used_in' => 'Database build pipeline',
         'description' => 'Normalized relation extraction result used as the upstream structured source for the current graph seed.',
@@ -73,7 +77,7 @@ $downloadItems = [
     [
         'dataset' => 'TE lineage tree',
         'filename' => 'tree_te_lineage.json',
-        'path' => '/TE-/data/processed/tree_te_lineage.json',
+        'path' => tekg_data_url('processed/tree_te_lineage.json'),
         'format' => 'JSON',
         'used_in' => 'Tree preview and lineage expansion',
         'description' => 'Structured TE lineage tree used in the public classification tree and lineage-aware graph expansion.',
@@ -81,20 +85,18 @@ $downloadItems = [
     [
         'dataset' => 'TE lineage table',
         'filename' => 'tree_te_lineage.csv',
-        'path' => '/TE-/data/processed/tree_te_lineage.csv',
+        'path' => tekg_data_url('processed/tree_te_lineage.csv'),
         'format' => 'CSV',
         'used_in' => 'Manual inspection of lineage data',
         'description' => 'Tabular export of the TE lineage hierarchy corresponding to the public lineage JSON asset.',
     ],
 ];
 ?>
-      <link rel="stylesheet" href="/TE-/assets/css/pages/download.css">
-
       <section class="download-shell">
         <div class="proto-container">
           <h1 class="download-page-title">Download</h1>
           <div class="download-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php'), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php')), ENT_QUOTES, 'UTF-8') ?>">Home</a>
             <span>/</span>
             <span>Download</span>
           </div>
@@ -142,7 +144,7 @@ $downloadItems = [
       </section>
 
       <script id="download-page-data" type="application/json"><?= json_encode($downloadItems, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-<script src="/TE-/assets/js/pages/download.js"></script>
+<script src="<?= htmlspecialchars(tekg_assets_url('js/pages/download.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     </main>
   </div>
 </body>

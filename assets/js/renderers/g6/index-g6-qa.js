@@ -440,7 +440,7 @@
       payload.custom_references = currentCustomDepth.references;
     }
 
-    const response = await fetch('api/qa.php', {
+    const response = await fetch(window.__TEKG_PATHS.apiUrl('qa.php'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

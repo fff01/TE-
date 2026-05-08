@@ -1,4 +1,5 @@
 ﻿<?php
+require_once __DIR__ . '/path_config.php';
 require_once __DIR__ . '/site_i18n.php';
 
 function repbase_svg_clean_label(string $value): string
@@ -25,7 +26,7 @@ function repbase_svg_lookup(string $query): ?array
     if ($query === '') {
         return null;
     }
-    $file = __DIR__ . '/data/processed/te_repbase_db_matched.json';
+    $file = tekg_data_fs_path('processed/te_repbase_db_matched.json');
     if (!is_file($file)) {
         return null;
     }
@@ -226,7 +227,7 @@ $candidateIds = array_values(array_unique(array_filter([
 ], static fn($v) => is_string($v) && trim($v) !== '')));
 $entry = null;
 foreach ($candidateIds as $candidate) {
-    $entry = parse_repbase_entry(__DIR__ . '/data/raw/TE_Repbase.txt', $candidate);
+    $entry = parse_repbase_entry(tekg_data_fs_path('raw/TE_Repbase.txt'), $candidate);
     if ($entry !== null) {
         break;
     }

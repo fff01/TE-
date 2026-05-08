@@ -1,15 +1,14 @@
 import json
 import re
-from pathlib import Path
-
 import requests
 
+from path_helpers import api_path, data_path, imports_path
 from semantic_aliases import EXTRA_DISEASE_ALIASES, EXTRA_FUNCTION_ALIASES
 
 
-CONFIG_PATH = Path("api/config.local.php")
-OUTPUT_CYPHER = Path("imports/tekg_semantic_standardization_merge.cypher")
-OUTPUT_REPORT = Path("data/processed/tekg_semantic_standardization_report.json")
+CONFIG_PATH = api_path("config.local.php")
+OUTPUT_CYPHER = imports_path("tekg_semantic_standardization_merge.cypher")
+OUTPUT_REPORT = data_path("processed", "tekg_semantic_standardization_report.json")
 
 
 def load_config() -> dict[str, str]:

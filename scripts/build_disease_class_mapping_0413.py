@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from openpyxl import load_workbook
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 WORKBOOK = ROOT / "archive" / "processing_history" / "disease_update_new" / "disease_classify_all_update.xlsx"
 INPUT_JSONL = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_clean.jsonl"
 OUTPUT_DIR = ROOT / "data" / "processed" / "tekg2"

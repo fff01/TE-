@@ -3,9 +3,9 @@ import math
 import sys
 from pathlib import Path
 from urllib.request import Request, urlopen
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 REPORT_PATH = ROOT / "terminology" / "missing_terminology_report.json"
 OUTPUT_DIR = ROOT / "terminology"
 RELAY_URL = "http://127.0.0.1:18087/chat"

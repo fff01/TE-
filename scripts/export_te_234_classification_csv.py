@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 
 from openpyxl import load_workbook
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 SEED_JSON = ROOT / "data" / "processed" / "tekg2" / "tekg2_seed.json"
 XLSX_ALL = ROOT / "data" / "statistics" / "TE_tree_output_all.xlsx"
 XLSX_BASE = ROOT / "data" / "statistics" / "TE_tree_output.xlsx"

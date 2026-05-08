@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 TERMINOLOGY_DIR = ROOT / "terminology"
 OVERRIDES_PATH = TERMINOLOGY_DIR / "te_terminology_overrides.json"
 REPORT_PATH = TERMINOLOGY_DIR / "translation_candidate_merge_report.json"

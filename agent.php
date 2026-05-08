@@ -1,12 +1,16 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/path_config.php';
 require_once __DIR__ . '/site_i18n.php';
 
 $pageTitle = 'TE-KG Academic Agent';
 $activePage = 'agent';
-$protoCurrentPath = '/TE-/agent.php';
+$protoCurrentPath = tekg_app_url('agent.php');
 $protoSubtitle = 'Traceable academic research assistant';
+$pageExtraStylesheets = [
+    tekg_assets_url('css/pages/agent.css'),
+];
 
 $ui = [
     'page_title' => 'Academic Agent',
@@ -57,7 +61,6 @@ $defaultAgentModel = trim((string)($local['deepseek_reasoner_model'] ?? $local['
 
 require __DIR__ . '/head.php';
 ?>
-<link rel="stylesheet" href="/TE-/assets/css/pages/agent.css">
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://unpkg.com/@antv/g6@5/dist/g6.min.js"></script>
 
@@ -134,14 +137,14 @@ require __DIR__ . '/head.php';
 </section>
 
 <script id="agent-page-config" type="application/json"><?= json_encode([
-    'apiUrl' => '/TE-/api/agent.php',
-    'streamApiUrl' => '/TE-/api/agent_stream.php',
-    'agentRunCreateUrl' => '/TE-/api/agent_runs.php',
-    'agentRunStatusUrl' => '/TE-/api/agent_run_status.php',
-    'deepThinkStreamApiUrl' => '/TE-/api/deep_think_stream.php',
+    'apiUrl' => tekg_api_url('agent.php'),
+    'streamApiUrl' => tekg_api_url('agent_stream.php'),
+    'agentRunCreateUrl' => tekg_api_url('agent_runs.php'),
+    'agentRunStatusUrl' => tekg_api_url('agent_run_status.php'),
+    'deepThinkStreamApiUrl' => tekg_api_url('deep_think_stream.php'),
     'defaultModel' => $defaultAgentModel,
     'defaultMode' => 'deepthink',
     'ui' => $ui,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-<script src="/TE-/assets/js/pages/agent.js"></script>
+<script src="<?= htmlspecialchars(tekg_assets_url('js/pages/agent.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . '/foot.php'; ?>

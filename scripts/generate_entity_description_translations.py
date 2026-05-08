@@ -3,9 +3,9 @@ import math
 import sys
 from pathlib import Path
 from urllib.request import Request, urlopen
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 ENTITY_PATH = ROOT / "data" / "processed" / "entity_descriptions.json"
 RELAY_URL = "http://127.0.0.1:18087/chat"
 DEFAULT_MODEL = "qwen3.5-plus-2026-02-15"

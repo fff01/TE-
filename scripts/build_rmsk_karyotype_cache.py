@@ -5,8 +5,8 @@ import json
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
+from path_helpers import ROOT
 
-ROOT = Path(__file__).resolve().parents[1]
 RMSK_PATH = ROOT / "data" / "rmsk.txt"
 OUT_DIR = ROOT / "data" / "processed" / "rmsk"
 KARYOTYPE_DIR = OUT_DIR / "karyotype"

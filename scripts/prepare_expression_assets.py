@@ -11,8 +11,9 @@ from statistics import median
 from typing import Any
 
 
-ROOT = Path(r"D:\wamp64\www\TE-")
-BULK_ROOT = ROOT / "data" / "raw" / "new_data" / "bulk_expression_web"
+from path_helpers import data_path
+
+BULK_ROOT = data_path("raw", "new_data", "bulk_expression_web")
 OUT_ROOT = BULK_ROOT / "processed"
 
 

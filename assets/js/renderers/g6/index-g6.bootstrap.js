@@ -837,7 +837,7 @@
       throw new Error('Disease class query is required.');
     }
 
-    const endpoint = new URL('api/graph.php', window.location.href);
+    const endpoint = new URL(window.__TEKG_PATHS.apiUrl('graph.php'), window.location.origin);
     endpoint.searchParams.set('q', classQuery);
     endpoint.searchParams.set('type', 'disease_class');
     endpoint.searchParams.set('class', classQuery);

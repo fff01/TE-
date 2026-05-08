@@ -334,11 +334,11 @@
 
   async function loadEnglishResources() {
     const [nameRes, teDescRes, entityDescRes, teLineageRes, teMetricsRes] = await Promise.allSettled([
-      fetch('data/processed/entity_description_key_translation_cache.json', { credentials: 'same-origin' }),
-      fetch('data/processed/te_descriptions.json', { credentials: 'same-origin' }),
-      fetch('data/processed/entity_descriptions.json', { credentials: 'same-origin' }),
-      fetch('data/processed/tree_te_lineage.json', { credentials: 'same-origin' }),
-      fetch('api/te_metrics.php', { credentials: 'same-origin' }),
+      fetch(window.__TEKG_PATHS.dataUrl('processed/entity_description_key_translation_cache.json'), { credentials: 'same-origin' }),
+      fetch(window.__TEKG_PATHS.dataUrl('processed/te_descriptions.json'), { credentials: 'same-origin' }),
+      fetch(window.__TEKG_PATHS.dataUrl('processed/entity_descriptions.json'), { credentials: 'same-origin' }),
+      fetch(window.__TEKG_PATHS.dataUrl('processed/tree_te_lineage.json'), { credentials: 'same-origin' }),
+      fetch(window.__TEKG_PATHS.apiUrl('te_metrics.php'), { credentials: 'same-origin' }),
     ]);
 
     if (nameRes.status === 'fulfilled' && nameRes.value.ok) {
@@ -608,7 +608,10 @@
     setStatus(`Loading one-hop graph for ${query} (key-node level ${currentKeyNodeLevel}) ...`);
 
     try {
-      const response = await fetch(`api/graph.php?q=${encodeURIComponent(query)}&key_level=${currentKeyNodeLevel}`, {
+      const endpoint = new URL(window.__TEKG_PATHS.apiUrl('graph.php'), window.location.origin);
+      endpoint.searchParams.set('q', query);
+      endpoint.searchParams.set('key_level', String(currentKeyNodeLevel));
+      const response = await fetch(endpoint.toString(), {
         credentials: 'same-origin',
       });
       if (!response.ok) {

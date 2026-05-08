@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 
 from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 PRIMARY_RAW_FILE = ROOT / "data" / "raw" / "te_kg2.jsonl"
 LEGACY_RAW_FILE = ROOT / "data" / "archive" / "legacy" / "raw" / "output.jsonl"
 REPORT_JSON = ROOT / "data" / "processed" / "disease_top_class_apply_report.json"

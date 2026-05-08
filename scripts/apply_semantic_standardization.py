@@ -1,12 +1,12 @@
 import json
 import re
-from pathlib import Path
-
 import requests
 
+from path_helpers import api_path, repo_path
 
-CONFIG_PATH = Path("api/config.local.php")
-PLAN_PATH = Path("tekg_semantic_standardization_report.json")
+
+CONFIG_PATH = api_path("config.local.php")
+PLAN_PATH = repo_path("tekg_semantic_standardization_report.json")
 
 
 MERGE_STATEMENT = """

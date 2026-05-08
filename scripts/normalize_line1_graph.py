@@ -5,8 +5,8 @@ import sys
 from pathlib import Path
 
 from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
+from path_helpers import ROOT
 
-ROOT = Path(__file__).resolve().parents[1]
 INPUT_FILE = ROOT / "data" / "archive" / "legacy" / "raw" / "output.jsonl"
 CSV_FILE = ROOT / "data" / "raw" / "LINE1_pubmed_data.csv"
 NORMALIZED_JSONL = ROOT / "data" / "archive" / "legacy" / "processed" / "normalized_output.jsonl"

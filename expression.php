@@ -1,8 +1,12 @@
 ﻿<?php
+require_once __DIR__ . '/path_config.php';
 $pageTitle = 'TE-KG Expression';
 $activePage = 'expression';
-$protoCurrentPath = '/TE-/expression.php';
+$protoCurrentPath = tekg_app_url('expression.php');
 $protoSubtitle = 'Expression-oriented TE exploration workflows';
+$pageExtraStylesheets = [
+    tekg_assets_url('css/pages/expression.css'),
+];
 
 require __DIR__ . '/api/expression_data.php';
 
@@ -59,7 +63,7 @@ function tekg_expression_page_build_url(array $overrides = [], ?string $hash = n
 
     $params = array_filter($params, static fn (string $value): bool => $value !== '');
 
-    $url = '/TE-/expression.php?' . http_build_query($params);
+    $url = tekg_app_url('expression.php') . '?' . http_build_query($params);
     if ($hash !== null && $hash !== '') {
         $url .= '#' . rawurlencode($hash);
     }
@@ -168,14 +172,12 @@ try {
 
 require __DIR__ . '/head.php';
 ?>
-      <link rel="stylesheet" href="/TE-/assets/css/pages/expression.css">
-
       <section class="expression-shell">
         <div class="proto-container">
           <h1 class="expression-page-title">Expression</h1>
           <p class="expression-intro">This browse view is now backed by the MySQL expression summary tables. It lets us shortlist TE records by expression context before we wire in the dedicated Expression detail page.</p>
           <div class="expression-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
             <span>/</span>
             <span>Expression</span>
           </div>
@@ -210,7 +212,7 @@ require __DIR__ . '/head.php';
                     <tbody>
                       <?php foreach ($browse['rows'] as $row): ?>
                         <?php $cvPayload = tekg_expression_row_cv_payload($row); ?>
-                        <?php $detailUrl = site_url_with_state('/TE-/expression_detail.php', $siteLang, null, ['te' => (string)$row['te_name'], 'metric' => 'median', 'sort' => 'default']); ?>
+                        <?php $detailUrl = site_url_with_state(tekg_app_url('expression_detail.php'), $siteLang, null, ['te' => (string)$row['te_name'], 'metric' => 'median', 'sort' => 'default']); ?>
                         <tr>
                           <td class="expression-name-cell"><a class="expression-te-name" href="<?= htmlspecialchars($detailUrl, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars((string)$row['te_name'], ENT_QUOTES, 'UTF-8') ?></a></td>
                           <td class="expression-context-cell">
@@ -248,6 +250,6 @@ require __DIR__ . '/head.php';
           </div>
         </div>
       </section>
-      <script src="/TE-/assets/js/pages/expression.js"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/expression.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . '/foot.php'; ?>
 

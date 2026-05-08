@@ -1,12 +1,12 @@
 import json
 import re
-from pathlib import Path
+from path_helpers import data_path, imports_path
 
 
-TREE_FILE = Path("data/raw/tree.txt")
-JSON_OUT = Path("data/processed/tree_te_lineage.json")
-CSV_OUT = Path("data/processed/tree_te_lineage.csv")
-CYPHER_OUT = Path("imports/import_tree_te_lineage.cypher")
+TREE_FILE = data_path("raw", "tree.txt")
+JSON_OUT = data_path("processed", "tree_te_lineage.json")
+CSV_OUT = data_path("processed", "tree_te_lineage.csv")
+CYPHER_OUT = imports_path("import_tree_te_lineage.cypher")
 
 ROOT_LABEL = "人类转座子"
 ROOT_NAME = "TE"

@@ -6,13 +6,14 @@ import re
 from typing import Any
 
 
-ROOT = Path(r"D:\wamp64\www\TE-")
-RAW_PATH = ROOT / "data" / "raw" / "TE_Repbase.txt"
-OUT_PATH = ROOT / "data" / "processed" / "te_repbase_structured.json"
-REPORT_PATH = ROOT / "data" / "processed" / "te_repbase_report.json"
-DB_TE_NAMES_PATH = ROOT / "data" / "processed" / "_db_te_names_current.json"
-ALIGNMENT_PATH = ROOT / "data" / "processed" / "te_repbase_db_alignment.json"
-DB_MATCHED_PATH = ROOT / "data" / "processed" / "te_repbase_db_matched.json"
+from path_helpers import data_path
+
+RAW_PATH = data_path("raw", "TE_Repbase.txt")
+OUT_PATH = data_path("processed", "te_repbase_structured.json")
+REPORT_PATH = data_path("processed", "te_repbase_report.json")
+DB_TE_NAMES_PATH = data_path("processed", "_db_te_names_current.json")
+ALIGNMENT_PATH = data_path("processed", "te_repbase_db_alignment.json")
+DB_MATCHED_PATH = data_path("processed", "te_repbase_db_matched.json")
 
 
 SINGLE_VALUE_TAGS = {"ID", "AC", "DE", "NM", "OS", "SQ"}

@@ -27,7 +27,7 @@
 
   async function loadSpec() {
     setStatus('Loading workflow spec...');
-    const response = await fetch('/TE-/api/agent_workflow_lab.php', { credentials: 'same-origin' });
+    const response = await fetch(window.__TEKG_PATHS.apiUrl('agent_workflow_lab.php'), { credentials: 'same-origin' });
     const payload = await response.json();
     if (!payload.ok) {
       throw new Error(payload.error || 'Failed to load workflow spec.');
@@ -205,7 +205,7 @@
       return;
     }
     setStatus('Saving workflow spec...');
-    const response = await fetch('/TE-/api/agent_workflow_lab.php', {
+    const response = await fetch(window.__TEKG_PATHS.apiUrl('agent_workflow_lab.php'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',

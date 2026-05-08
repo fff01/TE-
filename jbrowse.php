@@ -1,11 +1,17 @@
 <?php
+require __DIR__ . '/path_config.php';
+require __DIR__ . '/site_i18n.php';
+
 $pageTitle = 'TE-KG JBrowse';
 $activePage = 'genomic';
-$protoCurrentPath = '/TE-/jbrowse.php';
+$protoCurrentPath = tekg_app_url('jbrowse.php');
 $protoSubtitle = 'Standalone genome browser for TE loci';
-require __DIR__ . '/site_i18n.php';
-require __DIR__ . '/path_config.php';
 $isEmbedded = trim((string) ($_GET['embed'] ?? '')) !== '';
+if (!$isEmbedded) {
+    $pageExtraStylesheets = [
+        tekg_assets_url('css/pages/jbrowse.css'),
+    ];
+}
 
 function jbrowse_primary_chr_order(): array
 {
@@ -429,16 +435,14 @@ if ($isEmbedded) {
     require __DIR__ . '/head.php';
 }
 ?>
-      <link rel="stylesheet" href="/TE-/assets/css/pages/jbrowse.css">
-
       <section class="jbrowse-shell<?= $isEmbedded ? ' is-embedded' : '' ?>">
         <div class="jbrowse-container">
           <?php if (!$isEmbedded): ?>
           <h1 class="jbrowse-title">JBrowse</h1>
           <div class="jbrowse-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
             <span>/</span>
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/genomic.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Genomic</a>
+            <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('genomic.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Genomic</a>
             <span>/</span>
             <span>JBrowse</span>
           </div>
@@ -548,7 +552,7 @@ if ($isEmbedded) {
 
       <script src="https://unpkg.com/@jbrowse/react-linear-genome-view2@3.5.0/dist/react-linear-genome-view.umd.production.min.js" crossorigin></script>
       <script id="jbrowse-page-meta" type="application/json"><?= json_encode($pageMeta, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
-      <script src="/TE-/assets/js/pages/jbrowse.js"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/jbrowse.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php
 if ($isEmbedded) {
     ?>

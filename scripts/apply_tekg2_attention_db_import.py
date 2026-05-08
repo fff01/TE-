@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "api" / "config.local.php"
 SEED_PATH = ROOT / "data" / "processed" / "tekg2" / "tekg2_seed.json"
 REPORT_PATH = ROOT / "data" / "processed" / "tekg2" / "tekg21_attention_db_import_report.json"

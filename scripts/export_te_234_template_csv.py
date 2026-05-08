@@ -3,9 +3,9 @@ from __future__ import annotations
 import csv
 import json
 from pathlib import Path
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 SEED_JSON = ROOT / "data" / "processed" / "tekg2" / "tekg2_seed.json"
 OUT_CSV = ROOT / "data" / "statistics" / "te_234_template.csv"
 

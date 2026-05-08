@@ -1,11 +1,15 @@
 ﻿<?php
+require_once __DIR__ . '/path_config.php';
 $pageTitle = 'TE-KG Home';
 $activePage = 'home';
-$protoCurrentPath = '/TE-/index.php';
+$protoCurrentPath = tekg_app_url('index.php');
 $protoSubtitle = 'A transposable-element knowledge graph for exploration and discovery';
+$pageExtraStylesheets = [
+    tekg_assets_url('css/pages/index.css'),
+];
 require __DIR__ . '/head.php';
 
-$seedPath = __DIR__ . '/data/processed/tekg2/tekg2_seed.json';
+$seedPath = tekg_data_fs_path('processed/tekg2/tekg2_seed.json');
 $seed = json_decode((string) file_get_contents($seedPath), true);
 $nodeBuckets = $seed['nodes'] ?? [];
 
@@ -216,32 +220,30 @@ foreach ($statusChartViews as $viewKey => $view) {
 $overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into browsing, graph exploration, genomic, expression, epigenetics, download, and project information.';
 
 $quickLinks = [
-    ['title' => 'Home', 'href' => site_url_with_state('/TE-/index.php', $siteLang), 'icon' => 'home'],
-    ['title' => 'Browse', 'href' => site_url_with_state('/TE-/browse.php', $siteLang), 'icon' => 'browse'],
-    ['title' => 'TE-KG', 'href' => site_url_with_state('/TE-/preview.php', $siteLang), 'icon' => 'preview'],
-    ['title' => 'Genomic', 'href' => site_url_with_state('/TE-/genomic.php', $siteLang), 'icon' => 'genomic'],
-    ['title' => 'Expression', 'href' => site_url_with_state('/TE-/expression.php', $siteLang), 'icon' => 'expression'],
-    ['title' => 'Epigenetics', 'href' => site_url_with_state('/TE-/epigenetics.php', $siteLang), 'icon' => 'epigenetics'],
-    ['title' => 'Download', 'href' => site_url_with_state('/TE-/download.php', $siteLang), 'icon' => 'download'],
-    ['title' => 'About', 'href' => site_url_with_state('/TE-/about.php', $siteLang), 'icon' => 'about'],
+    ['title' => 'Home', 'href' => site_url_with_state(tekg_app_url('index.php'), $siteLang), 'icon' => 'home'],
+    ['title' => 'Browse', 'href' => site_url_with_state(tekg_app_url('browse.php'), $siteLang), 'icon' => 'browse'],
+    ['title' => 'TE-KG', 'href' => site_url_with_state(tekg_app_url('preview.php'), $siteLang), 'icon' => 'preview'],
+    ['title' => 'Genomic', 'href' => site_url_with_state(tekg_app_url('genomic.php'), $siteLang), 'icon' => 'genomic'],
+    ['title' => 'Expression', 'href' => site_url_with_state(tekg_app_url('expression.php'), $siteLang), 'icon' => 'expression'],
+    ['title' => 'Epigenetics', 'href' => site_url_with_state(tekg_app_url('epigenetics.php'), $siteLang), 'icon' => 'epigenetics'],
+    ['title' => 'Download', 'href' => site_url_with_state(tekg_app_url('download.php'), $siteLang), 'icon' => 'download'],
+    ['title' => 'About', 'href' => site_url_with_state(tekg_app_url('about.php'), $siteLang), 'icon' => 'about'],
 ];
 
 $homeGraphQuery = 'LINE1';
-$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, [
+$treeEmbedUrl = site_url_with_state(tekg_app_url('index_g6.html'), $siteLang, null, [
     'embed' => 'home-preview',
     'q' => $homeGraphQuery,
     'type' => 'TE',
 ]);
 ?>
-      <link rel="stylesheet" href="/TE-/assets/css/pages/index.css">
-
       <section class="hero-area">
         <div class="proto-container">
           <div class="hero-row">
             <div class="hero-content">
               <h1>Overview</h1>
               <p><?= htmlspecialchars($overviewCopy, ENT_QUOTES, 'UTF-8') ?></p>
-              <a class="learn-more" href="<?= htmlspecialchars(site_url_with_state('/TE-/about.php', $siteLang), ENT_QUOTES, 'UTF-8') ?>">Learn More...</a>
+              <a class="learn-more" href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('about.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Learn More...</a>
             </div>
             <div class="hero-figure">
               <div class="hero-figure-frame">
@@ -385,7 +387,7 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, [
         </div>
       </section>
 
-      <script src="/TE-/assets/js/pages/index.js"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/index.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     </main>
   </div>
 </body>

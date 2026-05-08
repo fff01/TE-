@@ -1,11 +1,11 @@
 import json
 import re
-from pathlib import Path
-
 import requests
 
+from path_helpers import api_path
 
-CONFIG_PATH = Path("api/config.local.php")
+
+CONFIG_PATH = api_path("config.local.php")
 
 TE_CANONICAL_MAP = {
     "LINE-1": "LINE1",

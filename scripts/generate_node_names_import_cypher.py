@@ -1,9 +1,9 @@
 import json
-from pathlib import Path
+from path_helpers import data_path, imports_path
 
 
-INPUT_FILE = Path("data/processed/te_kg2_graph_seed.json")
-OUTPUT_FILE = Path("imports/import_graph_node_names.cypher")
+INPUT_FILE = data_path("processed", "te_kg2_graph_seed.json")
+OUTPUT_FILE = imports_path("import_graph_node_names.cypher")
 
 
 LABEL_MAP = {

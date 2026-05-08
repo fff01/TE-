@@ -5,14 +5,18 @@ import json
 from pathlib import Path
 import sys
 
-ROOT = Path(r"D:\wamp64\www\TE-")
-if str(ROOT / "scripts" / "plot") not in sys.path:
-    sys.path.insert(0, str(ROOT / "scripts" / "plot"))
+SCRIPT_ROOT = Path(__file__).resolve().parents[1]
+if str(SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_ROOT))
+if str(SCRIPT_ROOT / "plot") not in sys.path:
+    sys.path.insert(0, str(SCRIPT_ROOT / "plot"))
+
+from path_helpers import data_path  # noqa: E402
 
 from base_SVG import render_structure_svg  # noqa: E402
 
-CATALOG_PATH = ROOT / "data" / "processed" / "dfam" / "dfam_curated_catalog.json"
-PLOTS_DIR = ROOT / "data" / "processed" / "dfam" / "plots"
+CATALOG_PATH = data_path("processed", "dfam", "dfam_curated_catalog.json")
+PLOTS_DIR = data_path("processed", "dfam", "plots")
 
 FRAGMENT_LABELS = {
     "fragment_3end": "3' end fragment model",

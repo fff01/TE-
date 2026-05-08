@@ -1,9 +1,9 @@
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 INPUT_JSONL = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_clean.jsonl"
 OUTPUT_JSONL = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_unresolved_fixed.jsonl"
 OUTPUT_REPORT = ROOT / "data" / "processed" / "tekg2" / "tekg2_0413_unresolved_fixed_report.json"

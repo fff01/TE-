@@ -1,16 +1,15 @@
 import json
 import re
 from collections import defaultdict
-from pathlib import Path
-
 import requests
 
+from path_helpers import api_path, data_path, imports_path
 from normalize_te_kg2_graph import DISEASE_ALIASES, FUNCTION_ALIASES
 
 
-CONFIG_PATH = Path("api/config.local.php")
-OUTPUT_CYPHER = Path("imports/tekg_exact_duplicate_merge.cypher")
-OUTPUT_REPORT = Path("data/processed/tekg_exact_duplicate_report.json")
+CONFIG_PATH = api_path("config.local.php")
+OUTPUT_CYPHER = imports_path("tekg_exact_duplicate_merge.cypher")
+OUTPUT_REPORT = data_path("processed", "tekg_exact_duplicate_report.json")
 
 
 def load_config() -> dict[str, str]:

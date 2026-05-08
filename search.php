@@ -4,8 +4,11 @@ require_once __DIR__ . '/path_config.php';
 
 $pageTitle = 'TE-KG Detail';
 $activePage = 'browse';
-$protoCurrentPath = '/TE-/search.php';
+$protoCurrentPath = tekg_app_url('search.php');
 $protoSubtitle = 'TE detail view';
+$pageExtraStylesheets = [
+    tekg_assets_url('css/pages/search.css'),
+];
 
 function tekg_clean_label_proto(string $value): string
 {
@@ -65,7 +68,7 @@ function tekg_repbase_lookup_proto(string $query): ?array
         return null;
     }
 
-    $file = __DIR__ . '/data/processed/te_repbase_db_matched.json';
+    $file = tekg_data_fs_path('processed/te_repbase_db_matched.json');
     if (!is_file($file)) {
         return null;
     }
@@ -122,7 +125,7 @@ function tekg_dfam_lookup_index_proto(): ?array
         return $lookup;
     }
     $loaded = true;
-    $file = __DIR__ . '/data/processed/dfam/dfam_lookup_index.json';
+    $file = tekg_data_fs_path('processed/dfam/dfam_lookup_index.json');
     if (!is_file($file)) {
         return null;
     }
@@ -137,7 +140,7 @@ function tekg_dfam_entry_proto(string $accession): ?array
     if (isset($cache[$accession])) {
         return $cache[$accession];
     }
-    $file = __DIR__ . '/data/processed/dfam/entries/' . $accession . '.json';
+    $file = tekg_data_fs_path('processed/dfam/entries/' . $accession . '.json');
     if (!is_file($file)) {
         $cache[$accession] = null;
         return null;
@@ -162,17 +165,17 @@ function tekg_dfam_model_label_proto(string $modelType): string
 
 function tekg_dfam_plot_relative_path_proto(string $accession): string
 {
-    return '/TE-/data/processed/dfam/plots/' . rawurlencode($accession) . '.svg';
+    return tekg_data_url('processed/dfam/plots/' . rawurlencode($accession) . '.svg');
 }
 
 function tekg_dfam_plot_filesystem_path_proto(string $accession): string
 {
-    return __DIR__ . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'processed' . DIRECTORY_SEPARATOR . 'dfam' . DIRECTORY_SEPARATOR . 'plots' . DIRECTORY_SEPARATOR . $accession . '.svg';
+    return tekg_data_fs_path('processed/dfam/plots/' . $accession . '.svg');
 }
 
 function tekg_run_python_for_dfam_plot_proto(string $accession): bool
 {
-    $script = __DIR__ . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'plot' . DIRECTORY_SEPARATOR . 'render_dfam_structure_svg.py';
+    $script = tekg_scripts_fs_path('plot/render_dfam_structure_svg.py');
     if (!is_file($script)) {
         return false;
     }
@@ -200,9 +203,9 @@ function tekg_dfam_structure_svg_path_proto(array $entry): ?string
     }
 
     $svgFile = tekg_dfam_plot_filesystem_path_proto($accession);
-    $catalogFile = __DIR__ . '/data/processed/dfam/dfam_curated_catalog.json';
-    $rendererScript = __DIR__ . '/scripts/plot/render_dfam_structure_svg.py';
-    $baseRenderer = __DIR__ . '/scripts/plot/base_SVG.py';
+    $catalogFile = tekg_data_fs_path('processed/dfam/dfam_curated_catalog.json');
+    $rendererScript = tekg_scripts_fs_path('plot/render_dfam_structure_svg.py');
+    $baseRenderer = tekg_scripts_fs_path('plot/base_SVG.py');
     $needsRender = !is_file($svgFile);
 
     if (!$needsRender) {
@@ -243,7 +246,7 @@ function tekg_repbase_structure_svg_url_proto(?array $repbase, string $query): ?
         return null;
     }
 
-    return '/TE-/repbase_structure_svg.php?te=' . rawurlencode($candidate);
+    return tekg_app_url('repbase_structure_svg.php') . '?te=' . rawurlencode($candidate);
 }
 
 function tekg_dfam_lookup_proto(string $query, string $type = 'all'): ?array
@@ -290,7 +293,7 @@ function tekg_karyotype_index_proto(): ?array
         return $lookup;
     }
     $loaded = true;
-    $file = __DIR__ . '/data/processed/rmsk/karyotype_index.json';
+    $file = tekg_data_fs_path('processed/rmsk/karyotype_index.json');
     if (!is_file($file)) {
         return null;
     }
@@ -402,7 +405,7 @@ function tekg_jbrowse_hit_label_proto(string $chrom, int $start, int $end, strin
 
 function tekg_jbrowse_build_bin_hits_for_te_proto(string $teName, int $binSize): ?array
 {
-    $rmskPath = __DIR__ . '/data/rmsk.txt';
+    $rmskPath = tekg_data_fs_path('rmsk.txt');
     if (!is_file($rmskPath)) {
         return null;
     }
@@ -512,7 +515,7 @@ function tekg_jbrowse_load_bin_hits_for_te_proto(string $teName): ?array
     }
 
     $cachePath = tekg_jbrowse_bin_cache_path_proto($teName);
-    $rmskPath = __DIR__ . '/data/rmsk.txt';
+    $rmskPath = tekg_data_fs_path('rmsk.txt');
     $sourceTime = is_file($rmskPath) ? ((int) @filemtime($rmskPath)) : 0;
     $decoded = null;
 
@@ -655,7 +658,7 @@ function tekg_tree_classification_index_proto(): ?array
     }
     $loaded = true;
 
-    $file = __DIR__ . '/data/processed/tree_te_lineage.json';
+    $file = tekg_data_fs_path('processed/tree_te_lineage.json');
     if (!is_file($file)) {
         return null;
     }
@@ -1011,8 +1014,8 @@ function tekg_jbrowse_lookup_proto(string $query, string $type = 'all', ?array $
         number_format(((int) ($locus['start'] ?? 0)) + 1),
         number_format((int) ($locus['end'] ?? 0))
     );
-    $entry['browser_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), null, $browserParams);
-    $entry['config_url'] = site_url_with_state('/TE-/jbrowse.php', $lang ?? site_lang(), null, $browserParams + ['format' => 'config']);
+    $entry['browser_url'] = site_url_with_state(tekg_app_url('jbrowse.php'), $lang ?? site_lang(), null, $browserParams);
+    $entry['config_url'] = site_url_with_state(tekg_app_url('jbrowse.php'), $lang ?? site_lang(), null, $browserParams + ['format' => 'config']);
     return $entry;
 }
 
@@ -1055,11 +1058,11 @@ $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
 $karyotypeHitMap = tekg_karyotype_bin_hit_map_proto($genomeDistribution, $jbrowseSession);
 $classificationSession = tekg_tree_classification_lookup_proto($query, $type, $repbase, $dfamSequence);
-$searchGraphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, null, array_filter([
+$searchGraphSrc = site_url_with_state(tekg_app_url('index_g6.html'), $siteLang, null, array_filter([
     'embed' => 'search-result',
     'q' => $query !== '' ? $query : null,
 ], static fn ($value) => $value !== null && $value !== ''));
-$browseBackUrl = site_url_with_state('/TE-/browse.php', $siteLang);
+$browseBackUrl = site_url_with_state(tekg_app_url('browse.php'), $siteLang);
 $detailSections = [
     ['id' => 'search-summary-panel', 'label' => 'Summary'],
     ['id' => 'search-graph-panel', 'label' => 'Local Graph'],
@@ -1076,8 +1079,6 @@ if ($jbrowseSession !== null) {
 
 require __DIR__ . '/head.php';
 ?>
-      <link rel="stylesheet" href="/TE-/assets/css/pages/search.css">
-
       <section class="search-shell">
         <div class="proto-container">
           <section class="query-panel">
@@ -1260,7 +1261,7 @@ require __DIR__ . '/head.php';
       </section>
 
       <?php if ($genomeDistribution !== null): ?>
-      <script src="/TE-/assets/vendor/karyotype/Karyotype.js"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('vendor/karyotype/Karyotype.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
       <?php endif; ?>
 
       
@@ -1278,7 +1279,7 @@ require __DIR__ . '/head.php';
         'configUrl' => (string) ($jbrowseSession['config_url'] ?? ''),
         'karyotypeHitMap' => $karyotypeHitMap,
       ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
-      <script src="/TE-/assets/js/pages/search.js"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/search.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     </main>
   </div>
 </body>

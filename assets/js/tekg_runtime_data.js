@@ -66,7 +66,7 @@
     }
     async function loadTerminology(){
       try{
-        const res = await fetch('terminology/te_terminology.json', {cache:'no-store'});
+        const res = await fetch(window.__TEKG_PATHS.terminologyUrl('te_terminology.json'), {cache:'no-store'});
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         mergeTerminology(payload);
@@ -74,7 +74,7 @@
         console.warn('Failed to load terminology table:', err);
       }
       try{
-        const overrideRes = await fetch('terminology/te_terminology_overrides.json', {cache:'no-store'});
+        const overrideRes = await fetch(window.__TEKG_PATHS.terminologyUrl('te_terminology_overrides.json'), {cache:'no-store'});
         if(!overrideRes.ok) throw new Error(`HTTP ${overrideRes.status}`);
         const overridePayload = await overrideRes.json();
         mergeTerminology(overridePayload);
@@ -84,7 +84,7 @@
     }
     async function loadTeDescriptions(){
       try{
-        const res = await fetch('data/processed/te_descriptions.json', {cache:'no-store'});
+        const res = await fetch(window.__TEKG_PATHS.dataUrl('processed/te_descriptions.json'), {cache:'no-store'});
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         teDescMap = {
@@ -97,7 +97,7 @@
     }
     async function loadEntityDescriptions(){
       try{
-        const res = await fetch('data/processed/entity_descriptions.json', {cache:'no-store'});
+        const res = await fetch(window.__TEKG_PATHS.dataUrl('processed/entity_descriptions.json'), {cache:'no-store'});
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         entityDescMap = {
@@ -113,7 +113,7 @@
     }
     async function loadUiText(){
       try{
-        const res = await fetch('data/processed/ui_text.json', {cache:'no-store'});
+        const res = await fetch(window.__TEKG_PATHS.dataUrl('processed/ui_text.json'), {cache:'no-store'});
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         ui = {
@@ -126,7 +126,7 @@
     }
     async function loadLocalQaTemplates(){
       try{
-        const res = await fetch('data/processed/local_qa_templates.json', {cache:'no-store'});
+        const res = await fetch(window.__TEKG_PATHS.dataUrl('processed/local_qa_templates.json'), {cache:'no-store'});
         if(!res.ok) throw new Error(`HTTP ${res.status}`);
         const payload = await res.json();
         localQaTemplates = {

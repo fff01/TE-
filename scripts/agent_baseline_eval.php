@@ -19,7 +19,7 @@ require_once __DIR__ . '/../api/agent/plugins/SequencePlugin.php';
 require_once __DIR__ . '/../api/agent/plugins/CitationResolverPlugin.php';
 require_once __DIR__ . '/../api/agent/orchestrator/AcademicAgentService.php';
 
-$casesPath = __DIR__ . '/../api/agent/evaluation/baseline_cases.json';
+$casesPath = tekg_api_fs_path('agent/evaluation/baseline_cases.json');
 $cases = json_decode((string)file_get_contents($casesPath), true);
 if (!is_array($cases)) {
     fwrite(STDERR, "Invalid baseline cases JSON.\n");

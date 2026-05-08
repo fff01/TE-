@@ -6,9 +6,9 @@ import time
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "api" / "config.local.php"
 TERMINOLOGY_PATH = ROOT / "terminology" / "te_terminology.json"
 OVERRIDES_PATH = ROOT / "terminology" / "te_terminology_overrides.json"

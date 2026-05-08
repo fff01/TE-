@@ -1,10 +1,12 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/path_config.php';
+
 $activePage = 'agent';
 $pageTitle = 'Agent Workflow Lab';
 $protoSubtitle = 'Developer workflow designer for the multi-node TE-KG agent';
-$pageExtraStylesheets = ['/TE-/assets/css/pages/agent_workflow_lab.css'];
+$pageExtraStylesheets = [tekg_assets_url('css/pages/agent_workflow_lab.css')];
 require __DIR__ . '/head.php';
 ?>
 <section class="workflow-lab">
@@ -74,5 +76,5 @@ require __DIR__ . '/head.php';
   </section>
 </section>
 
-<script src="/TE-/assets/js/pages/agent_workflow_lab.js"></script>
+<script src="<?= htmlspecialchars(tekg_assets_url('js/pages/agent_workflow_lab.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . '/foot.php'; ?>

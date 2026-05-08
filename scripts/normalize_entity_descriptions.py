@@ -7,9 +7,9 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 from semantic_aliases import EXTRA_DISEASE_ALIASES, EXTRA_FUNCTION_ALIASES
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 ENTITY_PATH = ROOT / "data" / "processed" / "entity_descriptions.json"
 BACKUP_PATH = ROOT / "data" / "processed" / "entity_descriptions.pre_en_cleanup.json"
 REPORT_PATH = ROOT / "data" / "processed" / "entity_description_normalization_report.json"

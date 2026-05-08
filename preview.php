@@ -1,8 +1,12 @@
 <?php
+require_once __DIR__ . '/path_config.php';
 $pageTitle = 'TE-KG Preview';
 $activePage = 'preview';
-$protoCurrentPath = '/TE-/preview.php';
+$protoCurrentPath = tekg_app_url('preview.php');
 $protoSubtitle = 'Interactive graph preview';
+$pageExtraStylesheets = [
+    tekg_assets_url('css/pages/preview.css'),
+];
 require __DIR__ . '/head.php';
 
 $siteLang = site_lang();
@@ -10,15 +14,13 @@ $queryParams = $_GET;
 unset($queryParams['lang'], $queryParams['renderer']);
 
 $g6PreviewVersion = max(
-    (int)@filemtime(__DIR__ . '/index_g6.html'),
-    (int)@filemtime(__DIR__ . '/assets/css/tekg_runtime.css'),
-    (int)@filemtime(__DIR__ . '/assets/js/renderers/g6/index-g6-qa.js')
+    (int)@filemtime(tekg_fs_from_project_relative('index_g6.html')),
+    (int)@filemtime(tekg_assets_fs_path('css/tekg_runtime.css')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-qa.js'))
 );
-$graphSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, null, array_merge($queryParams, ['embed' => 'preview-graphonly']));
-$qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, null, array_merge($queryParams, ['embed' => 'qa-overlay']));
+$graphSrc = site_url_with_state(tekg_app_url('index_g6.html'), $siteLang, null, array_merge($queryParams, ['embed' => 'preview-graphonly']));
+$qaSrc = site_url_with_state(tekg_app_url('index_g6.html'), $siteLang, null, array_merge($queryParams, ['embed' => 'qa-overlay']));
 ?>
-      <link rel="stylesheet" href="/TE-/assets/css/pages/preview.css">
-
       <section class="preview-stage" id="previewStage">
         <button class="preview-fullscreen-btn" id="previewFullscreenBtn" type="button" aria-label="Enter fullscreen preview">
           Fullscreen
@@ -62,7 +64,7 @@ $qaSrc = site_url_with_state('/TE-/index_g6.html', $siteLang, null, array_merge(
           </button>
         </div>
       </section>
-      <script src="/TE-/assets/js/pages/preview.js"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
   </main>
   </div>
 </body>

@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
+from path_helpers import ROOT
 
-ROOT = Path(__file__).resolve().parents[1]
 JBROWSE_DIR = ROOT / 'data' / 'JBrowse'
 FASTA_PATH = JBROWSE_DIR / 'hg38.fa'
 FAI_PATH = JBROWSE_DIR / 'hg38.fa.fai'

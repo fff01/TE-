@@ -1,8 +1,12 @@
 ﻿<?php
+require_once __DIR__ . '/path_config.php';
 $pageTitle='TE-KG Expression Detail';
 $activePage='expression';
-$protoCurrentPath='/TE-/expression_detail.php';
+$protoCurrentPath=tekg_app_url('expression_detail.php');
 $protoSubtitle='Expression Detail View';
+$pageExtraStylesheets = [
+  tekg_assets_url('css/pages/expression_detail.css'),
+];
 require __DIR__ . '/site_i18n.php';
 require __DIR__ . '/api/expression_data.php';
 
@@ -117,13 +121,12 @@ if(is_array($detail)){
 }
 require __DIR__ . '/head.php';
 ?>
-<link rel="stylesheet" href="/TE-/assets/css/pages/expression_detail.css">
 <section class="expression-shell">
   <div class="proto-container">
     <div id="expressionDetailPage">
       <section class="detail-toolbar">
-        <a class="detail-back" href="<?= htmlspecialchars(site_url_with_state('/TE-/expression.php',$siteLang),ENT_QUOTES,'UTF-8') ?>">&larr; Back To Expression</a>
-        <form class="detail-search-form" method="get" action="<?= htmlspecialchars('/TE-/expression_detail.php',ENT_QUOTES,'UTF-8') ?>">
+        <a class="detail-back" href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('expression.php'),$siteLang),ENT_QUOTES,'UTF-8') ?>">&larr; Back To Expression</a>
+        <form class="detail-search-form" method="get" action="<?= htmlspecialchars(tekg_app_url('expression_detail.php'),ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang,ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="metric" value="<?= htmlspecialchars($metric,ENT_QUOTES,'UTF-8') ?>">
           <input type="hidden" name="chart" value="<?= htmlspecialchars($chart,ENT_QUOTES,'UTF-8') ?>">
@@ -150,7 +153,7 @@ require __DIR__ . '/head.php';
                   <a class="detail-nav-link" data-detail-nav-link href="#<?= htmlspecialchars($section['id'],ENT_QUOTES,'UTF-8') ?>"><?= htmlspecialchars($section['label'],ENT_QUOTES,'UTF-8') ?></a>
                 <?php endforeach; ?>
               </nav>
-              <form class="detail-controls" method="get" action="<?= htmlspecialchars('/TE-/expression_detail.php',ENT_QUOTES,'UTF-8') ?>">
+              <form class="detail-controls" method="get" action="<?= htmlspecialchars(tekg_app_url('expression_detail.php'),ENT_QUOTES,'UTF-8') ?>">
                 <input type="hidden" name="lang" value="<?= htmlspecialchars($siteLang,ENT_QUOTES,'UTF-8') ?>">
                 <input type="hidden" name="te" value="<?= htmlspecialchars($teQuery,ENT_QUOTES,'UTF-8') ?>">
                 <div class="detail-controls-title">Display Controls</div>
@@ -199,5 +202,5 @@ require __DIR__ . '/head.php';
   </div>
 </section>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-<script src="/TE-/assets/js/pages/expression_detail.js"></script>
+<script src="<?= htmlspecialchars(tekg_assets_url('js/pages/expression_detail.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . '/foot.php'; ?>

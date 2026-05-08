@@ -1062,7 +1062,7 @@
 
   async function pollAgentRun(turn, runId, abortController) {
     let afterSequence = 0;
-    const statusUrlBase = config.agentRunStatusUrl || '/TE-/api/agent_run_status.php';
+    const statusUrlBase = config.agentRunStatusUrl || window.__TEKG_PATHS.apiUrl('agent_run_status.php');
     const startupDeadline = performance.now() + 6000;
 
     while (true) {
@@ -1175,7 +1175,7 @@
     activeAbortController = abortController;
 
     try {
-      const response = await fetch(config.agentRunCreateUrl || '/TE-/api/agent_runs.php', {
+      const response = await fetch(config.agentRunCreateUrl || window.__TEKG_PATHS.apiUrl('agent_runs.php'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
@@ -1239,7 +1239,7 @@
     activeAbortController = abortController;
 
     try {
-      const response = await fetch(config.deepThinkStreamApiUrl || '/TE-/api/deep_think_stream.php', {
+      const response = await fetch(config.deepThinkStreamApiUrl || window.__TEKG_PATHS.apiUrl('deep_think_stream.php'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         body: JSON.stringify({

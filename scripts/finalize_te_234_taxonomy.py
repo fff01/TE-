@@ -9,9 +9,9 @@ from typing import Any
 
 import requests
 from openpyxl import load_workbook
+from path_helpers import ROOT
 
 
-ROOT = Path(__file__).resolve().parents[1]
 
 TREE_FILES = [
     ROOT / "transposon_tree" / "tree_all_4.27.txt",
