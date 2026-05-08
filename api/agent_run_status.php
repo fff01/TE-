@@ -38,6 +38,7 @@ if (!is_array($state)) {
     ]);
     exit;
 }
+$state = tekg_agent_mark_stale_run_if_needed($runId, $state, tekg_agent_config());
 
 tekg_agent_json_response(200, [
     'ok' => true,

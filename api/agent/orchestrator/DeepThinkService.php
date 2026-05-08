@@ -427,9 +427,9 @@ final class TekgDeepThinkService
     {
         $provider = $this->inferProvider($model);
         if ($provider === 'deepseek' && stripos($model, 'reasoner') !== false) {
-            return max(25, min(35, (int)($runtimeConfig['llm_answer_reasoner_timeout'] ?? $runtimeConfig['llm_answer_timeout'] ?? 35)));
+            return max(25, (int)($runtimeConfig['llm_answer_reasoner_timeout'] ?? $runtimeConfig['llm_answer_timeout'] ?? 35));
         }
-        return max(12, min(20, (int)($runtimeConfig['llm_answer_chat_timeout'] ?? 18)));
+        return max(12, (int)($runtimeConfig['llm_answer_chat_timeout'] ?? 18));
     }
 
     private function maxPluginSteps(array $payload, array $analysis): int

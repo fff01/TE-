@@ -19,7 +19,7 @@ function tekg_agent_execute_run(string $runId): int
     }
 
     $status = (string)($state['status'] ?? '');
-    if ($status === 'running' || $status === 'completed') {
+    if ($status === 'running' || $status === 'completed' || $status === 'failed') {
         return 0;
     }
 

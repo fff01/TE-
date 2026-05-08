@@ -247,6 +247,59 @@ function tekg_agent_update_run_state_for_event(array $state, array $event): arra
     return $state;
 }
 
+function tekg_agent_mark_stale_run_if_needed(string $runId, array $state, array $config): array
+{
+    $status = (string)($state['status'] ?? '');
+    if (!in_array($status, ['pending', 'running'], true)) {
+        return $state;
+    }
+
+    $now = time();
+    $createdAt = strtotime((string)($state['created_at'] ?? '')) ?: $now;
+    $startedAt = strtotime((string)($state['started_at'] ?? '')) ?: null;
+    $reason = '';
+    $failureStage = '';
+
+    if ($status === 'pending' && $startedAt === null && ($now - $createdAt) > 30) {
+        $failureStage = 'Startup';
+        $reason = 'The Agent worker did not acknowledge startup within 30 seconds.';
+    }
+
+    if ($status === 'running') {
+        $runStartedAt = $startedAt ?? $createdAt;
+        $timeoutSeconds = max(90, (int)($config['agent_execution_timeout'] ?? 300)) + 30;
+        if (($now - $runStartedAt) > $timeoutSeconds) {
+            $failureStage = trim((string)($state['current_stage'] ?? ''));
+            if ($failureStage === '') {
+                $failureStage = 'Worker';
+            }
+            $reason = 'The Agent run exceeded the configured execution timeout and was marked stale.';
+        }
+    }
+
+    if ($reason === '') {
+        return $state;
+    }
+
+    $state['status'] = 'failed';
+    $state['error'] = $reason;
+    $state['failure_stage'] = $failureStage;
+    $state['failure_reason'] = $reason;
+    $state['finished_at'] = gmdate('c');
+    $state['updated_at'] = gmdate('c');
+    tekg_agent_save_run_state($runId, $state);
+
+    $requestId = trim((string)($state['request_id'] ?? ''));
+    tekg_agent_append_diagnostic_log($requestId !== '' ? $requestId : tekg_agent_make_request_id(), 'agent_run_marked_stale', [
+        'run_id' => $runId,
+        'status_before' => $status,
+        'failure_stage' => $failureStage,
+        'reason' => $reason,
+    ]);
+
+    return $state;
+}
+
 function tekg_agent_cli_php_binary(): string
 {
     $candidates = array_values(array_filter([

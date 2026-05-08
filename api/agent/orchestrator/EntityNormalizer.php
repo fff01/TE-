@@ -33,7 +33,7 @@ final class TekgAgentEntityNormalizer
             'question_tokens' => $tokens,
             'asks_for_papers' => $this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'literature', 'citation', 'citations', '文献', '论文', '参考文献', '引用', 'pmid']),
             'asks_for_expression' => $this->containsAny($question, ['expression', 'expressed', 'cell line', 'cell lines', 'tissue', 'context', 'transcriptome', '表达', '组织', '细胞系', '转录组']),
-            'asks_for_genome' => $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate', '基因组', '基因组浏览器', '位点', '位置', '染色体', '坐标']),
+            'asks_for_genome' => $intent !== 'expression' && $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'located', 'located at', 'where is', 'chromosome', 'chr', 'coordinate', '基因组', '基因组浏览器', '位点', '位置', '定位', '染色体', '坐标', '位于哪里', '位于哪', '位于', '在哪里', '在哪个染色体', '在哪条染色体', '哪个染色体', '哪条染色体', '基因组位置', '基因组坐标', '染色体位置']),
             'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'lineage', 'taxonomy', '分类', '亚家族', '家族', '树', '谱系']),
             'asks_for_sequence' => $this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'orfs', 'utr', 'promoter', 'motif', 'structure', 'annotation', '序列', '共识序列', '长度', '结构', '注释', '启动子', '基序']),
             'asks_for_mechanism' => $intent === 'mechanism',
@@ -198,7 +198,7 @@ final class TekgAgentEntityNormalizer
         if ($this->containsAny($question, ['expression', 'expressed', 'cell line', 'tissue', 'transcriptome', '表达', '组织', '细胞系', '转录组'])) {
             return 'expression';
         }
-        if ($this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'chromosome', 'chr', 'coordinate', '基因组', '浏览器', '位点', '位置', '染色体', '坐标'])) {
+        if ($this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'located', 'located at', 'where is', 'chromosome', 'chr', 'coordinate', '基因组', '浏览器', '位点', '位置', '定位', '染色体', '坐标', '位于哪里', '位于哪', '位于', '在哪里', '在哪个染色体', '在哪条染色体', '哪个染色体', '哪条染色体', '基因组位置', '基因组坐标', '染色体位置'])) {
             return 'genome';
         }
         if ($this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'utr', 'motif', 'structure', 'annotation', '序列', '共识序列', '长度', '结构', '注释', '启动子'])) {

@@ -720,3 +720,9 @@
 [2026-04-20 15:05:27] answer:template_query {"rows":15}
 [2026-04-20 15:05:27] answer:prepared {"rows":4,"refs":4,"intent":"te_to_disease","depth":"shallow"}
 [2026-04-20 15:05:28] answer:done {"mode":"template_rag+structured_local"}
+[2026-05-08 07:46:21] answer:start {"question":"LINE-1 related diseases\n\n[Current G6 graph context]\nMode: Dynamic graph\nCenter node: L1HS\nSelected node: None\nKey-node level: 1\nFixed view: Off","question_raw":"LINE-1 related diseases","graph_state":{"mode":"dynamic","query":"L1HS","query_type":"","class_query":"","fixed_view":false,"key_node_level":1,"selected_node":{"id":"","label":"","type":""},"current_elements":[]},"language":"en","style":"simple","depth":"shallow"}
+[2026-05-08 07:46:21] answer:normalized {"language":"en","style":"simple","depth":"shallow"}
+[2026-05-08 07:46:21] answer:intent {"entity":"LINE1","secondary_entity":null,"disease":null,"intent":"te_to_disease","target_type":"Disease"}
+[2026-05-08 07:46:21] answer:template_query {"rows":15}
+[2026-05-08 07:46:21] answer:prepared {"rows":4,"refs":4,"intent":"te_to_disease","depth":"shallow"}
+[2026-05-08 07:46:22] answer:done {"mode":"template_rag+structured_local"}

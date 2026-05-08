@@ -746,9 +746,9 @@ final class TekgAcademicAgentService
     {
         $provider = $this->inferProvider($model);
         if ($provider === 'deepseek' && stripos($model, 'reasoner') !== false) {
-            return max(25, min(35, (int)($this->config['llm_answer_reasoner_timeout'] ?? 35)));
+            return max(25, (int)($this->config['llm_answer_reasoner_timeout'] ?? 35));
         }
-        return max(15, min(20, (int)($this->config['llm_answer_chat_timeout'] ?? 18)));
+        return max(15, (int)($this->config['llm_answer_chat_timeout'] ?? 18));
     }
 
     private function expertConfig(string $expertModel): array
@@ -1313,6 +1313,16 @@ final class TekgAcademicAgentService
             ];
         }
 
+        $remainingPrimaryPath = $this->remainingPrimaryPath($routingPolicy, $pluginResults);
+        if ($remainingPrimaryPath !== []) {
+            return [
+                'is_sufficient' => false,
+                'reason' => 'The minimum evidence gate passed, but model-driven sufficiency assessment was unavailable, so the remaining primary path should continue.',
+                'missing_dimensions' => ['model-driven sufficiency assessment unavailable'],
+                'recommended_next_experts' => $remainingPrimaryPath,
+            ];
+        }
+
         return [
             'is_sufficient' => true,
             'reason' => 'The minimum evidence gate passed and no further model-driven expansion was available.',
@@ -1412,6 +1422,21 @@ final class TekgAcademicAgentService
             $recommended[] = 'Cypher Explorer Plugin';
         }
         return array_values(array_unique($recommended));
+    }
+
+    private function remainingPrimaryPath(array $routingPolicy, array $pluginResults): array
+    {
+        $executed = array_keys($pluginResults);
+        $forbidden = array_values(array_filter(array_map('strval', (array)($routingPolicy['forbidden_path'] ?? []))));
+        $remaining = [];
+        foreach ((array)($routingPolicy['primary_path'] ?? []) as $pluginName) {
+            $pluginName = trim((string)$pluginName);
+            if ($pluginName === '' || in_array($pluginName, $executed, true) || in_array($pluginName, $forbidden, true)) {
+                continue;
+            }
+            $remaining[] = $pluginName;
+        }
+        return array_values(array_unique($remaining));
     }
 
     private function maybeAppendPlugins(array $analysis, array $planning, string $pluginName, array $result, array $queue): array
@@ -1633,8 +1658,17 @@ final class TekgAcademicAgentService
 
     private function narrateEvent(string $model, string $language, array $event, string $fallback): string
     {
+        if ($this->shouldUseDeterministicNarration($event)) {
+            return $fallback;
+        }
         $narrated = $this->llm->narrateEvent($model, $language, $event);
         return $narrated !== null && trim($narrated) !== '' ? trim($narrated) : $fallback;
+    }
+
+    private function shouldUseDeterministicNarration(array $event): bool
+    {
+        $type = (string)($event['type'] ?? '');
+        return in_array($type, ['analysis', 'planning_step', 'tool_selected', 'tool_result', 'reflection', 'synthesizing'], true);
     }
 
     private function emitEvent(?callable $emit, int &$eventSequence, array $event): void
