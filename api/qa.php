@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/path_config.php';
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -1829,7 +1831,7 @@ final class QaService
 
     private function loadTeTreeOverviewRows(): array
     {
-        $path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'processed' . DIRECTORY_SEPARATOR . 'tree_te_lineage.json';
+        $path = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
         if (!is_file($path)) {
             return [];
         }

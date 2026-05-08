@@ -4,6 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+TAXONOMY_ROOT = ROOT / "data" / "taxonomy"
 
 
 def repo_path(*parts: str) -> Path:
@@ -19,11 +20,19 @@ def imports_path(*parts: str) -> Path:
 
 
 def taxonomy_path(*parts: str) -> Path:
-    return ROOT.joinpath("transposon_tree", *parts)
+    return TAXONOMY_ROOT.joinpath("transposon_tree", *parts)
+
+
+def taxonomy_te234_path(*parts: str) -> Path:
+    return TAXONOMY_ROOT.joinpath("te_234", *parts)
+
+
+def taxonomy_lineage_path(*parts: str) -> Path:
+    return TAXONOMY_ROOT.joinpath("lineage", *parts)
 
 
 def terminology_path(*parts: str) -> Path:
-    return ROOT.joinpath("terminology", *parts)
+    return ROOT.joinpath("data", "terminology", *parts)
 
 
 def api_path(*parts: str) -> Path:
@@ -32,3 +41,7 @@ def api_path(*parts: str) -> Path:
 
 def scripts_path(*parts: str) -> Path:
     return ROOT.joinpath("scripts", *parts)
+
+
+def assets_path(*parts: str) -> Path:
+    return ROOT.joinpath("assets", *parts)

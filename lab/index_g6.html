@@ -1,0 +1,514 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEKG G6 Workspace</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="../assets/css/tekg_runtime.css">
+  <script src="../assets/js/tekg_paths.php"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@antv/g6@5/dist/g6.min.js"></script>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    .g6-surface-stack {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      background: radial-gradient(circle at top, #fff, #f6faff);
+    }
+
+    .graph-preloader {
+      position: absolute;
+      inset: 0;
+      z-index: 12;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #f8fbff;
+    }
+
+    .graph-preloader.is-visible {
+      display: flex;
+    }
+
+    .graph-preloader-inner {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .graph-preloader-icon {
+      position: relative;
+      width: 96px;
+      height: 96px;
+    }
+
+    .graph-preloader-icon span {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.35);
+      animation: graph-preloader-fx 1.6s linear infinite;
+    }
+
+    .graph-preloader-icon span:last-child {
+      animation-delay: -0.8s;
+    }
+
+    .graph-preloader-label {
+      position: absolute;
+      top: calc(100% + 14px);
+      left: 50%;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1d4ed8;
+      letter-spacing: 0.01em;
+    }
+
+    @keyframes graph-preloader-fx {
+      0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+      }
+      100% {
+        transform: scale(1, 1);
+        opacity: 0;
+      }
+    }
+
+    .g6-surface-stack #g6-default-tree-surface,
+    .g6-surface-stack #g6-dynamic-surface {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .g6-surface-stack #g6-dynamic-surface {
+      display: none;
+    }
+
+    .g6-surface-stack #g6-dynamic-surface iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: radial-gradient(circle at top, #fff, #f6faff);
+    }
+
+    .graph-legend-panel {
+      position: absolute;
+      left: 20px;
+      bottom: 20px;
+      z-index: 9;
+      width: 248px;
+      max-height: min(52vh, 560px);
+      overflow-y: auto;
+      padding: 16px 18px;
+      border: 1px solid rgba(203, 213, 225, 0.9);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 18px 40px rgba(37, 99, 235, 0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .graph-legend-panel[hidden] {
+      display: none !important;
+    }
+    .graph-legend-title {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #334155;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .graph-legend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .graph-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      font-size: 14px;
+      color: #334155;
+    }
+    .graph-legend-check {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 5px;
+      background: #ffffff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+      cursor: pointer;
+      flex: 0 0 auto;
+      position: relative;
+      transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .graph-legend-check::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 46%;
+      width: 5px;
+      height: 9px;
+      border-right: 2px solid #ffffff;
+      border-bottom: 2px solid #ffffff;
+      transform: translate(-50%, -55%) rotate(45deg);
+      opacity: 0;
+      transition: opacity 0.16s ease;
+    }
+    .graph-legend-check:checked {
+      background: #22c55e;
+      border-color: #16a34a;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.16);
+    }
+    .graph-legend-check:checked::after {
+      opacity: 1;
+    }
+    .graph-legend-check:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+    .graph-legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: var(--legend-color, #94a3b8);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+      flex: 0 0 auto;
+    }
+    .graph-legend-text {
+      min-width: 0;
+      line-height: 1.2;
+      font-weight: 600;
+    }
+    body.tekg-g6-embed-home-preview .graph-legend-panel {
+      display: none !important;
+    }
+    .focus-legacy,
+    body.tekg-g6-preview-ready .non-key-legacy {
+      display: none !important;
+    }
+
+    body.tekg-g6-compact-embed {
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    body.tekg-g6-compact-embed > header,
+    body.tekg-g6-compact-embed .main > .panel:last-child,
+    body.tekg-g6-compact-embed .panel > .head,
+    body.tekg-g6-compact-embed .panel > .toolbar,
+    body.tekg-g6-compact-embed .panel > .nav,
+    body.tekg-g6-compact-embed .panel > .detail {
+      display: none !important;
+    }
+
+    body.tekg-g6-compact-embed .main {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+    }
+
+    body.tekg-g6-compact-embed .main > .panel:first-child {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    body.tekg-g6-compact-embed .g6-surface-stack {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      background: radial-gradient(circle at top, #ffffff 0%, #f6faff 100%);
+    }
+
+    body.tekg-g6-preview-graphonly {
+      margin: 0;
+      overflow: hidden;
+      background: #f6faff;
+    }
+
+    body.tekg-g6-preview-graphonly > header,
+    body.tekg-g6-preview-graphonly .main > .panel:last-child {
+      display: none !important;
+    }
+
+    body.tekg-g6-preview-graphonly .main > .panel:first-child > .head {
+      display: none !important;
+    }
+
+    body.tekg-g6-preview-graphonly .main {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+    }
+
+    body.tekg-g6-preview-graphonly .main > .panel:first-child {
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: #fff;
+    }
+
+    body.tekg-g6-preview-graphonly .g6-surface-stack {
+      flex: 1;
+      min-height: 0;
+    }
+
+    body.tekg-g6-preview-graphonly .detail {
+      min-height: 160px;
+      height: 160px;
+      max-height: 160px;
+      flex: 0 0 160px;
+    }
+
+    body.tekg-g6-qa-overlay {
+      margin: 0;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    body.tekg-g6-qa-overlay > header,
+    body.tekg-g6-qa-overlay .main > .panel:first-child {
+      display: none !important;
+    }
+
+    body.tekg-g6-qa-overlay .main {
+      display: block;
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      gap: 0;
+    }
+
+    body.tekg-g6-qa-overlay .main > .panel:last-child {
+      width: 100%;
+      height: 100vh;
+      min-height: 100vh;
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      background: #fff;
+    }
+
+    body.tekg-g6-qa-overlay .chat {
+      height: calc(100vh - 79px);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <i class="fas fa-dna" style="font-size:2rem;color:#2563eb"></i>
+    <h1 id="page-title">TEKG G6 Workspace</h1>
+    <div class="actions">
+      <span class="badge" id="page-badge">Independent G6 entry</span>
+      <div class="lang">
+        <button id="lang-zh" type="button">濞戞搩鍘介弸?/button>
+        <button id="lang-en" type="button" class="active">English</button>
+      </div>
+    </div>
+  </header>
+  <div class="main">
+    <section class="panel">
+      <div class="head">
+        <h2 id="graph-title">G6 Graph Workspace</h2>
+      </div>
+      <div class="toolbar">
+        <div class="search">
+          <i class="fas fa-search" style="color:#64748b"></i>
+          <input id="node-search" type="text" placeholder="Search LINE1, L1HS, disease, or function">
+        </div>
+        <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
+          <span id="focus-view-text">Focus mode: Global</span>
+        </button>
+        <div class="stepper-control" id="key-node-level-control">
+          <button id="decrease-key-node-level" type="button" aria-label="Decrease key-node level">-</button>
+          <span id="key-node-level-text">Key-node level: 1</span>
+          <button id="increase-key-node-level" type="button" aria-label="Increase key-node level">+</button>
+        </div>
+        <button id="toggle-non-key-nodes" class="non-key-legacy" type="button" style="display:none">
+          <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
+        </button>
+        <button id="toggle-show-labels" type="button"><span id="show-labels-text">Show names: Off</span></button>
+        <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: Off</span></button>
+        <button id="back-graph" type="button" disabled><i class="fas fa-arrow-left"></i> <span id="back-text">Back</span></button>
+        <button id="reset-graph" type="button"><i class="fas fa-sync-alt"></i> <span id="reset-text">Reset</span></button>
+      </div>
+      <div class="g6-surface-stack">
+        <div id="cy" style="display:none"></div>
+        <div id="g6-default-tree-surface"></div>
+        <div id="g6-dynamic-surface"></div>
+        <div id="graph-preloader" class="graph-preloader" aria-hidden="true">
+          <div class="graph-preloader-inner">
+            <div class="graph-preloader-icon" aria-hidden="true">
+              <span></span>
+              <span></span>
+            </div>
+            <div id="graph-preloader-label" class="graph-preloader-label">Loading graph...</div>
+          </div>
+        </div>
+        <div id="graph-type-legend" class="graph-legend-panel" aria-label="Entity legend" aria-hidden="true" hidden>
+          <div id="graph-legend-title" class="graph-legend-title">Entity Legend</div>
+          <div id="graph-legend-list" class="graph-legend-list"></div>
+        </div>
+      </div>
+      <div class="nav" id="search-results-nav" style="display:none">
+        <button id="prev-result" type="button"><i class="fas fa-chevron-left"></i></button>
+        <span id="result-counter">0/0</span>
+        <span id="result-name"></span>
+        <button id="next-result" type="button"><i class="fas fa-chevron-right"></i></button>
+      </div>
+      <div class="detail" id="node-details">Preparing G6 workspace...</div>
+    </section>
+    <section class="panel">
+      <div class="head qa-head">
+        <h2 id="qa-title" hidden>Interactive QA Demo</h2>
+        <div class="qa-topbar">
+          <div class="qa-dropdown" data-qa-dropdown="style">
+            <button id="qa-style-trigger" class="qa-dropdown-trigger" type="button" data-qa-trigger="style" aria-expanded="false" aria-controls="qa-style-menu">
+              <span id="qa-style-current">Brief</span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="qa-style-menu" class="qa-dropdown-menu" data-qa-menu="style">
+              <button id="mode-simple" class="qa-dropdown-option active" type="button">Brief</button>
+              <button id="mode-detailed" class="qa-dropdown-option" type="button">Detailed</button>
+              <button id="mode-custom" class="qa-dropdown-option" type="button">Custom</button>
+            </div>
+          </div>
+          <div class="qa-dropdown" data-qa-dropdown="depth">
+            <button id="qa-depth-trigger" class="qa-dropdown-trigger" type="button" data-qa-trigger="depth" aria-expanded="false" aria-controls="qa-depth-menu">
+              <span id="qa-depth-current">Shallow</span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="qa-depth-menu" class="qa-dropdown-menu" data-qa-menu="depth">
+              <button id="depth-shallow" class="qa-dropdown-option active" type="button">Shallow</button>
+              <button id="depth-medium" class="qa-dropdown-option" type="button">Medium</button>
+              <button id="depth-deep" class="qa-dropdown-option" type="button">Deep</button>
+              <button id="depth-custom" class="qa-dropdown-option" type="button">Custom</button>
+            </div>
+          </div>
+          <div class="qa-dropdown" data-qa-dropdown="model">
+            <button id="qa-model-trigger" class="qa-dropdown-trigger" type="button" data-qa-trigger="model" aria-expanded="false" aria-controls="qa-model-menu">
+              <span id="qa-model-current">Qwen</span>
+              <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </button>
+            <div id="qa-model-menu" class="qa-dropdown-menu" data-qa-menu="model">
+              <button id="model-qwen" class="qa-dropdown-option active" type="button">Qwen</button>
+              <button id="model-deepseek" class="qa-dropdown-option" type="button">DeepSeek</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chat">
+        <div class="custom-editor" id="custom-editor"> 
+          <div class="custom-editor-card">
+            <div class="custom-editor-title" id="custom-editor-title">Custom prompt</div>
+            <div class="custom-editor-help" id="custom-editor-help">Write the tone, structure, emphasis, or constraints you want the QA model to follow. After confirmation, it will be temporarily saved and used for subsequent questions.</div>
+            <textarea id="custom-prompt" placeholder="For example: Answer in accessible academic English; start with a conclusion; then explain mechanisms in bullet points; cite PMID when possible."></textarea>
+            <div class="custom-depth-editor" id="custom-depth-editor">
+              <div class="custom-depth-grid">
+                <div class="custom-depth-field">
+                  <label id="custom-rows-label" for="custom-rows">row (relation count)</label>
+                  <input id="custom-rows" type="number" min="1" step="1" value="12">
+                </div>
+                <div class="custom-depth-field">
+                  <label id="custom-references-label" for="custom-references">references (paper count)</label>
+                  <input id="custom-references" type="number" min="1" step="1" value="8">
+                </div>
+              </div>
+              <div class="custom-depth-note" id="custom-depth-note">
+                row controls the maximum number of structured relation records; references controls the maximum number of cited papers. Recommended upper bounds are 12 and 8 to avoid overly long answers.
+              </div>
+            </div>
+          </div>
+          <div class="custom-editor-actions">
+            <button id="cancel-custom-editor" class="secondary" type="button">Cancel</button>
+            <button id="confirm-custom-editor" class="primary" type="button">Confirm</button>
+          </div>
+        </div>
+        <div class="msgs" id="chat-messages"></div>
+        <div class="input">
+          <input id="user-question" type="text" value="LINE-1 related diseases" placeholder="Ask your question">
+          <button id="send-question" type="button"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const __tekgG6Url = new URL(window.location.href);
+    const __tekgEmbedMode = __tekgG6Url.searchParams.get('embed') || '';
+    const __tekgInitialQuery = __tekgG6Url.searchParams.get('q') || '';
+    const __tekgCompactEmbed = __tekgEmbedMode === 'home-preview' || __tekgEmbedMode === 'search-result';
+    const __tekgGraphOnlyEmbed = __tekgEmbedMode === 'preview-graphonly';
+    const __tekgQaOverlayEmbed = __tekgEmbedMode === 'qa-overlay';
+    if (__tekgCompactEmbed) {
+      document.body.classList.add('tekg-g6-compact-embed');
+    }
+    if (__tekgEmbedMode) {
+      document.body.classList.add('tekg-g6-embed-' + __tekgEmbedMode.replace(/[^a-z0-9_-]/gi, '-'));
+    }
+    if (__tekgGraphOnlyEmbed) {
+      document.body.classList.add('tekg-g6-preview-graphonly');
+    }
+    if (__tekgQaOverlayEmbed) {
+      document.body.classList.add('tekg-g6-qa-overlay');
+    }
+    window.__TEKG_RENDERER_MODE = 'g6';
+    window.__TEKG_EMBED_MODE = __tekgEmbedMode;
+    window.__TEKG_INITIAL_QUERY = __tekgInitialQuery;
+    window.__TEKG_COMPACT_EMBED = __tekgCompactEmbed;
+    window.__TEKG_G6_BOOTSTRAP_OWN_TREE = true;
+  </script>
+  <script src="../assets/data/graph_demo_data.js"></script>
+  <script src="../assets/js/tekg_runtime_data.js"></script>
+  <script src="../assets/js/renderers/g6/default-tree-mindmap.js"></script>
+  <script src="../assets/js/renderers/g6/index-g6-runtime.js"></script>
+  <script src="../assets/js/renderers/g6/index-g6.bootstrap.js"></script>
+  <script src="../assets/js/renderers/g6/index-g6-qa.js"></script>
+</body>
+</html>
+

@@ -658,7 +658,7 @@ function tekg_tree_classification_index_proto(): ?array
     }
     $loaded = true;
 
-    $file = tekg_data_fs_path('processed/tree_te_lineage.json');
+    $file = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
     if (!is_file($file)) {
         return null;
     }
@@ -1058,7 +1058,7 @@ $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
 $karyotypeHitMap = tekg_karyotype_bin_hit_map_proto($genomeDistribution, $jbrowseSession);
 $classificationSession = tekg_tree_classification_lookup_proto($query, $type, $repbase, $dfamSequence);
-$searchGraphSrc = site_url_with_state(tekg_app_url('index_g6.html'), $siteLang, null, array_filter([
+$searchGraphSrc = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang, null, array_filter([
     'embed' => 'search-result',
     'q' => $query !== '' ? $query : null,
 ], static fn ($value) => $value !== null && $value !== ''));

@@ -97,7 +97,7 @@ function tekg_browse_infer_lineage(array $entry): array
 function tekg_browse_load_rows(): array
 {
     $repbaseFile = tekg_data_fs_path('processed/te_repbase_db_matched.json');
-    $lineageFile = tekg_data_fs_path('processed/tree_te_lineage.json');
+    $lineageFile = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
     if (!is_file($repbaseFile)) {
         return [];
     }

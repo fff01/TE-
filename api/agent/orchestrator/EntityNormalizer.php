@@ -515,7 +515,7 @@ final class TekgAgentEntityNormalizer
             return $this->treeNames;
         }
         $paths = [
-            TEKG_DATA_FS_DIR . '/processed/tree_te_lineage.json',
+            tekg_taxonomy_lineage_fs_path('tree_te_lineage.json'),
             TEKG_DATA_FS_DIR . '/processed/tekg2_0413_tree_rmsk_repbase_lineage.json',
             TEKG_DATA_FS_DIR . '/processed/tekg2_0413_tree_all_lineage.json',
         ];

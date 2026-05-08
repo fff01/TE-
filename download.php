@@ -77,7 +77,7 @@ $downloadItems = [
     [
         'dataset' => 'TE lineage tree',
         'filename' => 'tree_te_lineage.json',
-        'path' => tekg_data_url('processed/tree_te_lineage.json'),
+        'path' => tekg_data_url('taxonomy/lineage/tree_te_lineage.json'),
         'format' => 'JSON',
         'used_in' => 'Tree preview and lineage expansion',
         'description' => 'Structured TE lineage tree used in the public classification tree and lineage-aware graph expansion.',
@@ -85,7 +85,7 @@ $downloadItems = [
     [
         'dataset' => 'TE lineage table',
         'filename' => 'tree_te_lineage.csv',
-        'path' => tekg_data_url('processed/tree_te_lineage.csv'),
+        'path' => tekg_data_url('taxonomy/lineage/tree_te_lineage.csv'),
         'format' => 'CSV',
         'used_in' => 'Manual inspection of lineage data',
         'description' => 'Tabular export of the TE lineage hierarchy corresponding to the public lineage JSON asset.',

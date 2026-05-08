@@ -34,11 +34,20 @@ if (!defined('TEKG_SCRIPTS_FS_DIR')) {
 if (!defined('TEKG_IMPORTS_FS_DIR')) {
     define('TEKG_IMPORTS_FS_DIR', TEKG_ROOT_DIR . '/imports');
 }
+if (!defined('TEKG_TAXONOMY_ROOT_FS_DIR')) {
+    define('TEKG_TAXONOMY_ROOT_FS_DIR', TEKG_DATA_FS_DIR . '/taxonomy');
+}
 if (!defined('TEKG_TAXONOMY_FS_DIR')) {
-    define('TEKG_TAXONOMY_FS_DIR', TEKG_ROOT_DIR . '/transposon_tree');
+    define('TEKG_TAXONOMY_FS_DIR', TEKG_TAXONOMY_ROOT_FS_DIR . '/transposon_tree');
+}
+if (!defined('TEKG_TAXONOMY_TE234_FS_DIR')) {
+    define('TEKG_TAXONOMY_TE234_FS_DIR', TEKG_TAXONOMY_ROOT_FS_DIR . '/te_234');
+}
+if (!defined('TEKG_TAXONOMY_LINEAGE_FS_DIR')) {
+    define('TEKG_TAXONOMY_LINEAGE_FS_DIR', TEKG_TAXONOMY_ROOT_FS_DIR . '/lineage');
 }
 if (!defined('TEKG_TERMINOLOGY_FS_DIR')) {
-    define('TEKG_TERMINOLOGY_FS_DIR', TEKG_ROOT_DIR . '/terminology');
+    define('TEKG_TERMINOLOGY_FS_DIR', TEKG_DATA_FS_DIR . '/terminology');
 }
 if (!defined('TEKG_CACHE_FS_DIR')) {
     define('TEKG_CACHE_FS_DIR', TEKG_DATA_FS_DIR . '/cache');
@@ -127,6 +136,16 @@ function tekg_imports_fs_path(string $suffix = ''): string
 function tekg_taxonomy_fs_path(string $suffix = ''): string
 {
     return tekg_join_path(TEKG_TAXONOMY_FS_DIR, $suffix);
+}
+
+function tekg_taxonomy_te234_fs_path(string $suffix = ''): string
+{
+    return tekg_join_path(TEKG_TAXONOMY_TE234_FS_DIR, $suffix);
+}
+
+function tekg_taxonomy_lineage_fs_path(string $suffix = ''): string
+{
+    return tekg_join_path(TEKG_TAXONOMY_LINEAGE_FS_DIR, $suffix);
 }
 
 function tekg_terminology_fs_path(string $suffix = ''): string

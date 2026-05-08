@@ -1,19 +1,20 @@
 ﻿<?php
+require_once __DIR__ . '/path_config.php';
 $pageTitle = 'TE-KG About';
 $activePage = 'about';
-$protoCurrentPath = '/TE-/about.php';
+$protoCurrentPath = tekg_app_url('about.php');
 $protoSubtitle = 'Overview of the TE-KG interface and public workflows';
 require __DIR__ . '/head.php';
 
-$treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, ['embed' => 'home-preview']);
+$treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang, null, ['embed' => 'home-preview']);
 ?>
-      <link rel="stylesheet" href="/TE-/assets/css/pages/about.css">
+      <link rel="stylesheet" href="<?= htmlspecialchars(tekg_assets_url('css/pages/about.css'), ENT_QUOTES, 'UTF-8') ?>">
 
       <section class="about-shell">
         <div class="proto-container">
           <h1 class="page-title-hero">About</h1>
           <div class="page-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state('/TE-/index.php'), ENT_QUOTES, 'UTF-8') ?>">Home</a>
+            <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php')), ENT_QUOTES, 'UTF-8') ?>">Home</a>
             <span>/</span>
             <span>About</span>
           </div>
@@ -166,7 +167,7 @@ $treeEmbedUrl = site_url_with_state('/TE-/index_g6.html', $siteLang, null, ['emb
         </div>
       </section>
 
-      <script src="/TE-/assets/js/pages/about.js"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/about.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     </main>
   </div>
 </body>

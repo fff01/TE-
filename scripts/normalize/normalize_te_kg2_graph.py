@@ -1,0 +1,665 @@
+import sys
+from pathlib import Path
+
+SCRIPTS_ROOT = next(parent for parent in Path(__file__).resolve().parents if parent.name == "scripts")
+if str(SCRIPTS_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_ROOT))
+
+import json
+import re
+from collections import Counter
+from path_helpers import data_path
+from disease_top_class import build_disease_top_class_map, canonicalize_disease_name, lookup_disease_class
+from semantic_aliases import EXTRA_DISEASE_ALIASES, EXTRA_FUNCTION_ALIASES, EXTRA_TE_ALIASES
+
+INPUT_FILE = data_path("raw", "te_kg2.jsonl")
+NORMALIZED_JSONL = data_path("processed", "te_kg2_normalized_output.jsonl")
+GRAPH_SEED_JSON = data_path("processed", "te_kg2_graph_seed.json")
+REPORT_JSON = data_path("processed", "te_kg2_normalization_report.json")
+
+
+RELATION_ALIASES = {
+    "report": "reports",
+    "reported": "reports",
+    "报道": "reports",
+    "involve in": "participates in",
+    "participate in": "participates in",
+    "participates in": "participates in",
+    "associate with": "participates in",
+    "associated with": "associated with",
+    "correlate with": "participates in",
+    "correlated with": "associated with",
+    "参与": "participates in",
+    "lead to": "leads to",
+    "leads to": "leads to",
+    "cause": "leads to",
+    "causes": "leads to",
+    "导致": "leads to",
+    "drive": "promotes",
+    "promote": "promotes",
+    "promotes": "promotes",
+    "facilitate": "promotes",
+    "facilitates": "promotes",
+    "促进": "promotes",
+    "mediate": "mediates",
+    "mediates": "mediates",
+    "介导": "mediates",
+    "affect": "affects",
+    "affects": "affects",
+    "影响": "affects",
+    "regulate": "regulates",
+    "regulates": "regulates",
+    "调控": "regulates",
+    "utilize": "utilizes",
+    "use": "utilizes",
+    "uses": "utilizes",
+    "utilizes": "utilizes",
+    "利用": "utilizes",
+    "perform": "performs",
+    "performs": "performs",
+    "执行": "performs",
+    "suppress": "suppresses",
+    "inhibit": "suppresses",
+    "suppresses": "suppresses",
+    "inhibits": "suppresses",
+    "抑制": "suppresses",
+    "trigger": "triggers",
+    "triggers": "triggers",
+    "触发": "triggers",
+    "induce": "induces",
+    "induces": "induces",
+    "诱导": "induces",
+    "increase risk": "increases risk",
+    "increases risk": "increases risk",
+    "增加风险": "increases risk",
+    "modulate": "modulates",
+    "modulates": "modulates",
+    "调节": "modulates",
+    "contribute to": "contributes to",
+    "contributes to": "contributes to",
+    "促成": "contributes to",
+    "undergo": "undergoes",
+    "undergoes": "undergoes",
+    "发生": "undergoes",
+    "activate": "activates",
+    "activates": "activates",
+    "激活": "activates",
+    "disrupt": "disrupts",
+    "disrupts": "disrupts",
+    "破坏": "disrupts",
+    "generate": "generates",
+    "generates": "generates",
+    "产生": "generates",
+    "serve as": "serves as",
+    "serves as": "serves as",
+    "充当": "serves as",
+    "enable": "enables",
+    "enables": "enables",
+    "使能": "enables",
+    "explain": "explains",
+    "explains": "explains",
+    "解释": "explains",
+    "supply": "supplies",
+    "supplies": "supplies",
+    "提供": "supplies",
+    "predispose to": "predisposes to",
+    "predisposes to": "predisposes to",
+    "易感": "predisposes to",
+    "is regulated by": "is regulated by",
+    "被调控": "is regulated by",
+    "alter": "alters",
+    "alters": "alters",
+    "改变": "alters",
+    "exhibit": "exhibits",
+    "exhibits": "exhibits",
+    "表现为": "exhibits",
+    "lack": "lacks",
+    "lacks": "lacks",
+    "缺失": "lacks",
+    "characterizes": "characterizes",
+    "表征": "characterizes",
+}
+
+
+TE_ALIASES = {
+    "line1": "LINE-1",
+    "line-1": "LINE-1",
+    "line 1": "LINE-1",
+    "long interspersed element-1": "LINE-1",
+    "long interspersed nuclear element-1": "LINE-1",
+    "human line-1": "LINE-1",
+    "human line1": "LINE-1",
+    "l1hs": "L1HS",
+    "l1hs-specific": "L1HS",
+    "l1hs/ta": "L1HS",
+    "l1 ta": "L1-Ta",
+    "l1-ta": "L1-Ta",
+    "sva_f": "SVA_F",
+}
+
+
+DISEASE_ALIASES = {
+    "alzheimer's disease": "Alzheimer's disease",
+    "alzheimer’s disease": "Alzheimer's disease",
+    "huntington's disease": "Huntington's disease",
+    "huntington disease": "Huntington's disease",
+    "down syndrome": "Down syndrome",
+    "rett syndrome": "Rett syndrome",
+    "autism spectrum disorder": "Autism spectrum disorder (ASD)",
+    "autism spectrum disorders": "Autism spectrum disorder (ASD)",
+    "autism spectrum disorder (asd)": "Autism spectrum disorder (ASD)",
+    "ataxia telangiectasia": "ataxia telangiectasia",
+    "hepatocellular carcinoma": "Hepatocellular carcinoma",
+    "non-small cell lung cancer": "non-small cell lung cancer",
+    "chronic granulomatous disease": "Chronic granulomatous disease",
+    "b cell malignancies": "B-cell malignancies",
+    "head-and-neck squamous cell carcinoma": "Head and neck squamous cell carcinoma",
+    "x-linked dystonia-parkinsonism": "X-linked dystonia parkinsonism",
+    "x-linked dystonia-parkinsonism (xdp)": "X-linked dystonia parkinsonism (XDP)",
+    "age related diseases": "age-related diseases",
+    "head-and-neck cancer": "head and neck cancer",
+    "nonobstructive azoospermia": "non-obstructive azoospermia",
+    "śá1-antitrypsin deficiency": "ŚÁ-1 antitrypsin deficiency",
+}
+
+
+FUNCTION_ALIASES = {
+    "retrotransposition": "retrotransposition",
+    "line-1 retrotransposition": "LINE-1 retrotransposition",
+    "l1 retrotransposition": "L1 retrotransposition",
+    "genome instability": "genome instability",
+    "genomic instability": "genome instability",
+    "insertional mutation": "insertional mutation",
+    "insertional mutagenesis": "insertional mutagenesis",
+    "dna damage": "DNA damage",
+    "dna repair": "DNA repair",
+    "dna damage response": "DNA damage response",
+    "non-homologous end-joining (nhej)": "Non-homologous end joining (NHEJ)",
+    "nonhomologous end joining (nhej)": "Non-homologous end joining (NHEJ)",
+    "5'-transduction": "5' transduction",
+    "cell type-specific expression": "Cell type specific expression",
+    "cis-preference": "Cis preference",
+    "coevolution": "Co-evolution",
+    "dna-binding": "DNA binding",
+    "dna cleavage by l1-endonuclease": "DNA cleavage by L1 endonuclease",
+    "dna double-strand break repair by nonhomologous end joining": "DNA double-strand break repair by non-homologous end joining",
+    "derepression": "De-repression",
+    "exon-trapping": "Exon trapping",
+    "expression upregulation": "Expression up-regulation",
+    "gene down-regulation": "Gene downregulation",
+    "l1-rnp formation": "L1 RNP formation",
+    "l1-retrotransposition-induced mutagenesis": "L1 retrotransposition-induced mutagenesis",
+    "line1 de-repression": "LINE-1 derepression",
+    "line1 expression": "LINE-1 expression",
+    "line1 hypomethylation": "LINE-1 hypomethylation",
+    "line1 reactivation": "LINE-1 reactivation",
+    "line1 transcription": "LINE-1 transcription",
+    "line1 mediated retrotransposition": "LINE-1-mediated retrotransposition",
+    "mono-allelic expression": "Monoallelic expression",
+    "nonallelic homologous recombination": "Non-allelic homologous recombination",
+    "nonallelic homologous recombination (nahr)": "Non-allelic homologous recombination (NAHR)",
+    "non-viral gene transfer": "Nonviral gene transfer",
+    "rna-binding": "RNA binding",
+    "reverse-transcriptase activity": "Reverse transcriptase activity",
+    "t-cell engineering": "T cell engineering",
+    "target-site duplication (tsd)": "Target site duplication (TSD)",
+    "target-site primed reverse transcription (tprt)": "Target-primed reverse transcription (TPRT)",
+    "target primed reverse transcription (tprt)": "Target-primed reverse transcription (TPRT)",
+    "target site-primed reverse transcription": "Target-site primed reverse transcription",
+    "transcriptional derepression": "Transcriptional de-repression",
+    "twin-priming": "Twin priming",
+    "type-i interferon response": "Type I interferon response",
+    "up-regulation": "Upregulation",
+    "x-chromosome inactivation": "X chromosome inactivation",
+    "x-inactivation": "X inactivation",
+    "cell-cycle regulation": "cell cycle regulation",
+    "hypomethylation": "hypo-methylation",
+    "interchromosomal translocation": "inter-chromosomal translocation",
+}
+
+TE_ALIASES.update(EXTRA_TE_ALIASES)
+DISEASE_ALIASES.update(EXTRA_DISEASE_ALIASES)
+FUNCTION_ALIASES.update(EXTRA_FUNCTION_ALIASES)
+DISEASE_CLASS_MAP = build_disease_top_class_map()
+
+
+def normalize_whitespace(text: str) -> str:
+    text = str(text or "")
+    text = text.replace("\u2010", "-").replace("\u2011", "-").replace("\u2012", "-")
+    text = text.replace("\u2013", "-").replace("\u2014", "-").replace("\u2212", "-")
+    text = text.replace("\u00a0", " ")
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def normalize_key(text: str) -> str:
+    return normalize_whitespace(text).casefold()
+
+
+def normalize_compare_key(text: str) -> str:
+    text = normalize_key(text)
+    text = text.replace("’", "'").replace("`", "'")
+    text = re.sub(r"\(.*?\)", "", text)
+    text = re.sub(r"[\s\-_]", "", text)
+    return text
+
+
+def iter_json_objects(path: Path):
+    decoder = json.JSONDecoder()
+    with path.open("r", encoding="utf-8") as handle:
+        for lineno, line in enumerate(handle, start=1):
+            raw = line.strip()
+            if not raw:
+                continue
+            index = 0
+            while index < len(raw):
+                obj, end = decoder.raw_decode(raw, index)
+                yield lineno, obj
+                index = end
+                while index < len(raw) and raw[index].isspace():
+                    index += 1
+
+
+def load_repbase_ids(path: Path) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    if not path.exists():
+        return mapping
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            if not line.startswith("ID"):
+                continue
+            parts = line.strip().split()
+            if len(parts) >= 2:
+                canonical = parts[1].strip()
+                mapping[canonical.casefold()] = canonical
+    return mapping
+
+
+REPBASE_ID_LOOKUP = load_repbase_ids(Path("TE_Repbase.txt"))
+
+
+def infer_line1_subfamily(name: str) -> str | None:
+    normalized = normalize_whitespace(name).upper()
+    normalized = normalized.replace("LINE1", "L1").replace("LINE-1", "L1")
+    normalized = normalized.replace(" ", "")
+    match = re.fullmatch(r"L1(PA\d+A?|PB\d+|MA\d+|HS)", normalized)
+    if match:
+        return normalized
+    return None
+
+
+def canonicalize_entity(entity_type: str, name: str) -> str:
+    base = normalize_whitespace(name)
+    if not base:
+        return ""
+
+    compare_key = normalize_compare_key(base)
+    key = normalize_key(base)
+
+    if entity_type == "transposons":
+        if key in TE_ALIASES:
+            return TE_ALIASES[key]
+        subfamily = infer_line1_subfamily(base)
+        if subfamily:
+            return subfamily
+        repbase = REPBASE_ID_LOOKUP.get(base.casefold())
+        if repbase:
+            return repbase
+        return base
+
+    if entity_type == "diseases":
+        if key in DISEASE_ALIASES:
+            return DISEASE_ALIASES[key]
+        if compare_key in {normalize_compare_key(k) for k in DISEASE_ALIASES}:
+            for alias, canonical in DISEASE_ALIASES.items():
+                if compare_key == normalize_compare_key(alias):
+                    return canonical
+        return base
+
+    if entity_type == "functions":
+        if key in FUNCTION_ALIASES:
+            return FUNCTION_ALIASES[key]
+        if compare_key in {normalize_compare_key(k) for k in FUNCTION_ALIASES}:
+            for alias, canonical in FUNCTION_ALIASES.items():
+                if compare_key == normalize_compare_key(alias):
+                    return canonical
+        return base
+
+    return base
+
+
+def canonicalize_relation(name: str) -> str:
+    base = normalize_key(name)
+    return RELATION_ALIASES.get(base, normalize_whitespace(name))
+
+
+def dedupe_entities(items: list[dict], entity_type: str) -> list[dict]:
+    deduped: dict[str, dict] = {}
+    for item in items:
+        raw_name = normalize_whitespace(item.get("name", ""))
+        if not raw_name:
+            continue
+        canonical_name = canonicalize_entity(entity_type, raw_name)
+        if not canonical_name:
+            continue
+        description = normalize_whitespace(item.get("description", ""))
+        dedupe_key = canonical_name.casefold()
+        if dedupe_key not in deduped:
+            payload = {"name": canonical_name, "description": description}
+            if entity_type == "diseases":
+                disease_class = normalize_whitespace(item.get("disease_class", "")) or lookup_disease_class(
+                    canonical_name,
+                    DISEASE_CLASS_MAP,
+                )
+                if disease_class:
+                    payload["disease_class"] = disease_class
+            deduped[dedupe_key] = payload
+        elif not deduped[dedupe_key]["description"] and description:
+            deduped[dedupe_key]["description"] = description
+        elif entity_type == "diseases" and not deduped[dedupe_key].get("disease_class"):
+            disease_class = normalize_whitespace(item.get("disease_class", "")) or lookup_disease_class(
+                canonical_name,
+                DISEASE_CLASS_MAP,
+            )
+            if disease_class:
+                deduped[dedupe_key]["disease_class"] = disease_class
+    return sorted(deduped.values(), key=lambda x: x["name"].casefold())
+
+
+def infer_entity_type(name: str, entities: dict) -> str:
+    raw = normalize_whitespace(name)
+    if not raw:
+        return "functions"
+
+    for entity_type, items in entities.items():
+        canonical_name = canonicalize_entity(entity_type, raw)
+        canonical_key = normalize_key(canonical_name)
+        canonical_compare_key = normalize_compare_key(canonical_name)
+        for item in items:
+            item_name = item["name"]
+            if normalize_key(item_name) == canonical_key or normalize_compare_key(item_name) == canonical_compare_key:
+                return entity_type
+
+    te_canonical = canonicalize_entity("transposons", raw)
+    if te_canonical and normalize_key(te_canonical) != normalize_key(raw):
+        return "transposons"
+    if infer_line1_subfamily(raw):
+        return "transposons"
+    return "functions"
+
+
+def ensure_entity_present(normalized_entities: dict, entity_type: str, canonical_name: str) -> None:
+    canonical_name = normalize_whitespace(canonical_name)
+    if not canonical_name:
+        return
+
+    bucket = normalized_entities.setdefault(entity_type, [])
+    wanted_key = normalize_key(canonical_name)
+    for item in bucket:
+        if normalize_key(item.get("name", "")) == wanted_key:
+            return
+
+    payload = {"name": canonical_name, "description": ""}
+    if entity_type == "diseases":
+        disease_class = lookup_disease_class(canonical_name, DISEASE_CLASS_MAP)
+        if disease_class:
+            payload["disease_class"] = disease_class
+    bucket.append(payload)
+
+
+def resolve_entity_name(entity_type: str, raw_name: str, entities: dict) -> str:
+    canonical_name = canonicalize_entity(entity_type, raw_name)
+    if not canonical_name:
+        return ""
+
+    bucket = entities.get(entity_type, []) or []
+    canonical_key = normalize_key(canonical_name)
+    canonical_compare_key = normalize_compare_key(canonical_name)
+    for item in bucket:
+        item_name = item.get("name", "")
+        if normalize_key(item_name) == canonical_key or normalize_compare_key(item_name) == canonical_compare_key:
+            return item_name
+
+    return canonical_name
+
+
+def entity_identity_key(entity_type: str, name: str) -> str:
+    canonical_name = canonicalize_entity(entity_type, name)
+    key = normalize_compare_key(canonical_name or name)
+    if key:
+        return key
+    return normalize_key(canonical_name or name)
+
+
+def register_bucket_node(bucket: dict, entity_type: str, item: dict) -> None:
+    key = entity_identity_key(entity_type, item["name"])
+    if key not in bucket:
+        bucket[key] = dict(item)
+        return
+
+    existing = bucket[key]
+    if not existing.get("description") and item.get("description"):
+        existing["description"] = item["description"]
+    if entity_type == "diseases" and not existing.get("disease_class") and item.get("disease_class"):
+        existing["disease_class"] = item["disease_class"]
+
+
+def build_node_indexes(node_buckets: dict) -> dict[str, dict[str, str]]:
+    indexes: dict[str, dict[str, str]] = {}
+    for entity_type, bucket in node_buckets.items():
+        index: dict[str, str] = {}
+        for item in bucket.values():
+            name = item["name"]
+            index[normalize_key(name)] = name
+            compare_key = normalize_compare_key(name)
+            if compare_key:
+                index[compare_key] = name
+        indexes[entity_type] = index
+    return indexes
+
+
+def resolve_seed_node_name(entity_type: str, raw_name: str, indexes: dict[str, dict[str, str]]) -> str:
+    canonical_name = canonicalize_entity(entity_type, raw_name)
+    index = indexes.get(entity_type, {})
+    for key in (normalize_key(canonical_name), normalize_compare_key(canonical_name)):
+        if key and key in index:
+            return index[key]
+    return canonical_name
+
+
+def normalize_record(record: dict) -> dict:
+    entities = record.get("entities", {}) or {}
+    normalized_entities = {
+        "transposons": dedupe_entities(entities.get("transposons", []) or [], "transposons"),
+        "diseases": dedupe_entities(entities.get("diseases", []) or [], "diseases"),
+        "functions": dedupe_entities(entities.get("functions", []) or [], "functions"),
+        "papers": dedupe_entities(entities.get("papers", []) or [], "papers"),
+    }
+
+    relation_seen: dict[tuple[str, str, str], dict] = {}
+    for rel in record.get("relations", []) or []:
+        source_type = infer_entity_type(rel.get("source", ""), normalized_entities)
+        target_type = infer_entity_type(rel.get("target", ""), normalized_entities)
+        source = resolve_entity_name(source_type, rel.get("source", ""), normalized_entities)
+        target = resolve_entity_name(target_type, rel.get("target", ""), normalized_entities)
+        relation = canonicalize_relation(rel.get("relation", ""))
+        description = normalize_whitespace(rel.get("description", ""))
+        if not source or not target or not relation:
+            continue
+
+        ensure_entity_present(normalized_entities, source_type, source)
+        ensure_entity_present(normalized_entities, target_type, target)
+
+        dedupe_key = (source.casefold(), relation.casefold(), target.casefold())
+        if dedupe_key not in relation_seen:
+            relation_seen[dedupe_key] = {
+                "source": source,
+                "source_type": source_type,
+                "relation": relation,
+                "target": target,
+                "target_type": target_type,
+                "description": description,
+            }
+        elif not relation_seen[dedupe_key]["description"] and description:
+            relation_seen[dedupe_key]["description"] = description
+
+    pmid = normalize_whitespace(record.get("pmid", ""))
+    return {
+        "pmid": pmid,
+        "entities": normalized_entities,
+        "relations": sorted(
+            relation_seen.values(),
+            key=lambda x: (x["source"].casefold(), x["relation"].casefold(), x["target"].casefold()),
+        ),
+    }
+
+
+def build_graph_seed(records: list[dict]) -> dict:
+    node_buckets = {
+        "transposons": {},
+        "diseases": {},
+        "functions": {},
+        "papers": {},
+    }
+    relation_buckets: dict[tuple[str, str, str], dict] = {}
+
+    for record in records:
+        pmid = record.get("pmid", "")
+        paper_entities = record["entities"].get("papers", [])
+        if paper_entities:
+            paper = dict(paper_entities[0])
+            paper["pmid"] = pmid
+            node_buckets["papers"][pmid] = paper
+        elif pmid:
+            node_buckets["papers"][pmid] = {
+                "pmid": pmid,
+                "name": f"PMID:{pmid}",
+                "description": "",
+            }
+
+        for entity_type in ("transposons", "diseases", "functions"):
+            for item in record["entities"].get(entity_type, []):
+                register_bucket_node(node_buckets[entity_type], entity_type, item)
+
+    node_indexes = build_node_indexes(node_buckets)
+
+    for record in records:
+        pmid = record.get("pmid", "")
+        for rel in record.get("relations", []):
+            source_type = rel.get("source_type") or infer_entity_type(rel["source"], record["entities"])
+            target_type = rel.get("target_type") or infer_entity_type(rel["target"], record["entities"])
+            source = resolve_seed_node_name(source_type, rel["source"], node_indexes)
+            target = resolve_seed_node_name(target_type, rel["target"], node_indexes)
+
+            key = (source.casefold(), rel["relation"].casefold(), target.casefold())
+            if key not in relation_buckets:
+                relation_buckets[key] = {
+                    "source": source,
+                    "relation": rel["relation"],
+                    "target": target,
+                    "description": rel.get("description", ""),
+                    "pmids": [],
+                }
+            relation_buckets[key]["pmids"].append(pmid)
+
+    return {
+        "nodes": {
+            entity_type: sorted(bucket.values(), key=lambda x: x["name"].casefold())
+            for entity_type, bucket in node_buckets.items()
+        },
+        "relations": sorted(
+            (
+                {
+                    **value,
+                    "pmids": sorted({pmid for pmid in value["pmids"] if pmid}),
+                }
+                for value in relation_buckets.values()
+            ),
+            key=lambda x: (x["source"].casefold(), x["relation"].casefold(), x["target"].casefold()),
+        ),
+        "lineage_relations": [],
+    }
+
+
+def validate_graph_seed(graph_seed: dict) -> dict:
+    node_names = {item["name"] for items in graph_seed["nodes"].values() for item in items}
+    missing_samples = []
+    missing_count = 0
+    missing_counter = Counter()
+
+    for rel in graph_seed["relations"]:
+        missing_fields = []
+        if rel["source"] not in node_names:
+            missing_fields.append("source")
+            missing_counter[f"source:{rel['source']}"] += 1
+        if rel["target"] not in node_names:
+            missing_fields.append("target")
+            missing_counter[f"target:{rel['target']}"] += 1
+        if not missing_fields:
+            continue
+
+        missing_count += 1
+        if len(missing_samples) < 20:
+            missing_samples.append({
+                "missing": missing_fields,
+                "source": rel["source"],
+                "relation": rel["relation"],
+                "target": rel["target"],
+            })
+
+    return {
+        "missing_relation_endpoint_count": missing_count,
+        "missing_relation_endpoint_samples": missing_samples,
+        "top_missing_relation_endpoints": missing_counter.most_common(30),
+    }
+
+
+def build_report(records: list[dict], graph_seed: dict, validation: dict) -> dict:
+    relation_counter = Counter()
+    node_counts = {group: len(items) for group, items in graph_seed["nodes"].items()}
+    for rel in graph_seed["relations"]:
+        relation_counter[rel["relation"]] += 1
+    return {
+        "records": len(records),
+        "paper_nodes": node_counts["papers"],
+        "te_nodes": node_counts["transposons"],
+        "disease_nodes": node_counts["diseases"],
+        "function_nodes": node_counts["functions"],
+        "relation_count": len(graph_seed["relations"]),
+        "top_relations": relation_counter.most_common(20),
+        **validation,
+    }
+
+
+def main() -> None:
+    if not INPUT_FILE.exists():
+        raise FileNotFoundError(f"Missing input file: {INPUT_FILE}")
+
+    normalized_records = []
+    for _lineno, obj in iter_json_objects(INPUT_FILE):
+        normalized_records.append(normalize_record(obj))
+
+    with NORMALIZED_JSONL.open("w", encoding="utf-8") as handle:
+        for record in normalized_records:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    graph_seed = build_graph_seed(normalized_records)
+    with GRAPH_SEED_JSON.open("w", encoding="utf-8") as handle:
+        json.dump(graph_seed, handle, ensure_ascii=False, indent=2)
+
+    validation = validate_graph_seed(graph_seed)
+    report = build_report(normalized_records, graph_seed, validation)
+    REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    if validation["missing_relation_endpoint_count"] > 0:
+        raise RuntimeError(
+            f"Graph seed validation failed: {validation['missing_relation_endpoint_count']} relation endpoints are missing corresponding nodes."
+        )
+
+    print(f"Normalized records: {len(normalized_records)}")
+    print(f"Wrote: {NORMALIZED_JSONL}")
+    print(f"Wrote: {GRAPH_SEED_JSON}")
+    print(f"Wrote: {REPORT_JSON}")
+
+
+if __name__ == "__main__":
+    main()

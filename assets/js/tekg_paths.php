@@ -10,7 +10,7 @@ $payload = [
     'apiBase' => TEKG_API_URL_BASE,
     'assetsBase' => TEKG_ASSETS_URL_BASE,
     'dataBase' => TEKG_DATA_URL_BASE,
-    'terminologyBase' => tekg_app_url('terminology'),
+    'terminologyBase' => tekg_data_url('terminology'),
 ];
 ?>
 (function (global) {

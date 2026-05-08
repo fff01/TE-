@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+SCRIPTS_ROOT = next(parent for parent in Path(__file__).resolve().parents if parent.name == "scripts")
+if str(SCRIPTS_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_ROOT))
+
 import csv
 import json
 import re

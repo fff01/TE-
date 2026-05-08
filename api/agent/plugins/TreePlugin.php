@@ -127,7 +127,7 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
         if (is_array($this->tree)) {
             return $this->tree;
         }
-        $path = TEKG_DATA_FS_DIR . '/processed/tree_te_lineage.json';
+        $path = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
         $decoded = is_file($path) ? json_decode((string)file_get_contents($path), true) : [];
         $this->tree = is_array($decoded) ? $decoded : ['nodes' => [], 'edges' => []];
         return $this->tree;

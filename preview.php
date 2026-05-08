@@ -14,12 +14,12 @@ $queryParams = $_GET;
 unset($queryParams['lang'], $queryParams['renderer']);
 
 $g6PreviewVersion = max(
-    (int)@filemtime(tekg_fs_from_project_relative('index_g6.html')),
+    (int)@filemtime(tekg_fs_from_project_relative('lab/index_g6.html')),
     (int)@filemtime(tekg_assets_fs_path('css/tekg_runtime.css')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-qa.js'))
 );
-$graphSrc = site_url_with_state(tekg_app_url('index_g6.html'), $siteLang, null, array_merge($queryParams, ['embed' => 'preview-graphonly']));
-$qaSrc = site_url_with_state(tekg_app_url('index_g6.html'), $siteLang, null, array_merge($queryParams, ['embed' => 'qa-overlay']));
+$graphSrc = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang, null, array_merge($queryParams, ['embed' => 'preview-graphonly']));
+$qaSrc = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang, null, array_merge($queryParams, ['embed' => 'qa-overlay']));
 ?>
       <section class="preview-stage" id="previewStage">
         <button class="preview-fullscreen-btn" id="previewFullscreenBtn" type="button" aria-label="Enter fullscreen preview">
