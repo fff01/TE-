@@ -133,30 +133,40 @@ $datasetMeta = [
     ],
 ];
 
-$classDatasetStats = [
-    [
-        'key' => 'class-i',
-        'label' => 'Class I: Retrotransposons',
-        'count' => 1140,
-        'color' => '#4f86df',
-        'description' => 'Retrotransposons',
-    ],
-    [
-        'key' => 'class-ii',
-        'label' => 'Class II: DNA Transposons',
-        'count' => 440,
-        'color' => '#b7d4ff',
-        'description' => 'DNA Transposons',
-    ],
-];
-$classDatasetTotal = array_sum(array_map(static fn(array $item): int => (int) $item['count'], $classDatasetStats));
-$classDatasetStats = array_map(
-    static function (array $item) use ($classDatasetTotal): array {
-        $item['percentage'] = $classDatasetTotal > 0 ? ((float) $item['count'] / (float) $classDatasetTotal) * 100.0 : 0.0;
-        return $item;
-    },
-    $classDatasetStats
-);
+$statusChartViews = [];
+$homepageTaxonomyStatsPath = tekg_data_fs_path('processed/tekg3_homepage_taxonomy.json');
+if (is_file($homepageTaxonomyStatsPath)) {
+    $homepageTaxonomyStats = json_decode((string) file_get_contents($homepageTaxonomyStatsPath), true);
+    if (is_array($homepageTaxonomyStats) && isset($homepageTaxonomyStats['views']) && is_array($homepageTaxonomyStats['views'])) {
+        $statusChartViews = $homepageTaxonomyStats['views'];
+    }
+}
+
+if (!isset($statusChartViews['root'])) {
+    $classDatasetStats = [
+        [
+            'key' => 'class-i',
+            'label' => 'Class I: Retrotransposons',
+            'count' => 1140,
+            'color' => '#4f86df',
+            'description' => 'Retrotransposons',
+        ],
+        [
+            'key' => 'class-ii',
+            'label' => 'Class II: DNA Transposons',
+            'count' => 440,
+            'color' => '#b7d4ff',
+            'description' => 'DNA Transposons',
+        ],
+    ];
+    $statusChartViews = [
+        'root' => [
+            'count' => array_sum(array_map(static fn(array $item): int => (int) $item['count'], $classDatasetStats)),
+            'label' => 'Classified TE',
+            'segments' => $classDatasetStats,
+        ],
+    ];
+}
 
 $datasetItems = [];
 foreach ($datasetMeta as $meta) {
@@ -195,14 +205,6 @@ foreach ($datasetItems as $item) {
 $secondarySplitIndex = (int) ceil(count($secondaryDatasetItems) / 2);
 $leftDatasetItems = array_slice($secondaryDatasetItems, 0, $secondarySplitIndex);
 $rightDatasetItems = array_slice($secondaryDatasetItems, $secondarySplitIndex);
-
-$statusChartViews = [
-    'root' => [
-        'count' => $primaryDatasetItem['count'] ?? 0,
-        'label' => $primaryDatasetItem['label'] ?? 'TE',
-        'segments' => $classDatasetStats,
-    ],
-];
 
 foreach ($statusChartViews as $viewKey => $view) {
     $viewTotal = (float) ($view['count'] ?? 0);
@@ -300,7 +302,7 @@ $treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang
                         data-chart='<?= htmlspecialchars(json_encode($statusChartViews, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>'
                         data-chart-view="root"
                       ></svg>
-                      <div class="status-badge-center">
+                      <div class="status-badge-center" data-ring-center>
                         <div class="status-count" data-ring-count><?= number_format($primaryDatasetItem['count']) ?></div>
                         <div class="status-name" data-ring-label><?= htmlspecialchars($primaryDatasetItem['label'], ENT_QUOTES, 'UTF-8') ?></div>
                       </div>
@@ -392,4 +394,3 @@ $treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang
   </div>
 </body>
 </html>
-

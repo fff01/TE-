@@ -9,7 +9,7 @@ return [
     'ssl_verify' => false,
     'llm_relay_url' => 'http://127.0.0.1:18087/chat',
     'llm_answer_chat_timeout' => 40,
-    'neo4j_url' => 'http://127.0.0.1:7474/db/tekg21/tx/commit',
+    'neo4j_url' => 'http://127.0.0.1:7474/db/tekg3/tx/commit',
     'neo4j_user' => 'neo4j',
     'neo4j_password' => 'xjss9577',
     'key_node_threshold' => 3,

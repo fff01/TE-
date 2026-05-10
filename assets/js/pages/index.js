@@ -8,6 +8,9 @@
   const ringChart = document.querySelector('.status-ring-chart');
   const ringCount = document.querySelector('[data-ring-count]');
   const ringLabel = document.querySelector('[data-ring-label]');
+  const ringCenter = document.querySelector('[data-ring-center]');
+  let chartViews = {};
+  let activeChartView = 'root';
 
   function syncHeader() {
     if (!header) {
@@ -71,22 +74,16 @@
     ].join(' ');
   }
 
-  function renderChart() {
+  function renderChart(viewKey = 'root') {
     if (!ringChart) {
       return;
     }
 
-    let chartViews = {};
-    try {
-      chartViews = JSON.parse(ringChart.dataset.chart || '{}');
-    } catch (error) {
-      chartViews = {};
-    }
-
-    const view = chartViews.root;
+    const view = chartViews[viewKey] || chartViews.root;
     if (!view) {
       return;
     }
+    activeChartView = chartViews[viewKey] ? viewKey : 'root';
 
     ringChart.replaceChildren();
     let startAngle = -90;
@@ -100,6 +97,7 @@
       path.dataset.label = segment.label || '';
       path.dataset.count = String(segment.count || '');
       path.dataset.percentage = Number(segment.percentage || 0).toFixed(1);
+      path.dataset.nextView = segment.nextView || '';
       ringChart.appendChild(path);
       startAngle = endAngle;
     });
@@ -128,9 +126,34 @@
     });
   });
 
+  if (ringChart) {
+    try {
+      chartViews = JSON.parse(ringChart.dataset.chart || '{}');
+    } catch (error) {
+      chartViews = {};
+    }
+  }
+
   renderChart();
 
   if (ringChart) {
+    ringChart.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      const segment = target.closest('.status-ring-segment');
+      if (!segment) {
+        return;
+      }
+      const nextView = segment.dataset.nextView || '';
+      if (nextView && chartViews[nextView]) {
+        renderChart(nextView);
+      }
+    });
+
     ringChart.addEventListener('mousemove', (event) => {
       const target = event.target;
       if (!(target instanceof Element)) {
@@ -147,6 +170,16 @@
 
     ringChart.addEventListener('mouseleave', () => {
       hideTooltip();
+    });
+  }
+
+  if (ringCenter) {
+    ringCenter.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (activeChartView !== 'root') {
+        renderChart('root');
+      }
     });
   }
 
