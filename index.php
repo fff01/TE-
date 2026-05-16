@@ -1,5 +1,6 @@
 ﻿<?php
 require_once __DIR__ . '/path_config.php';
+require_once __DIR__ . '/api/taxonomy_lib.php';
 $pageTitle = 'TE-KG Home';
 $activePage = 'home';
 $protoCurrentPath = tekg_app_url('index.php');
@@ -134,11 +135,23 @@ $datasetMeta = [
 ];
 
 $statusChartViews = [];
+$homepageTaxonomySource = 'fallback';
+try {
+    $homepageTaxonomyPayload = tekg_taxonomy_homepage_payload(tekg_taxonomy_fetch_items());
+    if (isset($homepageTaxonomyPayload['views']) && is_array($homepageTaxonomyPayload['views'])) {
+        $statusChartViews = $homepageTaxonomyPayload['views'];
+        $homepageTaxonomySource = 'neo4j';
+    }
+} catch (Throwable) {
+    $statusChartViews = [];
+}
+
 $homepageTaxonomyStatsPath = tekg_data_fs_path('processed/tekg3_homepage_taxonomy.json');
-if (is_file($homepageTaxonomyStatsPath)) {
+if (!isset($statusChartViews['root']) && is_file($homepageTaxonomyStatsPath)) {
     $homepageTaxonomyStats = json_decode((string) file_get_contents($homepageTaxonomyStatsPath), true);
     if (is_array($homepageTaxonomyStats) && isset($homepageTaxonomyStats['views']) && is_array($homepageTaxonomyStats['views'])) {
         $statusChartViews = $homepageTaxonomyStats['views'];
+        $homepageTaxonomySource = 'json_fallback';
     }
 }
 

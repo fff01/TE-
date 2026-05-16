@@ -54,6 +54,14 @@ api/taxonomy_lib.php
 
 Search、Browse、G6、QA、agent TreePlugin 和 EntityNormalizer 应复用该 helper/API，不再直接读取 taxonomy lineage 文件。
 
+首页 ring chart：
+
+```text
+index.php -> tekg_taxonomy_fetch_items() -> tekg_taxonomy_homepage_payload()
+```
+
+该路径直接读取 Neo4j `tekg3` 的 `homepage_chart_included` 和 `taxonomy_*` 字段。
+
 ## 保留与删除
 
 保留的 canonical input：
@@ -74,7 +82,7 @@ data/taxonomy/lineage/tree_te_lineage.csv
 assets/data/graph_demo_data.js
 ```
 
-`data/processed/tekg3_homepage_taxonomy.json` 暂时保留为首页 ring chart 派生缓存。它不是单个 TE 分类的权威源。
+`data/processed/tekg3_homepage_taxonomy.json` 暂时保留为首页 ring chart 的 fallback cache。首页运行时优先通过 PHP helper 实时查询 Neo4j `tekg3` 并生成 ring chart views；只有 Neo4j 查询失败时才回退到该 JSON 文件。
 
 ## 验证
 
@@ -90,7 +98,8 @@ python scripts/checks/check_taxonomy_runtime_consistency.py
 1. 代表 TE 在 Neo4j tekg3 中有 taxonomy 字段。
 2. api/taxonomy.php 与 Neo4j 字段一致。
 3. api/graph.php 输出的 node taxonomy 与 Neo4j 字段一致。
-4. 运行时文件不再引用旧 lineage JSON 或 graph_demo_data.js。
+4. index.php 优先从实时 Neo4j taxonomy 生成 homepage ring chart。
+5. 运行时文件不再引用旧 lineage JSON 或 graph_demo_data.js。
 ```
 
 当前代表 TE：

@@ -301,3 +301,195 @@ function tekg_taxonomy_summary_payload(array $items): array
     ksort($summary['taxonomy_sources']);
     return $summary;
 }
+
+function tekg_taxonomy_slugify(string $value): string
+{
+    $slug = preg_replace('/[^a-z0-9]+/', '-', strtolower($value)) ?? '';
+    $slug = trim($slug, '-');
+    return $slug !== '' ? $slug : 'segment';
+}
+
+function tekg_taxonomy_ring_color(int $index): string
+{
+    $colors = ['#4f86df', '#80acef', '#a7c8ff', '#d2e3ff', '#5d97f6', '#bfd8ff'];
+    return $colors[$index % count($colors)];
+}
+
+function tekg_taxonomy_counter(array $values): array
+{
+    $counter = [];
+    foreach ($values as $value) {
+        $name = trim((string)$value);
+        if ($name === '') {
+            continue;
+        }
+        $counter[$name] = ($counter[$name] ?? 0) + 1;
+    }
+    return $counter;
+}
+
+function tekg_taxonomy_sort_counter(array $counter): array
+{
+    uksort($counter, static function (string $left, string $right) use ($counter): int {
+        $countCompare = ((int)$counter[$right]) <=> ((int)$counter[$left]);
+        return $countCompare !== 0 ? $countCompare : strcasecmp($left, $right);
+    });
+    return $counter;
+}
+
+function tekg_taxonomy_chart_view(string $label, array $counter, ?string $nextPrefix = null, array $nextOverrides = []): array
+{
+    $counter = tekg_taxonomy_sort_counter($counter);
+    $segments = [];
+    $index = 0;
+    foreach ($counter as $name => $count) {
+        $segment = [
+            'key' => tekg_taxonomy_slugify((string)$name),
+            'label' => (string)$name,
+            'count' => (int)$count,
+            'color' => tekg_taxonomy_ring_color($index),
+            'description' => (string)$name,
+        ];
+        if (isset($nextOverrides[$name])) {
+            $segment['nextView'] = $nextOverrides[$name];
+        } elseif ($nextPrefix !== null) {
+            $segment['nextView'] = $nextPrefix . tekg_taxonomy_slugify((string)$name);
+        }
+        $segments[] = $segment;
+        $index++;
+    }
+
+    return [
+        'count' => array_sum(array_map('intval', $counter)),
+        'label' => $label,
+        'segments' => $segments,
+    ];
+}
+
+function tekg_taxonomy_path_value(array $item, string $rank, string $fallback = 'Unclassified'): string
+{
+    $value = trim((string)($item['path'][$rank] ?? ''));
+    return $value !== '' ? $value : $fallback;
+}
+
+function tekg_taxonomy_retro_primary_bucket(array $item): string
+{
+    $order = trim((string)($item['path']['order'] ?? ''));
+    if ($order !== '') {
+        return $order;
+    }
+    $superfamily = strtoupper((string)($item['path']['superfamily'] ?? ''));
+    if (str_contains($superfamily, 'SINE')) {
+        return 'SINEs';
+    }
+    return 'Unclassified';
+}
+
+function tekg_taxonomy_dna_primary_bucket(array $item): string
+{
+    $subclass = trim((string)($item['path']['subclass'] ?? ''));
+    if ($subclass !== '') {
+        return $subclass;
+    }
+    $order = trim((string)($item['path']['order'] ?? ''));
+    return $order !== '' ? $order : 'Unclassified';
+}
+
+function tekg_taxonomy_deep_bucket(array $item): string
+{
+    $family = trim((string)($item['path']['family'] ?? ''));
+    if ($family !== '') {
+        return $family;
+    }
+    $subclade = trim((string)($item['path']['subclade'] ?? ''));
+    return $subclade !== '' ? $subclade : 'Unclassified';
+}
+
+function tekg_taxonomy_homepage_views(array $items): array
+{
+    $included = array_values(array_filter($items, static function (array $item): bool {
+        return !empty($item['homepage_chart_included']) && trim((string)($item['path']['class'] ?? '')) !== '';
+    }));
+
+    $views = [
+        'root' => tekg_taxonomy_chart_view(
+            'Classified TE',
+            tekg_taxonomy_counter(array_map(static fn(array $item): string => (string)$item['path']['class'], $included)),
+            'class::'
+        ),
+    ];
+
+    $byClass = [];
+    foreach ($included as $item) {
+        $className = (string)$item['path']['class'];
+        $byClass[$className] ??= [];
+        $byClass[$className][] = $item;
+    }
+
+    foreach ($byClass as $className => $records) {
+        $classViewKey = 'class::' . tekg_taxonomy_slugify((string)$className);
+        $primaryBuckets = [];
+        foreach ($records as $item) {
+            if ($className === 'Retrotransposons') {
+                $bucket = tekg_taxonomy_retro_primary_bucket($item);
+            } elseif ($className === 'DNA Transposons') {
+                $bucket = tekg_taxonomy_dna_primary_bucket($item);
+            } else {
+                $bucket = 'Unclassified';
+            }
+            $primaryBuckets[$bucket] ??= [];
+            $primaryBuckets[$bucket][] = $item;
+        }
+
+        $primaryCounter = [];
+        foreach ($primaryBuckets as $bucketName => $bucketRecords) {
+            $primaryCounter[$bucketName] = count($bucketRecords);
+        }
+        $views[$classViewKey] = tekg_taxonomy_chart_view($className, $primaryCounter, $classViewKey . '::');
+
+        foreach ($primaryBuckets as $bucketName => $bucketRecords) {
+            $segmentKey = $classViewKey . '::' . tekg_taxonomy_slugify((string)$bucketName);
+            $superfamilyBuckets = [];
+            foreach ($bucketRecords as $item) {
+                $superfamily = tekg_taxonomy_path_value($item, 'superfamily');
+                $superfamilyBuckets[$superfamily] ??= [];
+                $superfamilyBuckets[$superfamily][] = $item;
+            }
+
+            $superfamilyCounter = [];
+            foreach ($superfamilyBuckets as $superfamilyName => $superfamilyRecords) {
+                $superfamilyCounter[$superfamilyName] = count($superfamilyRecords);
+            }
+
+            $nextOverrides = [];
+            foreach ($superfamilyBuckets as $superfamilyName => $superfamilyRecords) {
+                $deepCounter = tekg_taxonomy_counter(array_map('tekg_taxonomy_deep_bucket', $superfamilyRecords));
+                if (count($deepCounter) > 1) {
+                    $deepKey = $segmentKey . '::' . tekg_taxonomy_slugify((string)$superfamilyName);
+                    $nextOverrides[$superfamilyName] = $deepKey;
+                    $views[$deepKey] = tekg_taxonomy_chart_view((string)$superfamilyName, $deepCounter);
+                }
+            }
+            $views[$segmentKey] = tekg_taxonomy_chart_view((string)$bucketName, $superfamilyCounter, null, $nextOverrides);
+        }
+    }
+
+    return $views;
+}
+
+function tekg_taxonomy_homepage_payload(array $items): array
+{
+    $included = array_values(array_filter($items, static function (array $item): bool {
+        return !empty($item['homepage_chart_included']) && trim((string)($item['path']['class'] ?? '')) !== '';
+    }));
+
+    return [
+        'views' => tekg_taxonomy_homepage_views($items),
+        'summary' => [
+            'total_te_nodes' => count($items),
+            'classified_for_homepage' => count($included),
+            'excluded_non_leaf' => count(array_filter($items, static fn(array $item): bool => (string)($item['taxonomy_status'] ?? '') === 'non_leaf')),
+            'excluded_unresolved' => count(array_filter($items, static fn(array $item): bool => (string)($item['taxonomy_group'] ?? '') === 'unresolved')),
+        ],
+    ];
+}

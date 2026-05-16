@@ -203,6 +203,22 @@ def check_legacy_runtime_references(failures: list[str]) -> None:
                 failures.append(f"legacy runtime taxonomy reference remains: {rel_path} contains {pattern}")
 
 
+def check_homepage_uses_realtime_taxonomy(failures: list[str]) -> None:
+    index_path = ROOT / "index.php"
+    if not index_path.is_file():
+        failures.append("index.php is missing")
+        return
+    text = index_path.read_text(encoding="utf-8", errors="replace")
+    if "api/taxonomy_lib.php" not in text:
+        failures.append("homepage ring chart does not load api/taxonomy_lib.php")
+    if "tekg_taxonomy_homepage_payload(" not in text:
+        failures.append("homepage ring chart does not build views from realtime Neo4j taxonomy")
+    json_pos = text.find("tekg3_homepage_taxonomy.json")
+    live_pos = text.find("tekg_taxonomy_homepage_payload(")
+    if json_pos != -1 and (live_pos == -1 or json_pos < live_pos):
+        failures.append("homepage ring chart reads JSON before realtime Neo4j taxonomy")
+
+
 def main() -> int:
     failures: list[str] = []
     config = read_local_config()
@@ -215,6 +231,7 @@ def main() -> int:
     if expected:
         check_taxonomy_api(expected, failures)
         check_graph_api(expected, failures)
+    check_homepage_uses_realtime_taxonomy(failures)
     check_legacy_runtime_references(failures)
 
     if failures:
