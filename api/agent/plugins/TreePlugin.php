@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/taxonomy_lib.php';
+
 final class TekgAgentTreePlugin implements TekgAgentPluginInterface
 {
-    private ?array $tree = null;
+    private ?array $taxonomyItems = null;
     private ?array $diseaseTopMap = null;
 
     public function getName(): string
@@ -85,11 +87,11 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
 
     private function topTeClasses(): array
     {
-        $tree = $this->loadTree();
         $top = [];
-        foreach ($tree['nodes'] as $node) {
-            if ((int)($node['depth'] ?? -1) === 1) {
-                $top[] = (string)$node['name'];
+        foreach ($this->loadTaxonomyItems() as $item) {
+            $class = trim((string)($item['path']['class'] ?? ''));
+            if ($class !== '') {
+                $top[] = $class;
             }
         }
         return array_values(array_unique($top));
@@ -97,23 +99,11 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
 
     private function tePath(string $name): array
     {
-        $tree = $this->loadTree();
-        $parentMap = [];
-        foreach ($tree['edges'] as $edge) {
-            $parentMap[(string)$edge['child']] = (string)$edge['parent'];
-        }
-        $current = trim($name);
-        if ($current === '') {
+        $item = tekg_taxonomy_find_item($name, $this->loadTaxonomyItems());
+        if (!is_array($item)) {
             return [];
         }
-        $path = [$current];
-        $guard = 0;
-        while (isset($parentMap[$current]) && $guard < 20) {
-            $current = $parentMap[$current];
-            $path[] = $current;
-            $guard++;
-        }
-        return array_reverse($path);
+        return array_values(array_filter(array_merge(['TE'], (array)($item['path_labels'] ?? []))));
     }
 
     private function diseaseTopClass(string $name): ?string
@@ -122,15 +112,17 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
         return $map[$name] ?? null;
     }
 
-    private function loadTree(): array
+    private function loadTaxonomyItems(): array
     {
-        if (is_array($this->tree)) {
-            return $this->tree;
+        if (is_array($this->taxonomyItems)) {
+            return $this->taxonomyItems;
         }
-        $path = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
-        $decoded = is_file($path) ? json_decode((string)file_get_contents($path), true) : [];
-        $this->tree = is_array($decoded) ? $decoded : ['nodes' => [], 'edges' => []];
-        return $this->tree;
+        try {
+            $this->taxonomyItems = tekg_taxonomy_fetch_items();
+        } catch (Throwable) {
+            $this->taxonomyItems = [];
+        }
+        return $this->taxonomyItems;
     }
 
     private function loadDiseaseTopMap(): array

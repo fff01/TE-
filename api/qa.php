@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/path_config.php';
+require_once __DIR__ . '/taxonomy_lib.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -1831,24 +1832,19 @@ final class QaService
 
     private function loadTeTreeOverviewRows(): array
     {
-        $path = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
-        if (!is_file($path)) {
-            return [];
-        }
-        $decoded = json_decode((string)file_get_contents($path), true);
-        if (!is_array($decoded)) {
+        try {
+            $items = tekg_taxonomy_fetch_items();
+        } catch (Throwable) {
             return [];
         }
         $rows = [];
-        foreach ((array)($decoded['nodes'] ?? []) as $node) {
-            if (!is_array($node) || (int)($node['depth'] ?? -1) !== 1) {
-                continue;
+        $seen = [];
+        foreach ($items as $item) {
+            $name = trim((string)($item['path']['class'] ?? ''));
+            if ($name !== '' && !isset($seen[$name])) {
+                $seen[$name] = true;
+                $rows[] = [$name, 'top class', [], [], ['TE']];
             }
-            $name = trim((string)($node['name'] ?? ''));
-            if ($name === '') {
-                continue;
-            }
-            $rows[] = [$name, 'top class', [], [], ['TE']];
         }
         return $rows;
     }
@@ -2537,4 +2533,3 @@ final class QaService
         @file_put_contents(__DIR__ . '/qa_debug.log', $line, FILE_APPEND);
     }
 }
-

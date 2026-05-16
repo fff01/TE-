@@ -14,8 +14,7 @@
     const currentRenderer = 'g6';
     window.__TEKG_EMBED_MODE = embedMode;
     window.__TEKG_RENDERER_MODE = currentRenderer;
-    const demoData = window.GRAPH_DEMO_DATA || {elements:[],qa:{}};
-    const initialElements = JSON.parse(JSON.stringify(demoData.elements || []));
+    const initialElements = [];
     const el = id => document.getElementById(id);
     const nodeDetails = el('node-details'), searchInput = el('node-search'), nav = el('search-results-nav'), prevBtn = el('prev-result'), nextBtn = el('next-result'), resultCounter = el('result-counter'), resultName = el('result-name'), chatMessages = el('chat-messages'), userInput = el('user-question'), sendBtn = el('send-question');
     let currentLang = 'en', currentAnswerStyle = 'simple', currentAnswerDepth = 'shallow', currentModelProvider = 'qwen', currentCustomPrompt = '', customPromptDraft = '', currentCustomDepth = {rows:12,references:8}, customDepthDraft = {rows:12,references:8}, customEditorOpen = false, customEditorMode = 'prompt', previousAnswerStyleBeforeCustom = 'simple', previousAnswerDepthBeforeCustom = 'shallow', searchResults = [], currentResultIndex = -1, focusLevel = 0, searchDebounceId = null, fixedView = false, currentGraphKind = 'default-tree', currentKeyNodeLevel = 1;
@@ -169,7 +168,7 @@
     const inferType = name => {
       const current = cy.nodes().filter(n => n.data('label') === name)[0];
       if(current) return current.data('type') || 'Unknown';
-      return ((demoData.elements.find(x => x.data && x.data.label === name && !x.data.source) || {}).data || {}).type || 'Unknown';
+      return 'Unknown';
     };
     function isBrokenDescription(text=''){
       const value = String(text || '').trim();

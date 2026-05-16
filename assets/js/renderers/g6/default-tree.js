@@ -74,28 +74,86 @@
   let rootId = null;
   let selectedNodeId = null;
   let activeTreeConfig = null;
+  let taxonomyTreeElements = [];
+  let taxonomyTreePromise = null;
 
   function getEl(id) {
     return document.getElementById(id);
   }
 
   function getCurrentTreeVariantKey() {
-    return String(window.__TEKG_TREE_VARIANT || window.GRAPH_DEMO_DATA?.tree_default_variant || 'rmsk_repbase').trim() || 'rmsk_repbase';
+    return String(window.__TEKG_TREE_VARIANT || 'tekg3').trim() || 'tekg3';
   }
 
   function getCurrentTreeVariantPayload() {
-    const variants = window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.tree_variants && typeof window.GRAPH_DEMO_DATA.tree_variants === 'object'
-      ? window.GRAPH_DEMO_DATA.tree_variants
-      : {};
-    return variants[getCurrentTreeVariantKey()] || null;
+    return null;
   }
 
   function getCurrentTreeElements() {
-    const variantPayload = getCurrentTreeVariantPayload();
-    if (variantPayload && Array.isArray(variantPayload.elements) && variantPayload.elements.length) {
-      return variantPayload.elements;
+    return taxonomyTreeElements;
+  }
+
+  function treeNodeId(name) {
+    return `TREE_${String(name || '').trim().replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'node'}`;
+  }
+
+  function taxonomyPayloadToElements(payload) {
+    const nodes = Array.isArray(payload?.nodes) ? payload.nodes : [];
+    const edges = Array.isArray(payload?.edges) ? payload.edges : [];
+    const elements = [];
+    const yByName = new Map();
+    nodes.forEach((node, index) => {
+      const name = String(node?.name || '').trim();
+      if (!name) return;
+      const depth = Math.max(0, Number(node?.depth) || 0);
+      yByName.set(name, index * 28);
+      elements.push({
+        position: { x: depth * 250, y: index * 28 },
+        data: {
+          id: treeNodeId(name),
+          label: name,
+          query_label: depth === 0 ? '' : name,
+          type: 'TE',
+          description: String(node?.description || ''),
+          tree_depth: depth,
+          tree_reference: true,
+          tree_matched: depth > 0,
+          tree_is_meta: depth < 4,
+        },
+      });
+    });
+    edges.forEach((edge) => {
+      const child = String(edge?.child || '').trim();
+      const parent = String(edge?.parent || '').trim();
+      if (!child || !parent) return;
+      elements.push({
+        data: {
+          id: `${treeNodeId(parent)}__SUBFAMILY_OF__${treeNodeId(child)}`,
+          source: treeNodeId(parent),
+          target: treeNodeId(child),
+          relation: 'SUBFAMILY_OF',
+          tree_reference: true,
+        },
+        position: { x: 0, y: yByName.get(child) || 0 },
+      });
+    });
+    return elements;
+  }
+
+  async function ensureCurrentTreeElements() {
+    if (taxonomyTreeElements.length) return taxonomyTreeElements;
+    if (!taxonomyTreePromise) {
+      taxonomyTreePromise = fetch(window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree'), { credentials: 'same-origin' })
+        .then((response) => {
+          if (!response.ok) throw new Error(`taxonomy API HTTP ${response.status}`);
+          return response.json();
+        })
+        .then((payload) => {
+          taxonomyTreeElements = taxonomyPayloadToElements(payload);
+          return taxonomyTreeElements;
+        });
     }
-    return window.GRAPH_DEMO_DATA?.elements || [];
+    return taxonomyTreePromise;
   }
 
   function escapeHtml(text) {
@@ -806,6 +864,7 @@
 
   async function renderDefaultTree() {
     const detailEl = getEl('node-details');
+    await ensureCurrentTreeElements();
     const source = buildStrictTreeSource();
     if (!source.rootId) {
       if (detailEl) detailEl.textContent = 'Default tree data is unavailable.';

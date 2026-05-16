@@ -1,7 +1,5 @@
 (() => {
   const header = document.getElementById('protoHeader');
-  const triggers = Array.from(document.querySelectorAll('[data-status-trigger]'));
-  const items = Array.from(document.querySelectorAll('[data-status-item]'));
   const tooltip = document.getElementById('statusTooltip');
   const tooltipTitle = tooltip ? tooltip.querySelector('.status-tooltip-title') : null;
   const tooltipMeta = tooltip ? tooltip.querySelector('.status-tooltip-meta') : null;
@@ -11,6 +9,9 @@
   const ringCenter = document.querySelector('[data-ring-center]');
   let chartViews = {};
   let activeChartView = 'root';
+  let activeSegments = [];
+  const ringOuterRadius = 168;
+  const ringInnerRadius = 102;
 
   function syncHeader() {
     if (!header) {
@@ -74,6 +75,39 @@
     ].join(' ');
   }
 
+  function normalizeAngle(angle) {
+    let value = angle;
+    while (value < -90) {
+      value += 360;
+    }
+    while (value >= 270) {
+      value -= 360;
+    }
+    return value;
+  }
+
+  function resolveHoveredSegment(event) {
+    if (!ringChart || !activeSegments.length) {
+      return null;
+    }
+    const rect = ringChart.getBoundingClientRect();
+    const scaleX = rect.width / 360;
+    const scaleY = rect.height / 360;
+    const x = (event.clientX - rect.left) / scaleX;
+    const y = (event.clientY - rect.top) / scaleY;
+    const dx = x - 180;
+    const dy = y - 180;
+    const radius = Math.sqrt(dx * dx + dy * dy);
+    if (radius < ringInnerRadius || radius > ringOuterRadius) {
+      return null;
+    }
+
+    let angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    angle = normalizeAngle(angle);
+
+    return activeSegments.find((segment) => angle >= segment.startAngle && angle < segment.endAngle) || null;
+  }
+
   function renderChart(viewKey = 'root') {
     if (!ringChart) {
       return;
@@ -86,6 +120,7 @@
     activeChartView = chartViews[viewKey] ? viewKey : 'root';
 
     ringChart.replaceChildren();
+    activeSegments = [];
     let startAngle = -90;
     view.segments.forEach((segment) => {
       const sweep = 360 * ((Number(segment.percentage) || 0) / 100);
@@ -99,6 +134,14 @@
       path.dataset.percentage = Number(segment.percentage || 0).toFixed(1);
       path.dataset.nextView = segment.nextView || '';
       ringChart.appendChild(path);
+      activeSegments.push({
+        startAngle,
+        endAngle,
+        label: path.dataset.label,
+        count: path.dataset.count,
+        percentage: path.dataset.percentage,
+        nextView: path.dataset.nextView,
+      });
       startAngle = endAngle;
     });
 
@@ -109,22 +152,6 @@
       ringLabel.textContent = view.label || '';
     }
   }
-
-  triggers.forEach((trigger) => {
-    trigger.addEventListener('click', () => {
-      const item = trigger.closest('[data-status-item]');
-      if (!item) {
-        return;
-      }
-      const wasOpen = item.classList.contains('is-open');
-      items.forEach((entry) => entry.classList.remove('is-open'));
-      triggers.forEach((entry) => entry.setAttribute('aria-expanded', 'false'));
-      if (!wasOpen) {
-        item.classList.add('is-open');
-        trigger.setAttribute('aria-expanded', 'true');
-      }
-    });
-  });
 
   if (ringChart) {
     try {
@@ -155,17 +182,12 @@
     });
 
     ringChart.addEventListener('mousemove', (event) => {
-      const target = event.target;
-      if (!(target instanceof Element)) {
-        hideTooltip();
-        return;
-      }
-      const segment = target.closest('.status-ring-segment');
+      const segment = resolveHoveredSegment(event);
       if (!segment) {
         hideTooltip();
         return;
       }
-      showTooltip(segment, event);
+      showTooltip({ dataset: segment }, event);
     });
 
     ringChart.addEventListener('mouseleave', () => {

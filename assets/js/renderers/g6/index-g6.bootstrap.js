@@ -65,7 +65,7 @@
   let currentGraphQuery = '';
   let currentGraphQueryType = '';
   let currentGraphClassQuery = '';
-  let currentTreeVariant = String(window.GRAPH_DEMO_DATA?.tree_default_variant || 'rmsk_repbase').trim() || 'rmsk_repbase';
+  let currentTreeVariant = 'tekg3';
   let currentSelectedNode = null;
   let currentAnswerGraphElements = [];
   let currentQueryGraphElements = [];
@@ -487,17 +487,16 @@
   }
 
   function getTreeVariants() {
-    const variants = window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.tree_variants && typeof window.GRAPH_DEMO_DATA.tree_variants === 'object'
-      ? window.GRAPH_DEMO_DATA.tree_variants
-      : {};
-    return Object.keys(variants).map((key) => ({ key, ...(variants[key] || {}) }));
+    return [{
+      key: 'tekg3',
+      label: 'Neo4j TE taxonomy',
+      summary: 'TE taxonomy tree synthesized from current tekg3 taxonomy properties.',
+      counts: {},
+    }];
   }
 
   function getCurrentTreeVariantPayload() {
-    const variants = window.GRAPH_DEMO_DATA && window.GRAPH_DEMO_DATA.tree_variants && typeof window.GRAPH_DEMO_DATA.tree_variants === 'object'
-      ? window.GRAPH_DEMO_DATA.tree_variants
-      : {};
-    return variants[currentTreeVariant] || null;
+    return getTreeVariants().find((item) => item.key === currentTreeVariant) || getTreeVariants()[0] || null;
   }
 
   function getNextTreeVariantKey() {

@@ -1,6 +1,7 @@
 ﻿<?php
 require_once __DIR__ . '/site_i18n.php';
 require_once __DIR__ . '/path_config.php';
+require_once __DIR__ . '/api/taxonomy_lib.php';
 
 $pageTitle = 'TE-KG Detail';
 $activePage = 'browse';
@@ -649,70 +650,21 @@ function tekg_karyotype_bin_hit_map_proto(?array $genomeDistribution, ?array $jb
 }
 
 
-function tekg_tree_classification_index_proto(): ?array
+function tekg_tree_classification_items_proto(): ?array
 {
-    static $lookup = null;
+    static $items = null;
     static $loaded = false;
     if ($loaded) {
-        return $lookup;
+        return $items;
     }
     $loaded = true;
 
-    $file = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
-    if (!is_file($file)) {
+    try {
+        $items = tekg_taxonomy_fetch_items();
+    } catch (Throwable) {
         return null;
     }
-
-    $decoded = json_decode((string) file_get_contents($file), true);
-    if (!is_array($decoded)) {
-        return null;
-    }
-
-    $nodes = is_array($decoded['nodes'] ?? null) ? $decoded['nodes'] : [];
-    $edges = is_array($decoded['edges'] ?? null) ? $decoded['edges'] : [];
-    $nodeMap = [];
-    $nameIndex = [];
-    $canonicalIndex = [];
-    foreach ($nodes as $node) {
-        if (!is_array($node)) {
-            continue;
-        }
-        $name = trim((string) ($node['name'] ?? ''));
-        if ($name === '') {
-            continue;
-        }
-        $nodeMap[$name] = $node;
-        $strictKey = tekg_lower_proto(tekg_clean_label_proto($name));
-        $canonicalKey = tekg_canonicalize_label_proto($name);
-        if ($strictKey !== '') {
-            $nameIndex[$strictKey] = $name;
-        }
-        if ($canonicalKey !== '') {
-            $canonicalIndex[$canonicalKey] = $name;
-        }
-    }
-
-    $parentMap = [];
-    foreach ($edges as $edge) {
-        if (!is_array($edge)) {
-            continue;
-        }
-        $child = trim((string) ($edge['child'] ?? ''));
-        $parent = trim((string) ($edge['parent'] ?? ''));
-        if ($child === '' || $parent === '') {
-            continue;
-        }
-        $parentMap[$child] = $parent;
-    }
-
-    $lookup = [
-        'root' => (string) ($decoded['root'] ?? ''),
-        'nodes' => $nodeMap,
-        'name_index' => $nameIndex,
-        'canonical_index' => $canonicalIndex,
-        'parent_map' => $parentMap,
-    ];
-    return $lookup;
+    return $items;
 }
 
 function tekg_tree_classification_display_label_proto(string $label): string
@@ -738,8 +690,8 @@ function tekg_tree_classification_lookup_proto(string $query, string $type = 'al
         return null;
     }
 
-    $lookup = tekg_tree_classification_index_proto();
-    if (!is_array($lookup)) {
+    $items = tekg_tree_classification_items_proto();
+    if (!is_array($items)) {
         return null;
     }
 
@@ -761,43 +713,49 @@ function tekg_tree_classification_lookup_proto(string $query, string $type = 'al
         }
     }
 
-    $teName = null;
+    $taxonomyIndex = tekg_taxonomy_index_items($items);
+    $taxonomyItem = null;
     foreach ($candidates as $candidate) {
         $strictKey = tekg_lower_proto(tekg_clean_label_proto($candidate));
         $canonicalKey = tekg_canonicalize_label_proto($candidate);
-        $teName = $lookup['name_index'][$strictKey] ?? $lookup['canonical_index'][$canonicalKey] ?? null;
-        if (is_string($teName) && $teName !== '') {
+        $taxonomyItem = $taxonomyIndex[$candidate]
+            ?? $taxonomyIndex[$strictKey]
+            ?? $taxonomyIndex[$canonicalKey]
+            ?? $taxonomyIndex[tekg_taxonomy_canonical_key($candidate)]
+            ?? null;
+        if (is_array($taxonomyItem)) {
             break;
         }
     }
 
-    if (!is_string($teName) || $teName === '') {
+    if (!is_array($taxonomyItem)) {
         return null;
     }
 
     $path = [];
-    $seen = [];
-    $current = $teName;
-    while ($current !== '' && !isset($seen[$current])) {
-        $seen[$current] = true;
-        $node = $lookup['nodes'][$current] ?? ['name' => $current, 'depth' => count($path), 'description' => ''];
+    $labels = array_merge(['TE'], (array)($taxonomyItem['path_labels'] ?? []));
+    foreach ($labels as $depth => $label) {
+        $label = trim((string)$label);
+        if ($label === '') {
+            continue;
+        }
         $path[] = [
-            'name' => $current,
-            'display_label' => tekg_tree_classification_display_label_proto($current),
-            'depth' => (int) ($node['depth'] ?? count($path)),
-            'description' => (string) ($node['description'] ?? ''),
+            'name' => $label,
+            'display_label' => tekg_tree_classification_display_label_proto($label),
+            'depth' => (int)$depth,
+            'description' => $label === 'TE'
+                ? 'TE taxonomy root synthesized from Neo4j tekg3.'
+                : $label . ' taxonomy node synthesized from Neo4j tekg3.',
         ];
-        $current = (string) ($lookup['parent_map'][$current] ?? '');
     }
 
-    $path = array_reverse($path);
     if ($path === []) {
         return null;
     }
 
     return [
         'matched_query' => $query,
-        'resolved_te_name' => $teName,
+        'resolved_te_name' => (string)($taxonomyItem['name'] ?? ''),
         'path' => $path,
         'display_path' => implode(' --- ', array_map(static fn(array $node): string => (string) ($node['display_label'] ?? ''), $path)),
     ];
@@ -1284,8 +1242,6 @@ require __DIR__ . '/head.php';
   </div>
 </body>
 </html>
-
-
 
 
 

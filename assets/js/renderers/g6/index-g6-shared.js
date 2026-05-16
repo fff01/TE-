@@ -481,7 +481,7 @@
         fetch(window.__TEKG_PATHS.dataUrl('processed/entity_description_key_translation_cache.json'), { credentials: 'same-origin' }),
         fetch(window.__TEKG_PATHS.dataUrl('processed/te_descriptions.json'), { credentials: 'same-origin' }),
         fetch(window.__TEKG_PATHS.dataUrl('processed/entity_descriptions.json'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.dataUrl('taxonomy/lineage/tree_te_lineage.json'), { credentials: 'same-origin' }),
+        fetch(window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree'), { credentials: 'same-origin' }),
         fetch(window.__TEKG_PATHS.apiUrl('te_metrics.php'), { credentials: 'same-origin' }),
       ]);
 

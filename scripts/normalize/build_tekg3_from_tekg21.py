@@ -41,6 +41,9 @@ ROOT_NAMES = {
 VERTICAL_MARK = "│"
 BRANCH_MARKS = ("├──", "└──")
 
+VERTICAL_MARK = "\u2502"
+BRANCH_MARKS = ("\u251c\u2500\u2500", "\u2514\u2500\u2500")
+
 RING_COLORS = [
     "#4f86df",
     "#80acef",
@@ -64,6 +67,13 @@ TAXONOMY_PROP_KEYS = [
     "is_leaf_standard",
     "homepage_chart_included",
 ]
+
+CLASSIFICATION_PATH_OVERRIDES: dict[str, dict[str, str]] = {
+    "MER131": {
+        "class": "Retrotransposons",
+        "superfamily": "Other SINE Elements",
+    },
+}
 
 
 @dataclass
@@ -171,13 +181,14 @@ def parse_tree_content(raw_line: str) -> tuple[int, str]:
         return 0, ""
     leading_blocks = (len(line) - len(line.lstrip(" "))) // 4
     depth = leading_blocks + line.count(VERTICAL_MARK)
-    marker_matches = list(re.finditer(r"(├──|└──)\s*", line))
+    branch_pattern = "|".join(re.escape(mark) for mark in BRANCH_MARKS)
+    marker_matches = list(re.finditer(rf"({branch_pattern})\s*", line))
     if marker_matches:
         marker_match = marker_matches[-1]
         depth += 1
         content = line[marker_match.end() :].strip()
     else:
-        content = re.sub(r"^[\s│├└─]+", "", line).strip()
+        content = re.sub(rf"^[\s{re.escape(VERTICAL_MARK)}{''.join(re.escape(mark) for mark in BRANCH_MARKS)}]+", "", line).strip()
     return depth, content
 
 
@@ -193,11 +204,15 @@ def parse_tree(tree_file: Path, tree_source: str) -> tuple[dict[str, list[TreeNo
         if not content or content in ROOT_NAMES:
             continue
         path: dict[str, str] = {}
+        parent_entry = None
         if depth > 0:
             parent_entry = stack.get(depth - 1)
             if parent_entry is not None:
                 path = dict(parent_entry["path"])
         rank_info = extract_rank(content)
+        same_depth_entry = stack.get(depth)
+        if rank_info is None and same_depth_entry is not None and len(same_depth_entry["path"]) > len(path):
+            path = dict(same_depth_entry["path"])
         display_name = rank_info[1] if rank_info else content
         if rank_info:
             path[rank_info[0]] = display_name
@@ -310,6 +325,11 @@ def classify_te_names(
             is_leaf_standard = False
             homepage_chart_included = False
             path = {}
+
+        if name in CLASSIFICATION_PATH_OVERRIDES:
+            override_path = CLASSIFICATION_PATH_OVERRIDES[name]
+            path = dict(path)
+            path.update(override_path)
 
         classifications.append(
             Classification(
@@ -621,7 +641,12 @@ def segment_color(index: int) -> str:
     return RING_COLORS[index % len(RING_COLORS)]
 
 
-def build_chart_view(label: str, segments_counter: Counter[str], next_prefix: str | None = None) -> dict[str, Any]:
+def build_chart_view(
+    label: str,
+    segments_counter: Counter[str],
+    next_prefix: str | None = None,
+    next_overrides: dict[str, str] | None = None,
+) -> dict[str, Any]:
     ordered = sorted(segments_counter.items(), key=lambda item: (-item[1], item[0].lower()))
     total = sum(segments_counter.values())
     segments: list[dict[str, Any]] = []
@@ -633,22 +658,48 @@ def build_chart_view(label: str, segments_counter: Counter[str], next_prefix: st
             "color": segment_color(idx),
             "description": name,
         }
-        if next_prefix:
+        if next_overrides and name in next_overrides:
+            segment["nextView"] = next_overrides[name]
+        elif next_prefix:
             segment["nextView"] = f"{next_prefix}{slugify(name)}"
         segments.append(segment)
     return {"count": total, "label": label, "segments": segments}
 
 
-def choose_child_rank(records: list[Classification]) -> str | None:
-    candidates = ("order", "subclass", "superfamily", "family", "subclade")
-    for rank in candidates:
-        names = {item.path.get(rank) for item in records if item.path.get(rank)}
-        if len(names) >= 2:
-            return rank
-    for rank in candidates:
-        if any(item.path.get(rank) for item in records):
-            return rank
-    return None
+def retro_primary_bucket(item: Classification) -> str:
+    order = item.path.get("order")
+    if order:
+        return order
+    superfamily = item.path.get("superfamily", "")
+    if "SINE" in superfamily.upper():
+        return "SINEs"
+    return "Unclassified"
+
+
+def dna_primary_bucket(item: Classification) -> str:
+    return item.path.get("subclass") or item.path.get("order") or "Unclassified"
+
+
+def build_segment_counter(records: list[Classification], rank: str) -> Counter[str]:
+    counter: Counter[str] = Counter()
+    for item in records:
+        value = item.path.get(rank)
+        if value:
+            counter[value] += 1
+        else:
+            counter["Unclassified"] += 1
+    return counter
+
+
+def build_deep_counter(records: list[Classification]) -> Counter[str]:
+    counter: Counter[str] = Counter()
+    for item in records:
+        value = item.path.get("family") or item.path.get("subclade")
+        if value:
+            counter[value] += 1
+        else:
+            counter["Unclassified"] += 1
+    return counter
 
 
 def build_homepage_stats(final_map: dict[str, Classification]) -> dict[str, Any]:
@@ -661,16 +712,48 @@ def build_homepage_stats(final_map: dict[str, Classification]) -> dict[str, Any]
         by_class[item.path["class"]].append(item)
 
     for class_name, records in by_class.items():
-        child_rank = choose_child_rank(records)
-        if not child_rank:
+        class_view_key = f"class::{slugify(class_name)}"
+        grouped: dict[str, list[Classification]] = defaultdict(list)
+
+        if class_name == "Retrotransposons":
+            for item in records:
+                grouped[retro_primary_bucket(item)].append(item)
+            counter = Counter({bucket: len(bucket_records) for bucket, bucket_records in grouped.items()})
+            chart_views[class_view_key] = build_chart_view(class_name, counter, next_prefix=f"{class_view_key}::")
+
+            for bucket_name, bucket_records in grouped.items():
+                segment_key = f"{class_view_key}::{slugify(bucket_name)}"
+                superfamily_counter = build_segment_counter(bucket_records, "superfamily")
+                next_overrides: dict[str, str] = {}
+                for superfamily_name in sorted(superfamily_counter):
+                    sub_records = [record for record in bucket_records if (record.path.get("superfamily") or "Unclassified") == superfamily_name]
+                    deep_counter = build_deep_counter(sub_records)
+                    if len(deep_counter) > 1:
+                        next_overrides[superfamily_name] = f"{segment_key}::{slugify(superfamily_name)}"
+                        chart_views[next_overrides[superfamily_name]] = build_chart_view(superfamily_name, deep_counter)
+                chart_views[segment_key] = build_chart_view(bucket_name, superfamily_counter, next_overrides=next_overrides)
             continue
-        counter = Counter(item.path[child_rank] for item in records if item.path.get(child_rank))
-        missing = sum(1 for item in records if not item.path.get(child_rank))
-        if missing:
-            counter["Unclassified"] += missing
-        if not counter:
+
+        if class_name == "DNA Transposons":
+            for item in records:
+                grouped[dna_primary_bucket(item)].append(item)
+            counter = Counter({bucket: len(bucket_records) for bucket, bucket_records in grouped.items()})
+            chart_views[class_view_key] = build_chart_view(class_name, counter, next_prefix=f"{class_view_key}::")
+
+            for bucket_name, bucket_records in grouped.items():
+                segment_key = f"{class_view_key}::{slugify(bucket_name)}"
+                superfamily_counter = build_segment_counter(bucket_records, "superfamily")
+                next_overrides: dict[str, str] = {}
+                for superfamily_name in sorted(superfamily_counter):
+                    sub_records = [record for record in bucket_records if (record.path.get("superfamily") or "Unclassified") == superfamily_name]
+                    deep_counter = build_deep_counter(sub_records)
+                    if len(deep_counter) > 1:
+                        next_overrides[superfamily_name] = f"{segment_key}::{slugify(superfamily_name)}"
+                        chart_views[next_overrides[superfamily_name]] = build_chart_view(superfamily_name, deep_counter)
+                chart_views[segment_key] = build_chart_view(bucket_name, superfamily_counter, next_overrides=next_overrides)
             continue
-        chart_views[f"class::{slugify(class_name)}"] = build_chart_view(class_name, counter)
+
+        chart_views[class_view_key] = build_chart_view(class_name, Counter())
 
     summary = {
         "total_te_nodes": len(final_map),

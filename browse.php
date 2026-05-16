@@ -1,5 +1,6 @@
 ﻿<?php
 require_once __DIR__ . '/path_config.php';
+require_once __DIR__ . '/api/taxonomy_lib.php';
 $pageTitle = 'TE-KG Browse';
 $activePage = 'browse';
 $protoCurrentPath = tekg_app_url('browse.php');
@@ -97,7 +98,6 @@ function tekg_browse_infer_lineage(array $entry): array
 function tekg_browse_load_rows(): array
 {
     $repbaseFile = tekg_data_fs_path('processed/te_repbase_db_matched.json');
-    $lineageFile = tekg_taxonomy_lineage_fs_path('tree_te_lineage.json');
     if (!is_file($repbaseFile)) {
         return [];
     }
@@ -107,35 +107,11 @@ function tekg_browse_load_rows(): array
         return [];
     }
 
-    $lineage = is_file($lineageFile)
-        ? json_decode((string) file_get_contents($lineageFile), true)
-        : null;
-
-    $parentMap = [];
-    foreach (($lineage['edges'] ?? []) as $edge) {
-        $child = (string) ($edge['child'] ?? '');
-        $parent = (string) ($edge['parent'] ?? '');
-        if ($child !== '' && $parent !== '') {
-            $parentMap[$child] = $parent;
-        }
+    try {
+        $taxonomyIndex = tekg_taxonomy_index_items(tekg_taxonomy_fetch_items());
+    } catch (Throwable) {
+        $taxonomyIndex = [];
     }
-
-    $pathCache = [];
-    $pathToRoot = static function (string $name) use (&$pathCache, $parentMap): array {
-        if (isset($pathCache[$name])) {
-            return $pathCache[$name];
-        }
-        $path = [];
-        $cursor = $name;
-        $seen = [];
-        while ($cursor !== '' && !isset($seen[$cursor])) {
-            $seen[$cursor] = true;
-            $path[] = $cursor;
-            $cursor = $parentMap[$cursor] ?? '';
-        }
-        $pathCache[$name] = array_reverse($path);
-        return $pathCache[$name];
-    };
 
     $rows = [];
     foreach ($repbase['entries'] as $entry) {
@@ -144,19 +120,14 @@ function tekg_browse_load_rows(): array
             continue;
         }
 
-        $path = $pathToRoot($name);
-        $ancestors = $path;
-        if (!empty($ancestors) && $ancestors[0] === 'TE') {
-            array_shift($ancestors);
-        }
-        if (!empty($ancestors) && end($ancestors) === $name) {
-            array_pop($ancestors);
-        }
-
         $inferred = tekg_browse_infer_lineage($entry);
-        $className = $ancestors[0] ?? $inferred['className'];
-        $family = $ancestors[1] ?? $inferred['family'];
-        $subtype = count($ancestors) > 2 ? (string) end($ancestors) : $inferred['subtype'];
+        $taxonomy = $taxonomyIndex[$name] ?? $taxonomyIndex[tekg_taxonomy_canonical_key($name)] ?? null;
+        $taxonomyPath = is_array($taxonomy) && is_array($taxonomy['path'] ?? null) ? $taxonomy['path'] : [];
+        $className = trim((string)($taxonomyPath['class'] ?? '')) ?: $inferred['className'];
+        $family = trim((string)($taxonomyPath['order'] ?? ''))
+            ?: (trim((string)($taxonomyPath['superfamily'] ?? '')) ?: $inferred['family']);
+        $subtype = trim((string)($taxonomyPath['subclade'] ?? ''))
+            ?: (trim((string)($taxonomyPath['family'] ?? '')) ?: $inferred['subtype']);
 
         $rows[] = [
             'name' => $name,
@@ -235,8 +206,6 @@ $browseRows = tekg_browse_load_rows();
 <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/browse.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
   </body>
 </html>
-
-
 
 
 

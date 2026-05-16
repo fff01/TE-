@@ -271,20 +271,10 @@ $treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang
                 <div class="status-cluster status-cluster--left">
                   <?php foreach ($leftDatasetItems as $item): ?>
                     <div class="status-item status-item--orbit" data-status-item="<?= htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8') ?>" style="--status-gradient: <?= htmlspecialchars($item['gradient'], ENT_QUOTES, 'UTF-8') ?>; --status-shadow: <?= htmlspecialchars($item['shadow'], ENT_QUOTES, 'UTF-8') ?>; --status-text: <?= htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8') ?>;">
-                      <button class="status-trigger" type="button" data-status-trigger="<?= htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false">
+                      <div class="status-trigger status-trigger--static">
                         <div class="status-badge">
                           <div class="status-count"><?= number_format($item['count']) ?></div>
                           <div class="status-name"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></div>
-                        </div>
-                      </button>
-                      <div class="status-panel">
-                        <div class="status-panel-inner">
-                          <h4><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?> examples</h4>
-                          <div class="status-panel-list">
-                            <?php foreach ($item['samples'] as $sample): ?>
-                              <a class="status-panel-link" href="javascript:void(0)"><?= htmlspecialchars($sample, ENT_QUOTES, 'UTF-8') ?></a>
-                            <?php endforeach; ?>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -292,7 +282,7 @@ $treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang
                 </div>
 
                 <div class="status-item status-item--primary" data-status-item="<?= htmlspecialchars($primaryDatasetItem['key'], ENT_QUOTES, 'UTF-8') ?>" style="--status-gradient: <?= htmlspecialchars($primaryDatasetItem['gradient'], ENT_QUOTES, 'UTF-8') ?>; --status-shadow: <?= htmlspecialchars($primaryDatasetItem['shadow'], ENT_QUOTES, 'UTF-8') ?>; --status-text: <?= htmlspecialchars($primaryDatasetItem['text'], ENT_QUOTES, 'UTF-8') ?>;">
-                  <button class="status-trigger" type="button" data-status-trigger="<?= htmlspecialchars($primaryDatasetItem['key'], ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false">
+                  <div class="status-trigger status-trigger--static">
                     <div class="status-badge status-badge--ring">
                       <svg
                         class="status-ring-chart"
@@ -307,36 +297,16 @@ $treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang
                         <div class="status-name" data-ring-label><?= htmlspecialchars($primaryDatasetItem['label'], ENT_QUOTES, 'UTF-8') ?></div>
                       </div>
                     </div>
-                  </button>
-                  <div class="status-panel">
-                    <div class="status-panel-inner">
-                      <h4><?= htmlspecialchars($primaryDatasetItem['label'], ENT_QUOTES, 'UTF-8') ?> examples</h4>
-                      <div class="status-panel-list">
-                        <?php foreach ($primaryDatasetItem['samples'] as $sample): ?>
-                          <a class="status-panel-link" href="javascript:void(0)"><?= htmlspecialchars($sample, ENT_QUOTES, 'UTF-8') ?></a>
-                        <?php endforeach; ?>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
                 <div class="status-cluster status-cluster--right">
                   <?php foreach ($rightDatasetItems as $item): ?>
                     <div class="status-item status-item--orbit" data-status-item="<?= htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8') ?>" style="--status-gradient: <?= htmlspecialchars($item['gradient'], ENT_QUOTES, 'UTF-8') ?>; --status-shadow: <?= htmlspecialchars($item['shadow'], ENT_QUOTES, 'UTF-8') ?>; --status-text: <?= htmlspecialchars($item['text'], ENT_QUOTES, 'UTF-8') ?>;">
-                      <button class="status-trigger" type="button" data-status-trigger="<?= htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false">
+                      <div class="status-trigger status-trigger--static">
                         <div class="status-badge">
                           <div class="status-count"><?= number_format($item['count']) ?></div>
                           <div class="status-name"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></div>
-                        </div>
-                      </button>
-                      <div class="status-panel">
-                        <div class="status-panel-inner">
-                          <h4><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?> examples</h4>
-                          <div class="status-panel-list">
-                            <?php foreach ($item['samples'] as $sample): ?>
-                              <a class="status-panel-link" href="javascript:void(0)"><?= htmlspecialchars($sample, ENT_QUOTES, 'UTF-8') ?></a>
-                            <?php endforeach; ?>
-                          </div>
                         </div>
                       </div>
                     </div>

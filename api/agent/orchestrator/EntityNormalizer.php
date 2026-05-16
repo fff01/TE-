@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/taxonomy_lib.php';
+
 final class TekgAgentEntityNormalizer
 {
     private ?array $teNames = null;
@@ -514,23 +516,22 @@ final class TekgAgentEntityNormalizer
         if (is_array($this->treeNames)) {
             return $this->treeNames;
         }
-        $paths = [
-            tekg_taxonomy_lineage_fs_path('tree_te_lineage.json'),
-            TEKG_DATA_FS_DIR . '/processed/tekg2_0413_tree_rmsk_repbase_lineage.json',
-            TEKG_DATA_FS_DIR . '/processed/tekg2_0413_tree_all_lineage.json',
-        ];
         $names = [];
-        foreach ($paths as $path) {
-            if (!is_file($path)) {
-                continue;
-            }
-            $decoded = json_decode((string)file_get_contents($path), true);
-            foreach ((array)($decoded['nodes'] ?? []) as $node) {
-                $name = trim((string)($node['name'] ?? ''));
+        try {
+            foreach (tekg_taxonomy_fetch_items() as $item) {
+                $name = trim((string)($item['name'] ?? ''));
                 if ($name !== '') {
                     $names[] = $name;
                 }
+                foreach ((array)($item['path_labels'] ?? []) as $label) {
+                    $label = trim((string)$label);
+                    if ($label !== '') {
+                        $names[] = $label;
+                    }
+                }
             }
+        } catch (Throwable) {
+            $names = [];
         }
         $this->treeNames = array_values(array_unique($names));
         return $this->treeNames;

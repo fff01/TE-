@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/taxonomy_lib.php';
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -83,6 +85,7 @@ final class GraphService
 {
     private array $config;
     private array $diseaseNameTranslations = [];
+    private ?array $teTaxonomyIndex = null;
 
     public function __construct(array $config)
     {
@@ -1774,6 +1777,50 @@ CYPHER,
                 'category_level' => (int)($row['category_level'] ?? 0),
             ],
         ];
+
+        if ($type === 'TE') {
+            $taxonomy = $this->taxonomyPayloadForTeName((string)($row['name'] ?? ''));
+            if ($taxonomy !== null) {
+                $nodes[$id]['data']['taxonomy'] = $taxonomy;
+            }
+        }
+    }
+
+    private function taxonomyPayloadForTeName(string $name): ?array
+    {
+        $index = $this->loadTeTaxonomyIndex();
+        $item = $index[$name] ?? $index[tekg_taxonomy_canonical_key($name)] ?? null;
+        if (!is_array($item)) {
+            return null;
+        }
+
+        return [
+            'group' => $item['taxonomy_group'] ?? null,
+            'status' => $item['taxonomy_status'] ?? null,
+            'source' => $item['taxonomy_source'] ?? null,
+            'canonical_name' => $item['taxonomy_canonical_name'] ?? null,
+            'path' => $item['path'] ?? [],
+            'path_labels' => $item['path_labels'] ?? [],
+            'display_path' => $item['display_path'] ?? '',
+            'is_leaf_standard' => (bool)($item['is_leaf_standard'] ?? false),
+            'homepage_chart_included' => (bool)($item['homepage_chart_included'] ?? false),
+        ];
+    }
+
+    private function loadTeTaxonomyIndex(): array
+    {
+        if (is_array($this->teTaxonomyIndex)) {
+            return $this->teTaxonomyIndex;
+        }
+
+        try {
+            $items = tekg_taxonomy_fetch_items(null, $this->config);
+            $this->teTaxonomyIndex = tekg_taxonomy_index_items($items);
+        } catch (Throwable) {
+            $this->teTaxonomyIndex = [];
+        }
+
+        return $this->teTaxonomyIndex;
     }
 
     private function collapseDuplicateDiseaseNodes(array &$nodes, array &$edges): void
