@@ -9,6 +9,7 @@ $protoBasePath = TEKG_APP_URL_BASE;
 $protoCurrentPath = $protoCurrentPath ?? tekg_app_url('index.php');
 $protoSubtitle = $protoSubtitle ?? 'Transposable Elements Knowledge Graph';
 $pageExtraStylesheets = is_array($pageExtraStylesheets ?? null) ? $pageExtraStylesheets : [];
+$protoMainClass = trim((string)($protoMainClass ?? ''));
 
 $navItems = [
     'home' => ['label' => 'Home', 'href' => tekg_app_url('index.php')],
@@ -57,4 +58,4 @@ $navItems = [
         </div>
       </div>
     </header>
-    <main class="proto-main">
+    <main class="proto-main<?= $protoMainClass !== '' ? ' ' . htmlspecialchars($protoMainClass, ENT_QUOTES, 'UTF-8') : '' ?>">

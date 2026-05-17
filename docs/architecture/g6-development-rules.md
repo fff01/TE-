@@ -20,9 +20,9 @@ G6 is now the default and only renderer. Do not reintroduce dual-renderer branch
 - `index.php`
 - `preview.php`
 - `search.php`
-- `index_g6.html`
+- `assets/html/preview_graph.html`
 - `assets/js/renderers/g6/index-g6.bootstrap.js`
-- `assets/js/renderers/g6/index-g6-qa.js`
+- `assets/js/pages/preview/preview-deepthink.js`
 
 ## Recommended Development Path
 

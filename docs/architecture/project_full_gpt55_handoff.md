@@ -149,8 +149,8 @@ Important current homepage behavior:
 
 - homepage taxonomy/ring data comes from:
   - [tekg3_homepage_taxonomy.json](/D:/wamp64/www/TE-/data/processed/tekg3_homepage_taxonomy.json)
-- the embedded G6 preview uses:
-  - [lab/index_g6.html](/D:/wamp64/www/TE-/lab/index_g6.html)
+- the embedded graph preview uses:
+  - [preview_graph.html](/D:/wamp64/www/TE-/assets/html/preview_graph.html)
 
 ### Graph / TE-KG Preview
 
@@ -514,14 +514,12 @@ Important structural rule:
 
 Current lab directory:
 
-- [lab](/D:/wamp64/www/TE-/lab)
+- `lab/` has been removed from the formal preview runtime.
 
-Files:
+Replacement files:
 
-- [agent_workflow_lab.php](/D:/wamp64/www/TE-/lab/agent_workflow_lab.php)
-- [index_g6.html](/D:/wamp64/www/TE-/lab/index_g6.html)
-- [index_g6_embed.html](/D:/wamp64/www/TE-/lab/index_g6_embed.html)
-- [tmp_quick_done_test.php](/D:/wamp64/www/TE-/lab/tmp_quick_done_test.php)
+- [preview_graph.html](/D:/wamp64/www/TE-/assets/html/preview_graph.html)
+- [preview_g6_embed.html](/D:/wamp64/www/TE-/assets/html/preview_g6_embed.html)
 
 Important caution:
 
@@ -880,4 +878,3 @@ The right approach is:
 2. verify the codebase live
 3. separate runtime truth from historical notes
 4. then change only what is justified by the current files
-

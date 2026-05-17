@@ -1016,7 +1016,7 @@ $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
 $karyotypeHitMap = tekg_karyotype_bin_hit_map_proto($genomeDistribution, $jbrowseSession);
 $classificationSession = tekg_tree_classification_lookup_proto($query, $type, $repbase, $dfamSequence);
-$searchGraphSrc = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang, null, array_filter([
+$searchGraphSrc = site_url_with_state(tekg_assets_url('html/preview_graph.html'), $siteLang, null, array_filter([
     'embed' => 'search-result',
     'q' => $query !== '' ? $query : null,
 ], static fn ($value) => $value !== null && $value !== ''));
@@ -1242,7 +1242,6 @@ require __DIR__ . '/head.php';
   </div>
 </body>
 </html>
-
 
 
 

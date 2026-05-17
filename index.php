@@ -246,7 +246,7 @@ $quickLinks = [
 ];
 
 $homeGraphQuery = 'LINE1';
-$treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang, null, [
+$treeEmbedUrl = site_url_with_state(tekg_assets_url('html/preview_graph.html'), $siteLang, null, [
     'embed' => 'home-preview',
     'q' => $homeGraphQuery,
     'type' => 'TE',

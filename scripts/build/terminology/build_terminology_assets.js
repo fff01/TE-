@@ -3,7 +3,7 @@ const path = require('path');
 const vm = require('vm');
 
 const root = path.resolve(__dirname, '..', '..', '..');
-const indexPath = path.join(root, 'lab', 'index_g6.html');
+const runtimeDataPath = path.join(root, 'assets', 'js', 'tekg_runtime_data.js');
 const seedPath = path.join(root, 'data', 'processed', 'te_kg2_graph_seed.json');
 const terminologyDir = path.join(root, 'data', 'terminology');
 const jsonOut = path.join(terminologyDir, 'te_terminology.json');
@@ -478,7 +478,7 @@ function uniqueSorted(values) {
 function buildTerminologyPayload(nameMap, relLabel) {
   return {
     version: 3,
-    generated_from: 'lab/index_g6.html',
+    generated_from: 'assets/js/tekg_runtime_data.js',
     generated_at: new Date().toISOString(),
     names: {
       zh: { ...(nameMap.zh || {}), ...(curatedNameAdditions.zh || {}) },
@@ -612,8 +612,8 @@ function writeMissingReportMarkdown(report) {
 }
 
 function main() {
-  const indexSource = fs.readFileSync(indexPath, 'utf8');
-  const { relLabel, nameMap } = evaluateMaps(indexSource);
+  const runtimeDataSource = fs.readFileSync(runtimeDataPath, 'utf8');
+  const { relLabel, nameMap } = evaluateMaps(runtimeDataSource);
   const payload = buildTerminologyPayload(nameMap, relLabel);
   fs.writeFileSync(jsonOut, JSON.stringify(payload, null, 2), 'utf8');
   writeTerminologyCsv(payload);

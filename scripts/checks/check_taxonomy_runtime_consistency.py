@@ -27,7 +27,7 @@ RUNTIME_FILES_TO_SCAN = [
     "assets/js/renderers/g6/index-g6.bootstrap.js",
     "assets/js/renderers/g6/default-tree.js",
     "assets/js/renderers/g6/default-tree-mindmap.js",
-    "lab/index_g6.html",
+    "assets/html/preview_graph.html",
 ]
 
 LEGACY_PATTERNS = [

@@ -67,8 +67,8 @@
   - 纯图嵌入入口
 - `index-g6.bootstrap.js`
   - 正式页面桥接层
-- `index-g6-qa.js`
-  - G6 问答助手逻辑
+- `assets/js/pages/preview/preview-deepthink.js`
+  - Preview Deep Think 侧边问答逻辑
 
 ### 需要后续再判断角色的文件
 

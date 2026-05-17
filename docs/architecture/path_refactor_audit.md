@@ -239,7 +239,7 @@ Updated files:
 - [assets/js/renderers/g6/index-g6-runtime.js](/D:/wamp64/www/TE-/assets/js/renderers/g6/index-g6-runtime.js)
 - [assets/js/renderers/g6/index-g6-shared.js](/D:/wamp64/www/TE-/assets/js/renderers/g6/index-g6-shared.js)
 - [assets/js/renderers/g6/index-g6.bootstrap.js](/D:/wamp64/www/TE-/assets/js/renderers/g6/index-g6.bootstrap.js)
-- [assets/js/renderers/g6/index-g6-qa.js](/D:/wamp64/www/TE-/assets/js/renderers/g6/index-g6-qa.js)
+- [assets/js/pages/preview/preview-deepthink.js](/D:/wamp64/www/TE-/assets/js/pages/preview/preview-deepthink.js)
 - [index_g6.html](/D:/wamp64/www/TE-/index_g6.html)
 - [index_g6_embed.html](/D:/wamp64/www/TE-/index_g6_embed.html)
 - [agent_workflow_lab.php](/D:/wamp64/www/TE-/agent_workflow_lab.php)

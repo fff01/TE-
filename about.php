@@ -6,7 +6,7 @@ $protoCurrentPath = tekg_app_url('about.php');
 $protoSubtitle = 'Overview of the TE-KG interface and public workflows';
 require __DIR__ . '/head.php';
 
-$treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang, null, ['embed' => 'home-preview']);
+$treeEmbedUrl = site_url_with_state(tekg_assets_url('html/preview_graph.html'), $siteLang, null, ['embed' => 'home-preview']);
 ?>
       <link rel="stylesheet" href="<?= htmlspecialchars(tekg_assets_url('css/pages/about.css'), ENT_QUOTES, 'UTF-8') ?>">
 
@@ -172,4 +172,3 @@ $treeEmbedUrl = site_url_with_state(tekg_app_url('lab/index_g6.html'), $siteLang
   </div>
 </body>
 </html>
-

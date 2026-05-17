@@ -667,7 +667,7 @@
 
   function buildDynamicFrameSrc(requestLike = buildCurrentGraphRequest()) {
     const request = normalizeGraphRequest(requestLike);
-    const url = new URL(window.__TEKG_PATHS.appUrl('lab/index_g6_embed.html'), window.location.origin);
+    const url = new URL(window.__TEKG_PATHS.assetsUrl('html/preview_g6_embed.html'), window.location.origin);
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
     url.searchParams.set('show_labels', window.showLabels ? '1' : '0');
