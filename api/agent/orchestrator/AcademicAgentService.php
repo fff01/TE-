@@ -17,6 +17,7 @@ final class TekgAcademicAgentService
         $this->citationResolver = new TekgAgentCitationResolver();
         $this->plugins = [
             'Entity Resolver' => new TekgAgentEntityResolverPlugin(),
+            'Site Navigator Plugin' => new TekgAgentSiteNavigatorPlugin(),
             'Graph Plugin' => new TekgAgentGraphPlugin($neo4j, $this->citationResolver),
             'Graph Analytics Plugin' => new TekgAgentGraphAnalyticsPlugin($neo4j),
             'Cypher Explorer Plugin' => new TekgAgentCypherExplorerPlugin($neo4j, $this->llm, $config),
@@ -81,6 +82,12 @@ final class TekgAcademicAgentService
         $analysis['answer_language'] = $answerLanguage;
         $analysis['language'] = 'english';
         $analysis['session_memory'] = $sessionMemory;
+        $analysis['request_context'] = [
+            'source_page' => (string)($payload['source_page'] ?? ''),
+            'current_url' => (string)($payload['current_url'] ?? ''),
+            'page_context' => (array)($payload['page_context'] ?? []),
+            'graph_context' => (array)($payload['graph_context'] ?? []),
+        ];
 
         $planning = $this->buildPlan($question, $analysis, $sessionMemory);
         $routingPolicy = $this->routingPolicyFor($analysis);
@@ -913,6 +920,15 @@ final class TekgAcademicAgentService
             ];
         }
 
+        if (($analysis['asks_for_site_navigation'] ?? false)) {
+            $gaps[] = [
+                'gap_type' => 'site navigation',
+                'why_needed' => 'The user is asking where a TE-KG page, panel, route, or dataset entry can be opened.',
+                'priority' => 94,
+                'candidate_tools' => ['Site Navigator Plugin'],
+            ];
+        }
+
         if (($analysis['asks_for_classification'] ?? false) || $intent === 'classification') {
             $gaps[] = [
                 'gap_type' => 'classification context',
@@ -995,6 +1011,7 @@ final class TekgAcademicAgentService
         $seen = [];
         $preferredOrder = [
             'Entity Resolver' => 10,
+            'Site Navigator Plugin' => 15,
             'Graph Analytics Plugin' => 20,
             'Graph Plugin' => 30,
             'Cypher Explorer Plugin' => 40,
@@ -1109,6 +1126,9 @@ final class TekgAcademicAgentService
         }
         if ($intent === 'graph_analytics' && !in_array('Graph Analytics Plugin', $queue, true)) {
             $queue[] = 'Graph Analytics Plugin';
+        }
+        if (($analysis['asks_for_site_navigation'] ?? false) && !in_array('Site Navigator Plugin', $queue, true)) {
+            array_splice($queue, in_array('Entity Resolver', $queue, true) ? 1 : 0, 0, ['Site Navigator Plugin']);
         }
         $forbidden = array_values(array_filter(array_map('strval', (array)($routingPolicy['forbidden_path'] ?? []))));
         $queue = array_values(array_unique(array_filter($queue, static fn(string $plugin): bool => $plugin !== '' && !in_array($plugin, $forbidden, true))));
@@ -1264,6 +1284,18 @@ final class TekgAcademicAgentService
         array $collectionState,
         array $routingPolicy
     ): array {
+        if (($analysis['asks_for_site_navigation'] ?? false) && isset($pluginResults['Site Navigator Plugin'])) {
+            $siteResult = (array)$pluginResults['Site Navigator Plugin'];
+            if (in_array((string)($siteResult['status'] ?? ''), ['ok', 'partial'], true)) {
+                return [
+                    'is_sufficient' => true,
+                    'reason' => 'The site navigator returned clickable TE-KG routes for this page-location question.',
+                    'missing_dimensions' => [],
+                    'recommended_next_experts' => [],
+                ];
+            }
+        }
+
         $hardStop = $this->evaluateHardStopCondition($analysis, $pluginResults, $routingPolicy);
         if ($hardStop !== null) {
             return $hardStop;
@@ -1587,6 +1619,7 @@ final class TekgAcademicAgentService
             'Graph Plugin' => 'I will start with the local graph and check whether it already contains enough structured relations to support the current task.',
             'Graph Analytics Plugin' => 'I will run a graph analytics query now because this question asks for global structure, ranking, or topology rather than a single local entity neighborhood.',
             'Cypher Explorer Plugin' => 'I will generate a read-only Cypher query to explore graph patterns that are not covered by the fixed neighborhood templates.',
+            'Site Navigator Plugin' => 'I will locate the TE-KG page, panel, or dataset entry that best matches the request.',
             'Literature Plugin' => 'Next I will add local paper evidence and PubMed support if the current structured relations are not strong enough on their own.',
             'Literature Reading Plugin' => 'I will synthesize the retrieved citations into grouped claims, conflicts, and remaining evidence gaps.',
             'Tree Plugin' => 'I will place the recognized entities in their lineage to recover classification context where needed.',
@@ -1611,6 +1644,7 @@ final class TekgAcademicAgentService
             'Graph Plugin' => 'I will check the local graph first because it is the strongest initial layer for ' . $gapText . '.',
             'Graph Analytics Plugin' => 'I will use graph analytics now because this question is about ranking, counts, or global graph structure.',
             'Cypher Explorer Plugin' => 'I will use the Cypher Explorer now because the fixed plugins may not cover the required graph pattern or aggregation.',
+            'Site Navigator Plugin' => 'I will use the site navigator now because the user needs a clickable TE-KG route or panel location.',
             'Literature Plugin' => 'I will add literature evidence now because the current question still needs direct citation support.',
             'Literature Reading Plugin' => 'I will synthesize the retrieved citations now so later steps receive grouped claims instead of a flat citation list.',
             'Tree Plugin' => 'I will use the lineage tree now because classification context is still missing.',
@@ -2225,6 +2259,8 @@ final class TekgAcademicAgentService
                 $collectedResults['analytics_result'] = $result;
             } elseif ($pluginName === 'Cypher Explorer Plugin') {
                 $collectedResults['cypher_result'] = $result;
+            } elseif ($pluginName === 'Site Navigator Plugin') {
+                $collectedResults['site_navigation_result'] = $result;
             } elseif ($pluginName === 'Literature Plugin') {
                 $collectedResults['literature_result'] = $result;
             } elseif ($pluginName === 'Literature Reading Plugin') {

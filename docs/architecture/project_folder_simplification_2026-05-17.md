@@ -1,17 +1,16 @@
-# TE-KG Project Folder Simplification Recommendations
+# TE-KG 项目文件夹精简建议
 
-Date: 2026-05-17
+日期：2026-05-17
 
-Scope: This document lists practical cleanup targets found by scanning the current project folder. It intentionally avoids download-link cleanup because that is easy to fix later.
+范围：本文记录当前项目文件夹中值得清理的实际目标。本文刻意不处理 download link 这类容易后补的小问题。
 
-## Current Shape
+## 当前结构
 
-Top-level directories:
+顶层目录：
 
 ```text
 .vscode
 api
-archive
 assets
 data
 docs
@@ -22,9 +21,9 @@ templates
 test
 ```
 
-The repository has about 296 tracked/listed files from `rg --files`, while the local workspace also contains large ignored data assets under `data/`.
+当前 `rg --files` 能看到约 296 个文件。本地工作区还包含很多被 Git 忽略的大型数据资产，主要集中在 `data/` 下。
 
-Large local assets are concentrated in:
+大型本地资产主要集中在：
 
 - `data/JBrowse`
 - `data/bulk_expression_web`
@@ -32,11 +31,11 @@ Large local assets are concentrated in:
 - `data/processed`
 - `data/dfam`
 - `reference/external_examples/g6-official/.git`
-- `archive/processing_history`
+- `archive/processing_history` 已删除
 
-## 1. Remove Generated Python Bytecode From Version Control
+## 1. 从版本控制里移除 Python bytecode
 
-Observed tracked bytecode:
+本项已处理。原先观察到被 Git 跟踪的 bytecode：
 
 ```text
 scripts/__pycache__/path_helpers.cpython-313.pyc
@@ -44,12 +43,18 @@ scripts/checks/__pycache__/check_taxonomy_runtime_consistency.cpython-313.pyc
 scripts/normalize/__pycache__/build_tekg3_from_tekg21.cpython-313.pyc
 ```
 
-Risk:
+已执行处理：
 
-- Every Python version or script run can create meaningless diffs.
-- Reviews become noisier.
+- 已用 `git rm --cached` 从 Git 索引移除所有已跟踪 `.pyc`。
+- 已在 `.gitignore` 增加 `__pycache__/` 和 `*.pyc`。
+- 本地磁盘上的 `.pyc` 文件不作为运行时输入，也不应再次进入版本控制。
 
-Recommended fix:
+风险：
+
+- Python 版本变化或脚本运行都会制造无意义 diff。
+- code review 会被生成文件干扰。
+
+已执行命令：
 
 ```powershell
 git rm --cached scripts/__pycache__/path_helpers.cpython-313.pyc
@@ -57,31 +62,31 @@ git rm --cached scripts/checks/__pycache__/check_taxonomy_runtime_consistency.cp
 git rm --cached scripts/normalize/__pycache__/build_tekg3_from_tekg21.cpython-313.pyc
 ```
 
-Then add to `.gitignore`:
+`.gitignore` 已加入：
 
 ```text
 __pycache__/
 *.pyc
 ```
 
-## 2. Keep Runtime Config Centralized
+## 2. 保持运行时配置集中
 
-Already improved in this pass:
+本轮已经改进：
 
-- Added `api/runtime_config.php`.
-- Updated `api/config.local.php.example` to `tekg3`.
-- Removed runtime fallbacks to `tekg2` and `tekg21` from active API files.
-- Added `scripts/checks/check_runtime_db_config.py`.
+- 新增 `api/runtime_config.php`。
+- 把 `api/config.local.php.example` 更新到 `tekg3`。
+- 从活跃 API 文件里移除了运行时 fallback 到 `tekg2` 和 `tekg21` 的逻辑。
+- 新增 `scripts/checks/check_runtime_db_config.py`。
 
-Next cleanup:
+下一步清理：
 
-- Let non-agent runtime files use `api/runtime_config.php` for all shared runtime config where reasonable.
-- Keep MySQL expression config separate only if it remains expression-specific.
-- Do not reintroduce DB-name defaults inside page/API files.
+- 非 agent 运行时文件应尽量通过 `api/runtime_config.php` 读取共享配置。
+- MySQL expression 配置如果确实只属于 expression，可以继续保留在 expression helper 中。
+- 不要再在页面或 API 文件里重新加入 DB 名默认值。
 
-## 3. Mark Old Build Scripts As Legacy Or Update Them
+## 3. 删除旧构建脚本
 
-Still observed older references:
+本项已处理。以下旧链路脚本已从 `scripts/` 中删除：
 
 ```text
 scripts/build/generate_tree_demo_data.py
@@ -91,14 +96,25 @@ scripts/export/finalize_te_234_taxonomy.py
 scripts/build/build_tekg2_seed_from_standardized_new.py
 scripts/normalize/fix_tekg2_unresolved_0413.py
 scripts/normalize/extract_tekg2_unresolved_relations.py
+scripts/eval/analyze_tekg2_import_readiness.py
+scripts/export/export_te_234_classification_csv.py
+scripts/export/export_te_234_template_csv.py
+scripts/import/generate_disease_classification_import_cypher_0413.py
+scripts/import/generate_te_kg2_dedup_cypher.py
+scripts/import/generate_tekg2_import_bundle.py
+scripts/normalize/apply_tekg2_attention_db_import.py
+scripts/normalize/apply_tekg2_entity_overrides.py
+scripts/normalize/clean_tekg2_standardized_jsonl.py
+scripts/normalize/normalize_te_kg2_graph.py
+scripts/tekg2_entity_overrides.py
 ```
 
-Risk:
+风险：
 
-- A future maintainer may run an old generator and recreate stale files.
-- Old `tekg2` and `4.18/4.27` taxonomy assumptions can drift back into runtime.
+- 后续维护者可能运行旧 generator，重新生成过时文件。
+- 旧的 `tekg2`、`4.18/4.27` taxonomy 假设可能重新混入运行时。
 
-Recommended structure:
+后续如果还要继续清理，可考虑的结构：
 
 ```text
 scripts/
@@ -109,15 +125,15 @@ scripts/
   build/
 ```
 
-Lower-risk first step:
+保留原则：
 
-- Keep paths unchanged for now.
-- Add a header comment to legacy scripts.
-- Add `scripts/checks/check_legacy_generator_inputs.py` to fail if a script is presented as active but references missing inputs.
+- `scripts/normalize/build_tekg3_from_tekg21.py` 保留，因为它是当前 `tekg3` 构建和标准化入口。
+- `scripts/checks/*` 保留，因为这些是运行时一致性检查。
+- 历史说明文档里出现旧脚本名可以保留，但不能再把这些脚本当成当前可运行入口。
 
-## 4. Split Very Large Runtime Files Only After Behavior Is Covered
+## 4. 拆大文件前先保证行为有覆盖
 
-Largest active PHP files:
+活跃 PHP 文件里较大的文件：
 
 ```text
 api/qa.php                                      2293 lines
@@ -129,7 +145,7 @@ api/agent/bootstrap.php                         797 lines
 api/expression_data.php                         541 lines
 ```
 
-Largest active JS files:
+活跃 JS 文件里较大的文件：
 
 ```text
 assets/js/renderers/g6/index-g6.bootstrap.js  1415 lines
@@ -140,45 +156,46 @@ assets/js/renderers/g6/default-tree-mindmap.js 856 lines
 assets/js/renderers/g6/default-tree.js         833 lines
 ```
 
-Recommended order:
+建议顺序：
 
-1. Leave `api/qa.php` and agent files to the agent-focused maintainer.
-2. Split `api/graph.php` only after API smoke tests cover representative queries.
-3. Split `search.php` by data source helper:
+1. `api/qa.php` 和 agent 相关文件交给 agent 负责人处理。
+2. `api/graph.php` 要等代表性 API smoke test 稳定后再拆。
+3. `search.php` 可以按数据源 helper 拆分：
    - Repbase helper
    - Dfam helper
    - JBrowse helper
    - taxonomy helper
-   - rendering/page assembly
-4. Split G6 files by runtime contract, layout, interaction, and data loading.
+   - 页面组装和渲染
+4. G6 文件可以按运行时契约、布局、交互、数据加载拆分。
 
-Avoid doing this as a visual redesign. The first refactor should preserve behavior.
+不要把这一步做成视觉重设计。第一轮重构应该保持行为不变。
 
-## 5. Treat `archive` And `reference` As Non-Runtime
+## 5. 把 `archive` 和 `reference` 明确为非运行时区域
 
-Observed issue:
+本项已处理：
 
-- `archive/processing_history` contains large historical JSONL and Python files.
-- `reference/external_examples/g6-official/.git` contains a nested external Git checkout.
+- 顶层 `archive/` 已删除。
+- `reference/archive`、`reference/README.md`、`reference/deepseek.html` 已删除。
+- `reference/` 目前只保留 `reference/external_examples`。
+- 按用户要求，`reference/external_examples` 未删除。
 
-Risk:
+原始风险：
 
-- Search output is noisy.
-- Large historical files can be mistaken for active inputs.
-- Nested `.git` directories confuse project scanning and backup behavior.
+- 搜索结果噪声很大。
+- 大型历史文件容易被误认为活跃输入。
+- 嵌套 `.git` 目录会干扰项目扫描、备份和迁移。
 
-Recommended cleanup:
+后续维护规则：
 
-- Move heavy historical files outside the active workspace if they are not needed daily.
-- Keep a short manifest that explains where archival data lives.
-- Remove or compress nested external examples if they are only references.
-- Prefix archive scripts with a clear legacy marker if they must stay.
+- 不要让运行时代码依赖 `reference/external_examples`。
+- 如果未来新增归档材料，优先放到 Git 外或写入明确历史说明。
+- 当前项目根目录下不再保留 `archive/` 作为活跃目录。
 
-## 6. Add A Runtime Data Manifest
+## 6. 增加运行时数据 manifest
 
-Important runtime data is currently local and large. Some generated files are canonical runtime inputs; some are derived outputs; some are fallback caches.
+当前重要运行时数据是本地的，而且体积很大。有些生成文件是 canonical runtime input，有些是 derived output，有些是 fallback cache。
 
-Recommended manifest fields:
+建议 manifest 字段：
 
 ```json
 {
@@ -191,7 +208,7 @@ Recommended manifest fields:
 }
 ```
 
-High-priority entries:
+高优先级记录对象：
 
 - `data/taxonomy/transposon_tree/tree_rmsk_repbase.txt`
 - `data/taxonomy/transposon_tree/tree_all.txt`
@@ -201,27 +218,27 @@ High-priority entries:
 - `data/JBrowse/*`
 - `data/processed/dfam/dfam_curated_catalog.json`
 
-## 7. Remove Duplicate Or Suspicious Data Files
+## 7. 删除或归档重复、可疑的大文件
 
-One obvious candidate:
+一个明显候选：
 
 ```text
 data/bulk_expression_web/cancer_cell_line/CCLE_TE_normalized_count copy.tsv
 ```
 
-It is large and likely a manual duplicate. Do not delete it blindly; first compare size/checksum and confirm whether any script references it.
+它体积很大，而且看起来像手动复制文件。不要盲删；先比较大小、checksum，并确认是否有脚本引用它。
 
-Suggested check:
+建议检查：
 
 ```powershell
 rg -n "CCLE_TE_normalized_count copy.tsv|CCLE_TE_normalized_count.tsv" .
 ```
 
-If only the non-copy file is used, move the copy to archive or remove it after backup.
+如果只有非 copy 文件被使用，可以在备份后把 copy 文件移入 archive 或删除。
 
-## 8. Make Docs Easier To Navigate
+## 8. 让 docs 更容易导航
 
-Current docs are useful but spread across:
+当前文档有价值，但分布较散：
 
 ```text
 docs/architecture
@@ -232,40 +249,40 @@ docs/notes
 docs/setup
 ```
 
-Recommended convention:
+建议约定：
 
-- `docs/architecture`: current architecture and active risk/task documents.
-- `docs/setup`: local setup, config, runtime data restore.
-- `docs/latex`: paper/report source only.
-- `docs/notes`: temporary notes; periodically archive or merge.
-- `docs/demo`: demo-specific scripts/pages.
+- `docs/architecture`：当前架构、活跃风险、任务清单。
+- `docs/setup`：本地配置、运行时数据恢复、环境启动。
+- `docs/latex`：论文或报告的 LaTeX 源文件。
+- `docs/notes`：临时笔记，定期归档或合并。
+- `docs/demo`：demo 专用脚本和页面说明。
 
-Also add a short `docs/README.md` table that says which docs are current.
+另外建议在 `docs/README.md` 增加一个短表，说明哪些文档是当前有效版本。
 
-## 9. Keep Agent And Non-Agent Ownership Separate
+## 9. 保持 agent 和非 agent 的职责边界
 
-The project handoff already says the main assistant should focus on non-agent work, while `agent_gpt55_handoff.md` is for a separate AI/person responsible for agent development.
+项目 handoff 已经说明：主 AI 主要负责非 agent 工作；`agent_gpt55_handoff.md` 面向另一个负责 agent 开发的 AI 或维护者。
 
-Recommended boundary:
+建议边界：
 
-- Non-agent owner: root runtime pages, data paths, taxonomy API, graph API, expression pages, JBrowse, docs.
-- Agent owner: `agent.php`, `assets/js/pages/agent.js`, `api/agent/*`, `api/qa.php` behavior.
-- Shared contract: `api/runtime_config.php`, `api/taxonomy.php`, `api/graph.php`, and expression helper functions.
+- 非 agent 负责人：根目录运行时页面、数据路径、taxonomy API、graph API、expression 页面、JBrowse、docs。
+- agent 负责人：`agent.php`、`assets/js/pages/agent.js`、`api/agent/*`、`api/qa.php` 行为。
+- 共享契约：`api/runtime_config.php`、`api/taxonomy.php`、`api/graph.php`、expression helper。
 
-This prevents unrelated agent refactors from blocking database and frontend stabilization.
+这样可以避免无关 agent 重构阻塞数据库和前端稳定工作。
 
-## 10. Suggested Cleanup Sequence
+## 10. 建议清理顺序
 
-1. Remove tracked `.pyc` files and update `.gitignore`.
-2. Add a runtime data manifest.
-3. Mark stale generator scripts as legacy or update their inputs.
-4. Decide whether `data/processed/tekg2/*` is active reference, migration input, or archive.
-5. Review duplicate large files such as `CCLE_TE_normalized_count copy.tsv`.
-6. Split `search.php` data helpers after smoke tests are stable.
-7. Split `api/graph.php` into query, normalization, payload, and HTTP handling modules.
-8. Keep agent refactors separate from non-agent database cleanup.
+1. 移除被跟踪的 `.pyc` 文件并更新 `.gitignore`。
+2. 增加 runtime data manifest。
+3. 把过时 generator 脚本标记为 legacy，或更新它们的输入路径。
+4. 判断 `data/processed/tekg2/*` 是活跃参考、迁移输入，还是 archive。
+5. 检查重复大文件，例如 `CCLE_TE_normalized_count copy.tsv`。
+6. smoke test 稳定后，拆分 `search.php` 的数据 helper。
+7. 把 `api/graph.php` 拆成查询、标准化、payload、HTTP 处理几个模块。
+8. agent 重构和非 agent 数据库清理分开推进。
 
-## Verification Commands To Keep
+## 建议保留的验证命令
 
 ```powershell
 python scripts/checks/check_runtime_db_config.py

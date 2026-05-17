@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/LlmClient.php';
 require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/CitationResolver.php';
 require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/EntityNormalizer.php';
 require_once dirname(__DIR__, 2) . '/api/agent/plugins/EntityResolverPlugin.php';
+require_once dirname(__DIR__, 2) . '/api/agent/plugins/SiteNavigatorPlugin.php';
 require_once dirname(__DIR__, 2) . '/api/agent/plugins/GraphPlugin.php';
 require_once dirname(__DIR__, 2) . '/api/agent/plugins/GraphAnalyticsPlugin.php';
 require_once dirname(__DIR__, 2) . '/api/agent/plugins/CypherExplorerPlugin.php';

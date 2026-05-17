@@ -41,6 +41,7 @@ function tekg_agent_execute_run(string $runId): int
     require_once __DIR__ . '/agent/orchestrator/CitationResolver.php';
     require_once __DIR__ . '/agent/orchestrator/EntityNormalizer.php';
     require_once __DIR__ . '/agent/plugins/EntityResolverPlugin.php';
+    require_once __DIR__ . '/agent/plugins/SiteNavigatorPlugin.php';
     require_once __DIR__ . '/agent/plugins/GraphPlugin.php';
     require_once __DIR__ . '/agent/plugins/GraphAnalyticsPlugin.php';
     require_once __DIR__ . '/agent/plugins/CypherExplorerPlugin.php';

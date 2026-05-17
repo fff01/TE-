@@ -1,52 +1,68 @@
 # Scripts Layout
 
-This folder stores project-side Python scripts that generate data, normalize entities,
-or apply maintenance operations to the local Neo4j database.
+本目录保存项目侧的 Python、JavaScript 和辅助脚本，用于构建数据资产、标准化实体、导入或检查本地数据库。
 
-## Current groups
+## 当前活跃规则
+
+- 当前运行时 Neo4j 目标库是 `tekg3`。
+- 当前 TE taxonomy 构建和标准化入口是 `scripts/normalize/build_tekg3_from_tekg21.py`。
+- `tekg2`、`0413`、旧 lineage、旧 `graph_demo_data.js` 生成链路已经不再作为活跃构建入口。
+- 旧的 `tekg2` seed、旧 disease classification import、旧 tree lineage 和旧 demo data 生成脚本已从 `scripts/` 中删除。
+
+## 当前分组
 
 - `build/`
-  - parsers, preparers, demo builders, lineage builders, and taxonomy helpers
+  - 当前保留 parser、asset preparer、JBrowse/expression/dfam 等仍有用的构建脚本。
 - `normalize/`
-  - cleanup, normalization, override, and backfill operations
+  - 当前保留 `tekg3` 构建、语义标准化、疾病分类、中文术语回填等维护脚本。
 - `export/`
-  - CSV/report/finalization outputs
+  - 当前保留仍可用的实体描述翻译导出脚本。
 - `import/`
-  - Cypher generators and import bundle generators
-- `eval/`
-  - readiness analysis and baseline evaluation
+  - 当前保留仍可用的 Cypher 生成脚本。
+- `checks/`
+  - 当前运行时一致性检查脚本。
 - `plot/`
-  - visualization-specific generators
+  - 可视化和结构图生成脚本。
 - root support modules
-  - `path_helpers.py`, `semantic_aliases.py`, `disease_top_class.py`, `tekg2_entity_overrides.py`
+  - `path_helpers.py`
+  - `semantic_aliases.py`
+  - `disease_top_class.py`
 
-## How to run
+## 常用检查
 
-Run scripts from the project root, for example:
+从项目根目录运行：
 
 ```powershell
-python scripts\build\generate_tree_demo_data.py
-python scripts\import\generate_semantic_standardization_merge.py
+python scripts\checks\check_runtime_db_config.py
+python scripts\checks\check_taxonomy_runtime_consistency.py
+python scripts\checks\check_expression_paths.py
 ```
 
-The scripts still read and write project files relative to the repository root.
+## 当前关键构建入口
 
-## Current raw/processed data preference
+```powershell
+python scripts\normalize\build_tekg3_from_tekg21.py
+python scripts\build\prepare_expression_assets.py
+python scripts\build\prepare_jbrowse_assets.py
+python scripts\build\parse_dfam_embl.py
+python scripts\build\parse_te_repbase.py
+```
 
-- Primary raw source: `data/raw/te_kg2.jsonl`
-- Primary processed JSONL: `data/processed/te_kg2_normalized_output.jsonl`
-- Primary graph seed: `data/processed/te_kg2_graph_seed.json`
-- Legacy raw source retained for compatibility only: `data/archive/legacy/raw/output.jsonl`
-- Legacy processed result retained for comparison only: `data/archive/legacy/processed/normalized_output.jsonl`
-- Legacy graph seed retained for comparison only: `data/archive/legacy/processed/neo4j_graph_seed.json`
+## 路径规则
 
-For new development, treat the `te_kg2` branch as the default pipeline.
+- Python 脚本应优先使用 `scripts/path_helpers.py`。
+- PHP 运行时路径应优先使用 `path_config.php`。
+- 浏览器运行时路径应优先使用 `assets/js/tekg_paths.php`。
 
-## Legacy compatibility switches
+## 已移除的旧链路
 
-- `scripts/normalize/apply_disease_classes.py`
-  - Default behavior now updates only `data/raw/te_kg2.jsonl`
-  - Use `--include-legacy-output-jsonl` only when you intentionally need to annotate `data/archive/legacy/raw/output.jsonl`
-- `scripts/normalize/normalize_line1_graph.py`
-  - This is now an explicit legacy pipeline
-  - Use `--legacy-output-jsonl` only when you intentionally want to rebuild artifacts from `data/archive/legacy/raw/output.jsonl`
+以下类别不再作为活跃脚本保留：
+
+- `tekg2` seed 构建脚本
+- `tekg2` import bundle 生成脚本
+- `0413` disease classification import 脚本
+- 旧 `tree_te_lineage` 生成脚本
+- 旧 `assets/data/graph_demo_data.js` 生成脚本
+- 旧 `tekg2` unresolved relation 修复脚本
+
+如需查看过去的处理历史，应查阅 Git 历史或历史文档，而不是重新把这些脚本作为运行时构建入口。

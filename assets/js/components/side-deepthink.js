@@ -1,13 +1,15 @@
 (() => {
-  const root = document.getElementById('previewDeepThink');
-  const form = document.getElementById('previewDeepThinkForm');
-  const input = document.getElementById('previewDeepThinkInput');
-  const submitBtn = document.getElementById('previewDeepThinkSubmit');
-  const statusEl = document.getElementById('previewDeepThinkStatus');
-  const messagesEl = document.getElementById('previewDeepThinkMessages');
-  const clearGraphBtn = document.getElementById('previewDeepThinkClearGraph');
-  const configNode = document.getElementById('preview-config');
-  if (!root || !form || !input || !submitBtn || !statusEl || !messagesEl || !configNode) return;
+  const root = document.getElementById('sideDeepThink');
+  const drawer = document.getElementById('sideDeepThinkDrawer');
+  const toggleBtn = document.getElementById('sideDeepThinkToggle');
+  const closeBtn = document.getElementById('sideDeepThinkClose');
+  const form = document.getElementById('sideDeepThinkForm');
+  const input = document.getElementById('sideDeepThinkInput');
+  const submitBtn = document.getElementById('sideDeepThinkSubmit');
+  const statusEl = document.getElementById('sideDeepThinkStatus');
+  const messagesEl = document.getElementById('sideDeepThinkMessages');
+  const configNode = document.getElementById('side-deepthink-config');
+  if (!root || !drawer || !toggleBtn || !form || !input || !submitBtn || !statusEl || !messagesEl || !configNode) return;
 
   let config = {};
   try {
@@ -16,7 +18,7 @@
     config = {};
   }
 
-  const storageKey = String(config.sessionStorageKey || 'tekg-preview-deepthink-session');
+  const storageKey = String(config.sessionStorageKey || 'tekg-side-deepthink-session');
   let sessionId = '';
   try {
     sessionId = window.localStorage.getItem(storageKey) || '';
@@ -47,6 +49,14 @@
       .replace(/'/g, '&#39;');
   }
 
+  function fallbackMarkdown(source) {
+    let html = escapeHtml(source)
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      .replace(/\n{2,}/g, '</p><p>')
+      .replace(/\n/g, '<br>');
+    return `<p>${html}</p>`;
+  }
+
   function renderMarkdown(text) {
     const source = String(text || '')
       .replace(/^\[\^(\d+)\]:\s+.+$/gm, '')
@@ -57,7 +67,7 @@
         return window.marked.parse(source);
       } catch (_error) {}
     }
-    return `<p>${escapeHtml(source).replace(/\n{2,}/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+    return fallbackMarkdown(source);
   }
 
   function normalizeCitationTitle(citation) {
@@ -84,12 +94,7 @@
       const key = pmid || title.toLowerCase();
       if (!key || seen.has(key)) continue;
       seen.add(key);
-      next.push({
-        ...citation,
-        pmid,
-        title,
-        url: normalizeCitationUrl(citation),
-      });
+      next.push({ ...citation, pmid, title, url: normalizeCitationUrl(citation) });
     }
     return next;
   }
@@ -101,13 +106,6 @@
 
   function enhanceAnswerCitations(turn, answerNode) {
     if (!turn || !answerNode) return;
-
-    answerNode.querySelectorAll('p, li, blockquote').forEach((node) => {
-      const text = node.textContent || '';
-      if (/^\[\^\d+\]:/.test(text.trim())) {
-        node.remove();
-      }
-    });
 
     const walker = document.createTreeWalker(answerNode, NodeFilter.SHOW_TEXT);
     const textNodes = [];
@@ -124,10 +122,7 @@
       pmidPattern.lastIndex = 0;
       if (!markerPattern.test(text) && !pmidPattern.test(text)) return;
 
-      const fragment = document.createDocumentFragment();
       const replacements = [];
-      let lastIndex = 0;
-
       markerPattern.lastIndex = 0;
       let match;
       while ((match = markerPattern.exec(text)) !== null) {
@@ -138,14 +133,12 @@
           end: markerPattern.lastIndex,
           build() {
             const anchor = document.createElement('a');
-            anchor.className = 'preview-inline-citation';
+            anchor.className = 'side-dt-inline-citation';
             anchor.href = normalizeCitationUrl(citation);
             anchor.target = '_blank';
             anchor.rel = 'noopener noreferrer';
             anchor.textContent = String(citationIndex + 1);
             anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
-            anchor.dataset.citationTitle = normalizeCitationTitle(citation);
-
             const sup = document.createElement('sup');
             sup.appendChild(anchor);
             return sup;
@@ -163,19 +156,20 @@
           end: pmidPattern.lastIndex,
           build() {
             const anchor = document.createElement('a');
-            anchor.className = 'preview-inline-citation';
+            anchor.className = 'side-dt-inline-citation';
             anchor.href = normalizeCitationUrl(citation);
             anchor.target = '_blank';
             anchor.rel = 'noopener noreferrer';
             anchor.textContent = `PMID ${pmid}`;
             anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
-            anchor.dataset.citationTitle = normalizeCitationTitle(citation);
             return anchor;
           },
         });
       }
 
       replacements.sort((left, right) => left.start - right.start);
+      const fragment = document.createDocumentFragment();
+      let lastIndex = 0;
       let cursor = 0;
       for (const replacement of replacements) {
         if (replacement.start < cursor) continue;
@@ -186,7 +180,6 @@
         lastIndex = replacement.end;
         cursor = replacement.end;
       }
-
       if (lastIndex < text.length) {
         fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
       }
@@ -194,44 +187,12 @@
     });
   }
 
-  function getShell() {
-    return window.__TEKG_PREVIEW_SHELL || null;
-  }
-
-  function getGraphBridge() {
-    const shell = getShell();
-    if (shell && typeof shell.getGraphBridge === 'function') return shell.getGraphBridge();
-    return window.__TEKG_G6_BRIDGE || null;
-  }
-
-  function getGraphState() {
-    const shell = getShell();
-    if (shell && typeof shell.getGraphState === 'function') return shell.getGraphState();
-    const bridge = getGraphBridge();
-    if (!bridge || typeof bridge.getState !== 'function') return {};
-    try {
-      return bridge.getState() || {};
-    } catch (_error) {
-      return {};
+  function setOpen(isOpen) {
+    root.classList.toggle('is-open', isOpen);
+    toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    if (isOpen) {
+      window.setTimeout(() => input.focus(), 80);
     }
-  }
-
-  function compactGraphContext() {
-    const state = getGraphState();
-    const selected = state.selectedNode && typeof state.selectedNode === 'object' ? state.selectedNode : null;
-    return {
-      mode: String(state.mode || ''),
-      query: String(state.query || ''),
-      query_type: String(state.queryType || ''),
-      selected_node: selected ? {
-        id: String(selected.id || selected.data?.id || ''),
-        label: String(selected.label || selected.rawLabel || selected.data?.label || selected.data?.rawLabel || ''),
-        type: String(selected.type || selected.nodeType || selected.data?.type || selected.data?.nodeType || ''),
-      } : null,
-      key_node_level: Number(state.keyNodeLevel || 1),
-      fixed_view: !!state.fixedView,
-      show_labels: !!state.showLabels,
-    };
   }
 
   function setBusy(isBusy) {
@@ -240,13 +201,12 @@
     input.disabled = isBusy;
   }
 
-  function setStatus(message) {
-    statusEl.textContent = message || '';
+  function formatElapsed(ms) {
+    return `${Math.max(0, ms / 1000).toFixed(1)}s`;
   }
 
-  function formatElapsed(ms) {
-    const seconds = Math.max(0, ms / 1000);
-    return `${seconds.toFixed(1)}s`;
+  function setStatus(message) {
+    statusEl.textContent = message || '';
   }
 
   function updateTurnStatus(turn, final = false) {
@@ -264,7 +224,7 @@
 
   function startTurnTimer(turn) {
     if (!turn) return;
-    stopTurnTimer(turn);
+    if (turn.timerId) window.clearInterval(turn.timerId);
     turn.timerId = window.setInterval(() => updateTurnStatus(turn), 250);
   }
 
@@ -274,15 +234,13 @@
       window.clearInterval(turn.timerId);
       turn.timerId = null;
     }
-    if (stage) {
-      turn.stage = stage;
-    }
+    if (stage) turn.stage = stage;
     updateTurnStatus(turn, true);
   }
 
   function createMessage(kind, htmlOrText, asHtml = false) {
     const node = document.createElement('div');
-    node.className = `preview-message preview-message-${kind}`;
+    node.className = `side-dt-message side-dt-message-${kind}`;
     if (asHtml) {
       node.innerHTML = htmlOrText || '';
     } else {
@@ -341,121 +299,15 @@
     }
   }
 
-  function normalizeGraphElements(candidate) {
-    if (!candidate || typeof candidate !== 'object') return null;
-    const nodes = Array.isArray(candidate.nodes) ? candidate.nodes : [];
-    const edges = Array.isArray(candidate.edges) ? candidate.edges : [];
-    if (!nodes.length || !edges.length) return null;
-    return { nodes, edges };
-  }
-
-  function graphElementsFromPayload(payload) {
-    if (!payload || typeof payload !== 'object') return null;
-    const direct = normalizeGraphElements(payload.graph_elements)
-      || normalizeGraphElements(payload.raw_result?.graph_elements)
-      || normalizeGraphElements(payload.raw_preview?.graph_elements)
-      || normalizeGraphElements(payload.display_details?.graph_elements)
-      || normalizeGraphElements(payload.display_details?.raw_preview?.graph_elements)
-      || normalizeGraphElements(payload.compressed_result?.graph_elements);
-    if (direct) return direct;
-
-    const rawRows = payload.raw_result?.rows || payload.raw_preview?.rows || payload.display_details?.raw_preview?.rows;
-    if (!Array.isArray(rawRows) || !rawRows.length) return null;
-    const nodes = new Map();
-    const edges = [];
-    rawRows.slice(0, 80).forEach((row, index) => {
-      const source = String(row.source_name || row.source || row.te || '').trim();
-      const target = String(row.target_name || row.target || row.disease || row.entity || '').trim();
-      if (!source || !target) return;
-      const relation = String(row.relation_type || row.relation || 'related_to').trim();
-      const targetType = String(row.target_label || row.target_type || row.type || 'Disease').trim();
-      const sourceId = `deepthink-node-${source.toLowerCase().replace(/[^a-z0-9]+/g, '-') || index}`;
-      const targetId = `deepthink-node-${target.toLowerCase().replace(/[^a-z0-9]+/g, '-') || index}`;
-      nodes.set(sourceId, { id: sourceId, label: source, type: 'TE', description: '' });
-      nodes.set(targetId, { id: targetId, label: target, type: targetType, description: String(row.relation_description || '') });
-      edges.push({ id: `deepthink-edge-${index}`, source: sourceId, target: targetId, relation });
-    });
-    if (!nodes.size || !edges.length) return null;
-    return { nodes: Array.from(nodes.values()), edges };
-  }
-
-  function graphActionFromElements(elements, fallbackQuery) {
+  function pageContext() {
+    const heading = document.querySelector('main h1, main h2, .page-title, .hero-title');
     return {
-      graph_action: {
-        enabled: true,
-        query: fallbackQuery || 'Deep Think result',
-        preset_state: {
-          key_node_level: 1,
-          fixed_view: true,
-        },
-        subgraph: {
-          nodes: elements.nodes.map((node) => ({
-            id: String(node.id || node.label || node.displayLabel || ''),
-            label: String(node.displayLabel || node.label || node.id || ''),
-            type: String(node.nodeType || node.type || 'TE'),
-            description: String(node.description || ''),
-            pmid: String(node.pmid || ''),
-          })),
-          edges: elements.edges.map((edge, index) => ({
-            id: String(edge.id || `deepthink-edge-${index}`),
-            source: String(edge.source || ''),
-            target: String(edge.target || ''),
-            relation: String(edge.relation || edge.relationType || edge.label || 'related_to'),
-            evidence: String(edge.evidence || ''),
-            pmids: Array.isArray(edge.pmids) ? edge.pmids : [],
-          })),
-        },
-      },
+      title: document.title,
+      path: window.location.pathname,
+      search: window.location.search,
+      hash: window.location.hash,
+      heading: heading ? String(heading.textContent || '').trim() : '',
     };
-  }
-
-  function extractEntityQuery(event) {
-    const payload = event && event.payload && typeof event.payload === 'object' ? event.payload : {};
-    const candidates = [
-      payload.compressed_result?.entity,
-      payload.compressed_result?.canonical_entity,
-      payload.raw_result?.entity,
-      payload.raw_result?.canonical_entity,
-      payload.display_details?.entity,
-      payload.preview_items?.[0]?.label,
-      payload.evidence_items?.[0]?.subject,
-      payload.evidence_items?.[0]?.entity,
-    ];
-    for (const candidate of candidates) {
-      const value = String(candidate || '').trim();
-      if (value) return value;
-    }
-    return '';
-  }
-
-  async function driveGraphFromEvent(event, turn) {
-    if (!event || event.type !== 'tool_result') return;
-    const pluginName = String(event.plugin_name || '');
-    const graphRelevant = /Graph|Cypher|Analytics|Sequence|Genome/i.test(pluginName);
-    if (!graphRelevant) return;
-
-    const bridge = getGraphBridge();
-    if (!bridge) return;
-    const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
-    const elements = graphElementsFromPayload(payload);
-    try {
-      if (elements && typeof bridge.applyAnswerGraph === 'function') {
-        const query = extractEntityQuery(event) || compactGraphContext().query || turn.question;
-        const applied = await bridge.applyAnswerGraph(graphActionFromElements(elements, query));
-        if (applied) {
-          turn.graphChanged = true;
-          return;
-        }
-      }
-
-      const entityQuery = extractEntityQuery(event);
-      if (entityQuery && typeof bridge.loadGraph === 'function') {
-        const loaded = await bridge.loadGraph({ query: entityQuery });
-        if (loaded) {
-          turn.graphChanged = true;
-        }
-      }
-    } catch (_error) {}
   }
 
   function handleStreamEvent(turn, event) {
@@ -484,8 +336,6 @@
       setTurnStage(turn, 'executing');
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       mergeTurnCitations(turn, payload.citations || payload.display_details?.citations || []);
-      turn.toolEvents.push(event);
-      driveGraphFromEvent(event, turn);
       return;
     }
     if (event.type === 'reflection' || event.type === 'synthesizing') {
@@ -522,14 +372,12 @@
     if (activeAbortController) {
       activeAbortController.abort();
     }
-    const graphContext = compactGraphContext();
+
     const turn = {
       question,
       answer: '',
       done: false,
       failed: false,
-      graphChanged: false,
-      toolEvents: [],
       citations: [],
       stage: 'starting',
       startedAt: performance.now ? performance.now() : Date.now(),
@@ -546,17 +394,13 @@
     try {
       const response = await fetch(config.deepThinkStreamApiUrl || window.__TEKG_PATHS.apiUrl('deep_think_stream.php'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
         body: JSON.stringify({
           question,
           question_raw: question,
-          graph_context: graphContext,
+          source_page: String(config.sourcePage || ''),
           current_url: window.location.href,
-          page_context: {
-            title: document.title,
-            path: window.location.pathname,
-          },
-          source_page: String(config.sourcePage || 'preview'),
+          page_context: pageContext(),
           model: String(config.defaultModel || 'deepseek-v4-flash'),
           mode: 'deepthink',
           session_id: sessionId || undefined,
@@ -596,10 +440,14 @@
     }
   }
 
+  toggleBtn.addEventListener('click', () => setOpen(!root.classList.contains('is-open')));
+  closeBtn?.addEventListener('click', () => setOpen(false));
+
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const question = String(input.value || '').trim();
     if (!question) return;
+    setOpen(true);
     submitQuestion(question);
   });
 
@@ -607,18 +455,6 @@
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       form.requestSubmit();
-    }
-  });
-
-  clearGraphBtn?.addEventListener('click', () => {
-    const bridge = getGraphBridge();
-    if (!bridge) return;
-    if (typeof bridge.goBack === 'function') {
-      bridge.goBack();
-      setStatus('Ready');
-    } else if (typeof bridge.showTree === 'function') {
-      bridge.showTree();
-      setStatus('Ready');
     }
   });
 

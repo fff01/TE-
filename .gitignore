@@ -1,6 +1,11 @@
 # Large local datasets
 data/
 reference/
+
+# Python generated files
+__pycache__/
+*.pyc
+
 # Large reference or genome files
 *.fa
 *.fasta

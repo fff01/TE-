@@ -295,7 +295,8 @@ final class TekgAgentLlmClient
 
         return "Use the following structured evidence to answer the research question.\n" .
             "Write a natural academic explanation rather than a fixed report template.\n" .
-            "If the question asks for mechanism, prefer a causal chain. If it asks for comparison, prefer a contrastive structure. If the evidence is weak or incomplete, say so explicitly.\n\n" .
+            "If the question asks for mechanism, prefer a causal chain. If it asks for comparison, prefer a contrastive structure. If the evidence is weak or incomplete, say so explicitly.\n" .
+            "If Site Navigator Plugin evidence provides Markdown links or URLs, preserve those links exactly and keep them clickable.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
@@ -331,7 +332,8 @@ final class TekgAgentLlmClient
 
         return "Write the final answer only from the structured answer plan and evidence below.\n" .
             "Follow answer_structure strictly. Do not improvise extra sections outside section_plan unless needed for one short limitation note.\n" .
-            "Do not restate raw JSON. Convert the plan into a natural academic answer.\n\n" .
+            "Do not restate raw JSON. Convert the plan into a natural academic answer.\n" .
+            "If Site Navigator Plugin evidence provides Markdown links or URLs, preserve those links exactly and keep them clickable.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
@@ -363,6 +365,7 @@ final class TekgAgentLlmClient
             "Keep the answer concise for simple factual questions, and only mention uncertainty if the evidence is incomplete or conflicting.\n" .
             "If extra_context includes a full sequence and the user explicitly asked for the complete sequence, reproduce that sequence verbatim in the answer.\n" .
             "When citing, prefer explicit PubMed markers like PMID 12345678. If you use indexed markers, use [1], [2], [3] in the citations array order.\n" .
+            "If Site Navigator Plugin evidence provides Markdown links or URLs, preserve those links exactly and keep them clickable.\n" .
             "Do not invent unsupported details and do not restate raw JSON.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }

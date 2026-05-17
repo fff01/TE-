@@ -69,8 +69,8 @@ assert_same('search-sequence-panel', $sequence['results']['primary_route']['frag
 assert_same('http://localhost/TE-/search.php?q=L1HS&type=TE#search-sequence-panel', $sequence['results']['primary_route']['url'] ?? '', 'absolute sequence URL');
 
 $expression = $plugin->run(navigator_context('L1HS在哪些组织表达，Expression页面在哪里'));
-assert_same('expression-detail-summary', $expression['results']['primary_route']['fragment'] ?? '', 'expression detail fragment');
-assert_same('http://localhost/TE-/expression_detail.php?te=L1HS#expression-detail-summary', $expression['results']['primary_route']['url'] ?? '', 'absolute expression URL');
+assert_same('expression-detail-normal-tissue', $expression['results']['primary_route']['fragment'] ?? '', 'normal tissue expression fragment');
+assert_same('http://localhost/TE-/expression_detail.php?te=L1HS#expression-detail-normal-tissue', $expression['results']['primary_route']['url'] ?? '', 'absolute normal tissue expression URL');
 
 $browser = $plugin->run(navigator_context('L1HS的Genome Browser入口'));
 assert_same('search-jbrowse-panel', $browser['results']['primary_route']['fragment'] ?? '', 'search JBrowse panel fragment');

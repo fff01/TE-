@@ -17,6 +17,7 @@ final class TekgDeepThinkService
         $this->citationResolver = new TekgAgentCitationResolver();
         $this->plugins = [
             'Entity Resolver' => new TekgAgentEntityResolverPlugin(),
+            'Site Navigator Plugin' => new TekgAgentSiteNavigatorPlugin(),
             'Graph Plugin' => new TekgAgentGraphPlugin($neo4j, $this->citationResolver),
             'Graph Analytics Plugin' => new TekgAgentGraphAnalyticsPlugin($neo4j),
             'Cypher Explorer Plugin' => new TekgAgentCypherExplorerPlugin($neo4j, $this->llm, $config),
@@ -73,6 +74,12 @@ final class TekgDeepThinkService
         $analysis['answer_language'] = $answerLanguage;
         $analysis['language'] = 'english';
         $analysis['session_memory'] = $sessionMemory;
+        $analysis['request_context'] = [
+            'source_page' => (string)($payload['source_page'] ?? ''),
+            'current_url' => (string)($payload['current_url'] ?? ''),
+            'page_context' => (array)($payload['page_context'] ?? []),
+            'graph_context' => (array)($payload['graph_context'] ?? []),
+        ];
         $writingModel = $this->resolveWritingModel($payload, $analysis);
 
         $eventSequence = 0;
@@ -607,6 +614,14 @@ final class TekgDeepThinkService
             ];
         }
 
+        if (($analysis['asks_for_site_navigation'] ?? false) && in_array('Site Navigator Plugin', $candidates, true)) {
+            return [
+                'done' => false,
+                'next_plugin' => 'Site Navigator Plugin',
+                'reason' => 'This question asks for a TE-KG page or panel route, so I will use the site navigator first.',
+            ];
+        }
+
         if ($this->shouldBypassRouter($analysis)) {
             $fallback = $candidates[0] ?? '';
             $this->logDiagnostic($requestId, 'deepthink_router_bypassed', [
@@ -715,6 +730,13 @@ final class TekgDeepThinkService
                 'reason' => 'The local graph already returned direct structured relations, so no extra evidence layer is needed for this simple relationship question.',
             ];
         }
+        if (($analysis['asks_for_site_navigation'] ?? false) && $this->pluginHasUsableResult($pluginResults, 'Site Navigator Plugin')) {
+            return [
+                'done' => true,
+                'next_plugin' => '',
+                'reason' => 'The site navigation layer already returned a direct TE-KG page route.',
+            ];
+        }
 
         return null;
     }
@@ -770,6 +792,9 @@ final class TekgDeepThinkService
         if (($analysis['asks_for_graph_analytics'] ?? false) && !in_array('Graph Analytics Plugin', $order, true)) {
             array_unshift($order, 'Graph Analytics Plugin');
         }
+        if (($analysis['asks_for_site_navigation'] ?? false) && !in_array('Site Navigator Plugin', $order, true)) {
+            array_unshift($order, 'Site Navigator Plugin');
+        }
         if (($analysis['asks_for_sequence'] ?? false) && !in_array('Sequence Plugin', $order, true)) {
             $order[] = 'Sequence Plugin';
         }
@@ -805,6 +830,7 @@ final class TekgDeepThinkService
             'Graph Plugin' => 'Lookup structured graph relations around the recognized entities.',
             'Graph Analytics Plugin' => 'Answer rankings, counts, and global topology questions over the knowledge graph.',
             'Cypher Explorer Plugin' => 'Run a read-only custom Cypher exploration when fixed graph templates are insufficient.',
+            'Site Navigator Plugin' => 'Find the best TE-KG page, panel, or dataset entry URL for the user request.',
             'Literature Plugin' => 'Collect local and PubMed literature evidence.',
             'Literature Reading Plugin' => 'Synthesize retrieved papers into grouped supported and conflicting claims.',
             'Tree Plugin' => 'Recover lineage and classification context.',
@@ -836,6 +862,7 @@ final class TekgDeepThinkService
             'Graph Plugin' => 'I will check the local graph first because this question needs structured relations.',
             'Graph Analytics Plugin' => 'I will use graph analytics because this question is about ranking, counts, or topology.',
             'Cypher Explorer Plugin' => 'I will use a custom Cypher exploration because the fixed graph templates may not be enough.',
+            'Site Navigator Plugin' => 'I will locate the exact TE-KG page or panel that matches this request.',
             'Literature Plugin' => 'I will add literature evidence because citation support is still useful here.',
             'Literature Reading Plugin' => 'I will synthesize the retrieved papers into grouped claims before answering.',
             'Tree Plugin' => 'I will recover lineage context because this question is about classification.',
@@ -1249,6 +1276,15 @@ final class TekgDeepThinkService
 
     private function buildDeterministicAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?array
     {
+        $siteNavigation = $this->buildDirectSiteNavigationAnswer($analysis, $pluginResults);
+        if ($siteNavigation !== null) {
+            return [
+                'path' => 'direct_site_navigation',
+                'body' => $siteNavigation,
+                'summary_hint' => 'Preserve every Markdown link exactly. Do not rewrite URLs as plain text.',
+            ];
+        }
+
         $sequence = $this->buildDirectFullSequenceAnswer($question, $answerLanguage, $analysis, $pluginResults, $citations);
         if ($sequence !== null) {
             return [
@@ -1268,6 +1304,20 @@ final class TekgDeepThinkService
         }
 
         return null;
+    }
+
+    private function buildDirectSiteNavigationAnswer(array $analysis, array $pluginResults): ?string
+    {
+        if (!($analysis['asks_for_site_navigation'] ?? false)) {
+            return null;
+        }
+        $result = (array)($pluginResults['Site Navigator Plugin'] ?? []);
+        if (!in_array((string)($result['status'] ?? ''), ['ok', 'partial'], true)) {
+            return null;
+        }
+        $results = (array)($result['results'] ?? []);
+        $answer = trim((string)($results['answer_markdown'] ?? ''));
+        return $answer !== '' ? $answer : null;
     }
 
     private function buildDirectFullSequenceAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?string
