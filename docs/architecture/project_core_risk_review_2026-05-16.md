@@ -261,27 +261,29 @@
 - 搜索 `/db/tekg2/tx/commit` 和 `/db/tekg21/tx/commit` 时，只出现在 legacy docs/scripts 中。
 - 缺少本地配置时，系统给出明确 setup error，而不是静默落到旧 DB。
 
-### 7. Expression 数据路径模型分裂
+### 7. Expression 数据路径模型分裂（已处理）
 
 证据：
 
 - 当前实际 expression 文件在 `data/bulk_expression_web` 下。
-- `api/expression_data.php` 的 quartile TSV fallback 读取：
-  - `data/raw/new_data/bulk_expression_web/processed/te_expression_context_stats.tsv`
-- `scripts/build/prepare_expression_assets.py` 从以下位置读取/写入：
-  - `data/raw/new_data/bulk_expression_web`
+- `api/expression_data.php` 的 quartile TSV 兜底读取已改为：
+  - `data/bulk_expression_web/processed/te_expression_context_stats.tsv`
+- `scripts/build/prepare_expression_assets.py` 已改为从以下位置读取/写入：
+  - `data/bulk_expression_web`
+- 路径统一通过 helper：
+  - PHP：`tekg_expression_bulk_fs_path()`
+  - Python：`expression_bulk_path()`
 
 风险：
 
-- 当前 Expression 页面能运行，是因为 MySQL summary tables 已经存在。
-- 如果 MySQL 缺 `q1_value` 或 `q3_value`，boxplot fallback 会去旧路径找 TSV，容易静默失效。
-- 从当前可见数据目录重建 expression assets 的路径不清晰。
+- 已降低。当前 Expression 页面运行和构建脚本使用同一个 canonical expression asset root。
+- 如果 MySQL 缺 `q1_value` 或 `q3_value`，boxplot 兜底会去当前目录找 TSV。
 
-建议任务：
+已完成任务：
 
-1. 明确 canonical expression asset root 是 `data/bulk_expression_web` 还是 `data/raw/new_data/bulk_expression_web`。
+1. 明确 canonical expression asset root 是 `data/bulk_expression_web`。
 2. 更新 `scripts/build/prepare_expression_assets.py` 和 `api/expression_data.php`，统一使用同一个 path helper。
-3. 新增 expression runtime data check。
+3. 新增 `scripts/checks/check_expression_paths.py`。
 
 验收标准：
 

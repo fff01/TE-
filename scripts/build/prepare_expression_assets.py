@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 
 SCRIPTS_ROOT = next(parent for parent in Path(__file__).resolve().parents if parent.name == "scripts")
 if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
-
-﻿#!/usr/bin/env python3
-from __future__ import annotations
 
 import csv
 import json
@@ -17,9 +16,9 @@ from statistics import median
 from typing import Any
 
 
-from path_helpers import data_path
+from path_helpers import expression_bulk_path
 
-BULK_ROOT = data_path("raw", "new_data", "bulk_expression_web")
+BULK_ROOT = expression_bulk_path()
 OUT_ROOT = BULK_ROOT / "processed"
 
 
@@ -701,6 +700,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-
-

@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/path_config.php';
+
 function tekg_expression_config(): array
 {
     static $config = null;
@@ -387,7 +389,7 @@ function tekg_expression_fetch_quartile_maps_from_tsv(string $teName): array
         return $cache[$teName];
     }
 
-    $path = dirname(__DIR__) . '/data/raw/new_data/bulk_expression_web/processed/te_expression_context_stats.tsv';
+    $path = tekg_expression_bulk_fs_path('processed/te_expression_context_stats.tsv');
     if (!is_file($path)) {
         return $cache[$teName] = [];
     }

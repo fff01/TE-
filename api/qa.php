@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/path_config.php';
+require_once __DIR__ . '/runtime_config.php';
 require_once __DIR__ . '/taxonomy_lib.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -37,18 +38,22 @@ $customRows = isset($payload['custom_rows']) ? max(1, (int)$payload['custom_rows
 $customReferences = isset($payload['custom_references']) ? max(1, (int)$payload['custom_references']) : 0;
 $modelProvider = trim((string)($payload['model_provider'] ?? 'qwen'));
 $graphState = is_array($payload['graph_state'] ?? null) ? $payload['graph_state'] : [];
-$localConfig = [];
-$localConfigPath = __DIR__ . '/config.local.php';
-if (is_file($localConfigPath)) {
-    $loaded = require $localConfigPath;
-    if (is_array($loaded)) {
-        $localConfig = $loaded;
-    }
-}
+$localConfig = tekg_runtime_load_local_config();
 
 if ($question === '') {
     http_response_code(400);
     echo json_encode(['ok' => false, 'error' => 'Question is required'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+try {
+    $neo4jConfig = tekg_runtime_neo4j_config($localConfig);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => $e->getMessage(),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
@@ -63,9 +68,9 @@ $config = [
         ? (bool)$localConfig['ssl_verify']
         : filter_var(env_value(['DASHSCOPE_SSL_VERIFY_BIOLOGY', 'DASHSCOPE_SSL_VERIFY'], '0'), FILTER_VALIDATE_BOOLEAN),
     'llm_relay_url' => $localConfig['llm_relay_url'] ?? env_value(['BIOLOGY_LLM_RELAY_URL', 'LLM_RELAY_URL'], ''),
-    'neo4j_url' => $localConfig['neo4j_url'] ?? env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg2/tx/commit'),
-    'neo4j_user' => $localConfig['neo4j_user'] ?? env_value(['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'),
-    'neo4j_password' => $localConfig['neo4j_password'] ?? env_value(['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD'], ''),
+    'neo4j_url' => $neo4jConfig['neo4j_url'],
+    'neo4j_user' => $neo4jConfig['neo4j_user'],
+    'neo4j_password' => $neo4jConfig['neo4j_password'],
 ];
 
 if ($config['neo4j_password'] === '') {

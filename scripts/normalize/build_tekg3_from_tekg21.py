@@ -765,11 +765,23 @@ def build_homepage_stats(final_map: dict[str, Classification]) -> dict[str, Any]
 
 
 def write_outputs(classifications: list[Classification], operations: list[dict[str, str]], final_map: dict[str, Classification], homepage_stats: dict[str, Any]) -> None:
+    input_counts = dict(Counter(item.group for item in classifications))
+    input_status_counts = dict(Counter(item.status for item in classifications))
+    post_merge_counts = dict(Counter(item.group for item in final_map.values()))
+    post_merge_status_counts = dict(Counter(item.status for item in final_map.values()))
     report = {
         "source_db": SOURCE_DB,
         "target_db": TARGET_DB,
-        "counts": dict(Counter(item.group for item in classifications)),
-        "status_counts": dict(Counter(item.status for item in classifications)),
+        "counts": post_merge_counts,
+        "status_counts": post_merge_status_counts,
+        "input_counts": input_counts,
+        "input_status_counts": input_status_counts,
+        "input_records": len(classifications),
+        "post_merge_counts": post_merge_counts,
+        "post_merge_status_counts": post_merge_status_counts,
+        "post_merge_te_nodes": len(final_map),
+        "operation_counts": dict(Counter(item["operation"] for item in operations)),
+        "homepage_chart_nodes": int(homepage_stats.get("summary", {}).get("classified_for_homepage", 0)),
         "operations": operations,
         "items": [
             {

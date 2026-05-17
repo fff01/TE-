@@ -61,6 +61,12 @@ if (!defined('TEKG_JBROWSE_FS_DIR')) {
 if (!defined('TEKG_JBROWSE_URL_BASE')) {
     define('TEKG_JBROWSE_URL_BASE', TEKG_DATA_URL_BASE . '/JBrowse');
 }
+if (!defined('TEKG_EXPRESSION_BULK_FS_DIR')) {
+    define('TEKG_EXPRESSION_BULK_FS_DIR', TEKG_DATA_FS_DIR . '/bulk_expression_web');
+}
+if (!defined('TEKG_EXPRESSION_BULK_URL_BASE')) {
+    define('TEKG_EXPRESSION_BULK_URL_BASE', TEKG_DATA_URL_BASE . '/bulk_expression_web');
+}
 
 function tekg_normalize_relative_path(string $relativePath): string
 {
@@ -171,4 +177,14 @@ function tekg_jbrowse_fs_path(string $suffix = ''): string
 function tekg_jbrowse_url(string $suffix = ''): string
 {
     return tekg_join_path(TEKG_JBROWSE_URL_BASE, $suffix);
+}
+
+function tekg_expression_bulk_fs_path(string $suffix = ''): string
+{
+    return tekg_join_path(TEKG_EXPRESSION_BULK_FS_DIR, $suffix);
+}
+
+function tekg_expression_bulk_url(string $suffix = ''): string
+{
+    return tekg_join_path(TEKG_EXPRESSION_BULK_URL_BASE, $suffix);
 }

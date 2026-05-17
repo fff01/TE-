@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from collections import Counter
 import json
 import re
 import sys
@@ -219,6 +220,28 @@ def check_homepage_uses_realtime_taxonomy(failures: list[str]) -> None:
         failures.append("homepage ring chart reads JSON before realtime Neo4j taxonomy")
 
 
+def check_taxonomy_report_counts(failures: list[str]) -> None:
+    report_path = ROOT / "data" / "processed" / "tekg3_taxonomy_standardization_report.json"
+    if not report_path.is_file():
+        failures.append("taxonomy standardization report is missing")
+        return
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    final = report.get("final")
+    if not isinstance(final, dict):
+        failures.append("taxonomy report missing final map")
+        return
+    final_counts = dict(Counter(str(item.get("group", "")) for item in final.values() if isinstance(item, dict)))
+    if report.get("counts") != final_counts:
+        failures.append(f"taxonomy report top-level counts are not post-merge counts: {report.get('counts')} != {final_counts}")
+    if report.get("post_merge_counts") != final_counts:
+        failures.append("taxonomy report missing or stale post_merge_counts")
+    items = report.get("items")
+    if isinstance(items, list):
+        input_counts = dict(Counter(str(item.get("group", "")) for item in items if isinstance(item, dict)))
+        if report.get("input_counts") != input_counts:
+            failures.append("taxonomy report missing or stale input_counts")
+
+
 def main() -> int:
     failures: list[str] = []
     config = read_local_config()
@@ -231,6 +254,7 @@ def main() -> int:
     if expected:
         check_taxonomy_api(expected, failures)
         check_graph_api(expected, failures)
+    check_taxonomy_report_counts(failures)
     check_homepage_uses_realtime_taxonomy(failures)
     check_legacy_runtime_references(failures)
 

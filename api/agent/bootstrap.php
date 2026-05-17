@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/expression_data.php';
+require_once dirname(__DIR__) . '/runtime_config.php';
 require_once dirname(__DIR__, 2) . '/path_config.php';
 require_once dirname(__DIR__, 2) . '/site_i18n.php';
 
@@ -18,20 +19,7 @@ function tekg_agent_env_value(array $names, ?string $default = null): ?string
 
 function tekg_agent_local_config(): array
 {
-    static $local = null;
-    if (is_array($local)) {
-        return $local;
-    }
-    $path = dirname(__DIR__) . '/config.local.php';
-    if (is_file($path)) {
-        $loaded = require $path;
-        if (is_array($loaded)) {
-            $local = $loaded;
-            return $local;
-        }
-    }
-    $local = [];
-    return $local;
+    return tekg_runtime_load_local_config();
 }
 
 function tekg_agent_ensure_dir(string $path): string
@@ -454,6 +442,7 @@ function tekg_agent_config(): array
         return $config;
     }
     $local = tekg_agent_local_config();
+    $neo4jConfig = tekg_runtime_neo4j_config($local);
     $config = [
         'dashscope_url' => trim((string)($local['dashscope_url'] ?? tekg_agent_env_value(['DASHSCOPE_API_URL_BIOLOGY', 'DASHSCOPE_API_URL'], 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'))),
         'dashscope_key' => trim((string)($local['dashscope_key'] ?? tekg_agent_env_value(['DASHSCOPE_API_KEY_BIOLOGY', 'DASHSCOPE_API_KEY'], ''))),
@@ -471,9 +460,9 @@ function tekg_agent_config(): array
         'llm_answer_timeout' => (int)($local['llm_answer_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_ANSWER_TIMEOUT'], '20')),
         'llm_answer_chat_timeout' => (int)($local['llm_answer_chat_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_ANSWER_CHAT_TIMEOUT'], '18')),
         'llm_answer_reasoner_timeout' => (int)($local['llm_answer_reasoner_timeout'] ?? tekg_agent_env_value(['TEKG_AGENT_LLM_ANSWER_REASONER_TIMEOUT'], '35')),
-        'neo4j_url' => trim((string)($local['neo4j_url'] ?? tekg_agent_env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg21/tx/commit'))),
-        'neo4j_user' => trim((string)($local['neo4j_user'] ?? tekg_agent_env_value(['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'))),
-        'neo4j_password' => trim((string)($local['neo4j_password'] ?? tekg_agent_env_value(['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD'], ''))),
+        'neo4j_url' => $neo4jConfig['neo4j_url'],
+        'neo4j_user' => $neo4jConfig['neo4j_user'],
+        'neo4j_password' => $neo4jConfig['neo4j_password'],
         'pubmed_tool' => trim((string)tekg_agent_env_value(['PUBMED_TOOL'], 'TEKGAcademicAgent')),
         'pubmed_email' => trim((string)tekg_agent_env_value(['PUBMED_EMAIL'], '')),
         'pubmed_cache_dir' => tekg_agent_pubmed_cache_dir(),

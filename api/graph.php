@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/taxonomy_lib.php';
+require_once __DIR__ . '/runtime_config.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -19,22 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
-$localConfig = [];
-$localConfigPath = __DIR__ . '/config.local.php';
-if (is_file($localConfigPath)) {
-    $loaded = require $localConfigPath;
-    if (is_array($loaded)) {
-        $localConfig = $loaded;
-    }
+try {
+    $localConfig = tekg_runtime_load_local_config();
+    $config = array_merge(tekg_runtime_neo4j_config($localConfig), [
+        'key_node_threshold' => (int)tekg_runtime_pick($localConfig, 'key_node_threshold', ['KEY_NODE_THRESHOLD_BIOLOGY', 'KEY_NODE_THRESHOLD'], '15'),
+        'key_node_expand_limit' => (int)tekg_runtime_pick($localConfig, 'key_node_expand_limit', ['KEY_NODE_EXPAND_LIMIT_BIOLOGY', 'KEY_NODE_EXPAND_LIMIT'], '15'),
+    ]);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
 }
-
-$config = [
-    'neo4j_url' => $localConfig['neo4j_url'] ?? env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg2/tx/commit'),
-    'neo4j_user' => $localConfig['neo4j_user'] ?? env_value(['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'),
-    'neo4j_password' => $localConfig['neo4j_password'] ?? env_value(['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD'], ''),
-    'key_node_threshold' => (int)($localConfig['key_node_threshold'] ?? env_value(['KEY_NODE_THRESHOLD_BIOLOGY', 'KEY_NODE_THRESHOLD'], '15')),
-    'key_node_expand_limit' => (int)($localConfig['key_node_expand_limit'] ?? env_value(['KEY_NODE_EXPAND_LIMIT_BIOLOGY', 'KEY_NODE_EXPAND_LIMIT'], '15')),
-];
 
 if (!function_exists('curl_init')) {
     http_response_code(500);
@@ -68,17 +64,6 @@ try {
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-}
-
-function env_value(array $names, ?string $default = null): ?string
-{
-    foreach ($names as $name) {
-        $value = getenv($name);
-        if ($value !== false && trim((string)$value) !== '') {
-            return trim((string)$value);
-        }
-    }
-    return $default;
 }
 
 final class GraphService

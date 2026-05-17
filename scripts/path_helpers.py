@@ -15,6 +15,10 @@ def data_path(*parts: str) -> Path:
     return ROOT.joinpath("data", *parts)
 
 
+def expression_bulk_path(*parts: str) -> Path:
+    return data_path("bulk_expression_web", *parts)
+
+
 def imports_path(*parts: str) -> Path:
     return ROOT.joinpath("imports", *parts)
 

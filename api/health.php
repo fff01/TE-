@@ -1,49 +1,34 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/runtime_config.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
-$local = [];
-$path = __DIR__ . '/config.local.php';
-if (is_file($path)) {
-    $loaded = require $path;
-    if (is_array($loaded)) {
-        $local = $loaded;
-    }
-}
-
-function pick(string $localKey, array $envNames, ?string $default = null): ?string
-{
-    global $local;
-    if (isset($local[$localKey]) && trim((string)$local[$localKey]) !== '') {
-        return trim((string)$local[$localKey]);
-    }
-    foreach ($envNames as $name) {
-        $value = getenv($name);
-        if ($value !== false && trim((string)$value) !== '') {
-            return trim((string)$value);
-        }
-    }
-    return $default;
-}
+$local = tekg_runtime_load_local_config();
 
 $config = [
-    'dashscope_key' => pick('dashscope_key', ['DASHSCOPE_API_KEY_BIOLOGY', 'DASHSCOPE_API_KEY']),
-    'dashscope_model' => pick('dashscope_model', ['DASHSCOPE_MODEL_BIOLOGY', 'DASHSCOPE_MODEL'], 'qwen-plus'),
-    'neo4j_url' => pick('neo4j_url', ['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg2/tx/commit'),
-    'neo4j_user' => pick('neo4j_user', ['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'),
-    'neo4j_password' => pick('neo4j_password', ['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD']),
+    'dashscope_key' => tekg_runtime_pick($local, 'dashscope_key', ['DASHSCOPE_API_KEY_BIOLOGY', 'DASHSCOPE_API_KEY']),
+    'dashscope_model' => tekg_runtime_pick($local, 'dashscope_model', ['DASHSCOPE_MODEL_BIOLOGY', 'DASHSCOPE_MODEL'], 'qwen-plus'),
 ];
 
+$neo4jConfig = null;
+$neo4jConfigError = '';
+try {
+    $neo4jConfig = tekg_runtime_neo4j_config($local);
+} catch (Throwable $e) {
+    $neo4jConfigError = $e->getMessage();
+}
+
 $neo4jReachable = false;
-$neo4jMessage = 'not tested';
-if (function_exists('curl_init') && $config['neo4j_password']) {
-    $ch = curl_init($config['neo4j_url']);
+$neo4jMessage = $neo4jConfigError !== '' ? $neo4jConfigError : 'not tested';
+if (function_exists('curl_init') && is_array($neo4jConfig) && $neo4jConfig['neo4j_password']) {
+    $ch = curl_init($neo4jConfig['neo4j_url']);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
         CURLOPT_HTTPAUTH => CURLAUTH_BASIC,
-        CURLOPT_USERPWD => $config['neo4j_user'] . ':' . $config['neo4j_password'],
+        CURLOPT_USERPWD => $neo4jConfig['neo4j_user'] . ':' . $neo4jConfig['neo4j_password'],
         CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         CURLOPT_POSTFIELDS => '{"statements":[{"statement":"RETURN 1 AS ok"}]}',
         CURLOPT_TIMEOUT => 10,
@@ -66,10 +51,12 @@ echo json_encode([
     'curl_loaded' => function_exists('curl_init'),
     'dashscope_key_present' => $config['dashscope_key'] !== null && $config['dashscope_key'] !== '',
     'dashscope_model' => $config['dashscope_model'],
-    'neo4j_url' => $config['neo4j_url'],
-    'neo4j_user' => $config['neo4j_user'],
-    'neo4j_password_present' => $config['neo4j_password'] !== null && $config['neo4j_password'] !== '',
+    'neo4j_url' => is_array($neo4jConfig) ? $neo4jConfig['neo4j_url'] : null,
+    'neo4j_database' => is_array($neo4jConfig) ? tekg_runtime_neo4j_database_name($neo4jConfig) : null,
+    'neo4j_user' => is_array($neo4jConfig) ? $neo4jConfig['neo4j_user'] : null,
+    'neo4j_password_present' => is_array($neo4jConfig) && $neo4jConfig['neo4j_password'] !== null && $neo4jConfig['neo4j_password'] !== '',
+    'neo4j_config_error' => $neo4jConfigError,
     'neo4j_reachable' => $neo4jReachable,
     'neo4j_message' => $neo4jMessage,
-    'using_local_config' => is_file($path),
+    'using_local_config' => tekg_runtime_using_local_config(),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

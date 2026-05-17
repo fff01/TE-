@@ -2,43 +2,16 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/path_config.php';
-
-function tekg_taxonomy_env_value(array $names, ?string $default = null): ?string
-{
-    foreach ($names as $name) {
-        $value = getenv($name);
-        if ($value !== false && trim((string)$value) !== '') {
-            return trim((string)$value);
-        }
-    }
-    return $default;
-}
+require_once __DIR__ . '/runtime_config.php';
 
 function tekg_taxonomy_config(): array
 {
-    $localConfig = [];
-    $localConfigPath = __DIR__ . '/config.local.php';
-    if (is_file($localConfigPath)) {
-        $loaded = require $localConfigPath;
-        if (is_array($loaded)) {
-            $localConfig = $loaded;
-        }
-    }
-
-    return [
-        'neo4j_url' => $localConfig['neo4j_url'] ?? tekg_taxonomy_env_value(['NEO4J_HTTP_URL_BIOLOGY', 'NEO4J_HTTP_URL'], 'http://127.0.0.1:7474/db/tekg3/tx/commit'),
-        'neo4j_user' => $localConfig['neo4j_user'] ?? tekg_taxonomy_env_value(['NEO4J_USER_BIOLOGY', 'NEO4J_USER'], 'neo4j'),
-        'neo4j_password' => $localConfig['neo4j_password'] ?? tekg_taxonomy_env_value(['NEO4J_PASSWORD_BIOLOGY', 'NEO4J_PASSWORD'], ''),
-    ];
+    return tekg_runtime_neo4j_config();
 }
 
 function tekg_taxonomy_database_name(array $config): string
 {
-    $url = (string)($config['neo4j_url'] ?? '');
-    if (preg_match('#/db/([^/]+)/tx/commit#', $url, $matches) === 1) {
-        return (string)$matches[1];
-    }
-    return '';
+    return tekg_runtime_neo4j_database_name($config);
 }
 
 function tekg_taxonomy_run_neo4j(array $config, string $statement, array $parameters = []): array
