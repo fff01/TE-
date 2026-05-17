@@ -2,23 +2,8 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/api/agent/bootstrap.php';
-require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/Neo4jClient.php';
-require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/LlmClient.php';
-require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/CitationResolver.php';
-require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/EntityNormalizer.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/EntityResolverPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/SiteNavigatorPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/GraphPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/GraphAnalyticsPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/CypherExplorerPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/LiteraturePlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/LiteratureReadingPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/TreePlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/ExpressionPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/GenomePlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/SequencePlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/plugins/CitationResolverPlugin.php';
-require_once dirname(__DIR__, 2) . '/api/agent/orchestrator/AcademicAgentService.php';
+require_once dirname(__DIR__, 2) . '/api/agent/plugin_registry.php';
+tekg_agent_require_academic_agent_service();
 
 $casesPath = tekg_api_fs_path('agent/evaluation/baseline_cases.json');
 $cases = json_decode((string)file_get_contents($casesPath), true);

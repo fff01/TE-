@@ -13,6 +13,7 @@ $protoMainClass = trim((string)($protoMainClass ?? ''));
 $enableSideDeepThink = (bool)($enableSideDeepThink ?? !in_array($activePage, ['agent', 'preview'], true));
 $sideDeepThinkVersion = max(
     (int)@filemtime(tekg_assets_fs_path('css/components/side-deepthink.css')),
+    (int)@filemtime(tekg_assets_fs_path('js/components/deepthink-client.js')),
     (int)@filemtime(tekg_assets_fs_path('js/components/side-deepthink.js'))
 );
 
@@ -41,6 +42,7 @@ $navItems = [
   <?php endif; ?>
   <script src="<?= htmlspecialchars(tekg_assets_url('js/tekg_paths.php'), ENT_QUOTES, 'UTF-8') ?>"></script>
   <?php if ($enableSideDeepThink): ?>
+    <script src="<?= htmlspecialchars(tekg_assets_url('js/components/deepthink-client.js') . '?v=' . $sideDeepThinkVersion, ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/components/side-deepthink.js') . '?v=' . $sideDeepThinkVersion, ENT_QUOTES, 'UTF-8') ?>" defer></script>
   <?php endif; ?>

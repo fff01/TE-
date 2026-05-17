@@ -10,18 +10,52 @@
   inset: auto 24px 24px auto;
   z-index: 1100;
   color: var(--side-dt-ink);
+  touch-action: none;
 }
 
 .side-dt-fab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
   border: 0;
-  border-radius: 999px;
-  padding: 14px 18px;
+  border-radius: 50%;
+  padding: 0;
   background: linear-gradient(135deg, #3d63d8, #5d7ce0);
-  box-shadow: 0 18px 40px rgba(48, 74, 150, 0.28);
+  box-shadow: 0 22px 46px rgba(48, 74, 150, 0.32);
   color: #fff;
   cursor: pointer;
-  font-weight: 800;
-  letter-spacing: 0.01em;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  isolation: isolate;
+  user-select: none;
+  touch-action: none;
+  transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.side-dt.is-moving .side-dt-fab {
+  box-shadow: 0 28px 58px rgba(48, 74, 150, 0.42);
+  transform: scale(1.04);
+}
+
+.side-dt-fab::before {
+  content: "";
+  position: absolute;
+  inset: 15px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.42);
+}
+
+.side-dt-fab-icon {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 0.95rem;
+  line-height: 1;
 }
 
 .side-dt.is-open .side-dt-fab {
@@ -44,6 +78,7 @@
   box-shadow: 0 24px 70px rgba(23, 39, 77, 0.22);
   backdrop-filter: blur(18px);
   overflow: hidden;
+  position: relative;
   opacity: 0;
   pointer-events: none;
   transform: translateY(14px) scale(0.98);
@@ -56,13 +91,109 @@
   transform: translateY(0) scale(1);
 }
 
+.side-dt-drag {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 66px;
+  height: 13px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: move;
+  transform: translateX(-50%);
+  z-index: 3;
+  touch-action: none;
+}
+
+.side-dt-drag::before {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 5px;
+  margin: 4px auto;
+  border-radius: 999px;
+  background: rgba(96, 122, 176, 0.32);
+}
+
+.side-dt.is-dragging .side-dt-drawer,
+.side-dt.is-resizing .side-dt-drawer {
+  transition: none;
+  user-select: none;
+}
+
 .side-dt-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 22px 22px 16px;
+  padding: 28px 22px 16px;
   border-bottom: 1px solid var(--side-dt-line);
+}
+
+.side-dt-resize {
+  position: absolute;
+  z-index: 4;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  touch-action: none;
+}
+
+.side-dt-resize-w,
+.side-dt-resize-e {
+  top: 22px;
+  bottom: 22px;
+  width: 14px;
+  cursor: ew-resize;
+}
+
+.side-dt-resize-w {
+  left: 0;
+}
+
+.side-dt-resize-e {
+  right: 0;
+}
+
+.side-dt-resize-s {
+  left: 22px;
+  right: 22px;
+  bottom: 0;
+  height: 14px;
+  cursor: ns-resize;
+}
+
+.side-dt-resize-nw,
+.side-dt-resize-ne,
+.side-dt-resize-sw,
+.side-dt-resize-se {
+  width: 22px;
+  height: 22px;
+}
+
+.side-dt-resize-nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.side-dt-resize-ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.side-dt-resize-sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
+.side-dt-resize-se {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
 }
 
 .side-dt-head h2 {
@@ -213,8 +344,13 @@
     inset: auto 12px 12px 12px;
   }
 
+  .side-dt.is-positioned {
+    right: auto;
+    bottom: auto;
+  }
+
   .side-dt-drawer {
-    width: 100%;
+    width: min(100%, calc(100vw - 24px));
     height: min(680px, calc(100vh - 24px));
     border-radius: 20px;
   }

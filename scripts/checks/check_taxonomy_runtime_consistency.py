@@ -19,7 +19,6 @@ REPRESENTATIVE_TE = ["L1HS", "AluJb", "MER131", "SVA", "ERVL"]
 RUNTIME_FILES_TO_SCAN = [
     "browse.php",
     "search.php",
-    "api/qa.php",
     "api/agent/plugins/TreePlugin.php",
     "api/agent/orchestrator/EntityNormalizer.php",
     "assets/js/tekg_runtime_data.js",

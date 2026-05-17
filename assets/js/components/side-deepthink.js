@@ -9,7 +9,18 @@
   const statusEl = document.getElementById('sideDeepThinkStatus');
   const messagesEl = document.getElementById('sideDeepThinkMessages');
   const configNode = document.getElementById('side-deepthink-config');
+  const dragHandle = document.getElementById('sideDeepThinkDrag');
+  const resizeHandles = {
+    w: document.getElementById('sideDeepThinkResizeW'),
+    e: document.getElementById('sideDeepThinkResizeE'),
+    s: document.getElementById('sideDeepThinkResizeS'),
+    nw: document.getElementById('sideDeepThinkResizeNW'),
+    ne: document.getElementById('sideDeepThinkResizeNE'),
+    sw: document.getElementById('sideDeepThinkResizeSW'),
+    se: document.getElementById('sideDeepThinkResizeSE'),
+  };
   if (!root || !drawer || !toggleBtn || !form || !input || !submitBtn || !statusEl || !messagesEl || !configNode) return;
+  if (!dragHandle || Object.values(resizeHandles).some((handle) => !handle)) return;
 
   let config = {};
   try {
@@ -26,6 +37,15 @@
 
   let activeAbortController = null;
   let activeTurn = null;
+  const deepThinkClient = window.TEKGDeepThinkClient || {};
+  const positionStorageKey = `${storageKey}-side-dt-position`;
+  const defaultFabSize = 84;
+  let drawerOpen = false;
+  let movedDuringDrag = false;
+  let fabDragState = null;
+  let moveState = null;
+  let resizeState = null;
+  let shellState = loadShellState();
 
   const STAGE_LABELS = {
     idle: 'Ready',
@@ -40,154 +60,149 @@
     failed: 'Failed',
   };
 
-  function escapeHtml(text) {
-    return String(text || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function fallbackMarkdown(source) {
-    let html = escapeHtml(source)
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-      .replace(/\n{2,}/g, '</p><p>')
-      .replace(/\n/g, '<br>');
-    return `<p>${html}</p>`;
-  }
-
   function renderMarkdown(text) {
-    const source = String(text || '')
-      .replace(/^\[\^(\d+)\]:\s+.+$/gm, '')
-      .trim();
-    if (!source) return '';
-    if (window.marked && typeof window.marked.parse === 'function') {
-      try {
-        return window.marked.parse(source);
-      } catch (_error) {}
+    if (typeof deepThinkClient.renderMarkdown === 'function') {
+      return deepThinkClient.renderMarkdown(text);
     }
-    return fallbackMarkdown(source);
-  }
-
-  function normalizeCitationTitle(citation) {
-    const title = String(citation && citation.title ? citation.title : '').trim();
-    if (title) return title;
-    const pmid = String(citation && citation.pmid ? citation.pmid : '').trim();
-    return pmid ? `PubMed PMID ${pmid}` : 'Open citation';
-  }
-
-  function normalizeCitationUrl(citation) {
-    const explicitUrl = String(citation && citation.url ? citation.url : '').trim();
-    if (explicitUrl) return explicitUrl;
-    const pmid = String(citation && citation.pmid ? citation.pmid : '').trim();
-    return pmid ? `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(pmid)}/` : '#';
-  }
-
-  function dedupeCitations(citations) {
-    const seen = new Set();
-    const next = [];
-    for (const citation of Array.isArray(citations) ? citations : []) {
-      if (!citation || typeof citation !== 'object') continue;
-      const pmid = String(citation.pmid || '').trim();
-      const title = String(citation.title || '').trim();
-      const key = pmid || title.toLowerCase();
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      next.push({ ...citation, pmid, title, url: normalizeCitationUrl(citation) });
-    }
-    return next;
+    return `<p>${String(text || '').replace(/[&<>]/g, '')}</p>`;
   }
 
   function mergeTurnCitations(turn, citations) {
-    if (!turn) return;
-    turn.citations = dedupeCitations([...(turn.citations || []), ...(Array.isArray(citations) ? citations : [])]);
+    if (typeof deepThinkClient.mergeTurnCitations === 'function') {
+      deepThinkClient.mergeTurnCitations(turn, citations);
+    }
   }
 
   function enhanceAnswerCitations(turn, answerNode) {
-    if (!turn || !answerNode) return;
-
-    const walker = document.createTreeWalker(answerNode, NodeFilter.SHOW_TEXT);
-    const textNodes = [];
-    while (walker.nextNode()) {
-      textNodes.push(walker.currentNode);
+    if (typeof deepThinkClient.enhanceAnswerCitations === 'function') {
+      deepThinkClient.enhanceAnswerCitations(turn, answerNode, 'side-dt-inline-citation');
     }
+  }
 
-    const markerPattern = /\[(?:\^)?(\d+)\]/g;
-    const pmidPattern = /\bPMID[:\s]+(\d{4,9})\b/gi;
-    textNodes.forEach((textNode) => {
-      if (textNode.parentElement && textNode.parentElement.closest('a')) return;
-      const text = textNode.nodeValue || '';
-      markerPattern.lastIndex = 0;
-      pmidPattern.lastIndex = 0;
-      if (!markerPattern.test(text) && !pmidPattern.test(text)) return;
+  function loadShellState() {
+    const fallback = {
+      fab: {
+        left: Math.max(16, window.innerWidth - defaultFabSize - 24),
+        top: Math.max(96, window.innerHeight - defaultFabSize - 24),
+      },
+      drawer: null,
+    };
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(positionStorageKey) || 'null');
+      if (!parsed || typeof parsed !== 'object') return fallback;
+      return {
+        fab: parsed.fab && typeof parsed.fab === 'object' ? parsed.fab : fallback.fab,
+        drawer: parsed.drawer && typeof parsed.drawer === 'object' ? parsed.drawer : null,
+      };
+    } catch (_error) {
+      return fallback;
+    }
+  }
 
-      const replacements = [];
-      markerPattern.lastIndex = 0;
-      let match;
-      while ((match = markerPattern.exec(text)) !== null) {
-        const citationIndex = Math.max(0, Number.parseInt(match[1], 10) - 1);
-        const citation = turn.citations[citationIndex] || {};
-        replacements.push({
-          start: match.index,
-          end: markerPattern.lastIndex,
-          build() {
-            const anchor = document.createElement('a');
-            anchor.className = 'side-dt-inline-citation';
-            anchor.href = normalizeCitationUrl(citation);
-            anchor.target = '_blank';
-            anchor.rel = 'noopener noreferrer';
-            anchor.textContent = String(citationIndex + 1);
-            anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
-            const sup = document.createElement('sup');
-            sup.appendChild(anchor);
-            return sup;
-          },
-        });
-      }
+  function saveShellState() {
+    try {
+      window.localStorage.setItem(positionStorageKey, JSON.stringify(shellState));
+    } catch (_error) {}
+  }
 
-      pmidPattern.lastIndex = 0;
-      while ((match = pmidPattern.exec(text)) !== null) {
-        const pmid = String(match[1] || '').trim();
-        if (!pmid) continue;
-        const citation = (turn.citations || []).find((item) => String(item && item.pmid ? item.pmid : '').trim() === pmid) || { pmid };
-        replacements.push({
-          start: match.index,
-          end: pmidPattern.lastIndex,
-          build() {
-            const anchor = document.createElement('a');
-            anchor.className = 'side-dt-inline-citation';
-            anchor.href = normalizeCitationUrl(citation);
-            anchor.target = '_blank';
-            anchor.rel = 'noopener noreferrer';
-            anchor.textContent = `PMID ${pmid}`;
-            anchor.setAttribute('aria-label', normalizeCitationTitle(citation));
-            return anchor;
-          },
-        });
-      }
+  function minDrawerWidth() {
+    return Math.min(340, Math.max(280, window.innerWidth - 24));
+  }
 
-      replacements.sort((left, right) => left.start - right.start);
-      const fragment = document.createDocumentFragment();
-      let lastIndex = 0;
-      let cursor = 0;
-      for (const replacement of replacements) {
-        if (replacement.start < cursor) continue;
-        if (replacement.start > lastIndex) {
-          fragment.appendChild(document.createTextNode(text.slice(lastIndex, replacement.start)));
-        }
-        fragment.appendChild(replacement.build());
-        lastIndex = replacement.end;
-        cursor = replacement.end;
-      }
-      if (lastIndex < text.length) {
-        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-      }
-      textNode.parentNode.replaceChild(fragment, textNode);
+  function minDrawerHeight() {
+    return Math.min(360, Math.max(280, window.innerHeight - 24));
+  }
+
+  function maxDrawerWidth() {
+    return Math.max(280, Math.min(760, window.innerWidth - 24));
+  }
+
+  function maxDrawerHeight() {
+    return Math.max(280, window.innerHeight - 24);
+  }
+
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function clampFabPosition(position) {
+    const width = toggleBtn.offsetWidth || defaultFabSize;
+    const height = toggleBtn.offsetHeight || defaultFabSize;
+    return {
+      left: clamp(Number(position.left) || 16, 12, Math.max(12, window.innerWidth - width - 12)),
+      top: clamp(Number(position.top) || 96, 12, Math.max(12, window.innerHeight - height - 12)),
+    };
+  }
+
+  function clampDrawerRect(rect) {
+    const width = clamp(Number(rect.width) || 440, minDrawerWidth(), maxDrawerWidth());
+    const height = clamp(Number(rect.height) || 680, minDrawerHeight(), maxDrawerHeight());
+    return {
+      left: clamp(Number(rect.left) || 16, 12, Math.max(12, window.innerWidth - width - 12)),
+      top: clamp(Number(rect.top) || 72, 12, Math.max(12, window.innerHeight - height - 12)),
+      width,
+      height,
+    };
+  }
+
+  function defaultDrawerRect() {
+    const width = clamp(440, minDrawerWidth(), maxDrawerWidth());
+    const height = clamp(680, minDrawerHeight(), maxDrawerHeight());
+    return clampDrawerRect({
+      left: window.innerWidth - width - 24,
+      top: Math.max(24, window.innerHeight - height - 24),
+      width,
+      height,
     });
   }
 
+  function applyFabPosition() {
+    shellState.fab = clampFabPosition(shellState.fab || {});
+    root.classList.add('is-positioned');
+    root.style.left = `${shellState.fab.left}px`;
+    root.style.top = `${shellState.fab.top}px`;
+    root.style.right = 'auto';
+    root.style.bottom = 'auto';
+    root.style.width = '';
+    root.style.height = '';
+  }
+
+  function applyDrawerRect() {
+    shellState.drawer = clampDrawerRect(shellState.drawer || defaultDrawerRect());
+    root.classList.add('is-positioned');
+    root.style.left = `${shellState.drawer.left}px`;
+    root.style.top = `${shellState.drawer.top}px`;
+    root.style.right = 'auto';
+    root.style.bottom = 'auto';
+    root.style.width = `${shellState.drawer.width}px`;
+    root.style.height = `${shellState.drawer.height}px`;
+    drawer.style.width = `${shellState.drawer.width}px`;
+    drawer.style.height = `${shellState.drawer.height}px`;
+  }
+
+  function applyShellPosition() {
+    if (drawerOpen) {
+      applyDrawerRect();
+    } else {
+      applyFabPosition();
+    }
+  }
+
+  function getResizeCursor(handle) {
+    if (handle === 'w' || handle === 'e') return 'ew-resize';
+    if (handle === 's') return 'ns-resize';
+    if (handle === 'nw' || handle === 'se') return 'nwse-resize';
+    if (handle === 'ne' || handle === 'sw') return 'nesw-resize';
+    return 'default';
+  }
+
+  function setBodyCursor(value) {
+    document.body.style.cursor = value || '';
+  }
+
   function setOpen(isOpen) {
+    drawerOpen = isOpen;
+    applyShellPosition();
     root.classList.toggle('is-open', isOpen);
     toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     if (isOpen) {
@@ -201,7 +216,151 @@
     input.disabled = isBusy;
   }
 
+  function startFabDrag(event) {
+    movedDuringDrag = false;
+    shellState.fab = clampFabPosition(shellState.fab || {});
+    fabDragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      baseLeft: shellState.fab.left,
+      baseTop: shellState.fab.top,
+    };
+    root.classList.add('is-moving');
+    toggleBtn.setPointerCapture(event.pointerId);
+  }
+
+  function updateFabDrag(event) {
+    if (!fabDragState || fabDragState.pointerId !== event.pointerId) return;
+    const dx = event.clientX - fabDragState.startX;
+    const dy = event.clientY - fabDragState.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) movedDuringDrag = true;
+    shellState.fab = clampFabPosition({
+      left: fabDragState.baseLeft + dx,
+      top: fabDragState.baseTop + dy,
+    });
+    applyFabPosition();
+  }
+
+  function finishFabDrag(event) {
+    if (!fabDragState || fabDragState.pointerId !== event.pointerId) return;
+    try {
+      toggleBtn.releasePointerCapture(event.pointerId);
+    } catch (_error) {}
+    fabDragState = null;
+    root.classList.remove('is-moving');
+    saveShellState();
+    if (!movedDuringDrag) setOpen(true);
+  }
+
+  function cancelFabDrag(event) {
+    if (!fabDragState || fabDragState.pointerId !== event.pointerId) return;
+    try {
+      toggleBtn.releasePointerCapture(event.pointerId);
+    } catch (_error) {}
+    fabDragState = null;
+    root.classList.remove('is-moving');
+  }
+
+  function startDrawerMove(event) {
+    shellState.drawer = clampDrawerRect(shellState.drawer || defaultDrawerRect());
+    moveState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect: { ...shellState.drawer },
+    };
+    root.classList.add('is-dragging');
+    setBodyCursor('move');
+    dragHandle.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function updateDrawerMove(event) {
+    if (!moveState || moveState.pointerId !== event.pointerId) return;
+    const dx = event.clientX - moveState.startX;
+    const dy = event.clientY - moveState.startY;
+    shellState.drawer = clampDrawerRect({
+      ...moveState.startRect,
+      left: moveState.startRect.left + dx,
+      top: moveState.startRect.top + dy,
+    });
+    applyDrawerRect();
+  }
+
+  function finishDrawerMove(event) {
+    if (!moveState || moveState.pointerId !== event.pointerId) return;
+    try {
+      dragHandle.releasePointerCapture(event.pointerId);
+    } catch (_error) {}
+    moveState = null;
+    root.classList.remove('is-dragging');
+    setBodyCursor('');
+    saveShellState();
+  }
+
+  function startResize(handle, element, event) {
+    shellState.drawer = clampDrawerRect(shellState.drawer || defaultDrawerRect());
+    resizeState = {
+      handle,
+      element,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect: { ...shellState.drawer },
+    };
+    root.classList.add('is-resizing');
+    setBodyCursor(getResizeCursor(handle));
+    element.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function updateResize(event) {
+    if (!resizeState || resizeState.pointerId !== event.pointerId) return;
+    const dx = event.clientX - resizeState.startX;
+    const dy = event.clientY - resizeState.startY;
+    const startRect = resizeState.startRect;
+    const startRight = startRect.left + startRect.width;
+    const startBottom = startRect.top + startRect.height;
+    let left = startRect.left;
+    let top = startRect.top;
+    let width = startRect.width;
+    let height = startRect.height;
+
+    if (resizeState.handle.includes('w')) {
+      left = Math.min(Math.max(12, startRect.left + dx), startRight - minDrawerWidth());
+      width = startRight - left;
+    }
+    if (resizeState.handle.includes('e')) {
+      width = startRect.width + dx;
+    }
+    if (resizeState.handle.includes('n')) {
+      top = Math.min(Math.max(12, startRect.top + dy), startBottom - minDrawerHeight());
+      height = startBottom - top;
+    }
+    if (resizeState.handle.includes('s')) {
+      height = startRect.height + dy;
+    }
+
+    shellState.drawer = clampDrawerRect({ left, top, width, height });
+    applyDrawerRect();
+  }
+
+  function finishResize(event) {
+    if (!resizeState || resizeState.pointerId !== event.pointerId) return;
+    try {
+      resizeState.element.releasePointerCapture(event.pointerId);
+    } catch (_error) {}
+    resizeState = null;
+    root.classList.remove('is-resizing');
+    setBodyCursor('');
+    saveShellState();
+  }
+
   function formatElapsed(ms) {
+    if (typeof deepThinkClient.formatElapsed === 'function') {
+      return deepThinkClient.formatElapsed(ms);
+    }
     return `${Math.max(0, ms / 1000).toFixed(1)}s`;
   }
 
@@ -213,7 +372,7 @@
     if (!turn) return;
     const label = STAGE_LABELS[turn.stage] || turn.stage || STAGE_LABELS.idle;
     const elapsed = formatElapsed((performance.now ? performance.now() : Date.now()) - turn.startedAt);
-    setStatus(final || turn.stage !== 'idle' ? `${label} · ${elapsed}` : label);
+    setStatus(final || turn.stage !== 'idle' ? `${label} \u00b7 ${elapsed}` : label);
   }
 
   function setTurnStage(turn, stage) {
@@ -260,42 +419,12 @@
   }
 
   function parseStreamChunk(chunk) {
-    const lines = String(chunk || '')
-      .split(/\r?\n/)
-      .map((line) => line.trimEnd())
-      .filter(Boolean);
-    const dataLines = lines
-      .filter((line) => line.startsWith('data:'))
-      .map((line) => line.slice(5).trimStart());
-    if (!dataLines.length) return null;
-    try {
-      return JSON.parse(dataLines.join('\n'));
-    } catch (_error) {
-      return null;
-    }
+    return typeof deepThinkClient.parseStreamChunk === 'function' ? deepThinkClient.parseStreamChunk(chunk) : null;
   }
 
   async function readEventStream(response, onEvent) {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      let boundaryIndex = buffer.indexOf('\n\n');
-      while (boundaryIndex !== -1) {
-        const chunk = buffer.slice(0, boundaryIndex);
-        buffer = buffer.slice(boundaryIndex + 2);
-        const event = parseStreamChunk(chunk);
-        if (event) onEvent(event);
-        boundaryIndex = buffer.indexOf('\n\n');
-      }
-    }
-    const finalChunk = buffer.trim();
-    if (finalChunk) {
-      const event = parseStreamChunk(finalChunk);
-      if (event) onEvent(event);
+    if (typeof deepThinkClient.readEventStream === 'function') {
+      await deepThinkClient.readEventStream(response, onEvent);
     }
   }
 
@@ -440,8 +569,35 @@
     }
   }
 
-  toggleBtn.addEventListener('click', () => setOpen(!root.classList.contains('is-open')));
+  toggleBtn.addEventListener('pointerdown', startFabDrag);
+  toggleBtn.addEventListener('pointermove', updateFabDrag);
+  toggleBtn.addEventListener('pointerup', finishFabDrag);
+  toggleBtn.addEventListener('pointercancel', cancelFabDrag);
+  toggleBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+  });
   closeBtn?.addEventListener('click', () => setOpen(false));
+
+  dragHandle.addEventListener('pointerdown', startDrawerMove);
+  dragHandle.addEventListener('pointermove', updateDrawerMove);
+  dragHandle.addEventListener('pointerup', finishDrawerMove);
+  dragHandle.addEventListener('pointercancel', finishDrawerMove);
+
+  Object.entries(resizeHandles).forEach(([handle, element]) => {
+    element.addEventListener('pointerdown', (event) => startResize(handle, element, event));
+    element.addEventListener('pointermove', updateResize);
+    element.addEventListener('pointerup', finishResize);
+    element.addEventListener('pointercancel', finishResize);
+  });
+
+  window.addEventListener('resize', () => {
+    shellState.fab = clampFabPosition(shellState.fab || {});
+    if (shellState.drawer) {
+      shellState.drawer = clampDrawerRect(shellState.drawer);
+    }
+    applyShellPosition();
+    saveShellState();
+  });
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -458,5 +614,6 @@
     }
   });
 
+  applyShellPosition();
   setStatus('Ready');
 })();

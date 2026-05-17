@@ -9,7 +9,6 @@ RUNTIME_FILES = [
     ROOT / "api" / "config.local.php.example",
     ROOT / "api" / "graph.php",
     ROOT / "api" / "health.php",
-    ROOT / "api" / "qa.php",
     ROOT / "api" / "taxonomy_lib.php",
     ROOT / "api" / "te_metrics.php",
     ROOT / "api" / "agent" / "bootstrap.php",

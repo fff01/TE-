@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/agent/bootstrap.php';
+require_once __DIR__ . '/agent/plugin_registry.php';
 
 function tekg_agent_execute_run(string $runId): int
 {
@@ -36,23 +37,7 @@ function tekg_agent_execute_run(string $runId): int
         'sapi' => PHP_SAPI,
     ]);
 
-    require_once __DIR__ . '/agent/orchestrator/Neo4jClient.php';
-    require_once __DIR__ . '/agent/orchestrator/LlmClient.php';
-    require_once __DIR__ . '/agent/orchestrator/CitationResolver.php';
-    require_once __DIR__ . '/agent/orchestrator/EntityNormalizer.php';
-    require_once __DIR__ . '/agent/plugins/EntityResolverPlugin.php';
-    require_once __DIR__ . '/agent/plugins/SiteNavigatorPlugin.php';
-    require_once __DIR__ . '/agent/plugins/GraphPlugin.php';
-    require_once __DIR__ . '/agent/plugins/GraphAnalyticsPlugin.php';
-    require_once __DIR__ . '/agent/plugins/CypherExplorerPlugin.php';
-    require_once __DIR__ . '/agent/plugins/LiteraturePlugin.php';
-    require_once __DIR__ . '/agent/plugins/LiteratureReadingPlugin.php';
-    require_once __DIR__ . '/agent/plugins/TreePlugin.php';
-    require_once __DIR__ . '/agent/plugins/ExpressionPlugin.php';
-    require_once __DIR__ . '/agent/plugins/GenomePlugin.php';
-    require_once __DIR__ . '/agent/plugins/SequencePlugin.php';
-    require_once __DIR__ . '/agent/plugins/CitationResolverPlugin.php';
-    require_once __DIR__ . '/agent/orchestrator/AcademicAgentService.php';
+    tekg_agent_require_academic_agent_service();
 
     $service = new TekgAcademicAgentService(tekg_agent_config());
     $doneEmitted = false;

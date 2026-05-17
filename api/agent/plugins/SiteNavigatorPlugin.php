@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
 {
+    private ?array $navigationMap = null;
+
     public function getName(): string
     {
         return 'Site Navigator Plugin';
@@ -115,27 +117,32 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
 
     private function buildRoutes(string $entity, string $currentUrl): array
     {
-        $teParams = $entity !== '' ? ['q' => $entity, 'type' => 'TE'] : ['type' => 'TE'];
-        $exprParams = $entity !== '' ? ['te' => $entity] : [];
-        $previewParams = $entity !== '' ? ['q' => $entity] : [];
-        $jbrowseParams = $entity !== '' ? ['te' => $entity] : [];
+        $routes = [];
+        foreach ((array)($this->navigationMap()['routes'] ?? []) as $key => $definition) {
+            if (!is_array($definition)) {
+                continue;
+            }
+            $routes[(string)$key] = $this->route(
+                (string)($definition['title'] ?? $key),
+                (string)($definition['capability'] ?? $key),
+                (string)($definition['path'] ?? 'index.php'),
+                $this->paramsForProfile((string)($definition['params'] ?? 'none'), $entity),
+                (string)($definition['fragment'] ?? ''),
+                (string)($definition['description'] ?? ''),
+                $currentUrl
+            );
+        }
+        return $routes;
+    }
 
-        return [
-            'search_summary' => $this->route('Search summary', 'search_summary', 'search.php', $teParams, 'search-summary-panel', 'Overview card for the selected TE.', $currentUrl),
-            'local_graph' => $this->route('Local graph', 'local_graph', 'search.php', $teParams, 'search-graph-panel', 'Local relationship graph around the selected TE.', $currentUrl),
-            'sequence' => $this->route('Sequence', 'sequence', 'search.php', $teParams, 'search-sequence-panel', 'Consensus sequence and sequence metadata.', $currentUrl),
-            'genome_distribution' => $this->route('Genome Annotation Distribution', 'genome_distribution', 'search.php', $teParams, 'search-karyotype-panel', 'Genome annotation distribution panel.', $currentUrl),
-            'genome_browser' => $this->route('Genome Browser', 'genome_browser', 'search.php', $teParams, 'search-jbrowse-panel', 'Embedded Genome Browser entry from the search detail page.', $currentUrl),
-            'jbrowse_direct' => $this->route('JBrowse direct entry', 'genome_browser', 'jbrowse.php', $jbrowseParams, '', 'Direct genome browser page.', $currentUrl),
-            'expression_summary' => $this->route('Expression detail summary', 'expression', 'expression_detail.php', $exprParams, 'expression-detail-summary', 'Expression detail overview for the selected TE.', $currentUrl),
-            'expression_normal_tissue' => $this->route('Normal tissue expression', 'expression', 'expression_detail.php', $exprParams, 'expression-detail-normal-tissue', 'Normal tissue expression panel.', $currentUrl),
-            'expression_normal_cell_line' => $this->route('Normal cell line expression', 'expression', 'expression_detail.php', $exprParams, 'expression-detail-normal-cell-line', 'Normal cell line expression panel.', $currentUrl),
-            'expression_cancer_cell_line' => $this->route('Cancer cell line expression', 'expression', 'expression_detail.php', $exprParams, 'expression-detail-cancer-cell-line', 'Cancer cell line expression panel.', $currentUrl),
-            'browse_catalog' => $this->route('Browse catalog', 'browse', 'browse.php', [], '', 'Catalog page for TE browsing and filtering.', $currentUrl),
-            'preview_graph' => $this->route('TE-KG graph', 'graph', 'preview.php', $previewParams, '', 'Interactive TE-KG graph preview.', $currentUrl),
-            'download' => $this->route('Download datasets', 'download', 'download.php', [], '', 'Dataset download page.', $currentUrl),
-            'genomic' => $this->route('Genomic overview', 'genomic', 'genomic.php', [], '', 'General genomic analysis page.', $currentUrl),
-        ];
+    private function paramsForProfile(string $profile, string $entity): array
+    {
+        return match ($profile) {
+            'te_search' => $entity !== '' ? ['q' => $entity, 'type' => 'TE'] : ['type' => 'TE'],
+            'te_param' => $entity !== '' ? ['te' => $entity] : [],
+            'query_param' => $entity !== '' ? ['q' => $entity] : [],
+            default => [],
+        };
     }
 
     private function route(string $title, string $capability, string $path, array $params, string $fragment, string $description, string $currentUrl): array
@@ -175,20 +182,10 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
     private function detectCapability(string $question, array $analysis): string
     {
         $lower = tekg_agent_lower($question);
-        $scores = [
-            'genome_distribution' => $this->score($lower, ['genome annotation distribution' => 10, 'annotation distribution' => 8, 'karyotype' => 7, 'genome distribution' => 7, '基因组注释分布' => 9, '注释分布' => 8, '基因组分布' => 7]),
-            'genome_browser' => $this->score($lower, ['genome browser' => 9, 'jbrowse' => 9, 'browser' => 5, '基因组浏览器' => 9, '浏览器' => 5]),
-            'sequence' => $this->score($lower, ['sequence' => 8, 'consensus' => 6, 'repbase' => 6, 'full sequence' => 9, '完整序列' => 9, '序列' => 7]),
-            'expression_normal_tissue' => $this->score($lower, ['normal tissue' => 9, 'tissue expression' => 8, '组织表达' => 9, '组织' => 6]),
-            'expression_normal_cell_line' => $this->score($lower, ['normal cell line' => 9, 'cell line' => 6, '正常细胞系' => 9, '细胞系' => 6]),
-            'expression_cancer_cell_line' => $this->score($lower, ['cancer cell line' => 9, 'cancer expression' => 7, '癌细胞系' => 9, '癌症细胞系' => 9]),
-            'expression_summary' => $this->score($lower, ['expression' => 7, '表达' => 7, 'expression page' => 9]),
-            'preview_graph' => $this->score($lower, ['te-kg' => 7, 'knowledge graph' => 7, 'graph page' => 8, '图谱' => 7, '知识图谱' => 8]),
-            'local_graph' => $this->score($lower, ['local graph' => 8, 'relationship graph' => 7, '关系图' => 8, '局部图' => 8]),
-            'browse_catalog' => $this->score($lower, ['browse' => 7, 'catalog' => 7, '目录' => 7, '浏览' => 5]),
-            'download' => $this->score($lower, ['download' => 8, 'dataset' => 6, 'datasets' => 6, '下载' => 8, '数据集' => 6]),
-            'search_summary' => $this->score($lower, ['search' => 5, 'summary' => 5, 'overview' => 5, '搜索' => 5, '概览' => 5, '简介' => 5]),
-        ];
+        $scores = [];
+        foreach ((array)($this->navigationMap()['capability_keywords'] ?? []) as $capability => $keywords) {
+            $scores[(string)$capability] = $this->score($lower, array_fill_keys(array_map('strval', (array)$keywords), 6));
+        }
 
         arsort($scores);
         $best = (string)array_key_first($scores);
@@ -196,21 +193,17 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
             return $best;
         }
 
-        return match ((string)($analysis['intent'] ?? '')) {
-            'sequence' => 'sequence',
-            'genome' => 'genome_browser',
-            'expression' => 'expression_summary',
-            'classification' => 'browse_catalog',
-            'relationship', 'mechanism', 'comparison' => 'preview_graph',
-            default => 'search_summary',
-        };
+        $fallbacks = (array)($this->navigationMap()['intent_fallbacks'] ?? []);
+        $intent = (string)($analysis['intent'] ?? '');
+        return (string)($fallbacks[$intent] ?? $fallbacks['default'] ?? 'search_summary');
     }
 
     private function score(string $question, array $weights): int
     {
         $score = 0;
         foreach ($weights as $needle => $weight) {
-            if ($needle !== '' && str_contains($question, (string)$needle)) {
+            $normalizedNeedle = tekg_agent_lower((string)$needle);
+            if ($normalizedNeedle !== '' && str_contains($question, $normalizedNeedle)) {
                 $score += (int)$weight;
             }
         }
@@ -219,20 +212,8 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
 
     private function candidateKeys(string $capability, array $analysis): array
     {
-        return match ($capability) {
-            'genome_distribution' => ['genome_distribution', 'genome_browser', 'jbrowse_direct', 'search_summary', 'preview_graph'],
-            'genome_browser' => ['genome_browser', 'jbrowse_direct', 'genome_distribution', 'genomic', 'search_summary'],
-            'sequence' => ['sequence', 'search_summary', 'browse_catalog', 'preview_graph'],
-            'expression_normal_tissue' => ['expression_normal_tissue', 'expression_summary', 'expression_normal_cell_line', 'expression_cancer_cell_line'],
-            'expression_normal_cell_line' => ['expression_normal_cell_line', 'expression_summary', 'expression_normal_tissue', 'expression_cancer_cell_line'],
-            'expression_cancer_cell_line' => ['expression_cancer_cell_line', 'expression_summary', 'expression_normal_cell_line', 'expression_normal_tissue'],
-            'expression_summary' => ['expression_summary', 'expression_normal_tissue', 'expression_normal_cell_line', 'expression_cancer_cell_line'],
-            'preview_graph' => ['preview_graph', 'local_graph', 'search_summary'],
-            'local_graph' => ['local_graph', 'preview_graph', 'search_summary'],
-            'browse_catalog' => ['browse_catalog', 'search_summary', 'preview_graph'],
-            'download' => ['download', 'browse_catalog', 'search_summary'],
-            default => ['search_summary', 'sequence', 'genome_distribution', 'expression_summary', 'preview_graph'],
-        };
+        $candidates = (array)($this->navigationMap()['candidate_routes'] ?? []);
+        return array_values(array_map('strval', (array)($candidates[$capability] ?? $candidates['default'] ?? [])));
     }
 
     private function confidenceFor(string $capability, string $question, array $analysis): float
@@ -268,5 +249,16 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
         }
 
         return $body;
+    }
+
+    private function navigationMap(): array
+    {
+        if ($this->navigationMap !== null) {
+            return $this->navigationMap;
+        }
+        $path = dirname(__DIR__) . '/config/site_navigation_map.php';
+        $map = is_file($path) ? require $path : [];
+        $this->navigationMap = is_array($map) ? $map : [];
+        return $this->navigationMap;
     }
 }
