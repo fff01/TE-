@@ -71,6 +71,7 @@
     const __tekgG6Url = new URL(window.location.href);
     const __tekgEmbedMode = __tekgG6Url.searchParams.get('embed') || '';
     const __tekgInitialQuery = __tekgG6Url.searchParams.get('q') || '';
+    const __tekgTreeVariant = __tekgG6Url.searchParams.get('tree') || 'rmsk_repbase';
     const __tekgCompactEmbed = __tekgEmbedMode === 'home-preview' || __tekgEmbedMode === 'search-result';
     if (__tekgCompactEmbed) {
       document.body.classList.add('tekg-g6-compact-embed');
@@ -83,6 +84,7 @@
     window.__TEKG_INITIAL_QUERY = __tekgInitialQuery;
     window.__TEKG_COMPACT_EMBED = __tekgCompactEmbed;
     window.__TEKG_G6_BOOTSTRAP_OWN_TREE = true;
+    window.__TEKG_TREE_VARIANT = __tekgTreeVariant;
   </script>
   <script src="../js/tekg_runtime_data.js"></script>
   <script src="../js/renderers/g6/index-g6-type-meta.js"></script>

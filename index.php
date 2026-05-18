@@ -245,11 +245,9 @@ $quickLinks = [
     ['title' => 'About', 'href' => site_url_with_state(tekg_app_url('about.php'), $siteLang), 'icon' => 'about'],
 ];
 
-$homeGraphQuery = 'LINE1';
 $treeEmbedUrl = site_url_with_state(tekg_assets_url('html/preview_graph.html'), $siteLang, null, [
     'embed' => 'home-preview',
-    'q' => $homeGraphQuery,
-    'type' => 'TE',
+    'tree' => 'rmsk_repbase',
 ]);
 ?>
       <section class="hero-area">

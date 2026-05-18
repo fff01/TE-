@@ -187,6 +187,171 @@ function tekg_taxonomy_find_item(string $query, array $items): ?array
     return $index[$query] ?? $index[tekg_taxonomy_canonical_key($query)] ?? null;
 }
 
+function tekg_taxonomy_tree_sources(): array
+{
+    return [
+        'rmsk_repbase' => [
+            'path' => tekg_taxonomy_fs_path('tree_rmsk_repbase.txt'),
+            'label' => 'RMSK + Repbase TE taxonomy',
+            'root' => 'Transposable Elements - Human',
+            'description' => 'TE taxonomy tree parsed from data/taxonomy/transposon_tree/tree_rmsk_repbase.txt.',
+        ],
+        'all' => [
+            'path' => tekg_taxonomy_fs_path('tree_all.txt'),
+            'label' => 'All TE taxonomy',
+            'root' => 'Transposable Elements (Mobile element) - Human',
+            'skip_root' => 'Mobile genetic element',
+            'description' => 'Full TE taxonomy tree parsed from data/taxonomy/transposon_tree/tree_all.txt.',
+        ],
+    ];
+}
+
+function tekg_taxonomy_normalize_tree_source(string $source): string
+{
+    $source = strtolower(trim($source));
+    $aliases = [
+        'repbase' => 'rmsk_repbase',
+        'rmsk-repbase' => 'rmsk_repbase',
+        'rmsk_repbase' => 'rmsk_repbase',
+        'all' => 'all',
+    ];
+    return $aliases[$source] ?? $source;
+}
+
+function tekg_taxonomy_is_file_tree_source(string $source): bool
+{
+    return array_key_exists(tekg_taxonomy_normalize_tree_source($source), tekg_taxonomy_tree_sources());
+}
+
+function tekg_taxonomy_parse_tree_line(string $line): ?array
+{
+    $line = rtrim($line);
+    if (trim($line) === '') {
+        return null;
+    }
+    if (preg_match('/^[\s│]*$/u', $line)) {
+        return null;
+    }
+
+    if (preg_match('/^(.*?)(?:├──|└──)\s*(.+)$/u', $line, $matches)) {
+        $prefix = (string)$matches[1];
+        $label = trim((string)$matches[2]);
+        if ($label === '') {
+            return null;
+        }
+        return [
+            'label' => $label,
+            'depth' => intdiv(strlen($prefix), 4) + 1,
+        ];
+    }
+
+    $label = trim($line);
+    if ($label === '' || preg_match('/^[│├└─\s]+$/u', $label)) {
+        return null;
+    }
+    return [
+        'label' => $label,
+        'depth' => 0,
+    ];
+}
+
+function tekg_taxonomy_file_tree_payload(string $source): array
+{
+    $sourceKey = tekg_taxonomy_normalize_tree_source($source);
+    $sources = tekg_taxonomy_tree_sources();
+    if (!isset($sources[$sourceKey])) {
+        throw new InvalidArgumentException('Unsupported taxonomy tree source: ' . $source);
+    }
+
+    $path = (string)$sources[$sourceKey]['path'];
+    if (!is_file($path)) {
+        throw new RuntimeException('Taxonomy tree file is missing: ' . $path);
+    }
+
+    $nodes = [];
+    $edges = [];
+    $stack = [];
+    $lines = file($path, FILE_IGNORE_NEW_LINES);
+    if ($lines === false) {
+        throw new RuntimeException('Unable to read taxonomy tree file: ' . $path);
+    }
+
+    foreach ($lines as $line) {
+        $parsed = tekg_taxonomy_parse_tree_line((string)$line);
+        if ($parsed === null) {
+            continue;
+        }
+        $label = (string)$parsed['label'];
+        $depth = (int)$parsed['depth'];
+        $nodes[$label] ??= [
+            'name' => $label,
+            'original_label' => $label,
+            'depth' => $depth,
+            'description' => $label . ' taxonomy node parsed from ' . $sourceKey . '.',
+        ];
+        if ($depth < (int)($nodes[$label]['depth'] ?? $depth)) {
+            $nodes[$label]['depth'] = $depth;
+        }
+
+        $stack[$depth] = $label;
+        foreach (array_keys($stack) as $stackDepth) {
+            if ((int)$stackDepth > $depth) {
+                unset($stack[$stackDepth]);
+            }
+        }
+
+        if ($depth > 0 && isset($stack[$depth - 1])) {
+            $parent = (string)$stack[$depth - 1];
+            $edgeKey = $label . "\0" . $parent;
+            $edges[$edgeKey] = [
+                'child' => $label,
+                'parent' => $parent,
+                'relation' => 'SUBFAMILY_OF',
+            ];
+        }
+    }
+
+    $skipRoot = trim((string)($sources[$sourceKey]['skip_root'] ?? ''));
+    if ($skipRoot !== '' && isset($nodes[$skipRoot])) {
+        unset($nodes[$skipRoot]);
+        foreach ($edges as $edgeKey => $edge) {
+            if ((string)($edge['parent'] ?? '') === $skipRoot || (string)($edge['child'] ?? '') === $skipRoot) {
+                unset($edges[$edgeKey]);
+            }
+        }
+    }
+
+    $root = (string)($sources[$sourceKey]['root'] ?? 'TE');
+    if (isset($nodes[$root])) {
+        $rootDepth = (int)($nodes[$root]['depth'] ?? 0);
+        foreach ($nodes as &$node) {
+            $node['depth'] = max(0, (int)($node['depth'] ?? 0) - $rootDepth);
+        }
+        unset($node);
+    }
+
+    $nodeList = array_values($nodes);
+    usort($nodeList, static function (array $left, array $right): int {
+        $depthCompare = ((int)($left['depth'] ?? 0)) <=> ((int)($right['depth'] ?? 0));
+        return $depthCompare !== 0 ? $depthCompare : strcasecmp((string)$left['name'], (string)$right['name']);
+    });
+
+    $edgeList = array_values($edges);
+    usort($edgeList, static fn(array $left, array $right): int => strcasecmp((string)$left['parent'] . (string)$left['child'], (string)$right['parent'] . (string)$right['child']));
+
+    return [
+        'root' => $root,
+        'root_label' => $root,
+        'tree_source' => $sourceKey,
+        'label' => (string)$sources[$sourceKey]['label'],
+        'description' => (string)$sources[$sourceKey]['description'],
+        'node_count' => count($nodeList),
+        'edge_count' => count($edgeList),
+        'nodes' => $nodeList,
+        'edges' => $edgeList,
+    ];
+}
+
 function tekg_taxonomy_tree_payload(array $items): array
 {
     $nodes = [

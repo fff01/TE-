@@ -6,6 +6,7 @@
   const initialQuery = String(window.__TEKG_INITIAL_QUERY || '').trim();
   const initialQueryType = String(params.get('type') || '').trim().toLowerCase();
   const initialClassQuery = String(params.get('class') || '').trim();
+  const initialTreeVariant = String(params.get('tree') || window.__TEKG_TREE_VARIANT || 'rmsk_repbase').trim() || 'rmsk_repbase';
 
   const els = {
     title: document.getElementById('page-title'),
@@ -65,7 +66,7 @@
   let currentGraphQuery = '';
   let currentGraphQueryType = '';
   let currentGraphClassQuery = '';
-  let currentTreeVariant = 'tekg3';
+  let currentTreeVariant = initialTreeVariant;
   let currentSelectedNode = null;
   let currentAnswerGraphElements = [];
   let currentQueryGraphElements = [];
@@ -487,16 +488,33 @@
   }
 
   function getTreeVariants() {
-    return [{
-      key: 'tekg3',
-      label: 'Neo4j TE taxonomy',
-      summary: 'TE taxonomy tree synthesized from current tekg3 taxonomy properties.',
-      counts: {},
-    }];
+    return [
+      {
+        key: 'rmsk_repbase',
+        label: 'RMSK + Repbase taxonomy',
+        summary: 'Curated homepage TE tree parsed from tree_rmsk_repbase.txt.',
+        source_tree: 'data/taxonomy/transposon_tree/tree_rmsk_repbase.txt',
+        counts: {},
+      },
+      {
+        key: 'all',
+        label: 'All TE taxonomy',
+        summary: 'Full TE tree parsed from tree_all.txt.',
+        source_tree: 'data/taxonomy/transposon_tree/tree_all.txt',
+        counts: {},
+      },
+    ];
   }
 
   function getCurrentTreeVariantPayload() {
     return getTreeVariants().find((item) => item.key === currentTreeVariant) || getTreeVariants()[0] || null;
+  }
+
+  function normalizeTreeVariantKey(value) {
+    const key = String(value || '').trim();
+    const variants = getTreeVariants();
+    if (variants.some((item) => item.key === key)) return key;
+    return variants[0]?.key || 'rmsk_repbase';
   }
 
   function getNextTreeVariantKey() {
@@ -1124,7 +1142,7 @@
   }
 
   async function renderDefaultTree(options = {}) {
-    const requestedVariant = String(options && options.variant ? options.variant : currentTreeVariant).trim() || currentTreeVariant;
+    const requestedVariant = normalizeTreeVariantKey(options && options.variant ? options.variant : currentTreeVariant);
     currentTreeVariant = requestedVariant;
     window.__TEKG_TREE_VARIANT = currentTreeVariant;
     if (options.pushHistory === true && currentMode !== 'tree') {

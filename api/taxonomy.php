@@ -20,14 +20,30 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $view = trim((string)($_GET['view'] ?? 'items'));
+$source = trim((string)($_GET['source'] ?? 'rmsk_repbase'));
 $names = tekg_taxonomy_parse_names((string)($_GET['names'] ?? ''));
-$config = tekg_taxonomy_config();
 
 try {
+    if ($view === 'tree') {
+        if (!tekg_taxonomy_is_file_tree_source($source)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'Unsupported taxonomy tree source'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        $payload = [
+            'ok' => true,
+            'source' => tekg_taxonomy_normalize_tree_source($source),
+        ] + tekg_taxonomy_file_tree_payload($source);
+
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
+    $config = tekg_taxonomy_config();
     $items = tekg_taxonomy_fetch_items($names, $config);
     $payload = [
         'ok' => true,
-        'source' => 'neo4j',
+        'source' => 'tekg3',
         'database' => tekg_taxonomy_database_name($config),
     ];
 

@@ -72,15 +72,15 @@
   let activeTreeConfig = null;
   let stateTreeRoot = null;
   let lastRenderOptions = null;
-  let taxonomyTreeElements = [];
-  let taxonomyTreePromise = null;
+  const taxonomyTreeElementsByVariant = new Map();
+  const taxonomyTreePromiseByVariant = new Map();
 
   function getEl(id) {
     return document.getElementById(id);
   }
 
   function getCurrentTreeVariantKey() {
-    return String(window.__TEKG_TREE_VARIANT || 'tekg3').trim() || 'tekg3';
+    return String(window.__TEKG_TREE_VARIANT || 'rmsk_repbase').trim() || 'rmsk_repbase';
   }
 
   function getCurrentTreeVariantPayload() {
@@ -88,7 +88,7 @@
   }
 
   function getCurrentTreeElements() {
-    return taxonomyTreeElements;
+    return taxonomyTreeElementsByVariant.get(getCurrentTreeVariantKey()) || [];
   }
 
   function treeNodeId(name) {
@@ -139,19 +139,24 @@
   }
 
   async function ensureCurrentTreeElements() {
-    if (taxonomyTreeElements.length) return taxonomyTreeElements;
-    if (!taxonomyTreePromise) {
-      taxonomyTreePromise = fetch(window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree'), { credentials: 'same-origin' })
+    const variant = getCurrentTreeVariantKey();
+    const cachedElements = taxonomyTreeElementsByVariant.get(variant) || [];
+    if (cachedElements.length) return cachedElements;
+    if (!taxonomyTreePromiseByVariant.has(variant)) {
+      const source = variant === 'tekg3' ? 'tekg3' : variant;
+      const taxonomyUrl = window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree&source=' + encodeURIComponent(source));
+      taxonomyTreePromiseByVariant.set(variant, fetch(taxonomyUrl, { credentials: 'same-origin' })
         .then((response) => {
           if (!response.ok) throw new Error(`taxonomy API HTTP ${response.status}`);
           return response.json();
         })
         .then((payload) => {
-          taxonomyTreeElements = taxonomyPayloadToElements(payload);
-          return taxonomyTreeElements;
-        });
+          const elements = taxonomyPayloadToElements(payload);
+          taxonomyTreeElementsByVariant.set(variant, elements);
+          return elements;
+        }));
     }
-    return taxonomyTreePromise;
+    return taxonomyTreePromiseByVariant.get(variant);
   }
 
   function escapeHtml(text) {
