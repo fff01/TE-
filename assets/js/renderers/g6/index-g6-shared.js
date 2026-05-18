@@ -81,6 +81,7 @@
   };
 
   const TE_MIN_RADIUS = 12.5;
+  const AGGREGATE_TE_CHILD_SIZE_RATIO = 1.5;
 
   function noop() {}
 
@@ -99,9 +100,10 @@
   }
 
   function canonicalTeLineageName(name) {
-    const raw = String(name || '').trim();
+    let raw = String(name || '').trim();
     if (!raw) return raw;
-    if (raw === 'LINE1' || raw === 'LINE-1') return 'L1';
+    raw = raw.replace(/^(Class I|Class II|Subclass|Order|Superfamily|Family):\s*/i, '').trim();
+    if (raw === 'LINE1' || raw === 'LINE-1' || raw === 'L1 (LINE-1)') return 'L1';
     return raw;
   }
 
@@ -360,6 +362,51 @@
       for (const name of lineageNames) {
         teFixedRadii.set(name, Math.max(TE_MIN_RADIUS, (adjustedScores.get(name) || 1) * scaleCoefficient));
       }
+
+      capAggregateTeRadiiByChildren();
+    }
+
+    function capAggregateTeRadiiByChildren() {
+      const namesByDepthDesc = [...teLineageDepths.keys()].sort(
+        (left, right) => (teLineageDepths.get(right) || 0) - (teLineageDepths.get(left) || 0),
+      );
+
+      for (const name of namesByDepthDesc) {
+        const children = getAggregateTeChildNames(name);
+        if (!children.length) continue;
+
+        const childRadii = children
+          .map((child) => Number(teFixedRadii.get(child)) || 0)
+          .filter((radius) => radius > 0);
+        if (!childRadii.length) continue;
+
+        const currentRadius = Number(teFixedRadii.get(name)) || 0;
+        if (currentRadius <= 0) continue;
+
+        const maxChildRadius = Math.max(...childRadii);
+        const cappedRadius = Math.max(
+          TE_MIN_RADIUS,
+          Math.min(currentRadius, maxChildRadius * AGGREGATE_TE_CHILD_SIZE_RATIO),
+        );
+        teFixedRadii.set(name, cappedRadius);
+      }
+    }
+
+    function getAggregateTeChildNames(name) {
+      const canonicalName = canonicalTeLineageName(name);
+      const taxonomyChildren = (teLineageChildren.get(canonicalName) || [])
+        .map((child) => canonicalTeLineageName(child))
+        .filter((child) => child && child !== canonicalName);
+      if (taxonomyChildren.length) return taxonomyChildren;
+
+      const knownNames = [...teFixedRadii.keys()].map((candidate) => canonicalTeLineageName(candidate));
+      if (canonicalName === 'SINE1/7SL (Alu)') {
+        return knownNames.filter((candidate) => /^Alu/i.test(candidate));
+      }
+      if (canonicalName === 'L1') {
+        return knownNames.filter((candidate) => /^L1/i.test(candidate) && candidate !== 'L1');
+      }
+      return [];
     }
 
     function teFillColorForName(name) {
@@ -476,15 +523,21 @@
 
       if (teLineageRes.status === 'fulfilled' && teLineageRes.value.ok) {
         const payload = await teLineageRes.value.json();
-        teLineageDepths = new Map(
-          (payload?.nodes || []).map((node) => [String(node?.name || '').trim(), Math.max(0, Number(node?.depth) || 0)]),
-        );
+        teLineageDepths = new Map();
+        for (const node of payload?.nodes || []) {
+          const name = canonicalTeLineageName(node?.name);
+          if (!name) continue;
+          const depth = Math.max(0, Number(node?.depth) || 0);
+          if (!teLineageDepths.has(name) || depth < teLineageDepths.get(name)) {
+            teLineageDepths.set(name, depth);
+          }
+        }
 
         teLineageChildren = new Map();
         for (const edge of payload?.edges || []) {
-          const parent = String(edge?.parent || '').trim();
-          const child = String(edge?.child || '').trim();
-          if (!parent || !child) continue;
+          const parent = canonicalTeLineageName(edge?.parent);
+          const child = canonicalTeLineageName(edge?.child);
+          if (!parent || !child || parent === child) continue;
           if (!teLineageChildren.has(parent)) teLineageChildren.set(parent, []);
           teLineageChildren.get(parent).push(child);
         }

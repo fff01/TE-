@@ -237,6 +237,7 @@ $overviewCopy = 'TE-KG is a comprehensive resource designed to support explorati
 $quickLinks = [
     ['title' => 'Home', 'href' => site_url_with_state(tekg_app_url('index.php'), $siteLang), 'icon' => 'home'],
     ['title' => 'Browse', 'href' => site_url_with_state(tekg_app_url('browse.php'), $siteLang), 'icon' => 'browse'],
+    ['title' => 'Path Finder', 'href' => site_url_with_state(tekg_app_url('path_finder.php'), $siteLang), 'icon' => 'preview'],
     ['title' => 'TE-KG', 'href' => site_url_with_state(tekg_app_url('preview.php'), $siteLang), 'icon' => 'preview'],
     ['title' => 'Genomic', 'href' => site_url_with_state(tekg_app_url('genomic.php'), $siteLang), 'icon' => 'genomic'],
     ['title' => 'Expression', 'href' => site_url_with_state(tekg_app_url('expression.php'), $siteLang), 'icon' => 'expression'],

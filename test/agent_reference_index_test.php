@@ -31,7 +31,8 @@ foreach ([
     assert_true(str_contains($content, $needle), "Agent theory index should include {$needle}.");
 }
 
-assert_true(str_contains($content, 'Core papers have been downloaded'), 'Index should state that core papers are downloaded.');
-assert_true(str_contains($content, 'not been read in depth'), 'Index should state that sources have not been read in depth.');
+assert_true(str_contains($content, 'Core papers are downloaded'), 'Index should state that core papers are downloaded.');
+assert_true(str_contains($content, 'structured reading pass completed'), 'Index should state that a structured reading pass has been completed.');
+assert_true(str_contains($content, 'tekg_agent_development_guide.md'), 'Index should point to the consolidated Agent development guide.');
 
 echo "Agent reference index tests passed.\n";
