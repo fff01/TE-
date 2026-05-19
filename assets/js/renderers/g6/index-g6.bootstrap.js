@@ -281,6 +281,14 @@
     };
   }
 
+  function relationLegendKeyForEdge(edge) {
+    const relation = String(edge && edge.relation || '').trim();
+    const relationType = String(edge && edge.relationType || '').trim();
+    if (relation) return relation;
+    if (relationType) return relationType;
+    return 'RELATION';
+  }
+
   function mergeRelationLegendMeta(left = [], right = []) {
     const merged = new Map();
     for (const item of [...(left || []), ...(right || [])]) {
@@ -296,7 +304,7 @@
     for (const item of Array.isArray(elements) ? elements : []) {
       const data = item && item.data ? item.data : null;
       if (!data || !data.source || !data.target) continue;
-      const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
+      const relationType = relationLegendKeyForEdge(data);
       relationTypes.add(relationType);
     }
     return [...relationTypes]
@@ -472,9 +480,10 @@
       if (!data || !data.source || !data.target) continue;
       if (!visibleNodeIds.has(String(data.source || '')) || !visibleNodeIds.has(String(data.target || ''))) continue;
       const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
+      const relationKey = relationLegendKeyForEdge(data);
       const pmids = Array.isArray(data.pmids) ? data.pmids : [];
       const isClassificationRelation = /CLASSIFIED_AS|HAS_SUBCATEGORY|TOP_CLASS_RELATION|DISEASE_CLASSIFICATION/i.test(relationType);
-      if (visibleRelations[relationType] === false) continue;
+      if (visibleRelations[relationKey] === false) continue;
       if (!isClassificationRelation && pmids.length < minPmids) continue;
       filteredEdges.push(item);
       connectedNodeIds.add(String(data.source || ''));

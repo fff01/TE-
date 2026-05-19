@@ -601,6 +601,14 @@
       return raw;
     }
 
+    function relationLegendKeyForEdge(edge) {
+      const relation = String(edge?.relation || '').trim();
+      const relationType = String(edge?.relationType || '').trim();
+      if (relation) return relation;
+      if (relationType) return relationType;
+      return 'RELATION';
+    }
+
     function formatEvidence(edge) {
       const evidence = String(edge?.evidence || '').trim();
       const pmids = Array.isArray(edge?.pmids)
@@ -752,8 +760,9 @@
         if (!data || !data.source || !data.target) continue;
         if (!allowedNodeIds.has(data.source) || !allowedNodeIds.has(data.target)) continue;
         const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
+        const relationKey = relationLegendKeyForEdge(data);
         const pmids = Array.isArray(data.pmids) ? data.pmids : [];
-        if (visibleRelations && visibleRelations[relationType] === false) continue;
+        if (visibleRelations && visibleRelations[relationKey] === false) continue;
         if (!isClassificationRelation(relationType) && pmids.length < minRelationPmids) continue;
         baseEdges.push({
           id: String(data.id || `${data.source}__${relationType}__${data.target}`),
@@ -761,6 +770,7 @@
           target: data.target,
           relation: String(data.relation || '').trim(),
           relationType,
+          relationKey,
           evidence: String(data.evidence || '').trim(),
           pmids,
         });
@@ -812,13 +822,14 @@
 
       for (const edge of baseEdges) {
         if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) continue;
-        const relationStyle = relationStyleForType(edge.relationType);
+        const relationStyle = relationStyleForType(edge.relationKey);
         edges.push({
           id: edge.id,
           source: edge.source,
           target: edge.target,
           relation: edge.relation,
           relationType: edge.relationType,
+          relationKey: edge.relationKey,
           evidence: edge.evidence,
           pmids: edge.pmids,
           strokeColor: relationStyle.color,
@@ -826,11 +837,11 @@
         });
       }
 
-      const relationLegendMeta = [...new Set(edges.map((edge) => edge.relationType).filter(Boolean))]
+      const relationLegendMeta = [...new Set(edges.map((edge) => edge.relationKey || edge.relationType).filter(Boolean))]
         .sort((left, right) => left.localeCompare(right))
-        .map((relationType) => ({
-          relationType,
-          ...relationStyleForType(relationType),
+        .map((relationKey) => ({
+          relationType: relationKey,
+          ...relationStyleForType(relationKey),
         }));
 
       return { nodes: visibleNodes, edges, relationLegendMeta };

@@ -26,6 +26,7 @@ def main() -> None:
     assert_contains("preview.php", "graph-relation-min-pmids")
 
     assert_contains("assets/js/renderers/g6/index-g6.bootstrap.js", "relationLegendState")
+    assert_contains("assets/js/renderers/g6/index-g6.bootstrap.js", "relationLegendKeyForEdge")
     assert_contains("assets/js/renderers/g6/index-g6.bootstrap.js", "getVisibleRelationPayload")
     assert_contains("assets/js/renderers/g6/index-g6.bootstrap.js", "relationMinPmids")
     assert_contains("assets/js/renderers/g6/index-g6.bootstrap.js", "expandModeEnabled")
@@ -33,11 +34,14 @@ def main() -> None:
     assert_contains("assets/js/renderers/g6/index-g6.bootstrap.js", "mergeGraphElements")
 
     assert_contains("assets/js/renderers/g6/index-g6-shared.js", "visibleRelations")
+    assert_contains("assets/js/renderers/g6/index-g6-shared.js", "relationLegendKeyForEdge")
     assert_contains("assets/js/renderers/g6/index-g6-shared.js", "minRelationPmids")
     assert_contains("assets/js/renderers/g6/index-g6-shared.js", "relationStyleForType")
     assert_contains("assets/js/renderers/g6/index-g6-shared.js", "relationLegendMeta")
 
     assert_contains("assets/css/pages/preview.css", "graph-legend-mode-switch")
+    assert_contains("assets/css/pages/preview.css", "text-decoration-thickness: 2px")
+    assert_not_contains("assets/css/pages/preview.css", ".graph-legend-tab.is-active {\n          border-radius")
     assert_contains("assets/css/pages/preview.css", "expand-mode")
     assert_contains("assets/css/pages/preview.css", "graph-relation-line")
 
