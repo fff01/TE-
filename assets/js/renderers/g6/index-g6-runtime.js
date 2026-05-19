@@ -517,8 +517,9 @@
     }
 
     const nonIsolatedNodes = nodes.filter((node) => connectedNodeIds.has(node.id));
+    const candidateNodes = [...nodes];
     const adjacency = new Map();
-    for (const node of nonIsolatedNodes) {
+    for (const node of candidateNodes) {
       adjacency.set(node.id, []);
     }
     for (const edge of baseEdges) {
@@ -530,7 +531,7 @@
     const mainComponentNodeIds = new Set();
     const traversalStartId = adjacency.has(anchorNodeId)
       ? anchorNodeId
-      : (nonIsolatedNodes[0]?.id || '');
+      : (candidateNodes[0]?.id || '');
     if (traversalStartId) {
       const queue = [traversalStartId];
       mainComponentNodeIds.add(traversalStartId);
@@ -544,7 +545,9 @@
       }
     }
 
-    const visibleNodes = nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id));
+    const visibleNodes = baseEdges.length === 0 || nonIsolatedNodes.length === 0
+      ? [...candidateNodes]
+      : candidateNodes.filter((node) => mainComponentNodeIds.has(node.id));
     const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
 
     for (const edge of baseEdges) {

@@ -50,6 +50,7 @@ $previewConfig = [
               <button id="toggle-non-key-nodes" class="non-key-legacy" type="button" style="display:none">
                 <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
               </button>
+              <button id="toggle-edge-labels" type="button"><span id="edge-labels-text">Show labels: Off</span></button>
               <button id="toggle-show-labels" type="button"><span id="show-labels-text">Show names: Off</span></button>
               <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: Off</span></button>
               <button id="back-graph" type="button" disabled><span id="back-text">Back</span></button>

@@ -13,6 +13,8 @@
     badge: document.getElementById('page-badge'),
     graphTitle: document.getElementById('graph-title'),
     searchInput: document.getElementById('node-search'),
+    edgeLabelsBtn: document.getElementById('toggle-edge-labels'),
+    edgeLabelsText: document.getElementById('edge-labels-text'),
     showLabelsBtn: document.getElementById('toggle-show-labels'),
     showLabelsText: document.getElementById('show-labels-text'),
     fixedBtn: document.getElementById('toggle-fixed-view'),
@@ -43,6 +45,8 @@
       badge: 'Tree-first preview with test-aligned dynamic graph',
       graphTitle: 'G6 Graph Workspace',
       searchPlaceholder: 'Search LINE1, L1HS, disease, or function',
+      showEdgeLabelsOn: 'Show labels: On',
+      showEdgeLabelsOff: 'Show labels: Off',
       showNamesOn: 'Show names: On',
       showNamesOff: 'Show names: Off',
       fixedOn: 'Fixed view: On',
@@ -83,9 +87,11 @@
   let relationMinPmids = 0;
   let expandModeEnabled = false;
   let expandedNodeKeys = new Set();
+  let graphIsLoading = false;
 
   window.currentLang = 'en';
   window.fixedView = false;
+  window.showEdgeLabels = false;
   window.showLabels = false;
   window.currentKeyNodeLevel = 1;
   window.focusLevel = 0;
@@ -262,6 +268,7 @@
   function buildCurrentGraphDataOptions(extra = {}) {
     return Object.assign({
       showAllLabels: window.showLabels,
+      showEdgeLabels: window.showEdgeLabels,
       visibleTypes: getVisibleTypePayload(),
       visibleRelations: getVisibleRelationPayload(),
       minRelationPmids: relationMinPmids,
@@ -375,7 +382,7 @@
   function syncLegendVisibility(mode = currentMode) {
     if (!els.graphLegend) return;
     const hasItems = getLegendTypeMeta().length > 0;
-    const shouldShow = mode === 'dynamic' && hasItems;
+    const shouldShow = mode === 'dynamic' && hasItems && !graphIsLoading;
     els.graphLegend.hidden = !shouldShow;
     els.graphLegend.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
   }
@@ -398,6 +405,8 @@
   }
 
   function setGraphLoading(visible, label = '') {
+    graphIsLoading = visible === true;
+    syncLegendVisibility(currentMode);
     if (!els.graphLoader) return;
     els.graphLoader.classList.remove('is-visible');
     els.graphLoader.setAttribute('aria-hidden', 'true');
@@ -459,15 +468,12 @@
     const visibleRelations = getVisibleRelationPayload();
     const minPmids = Math.max(0, Number(relationMinPmids) || 0);
     const visibleNodeIds = new Set();
-    const connectedNodeIds = new Set();
     const filteredNodes = [];
     const filteredEdges = [];
-    let anchorNode = null;
 
     for (const item of source) {
       const data = item && item.data ? item.data : null;
       if (!data || data.source || data.target) continue;
-      if (!anchorNode) anchorNode = item;
       const nodeType = String(data.type || 'TE').trim() || 'TE';
       const legendType = legendTypeForNodeType(nodeType);
       if (visibleMap[legendType] === false) continue;
@@ -486,17 +492,9 @@
       if (visibleRelations[relationKey] === false) continue;
       if (!isClassificationRelation && pmids.length < minPmids) continue;
       filteredEdges.push(item);
-      connectedNodeIds.add(String(data.source || ''));
-      connectedNodeIds.add(String(data.target || ''));
     }
 
-    const anchorId = String(anchorNode?.data?.id || '');
-    const connectedNodes = filteredNodes.filter((item) => {
-      const id = String(item?.data?.id || '');
-      return id === anchorId || connectedNodeIds.has(id);
-    });
-
-    return [...connectedNodes, ...filteredEdges];
+    return [...filteredNodes, ...filteredEdges];
   }
 
   async function renderDynamicElementsFromCache(elements, options = {}) {
@@ -794,6 +792,7 @@
     if (els.badge) els.badge.textContent = t.badge;
     if (els.graphTitle) els.graphTitle.textContent = t.graphTitle;
     if (els.searchInput) els.searchInput.placeholder = t.searchPlaceholder;
+    if (els.edgeLabelsText) els.edgeLabelsText.textContent = window.showEdgeLabels ? t.showEdgeLabelsOn : t.showEdgeLabelsOff;
     if (els.showLabelsText) els.showLabelsText.textContent = window.showLabels ? t.showNamesOn : t.showNamesOff;
     if (els.fixedText) els.fixedText.textContent = window.fixedView ? t.fixedOn : t.fixedOff;
     if (els.backText) els.backText.textContent = t.back || 'Back';
@@ -1651,6 +1650,24 @@
       });
     }
 
+    if (els.edgeLabelsBtn) {
+      els.edgeLabelsBtn.addEventListener('click', () => {
+        window.showEdgeLabels = !window.showEdgeLabels;
+        updateButtons();
+        notifyStateChange();
+        if (currentMode !== 'dynamic') return;
+        if (currentGraphSource === 'answer') {
+          renderAnswerGraphElements(currentAnswerGraphElements, currentGraphQuery || 'LINE1', { pushHistory: false }).catch((error) => {
+            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+          });
+          return;
+        }
+        loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+    }
+
   }
 
   window.__TEKG_G6_GRAPH_HOST = {
@@ -1773,6 +1790,9 @@
     },
     getShowLabels() {
       return !!window.showLabels;
+    },
+    getShowEdgeLabels() {
+      return !!window.showEdgeLabels;
     },
     getKeyNodeLevel() {
       return 1;

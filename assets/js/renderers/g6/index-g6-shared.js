@@ -783,7 +783,7 @@
       }
 
       const nonIsolatedNodes = nodes.filter((node) => connectedNodeIds.has(node.id));
-      const candidateNodes = nonIsolatedNodes.length ? nonIsolatedNodes : [...nodes];
+      const candidateNodes = [...nodes];
       const adjacency = new Map();
       for (const node of candidateNodes) adjacency.set(node.id, []);
       for (const edge of baseEdges) {
@@ -924,6 +924,7 @@
           currentShowAllLabels = graphDataOptions.showAllLabels === true;
         }
         graphDataOptions.showAllLabels = currentShowAllLabels;
+        const showEdgeLabels = graphDataOptions.showEdgeLabels === true;
         const data = buildGraphData(payloadElements, graphDataOptions);
 
         if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
@@ -991,7 +992,8 @@
               lineWidth: (edge) => (edge.synthetic ? 1.9 : 1.5),
               lineDash: (edge) => edge.lineDash || [],
               labelText: (edge) => {
-                const relationType = String(edge.relationType || '').trim();
+                if (!showEdgeLabels) return '';
+                const relationType = String(edge.relationKey || edge.relation || edge.relationType || '').trim();
                 const pmidCount = Array.isArray(edge.pmids) ? edge.pmids.length : 0;
                 if (!relationType && pmidCount <= 0) return '';
                 return pmidCount > 0 ? `${relationType} (${pmidCount})` : relationType;
@@ -1161,12 +1163,23 @@
             }
           }
         }
-        await renderElements(payload.elements || [], request, {
+        if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'showEdgeLabels')) {
+          const currentBridge = window.__TEKG_G6_BRIDGE;
+          if (currentBridge && typeof currentBridge.getShowEdgeLabels === 'function') {
+            graphDataOptions.showEdgeLabels = currentBridge.getShowEdgeLabels();
+          } else if (window.parent && window.parent !== window) {
+            const parentBridge = window.parent.__TEKG_G6_BRIDGE;
+            if (parentBridge && typeof parentBridge.getShowEdgeLabels === 'function') {
+              graphDataOptions.showEdgeLabels = parentBridge.getShowEdgeLabels();
+            }
+          }
+        }
+        const rendered = await renderElements(payload.elements || [], request, {
           sourceLabel: 'query',
           skipInitialStatus: true,
           graphDataOptions,
         });
-        return payload;
+        return { ...payload, elements: rendered.elements, relationLegendMeta: rendered.relationLegendMeta };
       } catch (error) {
         hooks.setStatus(`Failed: ${error && error.message ? error.message : 'unknown error'}`);
         console.error('G6 graph failed:', error);

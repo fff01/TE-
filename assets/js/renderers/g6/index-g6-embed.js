@@ -132,7 +132,8 @@
   window.__TEKG_G6_EMBED = bridge;
 
   runner.init().finally(() => {
-    if (initialRequest.query) {
+    const parentDrivesInitialGraph = !!getHost();
+    if (initialRequest.query && !parentDrivesInitialGraph) {
       const request = initialRequest.queryType
         ? initialRequest
         : initialRequest.query;
