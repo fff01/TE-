@@ -263,6 +263,35 @@
           gap: 10px;
         }
 
+        .graph-legend-loading {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          min-height: 96px;
+          color: #475569;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .graph-legend-loading-icon {
+          position: relative;
+          width: 96px;
+          height: 96px;
+          flex: 0 0 auto;
+        }
+
+        .graph-legend-loading-icon span {
+          position: absolute;
+          inset: 0;
+          border-radius: 999px;
+          background: rgba(37, 99, 235, 0.22);
+          animation: graph-preloader-fx 1.6s linear infinite;
+        }
+
+        .graph-legend-loading-icon span:last-child {
+          animation-delay: -0.8s;
+        }
+
         .graph-legend-footer {
           display: flex;
           justify-content: flex-end;
@@ -371,10 +400,12 @@
           display: none !important;
         }
 
+        .preview-graph-toolbar button.is-toggle,
         .expand-mode {
           border-bottom: 3px solid #cbd5e1 !important;
         }
 
+        .preview-graph-toolbar button.is-toggle.is-active,
         .expand-mode.is-active {
           border-bottom-color: #2563eb !important;
           color: #1d4ed8;

@@ -292,6 +292,7 @@
     return Object.assign({
       showAllLabels: window.showLabels,
       showEdgeLabels: window.showEdgeLabels,
+      allowInspectCard: window.fixedView && !expandModeEnabled,
       visibleTypes: getVisibleTypePayload(),
       visibleRelations: getVisibleRelationPayload(),
       minRelationPmids: relationMinPmids,
@@ -402,12 +403,28 @@
     }).join('');
   }
 
+  function renderGraphLegendLoading() {
+    if (!els.graphLegendList) return;
+    els.graphLegendList.innerHTML = [
+      '<div class="graph-legend-loading">',
+      '  <div class="graph-legend-loading-icon" aria-hidden="true">',
+      '    <span></span>',
+      '    <span></span>',
+      '  </div>',
+      '  <span>Loading legend...</span>',
+      '</div>',
+    ].join('');
+  }
+
   function syncLegendVisibility(mode = currentMode) {
     if (!els.graphLegend) return;
     const hasItems = getLegendTypeMeta().length > 0;
-    const shouldShow = mode === 'dynamic' && hasItems && !graphIsLoading;
+    const shouldShow = mode === 'dynamic' && hasItems;
     els.graphLegend.hidden = !shouldShow;
     els.graphLegend.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
+    if (shouldShow && graphIsLoading) {
+      renderGraphLegendLoading();
+    }
   }
 
   function applyLegendTypeFilter() {
@@ -419,6 +436,38 @@
       source: currentGraphSource,
       request: buildCurrentGraphRequest(),
     }).then(() => true);
+  }
+
+  function rerenderCurrentDynamicGraph() {
+    if (currentMode !== 'dynamic') return Promise.resolve(false);
+    const sourceElements = currentGraphSource === 'answer'
+      ? currentAnswerGraphElements
+      : currentQueryGraphElements;
+    if (!Array.isArray(sourceElements) || sourceElements.length === 0) {
+      return loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false });
+    }
+    return renderDynamicElementsFromCache(sourceElements, {
+      source: currentGraphSource,
+      request: buildCurrentGraphRequest(),
+    });
+  }
+
+  function updateCurrentGraphViewState() {
+    updateButtons();
+    notifyStateChange();
+    if (currentMode !== 'dynamic') return Promise.resolve(false);
+    const bridge = dynamicFrame && dynamicFrame.contentWindow
+      ? dynamicFrame.contentWindow.__TEKG_G6_EMBED
+      : null;
+    if (bridge && typeof bridge.setViewState === 'function') {
+      return Promise.resolve(bridge.setViewState({
+        fixedView: window.fixedView,
+        showAllLabels: window.showLabels,
+        showEdgeLabels: window.showEdgeLabels,
+        allowInspectCard: window.fixedView && !expandModeEnabled,
+      }));
+    }
+    return Promise.resolve(false);
   }
 
   function markLegendFilterPending() {
@@ -538,6 +587,13 @@
     }
 
     return [...filteredNodes, ...filteredEdges];
+  }
+
+  function syncToggleButtonState(button, active) {
+    if (!button) return;
+    button.classList.add('is-toggle');
+    button.classList.toggle('is-active', active === true);
+    button.setAttribute('aria-pressed', active === true ? 'true' : 'false');
   }
 
   async function renderDynamicElementsFromCache(elements, options = {}) {
@@ -842,10 +898,10 @@
     if (els.backText) els.backText.textContent = t.back || 'Back';
     if (els.resetText) els.resetText.textContent = t.reset;
     if (els.expandModeText) els.expandModeText.textContent = expandModeEnabled ? t.expandModeOn : t.expandModeOff;
-    if (els.expandModeBtn) {
-      els.expandModeBtn.classList.toggle('is-active', expandModeEnabled);
-      els.expandModeBtn.setAttribute('aria-pressed', expandModeEnabled ? 'true' : 'false');
-    }
+    syncToggleButtonState(els.edgeLabelsBtn, window.showEdgeLabels);
+    syncToggleButtonState(els.showLabelsBtn, window.showLabels);
+    syncToggleButtonState(els.fixedBtn, window.fixedView);
+    syncToggleButtonState(els.expandModeBtn, expandModeEnabled);
     updateBackButton();
   }
 
@@ -1635,8 +1691,12 @@
     if (els.expandModeBtn) {
       els.expandModeBtn.addEventListener('click', () => {
         expandModeEnabled = !expandModeEnabled;
-        updateButtons();
-        notifyStateChange();
+        if (expandModeEnabled) {
+          window.fixedView = false;
+        }
+        updateCurrentGraphViewState().catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
       });
     }
 
@@ -1671,29 +1731,16 @@
     if (els.fixedBtn) {
       els.fixedBtn.addEventListener('click', () => {
         window.fixedView = !window.fixedView;
-        updateButtons();
-        notifyStateChange();
-        if (currentMode === 'dynamic') {
-          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-        }
+        updateCurrentGraphViewState().catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
       });
     }
 
     if (els.showLabelsBtn) {
       els.showLabelsBtn.addEventListener('click', () => {
         window.showLabels = !window.showLabels;
-        updateButtons();
-        notifyStateChange();
-        if (currentMode !== 'dynamic') return;
-        if (currentGraphSource === 'answer') {
-          renderAnswerGraphElements(currentAnswerGraphElements, currentGraphQuery || 'LINE1', { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-          return;
-        }
-        loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
+        updateCurrentGraphViewState().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
       });
@@ -1702,16 +1749,7 @@
     if (els.edgeLabelsBtn) {
       els.edgeLabelsBtn.addEventListener('click', () => {
         window.showEdgeLabels = !window.showEdgeLabels;
-        updateButtons();
-        notifyStateChange();
-        if (currentMode !== 'dynamic') return;
-        if (currentGraphSource === 'answer') {
-          renderAnswerGraphElements(currentAnswerGraphElements, currentGraphQuery || 'LINE1', { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-          return;
-        }
-        loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
+        updateCurrentGraphViewState().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
       });
@@ -1819,7 +1857,7 @@
       window.fixedView = !!next;
       updateButtons();
       if (currentMode === 'dynamic') {
-        return loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).then(() => window.fixedView);
+        return updateCurrentGraphViewState().then(() => window.fixedView);
       }
       return Promise.resolve(window.fixedView);
     },
@@ -1830,10 +1868,7 @@
       window.showLabels = !!next;
       updateButtons();
       if (currentMode === 'dynamic') {
-        if (currentGraphSource === 'answer') {
-          return renderAnswerGraphElements(currentAnswerGraphElements, currentGraphQuery || 'LINE1', { pushHistory: false }).then(() => window.showLabels);
-        }
-        return loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).then(() => window.showLabels);
+        return updateCurrentGraphViewState().then(() => window.showLabels);
       }
       return Promise.resolve(window.showLabels);
     },

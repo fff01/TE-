@@ -213,6 +213,9 @@
     let currentClassQuery = String(options.initialClassQuery || '').trim();
     let currentLang = 'en';
     let currentShowAllLabels = options.initialShowAllLabels === true;
+    let currentShowEdgeLabels = false;
+    let currentAllowInspectCard = true;
+    let currentGraphData = null;
 
     if (currentQueryType === 'disease_class') {
       if (!currentClassQuery) currentClassQuery = currentQuery;
@@ -1065,6 +1068,9 @@
           size: nodeType === 'Paper'
             ? Math.max(28, degreeToSize(data.degree))
             : degreeToSize(data.degree),
+          baseSize: nodeType === 'Paper'
+            ? Math.max(28, degreeToSize(data.degree))
+            : degreeToSize(data.degree),
           nodeType,
           rawLabel: data.rawLabel || data.label || data.id,
           displayLabel: translateName(data.label || data.rawLabel || data.id),
@@ -1095,6 +1101,7 @@
         const canonicalName = canonicalTeLineageName(node.rawLabel || node.displayLabel);
         const fixedRadius = teRadiusForName(canonicalName, node.databaseDegree);
         node.size = fixedRadius * 2;
+        node.baseSize = node.size;
         node.fillColor = teFillColorForName(canonicalName);
         node.strokeColor = darkenHexColor(node.fillColor, 0.28);
       }
@@ -1206,6 +1213,37 @@
       return { nodes: visibleNodes, edges, relationLegendMeta };
     }
 
+    function applyCurrentViewState() {
+      if (!currentGraphData || !Array.isArray(currentGraphData.nodes) || !Array.isArray(currentGraphData.edges)) {
+        return Promise.resolve(false);
+      }
+
+      const nextNodes = currentGraphData.nodes.map((node) => {
+        const baseSize = Math.max(10, Number(node.baseSize || node.size) || 10);
+        return {
+          ...node,
+          size: currentShowAllLabels ? Math.round(Math.max(18, baseSize) * 1.22 + 4) : baseSize,
+          showAllLabels: currentShowAllLabels,
+        };
+      });
+      currentGraphData.nodes = nextNodes;
+
+      if (graph && typeof graph.updateNodeData === 'function' && typeof graph.updateEdgeData === 'function') {
+        graph.updateNodeData(nextNodes.map((node) => ({
+          id: node.id,
+          size: node.size,
+          showAllLabels: node.showAllLabels,
+        })));
+        graph.updateEdgeData(currentGraphData.edges.map((edge) => ({
+          id: edge.id,
+        })));
+        if (typeof graph.draw === 'function') {
+          return Promise.resolve(graph.draw()).then(() => true);
+        }
+      }
+      return Promise.resolve(false);
+    }
+
     function getContainerMetrics() {
       const docEl = document.documentElement;
       return {
@@ -1282,9 +1320,15 @@
         if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'showAllLabels')) {
           currentShowAllLabels = graphDataOptions.showAllLabels === true;
         }
+        if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'showEdgeLabels')) {
+          currentShowEdgeLabels = graphDataOptions.showEdgeLabels === true;
+        }
+        if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'allowInspectCard')) {
+          currentAllowInspectCard = graphDataOptions.allowInspectCard === true;
+        }
         graphDataOptions.showAllLabels = currentShowAllLabels;
-        const showEdgeLabels = graphDataOptions.showEdgeLabels === true;
         const data = buildGraphData(payloadElements, graphDataOptions);
+        currentGraphData = data;
 
         if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
           hideInspectCard();
@@ -1352,7 +1396,7 @@
               lineWidth: (edge) => (edge.synthetic ? 1.9 : 1.5),
               lineDash: (edge) => edge.lineDash || [],
               labelText: (edge) => {
-                if (!showEdgeLabels) return '';
+                if (!currentShowEdgeLabels) return '';
                 const relationType = String(edge.relationKey || edge.relation || edge.relationType || '').trim();
                 const pmidCount = Array.isArray(edge.pmids) ? edge.pmids.length : 0;
                 if (!relationType && pmidCount <= 0) return '';
@@ -1425,11 +1469,12 @@
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
-          showInspectCard('node', node, event, data);
+          if (currentAllowInspectCard) showInspectCard('node', node, event, data);
+          else hideInspectCard();
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
           const expanded = await Promise.resolve(hooks.onNodeExpand(node));
-          if (expanded || expanded === false) return;
+          if (expanded) return;
           if (!fixedView && (node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory')) {
             const classQuery = String(node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel || '').trim();
             if (classQuery) {
@@ -1457,7 +1502,8 @@
           const edgeId = event?.target?.id;
           const edge = data.edges.find((item) => item.id === edgeId);
           if (!edge) return;
-          showInspectCard('edge', edge, event, data);
+          if (currentAllowInspectCard) showInspectCard('edge', edge, event, data);
+          else hideInspectCard();
           hooks.onSelection(null);
           hooks.setDetailHtml(buildEdgeDetailHtml(edge, data.nodes));
         });
@@ -1578,6 +1624,32 @@
       return Promise.resolve(fixedView);
     }
 
+    function setViewState(next = {}) {
+      if (Object.prototype.hasOwnProperty.call(next, 'fixedView')) {
+        fixedView = next.fixedView === true;
+      }
+      if (Object.prototype.hasOwnProperty.call(next, 'showAllLabels')) {
+        currentShowAllLabels = next.showAllLabels === true;
+      }
+      if (Object.prototype.hasOwnProperty.call(next, 'showEdgeLabels')) {
+        currentShowEdgeLabels = next.showEdgeLabels === true;
+      }
+      if (Object.prototype.hasOwnProperty.call(next, 'allowInspectCard')) {
+        currentAllowInspectCard = next.allowInspectCard === true;
+      }
+      if (!currentAllowInspectCard) hideInspectCard();
+      hooks.syncRouteState({
+        query: currentQuery,
+        queryType: currentQueryType,
+        classQuery: currentClassQuery,
+        keyNodeLevel: currentKeyNodeLevel,
+        fixedView,
+        showLabels: currentShowAllLabels,
+        lang: 'en',
+      });
+      return applyCurrentViewState();
+    }
+
     function setKeyNodeLevel(level) {
       currentKeyNodeLevel = Math.max(1, Math.min(10, Number(level) || 1));
       hooks.syncRouteState({
@@ -1626,6 +1698,7 @@
       renderElements,
       resize,
       setFixedView,
+      setViewState,
       setKeyNodeLevel,
       setLanguage,
       getCurrentQuery: () => currentQuery,

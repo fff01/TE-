@@ -46,13 +46,13 @@ $previewConfig = [
               <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
                 <span id="focus-view-text">Focus mode: Global</span>
               </button>
-              <button id="toggle-expand-mode" class="expand-mode" type="button" aria-pressed="false"><span id="expand-mode-text">Expand mode: Off</span></button>
+              <button id="toggle-expand-mode" class="expand-mode is-toggle" type="button" aria-pressed="false"><span id="expand-mode-text">Expand mode: Off</span></button>
               <button id="toggle-non-key-nodes" class="non-key-legacy" type="button" style="display:none">
                 <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
               </button>
-              <button id="toggle-edge-labels" type="button"><span id="edge-labels-text">Show labels: Off</span></button>
-              <button id="toggle-show-labels" type="button"><span id="show-labels-text">Show names: Off</span></button>
-              <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: On</span></button>
+              <button id="toggle-edge-labels" class="is-toggle" type="button" aria-pressed="false"><span id="edge-labels-text">Show labels: Off</span></button>
+              <button id="toggle-show-labels" class="is-toggle" type="button" aria-pressed="false"><span id="show-labels-text">Show names: Off</span></button>
+              <button id="toggle-fixed-view" class="is-toggle" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
               <button id="back-graph" type="button" disabled><span id="back-text">Back</span></button>
               <button id="reset-graph" type="button"><span id="reset-text">Reset</span></button>
             </div>

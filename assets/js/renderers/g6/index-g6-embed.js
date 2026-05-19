@@ -108,6 +108,9 @@
     setFixedView(next) {
       return runner.setFixedView(next);
     },
+    setViewState(next) {
+      return runner.setViewState(next);
+    },
     setKeyNodeLevel(level) {
       return runner.setKeyNodeLevel(level);
     },
