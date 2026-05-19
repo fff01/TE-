@@ -230,6 +230,8 @@
     let teDatabaseDegrees = new Map();
     let teFixedRadii = new Map();
     let resourcesPromise = null;
+    let inspectCard = null;
+    let inspectCardState = null;
 
     const hooks = {
       setStatus: typeof options.setStatus === 'function' ? options.setStatus : noop,
@@ -258,6 +260,361 @@
         queryType: '',
         classQuery: '',
       };
+    }
+
+    function pubmedUrl(pmid) {
+      return `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(String(pmid || '').trim())}/`;
+    }
+
+    function ensureInspectCardStyles() {
+      if (document.getElementById('tekg-g6-inspect-card-styles')) return;
+      const style = document.createElement('style');
+      style.id = 'tekg-g6-inspect-card-styles';
+      style.textContent = `
+        .inspect-card {
+          position: absolute;
+          z-index: 20;
+          width: 260px;
+          max-width: min(360px, calc(100vw - 28px));
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          border-radius: 10px;
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+          color: #0f172a;
+          font-family: Arial, sans-serif;
+          pointer-events: auto;
+          overflow: hidden;
+        }
+        .inspect-card.is-expanded {
+          width: 380px;
+        }
+        .inspect-card__body {
+          padding: 12px 14px;
+        }
+        .inspect-card__title {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 800;
+          line-height: 1.3;
+        }
+        .inspect-card__meta {
+          margin-top: 5px;
+          color: #475569;
+          font-size: 12px;
+          font-weight: 700;
+          line-height: 1.45;
+        }
+        .inspect-card__desc {
+          margin-top: 9px;
+          color: #334155;
+          font-size: 12px;
+          line-height: 1.55;
+        }
+        .inspect-card__section {
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #e2e8f0;
+        }
+        .inspect-card__section-title {
+          margin: 0 0 6px;
+          color: #0f172a;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+        .inspect-card__kv {
+          display: grid;
+          grid-template-columns: 96px 1fr;
+          gap: 5px 8px;
+          font-size: 12px;
+          line-height: 1.45;
+        }
+        .inspect-card__key {
+          color: #64748b;
+          font-weight: 800;
+        }
+        .inspect-card__value {
+          color: #1e293b;
+          min-width: 0;
+          word-break: break-word;
+        }
+        .inspect-card__pmids {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .inspect-card__pmid {
+          color: #1d4ed8;
+          font-size: 12px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .inspect-card__pmid:hover {
+          text-decoration: underline;
+        }
+        .inspect-card__actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+          margin-top: 10px;
+        }
+        .inspect-card__button {
+          border: 1px solid #cbd5e1;
+          border-radius: 7px;
+          background: #ffffff;
+          color: #1e293b;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 800;
+          min-height: 28px;
+          padding: 0 10px;
+        }
+        .inspect-card__button:hover {
+          border-color: #2563eb;
+          color: #1d4ed8;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    function ensureInspectCard() {
+      ensureInspectCardStyles();
+      if (inspectCard && inspectCard.isConnected) return inspectCard;
+      if (window.getComputedStyle(container).position === 'static') {
+        container.style.position = 'relative';
+      }
+      inspectCard = document.createElement('div');
+      inspectCard.className = 'inspect-card';
+      inspectCard.setAttribute('role', 'dialog');
+      inspectCard.setAttribute('aria-label', 'Inspect card');
+      inspectCard.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const target = event.target;
+        if (target instanceof HTMLElement && target.dataset.inspectAction === 'toggle') {
+          inspectCardState = {
+            ...inspectCardState,
+            expanded: !inspectCardState?.expanded,
+          };
+          renderInspectCard();
+        }
+      });
+      container.appendChild(inspectCard);
+      return inspectCard;
+    }
+
+    function compactText(text, maxLength = 140) {
+      const raw = String(text || '').replace(/\s+/g, ' ').trim();
+      if (raw.length <= maxLength) return raw;
+      return `${raw.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+    }
+
+    function resolveInspectQuadrant(pointer, rect) {
+      const x = Math.max(0, Number(pointer?.x) || 0);
+      const y = Math.max(0, Number(pointer?.y) || 0);
+      const midX = Math.max(1, rect.width / 2);
+      const midY = Math.max(1, rect.height / 2);
+      if (x >= midX && y < midY) return 'q1';
+      if (x < midX && y < midY) return 'q2';
+      if (x < midX && y >= midY) return 'q3';
+      return 'q4';
+    }
+
+    function pointerFromEvent(event) {
+      const nativeEvent = event?.nativeEvent || event?.originalEvent || event?.event || event;
+      const rect = container.getBoundingClientRect();
+      const clientX = Number(nativeEvent?.clientX);
+      const clientY = Number(nativeEvent?.clientY);
+      if (Number.isFinite(clientX) && Number.isFinite(clientY)) {
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top,
+        };
+      }
+      const canvas = event?.canvas || event?.canvasPoint || event?.point;
+      if (canvas && Number.isFinite(Number(canvas.x)) && Number.isFinite(Number(canvas.y))) {
+        return {
+          x: Number(canvas.x),
+          y: Number(canvas.y),
+        };
+      }
+      return {
+        x: rect.width / 2,
+        y: rect.height / 2,
+      };
+    }
+
+    function positionInspectCard(card, state) {
+      const pointer = state?.pointer || { x: 0, y: 0 };
+      const rect = container.getBoundingClientRect();
+      const quadrant = state?.quadrant || resolveInspectQuadrant(pointer, rect);
+      const gap = 14;
+      const width = Math.max(1, card.offsetWidth || (state?.expanded === true ? 380 : 260));
+      const height = Math.max(1, card.offsetHeight || (state?.expanded === true ? 360 : 170));
+      const maxX = Math.max(gap, rect.width - width - gap);
+      const maxY = Math.max(gap, rect.height - height - gap);
+      let left = pointer.x + gap;
+      let top = pointer.y + gap;
+
+      if (quadrant === 'q1') {
+        left = pointer.x - width - gap;
+        top = pointer.y + gap;
+      } else if (quadrant === 'q2') {
+        left = pointer.x + gap;
+        top = pointer.y + gap;
+      } else if (quadrant === 'q3') {
+        left = pointer.x + gap;
+        top = pointer.y - height - gap;
+      } else {
+        left = pointer.x - width - gap;
+        top = pointer.y - height - gap;
+      }
+
+      card.style.left = `${Math.min(Math.max(gap, left), maxX)}px`;
+      card.style.top = `${Math.min(Math.max(gap, top), maxY)}px`;
+      card.style.transformOrigin = quadrant === 'q1'
+        ? 'right top'
+        : quadrant === 'q2'
+          ? 'left top'
+          : quadrant === 'q3'
+            ? 'left bottom'
+            : 'right bottom';
+    }
+
+    function kvRow(key, value) {
+      const text = String(value || '').trim();
+      if (!text) return '';
+      return `<span class="inspect-card__key">${escapeHtml(key)}</span><span class="inspect-card__value">${escapeHtml(text)}</span>`;
+    }
+
+    function pmidLinks(pmids) {
+      const values = Array.isArray(pmids)
+        ? [...new Set(pmids.map((pmid) => String(pmid || '').trim()).filter(Boolean))]
+        : [];
+      if (!values.length) return '<span class="inspect-card__value">No PMID evidence attached.</span>';
+      return [
+        '<div class="inspect-card__pmids">',
+        ...values.map((pmid) => `<a class="inspect-card__pmid" href="${pubmedUrl(pmid)}" target="_blank" rel="noopener noreferrer">${escapeHtml(pmid)} ↗</a>`),
+        '</div>',
+      ].join('');
+    }
+
+    function renderNodeInspectCard(node) {
+      const label = node.displayLabel || node.rawLabel || node.id || '';
+      const type = node.nodeType || 'Node';
+      const desc = String(node.description || '').trim();
+      const taxonomy = node.taxonomy && typeof node.taxonomy === 'object' ? node.taxonomy : null;
+      const expanded = inspectCardState?.expanded === true;
+      const briefPath = taxonomy?.display_path || (Array.isArray(taxonomy?.path_labels) ? taxonomy.path_labels.join(' > ') : '');
+      const degree = Math.max(0, Number(node.databaseDegree) || 0);
+      const summary = [
+        `<h3 class="inspect-card__title">${escapeHtml(label)}</h3>`,
+        `<div class="inspect-card__meta">${escapeHtml(type)} · degree ${escapeHtml(degree)}</div>`,
+        desc ? `<div class="inspect-card__desc">${escapeHtml(compactText(desc, expanded ? 260 : 135))}</div>` : '',
+      ];
+
+      const sections = [];
+      if (expanded) {
+        const rows = [
+          kvRow('Type', type),
+          kvRow('Degree', node.databaseDegree),
+          kvRow('Key node', node.alwaysShowLabel || node.databaseDegree > 15 ? 'Yes' : 'No'),
+          kvRow('Disease class', node.diseaseClass),
+          kvRow('Category level', node.categoryLevel),
+          kvRow('PMID', node.pmid),
+        ].filter(Boolean).join('');
+        if (rows) {
+          sections.push(`<div class="inspect-card__section"><p class="inspect-card__section-title">Node</p><div class="inspect-card__kv">${rows}</div></div>`);
+        }
+        if (taxonomy) {
+          const taxonomyRows = [
+            kvRow('Canonical', taxonomy.canonical_name),
+            kvRow('Status', taxonomy.status),
+            kvRow('Source', taxonomy.source),
+            kvRow('Path', briefPath),
+          ].filter(Boolean).join('');
+          if (taxonomyRows) {
+            sections.push(`<div class="inspect-card__section"><p class="inspect-card__section-title">Taxonomy</p><div class="inspect-card__kv">${taxonomyRows}</div></div>`);
+          }
+        } else if (briefPath) {
+          sections.push(`<div class="inspect-card__section"><p class="inspect-card__section-title">Taxonomy</p><div class="inspect-card__desc">${escapeHtml(briefPath)}</div></div>`);
+        }
+      } else if (briefPath) {
+        sections.push(`<div class="inspect-card__desc">${escapeHtml(compactText(briefPath, 120))}</div>`);
+      }
+
+      return [
+        '<div class="inspect-card__body">',
+        ...summary,
+        ...sections,
+        '<div class="inspect-card__actions">',
+        `<button class="inspect-card__button" type="button" data-inspect-action="toggle">${expanded ? 'Collapse' : 'Expand'}</button>`,
+        '</div>',
+        '</div>',
+      ].join('');
+    }
+
+    function renderEdgeInspectCard(edge, nodes) {
+      const source = resolveNode(edge?.source, nodes);
+      const target = resolveNode(edge?.target, nodes);
+      const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
+      const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
+      const relation = relationLabelForEdge(edge);
+      const relationType = String(edge?.relationType || '').trim();
+      const pmids = Array.isArray(edge?.pmids) ? edge.pmids : [];
+      const evidence = String(edge?.evidence || '').trim();
+      const expanded = inspectCardState?.expanded === true;
+      const rows = [
+        kvRow('Relation', relation),
+        kvRow('Type', relationType),
+        kvRow('PMID count', pmids.length),
+      ].filter(Boolean).join('');
+
+      return [
+        '<div class="inspect-card__body">',
+        `<h3 class="inspect-card__title">${escapeHtml(sourceLabel)} → ${escapeHtml(relation)} → ${escapeHtml(targetLabel)}</h3>`,
+        `<div class="inspect-card__meta">${escapeHtml(relationType || 'Relation')} · PMID ${pmids.length}</div>`,
+        expanded && rows ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Relation</p><div class="inspect-card__kv">${rows}</div></div>` : '',
+        expanded ? `<div class="inspect-card__section"><p class="inspect-card__section-title">PubMed</p>${pmidLinks(pmids)}</div>` : (pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
+        expanded ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence || (isClassificationRelation(relationType) ? 'This is a taxonomy/classification edge, not a literature evidence edge.' : 'No evidence text attached to this edge.'))}</div></div>` : '',
+        '<div class="inspect-card__actions">',
+        `<button class="inspect-card__button" type="button" data-inspect-action="toggle">${expanded ? 'Collapse' : 'Expand'}</button>`,
+        '</div>',
+        '</div>',
+      ].join('');
+    }
+
+    function renderInspectCard() {
+      if (!inspectCardState) return;
+      const card = ensureInspectCard();
+      card.className = inspectCardState.expanded ? 'inspect-card is-expanded' : 'inspect-card';
+      card.innerHTML = inspectCardState.kind === 'edge'
+        ? renderEdgeInspectCard(inspectCardState.edge, inspectCardState.nodes || [])
+        : renderNodeInspectCard(inspectCardState.node);
+      positionInspectCard(card, inspectCardState);
+    }
+
+    function showInspectCard(kind, payload, event, graphData) {
+      const pointer = pointerFromEvent(event);
+      const rect = container.getBoundingClientRect();
+      inspectCardState = {
+        kind,
+        node: kind === 'node' ? payload : null,
+        edge: kind === 'edge' ? payload : null,
+        nodes: graphData?.nodes || [],
+        pointer,
+        quadrant: resolveInspectQuadrant(pointer, rect),
+        expanded: false,
+      };
+      renderInspectCard();
+    }
+
+    function hideInspectCard() {
+      inspectCardState = null;
+      if (inspectCard) {
+        inspectCard.remove();
+        inspectCard = null;
+      }
     }
 
     function normalizeGraphRequest(requestLike) {
@@ -713,8 +1070,10 @@
           displayLabel: translateName(data.label || data.rawLabel || data.id),
           databaseDegree: Math.max(0, Number(data.degree) || 0),
           description: translateDescription(data.type || 'TE', data.label || data.rawLabel || data.id, data.description || ''),
+          pmid: String(data.pmid || ''),
           diseaseClass: String(data.disease_class || ''),
           categoryLevel: Math.max(0, Number(data.category_level) || 0),
+          taxonomy: data.taxonomy && typeof data.taxonomy === 'object' ? data.taxonomy : null,
           team: buildTeam(data),
           queryLabel: nodeType === 'DiseaseCategory' ? '' : String(data.rawLabel || data.label || data.id),
           queryType: nodeType === 'DiseaseClass' ? 'disease_class' : '',
@@ -928,6 +1287,7 @@
         const data = buildGraphData(payloadElements, graphDataOptions);
 
         if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
+          hideInspectCard();
           if (graph && typeof graph.destroy === 'function') {
             graph.destroy();
             graph = null;
@@ -1057,6 +1417,7 @@
         });
 
         await graph.render();
+        hideInspectCard();
         graph.off?.('node:click');
         graph.off?.('edge:click');
         graph.off?.('canvas:click');
@@ -1064,6 +1425,7 @@
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
+          showInspectCard('node', node, event, data);
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
           const expanded = await Promise.resolve(hooks.onNodeExpand(node));
@@ -1095,10 +1457,12 @@
           const edgeId = event?.target?.id;
           const edge = data.edges.find((item) => item.id === edgeId);
           if (!edge) return;
+          showInspectCard('edge', edge, event, data);
           hooks.onSelection(null);
           hooks.setDetailHtml(buildEdgeDetailHtml(edge, data.nodes));
         });
         graph.on('canvas:click', () => {
+          hideInspectCard();
           hooks.onSelection(null);
           hooks.setDetail('No node selected', 'Click a node or edge to inspect graph details.');
         });

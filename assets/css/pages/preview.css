@@ -69,13 +69,7 @@
         }
 
         .preview-graph-panel > .detail {
-          flex: 0 0 96px;
-          max-height: 96px;
-          overflow: auto;
-          border-top: 1px solid rgba(219, 231, 243, 0.8);
-          padding: 12px 20px;
-          font-size: 13px;
-          line-height: 1.45;
+          display: none;
         }
 
         .preview-graph-panel > .detail strong {

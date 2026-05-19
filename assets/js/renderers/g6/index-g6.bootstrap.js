@@ -92,7 +92,7 @@
   let legendFilterPending = false;
 
   window.currentLang = 'en';
-  window.fixedView = false;
+  window.fixedView = true;
   window.showEdgeLabels = false;
   window.showLabels = false;
   window.currentKeyNodeLevel = 1;

@@ -52,7 +52,7 @@ $previewConfig = [
               </button>
               <button id="toggle-edge-labels" type="button"><span id="edge-labels-text">Show labels: Off</span></button>
               <button id="toggle-show-labels" type="button"><span id="show-labels-text">Show names: Off</span></button>
-              <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: Off</span></button>
+              <button id="toggle-fixed-view" type="button"><span id="fixed-view-text">Fixed view: On</span></button>
               <button id="back-graph" type="button" disabled><span id="back-text">Back</span></button>
               <button id="reset-graph" type="button"><span id="reset-text">Reset</span></button>
             </div>
