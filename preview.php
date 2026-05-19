@@ -81,6 +81,9 @@ $previewConfig = [
                   <input id="graph-relation-min-pmids" class="graph-relation-min-pmids" type="number" min="0" max="99" step="1" value="0">
                 </div>
                 <div id="graph-legend-list" class="graph-legend-list"></div>
+                <div class="graph-legend-footer">
+                  <button id="graph-legend-apply" class="graph-legend-apply" type="button" disabled>Apply</button>
+                </div>
               </div>
             </div>
             <div class="nav" id="search-results-nav" style="display:none">

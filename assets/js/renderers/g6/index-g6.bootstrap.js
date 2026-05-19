@@ -34,6 +34,7 @@
     graphLegendTitle: document.getElementById('graph-legend-title'),
     graphLegendList: document.getElementById('graph-legend-list'),
     graphLegendTabs: document.querySelector('.graph-legend-mode-switch'),
+    graphLegendApply: document.getElementById('graph-legend-apply'),
     graphRelationControls: document.getElementById('graph-relation-controls'),
     relationMinPmidsInput: document.getElementById('graph-relation-min-pmids'),
     main: document.querySelector('.main'),
@@ -88,6 +89,7 @@
   let expandModeEnabled = false;
   let expandedNodeKeys = new Set();
   let graphIsLoading = false;
+  let legendFilterPending = false;
 
   window.currentLang = 'en';
   window.fixedView = false;
@@ -192,7 +194,12 @@
       ? sharedMeta.colors
       : LEGEND_FALLBACK_COLORS;
 
-    return [...new Set(order)]
+    const presentTypes = getCurrentLegendNodeTypes();
+    const orderedTypes = presentTypes.size
+      ? [...new Set(order)].filter((type) => presentTypes.has(type))
+      : [...new Set(order)];
+
+    return orderedTypes
       .filter((type) => (labels[type] || type) && colors[type])
       .filter((type) => !HIDDEN_ENTITY_LEGEND_TYPES.has(type))
       .map((type) => ({
@@ -205,6 +212,22 @@
   function legendTypeForNodeType(nodeType) {
     const type = String(nodeType || '').trim();
     return LEGEND_DISEASE_TYPES.has(type) ? 'Disease' : type;
+  }
+
+  function getCurrentGraphElements() {
+    if (currentGraphSource === 'answer') return currentAnswerGraphElements;
+    return currentQueryGraphElements;
+  }
+
+  function getCurrentLegendNodeTypes() {
+    const types = new Set();
+    for (const item of Array.isArray(getCurrentGraphElements()) ? getCurrentGraphElements() : []) {
+      const data = item && item.data ? item.data : null;
+      if (!data || data.source || data.target) continue;
+      const legendType = legendTypeForNodeType(data.type || 'TE');
+      if (legendType && !HIDDEN_ENTITY_LEGEND_TYPES.has(legendType)) types.add(legendType);
+    }
+    return types;
   }
 
   function ensureVisibleTypeState() {
@@ -398,6 +421,26 @@
     }).then(() => true);
   }
 
+  function markLegendFilterPending() {
+    legendFilterPending = true;
+    if (els.graphLegendApply) {
+      els.graphLegendApply.disabled = false;
+    }
+  }
+
+  function clearLegendFilterPending() {
+    legendFilterPending = false;
+    if (els.graphLegendApply) {
+      els.graphLegendApply.disabled = true;
+    }
+  }
+
+  function applyPendingLegendFilter() {
+    if (!legendFilterPending) return Promise.resolve(false);
+    clearLegendFilterPending();
+    return applyLegendTypeFilter();
+  }
+
   function setDetail(html) {
     if (els.detail) {
       els.detail.innerHTML = html || '';
@@ -542,6 +585,7 @@
         Array.isArray(rendered && rendered.relationLegendMeta) ? rendered.relationLegendMeta : []
       );
       ensureRelationLegendState();
+      clearLegendFilterPending();
       renderGraphLegend();
 
       notifyStateChange();
@@ -1010,6 +1054,7 @@
         Array.isArray(rendered && rendered.relationLegendMeta) ? rendered.relationLegendMeta : []
       );
       ensureRelationLegendState();
+      clearLegendFilterPending();
       renderGraphLegend();
 
       notifyStateChange();
@@ -1554,9 +1599,7 @@
         } else {
           return;
         }
-        applyLegendTypeFilter().catch((error) => {
-          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-        });
+        markLegendFilterPending();
       });
     }
 
@@ -1577,7 +1620,13 @@
         const nextValue = Math.max(0, Number.parseInt(els.relationMinPmidsInput.value || '0', 10) || 0);
         relationMinPmids = nextValue;
         updateButtons();
-        applyLegendTypeFilter().catch((error) => {
+        markLegendFilterPending();
+      });
+    }
+
+    if (els.graphLegendApply) {
+      els.graphLegendApply.addEventListener('click', () => {
+        applyPendingLegendFilter().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
       });
