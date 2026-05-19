@@ -69,8 +69,9 @@ $previewConfig = [
                 </div>
               </div>
               <div id="graph-type-legend" class="graph-legend-panel" aria-label="Entity legend" aria-hidden="true" hidden>
-                <div class="graph-legend-tabs" role="tablist" aria-label="Graph legend mode">
+                <div class="graph-legend-mode-switch" role="tablist" aria-label="Graph legend mode">
                   <button id="graph-legend-entity-tab" class="graph-legend-tab is-active" type="button" data-legend-mode="entity" aria-pressed="true">Entity</button>
+                  <span class="graph-legend-mode-separator" aria-hidden="true">/</span>
                   <button id="graph-legend-relation-tab" class="graph-legend-tab" type="button" data-legend-mode="relation" aria-pressed="false">Relation</button>
                 </div>
                 <div id="graph-legend-title" class="graph-legend-title">Entity Legend</div>

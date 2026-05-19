@@ -198,32 +198,31 @@
           text-transform: uppercase;
         }
 
-        .graph-legend-tabs {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 6px;
+        .graph-legend-mode-switch {
+          display: inline-flex;
+          align-items: baseline;
+          gap: 7px;
           margin-bottom: 12px;
-          padding: 4px;
-          border: 1px solid #dbe5f2;
-          border-radius: 999px;
-          background: #f5f8fc;
         }
 
         .graph-legend-tab {
-          min-height: 30px;
           border: 0;
-          border-radius: 999px;
           background: transparent;
           color: #64748b;
           font-size: 12px;
           font-weight: 800;
           cursor: pointer;
+          padding: 0;
         }
 
         .graph-legend-tab.is-active {
-          background: #ffffff;
           color: #1d4ed8;
-          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+        }
+
+        .graph-legend-mode-separator {
+          color: #94a3b8;
+          font-size: 12px;
+          font-weight: 800;
         }
 
         .graph-relation-controls {
@@ -270,6 +269,10 @@
           min-width: 0;
           font-size: 14px;
           color: #334155;
+        }
+
+        .graph-legend-item.is-disease-combined {
+          margin-top: 5px;
         }
 
         .graph-legend-check {

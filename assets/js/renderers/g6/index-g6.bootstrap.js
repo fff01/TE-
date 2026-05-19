@@ -31,7 +31,7 @@
     graphLegend: document.getElementById('graph-type-legend'),
     graphLegendTitle: document.getElementById('graph-legend-title'),
     graphLegendList: document.getElementById('graph-legend-list'),
-    graphLegendTabs: document.querySelector('.graph-legend-tabs'),
+    graphLegendTabs: document.querySelector('.graph-legend-mode-switch'),
     graphRelationControls: document.getElementById('graph-relation-controls'),
     relationMinPmidsInput: document.getElementById('graph-relation-min-pmids'),
     main: document.querySelector('.main'),
@@ -74,6 +74,7 @@
   let currentAnswerGraphElements = [];
   let currentQueryGraphElements = [];
   let currentRelationLegendMeta = [];
+  let rawRelationLegendMeta = [];
   let graphHistory = [];
   let dynamicFrame = null;
   let dynamicBridgePromise = null;
@@ -150,6 +151,8 @@
   };
 
   const VISIBLE_TYPE_STATE_STORAGE_KEY = 'tekg:g6-visible-types';
+  const LEGEND_DISEASE_TYPES = new Set(['Disease', 'DiseaseClass']);
+  const HIDDEN_ENTITY_LEGEND_TYPES = new Set(['DiseaseClass', 'DiseaseCategory']);
   let visibleTypeState = null;
 
   function loadPersistedVisibleTypeState() {
@@ -185,11 +188,17 @@
 
     return [...new Set(order)]
       .filter((type) => (labels[type] || type) && colors[type])
+      .filter((type) => !HIDDEN_ENTITY_LEGEND_TYPES.has(type))
       .map((type) => ({
         type,
         label: String(labels[type] || type),
         color: String(colors[type] || '#94a3b8'),
       }));
+  }
+
+  function legendTypeForNodeType(nodeType) {
+    const type = String(nodeType || '').trim();
+    return LEGEND_DISEASE_TYPES.has(type) ? 'Disease' : type;
   }
 
   function ensureVisibleTypeState() {
@@ -205,6 +214,29 @@
     visibleTypeState = next;
     persistVisibleTypeState();
     return visibleTypeState;
+  }
+
+  function syncDiseaseLegendStateFromEntityState() {
+    const visible = ensureVisibleTypeState();
+    const diseaseVisible = visible.Disease !== false;
+    visible.Disease = diseaseVisible;
+    visible.DiseaseClass = diseaseVisible;
+    visible.DiseaseCategory = diseaseVisible;
+    return visible;
+  }
+
+  function applyEntityLegendCheckState(type, checked) {
+    const visible = syncDiseaseLegendStateFromEntityState();
+    const normalizedType = String(type || '').trim();
+    if (!normalizedType) return visible;
+    if (LEGEND_DISEASE_TYPES.has(normalizedType)) {
+      visible.Disease = !!checked;
+      visible.DiseaseClass = !!checked;
+      visible.DiseaseCategory = !!checked;
+      return visible;
+    }
+    visible[normalizedType] = !!checked;
+    return visible;
   }
 
   function getVisibleTypePayload() {
@@ -259,6 +291,22 @@
     return [...merged.values()];
   }
 
+  function collectRelationLegendMetaFromElements(elements) {
+    const relationTypes = new Set();
+    for (const item of Array.isArray(elements) ? elements : []) {
+      const data = item && item.data ? item.data : null;
+      if (!data || !data.source || !data.target) continue;
+      const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
+      relationTypes.add(relationType);
+    }
+    return [...relationTypes]
+      .sort((left, right) => left.localeCompare(right))
+      .map((relationType) => ({
+        relationType,
+        ...relationStyleFallback(relationType),
+      }));
+  }
+
   function renderGraphLegend() {
     const t = textSet();
     const isRelationMode = activeLegendMode === 'relation';
@@ -280,7 +328,7 @@
 
     if (isRelationMode) {
       const visibleMap = ensureRelationLegendState();
-      const items = currentRelationLegendMeta;
+      const items = rawRelationLegendMeta.length ? rawRelationLegendMeta : currentRelationLegendMeta;
       els.graphLegendList.innerHTML = items.length ? items.map((item) => {
         const relationType = String(item.relationType || '').trim();
         const style = item.color ? item : relationStyleFallback(relationType);
@@ -307,7 +355,7 @@
       const safeColor = escapeHtml(item.color);
       const checked = visibleMap[item.type] !== false ? ' checked' : '';
       return [
-        '<div class="graph-legend-item">',
+        `<div class="graph-legend-item${item.type === 'Disease' ? ' is-disease-combined' : ''}">`,
         `  <input class="graph-legend-check" type="checkbox" data-type="${safeType}" aria-label="${safeLabel}"${checked}>`,
         `  <span class="graph-legend-swatch" style="--legend-color:${safeColor};"></span>`,
         `  <span class="graph-legend-text">${safeLabel}</span>`,
@@ -413,7 +461,8 @@
       if (!data || data.source || data.target) continue;
       if (!anchorNode) anchorNode = item;
       const nodeType = String(data.type || 'TE').trim() || 'TE';
-      if (visibleMap[nodeType] === false) continue;
+      const legendType = legendTypeForNodeType(nodeType);
+      if (visibleMap[legendType] === false) continue;
       filteredNodes.push(item);
       visibleNodeIds.add(String(data.id || ''));
     }
@@ -424,8 +473,9 @@
       if (!visibleNodeIds.has(String(data.source || '')) || !visibleNodeIds.has(String(data.target || ''))) continue;
       const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
       const pmids = Array.isArray(data.pmids) ? data.pmids : [];
+      const isClassificationRelation = /CLASSIFIED_AS|HAS_SUBCATEGORY|TOP_CLASS_RELATION|DISEASE_CLASSIFICATION/i.test(relationType);
       if (visibleRelations[relationType] === false) continue;
-      if (pmids.length < minPmids) continue;
+      if (!isClassificationRelation && pmids.length < minPmids) continue;
       filteredEdges.push(item);
       connectedNodeIds.add(String(data.source || ''));
       connectedNodeIds.add(String(data.target || ''));
@@ -469,21 +519,17 @@
       const graphDataOptions = source === 'answer'
         ? buildCurrentGraphDataOptions({
             includePaperNodes: true,
-            synthesizeDiseaseClasses: false,
             restrictToAnchorComponent: false,
             forceAnchorLabel: true,
           })
-        : buildCurrentGraphDataOptions(
-            request.queryType === 'disease_class'
-              ? { synthesizeDiseaseClasses: false }
-              : {}
-          );
+        : buildCurrentGraphDataOptions();
 
       const rendered = await bridge.renderElements(renderElements, request, {
         sourceLabel: source === 'answer' ? 'qa' : 'query',
         skipInitialStatus: true,
         graphDataOptions,
       });
+      rawRelationLegendMeta = collectRelationLegendMetaFromElements(source === 'answer' ? currentAnswerGraphElements : currentQueryGraphElements);
       currentRelationLegendMeta = mergeRelationLegendMeta(
         currentRelationLegendMeta,
         Array.isArray(rendered && rendered.relationLegendMeta) ? rendered.relationLegendMeta : []
@@ -947,7 +993,6 @@
         sourceLabel: 'qa',
         graphDataOptions: buildCurrentGraphDataOptions({
           includePaperNodes: true,
-          synthesizeDiseaseClasses: false,
           restrictToAnchorComponent: false,
           forceAnchorLabel: true,
         }),
@@ -1039,13 +1084,21 @@
       return { rootId: '', treeData: null };
     }
 
-    const visit = (nodeId, depth, path) => {
+    function makeDiseaseTreeNodeId(sourceId, pathIds = []) {
+      const safeSource = String(sourceId || '').replace(/[^A-Za-z0-9:_-]+/g, '_');
+      const safePath = pathIds.map((item) => String(item || '').replace(/[^A-Za-z0-9:_-]+/g, '_')).join('__');
+      return `disease-tree::${safePath || 'root'}::${safeSource || 'node'}`;
+    }
+
+    const visit = (nodeId, depth, path, treePath = []) => {
       if (!nodeId || path.has(nodeId)) return null;
       const node = nodes.get(nodeId);
       if (!node) return null;
 
       const nextPath = new Set(path);
       nextPath.add(nodeId);
+      const nextTreePath = [...treePath, nodeId];
+      const treeNodeId = makeDiseaseTreeNodeId(nodeId, treePath);
 
       const sortedChildIds = [...new Set(children.get(nodeId) || [])]
         .filter((childId) => nodes.has(childId))
@@ -1062,16 +1115,18 @@
         });
 
       const childNodes = sortedChildIds
-        .map((childId) => visit(childId, depth + 1, nextPath))
+        .map((childId) => visit(childId, depth + 1, nextPath, nextTreePath))
         .filter(Boolean);
 
       return {
-        id: node.id,
+        id: treeNodeId,
         data: {
+          sourceId: node.id,
           rawLabel: node.rawLabel,
           displayLabel: node.rawLabel,
           description: node.description,
           treeDepth: depth,
+          treePath: nextTreePath,
           queryLabel: node.queryLabel,
           nodeType: node.nodeType,
           diseaseClass: node.diseaseClass,
@@ -1085,8 +1140,8 @@
     };
 
     return {
-      rootId,
-      treeData: visit(rootId, 0, new Set()),
+      rootId: makeDiseaseTreeNodeId(rootId, []),
+      treeData: visit(rootId, 0, new Set(), []),
     };
   }
 
@@ -1367,6 +1422,7 @@
     currentAnswerGraphElements = [];
     currentQueryGraphElements = [];
     currentRelationLegendMeta = [];
+    rawRelationLegendMeta = [];
     relationLegendState = {};
     expandedNodeKeys = new Set();
     showDynamicSurface();
@@ -1392,6 +1448,7 @@
         graphDataOptions: buildCurrentGraphDataOptions(),
       });
       currentQueryGraphElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
+      rawRelationLegendMeta = collectRelationLegendMetaFromElements(currentQueryGraphElements);
       currentRelationLegendMeta = mergeRelationLegendMeta([], Array.isArray(payload && payload.relationLegendMeta) ? payload.relationLegendMeta : []);
       ensureRelationLegendState();
       renderGraphLegend();
@@ -1448,6 +1505,7 @@
       const beforeCount = currentQueryGraphElements.length;
       currentQueryGraphElements = mergeGraphElements(currentQueryGraphElements, nextElements);
       expandedNodeKeys.add(expandKey);
+      rawRelationLegendMeta = collectRelationLegendMetaFromElements(currentQueryGraphElements);
       if (Array.isArray(payload && payload.relationLegendMeta)) {
         currentRelationLegendMeta = mergeRelationLegendMeta(currentRelationLegendMeta, payload.relationLegendMeta);
       }
@@ -1483,7 +1541,7 @@
           ensureRelationLegendState()[relationType] = target.checked;
           persistVisibleTypeState();
         } else if (type) {
-          ensureVisibleTypeState()[type] = target.checked;
+          applyEntityLegendCheckState(type, target.checked);
           persistVisibleTypeState();
         } else {
           return;

@@ -22,7 +22,7 @@ def main() -> None:
     assert_not_contains("preview.php", "key-node-level-control")
     assert_not_contains("preview.php", "Key-node level")
     assert_contains("preview.php", "toggle-expand-mode")
-    assert_contains("preview.php", "graph-legend-tabs")
+    assert_contains("preview.php", "graph-legend-mode-switch")
     assert_contains("preview.php", "graph-relation-min-pmids")
 
     assert_contains("assets/js/renderers/g6/index-g6.bootstrap.js", "relationLegendState")
@@ -37,7 +37,7 @@ def main() -> None:
     assert_contains("assets/js/renderers/g6/index-g6-shared.js", "relationStyleForType")
     assert_contains("assets/js/renderers/g6/index-g6-shared.js", "relationLegendMeta")
 
-    assert_contains("assets/css/pages/preview.css", "graph-legend-tabs")
+    assert_contains("assets/css/pages/preview.css", "graph-legend-mode-switch")
     assert_contains("assets/css/pages/preview.css", "expand-mode")
     assert_contains("assets/css/pages/preview.css", "graph-relation-line")
 

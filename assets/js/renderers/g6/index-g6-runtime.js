@@ -266,23 +266,6 @@
     return interpolateHexColor(hex, '#0f172a', amount);
   }
 
-  function diseaseClassDiameterFromMembers(memberNodes) {
-    const members = Array.isArray(memberNodes) ? memberNodes.filter(Boolean) : [];
-    if (members.length === 0) return 56;
-
-    const radii = members.map((node) => Math.max(1, (Number(node.size) || 0) / 2));
-    const maxRadius = Math.max(...radii);
-    const sumRadius = radii.reduce((total, radius) => total + radius, 0);
-
-    if (members.length === 1) {
-      return maxRadius * 2;
-    }
-
-    const compressedRadius = Math.sqrt(sumRadius * maxRadius);
-    const boundedRadius = Math.min(maxRadius * 1.25, compressedRadius);
-    return boundedRadius * 2;
-  }
-
   function buildTeam(node) {
     if (node.type === 'Disease' || node.type === 'DiseaseCategory' || node.type === 'DiseaseClass') {
       const diseaseClass = String(node.disease_class || '').trim() || 'Disease';
@@ -563,37 +546,6 @@
 
     const visibleNodes = nonIsolatedNodes.filter((node) => mainComponentNodeIds.has(node.id));
     const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
-    const hasNativeDiseaseHierarchy = visibleNodes.some(
-      (node) => node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory'
-    );
-    const diseaseMembers = new Map();
-    if (!hasNativeDiseaseHierarchy) {
-      for (const node of visibleNodes) {
-        if (node.nodeType !== 'Disease') continue;
-        const diseaseClass = node.diseaseClass || 'Disease';
-        if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
-        diseaseMembers.get(diseaseClass).push(node);
-      }
-
-      for (const [diseaseClass, members] of diseaseMembers.entries()) {
-        const count = members.length;
-        const classNodeId = `disease-class::${diseaseClass}`;
-        const classNode = {
-          id: classNodeId,
-          size: diseaseClassDiameterFromMembers(members),
-          nodeType: 'DiseaseClass',
-          rawLabel: diseaseClass,
-          displayLabel: diseaseClass,
-          databaseDegree: count,
-          description: `Disease class node for ${diseaseClass}. Connected to ${count} disease node${count === 1 ? '' : 's'} in the current graph.`,
-          diseaseClass,
-          team: `Disease::${diseaseClass}`,
-          queryLabel: '',
-        };
-        visibleNodes.push(classNode);
-        visibleNodeIds.add(classNodeId);
-      }
-    }
 
     for (const edge of baseEdges) {
       if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) continue;
@@ -601,19 +553,6 @@
         source: edge.source,
         target: edge.target,
       });
-    }
-
-    if (!hasNativeDiseaseHierarchy) {
-      for (const [diseaseClass, members] of diseaseMembers.entries()) {
-        const classNodeId = `disease-class::${diseaseClass}`;
-        for (const member of members) {
-          edges.push({
-            source: classNodeId,
-            target: member.id,
-            synthetic: true,
-          });
-        }
-      }
     }
 
     return { nodes: visibleNodes, edges };

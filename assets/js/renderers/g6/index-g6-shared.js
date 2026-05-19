@@ -194,23 +194,6 @@
     return `${raw.slice(0, maxChars - 1)}...`;
   }
 
-  function diseaseClassDiameterFromMembers(memberNodes) {
-    const members = Array.isArray(memberNodes) ? memberNodes.filter(Boolean) : [];
-    if (members.length === 0) return 56;
-
-    const radii = members.map((node) => Math.max(1, (Number(node.size) || 0) / 2));
-    const maxRadius = Math.max(...radii);
-    const sumRadius = radii.reduce((total, radius) => total + radius, 0);
-
-    if (members.length === 1) {
-      return maxRadius * 2;
-    }
-
-    const compressedRadius = Math.sqrt(sumRadius * maxRadius);
-    const boundedRadius = Math.min(maxRadius * 1.25, compressedRadius);
-    return boundedRadius * 2;
-  }
-
   function resolveNode(edgeSide, nodes) {
     if (edgeSide && typeof edgeSide === 'object') return edgeSide;
     return nodes.find((node) => node.id === edgeSide) || null;
@@ -666,6 +649,10 @@
       };
     }
 
+    function isClassificationRelation(relationType) {
+      return /CLASSIFIED_AS|HAS_SUBCATEGORY|TOP_CLASS_RELATION|DISEASE_CLASSIFICATION/i.test(String(relationType || ''));
+    }
+
     function buildEdgeDetailHtml(edge, nodes) {
       const source = resolveNode(edge?.source, nodes);
       const target = resolveNode(edge?.target, nodes);
@@ -684,7 +671,6 @@
 
     function buildGraphData(elements, options = {}) {
       const includePaperNodes = options.includePaperNodes === true;
-      const allowSyntheticDiseaseClasses = options.synthesizeDiseaseClasses !== false;
       const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
       const forceAnchorLabel = options.forceAnchorLabel === true;
       const showAllLabels = options.showAllLabels === true;
@@ -768,7 +754,7 @@
         const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
         const pmids = Array.isArray(data.pmids) ? data.pmids : [];
         if (visibleRelations && visibleRelations[relationType] === false) continue;
-        if (pmids.length < minRelationPmids) continue;
+        if (!isClassificationRelation(relationType) && pmids.length < minRelationPmids) continue;
         baseEdges.push({
           id: String(data.id || `${data.source}__${relationType}__${data.target}`),
           source: data.source,
@@ -815,41 +801,6 @@
         ? [...candidateNodes]
         : candidateNodes.filter((node) => mainComponentNodeIds.has(node.id));
       const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
-      const hasNativeDiseaseHierarchy = visibleNodes.some(
-        (node) => node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory'
-      );
-      const synthesizeDiseaseClasses = allowSyntheticDiseaseClasses && !hasNativeDiseaseHierarchy;
-      const diseaseMembers = new Map();
-      if (synthesizeDiseaseClasses) {
-        for (const node of visibleNodes) {
-          if (node.nodeType !== 'Disease') continue;
-          const diseaseClass = node.diseaseClass || 'Disease';
-          if (!diseaseMembers.has(diseaseClass)) diseaseMembers.set(diseaseClass, []);
-          diseaseMembers.get(diseaseClass).push(node);
-        }
-
-        for (const [diseaseClass, members] of diseaseMembers.entries()) {
-          const count = members.length;
-          const classNodeId = `disease-class::${diseaseClass}`;
-          const classNode = {
-            id: classNodeId,
-            size: diseaseClassDiameterFromMembers(members),
-            nodeType: 'DiseaseClass',
-            rawLabel: diseaseClass,
-            displayLabel: diseaseClass,
-            databaseDegree: count,
-            description: `Disease class node for ${diseaseClass}. Connected to ${count} disease node${count === 1 ? '' : 's'} in the current graph.`,
-            diseaseClass,
-            team: `Disease::${diseaseClass}`,
-            queryLabel: diseaseClass,
-            queryType: 'disease_class',
-            classQuery: diseaseClass,
-            showAllLabels,
-          };
-          visibleNodes.push(classNode);
-          visibleNodeIds.add(classNodeId);
-        }
-      }
 
       if (showAllLabels) {
         for (const node of visibleNodes) {
@@ -873,26 +824,6 @@
           strokeColor: relationStyle.color,
           lineDash: relationStyle.lineDash,
         });
-      }
-
-      if (synthesizeDiseaseClasses) {
-        for (const [diseaseClass, members] of diseaseMembers.entries()) {
-          const classNodeId = `disease-class::${diseaseClass}`;
-          for (const member of members) {
-            edges.push({
-              id: `${classNodeId}__DISEASE_CLASSIFICATION__${member.id}`,
-              source: classNodeId,
-              target: member.id,
-              synthetic: true,
-              relation: 'classified as',
-              relationType: 'DISEASE_CLASSIFICATION',
-              evidence: '',
-              pmids: [],
-              strokeColor: relationStyleForType('DISEASE_CLASSIFICATION').color,
-              lineDash: relationStyleForType('DISEASE_CLASSIFICATION').lineDash,
-            });
-          }
-        }
       }
 
       const relationLegendMeta = [...new Set(edges.map((edge) => edge.relationType).filter(Boolean))]
@@ -1123,7 +1054,7 @@
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
           const expanded = await Promise.resolve(hooks.onNodeExpand(node));
-          if (expanded) return;
+          if (expanded || expanded === false) return;
           if (!fixedView && (node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory')) {
             const classQuery = String(node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel || '').trim();
             if (classQuery) {
@@ -1218,9 +1149,6 @@
               graphDataOptions.showAllLabels = parentBridge.getShowLabels();
             }
           }
-        }
-        if (request.queryType === 'disease_class') {
-          graphDataOptions.synthesizeDiseaseClasses = false;
         }
         await renderElements(payload.elements || [], request, {
           sourceLabel: 'query',
