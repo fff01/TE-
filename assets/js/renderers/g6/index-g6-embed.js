@@ -53,6 +53,14 @@
     return false;
   }
 
+  function pushNodeExpand(node) {
+    const host = getHost();
+    if (host && typeof host.onNodeExpand === 'function') {
+      return host.onNodeExpand(node || null);
+    }
+    return false;
+  }
+
   function pushReady() {
     const host = getHost();
     if (host && typeof host.onReady === 'function') host.onReady();
@@ -86,6 +94,7 @@
     setMode: pushMode,
     onSelection: pushSelection,
     onDiseaseClassClick: pushDiseaseClassClick,
+    onNodeExpand: pushNodeExpand,
     onReady: pushReady,
   });
 

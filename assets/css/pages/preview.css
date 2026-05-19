@@ -198,6 +198,65 @@
           text-transform: uppercase;
         }
 
+        .graph-legend-tabs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 6px;
+          margin-bottom: 12px;
+          padding: 4px;
+          border: 1px solid #dbe5f2;
+          border-radius: 999px;
+          background: #f5f8fc;
+        }
+
+        .graph-legend-tab {
+          min-height: 30px;
+          border: 0;
+          border-radius: 999px;
+          background: transparent;
+          color: #64748b;
+          font-size: 12px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .graph-legend-tab.is-active {
+          background: #ffffff;
+          color: #1d4ed8;
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+        }
+
+        .graph-relation-controls {
+          display: grid;
+          grid-template-columns: 1fr 76px;
+          gap: 10px;
+          align-items: center;
+          margin: 0 0 12px;
+          padding: 10px 0 12px;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .graph-relation-controls[hidden] {
+          display: none !important;
+        }
+
+        .graph-relation-min-pmids-label {
+          color: #475569;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .graph-relation-min-pmids {
+          width: 76px;
+          min-height: 34px;
+          border: 1px solid #d8e0ea;
+          border-radius: 8px;
+          padding: 0 8px;
+          color: #243b61;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
         .graph-legend-list {
           display: flex;
           flex-direction: column;
@@ -261,6 +320,17 @@
           flex: 0 0 auto;
         }
 
+        .graph-relation-line {
+          width: 28px;
+          height: 0;
+          border-top: 3px solid var(--legend-color, #94a3b8);
+          flex: 0 0 auto;
+        }
+
+        .graph-relation-line.is-dashed {
+          border-top-style: dashed;
+        }
+
         .graph-legend-text {
           min-width: 0;
           line-height: 1.2;
@@ -270,6 +340,16 @@
         .focus-legacy,
         body.tekg-g6-preview-ready .non-key-legacy {
           display: none !important;
+        }
+
+        .expand-mode {
+          border-bottom: 3px solid #cbd5e1 !important;
+        }
+
+        .expand-mode.is-active {
+          border-bottom-color: #2563eb !important;
+          color: #1d4ed8;
+          background: #eff6ff;
         }
 
         .preview-fullscreen-btn {

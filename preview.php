@@ -46,11 +46,7 @@ $previewConfig = [
               <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
                 <span id="focus-view-text">Focus mode: Global</span>
               </button>
-              <div class="stepper-control" id="key-node-level-control">
-                <button id="decrease-key-node-level" type="button" aria-label="Decrease key-node level">-</button>
-                <span id="key-node-level-text">Key-node level: 1</span>
-                <button id="increase-key-node-level" type="button" aria-label="Increase key-node level">+</button>
-              </div>
+              <button id="toggle-expand-mode" class="expand-mode" type="button" aria-pressed="false"><span id="expand-mode-text">Expand mode: Off</span></button>
               <button id="toggle-non-key-nodes" class="non-key-legacy" type="button" style="display:none">
                 <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
               </button>
@@ -73,7 +69,15 @@ $previewConfig = [
                 </div>
               </div>
               <div id="graph-type-legend" class="graph-legend-panel" aria-label="Entity legend" aria-hidden="true" hidden>
+                <div class="graph-legend-tabs" role="tablist" aria-label="Graph legend mode">
+                  <button id="graph-legend-entity-tab" class="graph-legend-tab is-active" type="button" data-legend-mode="entity" aria-pressed="true">Entity</button>
+                  <button id="graph-legend-relation-tab" class="graph-legend-tab" type="button" data-legend-mode="relation" aria-pressed="false">Relation</button>
+                </div>
                 <div id="graph-legend-title" class="graph-legend-title">Entity Legend</div>
+                <div id="graph-relation-controls" class="graph-relation-controls" hidden>
+                  <label class="graph-relation-min-pmids-label" for="graph-relation-min-pmids">Min PMID</label>
+                  <input id="graph-relation-min-pmids" class="graph-relation-min-pmids" type="number" min="0" max="99" step="1" value="0">
+                </div>
                 <div id="graph-legend-list" class="graph-legend-list"></div>
               </div>
             </div>

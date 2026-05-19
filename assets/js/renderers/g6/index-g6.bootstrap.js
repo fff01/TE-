@@ -21,9 +21,8 @@
     backText: document.getElementById('back-text'),
     resetBtn: document.getElementById('reset-graph'),
     resetText: document.getElementById('reset-text'),
-    levelMinus: document.getElementById('decrease-key-node-level'),
-    levelPlus: document.getElementById('increase-key-node-level'),
-    levelText: document.getElementById('key-node-level-text'),
+    expandModeBtn: document.getElementById('toggle-expand-mode'),
+    expandModeText: document.getElementById('expand-mode-text'),
     detail: document.getElementById('node-details'),
     treeSurface: document.getElementById('g6-default-tree-surface'),
     dynamicSurface: document.getElementById('g6-dynamic-surface'),
@@ -32,6 +31,9 @@
     graphLegend: document.getElementById('graph-type-legend'),
     graphLegendTitle: document.getElementById('graph-legend-title'),
     graphLegendList: document.getElementById('graph-legend-list'),
+    graphLegendTabs: document.querySelector('.graph-legend-tabs'),
+    graphRelationControls: document.getElementById('graph-relation-controls'),
+    relationMinPmidsInput: document.getElementById('graph-relation-min-pmids'),
     main: document.querySelector('.main'),
   };
 
@@ -51,7 +53,8 @@
       backTo: (label) => `Back to ${label}`,
       backToTree: 'Back to tree',
       reset: 'Reset',
-      keyNodeLevel: (level) => `Key-node level: ${level}`,
+      expandModeOn: 'Expand mode: On',
+      expandModeOff: 'Expand mode: Off',
       treeDetail:
         '<strong>No node selected</strong>Click a TE node to inspect it, then click again to enter the dynamic graph.',
       loadingDetail: (query) => buildLoadingDetailHtml(`Preparing the dynamic graph for ${escapeHtml(query)}.`),
@@ -70,9 +73,15 @@
   let currentSelectedNode = null;
   let currentAnswerGraphElements = [];
   let currentQueryGraphElements = [];
+  let currentRelationLegendMeta = [];
   let graphHistory = [];
   let dynamicFrame = null;
   let dynamicBridgePromise = null;
+  let activeLegendMode = 'entity';
+  let relationLegendState = {};
+  let relationMinPmids = 0;
+  let expandModeEnabled = false;
+  let expandedNodeKeys = new Set();
 
   window.currentLang = 'en';
   window.fixedView = false;
@@ -202,19 +211,93 @@
     return { ...ensureVisibleTypeState() };
   }
 
+  function ensureRelationLegendState() {
+    const next = relationLegendState && typeof relationLegendState === 'object'
+      ? { ...relationLegendState }
+      : {};
+    for (const item of currentRelationLegendMeta) {
+      const relationType = String(item.relationType || '').trim();
+      if (relationType && typeof next[relationType] !== 'boolean') next[relationType] = true;
+    }
+    relationLegendState = next;
+    return relationLegendState;
+  }
+
+  function getVisibleRelationPayload() {
+    return { ...ensureRelationLegendState() };
+  }
+
   function buildCurrentGraphDataOptions(extra = {}) {
     return Object.assign({
       showAllLabels: window.showLabels,
       visibleTypes: getVisibleTypePayload(),
+      visibleRelations: getVisibleRelationPayload(),
+      minRelationPmids: relationMinPmids,
     }, extra || {});
+  }
+
+  function relationStyleFallback(relationType) {
+    const colors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#ea580c', '#0891b2', '#be123c', '#4f46e5'];
+    const text = String(relationType || 'RELATION');
+    let hash = 0;
+    for (let index = 0; index < text.length; index += 1) {
+      hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+    }
+    return {
+      color: colors[Math.abs(hash) % colors.length],
+      dashed: /CLASSIFICATION|CATEGORY|TAXONOMY|SYNTHETIC/i.test(text),
+    };
+  }
+
+  function mergeRelationLegendMeta(left = [], right = []) {
+    const merged = new Map();
+    for (const item of [...(left || []), ...(right || [])]) {
+      const relationType = String(item && item.relationType || '').trim();
+      if (!relationType) continue;
+      if (!merged.has(relationType)) merged.set(relationType, item);
+    }
+    return [...merged.values()];
   }
 
   function renderGraphLegend() {
     const t = textSet();
+    const isRelationMode = activeLegendMode === 'relation';
     if (els.graphLegendTitle) {
-      els.graphLegendTitle.textContent = t.legendTitle || 'Entity Legend';
+      els.graphLegendTitle.textContent = isRelationMode ? 'Relation Legend' : (t.legendTitle || 'Entity Legend');
+    }
+    if (els.graphRelationControls) {
+      els.graphRelationControls.hidden = !isRelationMode;
+    }
+    if (els.graphLegendTabs) {
+      els.graphLegendTabs.querySelectorAll('[data-legend-mode]').forEach((button) => {
+        const mode = String(button.dataset.legendMode || 'entity');
+        const active = mode === activeLegendMode;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
     }
     if (!els.graphLegendList) return;
+
+    if (isRelationMode) {
+      const visibleMap = ensureRelationLegendState();
+      const items = currentRelationLegendMeta;
+      els.graphLegendList.innerHTML = items.length ? items.map((item) => {
+        const relationType = String(item.relationType || '').trim();
+        const style = item.color ? item : relationStyleFallback(relationType);
+        const safeType = escapeHtml(relationType);
+        const safeColor = escapeHtml(style.color || '#94a3b8');
+        const checked = visibleMap[relationType] !== false ? ' checked' : '';
+        const dashedClass = style.dashed ? ' is-dashed' : '';
+        return [
+          '<div class="graph-legend-item">',
+          `  <input class="graph-legend-check" type="checkbox" data-relation="${safeType}" aria-label="${safeType}"${checked}>`,
+          `  <span class="graph-relation-line${dashedClass}" style="--legend-color:${safeColor};"></span>`,
+          `  <span class="graph-legend-text">${safeType}</span>`,
+          '</div>',
+        ].join('');
+      }).join('') : '<div class="graph-legend-empty">No relation types in the visible graph.</div>';
+      return;
+    }
 
     const visibleMap = ensureVisibleTypeState();
     const items = getLegendTypeMeta();
@@ -281,7 +364,9 @@
       treeVariant: currentTreeVariant,
       fixedView: !!window.fixedView,
       showLabels: !!window.showLabels,
-      keyNodeLevel: window.currentKeyNodeLevel,
+      expandModeEnabled,
+      relationMinPmids,
+      visibleRelations: getVisibleRelationPayload(),
       selectedNode: currentSelectedNode,
       currentElements,
       lang: window.currentLang,
@@ -312,16 +397,21 @@
     return JSON.parse(JSON.stringify(Array.isArray(elements) ? elements : []));
   }
 
-  function filterElementsByVisibleTypes(elements) {
+  function filterElementsForLegend(elements) {
     const source = cloneAnswerElements(elements);
     const visibleMap = getVisibleTypePayload();
+    const visibleRelations = getVisibleRelationPayload();
+    const minPmids = Math.max(0, Number(relationMinPmids) || 0);
     const visibleNodeIds = new Set();
+    const connectedNodeIds = new Set();
     const filteredNodes = [];
     const filteredEdges = [];
+    let anchorNode = null;
 
     for (const item of source) {
       const data = item && item.data ? item.data : null;
       if (!data || data.source || data.target) continue;
+      if (!anchorNode) anchorNode = item;
       const nodeType = String(data.type || 'TE').trim() || 'TE';
       if (visibleMap[nodeType] === false) continue;
       filteredNodes.push(item);
@@ -332,16 +422,28 @@
       const data = item && item.data ? item.data : null;
       if (!data || !data.source || !data.target) continue;
       if (!visibleNodeIds.has(String(data.source || '')) || !visibleNodeIds.has(String(data.target || ''))) continue;
+      const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
+      const pmids = Array.isArray(data.pmids) ? data.pmids : [];
+      if (visibleRelations[relationType] === false) continue;
+      if (pmids.length < minPmids) continue;
       filteredEdges.push(item);
+      connectedNodeIds.add(String(data.source || ''));
+      connectedNodeIds.add(String(data.target || ''));
     }
 
-    return [...filteredNodes, ...filteredEdges];
+    const anchorId = String(anchorNode?.data?.id || '');
+    const connectedNodes = filteredNodes.filter((item) => {
+      const id = String(item?.data?.id || '');
+      return id === anchorId || connectedNodeIds.has(id);
+    });
+
+    return [...connectedNodes, ...filteredEdges];
   }
 
   async function renderDynamicElementsFromCache(elements, options = {}) {
     const source = options && options.source === 'answer' ? 'answer' : 'query';
     const request = normalizeGraphRequest(options && options.request ? options.request : buildCurrentGraphRequest());
-    const renderElements = filterElementsByVisibleTypes(elements);
+    const renderElements = filterElementsForLegend(elements);
 
     currentSelectedNode = null;
     showDynamicSurface();
@@ -377,11 +479,17 @@
               : {}
           );
 
-      await bridge.renderElements(renderElements, request, {
+      const rendered = await bridge.renderElements(renderElements, request, {
         sourceLabel: source === 'answer' ? 'qa' : 'query',
         skipInitialStatus: true,
         graphDataOptions,
       });
+      currentRelationLegendMeta = mergeRelationLegendMeta(
+        currentRelationLegendMeta,
+        Array.isArray(rendered && rendered.relationLegendMeta) ? rendered.relationLegendMeta : []
+      );
+      ensureRelationLegendState();
+      renderGraphLegend();
 
       notifyStateChange();
       return true;
@@ -405,19 +513,21 @@
         state.query || '',
         state.queryType || '',
         state.classQuery || '',
-        String(state.keyNodeLevel || 1),
         state.fixedView ? '1' : '0',
         state.showLabels ? '1' : '0',
+        state.expandModeEnabled ? '1' : '0',
+        String(state.relationMinPmids || 0),
       ].join('|');
     }
     if (state.kind === 'answer') {
       return [
         'answer',
         state.query || '',
-        String(state.keyNodeLevel || 1),
         state.fixedView ? '1' : '0',
         state.showLabels ? '1' : '0',
         String((state.elements || []).length),
+        state.expandModeEnabled ? '1' : '0',
+        String(state.relationMinPmids || 0),
       ].join('|');
     }
     return 'unknown';
@@ -440,10 +550,11 @@
       return {
         kind: 'answer',
         query: currentGraphQuery,
-        keyNodeLevel: window.currentKeyNodeLevel,
         fixedView: !!window.fixedView,
         showLabels: !!window.showLabels,
         elements: cloneAnswerElements(currentAnswerGraphElements),
+        expandModeEnabled,
+        relationMinPmids,
       };
     }
 
@@ -452,9 +563,10 @@
       query: currentGraphQuery,
       queryType: currentGraphQueryType,
       classQuery: currentGraphClassQuery,
-      keyNodeLevel: window.currentKeyNodeLevel,
       fixedView: !!window.fixedView,
       showLabels: !!window.showLabels,
+      expandModeEnabled,
+      relationMinPmids,
     };
   }
 
@@ -631,10 +743,11 @@
     if (els.fixedText) els.fixedText.textContent = window.fixedView ? t.fixedOn : t.fixedOff;
     if (els.backText) els.backText.textContent = t.back || 'Back';
     if (els.resetText) els.resetText.textContent = t.reset;
-    if (els.levelText) els.levelText.textContent = t.keyNodeLevel(window.currentKeyNodeLevel);
-    if (els.graphLegendTitle) els.graphLegendTitle.textContent = t.legendTitle || 'Entity Legend';
-    if (els.levelMinus) els.levelMinus.disabled = window.currentKeyNodeLevel <= 1;
-    if (els.levelPlus) els.levelPlus.disabled = window.currentKeyNodeLevel >= 10;
+    if (els.expandModeText) els.expandModeText.textContent = expandModeEnabled ? t.expandModeOn : t.expandModeOff;
+    if (els.expandModeBtn) {
+      els.expandModeBtn.classList.toggle('is-active', expandModeEnabled);
+      els.expandModeBtn.setAttribute('aria-pressed', expandModeEnabled ? 'true' : 'false');
+    }
     updateBackButton();
   }
 
@@ -830,7 +943,7 @@
         throw new Error('G6 embed bridge cannot render QA elements');
       }
 
-      await bridge.renderElements(filterElementsByVisibleTypes(currentAnswerGraphElements), { query: currentGraphQuery }, {
+      const rendered = await bridge.renderElements(filterElementsForLegend(currentAnswerGraphElements), { query: currentGraphQuery }, {
         sourceLabel: 'qa',
         graphDataOptions: buildCurrentGraphDataOptions({
           includePaperNodes: true,
@@ -839,6 +952,12 @@
           forceAnchorLabel: true,
         }),
       });
+      currentRelationLegendMeta = mergeRelationLegendMeta(
+        currentRelationLegendMeta,
+        Array.isArray(rendered && rendered.relationLegendMeta) ? rendered.relationLegendMeta : []
+      );
+      ensureRelationLegendState();
+      renderGraphLegend();
 
       notifyStateChange();
       return true;
@@ -1083,7 +1202,6 @@
     if (options.pushHistory !== false) {
       pushCurrentStateToHistory();
     }
-    window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(preset.key_node_level) || 1));
     window.fixedView = preset.fixed_view !== false;
     window.showLabels = true;
     updateButtons();
@@ -1106,9 +1224,11 @@
     }
 
     if (state.kind === 'query') {
-      window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(state.keyNodeLevel) || 1));
       window.fixedView = !!state.fixedView;
       window.showLabels = !!state.showLabels;
+      expandModeEnabled = !!state.expandModeEnabled;
+      relationMinPmids = Math.max(0, Number(state.relationMinPmids) || 0);
+      if (els.relationMinPmidsInput) els.relationMinPmidsInput.value = String(relationMinPmids);
       updateButtons();
       return loadDynamicGraph({
         query: state.query,
@@ -1118,9 +1238,11 @@
     }
 
     if (state.kind === 'answer') {
-      window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(state.keyNodeLevel) || 1));
       window.fixedView = !!state.fixedView;
       window.showLabels = !!state.showLabels;
+      expandModeEnabled = !!state.expandModeEnabled;
+      relationMinPmids = Math.max(0, Number(state.relationMinPmids) || 0);
+      if (els.relationMinPmidsInput) els.relationMinPmidsInput.value = String(relationMinPmids);
       updateButtons();
       return renderAnswerGraphElements(state.elements || [], state.query || 'LINE1', { pushHistory: false });
     }
@@ -1244,6 +1366,9 @@
     currentSelectedNode = null;
     currentAnswerGraphElements = [];
     currentQueryGraphElements = [];
+    currentRelationLegendMeta = [];
+    relationLegendState = {};
+    expandedNodeKeys = new Set();
     showDynamicSurface();
     if (els.searchInput) els.searchInput.value = q;
     updateButtons();
@@ -1267,7 +1392,14 @@
         graphDataOptions: buildCurrentGraphDataOptions(),
       });
       currentQueryGraphElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
-      if (Object.values(getVisibleTypePayload()).some((isVisible) => isVisible === false)) {
+      currentRelationLegendMeta = mergeRelationLegendMeta([], Array.isArray(payload && payload.relationLegendMeta) ? payload.relationLegendMeta : []);
+      ensureRelationLegendState();
+      renderGraphLegend();
+      if (
+        Object.values(getVisibleTypePayload()).some((isVisible) => isVisible === false) ||
+        Object.values(getVisibleRelationPayload()).some((isVisible) => isVisible === false) ||
+        relationMinPmids > 0
+      ) {
         await renderDynamicElementsFromCache(currentQueryGraphElements, {
           source: 'query',
           request,
@@ -1275,6 +1407,58 @@
       } else {
         notifyStateChange();
       }
+      return true;
+    } finally {
+      setGraphLoading(false);
+    }
+  }
+
+  function mergeGraphElements(baseElements, nextElements) {
+    const merged = new Map();
+    for (const item of [...(baseElements || []), ...(nextElements || [])]) {
+      const data = item && item.data ? item.data : null;
+      if (!data) continue;
+      const key = data.source && data.target
+        ? `edge:${data.id || `${data.source}__${data.relationType || data.relation || 'RELATION'}__${data.target}`}`
+        : `node:${data.id || data.label || data.rawLabel || ''}`;
+      if (!key.endsWith(':')) merged.set(key, item);
+    }
+    return [...merged.values()];
+  }
+
+  async function expandSelectedNode(node) {
+    if (currentMode !== 'dynamic' || currentGraphSource !== 'query' || !expandModeEnabled) return false;
+    const query = String(node?.queryLabel || node?.rawLabel || node?.displayLabel || '').trim();
+    if (!query) return false;
+    const expandKey = String(node?.id || query);
+    if (expandedNodeKeys.has(expandKey)) return false;
+
+    setGraphLoading(true, textSet().loadingOverlay(query));
+    try {
+      const frame = ensureDynamicFrame(buildCurrentGraphRequest());
+      if (!dynamicBridgePromise) dynamicBridgePromise = waitForEmbedBridge(frame);
+      const bridge = await dynamicBridgePromise;
+      if (!bridge || typeof bridge.loadGraph !== 'function') {
+        throw new Error('G6 embed bridge cannot load graph requests');
+      }
+      const payload = await bridge.loadGraph({ query }, {
+        graphDataOptions: buildCurrentGraphDataOptions(),
+      });
+      const nextElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
+      const beforeCount = currentQueryGraphElements.length;
+      currentQueryGraphElements = mergeGraphElements(currentQueryGraphElements, nextElements);
+      expandedNodeKeys.add(expandKey);
+      if (Array.isArray(payload && payload.relationLegendMeta)) {
+        currentRelationLegendMeta = mergeRelationLegendMeta(currentRelationLegendMeta, payload.relationLegendMeta);
+      }
+      await renderDynamicElementsFromCache(currentQueryGraphElements, {
+        source: 'query',
+        request: buildCurrentGraphRequest(),
+      });
+      setDetail(buildDetail(
+        node.displayLabel || node.rawLabel || query,
+        `Expanded ${query}. Added ${Math.max(0, currentQueryGraphElements.length - beforeCount)} graph elements while keeping ${currentGraphQuery || 'the current center'} active.`
+      ));
       return true;
     } finally {
       setGraphLoading(false);
@@ -1294,12 +1478,50 @@
         const target = event.target;
         if (!(target instanceof HTMLInputElement) || !target.classList.contains('graph-legend-check')) return;
         const type = String(target.dataset.type || '').trim();
-        if (!type) return;
-        ensureVisibleTypeState()[type] = target.checked;
-        persistVisibleTypeState();
+        const relationType = String(target.dataset.relation || '').trim();
+        if (activeLegendMode === 'relation' && relationType) {
+          ensureRelationLegendState()[relationType] = target.checked;
+          persistVisibleTypeState();
+        } else if (type) {
+          ensureVisibleTypeState()[type] = target.checked;
+          persistVisibleTypeState();
+        } else {
+          return;
+        }
         applyLegendTypeFilter().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
+      });
+    }
+
+    if (els.graphLegendTabs) {
+      els.graphLegendTabs.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLButtonElement)) return;
+        const mode = String(target.dataset.legendMode || '').trim();
+        if (!mode || mode === activeLegendMode) return;
+        activeLegendMode = mode === 'relation' ? 'relation' : 'entity';
+        updateButtons();
+        renderGraphLegend();
+      });
+    }
+
+    if (els.relationMinPmidsInput) {
+      els.relationMinPmidsInput.addEventListener('change', () => {
+        const nextValue = Math.max(0, Number.parseInt(els.relationMinPmidsInput.value || '0', 10) || 0);
+        relationMinPmids = nextValue;
+        updateButtons();
+        applyLegendTypeFilter().catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+    }
+
+    if (els.expandModeBtn) {
+      els.expandModeBtn.addEventListener('click', () => {
+        expandModeEnabled = !expandModeEnabled;
+        updateButtons();
+        notifyStateChange();
       });
     }
 
@@ -1359,34 +1581,6 @@
         loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
-      });
-    }
-
-    if (els.levelMinus) {
-      els.levelMinus.addEventListener('click', () => {
-        if (window.currentKeyNodeLevel <= 1) return;
-        window.currentKeyNodeLevel -= 1;
-        updateButtons();
-        notifyStateChange();
-        if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-        }
-      });
-    }
-
-    if (els.levelPlus) {
-      els.levelPlus.addEventListener('click', () => {
-        if (window.currentKeyNodeLevel >= 10) return;
-        window.currentKeyNodeLevel += 1;
-        updateButtons();
-        notifyStateChange();
-        if (currentMode === 'dynamic' && currentGraphQuery) {
-          loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false }).catch((error) => {
-            setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-          });
-        }
       });
     }
 
@@ -1453,6 +1647,12 @@
         classQuery,
       }, { pushHistory: true }).then(() => true);
     },
+    onNodeExpand(node) {
+      return expandSelectedNode(node).catch((error) => {
+        setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        return false;
+      });
+    },
   };
 
   window.__TEKG_LOAD_DYNAMIC_GRAPH = loadDynamicGraph;
@@ -1479,12 +1679,7 @@
     reset() {
       return renderDefaultTree();
     },
-    setKeyNodeLevel(level) {
-      window.currentKeyNodeLevel = Math.max(1, Math.min(10, Number(level) || 1));
-      updateButtons();
-      if (currentMode === 'dynamic' && currentGraphQuery) {
-        return loadDynamicGraph(buildCurrentGraphRequest(), { pushHistory: false });
-      }
+    setKeyNodeLevel(_level) {
       return Promise.resolve();
     },
     setFixedView(next) {
@@ -1513,7 +1708,7 @@
       return !!window.showLabels;
     },
     getKeyNodeLevel() {
-      return window.currentKeyNodeLevel;
+      return 1;
     },
     getMode() {
       return currentMode;

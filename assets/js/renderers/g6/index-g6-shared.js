@@ -255,6 +255,7 @@
       setMode: typeof options.setMode === 'function' ? options.setMode : noop,
       onSelection: typeof options.onSelection === 'function' ? options.onSelection : noop,
       onDiseaseClassClick: typeof options.onDiseaseClassClick === 'function' ? options.onDiseaseClassClick : noop,
+      onNodeExpand: typeof options.onNodeExpand === 'function' ? options.onNodeExpand : noop,
       onReady: typeof options.onReady === 'function' ? options.onReady : noop,
       setQueryUi: typeof options.setQueryUi === 'function' ? options.setQueryUi : noop,
       syncRouteState: typeof options.syncRouteState === 'function' ? options.syncRouteState : noop,
@@ -632,6 +633,39 @@
       return 'Not listed.';
     }
 
+    function hashString(input) {
+      let hash = 0;
+      const text = String(input || '');
+      for (let index = 0; index < text.length; index += 1) {
+        hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+      }
+      return Math.abs(hash);
+    }
+
+    const RELATION_STYLE_COLORS = [
+      '#2563eb',
+      '#dc2626',
+      '#059669',
+      '#7c3aed',
+      '#ea580c',
+      '#0891b2',
+      '#be123c',
+      '#4f46e5',
+      '#65a30d',
+      '#9333ea',
+    ];
+
+    function relationStyleForType(relationType) {
+      const type = String(relationType || 'RELATION').trim() || 'RELATION';
+      const index = hashString(type) % RELATION_STYLE_COLORS.length;
+      const dashed = /CLASSIFICATION|CATEGORY|TAXONOMY|SYNTHETIC/i.test(type);
+      return {
+        color: RELATION_STYLE_COLORS[index],
+        dashed,
+        lineDash: dashed ? [8, 6] : [],
+      };
+    }
+
     function buildEdgeDetailHtml(edge, nodes) {
       const source = resolveNode(edge?.source, nodes);
       const target = resolveNode(edge?.target, nodes);
@@ -657,6 +691,10 @@
       const visibleTypes = options.visibleTypes && typeof options.visibleTypes === 'object'
         ? options.visibleTypes
         : null;
+      const visibleRelations = options.visibleRelations && typeof options.visibleRelations === 'object'
+        ? options.visibleRelations
+        : null;
+      const minRelationPmids = Math.max(0, Number(options.minRelationPmids) || 0);
       const nodes = [];
       const edges = [];
       const allowedNodeIds = new Set();
@@ -727,14 +765,18 @@
         const data = item && item.data ? item.data : null;
         if (!data || !data.source || !data.target) continue;
         if (!allowedNodeIds.has(data.source) || !allowedNodeIds.has(data.target)) continue;
+        const relationType = String(data.relationType || data.relation || 'RELATION').trim() || 'RELATION';
+        const pmids = Array.isArray(data.pmids) ? data.pmids : [];
+        if (visibleRelations && visibleRelations[relationType] === false) continue;
+        if (pmids.length < minRelationPmids) continue;
         baseEdges.push({
-          id: String(data.id || `${data.source}__${data.relationType || data.relation || 'relation'}__${data.target}`),
+          id: String(data.id || `${data.source}__${relationType}__${data.target}`),
           source: data.source,
           target: data.target,
           relation: String(data.relation || '').trim(),
-          relationType: String(data.relationType || '').trim(),
+          relationType,
           evidence: String(data.evidence || '').trim(),
-          pmids: Array.isArray(data.pmids) ? data.pmids : [],
+          pmids,
         });
       }
 
@@ -819,6 +861,7 @@
 
       for (const edge of baseEdges) {
         if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) continue;
+        const relationStyle = relationStyleForType(edge.relationType);
         edges.push({
           id: edge.id,
           source: edge.source,
@@ -827,6 +870,8 @@
           relationType: edge.relationType,
           evidence: edge.evidence,
           pmids: edge.pmids,
+          strokeColor: relationStyle.color,
+          lineDash: relationStyle.lineDash,
         });
       }
 
@@ -843,12 +888,21 @@
               relationType: 'DISEASE_CLASSIFICATION',
               evidence: '',
               pmids: [],
+              strokeColor: relationStyleForType('DISEASE_CLASSIFICATION').color,
+              lineDash: relationStyleForType('DISEASE_CLASSIFICATION').lineDash,
             });
           }
         }
       }
 
-      return { nodes: visibleNodes, edges };
+      const relationLegendMeta = [...new Set(edges.map((edge) => edge.relationType).filter(Boolean))]
+        .sort((left, right) => left.localeCompare(right))
+        .map((relationType) => ({
+          relationType,
+          ...relationStyleForType(relationType),
+        }));
+
+      return { nodes: visibleNodes, edges, relationLegendMeta };
     }
 
     function getContainerMetrics() {
@@ -986,12 +1040,25 @@
           edge: {
             style: {
               stroke: (edge) => {
+                if (edge.strokeColor) return edge.strokeColor;
                 const source = resolveNode(edge.source, data.nodes);
                 const target = resolveNode(edge.target, data.nodes);
                 const alpha = edge.synthetic ? 0.62 : 0.5;
                 return mixEdgeColor(source?.nodeType, target?.nodeType, alpha);
               },
               lineWidth: (edge) => (edge.synthetic ? 1.9 : 1.5),
+              lineDash: (edge) => edge.lineDash || [],
+              labelText: (edge) => {
+                const relationType = String(edge.relationType || '').trim();
+                const pmidCount = Array.isArray(edge.pmids) ? edge.pmids.length : 0;
+                if (!relationType && pmidCount <= 0) return '';
+                return pmidCount > 0 ? `${relationType} (${pmidCount})` : relationType;
+              },
+              labelFontSize: 9,
+              labelFill: '#334155',
+              labelBackground: true,
+              labelBackgroundFill: 'rgba(255,255,255,0.82)',
+              labelBackgroundRadius: 4,
             },
           },
           layout: {
@@ -1055,6 +1122,8 @@
           if (!node) return;
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
+          const expanded = await Promise.resolve(hooks.onNodeExpand(node));
+          if (expanded) return;
           if (!fixedView && (node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory')) {
             const classQuery = String(node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel || '').trim();
             if (classQuery) {
@@ -1095,9 +1164,9 @@
         hooks.setStatus(
           sourceLabel === 'qa'
             ? `Loaded ${data.nodes.length} nodes and ${data.edges.length} edges from the current QA answer.`
-            : `Loaded ${data.nodes.length} nodes and ${data.edges.length} edges for ${query} at key-node level ${currentKeyNodeLevel}.`,
+            : `Loaded ${data.nodes.length} nodes and ${data.edges.length} edges for ${query}.`,
         );
-        return { elements: payloadElements };
+        return { elements: payloadElements, relationLegendMeta: data.relationLegendMeta };
       } catch (error) {
         hooks.setStatus(`Failed: ${error && error.message ? error.message : 'unknown error'}`);
         console.error('G6 graph failed:', error);
