@@ -1604,10 +1604,10 @@
       const frame = ensureDynamicFrame(buildCurrentGraphRequest());
       if (!dynamicBridgePromise) dynamicBridgePromise = waitForEmbedBridge(frame);
       const bridge = await dynamicBridgePromise;
-      if (!bridge || typeof bridge.loadGraph !== 'function') {
-        throw new Error('G6 embed bridge cannot load graph requests');
+      if (!bridge || typeof bridge.expandGraph !== 'function') {
+        throw new Error('G6 embed bridge cannot expand graph requests');
       }
-      const payload = await bridge.loadGraph({ query }, {
+      const payload = await bridge.expandGraph({ query }, {
         graphDataOptions: buildCurrentGraphDataOptions(),
       });
       const nextElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);
@@ -1622,6 +1622,9 @@
         source: 'query',
         request: buildCurrentGraphRequest(),
       });
+      clearLegendFilterPending();
+      renderGraphLegend();
+      notifyStateChange();
       setDetail(buildDetail(
         node.displayLabel || node.rawLabel || query,
         `Expanded ${query}. Added ${Math.max(0, currentQueryGraphElements.length - beforeCount)} graph elements while keeping ${currentGraphQuery || 'the current center'} active.`

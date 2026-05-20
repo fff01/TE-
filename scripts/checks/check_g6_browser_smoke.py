@@ -1,0 +1,148 @@
+from __future__ import annotations
+
+import sys
+
+from harness_lib import app_url, fail, ok, require, run_check
+
+
+def evidence(
+    loader_state: dict | None = None,
+    graph_state: dict | None = None,
+    frame_state: dict | None = None,
+    console_errors: list[str] | None = None,
+    page_errors: list[str] | None = None,
+    failed_requests: list[str] | None = None,
+) -> str:
+    parts = []
+    if loader_state is not None:
+        parts.append(f"loader={loader_state}")
+    if graph_state is not None:
+        parts.append(f"surface={graph_state}")
+    if frame_state is not None:
+        parts.append(f"frame={frame_state}")
+    if page_errors:
+        parts.append("page_errors=" + " | ".join(page_errors[:5]))
+    if console_errors:
+        parts.append("console_errors=" + " | ".join(console_errors[:5]))
+    if failed_requests:
+        parts.append("failed_requests=" + " | ".join(failed_requests[:5]))
+    return "\n".join(parts) if parts else "no extra evidence captured"
+
+
+def main() -> None:
+    try:
+        from playwright.sync_api import Error as PlaywrightError
+        from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        fail(
+            "Playwright is not installed. Run:\n"
+            "  pip install -r requirements-dev.txt\n"
+            "  python -m playwright install chromium"
+        )
+
+    url = app_url("preview.php?q=LINE1")
+    console_errors: list[str] = []
+    page_errors: list[str] = []
+    failed_requests: list[str] = []
+
+    with sync_playwright() as p:
+        try:
+            browser = p.chromium.launch(headless=True)
+        except PlaywrightError as exc:
+            fail(
+                "Unable to launch Chromium. Run:\n"
+                "  python -m playwright install chromium\n"
+                f"Original error: {exc}"
+            )
+
+        page = browser.new_page(viewport={"width": 1440, "height": 960})
+        page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+        page.on("pageerror", lambda exc: page_errors.append(str(exc)))
+        page.on("requestfailed", lambda request: failed_requests.append(f"{request.url} :: {request.failure}"))
+
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_selector("#g6-dynamic-surface iframe", timeout=30000)
+            frame_locator = page.frame_locator("#g6-dynamic-surface iframe")
+            frame_locator.locator("#container").wait_for(timeout=30000)
+            frame_locator.locator("canvas, svg, #container").first.wait_for(timeout=30000)
+            page.wait_for_timeout(2500)
+
+            loader_state = page.locator("#graph-preloader").evaluate(
+                """el => ({
+                    hidden: el ? el.getAttribute('aria-hidden') : null,
+                    cls: el ? el.className : null,
+                    text: el ? el.textContent : null
+                })"""
+            )
+            graph_state = page.locator("#g6-dynamic-surface").evaluate(
+                """el => {
+                    const rect = el.getBoundingClientRect();
+                    const iframe = el.querySelector('iframe');
+                    return {
+                        width: rect.width,
+                        height: rect.height,
+                        iframe: !!iframe,
+                        text: el.textContent || ''
+                    };
+                }"""
+            )
+            frame_state = frame_locator.locator("#container").evaluate(
+                """el => {
+                    const rect = el.getBoundingClientRect();
+                    return {
+                        width: rect.width,
+                        height: rect.height,
+                        canvases: el.querySelectorAll('canvas').length,
+                        svgs: el.querySelectorAll('svg').length,
+                        children: el.children.length,
+                        text: el.textContent || ''
+                    };
+                }"""
+            )
+
+            captured = evidence(loader_state, graph_state, frame_state, console_errors, page_errors, failed_requests)
+            require(graph_state["iframe"], "G6 dynamic surface has no iframe\n" + captured)
+            require(graph_state["width"] > 100 and graph_state["height"] > 100, "G6 dynamic surface has invalid size\n" + captured)
+            require(frame_state["width"] > 100 and frame_state["height"] > 100, "G6 iframe container has invalid size\n" + captured)
+            require(
+                frame_state["canvases"] > 0 or frame_state["svgs"] > 0 or frame_state["children"] > 0,
+                "G6 iframe container appears blank\n" + captured,
+            )
+            require(loader_state["hidden"] == "true" or "is-visible" not in str(loader_state["cls"]), "G6 loader still visible\n" + captured)
+
+            page.locator("#toggle-expand-mode").click(timeout=15000)
+            page.wait_for_timeout(1000)
+            post_toggle = page.locator("#g6-dynamic-surface").evaluate(
+                """el => {
+                    const rect = el.getBoundingClientRect();
+                    const iframe = el.querySelector('iframe');
+                    return { width: rect.width, height: rect.height, iframe: !!iframe };
+                }"""
+            )
+            require(post_toggle["iframe"], f"Expand mode removed the G6 iframe: {post_toggle}")
+            require(post_toggle["width"] > 100 and post_toggle["height"] > 100, f"Expand mode left invalid graph size: {post_toggle}")
+        except PlaywrightTimeoutError as exc:
+            fail(f"G6 browser smoke timed out at {url}: {exc}")
+        except PlaywrightError as exc:
+            fail(f"G6 browser smoke failed at {url}: {exc}")
+        finally:
+            browser.close()
+
+    reference_errors = [message for message in console_errors + page_errors if "ReferenceError" in message]
+    require(not reference_errors, "ReferenceError detected:\n" + "\n".join(reference_errors[:10]))
+    require(not page_errors, "Page errors detected:\n" + "\n".join(page_errors[:10]))
+    if failed_requests:
+        print("[WARN] Failed browser requests:")
+        for entry in failed_requests[:10]:
+            print(f"  {entry}", file=sys.stderr)
+    if console_errors:
+        print("[WARN] Console errors:")
+        for entry in console_errors[:10]:
+            print(f"  {entry}", file=sys.stderr)
+    ok(f"G6 browser smoke passed for {url}")
+
+
+if __name__ == "__main__":
+    run_check(main)

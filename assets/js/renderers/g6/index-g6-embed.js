@@ -105,6 +105,9 @@
     renderElements(elements, requestLike, options = {}) {
       return runner.renderElements(elements, requestLike, options);
     },
+    expandGraph(requestLike, options = {}) {
+      return runner.expandGraph(requestLike, options);
+    },
     setFixedView(next) {
       return runner.setFixedView(next);
     },

@@ -1244,6 +1244,46 @@
       return Promise.resolve(false);
     }
 
+    function mergeCurrentGraphData(nextData) {
+      if (!currentGraphData) {
+        currentGraphData = {
+          nodes: [],
+          edges: [],
+          relationLegendMeta: [],
+        };
+      }
+      const existingNodeIds = new Set((currentGraphData.nodes || []).map((node) => String(node.id || '')));
+      const existingEdgeIds = new Set((currentGraphData.edges || []).map((edge) => String(edge.id || '')));
+      const nextNodes = [];
+      const nextEdges = [];
+
+      for (const node of nextData.nodes || []) {
+        const id = String(node.id || '');
+        if (!id || existingNodeIds.has(id)) continue;
+        existingNodeIds.add(id);
+        nextNodes.push(node);
+      }
+      for (const edge of nextData.edges || []) {
+        const id = String(edge.id || `${edge.source || ''}__${edge.relationType || edge.relation || 'RELATION'}__${edge.target || ''}`);
+        if (!id || existingEdgeIds.has(id)) continue;
+        if (!existingNodeIds.has(String(edge.source || '')) || !existingNodeIds.has(String(edge.target || ''))) continue;
+        existingEdgeIds.add(id);
+        nextEdges.push(edge);
+      }
+
+      currentGraphData.nodes = [...(currentGraphData.nodes || []), ...nextNodes];
+      currentGraphData.edges = [...(currentGraphData.edges || []), ...nextEdges];
+      currentGraphData.relationLegendMeta = [...new Set([
+        ...(currentGraphData.relationLegendMeta || []).map((item) => item.relationType).filter(Boolean),
+        ...(nextData.relationLegendMeta || []).map((item) => item.relationType).filter(Boolean),
+      ])].sort((left, right) => left.localeCompare(right)).map((relationType) => ({
+        relationType,
+        ...relationStyleForType(relationType),
+      }));
+
+      return { nextNodes, nextEdges };
+    }
+
     function getContainerMetrics() {
       const docEl = document.documentElement;
       return {
@@ -1597,6 +1637,50 @@
       }
     }
 
+    async function expandGraph(requestLike, options = {}) {
+      const request = normalizeGraphRequest(requestLike);
+      const query = String(request.query || '').trim();
+      if (!query) return { elements: [], relationLegendMeta: [], addedNodes: 0, addedEdges: 0 };
+
+      const endpoint = new URL(window.__TEKG_PATHS.apiUrl('graph.php'), window.location.origin);
+      endpoint.searchParams.set('q', query);
+      endpoint.searchParams.set('key_level', String(currentKeyNodeLevel));
+      if (request.queryType === 'disease_class') {
+        endpoint.searchParams.set('type', 'disease_class');
+        endpoint.searchParams.set('class', request.classQuery || query);
+      }
+
+      const response = await fetch(endpoint.toString(), {
+        credentials: 'same-origin',
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const payload = await response.json();
+      const graphDataOptions = { ...(options.graphDataOptions || {}) };
+      if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'showAllLabels')) {
+        graphDataOptions.showAllLabels = currentShowAllLabels;
+      }
+      if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'showEdgeLabels')) {
+        graphDataOptions.showEdgeLabels = currentShowEdgeLabels;
+      }
+      if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'allowInspectCard')) {
+        graphDataOptions.allowInspectCard = currentAllowInspectCard;
+      }
+
+      const expandedData = buildGraphData(payload.elements || [], graphDataOptions);
+      const { nextNodes, nextEdges } = mergeCurrentGraphData(expandedData);
+
+      return {
+        ...payload,
+        elements: payload.elements || [],
+        relationLegendMeta: currentGraphData?.relationLegendMeta || expandedData.relationLegendMeta,
+        addedNodes: nextNodes.length,
+        addedEdges: nextEdges.length,
+      };
+    }
+
     function resize() {
       const metrics = getContainerMetrics();
       if ((container.clientWidth || 0) < 25 && metrics.width > 0) {
@@ -1695,6 +1779,7 @@
       init,
       ensureResources,
       loadGraph,
+      expandGraph,
       renderElements,
       resize,
       setFixedView,
