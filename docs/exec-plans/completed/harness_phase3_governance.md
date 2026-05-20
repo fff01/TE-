@@ -75,7 +75,7 @@ python scripts/checks/check_taxonomy_runtime_consistency.py
 - `check_runtime_db_config.py`：通过。
 - `check_expression_paths.py`：通过。
 - `check_taxonomy_runtime_consistency.py`：通过。
-- `check_repository_entropy.py`：warning-only，发现 Python cache、`reference/external_examples/g6-official/.git` 和多个大型数据文件。
+- `check_repository_entropy.py`：warning-only，发现 Python cache、`reference/external_examples/G6/.git` 和多个大型数据文件。
 
 ## 残留风险
 

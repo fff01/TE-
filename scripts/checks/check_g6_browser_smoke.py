@@ -9,6 +9,8 @@ def evidence(
     loader_state: dict | None = None,
     graph_state: dict | None = None,
     frame_state: dict | None = None,
+    legend_state: dict | None = None,
+    detail_state: dict | None = None,
     console_errors: list[str] | None = None,
     page_errors: list[str] | None = None,
     failed_requests: list[str] | None = None,
@@ -20,6 +22,10 @@ def evidence(
         parts.append(f"surface={graph_state}")
     if frame_state is not None:
         parts.append(f"frame={frame_state}")
+    if legend_state is not None:
+        parts.append(f"legend={legend_state}")
+    if detail_state is not None:
+        parts.append(f"detail={detail_state}")
     if page_errors:
         parts.append("page_errors=" + " | ".join(page_errors[:5]))
     if console_errors:
@@ -68,6 +74,16 @@ def main() -> None:
             frame_locator.locator("#container").wait_for(timeout=30000)
             frame_locator.locator("canvas, svg, #container").first.wait_for(timeout=30000)
             page.wait_for_timeout(2500)
+            page.wait_for_function(
+                """() => {
+                    const loader = document.querySelector('#graph-preloader');
+                    return loader && (
+                        loader.getAttribute('aria-hidden') === 'true'
+                        || !loader.classList.contains('is-visible')
+                    );
+                }""",
+                timeout=30000,
+            )
 
             loader_state = page.locator("#graph-preloader").evaluate(
                 """el => ({
@@ -101,8 +117,25 @@ def main() -> None:
                     };
                 }"""
             )
+            legend_state = page.locator("#graph-type-legend").evaluate(
+                """el => {
+                    const list = document.querySelector('#graph-legend-list');
+                    return {
+                        hidden: el ? el.hidden : null,
+                        ariaHidden: el ? el.getAttribute('aria-hidden') : null,
+                        text: list ? list.textContent.trim() : '',
+                        childCount: list ? list.children.length : 0
+                    };
+                }"""
+            )
+            detail_state = page.locator("#node-details").evaluate(
+                """el => ({
+                    text: el ? el.textContent : '',
+                    html: el ? el.innerHTML : ''
+                })"""
+            )
 
-            captured = evidence(loader_state, graph_state, frame_state, console_errors, page_errors, failed_requests)
+            captured = evidence(loader_state, graph_state, frame_state, legend_state, detail_state, console_errors, page_errors, failed_requests)
             require(graph_state["iframe"], "G6 dynamic surface has no iframe\n" + captured)
             require(graph_state["width"] > 100 and graph_state["height"] > 100, "G6 dynamic surface has invalid size\n" + captured)
             require(frame_state["width"] > 100 and frame_state["height"] > 100, "G6 iframe container has invalid size\n" + captured)
@@ -111,6 +144,8 @@ def main() -> None:
                 "G6 iframe container appears blank\n" + captured,
             )
             require(loader_state["hidden"] == "true" or "is-visible" not in str(loader_state["cls"]), "G6 loader still visible\n" + captured)
+            require("Loading legend" not in str(legend_state["text"]), "G6 legend still loading after graph render\n" + captured)
+            require(legend_state["childCount"] > 0, "G6 legend did not render any entries\n" + captured)
 
             page.locator("#toggle-expand-mode").click(timeout=15000)
             page.wait_for_timeout(1000)

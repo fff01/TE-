@@ -379,7 +379,7 @@ reference\frontend-study\te-home-prototype\head.php:
   264:             <a class="proto-control<?= $siteLang === 'zh' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($zhUrl, ENT_QUOTES, 'UTF-8') ?>">中文</a>
   265              <a class="proto-control<?= $siteLang === 'en' ? ' is-active' : '' ?>" href="<?= htmlspecialchars($enUrl, ENT_QUOTES, 'UTF-8') ?>">English</a>
 
-reference\g6-official\packages\site\.dumirc.ts:
+reference\external_examples\G6\packages\site\.dumirc.ts:
    7    locales: [
    8:     { id: 'zh', name: '中文' },
    9      { id: 'en', name: 'English' },
@@ -388,12 +388,12 @@ reference\g6-official\packages\site\.dumirc.ts:
   28:     defaultLanguage: 'zh', // 默认语言
   29      isAntVSite: false, // 是否是 AntV 的大官网
 
-reference\g6-official\packages\site\scripts\sort-doc.ts:
+reference\external_examples\G6\packages\site\scripts\sort-doc.ts:
   118      docs.forEach(([order, name], index) => {
   119:       ['zh', 'en'].forEach((lang) => {
   120          const filename = `${path}/${name}.${lang}.md`;
 
-reference\g6-official\packages\site\src\MarkdownDocumenter.ts:
+reference\external_examples\G6\packages\site\src\MarkdownDocumenter.ts:
   2334              childNode.selfClosingTag &&
   2335:             (childNode.name === 'zh' || childNode.name === 'en')
   2336            ) {

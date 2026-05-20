@@ -91,7 +91,7 @@
 
 ### 已迁移到 `reference/` 的目录
 
-- `reference/g6-official/`
+- `reference/external_examples/G6/`
   - 本地官方 G6 文档 / 示例参考区
 - `reference/archive/`
   - 历史归档内容
@@ -149,7 +149,7 @@
 
 ### C. 参考 / 归档区
 
-- `reference/g6-official/`
+- `reference/external_examples/G6/`
 - `reference/archive/`
 - `reference/latex-report/`
 - `reference/presentation-materials/`
@@ -198,7 +198,7 @@
 
 - 再整理参考资料与历史目录
 - 当前已经完成：
-  - `G6/` -> `reference/g6-official/`
+  - `G6/` -> `reference/external_examples/G6/`
   - `archive/` -> `reference/archive/`
   - `latex/` -> `reference/latex-report/`
   - `展示/` -> `reference/presentation-materials/`

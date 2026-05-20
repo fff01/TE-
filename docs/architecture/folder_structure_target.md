@@ -108,7 +108,7 @@ TE-/
 │   ├── screenshots/
 │   ├── papers/
 │   ├── external_examples/
-│   └── g6-official/
+│   └── G6/
 │
 ├── test/
 ├── archive/

@@ -30,7 +30,7 @@ test
 - `data/raw`
 - `data/processed`
 - `data/dfam`
-- `reference/external_examples/g6-official/.git`
+- `reference/external_examples/G6/.git`
 - `archive/processing_history` 已删除
 
 ## 1. 从版本控制里移除 Python bytecode

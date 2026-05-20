@@ -424,6 +424,8 @@
     els.graphLegend.setAttribute('aria-hidden', shouldShow ? 'false' : 'true');
     if (shouldShow && graphIsLoading) {
       renderGraphLegendLoading();
+    } else if (shouldShow) {
+      renderGraphLegend();
     }
   }
 
@@ -500,8 +502,8 @@
     graphIsLoading = visible === true;
     syncLegendVisibility(currentMode);
     if (!els.graphLoader) return;
-    els.graphLoader.classList.remove('is-visible');
-    els.graphLoader.setAttribute('aria-hidden', 'true');
+    els.graphLoader.classList.toggle('is-visible', graphIsLoading);
+    els.graphLoader.setAttribute('aria-hidden', graphIsLoading ? 'false' : 'true');
     if (els.graphLoaderLabel) {
       els.graphLoaderLabel.textContent = label || 'Loading graph...';
     }
@@ -1763,12 +1765,10 @@
   window.__TEKG_G6_GRAPH_HOST = {
     setDetail(title, description) {
       if (currentMode !== 'dynamic') return;
-      setGraphLoading(false);
       setDetail(buildDetail(title, description));
     },
     setDetailHtml(html) {
       if (currentMode !== 'dynamic') return;
-      setGraphLoading(false);
       setDetail(html || '');
     },
     setStatus(_text) {},
@@ -1804,7 +1804,6 @@
     },
     onReady() {},
     onNodeSelect(node) {
-      setGraphLoading(false);
       currentSelectedNode = node || null;
       notifyStateChange();
     },
