@@ -4,11 +4,24 @@
 
 ## 高优先级
 
+### G6 Expand mode same-label entity disambiguation
+
+- 状态：基础版已解决，见 `completed/g6-expand-same-label-disambiguation.md`。
+- 已完成：Expand 请求携带 `expand_node_id`、`expand_node_type`、`expand_query`；后端按 node id -> type+query -> old q fallback 解析。
+- 已覆盖：`Disease:Aging` vs `Function:Aging`，包括 API direct contract 和 browser smoke。
+- 残留风险：当前样本只覆盖 Aging；更多同名跨类型实体需要扩展 smoke。当前精确定位使用 Neo4j `elementId()`，未来跨库或重建数据库场景可能需要稳定业务 id。
+
+### G6 Expand mode 后续交互质量
+
+- 现状：白屏 blocker、loader blocker、legend loading、L1HS / LINE-1 初始加载卡住、增量新增节点聚集问题已解除。
+- 风险：expanded node 仍缺少明确视觉 affordance / collapse；复杂多节点连续扩展、expand 后切换 legend/filter/view state 再继续 expand 的 smoke 覆盖不足。
+- 下一步：拆分独立 active plan，先定义 expand/collapse 交互 contract 和多步浏览器 smoke，再做最小 runtime 改动。
+
 ### G6 Expand mode 白屏与加载态
 
-- 现象：`preview.php` 中 Expand mode 仍可能导致主图白屏或 loader state 卡住。
-- 风险：图谱探索能力不稳定，人工描述 bug 难以复现。
-- 下一步：建立 G6 browser smoke harness，先收集 console、loader、节点数和 iframe 状态，再继续修复。
+- 状态：已完成阶段性修复。
+- 现状：`preview.php` 中 Expand mode 白屏、loader 长期卡住、iframe request abort、增量新增节点无布局坐标等 blocker 已由 browser smoke 覆盖。
+- 下一步：保留 smoke 作为回归门禁；后续只在新的 active plan 中处理同名实体歧义和交互质量。
 
 ### G6 局部扩展接口不稳定
 

@@ -625,18 +625,27 @@
         const queryType = normalizeQueryType(requestLike.type || requestLike.queryType);
         const classQuery = String(requestLike.classQuery || requestLike.class || '').trim();
         const query = String(requestLike.query || requestLike.q || classQuery || '').trim();
+        const expandNodeId = String(requestLike.expandNodeId || requestLike.expand_node_id || '').trim();
+        const expandNodeType = String(requestLike.expandNodeType || requestLike.expand_node_type || '').trim();
+        const expandQuery = String(requestLike.expandQuery || requestLike.expand_query || query || '').trim();
         if (queryType === 'disease_class') {
           const normalizedClassQuery = classQuery || query;
           return {
             query: normalizedClassQuery,
             queryType,
             classQuery: normalizedClassQuery,
+            expandNodeId: '',
+            expandNodeType: '',
+            expandQuery: '',
           };
         }
         return {
           query,
           queryType: '',
           classQuery: '',
+          expandNodeId,
+          expandNodeType,
+          expandQuery,
         };
       }
 
@@ -1663,6 +1672,15 @@
       const endpoint = new URL(window.__TEKG_PATHS.apiUrl('graph.php'), window.location.origin);
       endpoint.searchParams.set('q', query);
       endpoint.searchParams.set('key_level', String(currentKeyNodeLevel));
+      if (request.expandNodeId) {
+        endpoint.searchParams.set('expand_node_id', request.expandNodeId);
+      }
+      if (request.expandNodeType) {
+        endpoint.searchParams.set('expand_node_type', request.expandNodeType);
+      }
+      if (request.expandQuery) {
+        endpoint.searchParams.set('expand_query', request.expandQuery);
+      }
       if (request.queryType === 'disease_class') {
         endpoint.searchParams.set('type', 'disease_class');
         endpoint.searchParams.set('class', request.classQuery || query);

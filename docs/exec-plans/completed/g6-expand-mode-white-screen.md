@@ -26,6 +26,14 @@
 - `scripts/checks/check_g6_relation_legend_expand_mode.py`
   - 更新静态契约，要求 expand 路径保留 G6 增量追加 API。
 
+## 阶段补充
+
+- G6 resource loading blocker 已解除：`@antv/g6` 和 `marked` 已本地化，不再把 browser smoke 失败归因到外部 CDN。
+- Legend loading blocker 已解除：初始图谱加载完成后 graph legend 不应停留在 `Loading legend...`。
+- `L1HS` / `LINE-1` 初始进入图谱时 Preparing / Loading legend 卡住的问题已通过 render bridge timeout 缓解。
+- Expand mode 语义 smoke 已加强：要求保留原中心图谱、点击非中心节点、对 clicked node 发起邻居查询、追加 clicked node 的新邻居、避免跳转成新中心图，并禁止把 inspect/detail card 变化当作成功。
+- Expand mode 新增节点聚集问题已解除：增量 `addNodeData()` / `addEdgeData()` / `draw()` 后会触发 G6 layout 刷新，`check_g6_expand_layout_smoke.py` 覆盖新增节点坐标分布。
+
 ## 非目标
 
 - 未修改 `api/graph.php`。
@@ -54,6 +62,8 @@ node --check assets/js/renderers/g6/index-g6-embed.js
 
 ## 残留风险
 
-- Expand 后布局质量仍需单独视觉 QA。
+- Expand mode same-label entity disambiguation 尚未解决：`api/graph.php?q=aging` anchor 是 `Function: Aging`，但 `LINE-1` 图中存在 `Disease: Aging`，当前 expand 请求只传 query label，可能把 Disease 节点扩展解析到 Function 节点。
+- 后续方向：expand 请求携带 node id 或 node type，后端按精确节点扩展，而不是只用 label/name 解析。
+- Expanded node 的视觉 affordance / collapse 仍未实现。
 - 多 node type / 多 query 的展开质量仍需补充场景覆盖。
 - 复杂交互序列，例如 expand 后切换 legend/filter/view state，再继续 expand，仍缺专项 smoke。

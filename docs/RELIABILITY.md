@@ -31,8 +31,14 @@ python scripts/checks/check_docs_freshness.py
 
 - Browser smoke 可能因外部 CDN 被阻断失败，尤其是 `@antv/g6` 和 `marked`。
 - 这类失败不等于 Neo4j 或 API 失败；应优先按 `docs/exec-plans/active/g6-resource-localization.md` 处理。
-- Expand mode 白屏 blocker 已解除，并由 `scripts/checks/check_g6_expand_mode_smoke.py` 覆盖基础回归路径。
-- Expand 后布局质量、多类型展开质量、复杂交互序列 smoke 覆盖仍不足，需要后续单独计划处理。
+- G6 resource loading blocker 已解除；`@antv/g6` 和 `marked` 现在由本地 vendor asset 提供，browser smoke 不应依赖外部 CDN。
+- G6 legend loading blocker 已解除；`check_g6_browser_smoke.py` 会验证 legend 不停留在 `Loading legend...`。
+- `L1HS` / `LINE-1` 初始进入图谱时 Preparing / Loading legend 卡住的问题已通过 render bridge timeout 缓解，避免大图 `graph.render()` 长时间不 resolve 时阻塞 parent loader。
+- Expand mode 白屏 blocker 已解除，并由 `scripts/checks/check_g6_expand_mode_smoke.py` 覆盖保留中心图、非中心节点扩展、无 iframe blank / `ERR_ABORTED` 的基础回归路径。
+- Expand mode 新增节点聚集问题已解除；`scripts/checks/check_g6_expand_layout_smoke.py` 覆盖增量追加后 `draw` / `layout` 路径和新增节点坐标分布。
+- Expand mode same-label entity disambiguation 基础版已解决：Expand 请求会携带 `expand_node_id`、`expand_node_type`、`expand_query`，后端优先按 clicked node 精确扩展。`Disease:Aging` vs `Function:Aging` 由 `check_g6_expand_disambiguation_smoke.py` 和 `check_api_contracts.py` 覆盖。
+- Same-label disambiguation 残留风险：当前 smoke 主要覆盖 Aging；更多同名跨类型实体样本仍需扩展。当前精确定位使用 Neo4j `elementId()`，适合本地单库 runtime，未来如需跨库稳定链接可能要引入稳定业务 id。
+- Expanded node 的视觉 affordance / collapse、复杂多节点连续扩展、多类型展开质量仍需后续单独计划处理。
 
 ## 运行前提
 

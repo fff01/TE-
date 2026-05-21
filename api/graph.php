@@ -48,10 +48,17 @@ if ($config['neo4j_password'] === '') {
 $query = trim((string)($_GET['q'] ?? ''));
 $queryType = trim((string)($_GET['type'] ?? ''));
 $classQuery = trim((string)($_GET['class'] ?? ''));
+$expandNodeId = trim((string)($_GET['expand_node_id'] ?? ''));
+$expandNodeType = trim((string)($_GET['expand_node_type'] ?? ''));
+$expandQuery = trim((string)($_GET['expand_query'] ?? ''));
 $keyLevel = max(1, min(10, (int)($_GET['key_level'] ?? 1)));
 
 if ($query === '' && strcasecmp($queryType, 'disease_class') === 0 && $classQuery !== '') {
     $query = $classQuery;
+}
+
+if ($query === '' && $expandQuery !== '') {
+    $query = $expandQuery;
 }
 
 if ($query === '') {
@@ -60,7 +67,11 @@ if ($query === '') {
 
 try {
     $service = new GraphService($config);
-    $payload = $service->search($query, $keyLevel, $queryType, $classQuery);
+    $payload = $service->search($query, $keyLevel, $queryType, $classQuery, [
+        'expand_node_id' => $expandNodeId,
+        'expand_node_type' => $expandNodeType,
+        'expand_query' => $expandQuery,
+    ]);
     echo json_encode(['ok' => true] + $payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (Throwable $e) {
     http_response_code(500);

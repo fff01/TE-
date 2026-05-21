@@ -1598,6 +1598,8 @@
     if (currentMode !== 'dynamic' || currentGraphSource !== 'query' || !expandModeEnabled) return false;
     const query = String(node?.queryLabel || node?.rawLabel || node?.displayLabel || '').trim();
     if (!query) return false;
+    const expandNodeId = String(node?.id || '').trim();
+    const expandNodeType = String(node?.nodeType || node?.type || '').trim();
     const expandKey = String(node?.id || query);
     if (expandedNodeKeys.has(expandKey)) return false;
 
@@ -1609,7 +1611,12 @@
       if (!bridge || typeof bridge.expandGraph !== 'function') {
         throw new Error('G6 embed bridge cannot expand graph requests');
       }
-      const payload = await bridge.expandGraph({ query }, {
+      const payload = await bridge.expandGraph({
+        query,
+        expandNodeId,
+        expandNodeType,
+        expandQuery: query,
+      }, {
         graphDataOptions: buildCurrentGraphDataOptions(),
       });
       const nextElements = cloneAnswerElements(Array.isArray(payload && payload.elements) ? payload.elements : []);

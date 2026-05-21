@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from harness_lib import app_url, http_json, ok, require, run_check
 
 
@@ -29,6 +31,27 @@ def graph_elements_contract(payload: dict) -> None:
         require(edge.get("relationType") or edge.get("relation"), f"Graph edge missing relation metadata: {edge}")
 
 
+def node_data_items(payload: dict) -> list[dict]:
+    items: list[dict] = []
+    for item in payload.get("elements") or []:
+        data = item.get("data") if isinstance(item, dict) else None
+        if isinstance(data, dict) and not (data.get("source") and data.get("target")):
+            items.append(data)
+    return items
+
+
+def find_node(payload: dict, label: str, node_type: str) -> dict:
+    for node in node_data_items(payload):
+        labels = {
+            str(node.get("label") or ""),
+            str(node.get("rawLabel") or ""),
+        }
+        if label in labels and node.get("type") == node_type:
+            return node
+    require(False, f"Could not find {node_type}:{label} in graph payload")
+    return {}
+
+
 def main() -> None:
     health = http_json(app_url("api/health.php"))
     require(health.get("ok") is True, "api/health.php ok must be true")
@@ -41,6 +64,31 @@ def main() -> None:
     require(isinstance(graph.get("anchor"), dict), "api/graph.php?q=LINE1 missing anchor object")
     graph_elements_contract(graph)
     ok("api/graph.php?q=LINE1 contract passed")
+
+    line1_graph = http_json(app_url("api/graph.php?q=LINE-1"))
+    require(line1_graph.get("ok") is True, f"api/graph.php?q=LINE-1 ok must be true: {line1_graph.get('error')}")
+    disease_aging = find_node(line1_graph, "Aging", "Disease")
+    disease_aging_id = str(disease_aging.get("id") or "")
+    require(disease_aging_id, f"Disease:Aging node missing id: {disease_aging}")
+    expanded = http_json(app_url(
+        "api/graph.php?"
+        f"q={quote('Aging')}"
+        f"&expand_query={quote('Aging')}"
+        f"&expand_node_type={quote('Disease')}"
+        f"&expand_node_id={quote(disease_aging_id, safe='')}"
+        "&key_level=1"
+    ))
+    require(expanded.get("ok") is True, f"same-label expand API ok must be true: {expanded.get('error')}")
+    anchor = expanded.get("anchor")
+    require(isinstance(anchor, dict), "same-label expand API missing anchor")
+    require(anchor.get("name") == "Aging", f"same-label expand anchor name must be Aging: {anchor}")
+    require(anchor.get("type") == "Disease", f"same-label expand anchor type must stay Disease: {anchor}")
+    expanded_source = expanded.get("expanded_source")
+    require(isinstance(expanded_source, dict), f"same-label expand API missing expanded_source: {expanded_source}")
+    require(expanded_source.get("id") == disease_aging_id, f"same-label expanded_source id mismatch: {expanded_source}")
+    require(expanded_source.get("type") == "Disease", f"same-label expanded_source type must be Disease: {expanded_source}")
+    require(expanded_source.get("resolution") in {"id", "name_type"}, f"unexpected expanded_source resolution: {expanded_source}")
+    ok("api/graph.php same-label expand disambiguation contract passed")
 
     tree = http_json(app_url("api/taxonomy.php?view=tree&source=rmsk_repbase"))
     require(tree.get("ok") is True, f"taxonomy file tree ok must be true: {tree.get('error')}")

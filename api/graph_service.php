@@ -13,16 +13,29 @@ final class GraphService
         $this->diseaseNameTranslations = $this->loadDiseaseNameTranslations();
     }
 
-    public function search(string $query, int $keyLevel = 1, string $queryType = '', string $classQuery = ''): array
+    public function search(string $query, int $keyLevel = 1, string $queryType = '', string $classQuery = '', array $options = []): array
     {
         $normalized = $this->normalizeQuery($query);
         $requestedType = $this->normalizeRequestedType($queryType);
         $requestedClass = trim($classQuery) !== '' ? trim($classQuery) : $normalized;
+        $expandedSource = null;
 
         if ($requestedType === 'DiseaseClass') {
             $anchor = $this->findDiseaseClassAnchor($requestedClass);
         } else {
-            $anchor = $this->findAnchorNode($query, $normalized);
+            $resolution = '';
+            $anchor = $this->resolveExpandAnchor($query, $normalized, $options, $resolution);
+            if ($anchor !== null && $resolution !== '') {
+                $expandedSource = [
+                    'id' => (string)($anchor['element_id'] ?? ''),
+                    'name' => (string)($anchor['name'] ?? ''),
+                    'type' => $this->normalizeType($anchor['labels'] ?? []),
+                    'resolution' => $resolution,
+                ];
+            }
+            if ($anchor === null) {
+                $anchor = $this->findAnchorNode($query, $normalized);
+            }
         }
 
         if ($anchor === null) {
@@ -65,7 +78,7 @@ final class GraphService
             }
         }
 
-        return [
+        $payload = [
             'query' => $query,
             'normalized_query' => $normalized,
             'requested_type' => $requestedType,
@@ -83,6 +96,12 @@ final class GraphService
             'elements' => $elements,
             'matches' => $anchor['matches'],
         ];
+
+        if ($expandedSource !== null) {
+            $payload['expanded_source'] = $expandedSource;
+        }
+
+        return $payload;
     }
 
     private function normalizeRequestedType(string $queryType): string
@@ -253,6 +272,100 @@ CYPHER,
         );
 
         return $rows[0] ?? null;
+    }
+
+    private function resolveExpandAnchor(string $query, string $normalized, array $options, string &$resolution): ?array
+    {
+        $resolution = '';
+        $nodeId = trim((string)($options['expand_node_id'] ?? ''));
+        $nodeType = trim((string)($options['expand_node_type'] ?? ''));
+        $expandQuery = trim((string)($options['expand_query'] ?? ''));
+        $name = $expandQuery !== '' ? $expandQuery : ($normalized !== '' ? $normalized : $query);
+
+        if ($nodeId !== '') {
+            $anchor = $this->findAnchorNodeByElementId($nodeId);
+            if ($anchor !== null) {
+                $anchorType = $this->normalizeType($anchor['labels'] ?? []);
+                if ($nodeType === '' || $anchorType === $nodeType) {
+                    $resolution = 'id';
+                    return $anchor;
+                }
+            }
+        }
+
+        if ($name !== '' && $nodeType !== '') {
+            $anchor = $this->findAnchorNodeByNameAndType($name, $nodeType);
+            if ($anchor !== null) {
+                $resolution = 'name_type';
+                return $anchor;
+            }
+        }
+
+        return null;
+    }
+
+    private function findAnchorNodeByElementId(string $nodeId): ?array
+    {
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (n)
+WHERE elementId(n) = $nodeId
+RETURN
+  elementId(n) AS element_id,
+  labels(n) AS labels,
+  n.name AS name,
+  n.description AS description,
+  n.pmid AS pmid,
+  n.disease_class AS disease_class
+LIMIT 1
+CYPHER,
+            ['nodeId' => $nodeId]
+        );
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        $row = $rows[0];
+        $row['matches'] = [$this->anchorMatch($row)];
+        return $row;
+    }
+
+    private function findAnchorNodeByNameAndType(string $name, string $nodeType): ?array
+    {
+        $rows = $this->runNeo4j(
+            <<<'CYPHER'
+MATCH (n)
+WHERE toLower(coalesce(n.name, '')) = toLower($name)
+  AND $nodeType IN labels(n)
+RETURN
+  elementId(n) AS element_id,
+  labels(n) AS labels,
+  n.name AS name,
+  n.description AS description,
+  n.pmid AS pmid,
+  n.disease_class AS disease_class
+LIMIT 1
+CYPHER,
+            ['name' => $name, 'nodeType' => $nodeType]
+        );
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        $row = $rows[0];
+        $row['matches'] = [$this->anchorMatch($row)];
+        return $row;
+    }
+
+    private function anchorMatch(array $row): array
+    {
+        return [
+            'name' => (string)($row['name'] ?? ''),
+            'type' => $this->normalizeType($row['labels'] ?? []),
+            'pmid' => (string)($row['pmid'] ?? ''),
+        ];
     }
 
     private function getTeAliasNodesForAnchor(array $anchor): array
