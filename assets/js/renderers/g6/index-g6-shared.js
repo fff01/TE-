@@ -1500,7 +1500,25 @@
           ],
         });
 
-        await graph.render();
+        const renderPromise = graph.render();
+        if (renderPromise && typeof renderPromise.then === 'function') {
+          let renderSettled = false;
+          await Promise.race([
+            renderPromise.then(
+              () => { renderSettled = true; },
+              (error) => {
+                renderSettled = true;
+                throw error;
+              }
+            ),
+            new Promise((resolve) => { setTimeout(resolve, 2500); }),
+          ]);
+          if (!renderSettled) {
+            renderPromise.catch((error) => {
+              console.warn('G6 render finished after the parent bridge timeout.', error);
+            });
+          }
+        }
         hideInspectCard();
         graph.off?.('node:click');
         graph.off?.('edge:click');
@@ -1671,6 +1689,21 @@
 
       const expandedData = buildGraphData(payload.elements || [], graphDataOptions);
       const { nextNodes, nextEdges } = mergeCurrentGraphData(expandedData);
+      if (graph && (nextNodes.length || nextEdges.length)) {
+        try {
+          if (typeof graph.addNodeData === 'function' && nextNodes.length) {
+            graph.addNodeData(nextNodes);
+          }
+          if (typeof graph.addEdgeData === 'function' && nextEdges.length) {
+            graph.addEdgeData(nextEdges);
+          }
+          if (typeof graph.draw === 'function') {
+            await graph.draw();
+          }
+        } catch (error) {
+          console.warn('G6 expand incremental draw failed; keeping current graph surface.', error);
+        }
+      }
 
       return {
         ...payload,

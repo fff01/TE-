@@ -1603,7 +1603,7 @@
 
     setGraphLoading(true, textSet().loadingOverlay(query));
     try {
-      const frame = ensureDynamicFrame(buildCurrentGraphRequest());
+      const frame = dynamicFrame || ensureDynamicFrame(buildCurrentGraphRequest());
       if (!dynamicBridgePromise) dynamicBridgePromise = waitForEmbedBridge(frame);
       const bridge = await dynamicBridgePromise;
       if (!bridge || typeof bridge.expandGraph !== 'function') {
@@ -1620,10 +1620,6 @@
       if (Array.isArray(payload && payload.relationLegendMeta)) {
         currentRelationLegendMeta = mergeRelationLegendMeta(currentRelationLegendMeta, payload.relationLegendMeta);
       }
-      await renderDynamicElementsFromCache(currentQueryGraphElements, {
-        source: 'query',
-        request: buildCurrentGraphRequest(),
-      });
       clearLegendFilterPending();
       renderGraphLegend();
       notifyStateChange();
