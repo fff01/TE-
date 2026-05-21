@@ -55,6 +55,16 @@ $previewConfig = [
               <button id="toggle-fixed-view" class="is-toggle" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
               <button id="back-graph" type="button" disabled><span id="back-text">Back</span></button>
               <button id="reset-graph" type="button"><span id="reset-text">Reset</span></button>
+              <div id="export-menu-wrap" class="graph-export-menu-wrap">
+                <button id="export-menu-toggle" class="graph-export-action" type="button" aria-haspopup="true" aria-expanded="false" disabled>
+                  <span id="export-menu-text">Export</span>
+                </button>
+                <div id="export-menu" class="graph-export-menu" role="menu" hidden>
+                  <button id="export-menu-csv" type="button" role="menuitem">CSV</button>
+                  <button id="export-menu-png" type="button" role="menuitem">PNG</button>
+                  <button id="export-menu-svg" type="button" role="menuitem" disabled aria-disabled="true">SVG <span>Soon</span></button>
+                </div>
+              </div>
             </div>
             <div class="g6-surface-stack preview-g6-surface-stack">
               <div id="cy" style="display:none"></div>

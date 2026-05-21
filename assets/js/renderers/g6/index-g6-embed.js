@@ -124,6 +124,12 @@
       runner.resize();
       return Promise.resolve();
     },
+    getVisibleSubgraph() {
+      return runner.getVisibleSubgraph();
+    },
+    exportPngDataUrl() {
+      return runner.exportPngDataUrl();
+    },
     getCurrentQuery() {
       return runner.getCurrentQuery();
     },

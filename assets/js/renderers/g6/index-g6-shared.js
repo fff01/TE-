@@ -1735,6 +1735,79 @@
       };
     }
 
+    function clonePlain(value) {
+      return JSON.parse(JSON.stringify(value || null));
+    }
+
+    function getVisibleSubgraph() {
+      const nodes = Array.isArray(currentGraphData?.nodes)
+        ? currentGraphData.nodes.map((node) => ({
+            id: String(node.id || ''),
+            label: String(node.displayLabel || node.rawLabel || node.id || ''),
+            rawLabel: String(node.rawLabel || node.displayLabel || node.id || ''),
+            type: String(node.nodeType || node.type || 'TE'),
+            nodeType: String(node.nodeType || node.type || 'TE'),
+            description: String(node.description || ''),
+            pmid: String(node.pmid || ''),
+            degree: Number(node.databaseDegree || node.degree || 0) || 0,
+            disease_class: String(node.diseaseClass || ''),
+            category_level: Number(node.categoryLevel || 0) || 0,
+          }))
+        : [];
+      const nodeById = new Map(nodes.map((node) => [String(node.id || ''), node]));
+      const edges = Array.isArray(currentGraphData?.edges)
+        ? currentGraphData.edges.map((edge) => {
+            const source = String(edge.source || '');
+            const target = String(edge.target || '');
+            return {
+              id: String(edge.id || `${source}__${edge.relationType || edge.relation || 'RELATION'}__${target}`),
+              source,
+              target,
+              source_label: nodeById.get(source)?.label || '',
+              source_type: nodeById.get(source)?.type || '',
+              target_label: nodeById.get(target)?.label || '',
+              target_type: nodeById.get(target)?.type || '',
+              relation: String(edge.relation || ''),
+              relationType: String(edge.relationType || edge.relationKey || edge.relation || 'RELATION'),
+              relationKey: String(edge.relationKey || edge.relationType || edge.relation || 'RELATION'),
+              pmids: Array.isArray(edge.pmids) ? edge.pmids.map((pmid) => String(pmid || '')).filter(Boolean) : [],
+              pmid_count: Array.isArray(edge.pmids) ? edge.pmids.length : 0,
+              evidence: String(edge.evidence || ''),
+            };
+          })
+        : [];
+
+      return clonePlain({
+        query: currentQuery,
+        request: buildCurrentRequest(),
+        nodes,
+        edges,
+        counts: { nodes: nodes.length, edges: edges.length },
+        source: 'iframe-currentGraphData',
+      });
+    }
+
+    async function exportPngDataUrl() {
+      if (graph && typeof graph.toDataURL === 'function') {
+        try {
+          const result = await graph.toDataURL({ type: 'image/png' });
+          if (typeof result === 'string' && result.startsWith('data:image/png')) return result;
+          if (result && typeof result.dataURL === 'string' && result.dataURL.startsWith('data:image/png')) return result.dataURL;
+        } catch (error) {
+          console.warn('G6 graph.toDataURL failed; falling back to canvas export.', error);
+        }
+      }
+
+      const canvases = Array.from(container.querySelectorAll('canvas'))
+        .filter((canvas) => canvas && canvas.width > 0 && canvas.height > 0)
+        .sort((left, right) => (right.width * right.height) - (left.width * left.height));
+      const canvas = canvases[0];
+      if (!canvas || typeof canvas.toDataURL !== 'function') {
+        throw new Error('No G6 canvas is available for PNG export.');
+      }
+      return canvas.toDataURL('image/png');
+    }
+
     function resize() {
       const metrics = getContainerMetrics();
       if ((container.clientWidth || 0) < 25 && metrics.width > 0) {
@@ -1842,6 +1915,8 @@
       setLanguage,
       getCurrentQuery: () => currentQuery,
       getCurrentRequest: () => buildCurrentRequest(),
+      getVisibleSubgraph,
+      exportPngDataUrl,
       getFixedView: () => fixedView,
       getKeyNodeLevel: () => currentKeyNodeLevel,
       getShowAllLabels: () => currentShowAllLabels,

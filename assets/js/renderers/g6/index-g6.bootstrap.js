@@ -23,6 +23,12 @@
     backText: document.getElementById('back-text'),
     resetBtn: document.getElementById('reset-graph'),
     resetText: document.getElementById('reset-text'),
+    exportMenuWrap: document.getElementById('export-menu-wrap'),
+    exportMenuToggle: document.getElementById('export-menu-toggle'),
+    exportMenu: document.getElementById('export-menu'),
+    exportMenuCsv: document.getElementById('export-menu-csv'),
+    exportMenuPng: document.getElementById('export-menu-png'),
+    exportMenuSvg: document.getElementById('export-menu-svg'),
     expandModeBtn: document.getElementById('toggle-expand-mode'),
     expandModeText: document.getElementById('expand-mode-text'),
     detail: document.getElementById('node-details'),
@@ -90,6 +96,12 @@
   let expandedNodeKeys = new Set();
   let graphIsLoading = false;
   let legendFilterPending = false;
+  let exportMenuCloseTimer = null;
+  let exportMenuWasOpenOnPointerDown = false;
+  let exportMenuReasonOnPointerDown = '';
+  let exportMenuOpenedAtOnPointerDown = 0;
+  let exportMenuOpenReason = '';
+  let exportMenuOpenedAt = 0;
 
   window.currentLang = 'en';
   window.fixedView = true;
@@ -501,6 +513,7 @@
   function setGraphLoading(visible, label = '') {
     graphIsLoading = visible === true;
     syncLegendVisibility(currentMode);
+    updateButtons();
     if (!els.graphLoader) return;
     els.graphLoader.classList.toggle('is-visible', graphIsLoading);
     els.graphLoader.setAttribute('aria-hidden', graphIsLoading ? 'false' : 'true');
@@ -904,6 +917,11 @@
     syncToggleButtonState(els.showLabelsBtn, window.showLabels);
     syncToggleButtonState(els.fixedBtn, window.fixedView);
     syncToggleButtonState(els.expandModeBtn, expandModeEnabled);
+    const canExportGraph = currentMode === 'dynamic' && !graphIsLoading && !!dynamicFrame;
+    if (els.exportMenuToggle) els.exportMenuToggle.disabled = !canExportGraph;
+    if (els.exportMenuCsv) els.exportMenuCsv.disabled = !canExportGraph;
+    if (els.exportMenuPng) els.exportMenuPng.disabled = !canExportGraph;
+    if (!canExportGraph) closeExportMenu();
     updateBackButton();
   }
 
@@ -1640,6 +1658,249 @@
     }
   }
 
+  async function getDynamicEmbedBridge() {
+    if (!dynamicFrame) return null;
+    if (!dynamicBridgePromise) {
+      dynamicBridgePromise = waitForEmbedBridge(dynamicFrame);
+    }
+    return dynamicBridgePromise;
+  }
+
+  function setExportMenuOpen(open) {
+    if (!els.exportMenu || !els.exportMenuToggle) return;
+    const isOpen = open === true && !els.exportMenuToggle.disabled;
+    els.exportMenu.hidden = !isOpen;
+    els.exportMenuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    if (!isOpen) {
+      exportMenuOpenReason = '';
+      exportMenuOpenedAt = 0;
+    }
+  }
+
+  function openExportMenu(reason = 'direct') {
+    if (exportMenuCloseTimer) {
+      window.clearTimeout(exportMenuCloseTimer);
+      exportMenuCloseTimer = null;
+    }
+    setExportMenuOpen(true);
+    exportMenuOpenReason = reason;
+    exportMenuOpenedAt = Date.now();
+  }
+
+  function closeExportMenu() {
+    if (exportMenuCloseTimer) {
+      window.clearTimeout(exportMenuCloseTimer);
+      exportMenuCloseTimer = null;
+    }
+    setExportMenuOpen(false);
+  }
+
+  function scheduleExportMenuClose() {
+    if (exportMenuCloseTimer) window.clearTimeout(exportMenuCloseTimer);
+    exportMenuCloseTimer = window.setTimeout(() => {
+      const active = document.activeElement;
+      if (els.exportMenuWrap && active instanceof Node && els.exportMenuWrap.contains(active)) return;
+      closeExportMenu();
+    }, 120);
+  }
+
+  function toggleExportMenu() {
+    if (!els.exportMenu || !els.exportMenuToggle || els.exportMenuToggle.disabled) return;
+    setExportMenuOpen(els.exportMenu.hidden);
+  }
+
+  function setExportMenuOpenFromPointer() {
+    if (!els.exportMenu || !els.exportMenuToggle || els.exportMenuToggle.disabled) return;
+    const openedByImmediateHover = exportMenuWasOpenOnPointerDown
+      && exportMenuReasonOnPointerDown === 'hover'
+      && Date.now() - exportMenuOpenedAtOnPointerDown < 500;
+    setExportMenuOpen(!exportMenuWasOpenOnPointerDown || openedByImmediateHover);
+  }
+
+  function normalizeCsvValue(value) {
+    if (Array.isArray(value)) return value.map((item) => String(item || '').trim()).filter(Boolean).join(';');
+    if (value === null || typeof value === 'undefined') return '';
+    return String(value);
+  }
+
+  function csvEscape(value) {
+    const text = normalizeCsvValue(value);
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function buildCsv(rows, fields) {
+    const header = fields.map((field) => field.key).join(',');
+    const body = rows.map((row) => fields.map((field) => csvEscape(field.get(row))).join(','));
+    return [header, ...body].join('\r\n') + '\r\n';
+  }
+
+  function safeExportName(value) {
+    const text = String(value || 'graph').trim() || 'graph';
+    return text.replace(/[^a-z0-9_.-]+/gi, '_').replace(/^_+|_+$/g, '') || 'graph';
+  }
+
+  function exportDateStamp() {
+    return new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  }
+
+  function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime || 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function downloadDataUrl(filename, dataUrl) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+
+  function parentFallbackVisibleSubgraph() {
+    const visibleElements = filterElementsForLegend(getCurrentGraphElements());
+    const nodes = [];
+    const edges = [];
+    const nodeById = new Map();
+
+    for (const item of visibleElements) {
+      const data = item && item.data ? dataClone(item.data) : null;
+      if (!data || data.source || data.target) continue;
+      const node = {
+        id: String(data.id || ''),
+        label: String(data.label || data.rawLabel || data.id || ''),
+        rawLabel: String(data.rawLabel || data.label || data.id || ''),
+        type: String(data.type || 'TE'),
+        description: String(data.description || ''),
+        pmid: String(data.pmid || ''),
+      };
+      nodes.push(node);
+      nodeById.set(node.id, node);
+    }
+
+    for (const item of visibleElements) {
+      const data = item && item.data ? dataClone(item.data) : null;
+      if (!data || !data.source || !data.target) continue;
+      edges.push({
+        id: String(data.id || `${data.source}__${data.relationType || data.relation || 'RELATION'}__${data.target}`),
+        source: String(data.source || ''),
+        target: String(data.target || ''),
+        relation: String(data.relation || ''),
+        relationType: String(data.relationType || data.relation || 'RELATION'),
+        pmids: Array.isArray(data.pmids) ? data.pmids : [],
+        evidence: String(data.evidence || ''),
+        source_label: nodeById.get(String(data.source || ''))?.label || '',
+        target_label: nodeById.get(String(data.target || ''))?.label || '',
+      });
+    }
+
+    return {
+      query: currentGraphQuery,
+      nodes,
+      edges,
+      counts: { nodes: nodes.length, edges: edges.length },
+      source: 'parent-filtered-fallback',
+    };
+  }
+
+  function dataClone(value) {
+    return JSON.parse(JSON.stringify(value || {}));
+  }
+
+  async function getVisibleSubgraphForExport() {
+    const bridge = await getDynamicEmbedBridge();
+    if (bridge && typeof bridge.getVisibleSubgraph === 'function') {
+      const subgraph = await bridge.getVisibleSubgraph();
+      if (subgraph && subgraph.counts && (subgraph.counts.nodes || subgraph.counts.edges)) {
+        return subgraph;
+      }
+    }
+    return parentFallbackVisibleSubgraph();
+  }
+
+  function buildExportCsvPayload(subgraph) {
+    const nodes = Array.isArray(subgraph && subgraph.nodes) ? subgraph.nodes : [];
+    const edges = Array.isArray(subgraph && subgraph.edges) ? subgraph.edges : [];
+    const nodeFields = [
+      { key: 'id', get: (row) => row.id },
+      { key: 'label', get: (row) => row.label || row.displayLabel || row.rawLabel || row.id },
+      { key: 'rawLabel', get: (row) => row.rawLabel || row.label || row.id },
+      { key: 'type', get: (row) => row.type || row.nodeType },
+      { key: 'description', get: (row) => row.description },
+      { key: 'pmid', get: (row) => row.pmid },
+    ];
+    const edgeFields = [
+      { key: 'id', get: (row) => row.id },
+      { key: 'source', get: (row) => row.source },
+      { key: 'target', get: (row) => row.target },
+      { key: 'relation', get: (row) => row.relation },
+      { key: 'relationType', get: (row) => row.relationType || row.relationKey },
+      { key: 'pmids', get: (row) => row.pmids },
+      { key: 'evidence', get: (row) => row.evidence },
+    ];
+    return {
+      query: subgraph?.query || currentGraphQuery || 'graph',
+      counts: subgraph?.counts || { nodes: nodes.length, edges: edges.length },
+      nodesCsv: buildCsv(nodes, nodeFields),
+      edgesCsv: buildCsv(edges, edgeFields),
+    };
+  }
+
+  async function exportVisibleCsv(options = {}) {
+    const subgraph = await getVisibleSubgraphForExport();
+    const payload = buildExportCsvPayload(subgraph);
+    const counts = payload.counts || {};
+    if (!counts.nodes && !counts.edges) {
+      setDetail(buildDetail('Export unavailable', 'No visible graph nodes or edges are available to export.'));
+      return payload;
+    }
+    if (options.download !== false) {
+      const base = safeExportName(payload.query || currentGraphQuery || 'graph');
+      const stamp = exportDateStamp();
+      downloadText(`tekg_${base}_visible_nodes_${stamp}.csv`, payload.nodesCsv, 'text/csv;charset=utf-8');
+      downloadText(`tekg_${base}_visible_edges_${stamp}.csv`, payload.edgesCsv, 'text/csv;charset=utf-8');
+      setDetail(buildDetail('CSV export ready', `Exported ${counts.nodes || 0} nodes and ${counts.edges || 0} edges from the current visible graph.`));
+    }
+    return payload;
+  }
+
+  function dataUrlByteLength(dataUrl) {
+    const marker = 'base64,';
+    const index = String(dataUrl || '').indexOf(marker);
+    if (index < 0) return 0;
+    const base64 = String(dataUrl).slice(index + marker.length);
+    return Math.floor((base64.length * 3) / 4) - (base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0);
+  }
+
+  async function exportCanvasPng(options = {}) {
+    const bridge = await getDynamicEmbedBridge();
+    if (!bridge || typeof bridge.exportPngDataUrl !== 'function') {
+      throw new Error('G6 PNG export bridge is not available');
+    }
+    const dataUrl = await bridge.exportPngDataUrl();
+    if (!String(dataUrl || '').startsWith('data:image/png;base64,')) {
+      throw new Error('G6 PNG export did not return a PNG data URL');
+    }
+    const payload = {
+      query: currentGraphQuery || 'graph',
+      dataUrl,
+      byteLength: dataUrlByteLength(dataUrl),
+    };
+    if (options.download !== false) {
+      const base = safeExportName(payload.query);
+      downloadDataUrl(`tekg_${base}_canvas_${exportDateStamp()}.png`, dataUrl);
+      setDetail(buildDetail('PNG export ready', 'Exported the current graph canvas as a PNG image.'));
+    }
+    return payload;
+  }
+
   function bindEvents() {
     renderGraphLegend();
     syncLegendVisibility(currentMode);
@@ -1722,6 +1983,59 @@
         renderDefaultTree({ pushHistory: true }).catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
+      });
+    }
+
+    if (els.exportMenuWrap) {
+      els.exportMenuWrap.addEventListener('mouseenter', () => openExportMenu('hover'));
+      els.exportMenuWrap.addEventListener('mouseleave', scheduleExportMenuClose);
+      els.exportMenuWrap.addEventListener('focusin', () => openExportMenu('focus'));
+      els.exportMenuWrap.addEventListener('focusout', scheduleExportMenuClose);
+    }
+
+    if (els.exportMenuToggle) {
+      els.exportMenuToggle.addEventListener('pointerdown', () => {
+        exportMenuWasOpenOnPointerDown = !!(els.exportMenu && !els.exportMenu.hidden);
+        exportMenuReasonOnPointerDown = exportMenuOpenReason;
+        exportMenuOpenedAtOnPointerDown = exportMenuOpenedAt;
+      });
+      els.exportMenuToggle.addEventListener('click', (event) => {
+        event.preventDefault();
+        setExportMenuOpenFromPointer();
+      });
+      els.exportMenuToggle.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowDown' && event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openExportMenu('keyboard');
+        if (els.exportMenuCsv) els.exportMenuCsv.focus();
+      });
+    }
+
+    if (els.exportMenuCsv) {
+      els.exportMenuCsv.addEventListener('click', () => {
+        closeExportMenu();
+        exportVisibleCsv().catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+    }
+
+    if (els.exportMenuPng) {
+      els.exportMenuPng.addEventListener('click', () => {
+        closeExportMenu();
+        exportCanvasPng().catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+    }
+
+    if (els.exportMenu) {
+      els.exportMenu.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          closeExportMenu();
+          if (els.exportMenuToggle) els.exportMenuToggle.focus();
+        }
       });
     }
 
@@ -1833,6 +2147,11 @@
 
   window.__TEKG_LOAD_DYNAMIC_GRAPH = loadDynamicGraph;
   window.__TEKG_G6_SHOW_TREE = renderDefaultTree;
+  window.__TEKG_G6_EXPORT = {
+    getVisibleSubgraph: getVisibleSubgraphForExport,
+    exportCsv: exportVisibleCsv,
+    exportPng: exportCanvasPng,
+  };
   window.__TEKG_G6_BRIDGE = {
     loadGraph(query) {
       return loadDynamicGraph(query);
@@ -1900,6 +2219,15 @@
     },
     getState() {
       return snapshotState();
+    },
+    getVisibleSubgraph() {
+      return getVisibleSubgraphForExport();
+    },
+    exportCsv(options) {
+      return exportVisibleCsv(options || {});
+    },
+    exportPng(options) {
+      return exportCanvasPng(options || {});
     },
     getVisibleTypes() {
       return getVisibleTypePayload();

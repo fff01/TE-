@@ -39,6 +39,7 @@ python scripts/checks/check_docs_freshness.py
 - Expand mode same-label entity disambiguation 基础版已解决：Expand 请求会携带 `expand_node_id`、`expand_node_type`、`expand_query`，后端优先按 clicked node 精确扩展。`Disease:Aging` vs `Function:Aging` 由 `check_g6_expand_disambiguation_smoke.py` 和 `check_api_contracts.py` 覆盖。
 - Same-label disambiguation 残留风险：当前 smoke 主要覆盖 Aging；更多同名跨类型实体样本仍需扩展。当前精确定位使用 Neo4j `elementId()`，适合本地单库 runtime，未来如需跨库稳定链接可能要引入稳定业务 id。
 - Expanded node 的视觉 affordance / collapse、复杂多节点连续扩展、多类型展开质量仍需后续单独计划处理。
+- G6 subgraph export v1 已完成：当前可见子图可导出 CSV，当前画布可导出 PNG，Export toolbar 已收敛为单按钮菜单，并由 `scripts/checks/check_g6_subgraph_export_smoke.py` 覆盖。SVG 仍是 disabled 的 `SVG Soon`，后续 v2 另行调研。
 
 ## 运行前提
 

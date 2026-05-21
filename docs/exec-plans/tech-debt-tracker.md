@@ -23,6 +23,13 @@
 - 现状：`preview.php` 中 Expand mode 白屏、loader 长期卡住、iframe request abort、增量新增节点无布局坐标等 blocker 已由 browser smoke 覆盖。
 - 下一步：保留 smoke 作为回归门禁；后续只在新的 active plan 中处理同名实体歧义和交互质量。
 
+### G6 Subgraph export SVG v2
+
+- 状态：v1 已完成，见 `completed/g6-subgraph-export.md`。
+- 已完成：当前可见 nodes / edges CSV 导出、当前画布 PNG 导出、单按钮 Export 菜单收敛。
+- 已覆盖：`scripts/checks/check_g6_subgraph_export_smoke.py` 验证 Export 菜单、CSV/PNG 导出触发、SVG disabled 状态。
+- 残留风险：SVG export 未实现，当前 UI 保持 disabled 的 `SVG Soon`。下一步先执行 `active/g6-svg-export.md` 调研当前 G6 canvas runtime 是否存在可靠官方 SVG export API，以及手写 SVG 是否值得做。
+
 ### G6 局部扩展接口不稳定
 
 - 现象：当前局部扩展逻辑仍处在探索阶段，尚未形成可靠 contract。

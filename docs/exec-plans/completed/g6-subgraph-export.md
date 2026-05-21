@@ -308,7 +308,37 @@ Expected:
 ## 执行记录
 
 - 计划创建日期：2026-05-21。
-- 尚未实施。
+- 2026-05-21：第一版已实施。
+  - Visible subgraph 数据源：iframe G6 runner 的 `currentGraphData.nodes` / `currentGraphData.edges`，通过 `window.__TEKG_G6_EMBED.getVisibleSubgraph()` 暴露；parent 仅在 iframe bridge 不可用时 fallback 到 `filterElementsForLegend(getCurrentGraphElements())`。
+  - CSV：`Export CSV` 一次导出两个文件，分别为 current visible nodes 和 current visible edges。nodes 字段为 `id,label,rawLabel,type,description,pmid`；edges 字段为 `id,source,target,relation,relationType,pmids,evidence`。
+  - PNG：优先尝试 G6 `graph.toDataURL({ type: 'image/png' })`，失败或不可用时 fallback 到 iframe 内最大 canvas 的 `toDataURL('image/png')`。
+  - UI：在 `preview.php` 现有 G6 toolbar 中新增 `Export CSV` / `Export PNG` 两个工具型按钮；仅 dynamic graph 可用且非 loading 时启用。
+  - Smoke：新增 `scripts/checks/check_g6_subgraph_export_smoke.py`，覆盖按钮存在、parent export bridge、CSV 行数与 visible subgraph counts 一致、PNG data URL 非空、legend filter 后导出数量缩小。
+  - 验证通过：
+    - `php -l preview.php`
+    - `node --check assets/js/renderers/g6/index-g6.bootstrap.js`
+    - `node --check assets/js/renderers/g6/index-g6-shared.js`
+    - `node --check assets/js/renderers/g6/index-g6-embed.js`
+    - `python scripts/checks/check_g6_browser_smoke.py`
+    - `python scripts/checks/check_g6_expand_mode_smoke.py --query LINE-1`
+    - `python scripts/checks/check_g6_expand_layout_smoke.py --query LINE-1`
+    - `python scripts/checks/check_g6_expand_disambiguation_smoke.py`
+    - `python scripts/checks/check_g6_subgraph_export_smoke.py`
+    - `python scripts/checks/check_api_contracts.py`
+- 2026-05-21：Export UI 收敛完成。
+  - UI 从两个独立按钮 `Export CSV` / `Export PNG` 收敛为一个 `Export` 主按钮。
+  - `Export` hover / focus / click 后显示小菜单，菜单项为 `CSV`、`PNG`、`SVG Soon`。
+  - `CSV` 继续复用 `exportVisibleCsv()`；`PNG` 继续复用 `exportCanvasPng()`。
+  - CSV / PNG 数据来源和文件格式未改变。
+  - SVG 仅显示为 disabled 的 `SVG Soon`，未实现 SVG 导出。
+  - `scripts/checks/check_g6_subgraph_export_smoke.py` 已更新为验证单按钮菜单语义、CSV/PNG 菜单项触发下载、SVG disabled 状态。
+  - 验证通过：
+    - `php -l preview.php`
+    - `node --check assets/js/renderers/g6/index-g6.bootstrap.js`
+    - `node --check assets/js/renderers/g6/index-g6-shared.js`
+    - `node --check assets/js/renderers/g6/index-g6-embed.js`
+    - `python scripts/checks/check_g6_browser_smoke.py`
+    - `python scripts/checks/check_g6_subgraph_export_smoke.py`
 
 ## 残留风险
 
