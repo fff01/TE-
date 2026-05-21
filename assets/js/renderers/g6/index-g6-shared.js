@@ -1700,6 +1700,9 @@
           if (typeof graph.draw === 'function') {
             await graph.draw();
           }
+          if (typeof graph.layout === 'function') {
+            await graph.layout();
+          }
         } catch (error) {
           console.warn('G6 expand incremental draw failed; keeping current graph surface.', error);
         }
