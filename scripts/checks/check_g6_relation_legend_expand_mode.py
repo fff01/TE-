@@ -28,7 +28,7 @@ def main() -> None:
     assert_not_contains("preview.php", "key-node-level-control")
     assert_not_contains("preview.php", "Key-node level")
     assert_contains("preview.php", "toggle-edge-labels")
-    assert_contains("preview.php", "Show labels: Off")
+    assert_contains("preview.php", "Show relations: Off")
     assert_contains("preview.php", "toggle-expand-mode")
     assert_contains("preview.php", "graph-legend-mode-switch")
     assert_contains("preview.php", "graph-relation-min-pmids")

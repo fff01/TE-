@@ -52,8 +52,8 @@
       badge: 'Tree-first preview with test-aligned dynamic graph',
       graphTitle: 'G6 Graph Workspace',
       searchPlaceholder: 'Search LINE1, L1HS, disease, or function',
-      showEdgeLabelsOn: 'Show labels: On',
-      showEdgeLabelsOff: 'Show labels: Off',
+      showEdgeLabelsOn: 'Show relations: On',
+      showEdgeLabelsOff: 'Show relations: Off',
       showNamesOn: 'Show names: On',
       showNamesOff: 'Show names: Off',
       fixedOn: 'Fixed view: On',
@@ -1621,7 +1621,7 @@
     const expandKey = String(node?.id || query);
     if (expandedNodeKeys.has(expandKey)) return false;
 
-    setGraphLoading(true, textSet().loadingOverlay(query));
+    setGraphLoading(true, `Expanding ${escapeHtml(query)} ...`);
     try {
       const frame = dynamicFrame || ensureDynamicFrame(buildCurrentGraphRequest());
       if (!dynamicBridgePromise) dynamicBridgePromise = waitForEmbedBridge(frame);

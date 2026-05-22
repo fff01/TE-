@@ -462,9 +462,10 @@
           display: none !important;
         }
 
-        .preview-graph-toolbar button.is-toggle,
-        .expand-mode {
-          border-bottom: 3px solid #cbd5e1 !important;
+        .preview-graph-toolbar button.is-toggle:not(.is-active),
+        .preview-graph-toolbar #back-graph,
+        .expand-mode:not(.is-active) {
+          border-bottom: 3px solid #0f766e !important;
         }
 
         .graph-export-menu-wrap {

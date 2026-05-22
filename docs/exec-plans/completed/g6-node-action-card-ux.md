@@ -118,3 +118,36 @@ Residual risks:
 - `Fixed view` / `Expand mode` internals still exist for compatibility; future cleanup should be a separate plan after references are audited.
 - Node action card smoke uses diagnostic bridge methods to make browser tests deterministic.
 - Expand/collapse affordance and multi-step expand UX remain separate future work.
+
+## Amendment - G6 UI Polish - 2026-05-22
+
+Small follow-up UI polish completed without changing graph API, Neo4j, taxonomy, agent, expression, evidence records, metrics imports, or Jump/Expand/Details semantics.
+
+Changes:
+
+- Node Expand loading overlay now says `Expanding {node} ...` on the node-card expand path. Initial graph and disease classification loading text still uses existing `Preparing` copy.
+- Node-card `Jump` closes the old inspect/action card before the new center graph loads.
+- PubMed evidence table column allocation was tightened: Journal fixed width changed from `132px` to `82px`, while the Title column receives more remaining table width. Fixed utility columns were also reduced to keep the table inside the card without horizontal scrolling.
+- Toolbar polish: user-visible `Reset` was removed, `Back to ...` keeps its behavior and now shares the Export main-button border style, off-state `Show names` and `Show relations` share the same style, and `Show labels` was renamed to `Show relations`.
+- Force layout remains `d3-force`; only collision spacing was increased slightly. Collision radius offsets changed from DiseaseClass/TE/Disease/Other `46/38/34/30` to `50/42/38/34`.
+
+Verification passed:
+
+```powershell
+php -l preview.php
+node --check assets/js/renderers/g6/index-g6.bootstrap.js
+node --check assets/js/renderers/g6/index-g6-shared.js
+node --check assets/js/renderers/g6/index-g6-embed.js
+python scripts/checks/check_g6_browser_smoke.py
+python scripts/checks/check_g6_expand_mode_smoke.py --query LINE-1
+python scripts/checks/check_g6_expand_layout_smoke.py --query LINE-1
+python scripts/checks/check_g6_expand_disambiguation_smoke.py
+python scripts/checks/check_g6_evidence_support_ux.py
+python scripts/checks/check_g6_node_action_card_ux.py
+python scripts/checks/check_api_contracts.py
+```
+
+Residual risks:
+
+- `Reset` internals remain harmlessly referenced because the DOM control is no longer rendered; remove only after a separate cleanup audit.
+- Slightly larger collision radii improve crowding but do not introduce a full layout tuning pass.

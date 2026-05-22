@@ -113,3 +113,4 @@ python scripts/checks/check_docs_freshness.py
 - Existing edge evidence card, PubMed evidence table, and selected-edge CSV download behavior remain unchanged.
 - Verification: `check_g6_node_action_card_ux.py`, `check_g6_browser_smoke.py`, expand mode/layout/disambiguation smokes, evidence support UX smoke, and API contracts passed.
 - Residual risk: legacy fixed/expand internal variables are intentionally retained for compatibility and should only be removed in a separate audited cleanup.
+- Follow-up UI polish: node-card Expand overlay says `Expanding`, Jump closes the old action card, `Reset` is no longer user-visible, `Show labels` is now `Show relations`, off-state toolbar controls align with the Export button style, evidence table Journal/Title widths were adjusted, and collision radius offsets increased slightly from `46/38/34/30` to `50/42/38/34`.

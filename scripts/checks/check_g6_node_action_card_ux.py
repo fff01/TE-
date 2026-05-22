@@ -81,17 +81,29 @@ def main() -> None:
                     const fixed = document.querySelector('#toggle-fixed-view');
                     const expand = document.querySelector('#toggle-expand-mode');
                     const detail = document.querySelector('#node-details');
+                    const reset = document.querySelector('#reset-graph');
+                    const edgeLabels = document.querySelector('#edge-labels-text');
+                    const back = document.querySelector('#back-graph');
+                    const exportButton = document.querySelector('#export-menu-toggle');
                     const visible = (el) => !!el && !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+                    const borderColor = (el) => el ? window.getComputedStyle(el).borderBottomColor : '';
                     return {
                         fixedVisible: visible(fixed),
                         expandVisible: visible(expand),
                         detailVisible: visible(detail),
+                        resetExists: !!reset,
+                        edgeLabelsText: edgeLabels ? edgeLabels.textContent.trim() : '',
+                        backBorder: borderColor(back),
+                        exportBorder: borderColor(exportButton),
                     };
                 }"""
             )
             require(controls["fixedVisible"] is False, "Fixed view user control must be hidden\n" + evidence(controls))
             require(controls["expandVisible"] is False, "Expand mode user control must be hidden\n" + evidence(controls))
             require(controls["detailVisible"] is False, "Legacy detail area must stay hidden\n" + evidence(controls))
+            require(controls["resetExists"] is False, "Reset user control must not be rendered\n" + evidence(controls))
+            require(controls["edgeLabelsText"] == "Show relations: Off", "Edge-label toggle must be named Show relations\n" + evidence(controls))
+            require(controls["backBorder"] == controls["exportBorder"], "Back button should share Export main-button border style\n" + evidence(controls))
 
             before = page.evaluate("() => window.__TEKG_G6_BRIDGE.getState()")
             before_counts = counts(before)
@@ -163,13 +175,36 @@ def main() -> None:
             require(counts(details_state) == before_counts, "Details action changed graph elements\n" + evidence({"before": before_counts, "after": counts(details_state)}))
 
             expand_request_start = len(graph_requests)
-            expanded = page.evaluate(
-                """async (nodeId) => {
+            expand_started = page.evaluate(
+                """(nodeId) => {
+                    window.__TEKG_NODE_ACTION_LOADER_TEXTS = [];
+                    const label = document.querySelector('#graph-preloader-label');
+                    const capture = () => window.__TEKG_NODE_ACTION_LOADER_TEXTS.push(label ? label.textContent || '' : '');
+                    capture();
+                    if (window.__TEKG_NODE_ACTION_LOADER_OBSERVER) {
+                        window.__TEKG_NODE_ACTION_LOADER_OBSERVER.disconnect();
+                    }
+                    window.__TEKG_NODE_ACTION_LOADER_OBSERVER = new MutationObserver(capture);
+                    if (label) {
+                        window.__TEKG_NODE_ACTION_LOADER_OBSERVER.observe(label, { childList: true, characterData: true, subtree: true });
+                    }
                     const iframe = document.querySelector('#g6-dynamic-surface iframe');
                     const embed = iframe && iframe.contentWindow ? iframe.contentWindow.__TEKG_G6_EMBED : null;
-                    return embed.triggerNodeAction(nodeId, 'expand');
+                    window.__TEKG_NODE_ACTION_EXPAND_PROMISE = embed.triggerNodeAction(nodeId, 'expand');
+                    window.__TEKG_NODE_ACTION_EXPAND_PROMISE.finally(() => {
+                        capture();
+                        if (window.__TEKG_NODE_ACTION_LOADER_OBSERVER) window.__TEKG_NODE_ACTION_LOADER_OBSERVER.disconnect();
+                    });
+                    return true;
                 }""",
                 node["id"],
+            )
+            require(expand_started is True, "Expand action did not start\n" + evidence({"node": node, "result": expand_started}))
+            expanded = page.evaluate("() => window.__TEKG_NODE_ACTION_EXPAND_PROMISE")
+            loader_texts = page.evaluate("() => window.__TEKG_NODE_ACTION_LOADER_TEXTS || []")
+            require(
+                any("Expanding" in str(item) for item in loader_texts),
+                "Expand loader must say Expanding\n" + evidence({"loader_texts": loader_texts}),
             )
             require(expanded is True, "Expand action failed\n" + evidence({"node": node, "result": expanded}))
             page.wait_for_function(
@@ -210,6 +245,21 @@ def main() -> None:
                 jump_node_probe["id"],
             )
             require(jumped is True, "Jump action failed\n" + evidence({"node": jump_node_probe, "result": jumped}))
+            jump_card_state = page.evaluate(
+                """() => {
+                    const iframe = document.querySelector('#g6-dynamic-surface iframe');
+                    const el = iframe && iframe.contentDocument ? iframe.contentDocument.querySelector('.inspect-card') : null;
+                    if (!el) return { exists: false, visible: false, text: '' };
+                    const rect = el.getBoundingClientRect();
+                    const style = window.getComputedStyle(el);
+                    return {
+                        exists: true,
+                        visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
+                        text: el.textContent || '',
+                    };
+                }"""
+            )
+            require(jump_card_state["visible"] is False, "Jump should close the old node action card\n" + evidence(jump_card_state))
             page.wait_for_function(
                 """() => {
                     const loader = document.querySelector('#graph-preloader');

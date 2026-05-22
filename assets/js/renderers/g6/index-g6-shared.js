@@ -402,25 +402,25 @@
         }
         .edge-evidence-table th:nth-child(1),
         .edge-evidence-table td:nth-child(1) {
-          width: 94px;
+          width: 84px;
         }
         .edge-evidence-table th:nth-child(2),
         .edge-evidence-table td:nth-child(2) {
-          width: 58px;
+          width: 48px;
         }
         .edge-evidence-table th:nth-child(3),
         .edge-evidence-table td:nth-child(3) {
-          width: 132px;
+          width: 82px;
         }
         .edge-evidence-table th:nth-child(4),
         .edge-evidence-table td:nth-child(4),
         .edge-evidence-table th:nth-child(5),
         .edge-evidence-table td:nth-child(5) {
-          width: 48px;
+          width: 40px;
         }
         .edge-evidence-table th:nth-child(6),
         .edge-evidence-table td:nth-child(6) {
-          width: 78px;
+          width: 62px;
         }
         .edge-evidence-table th,
         .edge-evidence-table td {
@@ -833,6 +833,7 @@
       if (nextAction === 'jump') {
         const query = String(node.queryLabel || node.rawLabel || node.displayLabel || '').trim();
         if (!query) return false;
+        hideInspectCard();
         if (node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory') {
           const classQuery = String(node.classQuery || node.diseaseClass || query).trim();
           if (classQuery) {
@@ -1826,10 +1827,10 @@
             },
             collide: {
               radius: (node) => {
-                if (node.nodeType === 'DiseaseClass') return node.size / 2 + 46;
-                if (node.nodeType === 'TE') return node.size / 2 + 38;
-                if (node.nodeType === 'Disease') return node.size / 2 + 34;
-                return node.size / 2 + 30;
+                if (node.nodeType === 'DiseaseClass') return node.size / 2 + 50;
+                if (node.nodeType === 'TE') return node.size / 2 + 42;
+                if (node.nodeType === 'Disease') return node.size / 2 + 38;
+                return node.size / 2 + 34;
               },
               strength: 1,
               iterations: 16,

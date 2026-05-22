@@ -146,6 +146,8 @@ def main() -> None:
                     const download = pubmedSection ? pubmedSection.querySelector('.edge-evidence-download') : null;
                     const journalCell = table ? table.querySelector('tbody tr td:nth-child(3)') : null;
                     const titleCell = table ? table.querySelector('tbody tr td:nth-child(7)') : null;
+                    const journalBox = journalCell ? journalCell.getBoundingClientRect() : { width: 0 };
+                    const titleBoxCell = titleCell ? titleCell.getBoundingClientRect() : { width: 0 };
                     const tableWrap = table ? table.closest('.edge-evidence-table-wrap') : null;
                     const tableBox = table ? table.getBoundingClientRect() : { width: 0 };
                     const wrapBox = tableWrap ? tableWrap.getBoundingClientRect() : { width: 0 };
@@ -163,6 +165,8 @@ def main() -> None:
                         downloadText: download ? download.textContent.trim() : '',
                         journalTitle: journalCell ? journalCell.getAttribute('title') || '' : '',
                         titleTitle: titleCell ? titleCell.getAttribute('title') || '' : '',
+                        journalWidth: journalBox.width,
+                        titleWidth: titleBoxCell.width,
                         tableScrollWidth: tableWrap ? tableWrap.scrollWidth : 0,
                         tableClientWidth: tableWrap ? tableWrap.clientWidth : 0,
                         tableBoxWidth: tableBox.width,
@@ -179,6 +183,7 @@ def main() -> None:
             require(table_state["firstHref"].startswith("https://pubmed.ncbi.nlm.nih.gov/"), "PMID link href is incorrect\n" + evidence(table_state))
             require(table_state["journalTitle"], "Journal cell must expose full value via title tooltip\n" + evidence(table_state))
             require(table_state["titleTitle"], "Title cell must expose full value via title tooltip\n" + evidence(table_state))
+            require(table_state["titleWidth"] > table_state["journalWidth"], "Title column should be wider than Journal column\n" + evidence(table_state))
             require(table_state["tableScrollWidth"] <= table_state["tableClientWidth"] + 1, "Evidence table must not require horizontal scroll\n" + evidence(table_state))
             require(table_state["tableBoxWidth"] <= table_state["wrapBoxWidth"] + 1, "Evidence table must fit inside the card PubMed section\n" + evidence(table_state))
             require("confidence" not in table_state["text"].lower(), "Evidence UI must not use confidence wording\n" + evidence(table_state))

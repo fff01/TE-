@@ -137,5 +137,6 @@
 - Node click now opens a node action card only. It does not auto-jump and does not auto-expand.
 - Node action buttons are explicit: `Jump`, `Expand`, and `Details`.
 - `Jump` reuses existing node-centered graph loading; `Expand` reuses the same-label-safe expand path and still sends `expand_node_id`, `expand_node_type`, and `expand_query`; `Details` expands the node card without graph mutation.
+- Follow-up UI polish completed: node Expand loader copy changed to `Expanding`, Jump closes the old card, Reset is no longer user-visible, `Show labels` was renamed to `Show relations`, toolbar off-state styling aligns with Export, evidence table Journal/Title widths were adjusted, and collision radius offsets increased slightly from `46/38/34/30` to `50/42/38/34`.
 - Checks: `scripts/checks/check_g6_node_action_card_ux.py`, updated `check_g6_browser_smoke.py`, and updated expand smokes.
 - Residual debt: fixed/expand internal variables are retained for compatibility and should only be removed after a separate reference audit. Expand/collapse affordance and multi-step expanded-node UX remain separate future work.
