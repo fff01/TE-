@@ -1820,8 +1820,22 @@
       const subgraph = await bridge.getVisibleSubgraph();
       if (subgraph && subgraph.counts && (subgraph.counts.nodes || subgraph.counts.edges)) {
         return subgraph;
-      }
     }
+  }
+
+  function downloadEdgeEvidenceCsv(button) {
+    const encoded = String(button?.getAttribute('data-evidence-csv') || '');
+    if (!encoded) return;
+    let text = '';
+    try {
+      text = decodeURIComponent(encoded);
+    } catch (_error) {
+      text = encoded;
+    }
+    const edgeId = String(button?.getAttribute('data-edge-id') || 'edge');
+    const base = safeExportName(`${currentGraphQuery || 'graph'}_${edgeId.slice(0, 24)}`);
+    downloadText(`tekg_${base}_edge_evidence_${exportDateStamp()}.csv`, text, 'text/csv;charset=utf-8');
+  }
     return parentFallbackVisibleSubgraph();
   }
 
@@ -1925,6 +1939,16 @@
           return;
         }
         markLegendFilterPending();
+      });
+    }
+
+    if (els.detail) {
+      els.detail.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        const button = target.closest('.edge-evidence-download');
+        if (!(button instanceof HTMLButtonElement)) return;
+        downloadEdgeEvidenceCsv(button);
       });
     }
 

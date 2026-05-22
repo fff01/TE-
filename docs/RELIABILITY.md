@@ -89,3 +89,16 @@ python scripts/checks/check_docs_freshness.py
 - Relation support distributions: `support_pmid_count` buckets `{'1': 11705, '2': 434, '3-5': 219, '6-10': 53, '>10': 33}`; `support_metric_coverage` buckets `{'0': 1354, '(0.25,0.5]': 103, '(0.5,0.75]': 53, '(0.75,1)': 62, '1': 10872}`.
 - IF aggregate range on relations: `support_if_mean` 0.3 to 90.2; `support_if_max` 0.3 to 90.2.
 - No graph API or G6 visual encoding consumes these fields yet. Add API/G6 usage only in a separate active plan.
+
+## G6 Evidence Support UX v1 Notes - 2026-05-22
+
+- G6 evidence support UX v1 is completed and archived in `docs/exec-plans/completed/g6-evidence-support-ux-v1.md`.
+- Graph API edge payloads now include eager `evidence_records` alongside existing `pmids` and `support_*` fields.
+- `evidence_records` intentionally excludes abstracts and only carries PMID, PubMed URL, title, journal, publication year, journal metric value/source/year, JCR quartile, and metric match method.
+- G6 edges use `support_pmid_count` for bounded edge width and `support_metric_coverage` for bounded opacity. Coverage `0` edges remain visible.
+- Clicking an edge renders an evidence table in the existing detail area with PMID links, Year, Journal, IF, JCR, Match, and Title.
+- Edges with more than 10 evidence records expose `Download CSV` for the selected edge evidence table.
+- Verification: `check_graph_api_edge_evidence_records.py`, `check_g6_evidence_support_ux.py`, `check_graph_api_evidence_support.py`, `check_api_contracts.py`, and `check_g6_browser_smoke.py` passed.
+- Residual risk: eager evidence payload is acceptable for current LINE1-sized graphs; future very large subgraphs may require a separate lazy endpoint if smoke/browser performance regresses.
+- Follow-up placement update: evidence tables now render inside the expanded edge inspect card's `PubMed` section instead of the lower detail area. The lower detail area only keeps the edge summary/prompt, and `check_g6_evidence_support_ux.py` verifies no duplicate lower detail evidence table.
+- Follow-up layout update: the legacy lower detail area is visually hidden again, and the card evidence table uses fixed column widths without horizontal scrolling. Journal and Title values may truncate in-cell but keep full `title` tooltip values and full CSV export values.

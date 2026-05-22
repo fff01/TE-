@@ -77,6 +77,63 @@
           margin-bottom: 3px;
         }
 
+        .edge-evidence-title {
+          margin-bottom: 5px;
+        }
+
+        .edge-evidence-summary {
+          margin-bottom: 8px;
+          color: #64748b;
+          font-size: 12px;
+        }
+
+        .edge-evidence-table-wrap {
+          overflow-x: auto;
+        }
+
+        .edge-evidence-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 12px;
+        }
+
+        .edge-evidence-table th,
+        .edge-evidence-table td {
+          padding: 6px 8px;
+          border: 1px solid #dbe7f3;
+          text-align: left;
+          vertical-align: top;
+        }
+
+        .edge-evidence-table th {
+          background: #f8fbff;
+          color: #475569;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .edge-evidence-table td {
+          color: #334155;
+        }
+
+        .edge-evidence-table a {
+          color: #2563eb;
+          font-weight: 700;
+          text-decoration: none;
+        }
+
+        .edge-evidence-download {
+          margin-top: 8px;
+          padding: 7px 11px;
+          border: 1px solid #c7d8ed;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #2563eb;
+          font-size: 12px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
         .preview-g6-surface-stack #g6-default-tree-surface,
         .preview-g6-surface-stack #g6-dynamic-surface {
           position: absolute;

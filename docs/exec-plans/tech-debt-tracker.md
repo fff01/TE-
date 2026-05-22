@@ -118,3 +118,14 @@
 - Written relation fields include `support_pmid_count`, `support_metric_paper_count`, `support_metric_coverage`, `support_if_max`, `support_if_mean`, `support_if_median`, JCR quartile counts, journal count, publication year min/max, and `relation_metrics_import_tag`.
 - Rollback is property-only via `scripts/rollback_relation_journal_metrics.py --import-tag relation_metrics_v1_2026-05-22 --write`; it must not delete nodes or relationships.
 - Next debt: design graph API evidence-support read path and G6 visual encoding in a separate active plan. Do not call IF-derived fields confidence.
+
+### G6 evidence support UX v1 - 2026-05-22
+
+- Status: completed and archived in `completed/g6-evidence-support-ux-v1.md`.
+- Graph API now exposes per-edge eager `evidence_records` without abstracts; fields are limited to PMID, PubMed URL, title, journal, year, journal metric value/source/year, JCR quartile, and match method.
+- G6 edge width uses `support_pmid_count`; edge opacity uses `support_metric_coverage` with a visible lower bound, so zero-coverage edges remain visible.
+- Edge click now renders an evidence table with PubMed links and supports selected-edge evidence CSV download for tables above 10 rows.
+- Follow-up UI placement: evidence table now lives inside the expanded edge inspect card's `PubMed` section, with the CSV button on that section header; the lower detail area no longer duplicates the table.
+- Follow-up layout: legacy lower detail is visually hidden again, and the PubMed evidence table uses fixed in-card column widths without horizontal scrolling; Journal/Title truncation keeps tooltip and CSV full values.
+- Checks: `scripts/checks/check_graph_api_edge_evidence_records.py` and `scripts/checks/check_g6_evidence_support_ux.py`.
+- Residual risk: eager payload size may need a lazy endpoint if future large graph queries regress browser/API performance; v1 does not add an explanatory legend for edge width/opacity.

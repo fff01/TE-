@@ -278,7 +278,7 @@
           position: absolute;
           z-index: 20;
           width: 260px;
-          max-width: min(360px, calc(100vw - 28px));
+          max-width: min(640px, calc(100vw - 28px));
           border: 1px solid rgba(148, 163, 184, 0.35);
           border-radius: 10px;
           background: rgba(255, 255, 255, 0.96);
@@ -289,10 +289,12 @@
           overflow: hidden;
         }
         .inspect-card.is-expanded {
-          width: 380px;
+          width: 620px;
         }
         .inspect-card__body {
           padding: 12px 14px;
+          max-height: min(560px, calc(100vh - 48px));
+          overflow: auto;
         }
         .inspect-card__title {
           margin: 0;
@@ -325,6 +327,16 @@
           font-weight: 900;
           letter-spacing: 0.05em;
           text-transform: uppercase;
+        }
+        .inspect-card__section-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 6px;
+        }
+        .inspect-card__section-head .inspect-card__section-title {
+          margin-bottom: 0;
         }
         .inspect-card__kv {
           display: grid;
@@ -377,6 +389,79 @@
           border-color: #2563eb;
           color: #1d4ed8;
         }
+        .edge-evidence-table-wrap {
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+        .edge-evidence-table {
+          width: 100%;
+          table-layout: fixed;
+          border-collapse: collapse;
+          font-size: 11px;
+        }
+        .edge-evidence-table th:nth-child(1),
+        .edge-evidence-table td:nth-child(1) {
+          width: 94px;
+        }
+        .edge-evidence-table th:nth-child(2),
+        .edge-evidence-table td:nth-child(2) {
+          width: 58px;
+        }
+        .edge-evidence-table th:nth-child(3),
+        .edge-evidence-table td:nth-child(3) {
+          width: 132px;
+        }
+        .edge-evidence-table th:nth-child(4),
+        .edge-evidence-table td:nth-child(4),
+        .edge-evidence-table th:nth-child(5),
+        .edge-evidence-table td:nth-child(5) {
+          width: 48px;
+        }
+        .edge-evidence-table th:nth-child(6),
+        .edge-evidence-table td:nth-child(6) {
+          width: 78px;
+        }
+        .edge-evidence-table th,
+        .edge-evidence-table td {
+          padding: 5px 5px;
+          border: 1px solid #e2e8f0;
+          text-align: left;
+          vertical-align: top;
+        }
+        .edge-evidence-table th {
+          background: #f8fafc;
+          color: #475569;
+          font-weight: 900;
+          white-space: nowrap;
+        }
+        .edge-evidence-table a {
+          color: #1d4ed8;
+          font-weight: 800;
+          text-decoration: none;
+        }
+        .edge-evidence-table a:hover {
+          text-decoration: underline;
+        }
+        .edge-evidence-cell-compact {
+          display: inline-block;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          vertical-align: top;
+        }
+        .edge-evidence-download {
+          flex: 0 0 auto;
+          min-height: 26px;
+          padding: 0 9px;
+          border: 1px solid #cbd5e1;
+          border-radius: 7px;
+          background: #ffffff;
+          color: #1d4ed8;
+          cursor: pointer;
+          font-size: 11px;
+          font-weight: 900;
+        }
       `;
       document.head.appendChild(style);
     }
@@ -391,15 +476,25 @@
       inspectCard.className = 'inspect-card';
       inspectCard.setAttribute('role', 'dialog');
       inspectCard.setAttribute('aria-label', 'Inspect card');
-      inspectCard.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const target = event.target;
-        if (target instanceof HTMLElement && target.dataset.inspectAction === 'toggle') {
-          inspectCardState = {
-            ...inspectCardState,
-            expanded: !inspectCardState?.expanded,
-          };
-          renderInspectCard();
+        inspectCard.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const target = event.target;
+        if (target instanceof HTMLElement) {
+          if (target.classList.contains('edge-evidence-download')) {
+            downloadTextFromIframe(
+              `tekg_${safeFilename(currentQuery || 'graph')}_${safeFilename(target.dataset.edgeId || 'edge')}_edge_evidence.csv`,
+              decodeURIComponent(String(target.getAttribute('data-evidence-csv') || '')),
+              'text/csv;charset=utf-8'
+            );
+            return;
+          }
+          if (target.dataset.inspectAction === 'toggle') {
+            inspectCardState = {
+              ...inspectCardState,
+              expanded: !inspectCardState?.expanded,
+            };
+            renderInspectCard();
+          }
         }
       });
       container.appendChild(inspectCard);
@@ -410,6 +505,22 @@
       const raw = String(text || '').replace(/\s+/g, ' ').trim();
       if (raw.length <= maxLength) return raw;
       return `${raw.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+    }
+
+    function safeFilename(value) {
+      return String(value || 'graph').trim().replace(/[^a-z0-9_.-]+/gi, '_').replace(/^_+|_+$/g, '') || 'graph';
+    }
+
+    function downloadTextFromIframe(filename, text, mime) {
+      const blob = new Blob([text || ''], { type: mime || 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
     function resolveInspectQuadrant(pointer, rect) {
@@ -502,6 +613,134 @@
       ].join('');
     }
 
+    function boundedEvidenceWidth(edge) {
+      if (edge?.synthetic) return 1.9;
+      const count = Math.max(
+        0,
+        Number(edge?.support_pmid_count ?? (Array.isArray(edge?.pmids) ? edge.pmids.length : 0)) || 0
+      );
+      return Math.max(1.4, Math.min(6, 1.35 + Math.log2(count + 1) * 0.82));
+    }
+
+    function boundedEvidenceOpacity(edge) {
+      if (edge?.synthetic) return 0.62;
+      const raw = Number(edge?.support_metric_coverage);
+      const coverage = Number.isFinite(raw) ? Math.max(0, Math.min(1, raw)) : 0;
+      return Math.max(0.28, Math.min(0.82, 0.28 + coverage * 0.54));
+    }
+
+    function evidenceValue(value) {
+      if (value === null || value === undefined || value === '') return '—';
+      return String(value);
+    }
+
+    function evidenceMetricValue(value) {
+      if (value === null || value === undefined || value === '' || Number.isNaN(Number(value))) return '—';
+      return Number(value).toFixed(1).replace(/\.0$/, '');
+    }
+
+    function evidenceRecordsForEdge(edge) {
+      const records = Array.isArray(edge?.evidence_records) ? edge.evidence_records : [];
+      if (records.length) {
+        return records
+          .filter((record) => record && typeof record === 'object')
+          .map((record) => ({
+            pmid: String(record.pmid || '').trim(),
+            pubmed_url: String(record.pubmed_url || '').trim(),
+            pubmed_title: record.pubmed_title ?? null,
+            pubmed_journal_title: record.pubmed_journal_title ?? null,
+            pubmed_publication_year: record.pubmed_publication_year ?? null,
+            journal_metric_value: record.journal_metric_value ?? null,
+            journal_metric_source: record.journal_metric_source ?? null,
+            journal_metric_year: record.journal_metric_year ?? null,
+            journal_jcr_quartile: record.journal_jcr_quartile ?? null,
+            journal_metric_match_method: record.journal_metric_match_method ?? null,
+          }))
+          .filter((record) => record.pmid);
+      }
+      return (Array.isArray(edge?.pmids) ? edge.pmids : [])
+        .map((pmid) => String(pmid || '').trim())
+        .filter(Boolean)
+        .map((pmid) => ({
+          pmid,
+          pubmed_url: pubmedUrl(pmid),
+          pubmed_title: null,
+          pubmed_journal_title: null,
+          pubmed_publication_year: null,
+          journal_metric_value: null,
+          journal_metric_source: null,
+          journal_metric_year: null,
+          journal_jcr_quartile: null,
+          journal_metric_match_method: null,
+        }));
+    }
+
+    function csvEscape(value) {
+      const text = value === null || value === undefined ? '' : String(value);
+      return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+
+    function buildEvidenceCsv(records) {
+      const fields = [
+        'pmid',
+        'pubmed_url',
+        'pubmed_publication_year',
+        'pubmed_journal_title',
+        'journal_metric_value',
+        'journal_metric_source',
+        'journal_metric_year',
+        'journal_jcr_quartile',
+        'journal_metric_match_method',
+        'pubmed_title',
+      ];
+      const lines = [fields.join(',')];
+      for (const record of records) {
+        lines.push(fields.map((field) => csvEscape(record[field])).join(','));
+      }
+      return lines.join('\r\n') + '\r\n';
+    }
+
+    function buildEvidenceTableHtml(edge) {
+      const records = evidenceRecordsForEdge(edge);
+      if (!records.length) {
+        return '<div class="edge-evidence-empty">No PMID evidence attached.</div>';
+      }
+
+      const rows = records.map((record) => {
+        const title = String(record.pubmed_title || '').trim();
+        const compactTitle = title ? compactText(title, 96) : '—';
+        const url = record.pubmed_url || pubmedUrl(record.pmid);
+        return [
+          '<tr>',
+          `<td><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(record.pmid)}</a></td>`,
+          `<td>${escapeHtml(evidenceValue(record.pubmed_publication_year))}</td>`,
+        `<td title="${escapeHtml(record.pubmed_journal_title || '')}"><span class="edge-evidence-cell-compact">${escapeHtml(evidenceValue(record.pubmed_journal_title))}</span></td>`,
+          `<td>${escapeHtml(evidenceMetricValue(record.journal_metric_value))}</td>`,
+          `<td>${escapeHtml(evidenceValue(record.journal_jcr_quartile))}</td>`,
+          `<td>${escapeHtml(evidenceValue(record.journal_metric_match_method))}</td>`,
+          `<td class="edge-evidence-title-cell" title="${escapeHtml(title)}"><span class="edge-evidence-cell-compact">${escapeHtml(compactTitle)}</span></td>`,
+          '</tr>',
+        ].join('');
+      }).join('');
+
+      return [
+        '<div class="edge-evidence-block">',
+        '<div class="edge-evidence-table-wrap">',
+        '<table class="edge-evidence-table">',
+        '<thead><tr><th>PMID</th><th>Year</th><th>Journal</th><th>IF</th><th>JCR</th><th>Match</th><th>Title</th></tr></thead>',
+        `<tbody>${rows}</tbody>`,
+        '</table>',
+        '</div>',
+        '</div>',
+      ].join('');
+    }
+
+    function buildEvidenceCsvButtonHtml(edge) {
+      const records = evidenceRecordsForEdge(edge);
+      if (records.length <= 10) return '';
+      return `<button class="edge-evidence-download" type="button" data-edge-id="${escapeHtml(edge?.id || 'edge')}" data-evidence-csv="${escapeHtml(encodeURIComponent(buildEvidenceCsv(records)))}">Download CSV</button>`;
+    }
+
     function renderNodeInspectCard(node) {
       const label = node.displayLabel || node.rawLabel || node.id || '';
       const type = node.nodeType || 'Node';
@@ -567,10 +806,12 @@
       const pmids = Array.isArray(edge?.pmids) ? edge.pmids : [];
       const evidence = String(edge?.evidence || '').trim();
       const expanded = inspectCardState?.expanded === true;
+      const coverage = Number(edge?.support_metric_coverage);
       const rows = [
         kvRow('Relation', relation),
         kvRow('Type', relationType),
-        kvRow('PMID count', pmids.length),
+        kvRow('PMID count', edge?.support_pmid_count ?? pmids.length),
+        Number.isFinite(coverage) ? kvRow('Metric coverage', coverage.toFixed(2)) : '',
       ].filter(Boolean).join('');
 
       return [
@@ -578,7 +819,7 @@
         `<h3 class="inspect-card__title">${escapeHtml(sourceLabel)} → ${escapeHtml(relation)} → ${escapeHtml(targetLabel)}</h3>`,
         `<div class="inspect-card__meta">${escapeHtml(relationType || 'Relation')} · PMID ${pmids.length}</div>`,
         expanded && rows ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Relation</p><div class="inspect-card__kv">${rows}</div></div>` : '',
-        expanded ? `<div class="inspect-card__section"><p class="inspect-card__section-title">PubMed</p>${pmidLinks(pmids)}</div>` : (pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
+        expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
         expanded ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence || (isClassificationRelation(relationType) ? 'This is a taxonomy/classification edge, not a literature evidence edge.' : 'No evidence text attached to this edge.'))}</div></div>` : '',
         '<div class="inspect-card__actions">',
         `<button class="inspect-card__button" type="button" data-inspect-action="toggle">${expanded ? 'Collapse' : 'Expand'}</button>`,
@@ -1036,13 +1277,19 @@
       const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
       const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
       const relation = relationLabelForEdge(edge);
-      const evidence = formatEvidence(edge);
+      const pmidCount = Math.max(0, Number(edge?.support_pmid_count) || (Array.isArray(edge?.pmids) ? edge.pmids.length : 0));
+      const coverage = Number(edge?.support_metric_coverage);
+      const coverageText = Number.isFinite(coverage) ? coverage.toFixed(2) : '—';
 
       return [
+        '<div class="edge-evidence-detail">',
+        '<div class="edge-evidence-title">',
         `<strong>${escapeHtml(sourceLabel)}</strong>`,
         `&nbsp;&rarr;&nbsp;${escapeHtml(relation)}&nbsp;&rarr;&nbsp;`,
         `<strong>${escapeHtml(targetLabel)}</strong>`,
-        `<div style="margin-top:8px;color:#475569;line-height:1.6;"><strong>Evidence:</strong> ${escapeHtml(evidence)}</div>`,
+        '</div>',
+        `<div class="edge-evidence-summary">PMID support: ${escapeHtml(pmidCount)} · Metric coverage: ${escapeHtml(coverageText)}. Expand the edge card to inspect PubMed evidence.</div>`,
+        '</div>',
       ].join('');
     }
 
@@ -1148,6 +1395,20 @@
           relationKey,
           evidence: String(data.evidence || '').trim(),
           pmids,
+          evidence_records: Array.isArray(data.evidence_records) ? data.evidence_records : [],
+          support_pmid_count: Number(data.support_pmid_count ?? pmids.length) || 0,
+          support_metric_paper_count: Number(data.support_metric_paper_count ?? 0) || 0,
+          support_metric_coverage: Number(data.support_metric_coverage ?? 0) || 0,
+          support_if_max: data.support_if_max ?? null,
+          support_if_mean: data.support_if_mean ?? null,
+          support_if_median: data.support_if_median ?? null,
+          support_jcr_q1_count: Number(data.support_jcr_q1_count ?? 0) || 0,
+          support_jcr_q2_count: Number(data.support_jcr_q2_count ?? 0) || 0,
+          support_jcr_q3_count: Number(data.support_jcr_q3_count ?? 0) || 0,
+          support_jcr_q4_count: Number(data.support_jcr_q4_count ?? 0) || 0,
+          support_journal_count: Number(data.support_journal_count ?? 0) || 0,
+          support_publication_year_min: data.support_publication_year_min ?? null,
+          support_publication_year_max: data.support_publication_year_max ?? null,
         });
       }
 
@@ -1207,6 +1468,20 @@
           relationKey: edge.relationKey,
           evidence: edge.evidence,
           pmids: edge.pmids,
+          evidence_records: edge.evidence_records,
+          support_pmid_count: edge.support_pmid_count,
+          support_metric_paper_count: edge.support_metric_paper_count,
+          support_metric_coverage: edge.support_metric_coverage,
+          support_if_max: edge.support_if_max,
+          support_if_mean: edge.support_if_mean,
+          support_if_median: edge.support_if_median,
+          support_jcr_q1_count: edge.support_jcr_q1_count,
+          support_jcr_q2_count: edge.support_jcr_q2_count,
+          support_jcr_q3_count: edge.support_jcr_q3_count,
+          support_jcr_q4_count: edge.support_jcr_q4_count,
+          support_journal_count: edge.support_journal_count,
+          support_publication_year_min: edge.support_publication_year_min,
+          support_publication_year_max: edge.support_publication_year_max,
           strokeColor: relationStyle.color,
           lineDash: relationStyle.lineDash,
         });
@@ -1439,10 +1714,10 @@
                 if (edge.strokeColor) return edge.strokeColor;
                 const source = resolveNode(edge.source, data.nodes);
                 const target = resolveNode(edge.target, data.nodes);
-                const alpha = edge.synthetic ? 0.62 : 0.5;
+                const alpha = boundedEvidenceOpacity(edge);
                 return mixEdgeColor(source?.nodeType, target?.nodeType, alpha);
               },
-              lineWidth: (edge) => (edge.synthetic ? 1.9 : 1.5),
+              lineWidth: (edge) => boundedEvidenceWidth(edge),
               lineDash: (edge) => edge.lineDash || [],
               labelText: (edge) => {
                 if (!currentShowEdgeLabels) return '';
@@ -1772,6 +2047,20 @@
               relationKey: String(edge.relationKey || edge.relationType || edge.relation || 'RELATION'),
               pmids: Array.isArray(edge.pmids) ? edge.pmids.map((pmid) => String(pmid || '')).filter(Boolean) : [],
               pmid_count: Array.isArray(edge.pmids) ? edge.pmids.length : 0,
+              evidence_records: Array.isArray(edge.evidence_records) ? clonePlain(edge.evidence_records) : [],
+              support_pmid_count: Number(edge.support_pmid_count ?? 0) || 0,
+              support_metric_paper_count: Number(edge.support_metric_paper_count ?? 0) || 0,
+              support_metric_coverage: Number(edge.support_metric_coverage ?? 0) || 0,
+              support_if_max: edge.support_if_max ?? null,
+              support_if_mean: edge.support_if_mean ?? null,
+              support_if_median: edge.support_if_median ?? null,
+              support_jcr_q1_count: Number(edge.support_jcr_q1_count ?? 0) || 0,
+              support_jcr_q2_count: Number(edge.support_jcr_q2_count ?? 0) || 0,
+              support_jcr_q3_count: Number(edge.support_jcr_q3_count ?? 0) || 0,
+              support_jcr_q4_count: Number(edge.support_jcr_q4_count ?? 0) || 0,
+              support_journal_count: Number(edge.support_journal_count ?? 0) || 0,
+              support_publication_year_min: edge.support_publication_year_min ?? null,
+              support_publication_year_max: edge.support_publication_year_max ?? null,
               evidence: String(edge.evidence || ''),
             };
           })
@@ -1784,6 +2073,52 @@
         edges,
         counts: { nodes: nodes.length, edges: edges.length },
         source: 'iframe-currentGraphData',
+      });
+    }
+
+    function inspectEdge(edgeId) {
+      const id = String(edgeId || '');
+      const edge = Array.isArray(currentGraphData?.edges)
+        ? currentGraphData.edges.find((item) => String(item.id || '') === id)
+        : null;
+      if (!edge) {
+        return false;
+      }
+      const card = ensureInspectCard();
+      const rect = container.getBoundingClientRect();
+      inspectCardState = {
+        kind: 'edge',
+        node: null,
+        edge,
+        nodes: currentGraphData?.nodes || [],
+        pointer: {
+          x: Math.max(20, Math.min(rect.width - 20, rect.width / 2)),
+          y: Math.max(20, Math.min(rect.height - 20, rect.height / 2)),
+        },
+        quadrant: 'q1',
+        expanded: false,
+      };
+      renderInspectCard();
+      positionInspectCard(card, inspectCardState);
+      hooks.onSelection(null);
+      hooks.setDetailHtml(buildEdgeDetailHtml(edge, currentGraphData?.nodes || []));
+      return true;
+    }
+
+    function getEdgeVisuals(edgeId) {
+      const id = String(edgeId || '');
+      const edge = Array.isArray(currentGraphData?.edges)
+        ? currentGraphData.edges.find((item) => String(item.id || '') === id)
+        : null;
+      if (!edge) {
+        return null;
+      }
+      return clonePlain({
+        edgeId: id,
+        support_pmid_count: Number(edge.support_pmid_count ?? 0) || 0,
+        support_metric_coverage: Number(edge.support_metric_coverage ?? 0) || 0,
+        width: boundedEvidenceWidth(edge),
+        opacity: boundedEvidenceOpacity(edge),
       });
     }
 
@@ -1916,6 +2251,8 @@
       getCurrentQuery: () => currentQuery,
       getCurrentRequest: () => buildCurrentRequest(),
       getVisibleSubgraph,
+      inspectEdge,
+      getEdgeVisuals,
       exportPngDataUrl,
       getFixedView: () => fixedView,
       getKeyNodeLevel: () => currentKeyNodeLevel,

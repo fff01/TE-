@@ -1729,6 +1729,7 @@ CYPHER,
     {
         $nodes = [];
         $edges = [];
+        $evidenceRecordsByPmid = $this->loadEvidenceRecordsByPmids($this->collectRelationPmids($rows));
 
         $this->addNode($nodes, [
             'element_id' => $anchor['element_id'],
@@ -1773,6 +1774,7 @@ CYPHER,
                     'relationType' => $row['relation_type'],
                     'evidence' => $row['relation_evidence'],
                     'pmids' => $row['relation_pmids'],
+                    'evidence_records' => $this->evidenceRecordsForPmids($row['relation_pmids'], $evidenceRecordsByPmid),
                 ],
             ];
             $edges[$edgeId]['data'] += $this->evidenceSupportData($row);
@@ -1809,6 +1811,7 @@ CYPHER,
                         'relationType' => $extra['relation_type'],
                         'evidence' => $extra['relation_evidence'],
                         'pmids' => $extra['relation_pmids'],
+                        'evidence_records' => $this->evidenceRecordsForPmids($extra['relation_pmids'], $evidenceRecordsByPmid),
                     ],
                 ];
                 $edges[$extraEdgeId]['data'] += $this->evidenceSupportData($extra);
@@ -1855,6 +1858,105 @@ CYPHER,
         ];
     }
 
+    private function collectRelationPmids(array $rows): array
+    {
+        $pmids = [];
+        foreach ($rows as $row) {
+            foreach (($row['relation_pmids'] ?? []) as $pmid) {
+                $key = trim((string)$pmid);
+                if ($key !== '') {
+                    $pmids[$key] = true;
+                }
+            }
+            foreach (($row['expanded'] ?? []) as $extra) {
+                foreach (($extra['relation_pmids'] ?? []) as $pmid) {
+                    $key = trim((string)$pmid);
+                    if ($key !== '') {
+                        $pmids[$key] = true;
+                    }
+                }
+            }
+        }
+        return array_keys($pmids);
+    }
+
+    private function loadEvidenceRecordsByPmids(array $pmids): array
+    {
+        $pmids = array_values(array_unique(array_filter(array_map(
+            static fn($pmid): string => trim((string)$pmid),
+            $pmids
+        ))));
+        if (empty($pmids)) {
+            return [];
+        }
+
+        $records = [];
+        foreach (array_chunk($pmids, 500) as $chunk) {
+            $rows = $this->runNeo4j(
+                <<<'CYPHER'
+MATCH (p:Paper)
+WHERE p.pmid IN $pmids
+RETURN
+  p.pmid AS pmid,
+  p.pubmed_title AS pubmed_title,
+  p.pubmed_journal_title AS pubmed_journal_title,
+  p.pubmed_publication_year AS pubmed_publication_year,
+  p.journal_metric_value AS journal_metric_value,
+  p.journal_metric_source AS journal_metric_source,
+  p.journal_metric_year AS journal_metric_year,
+  p.journal_jcr_quartile AS journal_jcr_quartile,
+  p.journal_metric_match_method AS journal_metric_match_method
+CYPHER,
+                ['pmids' => $chunk]
+            );
+
+            foreach ($rows as $row) {
+                $pmid = trim((string)($row['pmid'] ?? ''));
+                if ($pmid === '') {
+                    continue;
+                }
+                $records[$pmid] = $this->normalizeEvidenceRecord($pmid, $row);
+            }
+        }
+
+        return $records;
+    }
+
+    private function evidenceRecordsForPmids(mixed $pmids, array $recordsByPmid): array
+    {
+        if (!is_array($pmids)) {
+            return [];
+        }
+
+        $records = [];
+        $seen = [];
+        foreach ($pmids as $pmid) {
+            $key = trim((string)$pmid);
+            if ($key === '' || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $records[] = $recordsByPmid[$key] ?? $this->normalizeEvidenceRecord($key, []);
+        }
+        return $records;
+    }
+
+    private function normalizeEvidenceRecord(string $pmid, array $row): array
+    {
+        return [
+            'pmid' => $pmid,
+            'pubmed_url' => 'https://pubmed.ncbi.nlm.nih.gov/' . rawurlencode($pmid) . '/',
+            'pubmed_title' => $this->nullableStringValue($row['pubmed_title'] ?? null),
+            'pubmed_journal_title' => $this->nullableStringValue($row['pubmed_journal_title'] ?? null),
+            'pubmed_publication_year' => $this->nullableIntValue($row['pubmed_publication_year'] ?? null),
+            'journal_metric_value' => $this->nullableFloatValue($row['journal_metric_value'] ?? null),
+            'journal_metric_source' => $this->nullableStringValue($row['journal_metric_source'] ?? null),
+            'journal_metric_year' => $this->nullableIntValue($row['journal_metric_year'] ?? null),
+            'journal_jcr_quartile' => $this->nullableStringValue($row['journal_jcr_quartile'] ?? null),
+            'journal_metric_match_method' => $this->nullableStringValue($row['journal_metric_match_method'] ?? null),
+        ];
+    }
+
     private function intValue(mixed $value): int
     {
         return is_numeric($value) ? (int)$value : 0;
@@ -1873,6 +1975,15 @@ CYPHER,
     private function nullableIntValue(mixed $value): ?int
     {
         return is_numeric($value) ? (int)$value : null;
+    }
+
+    private function nullableStringValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $text = trim((string)$value);
+        return $text === '' ? null : $text;
     }
 
     private function addNode(array &$nodes, array $row): void
