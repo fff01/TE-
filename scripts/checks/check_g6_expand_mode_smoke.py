@@ -372,47 +372,35 @@ def run_one_query(query: str, results: list[dict[str, Any]]) -> None:
                 ][:12],
             }))
 
-            page.locator("#toggle-expand-mode").click(timeout=15000)
-            page.wait_for_timeout(1000)
             after_toggle = snapshot()
-            require(after_toggle["state"]["expandModeEnabled"] is True, "Expand mode did not turn on\n" + evidence({"before": before, "after_toggle": after_toggle}))
-            require(after_toggle["state"]["mode"] == "dynamic", "Expand mode toggle left graph outside dynamic mode\n" + evidence({"before": before, "after_toggle": after_toggle}))
-            require(after_toggle["state"]["source"] == "query", "Expand mode toggle left graph outside query source\n" + evidence({"before": before, "after_toggle": after_toggle}))
-            require(after_toggle["state"]["query"] == query, "Expand mode toggle changed the center query\n" + evidence({"before": before, "after_toggle": after_toggle}))
-            require(after_toggle["frame"]["canvases"] > 0 or after_toggle["frame"]["children"] > 0, "Expand mode immediately blanked graph\n" + evidence({"before": before, "after_toggle": after_toggle}))
-            require(after_toggle["loader"]["hidden"] == "true" or "is-visible" not in str(after_toggle["loader"]["cls"]), "Expand mode toggle left loader visible\n" + evidence({"before": before, "after_toggle": after_toggle}))
+            require(after_toggle["state"]["mode"] == "dynamic", "Card Expand setup left graph outside dynamic mode\n" + evidence({"before": before, "after_toggle": after_toggle}))
+            require(after_toggle["state"]["source"] == "query", "Card Expand setup left graph outside query source\n" + evidence({"before": before, "after_toggle": after_toggle}))
+            require(after_toggle["state"]["query"] == query, "Card Expand setup changed the center query\n" + evidence({"before": before, "after_toggle": after_toggle}))
+            require(after_toggle["frame"]["canvases"] > 0 or after_toggle["frame"]["children"] > 0, "Card Expand setup has blank graph\n" + evidence({"before": before, "after_toggle": after_toggle}))
+            require(after_toggle["loader"]["hidden"] == "true" or "is-visible" not in str(after_toggle["loader"]["cls"]), "Card Expand setup left loader visible\n" + evidence({"before": before, "after_toggle": after_toggle}))
 
-            iframe_box = page.locator("#g6-dynamic-surface iframe").bounding_box()
-            require(iframe_box is not None, "Cannot locate G6 iframe bounds\n" + evidence({"after_toggle": after_toggle}))
-
-            clicked_probe: str | None = None
-            click_snapshots: list[dict[str, Any]] = []
             initial_request_count = len(graph_requests)
-            for probe in CLICK_PROBES:
-                x = iframe_box["x"] + iframe_box["width"] * probe.x_ratio
-                y = iframe_box["y"] + iframe_box["height"] * probe.y_ratio
-                page.mouse.click(x, y)
-                page.wait_for_timeout(1500)
-                current = snapshot()
-                click_snapshots.append({
-                    "probe": probe.label,
-                    "snapshot": {
-                        "state": current["state"],
-                        "counts": current["counts"],
-                        "frame": current["frame"],
-                        "loader": current["loader"],
-                        "surface": current["surface"],
-                    },
-                })
-                request_count_changed = len(graph_requests) > initial_request_count
-                element_count_changed = current["counts"]["elements"] != after_toggle["counts"]["elements"]
-                loader_started = current["loader"]["hidden"] == "false" or "is-visible" in str(current["loader"]["cls"])
-                if request_count_changed or element_count_changed or loader_started:
-                    clicked_probe = probe.label
-                    break
-
-            if clicked_probe is not None:
-                page.wait_for_timeout(8000)
+            expanded = page.evaluate(
+                """async () => {
+                    const iframe = document.querySelector('#g6-dynamic-surface iframe');
+                    const embed = iframe && iframe.contentWindow ? iframe.contentWindow.__TEKG_G6_EMBED : null;
+                    if (!embed || typeof embed.getVisibleSubgraph !== 'function' || typeof embed.triggerNodeAction !== 'function') {
+                        return { ok: false, error: 'node action bridge missing' };
+                    }
+                    const subgraph = await embed.getVisibleSubgraph();
+                    const nodes = Array.isArray(subgraph && subgraph.nodes) ? subgraph.nodes : [];
+                    const preferred = nodes.find((item) => String(item.rawLabel || item.label || '').trim() === 'L1HS');
+                    const node = preferred || nodes.find((item) => item.id && item.type !== 'Paper' && String(item.rawLabel || item.label || '').trim() !== String(subgraph.query || '').trim());
+                    if (!node) return { ok: false, error: 'expand target not found' };
+                    await embed.inspectNode(node.id);
+                    const result = await embed.triggerNodeAction(node.id, 'expand');
+                    return { ok: true, result, node };
+                }"""
+            )
+            clicked_probe = "card-expand"
+            click_snapshots: list[dict[str, Any]] = [{"probe": clicked_probe, "expanded": expanded}]
+            require(expanded.get("ok") is True, "Card Expand did not trigger a node interaction\n" + evidence({"before": before, "after_toggle": after_toggle, "expanded": expanded}))
+            page.wait_for_timeout(8000)
 
             after_click = snapshot()
             after_elements = after_click["elements"]
@@ -437,7 +425,7 @@ def run_one_query(query: str, results: list[dict[str, Any]]) -> None:
                     )
                 except PlaywrightTimeoutError:
                     after_timeout = snapshot()
-                    layer = classify_failure(after_toggle, after_timeout, graph_requests_after_click, failed_requests, console_errors, page_errors, clicked_probe is not None)
+                    layer = classify_failure(after_toggle, after_timeout, graph_requests_after_click, failed_requests, console_errors, page_errors, True)
                     fail("Expand mode loader stuck after node click; layer=" + layer + "\n" + evidence({
                         "clicked_probe": clicked_probe,
                         "before": before,
@@ -463,7 +451,7 @@ def run_one_query(query: str, results: list[dict[str, Any]]) -> None:
                 center_still_present = center_node_id in after_identity["nodes"]
                 neighbor_added = connected_to_clicked(after_elements, clicked_node_id, new_node_ids, new_edge_ids)
 
-            layer = classify_failure(after_toggle, after_click, graph_requests_after_click, failed_requests, console_errors, page_errors, clicked_probe is not None)
+            layer = classify_failure(after_toggle, after_click, graph_requests_after_click, failed_requests, console_errors, page_errors, True)
             captured = {
                 "query": query,
                 "center_node": node_summary(center_node),
@@ -486,7 +474,7 @@ def run_one_query(query: str, results: list[dict[str, Any]]) -> None:
                 "page_errors": page_errors,
                 "classified_layer": layer,
             }
-            require(clicked_probe is not None, "Expand mode click did not trigger a node interaction; layer=" + layer + "\n" + evidence(captured))
+            require(clicked_probe is not None, "Card Expand did not trigger a node interaction; layer=" + layer + "\n" + evidence(captured))
             require(clicked_node_id, "Expand mode click did not expose clicked node metadata\n" + evidence(captured))
             require(clicked_node_id != center_node_id, "Expand mode clicked the initial center node, not a non-center node\n" + evidence(captured))
             require(clicked_queries, "Clicked node has no queryLabel/rawLabel/displayLabel fallback\n" + evidence(captured))

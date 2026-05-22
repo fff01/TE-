@@ -371,6 +371,7 @@
         .inspect-card__actions {
           display: flex;
           justify-content: flex-end;
+          flex-wrap: wrap;
           gap: 8px;
           margin-top: 10px;
         }
@@ -486,6 +487,11 @@
               decodeURIComponent(String(target.getAttribute('data-evidence-csv') || '')),
               'text/csv;charset=utf-8'
             );
+            return;
+          }
+          const nodeAction = target.dataset.nodeAction;
+          if (nodeAction && inspectCardState?.kind === 'node' && inspectCardState.node) {
+            void handleNodeAction(nodeAction, inspectCardState.node);
             return;
           }
           if (target.dataset.inspectAction === 'toggle') {
@@ -790,10 +796,66 @@
         ...summary,
         ...sections,
         '<div class="inspect-card__actions">',
-        `<button class="inspect-card__button" type="button" data-inspect-action="toggle">${expanded ? 'Collapse' : 'Expand'}</button>`,
+        '<button class="inspect-card__button" type="button" data-node-action="jump">Jump</button>',
+        '<button class="inspect-card__button" type="button" data-node-action="expand">Expand</button>',
+        '<button class="inspect-card__button" type="button" data-node-action="details">Details</button>',
         '</div>',
         '</div>',
       ].join('');
+    }
+
+    async function handleNodeAction(action, node) {
+      const nextAction = String(action || '').trim().toLowerCase();
+      if (!node) return false;
+      if (nextAction === 'details') {
+        inspectCardState = {
+          ...inspectCardState,
+          kind: 'node',
+          node,
+          expanded: true,
+        };
+        renderInspectCard();
+        return true;
+      }
+      if (nextAction === 'expand') {
+        const expanded = await Promise.resolve(hooks.onNodeExpand(node));
+        if (expanded) {
+          inspectCardState = {
+            ...inspectCardState,
+            kind: 'node',
+            node,
+            expanded: true,
+          };
+          renderInspectCard();
+        }
+        return expanded === true;
+      }
+      if (nextAction === 'jump') {
+        const query = String(node.queryLabel || node.rawLabel || node.displayLabel || '').trim();
+        if (!query) return false;
+        if (node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory') {
+          const classQuery = String(node.classQuery || node.diseaseClass || query).trim();
+          if (classQuery) {
+            const handled = await Promise.resolve(
+              hooks.onDiseaseClassClick(node, {
+                query: classQuery,
+                queryType: 'disease_class',
+                classQuery,
+              })
+            );
+            if (handled) return true;
+            await loadGraph({
+              query: classQuery,
+              queryType: 'disease_class',
+              classQuery,
+            });
+            return true;
+          }
+        }
+        await loadGraph(query);
+        return true;
+      }
+      return false;
     }
 
     function renderEdgeInspectCard(edge, nodes) {
@@ -1811,34 +1873,9 @@
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
-          if (currentAllowInspectCard) showInspectCard('node', node, event, data);
-          else hideInspectCard();
+          showInspectCard('node', node, event, data);
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
-          const expanded = await Promise.resolve(hooks.onNodeExpand(node));
-          if (expanded) return;
-          if (!fixedView && (node.nodeType === 'DiseaseClass' || node.nodeType === 'DiseaseCategory')) {
-            const classQuery = String(node.classQuery || node.diseaseClass || node.queryLabel || node.displayLabel || node.rawLabel || '').trim();
-            if (classQuery) {
-              const handled = await Promise.resolve(
-                hooks.onDiseaseClassClick(node, {
-                  query: classQuery,
-                  queryType: 'disease_class',
-                  classQuery,
-                })
-              );
-              if (handled) return;
-              loadGraph({
-                query: classQuery,
-                queryType: 'disease_class',
-                classQuery,
-              });
-            }
-            return;
-          }
-          if (!fixedView && node.queryLabel) {
-            loadGraph(node.queryLabel);
-          }
         });
         graph.on('edge:click', (event) => {
           const edgeId = event?.target?.id;
@@ -2105,6 +2142,49 @@
       return true;
     }
 
+    function inspectNode(nodeId) {
+      const id = String(nodeId || '');
+      const node = Array.isArray(currentGraphData?.nodes)
+        ? currentGraphData.nodes.find((item) => String(item.id || '') === id)
+        : null;
+      if (!node) {
+        return false;
+      }
+      const card = ensureInspectCard();
+      const rect = container.getBoundingClientRect();
+      inspectCardState = {
+        kind: 'node',
+        node,
+        edge: null,
+        nodes: currentGraphData?.nodes || [],
+        pointer: {
+          x: Math.max(20, Math.min(rect.width - 20, rect.width / 2)),
+          y: Math.max(20, Math.min(rect.height - 20, rect.height / 2)),
+        },
+        quadrant: 'q1',
+        expanded: false,
+      };
+      renderInspectCard();
+      positionInspectCard(card, inspectCardState);
+      hooks.onSelection(node);
+      hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
+      return true;
+    }
+
+    function triggerNodeAction(nodeId, action) {
+      const id = String(nodeId || '');
+      const node = Array.isArray(currentGraphData?.nodes)
+        ? currentGraphData.nodes.find((item) => String(item.id || '') === id)
+        : null;
+      if (!node) {
+        return Promise.resolve(false);
+      }
+      if (!inspectCardState || inspectCardState.kind !== 'node' || String(inspectCardState.node?.id || '') !== id) {
+        inspectNode(id);
+      }
+      return Promise.resolve(handleNodeAction(action, node));
+    }
+
     function getEdgeVisuals(edgeId) {
       const id = String(edgeId || '');
       const edge = Array.isArray(currentGraphData?.edges)
@@ -2251,6 +2331,8 @@
       getCurrentQuery: () => currentQuery,
       getCurrentRequest: () => buildCurrentRequest(),
       getVisibleSubgraph,
+      inspectNode,
+      triggerNodeAction,
       inspectEdge,
       getEdgeVisuals,
       exportPngDataUrl,

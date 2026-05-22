@@ -61,6 +61,11 @@
           text-transform: uppercase;
         }
 
+        #toggle-fixed-view,
+        #toggle-expand-mode {
+          display: none !important;
+        }
+
         .preview-g6-surface-stack {
           position: relative;
           flex: 1 1 auto;

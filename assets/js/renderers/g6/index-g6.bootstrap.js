@@ -304,7 +304,7 @@
     return Object.assign({
       showAllLabels: window.showLabels,
       showEdgeLabels: window.showEdgeLabels,
-      allowInspectCard: window.fixedView && !expandModeEnabled,
+      allowInspectCard: true,
       visibleTypes: getVisibleTypePayload(),
       visibleRelations: getVisibleRelationPayload(),
       minRelationPmids: relationMinPmids,
@@ -1613,7 +1613,7 @@
   }
 
   async function expandSelectedNode(node) {
-    if (currentMode !== 'dynamic' || currentGraphSource !== 'query' || !expandModeEnabled) return false;
+    if (currentMode !== 'dynamic' || currentGraphSource !== 'query') return false;
     const query = String(node?.queryLabel || node?.rawLabel || node?.displayLabel || '').trim();
     if (!query) return false;
     const expandNodeId = String(node?.id || '').trim();

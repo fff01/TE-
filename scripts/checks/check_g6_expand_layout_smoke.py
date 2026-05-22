@@ -386,20 +386,27 @@ def run_one(query: str) -> None:
                 "() => window.__TEKG_G6_EXPAND_LAYOUT_SNAPSHOT ? window.__TEKG_G6_EXPAND_LAYOUT_SNAPSHOT() : null"
             )
 
-            page.locator("#toggle-expand-mode").click(timeout=15000)
-            page.wait_for_timeout(1000)
-            iframe_box = page.locator("#g6-dynamic-surface iframe").bounding_box()
-            require(iframe_box is not None, "Cannot locate G6 iframe bounds")
             request_count = len(graph_requests)
-            clicked_probe = None
-            for x_ratio, y_ratio, label in CLICK_PROBES:
-                page.mouse.click(iframe_box["x"] + iframe_box["width"] * x_ratio, iframe_box["y"] + iframe_box["height"] * y_ratio)
-                page.wait_for_timeout(1500)
-                if len(graph_requests) > request_count:
-                    clicked_probe = label
-                    break
-
-            require(clicked_probe, "Could not trigger expand request\n" + evidence({"query": query, "graph_requests": graph_requests}))
+            expanded = page.evaluate(
+                """async () => {
+                    const iframe = document.querySelector('#g6-dynamic-surface iframe');
+                    const embed = iframe && iframe.contentWindow ? iframe.contentWindow.__TEKG_G6_EMBED : null;
+                    if (!embed || typeof embed.getVisibleSubgraph !== 'function' || typeof embed.triggerNodeAction !== 'function') {
+                        return { ok: false, error: 'node action bridge missing' };
+                    }
+                    const subgraph = await embed.getVisibleSubgraph();
+                    const nodes = Array.isArray(subgraph && subgraph.nodes) ? subgraph.nodes : [];
+                    const preferred = nodes.find((item) => String(item.rawLabel || item.label || '').trim() === 'L1HS');
+                    const node = preferred || nodes.find((item) => item.id && item.type !== 'Paper' && String(item.rawLabel || item.label || '').trim() !== String(subgraph.query || '').trim());
+                    if (!node) return { ok: false, error: 'expand target not found' };
+                    await embed.inspectNode(node.id);
+                    const result = await embed.triggerNodeAction(node.id, 'expand');
+                    return { ok: true, result, node };
+                }"""
+            )
+            require(expanded.get("ok") is True, "Could not trigger card Expand request\n" + evidence({"query": query, "expanded": expanded, "graph_requests": graph_requests}))
+            clicked_probe = "card-expand"
+            require(len(graph_requests) > request_count, "Card Expand did not issue graph request\n" + evidence({"query": query, "expanded": expanded, "graph_requests": graph_requests}))
             page.wait_for_timeout(8000)
             try:
                 page.wait_for_function(

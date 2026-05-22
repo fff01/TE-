@@ -102,3 +102,14 @@ python scripts/checks/check_docs_freshness.py
 - Residual risk: eager evidence payload is acceptable for current LINE1-sized graphs; future very large subgraphs may require a separate lazy endpoint if smoke/browser performance regresses.
 - Follow-up placement update: evidence tables now render inside the expanded edge inspect card's `PubMed` section instead of the lower detail area. The lower detail area only keeps the edge summary/prompt, and `check_g6_evidence_support_ux.py` verifies no duplicate lower detail evidence table.
 - Follow-up layout update: the legacy lower detail area is visually hidden again, and the card evidence table uses fixed column widths without horizontal scrolling. Journal and Title values may truncate in-cell but keep full `title` tooltip values and full CSV export values.
+
+## G6 Node Action Card UX Notes - 2026-05-22
+
+- G6 node action card UX is completed and archived in `docs/exec-plans/completed/g6-node-action-card-ux.md`.
+- User-visible `Fixed view` and `Expand mode` controls are hidden while their internal compatibility state remains available.
+- Clicking a node now opens the node action card only. It does not automatically jump to a new center graph and does not automatically expand.
+- Node cards expose explicit `Jump`, `Expand`, and `Details` actions.
+- `Jump` reuses the node-centered graph load path; `Expand` reuses the same-label-safe expand path with `expand_node_id`, `expand_node_type`, and `expand_query`; `Details` expands the node card without changing query or element count.
+- Existing edge evidence card, PubMed evidence table, and selected-edge CSV download behavior remain unchanged.
+- Verification: `check_g6_node_action_card_ux.py`, `check_g6_browser_smoke.py`, expand mode/layout/disambiguation smokes, evidence support UX smoke, and API contracts passed.
+- Residual risk: legacy fixed/expand internal variables are intentionally retained for compatibility and should only be removed in a separate audited cleanup.

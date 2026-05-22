@@ -129,3 +129,13 @@
 - Follow-up layout: legacy lower detail is visually hidden again, and the PubMed evidence table uses fixed in-card column widths without horizontal scrolling; Journal/Title truncation keeps tooltip and CSV full values.
 - Checks: `scripts/checks/check_graph_api_edge_evidence_records.py` and `scripts/checks/check_g6_evidence_support_ux.py`.
 - Residual risk: eager payload size may need a lazy endpoint if future large graph queries regress browser/API performance; v1 does not add an explanatory legend for edge width/opacity.
+
+### G6 node action card UX - 2026-05-22
+
+- Status: completed and archived in `completed/g6-node-action-card-ux.md`.
+- User-visible `Fixed view` and `Expand mode` controls are hidden; compatibility DOM/state is retained.
+- Node click now opens a node action card only. It does not auto-jump and does not auto-expand.
+- Node action buttons are explicit: `Jump`, `Expand`, and `Details`.
+- `Jump` reuses existing node-centered graph loading; `Expand` reuses the same-label-safe expand path and still sends `expand_node_id`, `expand_node_type`, and `expand_query`; `Details` expands the node card without graph mutation.
+- Checks: `scripts/checks/check_g6_node_action_card_ux.py`, updated `check_g6_browser_smoke.py`, and updated expand smokes.
+- Residual debt: fixed/expand internal variables are retained for compatibility and should only be removed after a separate reference audit. Expand/collapse affordance and multi-step expanded-node UX remain separate future work.

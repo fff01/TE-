@@ -8,7 +8,7 @@ from harness_lib import app_url, fail, ok, require, run_check
 
 
 def evidence(data: dict[str, Any]) -> str:
-    return json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True)
+    return json.dumps(data, ensure_ascii=True, indent=2, sort_keys=True)
 
 
 def norm(value: Any) -> str:
@@ -119,42 +119,27 @@ def main() -> None:
             target_id = str(target.get("id") or "")
             require(target_id, f"Disease:Aging missing node id: {target}")
 
-            page.locator("#toggle-expand-mode").click(timeout=15000)
-            page.wait_for_function(
-                """() => {
-                    const bridge = window.__TEKG_G6_BRIDGE;
-                    const state = bridge && typeof bridge.getState === 'function' ? bridge.getState() : null;
-                    return state && state.expandModeEnabled === true;
-                }""",
-                timeout=15000,
-            )
-
             request_start = len(graph_requests)
             response_start = len(graph_responses)
             expanded = page.evaluate(
                 """async ({ targetId }) => {
                     const bridge = window.__TEKG_G6_BRIDGE;
-                    const host = window.__TEKG_G6_GRAPH_HOST;
-                    if (!bridge || typeof bridge.getState !== 'function' || !host || typeof host.onNodeExpand !== 'function') {
-                        return { ok: false, error: 'parent host missing onNodeExpand' };
+                    const iframe = document.querySelector('#g6-dynamic-surface iframe');
+                    const embed = iframe && iframe.contentWindow ? iframe.contentWindow.__TEKG_G6_EMBED : null;
+                    if (!bridge || typeof bridge.getState !== 'function' || !embed || typeof embed.triggerNodeAction !== 'function') {
+                        return { ok: false, error: 'node action bridge missing' };
                     }
                     const state = bridge.getState();
                     const elements = Array.isArray(state.currentElements) ? state.currentElements : [];
                     const item = elements.find((entry) => entry && entry.data && entry.data.id === targetId);
                     if (!item) return { ok: false, error: 'target node not found' };
-                    const node = {
-                        id: item.data.id,
-                        nodeType: item.data.type,
-                        rawLabel: item.data.rawLabel || item.data.label,
-                        displayLabel: item.data.label || item.data.rawLabel,
-                        queryLabel: item.data.rawLabel || item.data.label,
-                    };
-                    const result = await host.onNodeExpand(node);
-                    return { ok: true, result, node };
+                    await embed.inspectNode(targetId);
+                    const result = await embed.triggerNodeAction(targetId, 'expand');
+                    return { ok: true, result, node: item.data };
                 }""",
                 {"targetId": target_id},
             )
-            require(expanded.get("ok") is True, "Direct Disease:Aging onNodeExpand failed\n" + evidence({"expanded": expanded}))
+            require(expanded.get("ok") is True, "Disease:Aging card Expand failed\n" + evidence({"expanded": expanded}))
             page.wait_for_timeout(1000)
 
             expand_requests = graph_requests[request_start:]

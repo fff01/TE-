@@ -127,6 +127,12 @@
     getVisibleSubgraph() {
       return runner.getVisibleSubgraph();
     },
+    inspectNode(nodeId) {
+      return runner.inspectNode(nodeId);
+    },
+    triggerNodeAction(nodeId, action) {
+      return runner.triggerNodeAction(nodeId, action);
+    },
     inspectEdge(edgeId) {
       return runner.inspectEdge(edgeId);
     },

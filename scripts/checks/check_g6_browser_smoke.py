@@ -147,7 +147,55 @@ def main() -> None:
             require("Loading legend" not in str(legend_state["text"]), "G6 legend still loading after graph render\n" + captured)
             require(legend_state["childCount"] > 0, "G6 legend did not render any entries\n" + captured)
 
-            page.locator("#toggle-expand-mode").click(timeout=15000)
+            hidden_controls = page.evaluate(
+                """() => {
+                    const fixed = document.querySelector('#toggle-fixed-view');
+                    const expand = document.querySelector('#toggle-expand-mode');
+                    const state = (el) => {
+                        if (!el) return { exists: false, visible: false };
+                        const rect = el.getBoundingClientRect();
+                        const style = window.getComputedStyle(el);
+                        return {
+                            exists: true,
+                            visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
+                        };
+                    };
+                    return { fixed: state(fixed), expand: state(expand) };
+                }"""
+            )
+            require(hidden_controls["fixed"]["exists"], f"Fixed view control missing from compatibility DOM: {hidden_controls}")
+            require(hidden_controls["expand"]["exists"], f"Expand mode control missing from compatibility DOM: {hidden_controls}")
+            require(not hidden_controls["fixed"]["visible"], f"Fixed view control is still user-visible: {hidden_controls}")
+            require(not hidden_controls["expand"]["visible"], f"Expand mode control is still user-visible: {hidden_controls}")
+
+            expanded = page.evaluate(
+                """async () => {
+                    const iframe = document.querySelector('#g6-dynamic-surface iframe');
+                    const bridge = iframe?.contentWindow?.__TEKG_G6_EMBED;
+                    const before = bridge?.getVisibleSubgraph ? bridge.getVisibleSubgraph() : null;
+                    const nodes = before?.nodes || [];
+                    const labelOf = (node) => String(node?.queryLabel || node?.rawLabel || node?.label || '').trim();
+                    const target = nodes.find((node) => labelOf(node) === 'L1HS')
+                        || nodes.find((node) => (node?.nodeType || node?.type) === 'TE' && labelOf(node))
+                        || nodes.find((node) => labelOf(node));
+                    if (!bridge || !target) {
+                        return { ok: false, reason: 'missing bridge or expandable target', before, target: target || null };
+                    }
+                    const inspected = bridge.inspectNode(target.id);
+                    const expanded = await bridge.triggerNodeAction(target.id, 'expand');
+                    const after = bridge.getVisibleSubgraph();
+                    return {
+                        ok: Boolean(inspected && expanded),
+                        inspected: Boolean(inspected),
+                        expanded: Boolean(expanded),
+                        target,
+                        beforeCount: (before?.nodes?.length || 0) + (before?.edges?.length || 0),
+                        afterCount: (after?.nodes?.length || 0) + (after?.edges?.length || 0),
+                    };
+                }"""
+            )
+            require(expanded["ok"], f"Node action card expand did not complete: {expanded}")
+            require(expanded["afterCount"] >= expanded["beforeCount"], f"Node action card expand reduced visible graph size: {expanded}")
             page.wait_for_timeout(1000)
             post_toggle = page.locator("#g6-dynamic-surface").evaluate(
                 """el => {
@@ -156,8 +204,8 @@ def main() -> None:
                     return { width: rect.width, height: rect.height, iframe: !!iframe };
                 }"""
             )
-            require(post_toggle["iframe"], f"Expand mode removed the G6 iframe: {post_toggle}")
-            require(post_toggle["width"] > 100 and post_toggle["height"] > 100, f"Expand mode left invalid graph size: {post_toggle}")
+            require(post_toggle["iframe"], f"Node action expand removed the G6 iframe: {post_toggle}")
+            require(post_toggle["width"] > 100 and post_toggle["height"] > 100, f"Node action expand left invalid graph size: {post_toggle}")
         except PlaywrightTimeoutError as exc:
             fail(f"G6 browser smoke timed out at {url}: {exc}")
         except PlaywrightError as exc:
