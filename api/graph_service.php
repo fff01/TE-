@@ -235,7 +235,20 @@ RETURN
   type(r) AS relation_type,
   coalesce(r.predicate, type(r)) AS relation_label,
   coalesce(r.pmids, []) AS relation_pmids,
-  coalesce(r.evidence, '') AS relation_evidence
+  coalesce(r.evidence, '') AS relation_evidence,
+  coalesce(r.support_pmid_count, 0) AS support_pmid_count,
+  coalesce(r.support_metric_paper_count, 0) AS support_metric_paper_count,
+  coalesce(r.support_metric_coverage, 0.0) AS support_metric_coverage,
+  r.support_if_max AS support_if_max,
+  r.support_if_mean AS support_if_mean,
+  r.support_if_median AS support_if_median,
+  coalesce(r.support_jcr_q1_count, 0) AS support_jcr_q1_count,
+  coalesce(r.support_jcr_q2_count, 0) AS support_jcr_q2_count,
+  coalesce(r.support_jcr_q3_count, 0) AS support_jcr_q3_count,
+  coalesce(r.support_jcr_q4_count, 0) AS support_jcr_q4_count,
+  coalesce(r.support_journal_count, 0) AS support_journal_count,
+  r.support_publication_year_min AS support_publication_year_min,
+  r.support_publication_year_max AS support_publication_year_max
 CYPHER,
             ['anchorId' => $anchorId]
         );
@@ -492,7 +505,20 @@ RETURN
   type(r1) AS relation_type,
   coalesce(r1.predicate, type(r1)) AS relation_label,
   coalesce(r1.pmids, []) AS relation_pmids,
-  coalesce(r1.evidence, '') AS relation_evidence
+  coalesce(r1.evidence, '') AS relation_evidence,
+  coalesce(r1.support_pmid_count, 0) AS support_pmid_count,
+  coalesce(r1.support_metric_paper_count, 0) AS support_metric_paper_count,
+  coalesce(r1.support_metric_coverage, 0.0) AS support_metric_coverage,
+  r1.support_if_max AS support_if_max,
+  r1.support_if_mean AS support_if_mean,
+  r1.support_if_median AS support_if_median,
+  coalesce(r1.support_jcr_q1_count, 0) AS support_jcr_q1_count,
+  coalesce(r1.support_jcr_q2_count, 0) AS support_jcr_q2_count,
+  coalesce(r1.support_jcr_q3_count, 0) AS support_jcr_q3_count,
+  coalesce(r1.support_jcr_q4_count, 0) AS support_jcr_q4_count,
+  coalesce(r1.support_journal_count, 0) AS support_journal_count,
+  r1.support_publication_year_min AS support_publication_year_min,
+  r1.support_publication_year_max AS support_publication_year_max
 CYPHER,
             ['anchorId' => $anchorId]
         );
@@ -1000,7 +1026,20 @@ RETURN
   type(r) AS relation_type,
   coalesce(r.predicate, type(r)) AS relation_label,
   coalesce(r.pmids, []) AS relation_pmids,
-  coalesce(r.evidence, '') AS relation_evidence
+  coalesce(r.evidence, '') AS relation_evidence,
+  coalesce(r.support_pmid_count, 0) AS support_pmid_count,
+  coalesce(r.support_metric_paper_count, 0) AS support_metric_paper_count,
+  coalesce(r.support_metric_coverage, 0.0) AS support_metric_coverage,
+  r.support_if_max AS support_if_max,
+  r.support_if_mean AS support_if_mean,
+  r.support_if_median AS support_if_median,
+  coalesce(r.support_jcr_q1_count, 0) AS support_jcr_q1_count,
+  coalesce(r.support_jcr_q2_count, 0) AS support_jcr_q2_count,
+  coalesce(r.support_jcr_q3_count, 0) AS support_jcr_q3_count,
+  coalesce(r.support_jcr_q4_count, 0) AS support_jcr_q4_count,
+  coalesce(r.support_journal_count, 0) AS support_journal_count,
+  r.support_publication_year_min AS support_publication_year_min,
+  r.support_publication_year_max AS support_publication_year_max
 LIMIT 20
 CYPHER,
             ['teId' => $teId]
@@ -1048,7 +1087,20 @@ RETURN
   type(r) AS relation_type,
   coalesce(r.predicate, type(r)) AS relation_label,
   coalesce(r.pmids, []) AS relation_pmids,
-  coalesce(r.evidence, '') AS relation_evidence
+  coalesce(r.evidence, '') AS relation_evidence,
+  coalesce(r.support_pmid_count, 0) AS support_pmid_count,
+  coalesce(r.support_metric_paper_count, 0) AS support_metric_paper_count,
+  coalesce(r.support_metric_coverage, 0.0) AS support_metric_coverage,
+  r.support_if_max AS support_if_max,
+  r.support_if_mean AS support_if_mean,
+  r.support_if_median AS support_if_median,
+  coalesce(r.support_jcr_q1_count, 0) AS support_jcr_q1_count,
+  coalesce(r.support_jcr_q2_count, 0) AS support_jcr_q2_count,
+  coalesce(r.support_jcr_q3_count, 0) AS support_jcr_q3_count,
+  coalesce(r.support_jcr_q4_count, 0) AS support_jcr_q4_count,
+  coalesce(r.support_journal_count, 0) AS support_journal_count,
+  r.support_publication_year_min AS support_publication_year_min,
+  r.support_publication_year_max AS support_publication_year_max
 CYPHER,
             [
                 'diseaseId' => $diseaseId,
@@ -1723,6 +1775,7 @@ CYPHER,
                     'pmids' => $row['relation_pmids'],
                 ],
             ];
+            $edges[$edgeId]['data'] += $this->evidenceSupportData($row);
 
             foreach (($row['expanded'] ?? []) as $extra) {
                 if (($extra['source_element_id'] ?? null) === null || ($extra['target_element_id'] ?? null) === null) {
@@ -1758,6 +1811,7 @@ CYPHER,
                         'pmids' => $extra['relation_pmids'],
                     ],
                 ];
+                $edges[$extraEdgeId]['data'] += $this->evidenceSupportData($extra);
             }
         }
 
@@ -1780,6 +1834,45 @@ CYPHER,
         unset($node);
 
         return array_merge(array_values($nodes), array_values($edges));
+    }
+
+    private function evidenceSupportData(array $row): array
+    {
+        return [
+            'support_pmid_count' => $this->intValue($row['support_pmid_count'] ?? 0),
+            'support_metric_paper_count' => $this->intValue($row['support_metric_paper_count'] ?? 0),
+            'support_metric_coverage' => $this->floatValue($row['support_metric_coverage'] ?? 0.0),
+            'support_if_max' => $this->nullableFloatValue($row['support_if_max'] ?? null),
+            'support_if_mean' => $this->nullableFloatValue($row['support_if_mean'] ?? null),
+            'support_if_median' => $this->nullableFloatValue($row['support_if_median'] ?? null),
+            'support_jcr_q1_count' => $this->intValue($row['support_jcr_q1_count'] ?? 0),
+            'support_jcr_q2_count' => $this->intValue($row['support_jcr_q2_count'] ?? 0),
+            'support_jcr_q3_count' => $this->intValue($row['support_jcr_q3_count'] ?? 0),
+            'support_jcr_q4_count' => $this->intValue($row['support_jcr_q4_count'] ?? 0),
+            'support_journal_count' => $this->intValue($row['support_journal_count'] ?? 0),
+            'support_publication_year_min' => $this->nullableIntValue($row['support_publication_year_min'] ?? null),
+            'support_publication_year_max' => $this->nullableIntValue($row['support_publication_year_max'] ?? null),
+        ];
+    }
+
+    private function intValue(mixed $value): int
+    {
+        return is_numeric($value) ? (int)$value : 0;
+    }
+
+    private function floatValue(mixed $value): float
+    {
+        return is_numeric($value) ? (float)$value : 0.0;
+    }
+
+    private function nullableFloatValue(mixed $value): ?float
+    {
+        return is_numeric($value) ? (float)$value : null;
+    }
+
+    private function nullableIntValue(mixed $value): ?int
+    {
+        return is_numeric($value) ? (int)$value : null;
     }
 
     private function addNode(array &$nodes, array $row): void

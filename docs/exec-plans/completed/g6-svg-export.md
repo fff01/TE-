@@ -190,3 +190,39 @@ Expected:
 - Existing G6 graph still loads.
 - Existing Export menu still shows SVG as disabled.
 - CSV/PNG export smoke remains green.
+
+---
+
+## Execution Record - 2026-05-21
+
+### Runtime Evidence
+
+- Current loaded G6 version observed in browser probe: `5.1.1`.
+- TE-KG iframe graph container renders with canvas elements and no SVG elements.
+- Current iframe bridge exposes `exportPngDataUrl()` and `getVisibleSubgraph()`, but no SVG export method.
+- Runtime `Graph.prototype` exposes `toDataURL`, `getData`, `getNodeData`, `getEdgeData`, `getCanvas`, `draw`, `render`, and `layout`.
+- Runtime `Graph.prototype` does not expose `toSVG`, `downloadImage`, `downloadFullImage`, `export`, or `exportToFile`.
+
+### Local G6 Reference Evidence
+
+- `reference/external_examples/G6/packages/site/docs/api/export-image.en.md` documents `Graph.toDataURL(options)`.
+- The documented browser export types are `image/png`, `image/jpeg`, and `image/webp`.
+- The same document states that G6 5.0 only provides an API to export canvas as a Base64 image.
+- `reference/external_examples/G6/packages/g6/src/runtime/graph.ts` implements browser `toDataURL()` by delegating to `this.context.canvas!.toDataURL(options)`.
+- `reference/external_examples/G6/packages/g6-ssr/README.md` documents SVG export through the separate `@antv/g6-ssr` path with `outputType: 'svg'` and `exportToFile()`.
+- The current TE-KG browser runtime does not load `@antv/g6-ssr`.
+
+### Decision
+
+Outcome C: no reliable official browser SVG export API exists in the current TE-KG G6 runtime.
+
+SVG export should remain disabled as `SVG Soon` until a separate implementation plan is approved. CSV remains the supported data export surface, and PNG remains the supported visual export surface.
+
+### Recommended Next Choice
+
+Recommended: keep SVG disabled for now.
+
+Alternative options for a later phase:
+
+- Build a simplified data-diagram SVG from the current visible nodes and edges, with explicit acceptance that it is not a faithful G6 visual export.
+- Investigate a dedicated export path such as `@antv/g6-ssr`, which would require dependency and architecture review.

@@ -83,3 +83,38 @@
 - 风险：Codex 可能误把旧状态当当前事实。
 - 现状：Phase 3 新增 `scripts/checks/check_docs_freshness.py`。
 - 下一步：继续在索引中标注 canonical / reference / legacy。
+
+### G6 SVG export v2 research result - 2026-05-21
+
+- Status: research archived in `completed/g6-svg-export.md`; no runtime implementation in this phase.
+- Current supported export surface: visible subgraph CSV and current canvas PNG from G6 subgraph export v1.
+- Decision: keep SVG disabled as `SVG Soon` because current browser G6 runtime is canvas-based and does not expose reliable browser `toSVG`, `export`, or `exportToFile` APIs.
+- Residual options: later build a simplified visible-subgraph SVG renderer, or evaluate a dedicated `@antv/g6-ssr` export path. Both require a separate plan and should not change CSV/PNG semantics.
+
+### PubMed metadata enrichment and evidence support inputs - 2026-05-21
+
+- Status: full PubMed metadata fetch completed for current Neo4j `tekg3` PMID inventory; visual edge encoding is not changed.
+- Output: `data/processed/pubmed_metadata.jsonl` contains 2308 PubMed metadata records and can later be joined to graph relations by PMID.
+- Supported fields: DOI, title, abstract, journal title/ISO abbreviation/ISSN, publication year/date/model/types, MeSH terms, keywords, authors, affiliations, grants, chemicals, references, source provider, fetched timestamp.
+- Impact Factor is not a PubMed field. Future relation strength or evidence support work needs an external journal metric mapping keyed by ISSN/year; do not hardcode IF in prompts or ask an LLM to infer it.
+- Debt: Impact Factor requires a future local mapping file such as `data/reference/journal_metrics.csv` with `issn,year,impact_factor,metric_source,metric_name`.
+
+### Journal metric mapping v1 - 2026-05-22
+
+- Status: v1 mapping completed and accepted for internal TE-KG use; no Neo4j import, G6 change, graph API change, taxonomy change, or agent change has been made.
+- Source: local `reference/external_examples/impact_factor` package data, treated as 2025 data with `metric_source=impact_factor_package_2025` and `metric_name=Journal Impact Factor`.
+- Provenance constraint: this is not a direct official JCR export, but the project has approved it as a trusted internal journal metric source.
+- Outputs: `data/reference/journal_metrics.csv`, `data/processed/journal_metrics_mapping_report.json`, and `data/processed/pubmed_metadata_with_metrics.jsonl`.
+- Coverage: journal match rate 86.59%; PMID match rate 88.26%; unmatched PMID count 271.
+- Unmatched journals/PMIDs keep null metrics. Do not guess IF, do not use LLM-generated metrics, and do not force-match different ISSNs.
+- Residual risk: `title_exact` fallback produced 22 matches. This is accepted for internal v1, but should be manually reviewed before publication or external-facing visual encoding.
+
+### Neo4j journal metrics relation aggregation v1 - 2026-05-22
+
+- Status: Paper enrichment and BIO_RELATION aggregation completed in Neo4j `tekg3`; graph API and G6 visual encoding are still unchanged.
+- Paper enrichment: 2308 existing `Paper` nodes tagged `journal_metrics_v1_2026-05-22`; 2037 with metrics, 271 with null metrics.
+- Relation aggregation: 12444 existing `BIO_RELATION` relationships tagged `relation_metrics_v1_2026-05-22`.
+- Aggregation evidence: 14770 raw relation PMID references, 2270 unique relation PMIDs, 2270 joinable PMIDs, 2003 with metrics, 267 without metrics.
+- Written relation fields include `support_pmid_count`, `support_metric_paper_count`, `support_metric_coverage`, `support_if_max`, `support_if_mean`, `support_if_median`, JCR quartile counts, journal count, publication year min/max, and `relation_metrics_import_tag`.
+- Rollback is property-only via `scripts/rollback_relation_journal_metrics.py --import-tag relation_metrics_v1_2026-05-22 --write`; it must not delete nodes or relationships.
+- Next debt: design graph API evidence-support read path and G6 visual encoding in a separate active plan. Do not call IF-derived fields confidence.
