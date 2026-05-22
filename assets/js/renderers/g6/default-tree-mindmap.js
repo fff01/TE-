@@ -227,7 +227,11 @@
         }
         const data = nodeData?.data || {};
         const query = data.queryLabel || data.rawLabel || nodeData?.id;
-        const hasChildren = Array.isArray(nodeData?.children) && nodeData.children.length > 0;
+        const directChildCount = Math.max(
+          0,
+          Number(nodeData?.style?.directChildCount || nodeData?.data?.directChildCount || 0) || 0
+        );
+        const hasChildren = directChildCount > 0 || (Array.isArray(nodeData?.children) && nodeData.children.length > 0);
         if (!query || hasChildren) return false;
         await window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
         return true;
@@ -506,7 +510,7 @@
 
     const ys = nodes.map((node) => node.style.y);
     const minY = Math.min(...ys);
-    let offsetY = top - minY;
+    let offsetY = (viewportHeight / 2) - minY;
     const centerNodeId = String(options.centerNodeId || '').trim();
     if (centerNodeId) {
       const centerNode = nodes.find((node) => String(node.id || '') === centerNodeId);
@@ -959,6 +963,12 @@
     render: renderDefaultTree,
     renderStructuredTree,
     destroy: destroyGraph,
+    getGraph() {
+      return g6Graph;
+    },
+    getStateTree() {
+      return stateTreeRoot;
+    },
   };
   window.__TEKG_G6_DEFAULT_TREE = window.__TEKG_G6_MINDMAP_TREE;
 }());

@@ -238,3 +238,14 @@
 - 所有新增能力都不依赖智能问答系统。
 - 旧入口 `/preview.php` 和现有 G6 runtime 继续可用。
 - 新增功能优先复用当前 `preview.php`、G6 bridge、`api/graph.php` 和现有样式，不另建一套图谱系统。
+
+## Current Completion Snapshot - 2026-05-22
+
+- Subgraph export v1 is complete: current visible graph CSV and canvas PNG are available; SVG remains out of scope.
+- Evidence support visual encoding is complete: edge width uses `support_pmid_count`, edge opacity uses `support_metric_coverage`, and zero-coverage edges remain visible.
+- Edge evidence table is complete: the selected edge card shows PubMed evidence rows, PMID links, and CSV download for larger evidence tables.
+- Node action card UX is complete: node click opens a card with explicit `Jump`, `Expand`, and `Details`; global Fixed view / Expand mode controls are hidden.
+- Layout mode switching is intentionally not implemented. The runtime continues to use Force layout by default.
+- TE mechanism loaders are implemented as mechanism-inspired loading UI only; they are not strict scientific diagrams.
+- TE tree load regression is fixed: deep taxonomy edges are restored, category clicks no longer route into ordinary empty graph queries, and initial tree positioning is corrected.
+- Recommended next work should be split into separate active plans: category-centered graph contract, TE tree search/focus, expanded-node collapse affordance, and large-graph evidence payload performance only if checks show a problem.

@@ -145,3 +145,21 @@
 - Follow-up loader root-cause refinement completed: mechanism loader type detection now handles taxonomy/category-level phrases and plural normalization (`Class I: Retrotransposons`, `Retrotransposons`, `Class II: DNA transposons`, `Tc1-Mariner`) without one-off hardcoding. Retro copy and DNA moving TE now align into target DNA gaps, DNA source donor segments initially connect to the TE and separate during movement, and target opening arcs no longer cover TE labels.
 - Checks: `scripts/checks/check_g6_node_action_card_ux.py`, updated `check_g6_browser_smoke.py`, and updated expand smokes.
 - Residual debt: fixed/expand internal variables are retained for compatibility and should only be removed after a separate reference audit. Expand/collapse affordance and multi-step expanded-node UX remain separate future work.
+
+### G6 TE tree load regression - 2026-05-22
+
+- Status: completed and archived in `completed/g6-te-tree-load-regression.md`.
+- Resolved: taxonomy file-tree depth parsing now uses UTF-8 character length, restoring deep edges in the `rmsk_repbase` tree and reconnecting `L1HS` under the Class I/LINE hierarchy.
+- Resolved: folded category nodes with real descendants stay in tree mode instead of being routed through ordinary graph search, preventing loader hangs for `Class I: Retrotransposons`, `Class II: DNA Transposons`, and `Others` clicks.
+- Resolved: mindmap initial Y positioning centers the root vertically, and plural loader terms such as `SINEs` classify through the retro loader semantics.
+- Check: `scripts/checks/check_g6_te_tree_load_regression.py` covers taxonomy integrity, direct search/load diagnostics, category click behavior, L1HS path restoration, and loader classification.
+- Residual debt: ordinary dynamic graph search for taxonomy category labels still returns empty payloads, and `SINEs` currently resolves as a single Paper node. If these labels should open category-centered graphs, create a separate query/alias contract plan rather than hardcoding UI exceptions.
+
+### Recommended next G6 / TE-KG plans - 2026-05-22
+
+- Category-centered graph contract: define whether taxonomy categories such as `Class I: Retrotransposons`, `Class II: DNA Transposons`, `Order: SINEs`, and `Others` should open category-centered graphs, empty states, or tree focus. Do this as an API/query contract plan, not as isolated UI hardcoding.
+- TE tree search/focus: add a tree search/focus interaction for deep taxonomy nodes such as `L1HS`, with clear expansion and viewport behavior.
+- Node action card multi-step expand/collapse affordance: show expanded state, avoid duplicate expands, and design a reset/collapse path for added neighborhoods.
+- Loader mechanism scientific polish: keep it separate from loader lifecycle. The current loaders are mechanism-inspired and should only be refined after graph loading stability remains green.
+- Large graph `evidence_records` lazy endpoint: only pursue if future large graph checks show payload or browser performance regressions from eager per-edge evidence records.
+- Journal metric manual review / official JCR replacement: before external-facing claims, review `title_exact` journal matches and consider replacing `impact_factor_package_2025` with an official licensed source.

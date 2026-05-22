@@ -200,6 +200,11 @@
       .replace(/[^a-z0-9]+/g, ' ')
       .replace(/\bretrotransposons\b/g, 'retrotransposon')
       .replace(/\btransposons\b/g, 'transposon')
+      .replace(/\bsines\b/g, 'sine')
+      .replace(/\blines\b/g, 'line')
+      .replace(/\bltrs\b/g, 'ltr')
+      .replace(/\bervs\b/g, 'erv')
+      .replace(/\bhervs\b/g, 'herv')
       .replace(/\s+/g, ' ')
       .trim()} `;
   }

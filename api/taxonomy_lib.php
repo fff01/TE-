@@ -241,7 +241,7 @@ function tekg_taxonomy_parse_tree_line(string $line): ?array
         }
         return [
             'label' => $label,
-            'depth' => intdiv(strlen($prefix), 4) + 1,
+            'depth' => intdiv(function_exists('mb_strlen') ? mb_strlen($prefix, 'UTF-8') : strlen($prefix), 4) + 1,
         ];
     }
 

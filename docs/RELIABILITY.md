@@ -119,3 +119,27 @@ python scripts/checks/check_docs_freshness.py
 - Follow-up loader trigger/scale refinement: `LINE1` now explicitly classifies as retro for Search loading, mechanism loaders render at `560x300`, retro target DNA is static, and DNA transposon uses one moving TE segment instead of a duplicate inserted-copy group.
 - Follow-up loader biology/visual refinement: source-to-target arrows were removed; target DNA is fixed and split into left/right gap segments; retro source DNA remains intact; DNA transposon donor DNA is split around the moving TE without slash cut marks; DNA transposon TE movement is lift then right/down transfer with no duplicate inserted-copy TE.
 - Follow-up loader root-cause refinement: loader type detection now normalizes taxonomy/category phrases and plural forms, so classification-level labels such as `Class I: Retrotransposons` and `Class II: DNA transposons` use the mechanism loader when appropriate while unknown/non-TE labels keep the default loader. Retro inserted copy and DNA moving TE now align directly into the target DNA gap, and target opening arcs render behind TE labels.
+
+## G6 TE Tree Load Regression Notes - 2026-05-22
+
+- G6 TE tree load regression is completed and archived in `docs/exec-plans/completed/g6-te-tree-load-regression.md`.
+- Taxonomy tree parsing now counts Unicode file-tree prefixes by UTF-8 character length. This restores missing deep parent edges in `api/taxonomy.php?view=tree&source=rmsk_repbase`; `L1HS` is connected under `Class I: Retrotransposons` again.
+- Folded TE tree category nodes no longer jump into ordinary dynamic graph queries when clicked. Category nodes with real descendants stay in tree mode, avoiding stuck loaders for labels such as `Class I: Retrotransposons`, `Class II: DNA Transposons`, and `Others`.
+- Mindmap initial positioning centers the root vertically by default instead of placing the tree near the top edge.
+- Loader semantic normalization now handles plural TE family/order labels such as `SINEs`, `LINEs`, `LTRs`, `ERVs`, and `HERVs`.
+- New regression coverage: `scripts/checks/check_g6_te_tree_load_regression.py` verifies taxonomy tree integrity, loader classification, direct graph loads for LINE1/L1HS/SINEs/category labels, category click behavior, restored L1HS path, and loader shutdown.
+- Residual risk: direct graph search for category labels can still return empty graph payloads, and `SINEs` currently resolves to a single Paper node. Tree category clicks are guarded, but alias/category search semantics should be handled in a separate graph-query plan if needed.
+
+## G6 / TE-KG Page Closeout Notes - 2026-05-22
+
+- Current entry points remain `preview.php`, `api/graph.php`, `api/graph_service.php`, and `assets/js/renderers/g6/`.
+- G6 resource loading is local-vendor based; browser smoke should not depend on external CDN availability for the current G6 runtime.
+- The old global `Fixed view` / `Expand mode` controls are hidden. Node click now opens an action card, and the explicit card actions are `Jump`, `Expand`, and `Details`.
+- `Expand` from the node action card keeps the current graph and uses the same-label-safe expand contract (`expand_node_id`, `expand_node_type`, `expand_query`). Internal `fixedView` / `expandModeEnabled` compatibility state is still retained.
+- Edge evidence support is user-visible: edge width maps to `support_pmid_count`, edge opacity maps to `support_metric_coverage`, and zero-coverage edges remain visible.
+- Edge click shows the evidence table inside the card `PubMed` section with PMID links and selected-edge CSV download when evidence rows exceed 10.
+- TE mechanism loaders are mechanism-inspired UI only, not strict biological mechanism diagrams. Unknown/non-TE labels keep the default loader. Expand copy remains `Expanding`.
+- TE tree load regression has been fixed: deep taxonomy edges are restored, folded category nodes stay in tree mode, and `SINEs` / Class I / Class II loader classification is covered.
+- Data chain now in runtime use: PubMed metadata -> enriched `Paper` nodes -> `BIO_RELATION.support_*` aggregates -> graph API edge payload -> G6 evidence support UI.
+- Core closeout verification on 2026-05-22 passed: PHP lint for `preview.php`, `api/graph.php`, `api/graph_service.php`; JS `node --check` for G6 bootstrap/shared/embed; API contracts; G6 browser smoke; node action card UX; evidence support UX; TE mechanism loader; TE tree load regression.
+- Current residual risks: category-centered graph contract is not implemented; TE tree search/focus is not implemented; manual browser path loading regressions should be diagnosed with request/loader/iframe evidence before fixes; large future graph payloads may need an `evidence_records` lazy endpoint; journal metric `title_exact` matches and internal IF source should be reviewed/replaced before external publication claims.

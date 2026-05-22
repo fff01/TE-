@@ -225,7 +225,11 @@
         }
         const data = nodeData?.data || {};
         const query = data.queryLabel || data.rawLabel || nodeData?.id;
-        if (!query) return false;
+        const directChildCount = Math.max(
+          0,
+          Number(nodeData?.style?.directChildCount || nodeData?.data?.directChildCount || 0) || 0
+        );
+        if (!query || directChildCount > 0) return false;
         await window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
         return true;
       },
@@ -929,5 +933,11 @@
     render: renderDefaultTree,
     renderStructuredTree,
     destroy: destroyGraph,
+    getGraph() {
+      return g6Graph;
+    },
+    getStateTree() {
+      return null;
+    },
   };
 }());
