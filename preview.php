@@ -20,7 +20,9 @@ $previewVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-shell.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-deepthink.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-type-meta.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6.bootstrap.js'))
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6.bootstrap.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-shared.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-embed.js'))
 );
 $previewConfig = [
     'deepThinkStreamApiUrl' => tekg_api_url('deep_think_stream.php'),
@@ -75,6 +77,7 @@ $previewConfig = [
                     <span></span>
                     <span></span>
                   </div>
+                  <div id="te-mechanism-loader-slot" class="te-mechanism-loader-slot" aria-hidden="true"></div>
                   <div id="graph-preloader-label" class="graph-preloader-label">Loading graph...</div>
                 </div>
               </div>

@@ -36,6 +36,7 @@
     dynamicSurface: document.getElementById('g6-dynamic-surface'),
     graphLoader: document.getElementById('graph-preloader'),
     graphLoaderLabel: document.getElementById('graph-preloader-label'),
+    mechanismLoaderSlot: document.getElementById('te-mechanism-loader-slot'),
     graphLegend: document.getElementById('graph-type-legend'),
     graphLegendTitle: document.getElementById('graph-legend-title'),
     graphLegendList: document.getElementById('graph-legend-list'),
@@ -136,6 +137,246 @@
 
   function textSet() {
     return UI[window.currentLang] || UI.en;
+  }
+
+  const TE_LOADER_KEYWORDS = Object.freeze({
+    retro: [
+      'LINE',
+      'LINE1',
+      'LINE-1',
+      'L1',
+      'L1HS',
+      'SINE',
+      'Alu',
+      'SVA',
+      'ERV',
+      'HERV',
+      'LTR',
+      'retrotransposon',
+    ],
+    dna: [
+      'DNA transposon',
+      'Tc1',
+      'Mariner',
+      'hAT',
+      'piggyBac',
+      'PIF',
+      'Harbinger',
+      'Merlin',
+      'Mutator',
+    ],
+  });
+
+  function getTeColor() {
+    const sharedMeta = window.__TEKG_G6_TYPE_META && typeof window.__TEKG_G6_TYPE_META === 'object'
+      ? window.__TEKG_G6_TYPE_META
+      : {};
+    const colors = sharedMeta.colors && typeof sharedMeta.colors === 'object' ? sharedMeta.colors : LEGEND_FALLBACK_COLORS;
+    return String(colors.TE || LEGEND_FALLBACK_COLORS.TE || '#4e79ff');
+  }
+
+  function getTeStrokeColor() {
+    const sharedMeta = window.__TEKG_G6_TYPE_META && typeof window.__TEKG_G6_TYPE_META === 'object'
+      ? window.__TEKG_G6_TYPE_META
+      : {};
+    const strokes = sharedMeta.strokes && typeof sharedMeta.strokes === 'object' ? sharedMeta.strokes : {};
+    return String(strokes.TE || '#1f3f99');
+  }
+
+  function normalizeLoaderText(value) {
+    return String(value || '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function normalizeLoaderMatchText(value) {
+    return ` ${normalizeLoaderText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\bretrotransposons\b/g, 'retrotransposon')
+      .replace(/\btransposons\b/g, 'transposon')
+      .replace(/\s+/g, ' ')
+      .trim()} `;
+  }
+
+  function loaderPhraseMatch(normalizedText, phrase) {
+    const normalizedPhrase = normalizeLoaderMatchText(phrase).trim();
+    return !!normalizedPhrase && normalizedText.includes(` ${normalizedPhrase} `);
+  }
+
+  function labelFromLoaderText(label) {
+    const raw = normalizeLoaderText(label)
+      .replace(/^Preparing\s+/i, '')
+      .replace(/^Loading\s+/i, '')
+      .replace(/^Expanding\s+/i, '')
+      .replace(/\s+network\s*$/i, '')
+      .replace(/\s*\.\.\.\s*$/i, '')
+      .trim();
+    return raw || normalizeLoaderText(label);
+  }
+
+  function loaderKeywordMatch(text, keywords) {
+    const raw = String(text || '');
+    if (!raw) return false;
+    const normalizedText = normalizeLoaderMatchText(raw);
+    return keywords.some((keyword) => {
+      const normalized = String(keyword || '').trim().toLowerCase();
+      if (!normalized) return false;
+      return loaderPhraseMatch(normalizedText, normalized);
+    });
+  }
+
+  function getSemanticTeLoaderKind(text) {
+    const normalizedText = normalizeLoaderMatchText(text);
+    if (!normalizedText.trim()) return 'default';
+    if (
+      loaderPhraseMatch(normalizedText, 'class ii')
+      || loaderPhraseMatch(normalizedText, 'class 2')
+      || loaderPhraseMatch(normalizedText, 'dna transposon')
+      || loaderPhraseMatch(normalizedText, 'tir')
+    ) {
+      return 'dna';
+    }
+    if (
+      loaderPhraseMatch(normalizedText, 'class i')
+      || loaderPhraseMatch(normalizedText, 'class 1')
+      || loaderPhraseMatch(normalizedText, 'retrotransposon')
+    ) {
+      return 'retro';
+    }
+    if (loaderKeywordMatch(text, TE_LOADER_KEYWORDS.dna)) return 'dna';
+    if (loaderKeywordMatch(text, TE_LOADER_KEYWORDS.retro)) return 'retro';
+    return 'default';
+  }
+
+  function getTeLoaderKind(nodeOrQuery) {
+    const parts = [];
+    if (nodeOrQuery && typeof nodeOrQuery === 'object') {
+      const nodeType = String(nodeOrQuery.nodeType || nodeOrQuery.type || '').trim();
+      const label = String(nodeOrQuery.queryLabel || nodeOrQuery.rawLabel || nodeOrQuery.displayLabel || nodeOrQuery.label || '').trim();
+      const taxonomy = nodeOrQuery.taxonomy && typeof nodeOrQuery.taxonomy === 'object' ? nodeOrQuery.taxonomy : {};
+      const pathLabels = Array.isArray(taxonomy.path_labels) ? taxonomy.path_labels.join(' ') : '';
+      parts.push(label, nodeType, taxonomy.canonical_name || '', taxonomy.display_path || '', pathLabels);
+    } else {
+      parts.push(String(nodeOrQuery || '').trim());
+    }
+    const text = parts.filter(Boolean).join(' ');
+    if (!text) return 'default';
+    return getSemanticTeLoaderKind(text);
+  }
+
+  function truncateTeLoaderLabel(label) {
+    const raw = normalizeLoaderText(label);
+    if (raw.length <= 8) return raw;
+    return `${raw.slice(0, 3).trim()}...`;
+  }
+
+  function buildTeMechanismLoaderSvg(kind, label) {
+    const fullLabel = normalizeLoaderText(label) || 'TE';
+    const displayLabel = truncateTeLoaderLabel(fullLabel);
+    if (kind === 'retro') {
+      return [
+        `<svg class="te-mechanism-loader__svg" viewBox="0 0 560 300" role="img" aria-label="Retrotransposon-inspired loader for ${escapeHtml(fullLabel)}">`,
+        `  <title>Retrotransposon-inspired loader for ${escapeHtml(fullLabel)}</title>`,
+        '  <g class="te-loader-source-dna">',
+        '    <path class="te-loader-dna-backbone" d="M48 72 H250" />',
+        '    <rect class="te-loader-te-segment" x="102" y="50" width="96" height="44" rx="12" />',
+        `    <text class="te-loader-label" x="150" y="72">${escapeHtml(displayLabel)}</text>`,
+        '    <text class="te-loader-muted-label" x="96" y="34">source DNA</text>',
+        '  </g>',
+        '  <g class="te-loader-retro-complex">',
+        '    <path class="te-loader-rna" d="M132 104 C164 132, 194 122, 224 150" />',
+        '    <text class="te-loader-muted-label te-loader-rna-label" x="166" y="142">RNA</text>',
+        '    <circle class="te-loader-enzyme-fill" cx="224" cy="150" r="18" />',
+        '    <text class="te-loader-label te-loader-rt-label" x="224" y="150">RT</text>',
+        '  </g>',
+        '  <g class="te-loader-target-dna">',
+        '    <path class="te-loader-dna-backbone te-loader-target-left" d="M250 232 H354" />',
+        '    <path class="te-loader-dna-backbone te-loader-target-right" d="M432 232 H510" />',
+        '    <path class="te-loader-target-open" d="M362 232 C374 206, 412 206, 424 232" />',
+        '    <text class="te-loader-muted-label" x="388" y="268">target DNA</text>',
+        '  </g>',
+        '  <g class="te-loader-copy">',
+        '    <rect class="te-loader-te-segment" x="354" y="210" width="78" height="44" rx="10" />',
+        `    <text class="te-loader-label te-loader-copy-label" x="393" y="232">${escapeHtml(displayLabel)}</text>`,
+        '  </g>',
+        '</svg>',
+      ].join('');
+    }
+    if (kind === 'dna') {
+      return [
+        `<svg class="te-mechanism-loader__svg" viewBox="0 0 560 300" role="img" aria-label="DNA transposon-inspired loader for ${escapeHtml(fullLabel)}">`,
+        `  <title>DNA transposon-inspired loader for ${escapeHtml(fullLabel)}</title>`,
+        '  <g class="te-loader-source-dna">',
+        '    <path class="te-loader-dna-backbone te-loader-source-left" d="M48 72 H102" />',
+        '    <path class="te-loader-dna-backbone te-loader-source-right" d="M198 72 H250" />',
+        '    <text class="te-loader-muted-label" x="96" y="34">source DNA</text>',
+        '    <text class="te-loader-muted-label" x="150" y="120">donor gap</text>',
+        '  </g>',
+        '  <g class="te-loader-target-dna">',
+        '    <path class="te-loader-dna-backbone te-loader-target-left" d="M250 232 H344" />',
+        '    <path class="te-loader-dna-backbone te-loader-target-right" d="M440 232 H510" />',
+        '    <path class="te-loader-target-open" d="M352 232 C366 206, 418 206, 432 232" />',
+        '    <text class="te-loader-muted-label" x="388" y="268">target DNA</text>',
+        '  </g>',
+        '  <g class="te-loader-dna-segment-moving">',
+        '    <rect class="te-loader-te-segment" x="102" y="50" width="96" height="44" rx="12" />',
+        `    <text class="te-loader-label" x="150" y="72">${escapeHtml(displayLabel)}</text>`,
+        '  </g>',
+        '</svg>',
+      ].join('');
+    }
+    return '';
+  }
+
+  function renderTeMechanismLoader(kind, label, colors = {}) {
+    const safeKind = kind === 'retro' || kind === 'dna' ? kind : 'default';
+    const teColor = String(colors.te || getTeColor());
+    const teStroke = String(colors.teStroke || getTeStrokeColor());
+    if (els.graphLoader) {
+      els.graphLoader.classList.remove('te-loader-retro', 'te-loader-dna', 'te-loader-default');
+      els.graphLoader.classList.add(`te-loader-${safeKind}`);
+    }
+    if (!els.mechanismLoaderSlot) {
+      return { kind: safeKind, label: normalizeLoaderText(label), rendered: false };
+    }
+    if (safeKind === 'default') {
+      els.mechanismLoaderSlot.innerHTML = '';
+      els.mechanismLoaderSlot.setAttribute('aria-hidden', 'true');
+      els.mechanismLoaderSlot.removeAttribute('style');
+      return { kind: safeKind, label: normalizeLoaderText(label), rendered: false };
+    }
+    els.mechanismLoaderSlot.style.setProperty('--te-loader-te-color', teColor);
+    els.mechanismLoaderSlot.style.setProperty('--te-loader-te-stroke', teStroke);
+    els.mechanismLoaderSlot.innerHTML = `<div class="te-mechanism-loader te-loader-${safeKind}">${buildTeMechanismLoaderSvg(safeKind, label)}</div>`;
+    els.mechanismLoaderSlot.setAttribute('aria-hidden', 'false');
+    return {
+      kind: safeKind,
+      label: normalizeLoaderText(label),
+      rendered: true,
+      teColor,
+      teStroke,
+    };
+  }
+
+  function resolveLoaderContext(label, context) {
+    if (context && typeof context === 'object') {
+      const labelValue = String(context.label || context.queryLabel || context.rawLabel || context.displayLabel || labelFromLoaderText(label) || '').trim();
+      return {
+        kind: context.kind || getTeLoaderKind(context),
+        label: labelValue,
+      };
+    }
+    const labelValue = labelFromLoaderText(label);
+    return {
+      kind: getTeLoaderKind(labelValue),
+      label: labelValue,
+    };
   }
 
   const LEGEND_FALLBACK_ORDER = ['TE', 'Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate', 'Paper'];
@@ -510,15 +751,23 @@
     }
   }
 
-  function setGraphLoading(visible, label = '') {
+  function setGraphLoading(visible, label = '', context = null) {
     graphIsLoading = visible === true;
     syncLegendVisibility(currentMode);
     updateButtons();
     if (!els.graphLoader) return;
     els.graphLoader.classList.toggle('is-visible', graphIsLoading);
     els.graphLoader.setAttribute('aria-hidden', graphIsLoading ? 'false' : 'true');
+    const displayLabel = label || 'Loading graph...';
+    if (graphIsLoading) {
+      const loaderContext = resolveLoaderContext(displayLabel, context);
+      renderTeMechanismLoader(loaderContext.kind, loaderContext.label);
+    }
     if (els.graphLoaderLabel) {
-      els.graphLoaderLabel.textContent = label || 'Loading graph...';
+      els.graphLoaderLabel.textContent = displayLabel;
+    }
+    if (!graphIsLoading) {
+      renderTeMechanismLoader('default', '');
     }
   }
 
@@ -621,7 +870,9 @@
     updateButtons();
     setDetail('');
     notifyStateChange();
-    setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery || request.query || 'LINE1'));
+    setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery || request.query || 'LINE1'), {
+      label: currentGraphQuery || request.query || 'LINE1',
+    });
 
     try {
       await waitForDynamicSurfaceSize();
@@ -1102,7 +1353,9 @@
     updateButtons();
     setDetail('');
     notifyStateChange();
-    setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery));
+    setGraphLoading(true, textSet().loadingOverlay(currentGraphQuery), {
+      label: currentGraphQuery,
+    });
 
     try {
       await waitForDynamicSurfaceSize();
@@ -1559,7 +1812,14 @@
     updateButtons();
     setDetail(textSet().loadingDetail(q));
     notifyStateChange();
-    setGraphLoading(true, textSet().loadingOverlay(q));
+    const loaderKind = getTeLoaderKind(q);
+    const loaderLabel = loaderKind === 'default'
+      ? textSet().loadingOverlay(q)
+      : `Loading ${escapeHtml(q)} network`;
+    setGraphLoading(true, loaderLabel, {
+      kind: loaderKind,
+      label: q,
+    });
 
     try {
       await waitForDynamicSurfaceSize();
@@ -1621,7 +1881,10 @@
     const expandKey = String(node?.id || query);
     if (expandedNodeKeys.has(expandKey)) return false;
 
-    setGraphLoading(true, `Expanding ${escapeHtml(query)} ...`);
+    setGraphLoading(true, `Expanding ${escapeHtml(query)} ...`, {
+      kind: getTeLoaderKind(node || query),
+      label: query,
+    });
     try {
       const frame = dynamicFrame || ensureDynamicFrame(buildCurrentGraphRequest());
       if (!dynamicBridgePromise) dynamicBridgePromise = waitForEmbedBridge(frame);
@@ -2243,6 +2506,25 @@
     },
     getState() {
       return snapshotState();
+    },
+    getTeLoaderKind(nodeOrQuery) {
+      return getTeLoaderKind(nodeOrQuery);
+    },
+    previewTeLoader(nodeOrQuery) {
+      const label = nodeOrQuery && typeof nodeOrQuery === 'object'
+        ? String(nodeOrQuery.queryLabel || nodeOrQuery.rawLabel || nodeOrQuery.displayLabel || nodeOrQuery.label || '').trim()
+        : String(nodeOrQuery || '').trim();
+      const kind = getTeLoaderKind(nodeOrQuery);
+      if (els.graphLoader) {
+        els.graphLoader.classList.add('is-visible');
+        els.graphLoader.setAttribute('aria-hidden', 'false');
+      }
+      if (els.graphLoaderLabel) {
+        els.graphLoaderLabel.textContent = kind === 'default'
+          ? (label ? textSet().loadingOverlay(label) : 'Loading graph...')
+          : `Loading ${label || 'TE'} network`;
+      }
+      return renderTeMechanismLoader(kind, label || 'TE');
     },
     getVisibleSubgraph() {
       return getVisibleSubgraphForExport();
