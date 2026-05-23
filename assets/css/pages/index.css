@@ -101,238 +101,266 @@
         }
 
         .status-layout {
-          display: grid;
-          justify-items: center;
-        }
-
-        .status-orbit {
           position: relative;
-          width: min(100%, 1120px);
-          min-height: 660px;
-        }
-
-        .status-item {
-          text-align: center;
-        }
-
-        .status-cluster {
-          position: absolute;
-          top: 50%;
           display: grid;
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 20px 18px;
-          width: 318px;
-          transform: translateY(-50%);
+          gap: 22px;
         }
 
-        .status-cluster--left {
-          left: 24px;
-        }
-
-        .status-cluster--right {
-          right: 24px;
-        }
-
-        .status-item--orbit {
-          position: relative;
-          width: 100%;
-        }
-
-        .status-trigger {
-          border: 0;
-          background: transparent;
-          padding: 0;
-          width: 100%;
-          cursor: default;
-          color: inherit;
-        }
-
-        .status-trigger--static {
-          display: block;
-        }
-
-        .status-badge {
-          width: 126px;
-          height: 126px;
-          margin: 0 auto 12px;
-          border-radius: 50%;
-          background: var(--status-gradient, linear-gradient(180deg, #edf5ff 0%, #d9e9ff 100%));
-          border: 7px solid #f8fbff;
-          box-shadow: var(--status-shadow, 0 4px 14px rgba(30, 74, 142, 0.12));
+        .status-donut-grid {
           display: grid;
-          align-content: center;
-          justify-items: center;
-          gap: 6px;
+          grid-template-columns: repeat(3, minmax(340px, 1fr));
+          gap: 24px;
+          align-items: stretch;
         }
 
-        .status-item--primary .status-badge {
-          width: 360px;
-          height: 360px;
-          margin-bottom: 0;
+        .status-donut-card {
+          min-width: 0;
+          display: grid;
+          grid-template-rows: 34px 300px auto minmax(150px, auto);
+          gap: 16px;
+          align-items: start;
+          padding: 24px;
+          border: 1px solid #d8e4f4;
+          border-radius: 8px;
+          background: #ffffff;
+          box-shadow: 0 14px 34px rgba(31, 74, 140, 0.1);
+          height: 100%;
         }
 
-        .status-badge--ring {
+        .status-donut-copy {
+          min-width: 0;
+        }
+
+        .status-donut-copy h4 {
+          margin: 0;
+          color: #173f78;
+          font-size: 21px;
+          font-weight: 800;
+          line-height: 1.2;
+        }
+
+        .status-donut-shell {
           position: relative;
-          border: 0;
-          overflow: hidden;
-          box-shadow:
-            0 22px 44px rgba(31, 74, 140, 0.14),
-            inset 0 0 0 8px rgba(255, 255, 255, 0.92);
+          width: min(100%, 300px);
+          aspect-ratio: 1;
+          justify-self: center;
+          align-self: center;
         }
 
-        .status-ring-chart {
+        .status-donut {
           position: absolute;
           inset: 0;
           width: 100%;
           height: 100%;
+          filter: drop-shadow(0 18px 26px rgba(33, 75, 141, 0.12));
         }
 
-        .status-ring-segment {
-          cursor: pointer;
-          transition: transform 0.18s ease, opacity 0.18s ease, filter 0.18s ease;
-          transform-origin: 180px 180px;
+        .status-donut-track {
+          fill: none;
+          stroke: #edf3fb;
+          stroke-width: 64;
         }
 
-        .status-ring-segment:hover {
-          transform: scale(1.08);
-          opacity: 1;
-          filter: saturate(1.05) brightness(1.02);
+        .status-donut-segment {
+          transition: filter 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+          transform-box: fill-box;
+          transform-origin: center;
         }
 
-        .status-badge-center {
-          position: relative;
-          z-index: 1;
-          width: 100%;
-          height: 100%;
+        .status-donut-segment:hover,
+        .status-donut-segment:focus,
+        .status-donut-segment.is-hovered {
+          filter: brightness(1.05) saturate(1.1);
+          transform: translateY(-5px);
+          outline: none;
+        }
+
+        .status-donut-center {
+          position: absolute;
+          inset: 25%;
           display: grid;
           align-content: center;
           justify-items: center;
-          gap: 10px;
-          padding: 58px;
-          pointer-events: auto;
-          cursor: pointer;
-        }
-
-        .status-count {
-          font-size: 26px;
-          line-height: 1;
-          font-weight: 800;
-          color: var(--status-text, #214b8d);
-        }
-
-        .status-item--primary .status-count {
-          font-size: 62px;
-        }
-
-        .status-name {
-          font-size: 13px;
-          font-weight: 700;
-          color: var(--status-text, #214b8d);
-        }
-
-        .status-item--primary .status-name {
-          font-size: 24px;
-        }
-
-        .status-item--primary {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 2;
-        }
-
-        .status-panel {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.26s ease;
-          margin-top: 18px;
-        }
-
-        .status-item--orbit .status-panel {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 50%;
-          width: 220px;
-          transform: translateX(-50%);
-          z-index: 5;
-        }
-
-        .status-item--primary .status-panel {
-          position: absolute;
-          top: calc(100% + 10px);
-          left: 50%;
-          width: 280px;
-          transform: translateX(-50%);
-          z-index: 5;
-        }
-
-        .status-item.is-open .status-panel {
-          max-height: 260px;
-        }
-
-        .status-panel-inner {
-          background: #f6faff;
-          border: 1px solid #d9e6fb;
-          border-radius: 10px;
-          padding: 14px;
-          text-align: left;
-        }
-
-        .status-panel-inner h4 {
-          margin: 0 0 10px;
-          font-size: 14px;
-          color: #214b8d;
-          font-weight: 700;
-        }
-
-        .status-panel-list {
-          display: grid;
           gap: 8px;
-        }
-
-        .status-panel-link {
-          display: block;
-          background: #fff;
-          border: 1px solid #d9e6fb;
-          border-radius: 8px;
-          padding: 10px 12px;
-          color: #355f9e;
-          font-size: 14px;
-          font-weight: 600;
-          line-height: 1.4;
-        }
-
-        .status-tooltip {
-          position: absolute;
-          min-width: 210px;
-          padding: 12px 14px;
-          border-radius: 14px;
-          background: rgba(20, 35, 62, 0.95);
-          box-shadow: 0 18px 32px rgba(13, 27, 48, 0.18);
-          color: #ffffff;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: inset 0 0 0 1px #e4edf8;
+          text-align: center;
           pointer-events: none;
-          z-index: 8;
+        }
+
+        .status-donut-total {
+          max-width: 100%;
+          color: #173f78;
+          font-size: 32px;
+          font-weight: 800;
+          line-height: 1;
+          overflow-wrap: anywhere;
+        }
+
+        .status-donut-label {
+          color: #60779a;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+
+        .status-legend {
+          min-width: 0;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 6px 14px;
+          align-self: start;
+        }
+
+        .status-legend-item {
+          min-width: 0;
+          display: grid;
+          grid-template-columns: 12px minmax(0, 1fr) auto auto;
+          gap: 8px;
+          align-items: center;
+          padding: 7px 0;
+          border-bottom: 1px solid #edf3fb;
+        }
+
+        .status-legend-swatch {
+          width: 12px;
+          height: 12px;
+          border-radius: 999px;
+        }
+
+        .status-legend-name {
+          min-width: 0;
+          color: #274b7c;
+          font-size: 12px;
+          font-weight: 700;
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .status-legend-count,
+        .status-legend-percent {
+          color: #60779a;
+          font-size: 12px;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .status-legend-percent {
+          color: #8396b1;
+        }
+
+        .status-level-control {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 8px;
+          align-self: start;
+        }
+
+        .status-level-control button {
+          border: 1px solid #d8e4f4;
+          border-radius: 999px;
+          background: #ffffff;
+          color: #274b7c;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 1;
+          padding: 8px 11px;
+          transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+        }
+
+        .status-level-control button:hover,
+        .status-level-control button:focus,
+        .status-level-control button.is-active {
+          border-color: #173f78;
+          background: #173f78;
+          color: #ffffff;
+          outline: none;
+        }
+
+        .status-donut-tooltip {
+          position: absolute;
+          z-index: 10;
+          display: grid;
+          gap: 3px;
+          min-width: 168px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          border: 1px solid #d8e4f4;
+          background: #ffffff;
+          box-shadow: 0 16px 28px rgba(16, 32, 58, 0.16);
+          color: #173f78;
+          font-size: 12px;
+          line-height: 1.35;
+          pointer-events: none;
+          transform: translate(-50%, -100%);
           opacity: 0;
-          transform: translate(-50%, -115%);
-          transition: opacity 0.12s ease;
+          transition: opacity 0.12s ease, transform 0.12s ease;
         }
 
-        .status-tooltip.is-visible {
+        .status-donut-tooltip.is-visible {
           opacity: 1;
+          transform: translate(-50%, calc(-100% - 4px));
         }
 
-        .status-tooltip-title {
+        .status-donut-tooltip strong {
+          font-size: 13px;
+        }
+
+        .status-donut-tooltip span {
+          color: #274b7c;
+        }
+
+        .status-loading {
+          position: relative;
+          min-height: 42px;
+          padding: 12px 14px;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #f3f7fd;
+          color: #60779a;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .status-loading::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.78), transparent);
+          animation: status-loading-sheen 1.2s ease-in-out infinite;
+        }
+
+        .status-fallback {
+          margin: 0 auto;
+          width: min(100%, 680px);
+          padding: 14px 16px;
+          border: 1px solid #f0c8c0;
+          border-radius: 8px;
+          background: #fff7f5;
+          color: #9b4e3f;
           font-size: 14px;
           font-weight: 700;
-          line-height: 1.45;
+          line-height: 1.5;
+          text-align: center;
         }
 
-        .status-tooltip-meta {
-          margin-top: 4px;
-          font-size: 13px;
-          line-height: 1.5;
-          color: rgba(255, 255, 255, 0.86);
+        .status-layout.has-error .status-donut {
+          opacity: 0.28;
+        }
+
+        @keyframes status-loading-sheen {
+          from {
+            transform: translateX(-100%);
+          }
+          to {
+            transform: translateX(100%);
+          }
         }
 
         .links-section {
@@ -385,49 +413,22 @@
             grid-template-columns: 1fr;
           }
 
-          .status-orbit {
-            min-height: 900px;
-          }
-
-          .status-cluster {
-            position: static;
-            width: 100%;
-            transform: none;
-          }
-
-          .status-cluster--left,
-          .status-cluster--right {
-            position: absolute;
-            left: 50%;
-            width: min(100%, 720px);
-            transform: translateX(-50%);
-          }
-
-          .status-cluster--left {
-            top: 0;
-          }
-
-          .status-cluster--right {
-            bottom: 0;
+          .status-donut-grid {
+            grid-template-columns: 1fr;
           }
         }
 
         @media (max-width: 992px) {
           .link-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr));
           }
 
           .hero-content h1 {
             font-size: 44px;
           }
 
-          .status-orbit {
-            min-height: 980px;
-          }
-
-          .status-cluster {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            width: min(100%, 520px);
+          .status-donut-card {
+            grid-template-rows: auto 280px auto auto;
           }
         }
 
@@ -444,45 +445,20 @@
             font-size: 34px;
           }
 
-          .status-orbit {
-            min-height: auto;
-            display: grid;
-            gap: 18px;
+          .status-donut-card {
+            grid-template-rows: auto 260px auto auto;
+            padding: 18px;
           }
 
-          .status-cluster {
-            position: static;
-            grid-template-columns: 1fr;
-            width: 100%;
+          .status-donut-shell {
+            width: min(100%, 260px);
           }
 
-          .status-cluster--left,
-          .status-cluster--right,
-          .status-item--orbit,
-          .status-item--primary {
-            position: static;
-            transform: none;
-            width: auto;
+          .status-donut-total {
+            font-size: 26px;
           }
 
-          .status-item--orbit .status-panel,
-          .status-item--primary .status-panel {
-            position: static;
-            width: auto;
-            transform: none;
-          }
-
-          .status-badge {
-            width: 144px;
-            height: 144px;
-          }
-
-          .status-item--primary .status-badge {
-            width: min(82vw, 260px);
-            height: min(82vw, 260px);
-          }
-
-          .status-item--primary .status-count {
-            font-size: 42px;
+          .status-legend-item {
+            grid-template-columns: 12px minmax(0, 1fr) auto auto;
           }
         }

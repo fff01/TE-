@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TE-KG Home Mockup</title>
+  <style>
+    :root {
+      --ink: #101827;
+      --muted: #5d6878;
+      --soft: #eef3f8;
+      --line: #d9e2ec;
+      --paper: #fbfcfe;
+      --panel: rgba(255,255,255,.86);
+      --te: #3f78e0;
+      --te-2: #49b38f;
+      --dna: #738091;
+      --accent: #bd4f6c;
+      --gold: #b9862f;
+      --shadow: 0 24px 80px rgba(23,35,55,.12);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background:
+        linear-gradient(180deg, #f7fafc 0%, #eef4f8 42%, #f8fafc 100%);
+      line-height: 1.45;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .page {
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .nav {
+      height: 66px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 750;
+      letter-spacing: .02em;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 7px;
+      background:
+        linear-gradient(135deg, var(--te), var(--te-2));
+      position: relative;
+      box-shadow: 0 10px 24px rgba(63,120,224,.25);
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      left: 7px;
+      right: 7px;
+      height: 3px;
+      border-radius: 99px;
+      background: rgba(255,255,255,.9);
+      transform: rotate(-18deg);
+    }
+
+    .brand-mark::before { top: 10px; }
+    .brand-mark::after { bottom: 10px; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #425066;
+      font-size: 14px;
+    }
+
+    .nav-links span {
+      padding: 8px 11px;
+      border-radius: 7px;
+    }
+
+    .nav-links span:last-child {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.72);
+    }
+
+    .hero {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 54px 24px 40px;
+      min-height: calc(100vh - 66px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.02fr) minmax(420px, .98fr);
+      gap: 42px;
+      align-items: center;
+      position: relative;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: #315b8f;
+      background: rgba(63,120,224,.09);
+      border: 1px solid rgba(63,120,224,.17);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--te-2);
+      box-shadow: 0 0 0 4px rgba(73,179,143,.15);
+    }
+
+    h1 {
+      margin: 22px 0 14px;
+      font-size: clamp(48px, 6vw, 82px);
+      line-height: .92;
+      letter-spacing: 0;
+    }
+
+    .subhead {
+      max-width: 610px;
+      color: #36445a;
+      font-size: 19px;
+      margin: 0 0 28px;
+    }
+
+    .search-shell {
+      background: var(--panel);
+      border: 1px solid rgba(178,190,205,.72);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      padding: 10px;
+      max-width: 650px;
+      backdrop-filter: blur(14px);
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .search-box {
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #657184;
+      background: #fff;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .search-icon {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #7f8ca0;
+      border-radius: 50%;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .search-icon::after {
+      content: "";
+      position: absolute;
+      width: 8px;
+      height: 2px;
+      background: #7f8ca0;
+      right: -6px;
+      bottom: -3px;
+      transform: rotate(45deg);
+      border-radius: 99px;
+    }
+
+    .primary-btn {
+      border: 0;
+      border-radius: 6px;
+      padding: 0 18px;
+      min-height: 52px;
+      color: #fff;
+      background: #19365f;
+      font-weight: 700;
+      box-shadow: 0 12px 26px rgba(25,54,95,.23);
+      cursor: default;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      color: #405069;
+      background: rgba(255,255,255,.74);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .action {
+      min-height: 42px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.76);
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      color: #22304a;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(31,45,67,.06);
+    }
+
+    .action.primary {
+      background: var(--te);
+      border-color: var(--te);
+      color: #fff;
+    }
+
+    .visual {
+      min-height: 520px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .visual-card {
+      width: min(100%, 520px);
+      aspect-ratio: 1 / .92;
+      position: relative;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 28% 20%, rgba(73,179,143,.18), transparent 24%),
+        radial-gradient(circle at 76% 72%, rgba(63,120,224,.18), transparent 28%),
+        rgba(255,255,255,.68);
+      border: 1px solid rgba(195,205,216,.65);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .kg-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .dna-line {
+      stroke: var(--dna);
+      stroke-width: 7;
+      stroke-linecap: round;
+      opacity: .72;
+    }
+
+    .te-segment {
+      fill: var(--te);
+      stroke: #1f4d9a;
+      stroke-width: 2;
+    }
+
+    .te-label {
+      fill: #0f172a;
+      stroke: #fff;
+      stroke-width: 4;
+      paint-order: stroke;
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .edge {
+      stroke: #9aacbf;
+      stroke-width: 2;
+      fill: none;
+      opacity: .72;
+    }
+
+    .node {
+      fill: #fff;
+      stroke-width: 3;
+      filter: drop-shadow(0 10px 18px rgba(22,34,50,.14));
+    }
+
+    .node.te { stroke: var(--te); }
+    .node.fx { stroke: var(--te-2); }
+    .node.ds { stroke: var(--accent); }
+    .node.pm { stroke: var(--gold); }
+
+    .pulse {
+      fill: var(--gold);
+      filter: drop-shadow(0 0 10px rgba(185,134,47,.6));
+      animation: evidenceMove 5.4s ease-in-out infinite;
+    }
+
+    .pulse.two {
+      animation-delay: -2s;
+      fill: var(--te-2);
+    }
+
+    .moving-te {
+      animation: teSlide 7s ease-in-out infinite;
+      transform-origin: center;
+    }
+
+    .hint-panel {
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .hint {
+      min-width: 0;
+      padding: 10px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.84);
+      border: 1px solid rgba(202,211,222,.8);
+    }
+
+    .hint strong {
+      display: block;
+      font-size: 18px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .hint span {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .section {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 44px 24px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 0;
+      max-width: 520px;
+      color: var(--muted);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      min-height: 112px;
+      box-shadow: 0 10px 28px rgba(31,45,67,.05);
+    }
+
+    .stat .value {
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 820;
+      color: #162640;
+      margin-bottom: 8px;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .tool-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      min-height: 170px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 10px 28px rgba(31,45,67,.05);
+    }
+
+    .tool-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: #eef5ff;
+      color: var(--te);
+      font-weight: 900;
+    }
+
+    .tool-card h3 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .tool-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: minmax(0, .86fr) minmax(360px, 1.14fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .evidence-card,
+    .source-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 10px 28px rgba(31,45,67,.05);
+    }
+
+    .edge-summary {
+      border: 1px solid #cfdae6;
+      border-radius: 7px;
+      padding: 14px;
+      background: linear-gradient(180deg, #fff, #f8fbfd);
+    }
+
+    .edge-strip {
+      height: 9px;
+      border-radius: 99px;
+      background:
+        linear-gradient(90deg, var(--te) 0 54%, var(--te-2) 54% 78%, var(--gold) 78% 100%);
+      margin-bottom: 14px;
+    }
+
+    .mini-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #fff;
+    }
+
+    .mini b {
+      display: block;
+      font-size: 20px;
+    }
+
+    .mini span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      overflow: hidden;
+      border-radius: 7px;
+    }
+
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 210px;
+    }
+
+    th {
+      color: #425066;
+      background: #f3f7fb;
+      font-size: 12px;
+    }
+
+    td:first-child {
+      color: var(--te);
+      font-weight: 750;
+    }
+
+    .source-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .source-item {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 10px;
+      color: #34435a;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      background: var(--te-2);
+      box-shadow: 0 0 0 5px rgba(73,179,143,.12);
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .step {
+      position: relative;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      min-height: 138px;
+      box-shadow: 0 10px 28px rgba(31,45,67,.05);
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: #19365f;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .step h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-band {
+      margin-top: 28px;
+      padding: 20px 24px 42px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @keyframes evidenceMove {
+      0%, 16% { transform: translate(0, 0); opacity: 0; }
+      28% { opacity: 1; }
+      54% { transform: translate(72px, 52px); opacity: 1; }
+      78% { transform: translate(156px, 22px); opacity: .88; }
+      100% { transform: translate(214px, 74px); opacity: 0; }
+    }
+
+    @keyframes teSlide {
+      0%, 18% { transform: translateX(0); }
+      45% { transform: translateX(42px); }
+      70% { transform: translateX(42px) translateY(34px); }
+      100% { transform: translateX(0); }
+    }
+
+    @media (max-width: 980px) {
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        padding-top: 30px;
+      }
+
+      .visual {
+        min-height: 420px;
+      }
+
+      .stats,
+      .tools,
+      .workflow {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .evidence-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .hero { padding: 24px 16px 32px; }
+      .section { padding: 34px 16px; }
+      .search-row { grid-template-columns: 1fr; }
+      .primary-btn { width: 100%; }
+      .stats,
+      .tools,
+      .workflow {
+        grid-template-columns: 1fr;
+      }
+      .hint-panel { grid-template-columns: 1fr; }
+      .visual { min-height: 360px; }
+      .section-head {
+        display: block;
+      }
+      .section-head p { margin-top: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <nav class="nav" aria-label="Mock navigation">
+      <a class="brand" href="#">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>TE-KG</span>
+      </a>
+      <div class="nav-links" aria-hidden="true">
+        <span>Graph</span>
+        <span>Taxonomy</span>
+        <span>Expression</span>
+        <span>Docs</span>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <section class="hero-copy">
+        <div class="eyebrow">Transposable element knowledge graph</div>
+        <h1>TE-KG</h1>
+        <p class="subhead">A transposable element-centered biomedical knowledge graph with literature evidence, taxonomy context, expression entry points, and relation-level PubMed support.</p>
+
+        <div class="search-shell" aria-label="Static search mockup">
+          <div class="search-row">
+            <div class="search-box">
+              <span class="search-icon" aria-hidden="true"></span>
+              <span>Search L1HS, LINE1, AluJb, SVA, Aging...</span>
+            </div>
+            <button class="primary-btn" type="button">Search</button>
+          </div>
+          <div class="chips" aria-label="Example queries">
+            <span class="chip">L1HS</span>
+            <span class="chip">LINE1</span>
+            <span class="chip">AluJb</span>
+            <span class="chip">SVA</span>
+            <span class="chip">Aging</span>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <span class="action primary">Explore Graph</span>
+          <span class="action">Browse Taxonomy</span>
+          <span class="action">View Evidence Model</span>
+        </div>
+      </section>
+
+      <section class="visual" aria-label="Static TE-KG animation mockup">
+        <div class="visual-card">
+          <svg class="kg-svg" viewBox="0 0 520 478" role="img" aria-label="TE-KG themed animation mockup">
+            <path class="edge" d="M138 154 C202 104, 278 128, 334 188"></path>
+            <path class="edge" d="M334 188 C386 214, 394 272, 336 318"></path>
+            <path class="edge" d="M138 154 C148 244, 206 314, 336 318"></path>
+            <circle class="pulse" cx="138" cy="154" r="6"></circle>
+            <circle class="pulse two" cx="138" cy="154" r="5"></circle>
+
+            <line class="dna-line" x1="58" y1="92" x2="216" y2="92"></line>
+            <line class="dna-line" x1="302" y1="92" x2="462" y2="92"></line>
+            <g class="moving-te">
+              <rect class="te-segment" x="218" y="75" width="84" height="34" rx="8"></rect>
+              <text class="te-label" x="260" y="98" text-anchor="middle">L1HS</text>
+            </g>
+
+            <circle class="node te" cx="138" cy="154" r="32"></circle>
+            <circle class="node fx" cx="334" cy="188" r="28"></circle>
+            <circle class="node ds" cx="336" cy="318" r="31"></circle>
+            <circle class="node pm" cx="210" cy="274" r="20"></circle>
+            <text class="te-label" x="138" y="160" text-anchor="middle">TE</text>
+            <text class="te-label" x="334" y="194" text-anchor="middle">Function</text>
+            <text class="te-label" x="336" y="324" text-anchor="middle">Disease</text>
+            <text class="te-label" x="210" y="280" text-anchor="middle">PMID</text>
+          </svg>
+
+          <div class="hint-panel">
+            <div class="hint">
+              <strong>2,308</strong>
+              <span>PubMed records</span>
+            </div>
+            <div class="hint">
+              <strong>12,444</strong>
+              <span>BIO_RELATION edges</span>
+            </div>
+            <div class="hint">
+              <strong>88.26%</strong>
+              <span>metric PMID coverage</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </header>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Data snapshot</h2>
+        <p>Static mock values copied from the current TE-KG planning context. A real implementation should source these from checks, generated summaries, or verified docs.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="value">2,308</div><div class="label">Paper nodes enriched with PubMed metadata</div></div>
+        <div class="stat"><div class="value">12,444</div><div class="label">BIO_RELATION relationships with support aggregation</div></div>
+        <div class="stat"><div class="value">14,770</div><div class="label">Raw PMID references on relation evidence</div></div>
+        <div class="stat"><div class="value">2,037</div><div class="label">PubMed records with journal metric mapping</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Core tools</h2>
+        <p>Homepage entry points should expose the actual database workflows without forcing users to discover them through navigation.</p>
+      </div>
+      <div class="tools">
+        <div class="tool-card">
+          <div class="tool-icon">G</div>
+          <h3>Explore TE Graph</h3>
+          <p>Search an entity, inspect relation edges, then open PubMed support in the edge card.</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">T</div>
+          <h3>Browse Taxonomy</h3>
+          <p>Start from TE taxonomy classes and expand toward specific families or elements.</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">E</div>
+          <h3>Expression Atlas</h3>
+          <p>Open expression profiles without mixing expression runtime into the graph page.</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">P</div>
+          <h3>Path Finder</h3>
+          <p>Trace paths across TE, disease, function, and biological relation nodes.</p>
+        </div>
+        <div class="tool-card">
+          <div class="tool-icon">S</div>
+          <h3>Search Database</h3>
+          <p>Use examples and typed search to reach graph, taxonomy, or database records.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Evidence support</h2>
+        <p>Relation support is evidence context, not confidence. Impact Factor is a journal metric and missing values stay unknown.</p>
+      </div>
+      <div class="evidence-grid">
+        <div class="evidence-card">
+          <div class="edge-summary">
+            <div class="edge-strip"></div>
+            <div class="mini-metrics">
+              <div class="mini"><b>65</b><span>support_pmid_count</span></div>
+              <div class="mini"><b>0.85</b><span>metric coverage</span></div>
+              <div class="mini"><b>11.47</b><span>IF mean</span></div>
+              <div class="mini"><b>2000-2024</b><span>year range</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="evidence-card">
+          <table aria-label="Static PubMed table mockup">
+            <thead>
+              <tr>
+                <th>PMID</th>
+                <th>Year</th>
+                <th>Journal</th>
+                <th>IF</th>
+                <th>JCR</th>
+                <th>Title</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>10699189</td>
+                <td>2000</td>
+                <td>Human molecular genetics</td>
+                <td>3.2</td>
+                <td>Q2</td>
+                <td>Transduction of flanking sequences is common in L1 retrotransposition</td>
+              </tr>
+              <tr>
+                <td>17034961</td>
+                <td>2007</td>
+                <td>Genome research</td>
+                <td>9.1</td>
+                <td>Q1</td>
+                <td>LINE-1 activity and genome remodeling in human cells</td>
+              </tr>
+              <tr>
+                <td>20169193</td>
+                <td>2010</td>
+                <td>Nucleic acids research</td>
+                <td>16.6</td>
+                <td>Q1</td>
+                <td>Retrotransposon regulation across functional genomic contexts</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>Sources and provenance</h2>
+        <p>Homepage copy should expose what is known, what is derived, and where the reliability boundaries are.</p>
+      </div>
+      <div class="evidence-grid">
+        <div class="source-card">
+          <h3>Current data version</h3>
+          <div class="source-list">
+            <div class="source-item"><span class="dot"></span><span>Neo4j runtime target: <b>tekg3</b></span></div>
+            <div class="source-item"><span class="dot"></span><span>PubMed metadata: <b>2,308 records</b></span></div>
+            <div class="source-item"><span class="dot"></span><span>Journal metrics source: <b>impact_factor_package_2025</b></span></div>
+            <div class="source-item"><span class="dot"></span><span>Relation aggregation tag: <b>relation_metrics_v1_2026-05-22</b></span></div>
+          </div>
+        </div>
+        <div class="source-card">
+          <h3>Quick start</h3>
+          <div class="workflow">
+            <div class="step">
+              <div class="step-num">1</div>
+              <h3>Search L1HS</h3>
+              <p>Start from a familiar TE query or taxonomy label.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <h3>Open graph</h3>
+              <p>Inspect TE, disease, function, and relation context.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <h3>Click an edge</h3>
+              <p>Read PMID evidence and journal metrics in the edge card.</p>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <h3>Export CSV</h3>
+              <p>Download larger evidence tables for offline review.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer-band">
+      Static visual mockup only. No real search, API calls, graph loading, or database writes are implemented.
+    </footer>
+  </main>
+</body>
+</html>
