@@ -61,6 +61,13 @@ $package = [
                 'href' => '/TE-/search.php?q=L1HS&type=TE#search-literature-panel',
             ],
         ],
+        [
+            'id' => 'route_2',
+            'route' => [
+                'url' => 'http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel',
+                'href' => '/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel',
+            ],
+        ],
     ],
 ];
 
@@ -121,6 +128,57 @@ assert_contains_string('PMID 99999', $badPmid['errors'], 'unknown PMID error is 
 $badUrl = ReportIntegrityGate::check('Unsupported URL https://example.org/missing is linked.', $package);
 assert_same(false, $badUrl['ok'], 'unknown URL fails');
 assert_contains_string('https://example.org/missing', $badUrl['errors'], 'unknown URL error is reported');
+
+$routeUrlWithTrailingBacktick = ReportIntegrityGate::check(
+    'Open route_id: route_2 at http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel` for karyotype context.',
+    $package
+);
+assert_same(true, $routeUrlWithTrailingBacktick['ok'], 'route_map URL with trailing Markdown backtick passes');
+assert_same(
+    ['http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel'],
+    $routeUrlWithTrailingBacktick['linked_urls'],
+    'route_map URL with trailing Markdown backtick is normalized'
+);
+
+$routeUrlWithTrailingBold = ReportIntegrityGate::check(
+    'Open route_id: route_2 at http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel** for karyotype context.',
+    $package
+);
+assert_same(true, $routeUrlWithTrailingBold['ok'], 'route_map URL with trailing Markdown bold punctuation passes');
+assert_same(
+    ['http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel'],
+    $routeUrlWithTrailingBold['linked_urls'],
+    'route_map URL with trailing Markdown bold punctuation is normalized'
+);
+
+$routeUrlInMarkdown = ReportIntegrityGate::check(
+    'Open [karyotype panel](http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel) or malformed http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel](http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel).',
+    $package
+);
+assert_same(true, $routeUrlInMarkdown['ok'], 'route_map URL inside Markdown and malformed Markdown fragment passes');
+assert_same(
+    ['http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel'],
+    $routeUrlInMarkdown['linked_urls'],
+    'route_map URL inside Markdown and malformed Markdown fragment is recognized once'
+);
+
+$routeUrlWithoutFragment = ReportIntegrityGate::check(
+    'Open route_id: route_2 at http://127.0.0.1/TE-/search.php?q=L1HS&type=TE for the L1HS search page.',
+    $package
+);
+assert_same(true, $routeUrlWithoutFragment['ok'], 'route_map URL without fragment passes when evidence has the same route plus fragment');
+assert_same(
+    ['http://127.0.0.1/TE-/search.php?q=L1HS&type=TE'],
+    $routeUrlWithoutFragment['linked_urls'],
+    'route_map URL without fragment is preserved in extracted linked URLs'
+);
+
+$unrelatedUrlWithMarkdownPunctuation = ReportIntegrityGate::check(
+    'Unsupported URL https://example.org/missing** is linked.',
+    $package
+);
+assert_same(false, $unrelatedUrlWithMarkdownPunctuation['ok'], 'unknown URL with benign Markdown punctuation still fails');
+assert_contains_string('https://example.org/missing', $unrelatedUrlWithMarkdownPunctuation['errors'], 'unknown normalized URL error is reported');
 
 $emptyClaimsPackage = $package;
 $emptyClaimsPackage['claims'] = [];

@@ -156,8 +156,8 @@ final class ReportIntegrityGate
             if (!is_array($item) || !is_array($item['route'] ?? null)) {
                 continue;
             }
-            self::addUrl($urls, $item['route']['url'] ?? null);
-            self::addUrl($urls, $item['route']['href'] ?? null);
+            self::addRouteUrl($urls, $item['route']['url'] ?? null);
+            self::addRouteUrl($urls, $item['route']['href'] ?? null);
         }
 
         return $urls;
@@ -258,9 +258,37 @@ final class ReportIntegrityGate
         }
     }
 
+    /**
+     * @param array<string,true> $urls
+     */
+    private static function addRouteUrl(array &$urls, mixed $value): void
+    {
+        if (!is_scalar($value)) {
+            return;
+        }
+        $url = self::cleanUrl((string)$value);
+        if ($url === '') {
+            return;
+        }
+        $urls[$url] = true;
+
+        $fragmentPos = strpos($url, '#');
+        if ($fragmentPos !== false) {
+            $withoutFragment = substr($url, 0, $fragmentPos);
+            if ($withoutFragment !== '') {
+                $urls[$withoutFragment] = true;
+            }
+        }
+    }
+
     private static function cleanUrl(string $url): string
     {
-        return rtrim(trim($url), ".,;:)");
+        $url = trim($url);
+        $markdownFragmentPos = strpos($url, '](');
+        if ($markdownFragmentPos !== false) {
+            $url = substr($url, 0, $markdownFragmentPos);
+        }
+        return rtrim($url, ".,;:)`*");
     }
 
     /**

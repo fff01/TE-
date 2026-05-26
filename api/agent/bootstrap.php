@@ -74,6 +74,7 @@ function tekg_agent_config(): array
         'dashscope_key' => trim((string)($local['dashscope_key'] ?? tekg_agent_env_value(['DASHSCOPE_API_KEY_BIOLOGY', 'DASHSCOPE_API_KEY'], ''))),
         'dashscope_model' => trim((string)($local['dashscope_model'] ?? tekg_agent_env_value(['DASHSCOPE_MODEL_BIOLOGY', 'DASHSCOPE_MODEL'], 'qwen3.5-35b-a3b'))),
         'agent_writing_model' => trim((string)($local['agent_writing_model'] ?? tekg_agent_env_value(['TEKG_AGENT_WRITING_MODEL'], ''))),
+        'agent_polisher_model' => trim((string)($local['agent_polisher_model'] ?? tekg_agent_env_value(['TEKG_AGENT_POLISHER_MODEL'], ''))),
         'deepseek_url' => trim((string)($local['deepseek_url'] ?? tekg_agent_env_value(['DEEPSEEK_API_URL'], 'https://api.deepseek.com/v1/chat/completions'))),
         'deepseek_key' => trim((string)($local['deepseek_key'] ?? tekg_agent_env_value(['DEEPSEEK_API_KEY'], ''))),
         'deepseek_model' => trim((string)($local['deepseek_model'] ?? tekg_agent_env_value(['DEEPSEEK_MODEL'], 'deepseek-chat'))),
@@ -317,4 +318,3 @@ function tekg_agent_http_request(
     }
     return $result;
 }
-

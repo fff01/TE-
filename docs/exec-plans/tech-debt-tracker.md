@@ -67,6 +67,27 @@
 - 风险：计划 section warning 依赖报告中出现 section title；它现在不阻断中文或自由标题报告，但 warning 可能偏多。
 - 下一步：建立 Agent report golden set 后，按真实报告格式校准 section 检查，必要时增加 title alias 或 section-key 映射。
 
+### DT vs Agent live evaluation - 2026-05-26
+
+- 状态：Phase 5A deterministic harness 已落地，见 `completed/dt-agent-evaluation-harness-v1.md`。
+- 已完成：30 个 DT/Agent 双轨 golden cases、`ModeComparisonEvaluation` deterministic contract、Agent response `evaluation_report`、同款网页入口约束和 polisher model 配置读取。
+- 已完成：Phase 5B 第一轮 live eval 已运行，见 `completed/dt-agent-live-evaluation-v1.md` 和 `docs/eval/runs/phase5b_flash_full/analysis.md`。
+- 结果：DT 30/30 成功，Agent 24/30 成功；Agent 在 5 个简单/边界 DT case 上 overkill。
+- 债务：当前 deterministic proxy 只能评估 artifact presence，不能公平评估 claim-level semantic quality。
+- 下一步：先修 Agent 边界路由和 Site Navigator URL gate，再做 Phase 5C 语义 evaluator；复杂/失败样本再用 pro 复跑。
+
+### Agent Site Navigator URL integrity false positives - 2026-05-26
+
+- 现象：Phase 5B 中 P5A_B_005、P5A_B_006、P5A_B_029 失败于 Writing，原因是 `ReportIntegrityGate` 把带 Markdown 片段/尾随符号的 Site Navigator URL 判为 unsupported。
+- 风险：站内导航类问题本应由 DT 快速处理；若用户强制 Agent，也不应因可点击链接格式轻微变化而失败。
+- 下一步：为 `ReportIntegrityGate::cleanUrl()` 增加 Markdown URL normalization，允许 route_map 中的 Site Navigator URL 作为 route evidence，并新增针对 `url](url)`、尾随 backtick、粗体结束符的测试。
+
+### Agent simple-task overkill - 2026-05-26
+
+- 现象：Phase 5B 中序列查询、单跳关系、paper list、简单定义等 5 个 case 被判为 Agent overkill。
+- 风险：Agent 会变成慢版 DT，延迟和成本增加，同时稀释研究工作流定位。
+- 下一步：在 Agent preflight 中，如果 `analysis.recommended_mode=deep_think` 且无报告/审计/排名/批量需求，直接返回建议使用 DT 或 compact answer，不进入完整 Evidence Walk Writing。
+
 ### Agent task complexity classifier calibration - 2026-05-25
 
 - 状态：第一版 `task_complexity` 已落地在 `EntityNormalizer`，并由 `task_complexity_test.php` 和 `agent_narration_task_complexity_test.php` 覆盖。

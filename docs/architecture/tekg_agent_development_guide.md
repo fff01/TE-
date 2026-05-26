@@ -713,16 +713,45 @@ Agent golden set：
 
 ### 9.5 第五阶段：评估与报告
 
+状态：Phase 5A 第一版已落地为 DT vs Agent deterministic evaluation harness。当前阶段不跑真实 DeepSeek API，而是先固定同款网页入口、双轨 golden cases、评估契约和 Agent 自评字段。真实 API 批量评估留到 Phase 5B。
+
 目标：
 
 - Agent 有可发表、可复现实验体系。
+- 用同一批问题平行评估 Deep Think 和 Agent，证明 Agent 不是慢版 DT，而是在研究任务上提供更高的 evidence depth、citation auditability 和 report artifacts。
 
 任务：
 
-- 建立 DT golden set 和 Agent golden set。
+- 建立 DT/Agent 双轨 golden set。
 - 记录每题 plugin trace。
 - 自动计算 tool-call accuracy、faithfulness、citation correctness、latency。
 - 支持导出 Markdown/LaTeX/CSV 报告。
+
+Phase 5A 实际产物：
+
+- `docs/eval/dt_agent_golden_cases.jsonl` 保存 30 个双轨 golden cases，覆盖简单查序列/位置/表达/导航、局部图谱关系、机制综述、证据审计、图谱排名、批量比较、报告生成和边界判断。该文件放在 `docs/eval` 而不是 `data/eval`，因为仓库忽略整个 `data/` 目录。
+- `api/agent/contracts/ModeComparisonEvaluation.php` 提供 deterministic comparison contract，输出 DT report、Agent report、`agent_value_added`、`agent_overkill`、`depth_delta`、`artifact_delta` 和推荐模式。
+- `AcademicAgentService` 在最终 response 中新增 `evaluation_report`，只使用当前 Agent runtime 已有字段，不改变 API 请求结构。
+- 同款入口规则已固定：DT 真实评估应调用 `api/deep_think_stream.php`；Agent 真实评估应调用 `api/agent_runs.php` + `api/agent_run_status.php`，不使用旧 `agent_stream.php` 或直接 worker 入口。
+- 模型策略：默认 broad evaluation 使用 `deepseek-v4-flash`；`agent_polisher_model` 已支持配置并默认为 `deepseek-v4-flash`；不把 `agent_writing_model` 默认改成 `deepseek-v4-pro`。后续复杂/失败样本可通过 payload 覆盖 writer 为 pro 做对照。
+
+下一步 Phase 5B：
+
+状态：Phase 5B 已完成第一轮 `deepseek-v4-flash` live evaluation，结果见 `docs/eval/runs/phase5b_flash_full/analysis.md`。
+
+Phase 5B 结论：
+
+- DT 30/30 成功，Agent 24/30 成功。
+- Agent 在复杂题上经常生成更长、更结构化的 evidence-walk 风格报告，但 deterministic proxy 只能证明 artifact presence，尚不能证明语义质量显著优于 DT。
+- Agent 在 5 个简单/边界 DT 任务上出现 overkill，平均延迟显著高于 DT。
+- Agent 的主要失败来自 Writing 阶段：Site Navigator URL 被 integrity gate 误判、简单定义题 Writing 超时，以及少数 create/poll 非 JSON/404 异常。
+
+下一步 Phase 5C：
+
+- 优先修 routing 和 integrity gate，而不是直接上 pro。
+- 为 Site Navigator route URL 增加 Markdown URL normalization 与 route evidence allowance。
+- 增加语义 evaluator，评估 claim faithfulness、citation relevance、missing-evidence reporting 和 report usefulness。
+- 只对复杂/失败样本使用 `deepseek-v4-pro` 复跑，判断 pro 是否带来足够质量增益。
 
 ## 10. 不建议做的方向
 

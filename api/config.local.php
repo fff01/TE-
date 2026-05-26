@@ -3,6 +3,7 @@ return [
     'dashscope_key' => getenv('DASHSCOPE_API_KEY_BIOLOGY') ?: getenv('DASHSCOPE_API_KEY') ?: '',
     'dashscope_model' => 'deepseek-v4-flash',
     'agent_writing_model' => 'deepseek-v4-flash',
+    'agent_polisher_model' => 'deepseek-v4-flash',
     'deepseek_model' => 'deepseek-v4-flash',
     'deepseek_reasoner_model' => 'deepseek-v4-flash',
     'dashscope_url' => 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',

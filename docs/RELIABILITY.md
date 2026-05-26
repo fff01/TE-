@@ -136,6 +136,132 @@ php test\agent_narration_task_complexity_test.php
 - `ReportIntegrityGate` 是确定性 guardrail，不等价于完整事实核验；它主要阻止新增 PMID、URL、citation/route marker 和明显强结论越界。缺失计划 section 只记录 warning，避免中文或自由标题报告被误拒。
 - Polisher 未通过 integrity gate 时，runtime 会使用已通过 gate 的 draft 作为保守答案并记录 warning；后续可把该 warning 展示为更明确的写作质量状态。
 
+## DT vs Agent Evaluation Harness Checks - 2026-05-26
+
+Phase 5A 已建立 deterministic evaluation harness。当前阶段不跑真实 DeepSeek API，不依赖 live WAMP/Neo4j/browser/LLM，只验证评估契约、golden cases 和 Agent response 最小接入。
+
+验证命令：
+
+```powershell
+php -l api\agent\contracts\ModeComparisonEvaluation.php
+php -l api\agent\orchestrator\AcademicAgentService.php
+php -l api\agent\bootstrap.php
+php test\mode_comparison_evaluation_test.php
+php test\dt_agent_golden_cases_test.php
+php test\agent_evaluation_report_runtime_test.php
+php test\agent_evidence_walk_runtime_test.php
+php test\agent_narration_task_complexity_test.php
+```
+
+同款入口约束：
+
+- Deep Think 真实评估必须调用 `api/deep_think_stream.php`，和 `agent.php` 的 `deepThinkStreamApiUrl` 一致。
+- Agent 真实评估必须调用 `api/agent_runs.php` 创建 run，并轮询 `api/agent_run_status.php`，和网页 Agent 一致。
+- 不用旧 `agent_stream.php` 做主评估入口，不直接调用 `agent_run_execute.php` 冒充用户入口。
+
+模型策略：
+
+- Broad evaluation 默认使用 `deepseek-v4-flash`。
+- `agent_polisher_model` 已进入 `tekg_agent_config()`，本地默认 `deepseek-v4-flash`。
+- 不把 `agent_writing_model` 默认改成 `deepseek-v4-pro`；复杂/失败样本可在 Phase 5B/5C 通过 payload 覆盖 writer 为 pro 做对照。
+
+残留风险：
+
+- Phase 5A 只证明评估框架可运行，不证明 DT/Agent 真实回答质量。
+- `ModeComparisonEvaluation` 是 deterministic proxy，不替代后续人工抽样和 LLM evaluator。
+- 30 个 golden cases 是 seed set；真实评估后需要扩展到 80-120 个 cases 并校准指标权重。
+
+## DT vs Agent Live Evaluation Results - 2026-05-26
+
+Phase 5B 已完成第一轮真实 `deepseek-v4-flash` live eval。
+
+结果目录：
+
+- `docs/eval/runs/canary_phase5b/`
+- `docs/eval/runs/phase5b_flash_full/`
+- 详细分析：`docs/eval/runs/phase5b_flash_full/analysis.md`
+
+环境前提已验证：
+
+- `agent.php` HTTP 200。
+- Neo4j `tekg3` read-only health check passed。
+- LLM relay health passed by environment checker。
+
+执行命令：
+
+```powershell
+python scripts/eval/run_dt_agent_live_eval.py --base-url http://127.0.0.1/TE- --limit 1 --out-dir docs\eval\runs\canary_phase5b --timeout 240 --poll-interval 2
+python scripts/eval/run_dt_agent_live_eval.py --base-url http://127.0.0.1/TE- --out-dir docs\eval\runs\phase5b_flash_full --timeout 300 --poll-interval 2
+python scripts/eval/run_dt_agent_live_eval.py --rescore-existing --out-dir docs\eval\runs\phase5b_flash_full
+```
+
+Aggregate result:
+
+- DT success: 30/30。
+- Agent success: 24/30。
+- Agent overkill: 5/30。
+- Expected Agent cases: 18 total, 16 completed.
+- Expected Deep Think or boundary-DT cases: 12 total, 8 Agent completed and 5 showed overkill.
+
+Main reliability findings:
+
+- DT is currently more reliable and faster for the seed set.
+- Agent produces research-style reports on many complex tasks but needs semantic evaluation before claiming superiority.
+- Agent should hard-route simple lookup/navigation/single-hop cases back to DT.
+- `ReportIntegrityGate` currently rejects some Site Navigator URLs emitted with Markdown punctuation; URL normalization should be fixed before the next live run.
+- The live runner now rescales from `synthesizing` events because Agent `done` payload does not currently expose full evidence artifacts.
+- Scope note: the runner is backend endpoint-equivalent to the webpage path, not a full browser UI smoke; it does not test DOM state or frontend stream rendering.
+- Scoring note: the live run uses a Python proxy scorer aligned with Phase 5A concepts, not a direct call to PHP `ModeComparisonEvaluation`.
+
+## Phase 5B.1 Live Canary Closeout - 2026-05-26
+
+Phase 5B.1 的三个 follow-up live canary 已通过。当前结果证明边界修复在网页同款后端路径上可运行：
+
+- Deep Think: `api/deep_think_stream.php`
+- Agent: `api/agent_runs.php` + `api/agent_run_status.php`
+
+执行命令：
+
+```powershell
+python scripts/eval/run_dt_agent_live_eval.py --base-url http://127.0.0.1/TE- --case-id P5A_B_005 --out-dir docs\eval\runs\phase5b1_canary_P5A_B_005 --timeout 300 --poll-interval 2
+python scripts/eval/run_dt_agent_live_eval.py --base-url http://127.0.0.1/TE- --case-id P5A_B_029 --out-dir docs\eval\runs\phase5b1_canary_P5A_B_029 --timeout 300 --poll-interval 2
+python scripts/eval/run_dt_agent_live_eval.py --base-url http://127.0.0.1/TE- --case-id P5A_B_001 --out-dir docs\eval\runs\phase5b1_canary_P5A_B_001 --timeout 300 --poll-interval 2
+```
+
+Latest live records:
+
+| Case | DT | Agent | Agent overkill | Errors |
+|---|---|---|---|---|
+| `P5A_B_005` | ok, 7435 ms | ok, 44609 ms | false | `dt_errors=[]`, `agent_errors=[]` |
+| `P5A_B_029` | ok, 7041 ms | ok, 2230 ms | false | `dt_errors=[]`, `agent_errors=[]` |
+| `P5A_B_001` | ok, 7431 ms | ok, 2159 ms | false | `dt_errors=[]`, `agent_errors=[]` |
+
+Reliability facts established:
+
+- Compact preflight accepts string confidence labels (`low`, `medium`, `high`) from `inferConfidence()`.
+- Site Navigator route evidence accepts the same route without a `#fragment` when the evidence route contains a fragment.
+- The Python live proxy scorer only counts Deep Think expected Agent runs as overkill when Agent has more than two plugins and `agent_artifact_score > 0.5`, matching the PHP contract more closely.
+
+Verification commands used for this closeout:
+
+```powershell
+php test\report_integrity_gate_test.php
+php test\agent_simple_preflight_gate_test.php
+php test\agent_narration_task_complexity_test.php
+php test\agent_evaluation_report_runtime_test.php
+python test\dt_agent_live_eval_score_test.py
+python -m py_compile scripts\eval\run_dt_agent_live_eval.py test\dt_agent_live_eval_score_test.py
+php -l api\agent\contracts\ReportIntegrityGate.php
+php -l api\agent\orchestrator\AcademicAgentService.php
+php -l test\report_integrity_gate_test.php
+php -l test\agent_simple_preflight_gate_test.php
+```
+
+Residual risk:
+
+- These canaries prove the repaired boundary cases, not broad semantic answer quality.
+- Phase 5C should add semantic evaluation over saved and future live runs before making claims about Agent research-answer superiority.
+
 ## 运行前提
 
 - WAMP 由用户手动启动。

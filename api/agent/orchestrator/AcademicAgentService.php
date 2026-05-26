@@ -14,6 +14,7 @@ require_once dirname(__DIR__) . '/contracts/EvidencePackage.php';
 require_once dirname(__DIR__) . '/contracts/EvidenceWalk.php';
 require_once dirname(__DIR__) . '/contracts/ReportPlan.php';
 require_once dirname(__DIR__) . '/contracts/ReportIntegrityGate.php';
+require_once dirname(__DIR__) . '/contracts/ModeComparisonEvaluation.php';
 
 final class TekgAcademicAgentService
 {
@@ -353,6 +354,76 @@ final class TekgAcademicAgentService
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
         $writingModel = $this->resolveWritingModel($analysis, $payload, $pluginResults);
         $polisherModel = $this->resolvePolisherModel($payload, $writingModel);
+        if ($this->shouldUseCompactPreflightGate($question, $analysis)) {
+            $this->logDiagnostic($requestId, 'compact_preflight_gate_triggered', [
+                'recommended_mode' => (string)($analysis['recommended_mode'] ?? ''),
+                'task_complexity' => (string)($analysis['task_complexity'] ?? ''),
+                'reason' => (string)($analysis['task_complexity_reason'] ?? ''),
+            ]);
+            $response = $this->buildCompactPreflightResponse(
+                $question,
+                trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
+                $requestId,
+                $answerLanguage,
+                $sessionId,
+                $analysis,
+                $planning,
+                $reasoningTrace,
+                $pluginCalls,
+                $evidence,
+                $confidence,
+                $limits,
+                [
+                    'core' => $coreModel,
+                    'sufficiency' => $sufficiencyModel,
+                    'expert' => $expertModel,
+                    'narrator' => $narratorModel,
+                    'answer_structure' => $answerStructureModel,
+                    'writer' => $writingModel,
+                    'writer_draft' => $writingModel,
+                    'writer_polisher' => $polisherModel,
+                ],
+                $citations,
+                $pluginResults,
+                $collectionState,
+                $sufficiencyDecision,
+                $workflowState
+            );
+
+            $updatedMemory = $this->updateSessionMemory($sessionMemory, $response['analysis'], $planning, $pluginResults, $citations, $evidence, $collectionState, []);
+            tekg_agent_save_session_memory($sessionId, $updatedMemory);
+
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'answer',
+                'request_id' => $requestId,
+                'session_id' => $sessionId,
+                'language' => $answerLanguage,
+                'message' => (string)$response['answer'],
+            ]);
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'done',
+                'request_id' => $requestId,
+                'session_id' => $sessionId,
+                'payload' => [
+                    'confidence' => $confidence,
+                    'used_plugins' => $response['used_plugins'],
+                    'answer' => (string)$response['answer'],
+                    'language' => $answerLanguage,
+                    'writing_failed' => false,
+                    'failure_stage' => '',
+                    'failure_reason' => '',
+                    'workflow_state' => $response['workflow_state'],
+                ],
+            ]);
+            $this->logDiagnostic($requestId, 'request_completed', [
+                'duration_ms' => (int)round((microtime(true) - $startedAt) * 1000),
+                'used_plugins' => $response['used_plugins'],
+                'answer_length' => tekg_agent_strlen((string)$response['answer']),
+                'routing_decision' => 'compact_preflight_deepthink',
+            ]);
+
+            return $response;
+        }
         $this->activateWorkflowStage($workflowState, 'Integrating', (string)($workflowState['current_stage'] ?? 'Executing'), $emit, $eventSequence, $sessionId);
         $evidencePackage = $this->buildValidatedEvidencePackage($question, $analysis, $pluginResults, $requestId);
         $evidenceWalk = EvidenceWalk::fromEvidencePackage($evidencePackage, $analysis, $planning, $sufficiencyDecision);
@@ -633,6 +704,12 @@ final class TekgAcademicAgentService
                 $answer
             )),
         ];
+        $evaluationReport = ModeComparisonEvaluation::fromAgentResponse($response, [
+            'question' => $question,
+            'category' => (string)($analysis['intent'] ?? ''),
+            'expected_best_mode' => 'agent',
+        ]);
+        $response['evaluation_report'] = $evaluationReport;
 
         $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence, $collectionState, $synthesizedEvidence);
         tekg_agent_save_session_memory($sessionId, $updatedMemory);
@@ -866,6 +943,234 @@ final class TekgAcademicAgentService
             }
         }
         return false;
+    }
+
+    private function shouldUseCompactPreflightGate(string $question, array $analysis): bool
+    {
+        $recommendedMode = $this->normalizeModeName((string)($analysis['recommended_mode'] ?? ''));
+        if ($recommendedMode !== 'deep_think') {
+            return false;
+        }
+
+        $taskComplexity = strtolower(trim((string)($analysis['task_complexity'] ?? '')));
+        if (!in_array($taskComplexity, ['simple_lookup', 'single_hop', 'ambiguous'], true)) {
+            return false;
+        }
+
+        return !$this->hasResearchTaskSignal($question, $analysis);
+    }
+
+    private function hasResearchTaskSignal(string $question, array $analysis): bool
+    {
+        $intent = strtolower(trim((string)($analysis['intent'] ?? '')));
+        if (in_array($intent, ['mechanism', 'comparison', 'graph_analytics', 'literature'], true)) {
+            return true;
+        }
+
+        $text = tekg_agent_lower($question);
+        $signals = [
+            'research',
+            'report',
+            'audit',
+            'ranking',
+            'rank',
+            'batch',
+            'compare',
+            'comparison',
+            'versus',
+            ' vs ',
+            'mechanism',
+            'literature review',
+            'review',
+            'dossier',
+            'evidence walk',
+            'evidence audit',
+            'graph ranking',
+            'centrality',
+            'topology',
+            'paper',
+            'papers',
+            'citation',
+            'citations',
+            'pubmed',
+            '研究',
+            '报告',
+            '审计',
+            '排名',
+            '批量',
+            '比较',
+            '对比',
+            '机制',
+            '综述',
+            '文献综述',
+            '证据审计',
+            '图谱排名',
+            '中心性',
+            '拓扑',
+            '论文',
+            '文献',
+            '引用',
+        ];
+        foreach ($signals as $signal) {
+            if ($signal !== '' && str_contains($text, tekg_agent_lower($signal))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function buildCompactPreflightResponse(
+        string $question,
+        string $mode,
+        string $requestId,
+        string $answerLanguage,
+        string $sessionId,
+        array $analysis,
+        array $planning,
+        array $reasoningTrace,
+        array $pluginCalls,
+        array $evidence,
+        string $confidence,
+        array $limits,
+        array $models,
+        array $citations = [],
+        array $pluginResults = [],
+        array $collectionState = [],
+        array $sufficiencyDecision = [],
+        array $workflowState = []
+    ): array {
+        $analysis['routing_decision'] = 'compact_preflight_deepthink';
+        $analysis['routing_decision_reason'] = 'recommended_mode=deep_think with no research/report/audit/ranking/batch/comparison/mechanism signal; skipped full Evidence Walk Writing.';
+
+        $answer = $this->compactPreflightAnswer($question, $answerLanguage, $evidence, $pluginCalls, $analysis);
+        $workflowState = $workflowState === [] ? $this->initialWorkflowState() : $workflowState;
+        $workflowState['stage_statuses']['Writing'] = 'skipped';
+        $workflowState['current_stage'] = 'Compact Preflight';
+        $workflowState['complete'] = true;
+        $reasoningTrace[] = [
+            'step' => 'compact_preflight',
+            'title' => 'Compact Deep Think Boundary',
+            'status' => 'done',
+            'details' => $analysis['routing_decision_reason'],
+        ];
+
+        $response = [
+            'question' => $question,
+            'mode' => $mode,
+            'request_id' => $requestId,
+            'language' => $answerLanguage,
+            'session_id' => $sessionId,
+            'model' => (string)($models['writer'] ?? $models['core'] ?? ''),
+            'model_provider' => $this->inferProvider((string)($models['writer'] ?? $models['core'] ?? '')),
+            'models' => $models,
+            'analysis' => $analysis,
+            'answer' => $answer,
+            'writing_failed' => false,
+            'failure_stage' => '',
+            'failure_reason' => '',
+            'reasoning_trace' => $reasoningTrace,
+            'used_plugins' => array_map(static fn(array $call): string => (string)($call['plugin_name'] ?? ''), $pluginCalls),
+            'plugin_calls' => $pluginCalls,
+            'evidence' => $evidence,
+            'citations' => $citations,
+            'evidence_package' => [],
+            'evidence_walk' => [],
+            'report_plan' => [],
+            'draft_report' => '',
+            'polished_report' => '',
+            'integrity_report' => [
+                'evidence_walk_validation' => ['ok' => true, 'skipped' => true],
+                'report_plan_validation' => ['ok' => true, 'skipped' => true],
+                'draft' => ['ok' => true, 'skipped' => true],
+                'polish' => ['ok' => true, 'skipped' => true],
+                'warnings' => ['Full Evidence Walk Writing skipped by simple-task preflight gate.'],
+            ],
+            'confidence' => $confidence,
+            'limits' => array_values(array_unique($limits)),
+            'planning' => $planning,
+            'collection_state' => $collectionState,
+            'sufficiency_decision' => $sufficiencyDecision,
+            'answer_structure' => [
+                'response_mode' => 'compact_boundary',
+                'preferred_report_type' => 'compact_answer',
+                'section_plan' => [],
+            ],
+            'synthesized_evidence' => [],
+            'timings' => [
+                'answer_structure_ms' => 0,
+                'writing_ms' => 0,
+            ],
+            'workflow_state' => $workflowState,
+            'node_contracts' => tekg_agent_node_contracts(),
+            'node_payloads' => tekg_agent_json_safe([
+                'routing_decision' => [
+                    'node' => 'Preflight Gate',
+                    'output' => [
+                        'routing_decision' => $analysis['routing_decision'],
+                        'routing_decision_reason' => $analysis['routing_decision_reason'],
+                    ],
+                ],
+            ]),
+        ];
+        $response['evaluation_report'] = ModeComparisonEvaluation::fromAgentResponse($response, [
+            'question' => $question,
+            'category' => (string)($analysis['intent'] ?? ''),
+            'expected_best_mode' => 'deep_think',
+        ]);
+
+        return $response;
+    }
+
+    private function compactPreflightAnswer(string $question, string $answerLanguage, array $evidence, array $pluginCalls, array $analysis): string
+    {
+        $evidenceLine = $this->compactEvidenceLine($evidence, $pluginCalls);
+        $reason = trim((string)($analysis['task_complexity_reason'] ?? 'This is a simple lookup or single-hop task.'));
+        if (in_array(strtolower(trim($answerLanguage)), ['chinese', 'zh', 'zh-cn', 'zh_cn'], true)) {
+            $answer = '这是一个简单查询，建议使用 Deep Think 获取更快的直接答案。Agent 已跳过完整 Evidence Walk Writing。';
+            if ($evidenceLine !== '') {
+                $answer .= "\n\n已有轻量证据：" . $evidenceLine;
+            }
+            return $answer . "\n\n路由原因：" . $reason;
+        }
+
+        $answer = 'This is a simple lookup, so Deep Think is the recommended path for a faster direct answer. Agent skipped full Evidence Walk Writing.';
+        if ($evidenceLine !== '') {
+            $answer .= "\n\nLight evidence already collected: " . $evidenceLine;
+        }
+        return $answer . "\n\nRouting reason: " . $reason;
+    }
+
+    private function compactEvidenceLine(array $evidence, array $pluginCalls): string
+    {
+        foreach ($evidence as $item) {
+            if (is_array($item)) {
+                foreach (['text', 'claim', 'summary', 'label', 'value'] as $key) {
+                    $value = trim((string)($item[$key] ?? ''));
+                    if ($value !== '') {
+                        return tekg_agent_substr($value, 0, 220);
+                    }
+                }
+            } elseif (trim((string)$item) !== '') {
+                return tekg_agent_substr(trim((string)$item), 0, 220);
+            }
+        }
+
+        foreach ($pluginCalls as $call) {
+            $summary = trim((string)($call['display_summary'] ?? $call['query_summary'] ?? ''));
+            if ($summary !== '') {
+                return tekg_agent_substr($summary, 0, 220);
+            }
+        }
+
+        return '';
+    }
+
+    private function normalizeModeName(string $mode): string
+    {
+        $normalized = strtolower(trim($mode));
+        $normalized = str_replace(['-', ' '], '_', $normalized);
+        return $normalized === 'deepthink' ? 'deep_think' : $normalized;
     }
 
 }
