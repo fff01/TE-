@@ -10,6 +10,7 @@ require_once __DIR__ . '/traits/AcademicAgentPlanningTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentPluginResultTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentNarrationTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentEvidenceTrait.php';
+require_once dirname(__DIR__) . '/contracts/EvidencePackage.php';
 
 final class TekgAcademicAgentService
 {
@@ -347,9 +348,10 @@ final class TekgAcademicAgentService
         $citations = $this->aggregateCitations($pluginResults);
         $limits = $this->aggregateLimits($pluginResults, $evidence);
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
-        $synthesizedEvidence = $this->buildSynthesizedEvidence($pluginResults, $evidence);
         $writingModel = $this->resolveWritingModel($analysis, $payload, $pluginResults);
         $this->activateWorkflowStage($workflowState, 'Integrating', (string)($workflowState['current_stage'] ?? 'Executing'), $emit, $eventSequence, $sessionId);
+        $evidencePackage = $this->buildValidatedEvidencePackage($question, $analysis, $pluginResults, $requestId);
+        $synthesizedEvidence = $this->buildSynthesizedEvidenceFromPackage($evidencePackage);
         $answerStructureStartedAt = microtime(true);
         $this->logDiagnostic($requestId, 'answer_structure_started', [
             'model' => $answerStructureModel,
@@ -361,7 +363,7 @@ final class TekgAcademicAgentService
             $question,
             $analysis,
             $synthesizedEvidence,
-            $citations,
+            $this->citationsFromEvidencePackage($evidencePackage),
             $sufficiencyDecision,
             $requestId
         );
@@ -378,8 +380,8 @@ final class TekgAcademicAgentService
             'session_id' => $sessionId,
             'node' => 'Evidence Synthesis Node',
             'source' => 'Evidence Synthesis Node',
-            'inputs_used' => ['compressed_results', 'citation_bundle'],
-            'outputs_changed' => ['supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure'],
+            'inputs_used' => ['result_envelopes', 'evidence_package'],
+            'outputs_changed' => ['evidence_package', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure'],
             'message' => $this->narrateEvent(
                 $narratorModel,
                 $processLanguage,
@@ -393,16 +395,13 @@ final class TekgAcademicAgentService
                 $synthesizingMessage
             ),
             'payload' => [
+                'evidence_package' => $evidencePackage,
                 'synthesized_evidence' => $synthesizedEvidence,
                 'answer_structure' => $answerStructure,
             ],
         ]);
         $this->activateWorkflowStage($workflowState, 'Writing', 'Integrating', $emit, $eventSequence, $sessionId);
 
-        $supportedClaimsForWriting = $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 6);
-        $conflictingClaimsForWriting = $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 3);
-        $missingEvidenceForWriting = $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 4);
-        $citationsForWriting = $this->lightweightCitations($citations, 8);
         $analysisForWriting = $this->analysisForWriting($analysis);
         $this->logDiagnostic($requestId, 'answer_generation_started', [
             'model' => $writingModel,
@@ -415,16 +414,13 @@ final class TekgAcademicAgentService
         $failureReason = '';
         $writingStartedAt = microtime(true);
         try {
-            $llm = $this->llm->writeStructuredAnswer(
+            $llm = $this->llm->writeEvidencePackageAnswer(
                 $writingModel,
                 $answerLanguage,
                 $question,
                 $analysisForWriting,
                 $answerStructure,
-                $supportedClaimsForWriting,
-                $conflictingClaimsForWriting,
-                $missingEvidenceForWriting,
-                $citationsForWriting,
+                $evidencePackage,
                 $confidence,
                 $limits,
                 $this->answerTimeoutForModel($writingModel)
@@ -493,6 +489,7 @@ final class TekgAcademicAgentService
             'plugin_calls' => $pluginCalls,
             'evidence' => $evidence,
             'citations' => $citations,
+            'evidence_package' => $evidencePackage,
             'confidence' => $confidence,
             'limits' => array_values(array_unique($limits)),
             'planning' => $planning,
@@ -516,7 +513,8 @@ final class TekgAcademicAgentService
                 $collectionState,
                 $sufficiencyDecision,
                 $answerStructure,
-                $synthesizedEvidence
+                $synthesizedEvidence,
+                $evidencePackage
             )),
         ];
 

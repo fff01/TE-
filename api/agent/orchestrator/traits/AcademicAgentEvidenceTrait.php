@@ -401,6 +401,83 @@ trait TekgAcademicAgentEvidenceTrait
         ];
     }
 
+    private function buildValidatedEvidencePackage(string $question, array $analysis, array $pluginResults, string $requestId): array
+    {
+        $package = EvidencePackage::fromPluginResults($question, $analysis, $pluginResults, [
+            'summary_max_chars' => 640,
+        ]);
+        $validation = EvidencePackage::validate($package);
+        if (($validation['ok'] ?? false) !== true) {
+            $errors = array_values(array_map('strval', (array)($validation['errors'] ?? [])));
+            $this->logDiagnostic($requestId, 'evidence_package_validation_failed', [
+                'errors' => $errors,
+            ]);
+            throw new RuntimeException('EvidencePackage validation failed: ' . implode('; ', $errors));
+        }
+        $this->logDiagnostic($requestId, 'evidence_package_validated', [
+            'claim_count' => (int)($package['metrics']['claim_count'] ?? 0),
+            'evidence_count' => (int)($package['metrics']['evidence_count'] ?? 0),
+            'citation_count' => (int)($package['metrics']['citation_count'] ?? 0),
+            'route_count' => (int)($package['metrics']['route_count'] ?? 0),
+        ]);
+        return $package;
+    }
+
+    private function buildSynthesizedEvidenceFromPackage(array $evidencePackage): array
+    {
+        $supportedClaims = [];
+        $missingEvidence = [];
+        $claimClusters = [];
+
+        foreach ((array)($evidencePackage['claims'] ?? []) as $claim) {
+            if (!is_array($claim)) {
+                continue;
+            }
+            $text = trim((string)($claim['text'] ?? ''));
+            if ($text === '') {
+                continue;
+            }
+            $supportedClaims[] = $text;
+            $claimClusters[] = [
+                'claim' => $text,
+                'summary' => $text,
+                'citations' => array_values((array)($claim['citation_ids'] ?? [])),
+            ];
+        }
+
+        foreach ((array)($evidencePackage['errors'] ?? []) as $error) {
+            if (!is_array($error)) {
+                continue;
+            }
+            $message = trim((string)($error['message'] ?? ''));
+            if ($message !== '') {
+                $missingEvidence[] = trim((string)($error['plugin'] ?? 'Plugin')) . ': ' . $message;
+            }
+        }
+
+        if ($supportedClaims === []) {
+            $missingEvidence[] = 'The evidence package contains no supported claims for final writing.';
+        }
+
+        return [
+            'supported_claims' => array_values(array_unique($supportedClaims)),
+            'conflicting_claims' => [],
+            'missing_evidence' => array_values(array_unique($missingEvidence)),
+            'claim_clusters' => $claimClusters,
+        ];
+    }
+
+    private function citationsFromEvidencePackage(array $evidencePackage): array
+    {
+        $citations = [];
+        foreach ((array)($evidencePackage['citation_map'] ?? []) as $item) {
+            if (is_array($item) && isset($item['citation']) && is_array($item['citation'])) {
+                $citations[] = $item['citation'];
+            }
+        }
+        return $citations;
+    }
+
     private function generateAnswerStructure(
         string $model,
         string $question,

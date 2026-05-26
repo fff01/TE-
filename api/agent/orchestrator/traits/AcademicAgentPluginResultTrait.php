@@ -263,7 +263,8 @@ trait TekgAcademicAgentPluginResultTrait
         array $collectionState = [],
         array $sufficiencyDecision = [],
         array $answerStructure = [],
-        array $synthesizedEvidence = []
+        array $synthesizedEvidence = [],
+        array $evidencePackage = []
     ): array {
         $collectedResults = [];
         foreach ($pluginResults as $result) {
@@ -429,10 +430,7 @@ trait TekgAcademicAgentPluginResultTrait
                     'question' => $question,
                     'analysis' => $analysis,
                     'answer_structure' => $answerStructure,
-                    'supported_claims' => $synthesisOutput['supported_claims'],
-                    'conflicting_claims' => $synthesisOutput['conflicting_claims'],
-                    'missing_evidence' => $synthesisOutput['missing_evidence'],
-                    'citation_bundle' => $citations,
+                    'evidence_package' => $evidencePackage,
                 ],
                 'output' => ['answer' => null],
             ],

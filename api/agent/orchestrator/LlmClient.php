@@ -173,6 +173,37 @@ final class TekgAgentLlmClient
         return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
     }
 
+    public function writeEvidencePackageAnswer(
+        string $model,
+        string $language,
+        string $question,
+        array $analysis,
+        array $answerStructure,
+        array $evidencePackage,
+        string $confidence,
+        array $limits,
+        ?int $timeout = null
+    ): array {
+        $provider = $this->inferProvider($model);
+        $messages = [
+            ['role' => 'system', 'content' => $this->systemPrompt($language)],
+            ['role' => 'user', 'content' => $this->buildEvidencePackageAnswerPrompt(
+                $question,
+                $analysis,
+                $answerStructure,
+                $evidencePackage,
+                $confidence,
+                $limits
+            )],
+        ];
+
+        $effectiveTimeout = $timeout ?? (int)($this->config['llm_answer_timeout'] ?? 40);
+        if (!empty($this->config['llm_relay_url'])) {
+            return $this->callRelay($provider, $model, $messages, true, $effectiveTimeout, 'answer');
+        }
+        return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
+    }
+
     public function writeDirectAnswer(
         string $model,
         string $language,
@@ -334,6 +365,32 @@ final class TekgAgentLlmClient
             "Follow answer_structure strictly. Do not improvise extra sections outside section_plan unless needed for one short limitation note.\n" .
             "Do not restate raw JSON. Convert the plan into a natural academic answer.\n" .
             "If Site Navigator Plugin evidence provides Markdown links or URLs, preserve those links exactly and keep them clickable.\n\n" .
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function buildEvidencePackageAnswerPrompt(
+        string $question,
+        array $analysis,
+        array $answerStructure,
+        array $evidencePackage,
+        string $confidence,
+        array $limits
+    ): string {
+        $payload = [
+            'question' => $question,
+            'analysis' => $analysis,
+            'answer_structure' => $answerStructure,
+            'evidence_package' => $evidencePackage,
+            'confidence' => $confidence,
+            'limits' => $limits,
+        ];
+
+        return "Write only from evidence_package. Treat evidence_package as the sole evidence body for the final answer.\n" .
+            "Use question, analysis, answer_structure, confidence, and limits only as framing or formatting guidance, not as additional evidence.\n" .
+            "Follow answer_structure where possible. Do not improvise extra sections outside section_plan unless needed for one short limitation note.\n" .
+            "Do not restate raw JSON. Convert package claims, evidence_items, citation_map, route_map, and errors into a natural academic answer.\n" .
+            "If route_map includes Markdown links or URLs, preserve those links exactly and keep them clickable.\n" .
+            "If the package has no claims, say that the current evidence package does not contain enough support rather than inventing a conclusion.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 

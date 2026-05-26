@@ -41,6 +41,7 @@ python scripts/checks/check_docs_freshness.py
 - Expanded node 的视觉 affordance / collapse、复杂多节点连续扩展、多类型展开质量仍需后续单独计划处理。
 - G6 subgraph export v1 已完成：当前可见子图可导出 CSV，当前画布可导出 PNG，Export toolbar 已收敛为单按钮菜单，并由 `scripts/checks/check_g6_subgraph_export_smoke.py` 覆盖。SVG 仍是 disabled 的 `SVG Soon`，后续 v2 另行调研。
 - Agent/DeepThink boundary and plugin envelope v1 已完成第一版：`task_complexity`、Agent research templates、`PluginResultEnvelope`、schema-style envelope checks 和 narration checks 已落地。当前仍未跑 live WAMP/Neo4j/LLM/browser，且 envelope 保留 legacy raw payload 兼容层。
+- Agent Evidence Package v1 已完成第一版：Agent Integrating 生成并校验 `evidence_package.v1`，Agent Writing 通过 `writeEvidencePackageAnswer()` 只读 `evidence_package`；Answer Writer Node payload 不再暴露旧 `supported_claims` / `citation_bundle` 作为写作输入。
 
 ## Agent / DeepThink Reliability Checks - 2026-05-25
 
@@ -80,6 +81,31 @@ node --check assets\js\pages\agent.js
 - 未跑 live WAMP、Neo4j、LLM、browser 路径；当前验证主要是 lint 和 fixture/contract tests。
 - `PluginResultEnvelope` 仍兼容 legacy raw payload，旧消费者尚未全部迁移到 envelope-first。
 - `task_complexity` 是启发式分类，适合作为产品边界提示和轻量路由信号，不应被当作严格语义分类器。
+
+## Agent Evidence Package Reliability Checks - 2026-05-26
+
+第三阶段 Evidence Package v1 的验证命令：
+
+```powershell
+php -l api\agent\contracts\EvidencePackage.php
+php -l api\agent\config\evidence_package_schema.php
+php -l api\agent\orchestrator\AcademicAgentService.php
+php -l api\agent\orchestrator\LlmClient.php
+php -l api\agent\orchestrator\traits\AcademicAgentEvidenceTrait.php
+php -l api\agent\orchestrator\traits\AcademicAgentPluginResultTrait.php
+php -l test\evidence_package_test.php
+php -l test\agent_evidence_package_runtime_test.php
+php test\evidence_package_test.php
+php test\plugin_result_envelope_test.php
+php test\agent_evidence_package_runtime_test.php
+php test\agent_narration_task_complexity_test.php
+```
+
+残留风险：
+
+- 未跑 live WAMP、Neo4j、LLM、browser 路径；当前验证证明静态 contract 和非 LLM runtime 约束成立。
+- 旧 `evidence`、`citations`、`synthesized_evidence` 仍保留在 Agent response 中用于 UI/兼容展示，但 Agent Writing 不再依赖这些字段。
+- Deep Think 暂未切换到 evidence package；当前 v1 只覆盖 Agent Writing。
 
 ## 运行前提
 

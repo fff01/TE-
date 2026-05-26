@@ -667,6 +667,8 @@ Agent golden set：
 
 ### 9.3 第三阶段：Evidence Package
 
+状态：Agent Evidence Package v1 已于 2026-05-26 落地。Agent Integrating 阶段生成并校验 `evidence_package`，Agent Writing 改为只读 `evidence_package`，不再使用旧的散装 `supported_claims`、`citations` 或 raw plugin payload 作为写作证据主体。Deep Think 暂未切换到该路径。
+
 目标：
 
 - 解决 Writing payload 过重。
@@ -677,6 +679,13 @@ Agent golden set：
 - 在 Integrating 阶段生成 `evidence_package.json`。
 - Writing 只读 evidence package。
 - 增加 claim-level citation mapping。
+
+第一版实际产物：
+
+- `api/agent/contracts/EvidencePackage.php` 定义 `evidence_package.v1` 构建与校验。
+- `api/agent/config/evidence_package_schema.php` 保存 schema-style contract。
+- `TekgAgentLlmClient::writeEvidencePackageAnswer()` 是 Agent Writing 当前入口。
+- `test/evidence_package_test.php` 和 `test/agent_evidence_package_runtime_test.php` 覆盖 package 构建、嵌套校验、claim-level citation/route mapping、writer prompt 与 Answer Writer Node 输入约束。
 
 ### 9.4 第四阶段：TE-KG Evidence Walk
 

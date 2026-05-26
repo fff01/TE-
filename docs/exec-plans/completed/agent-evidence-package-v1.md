@@ -107,3 +107,52 @@
 - Stop and report if changing Writing requires modifying unrelated graph/taxonomy/expression logic.
 - Stop and report if no deterministic non-LLM test can validate package construction.
 - Stop and report if existing run state format cannot carry package without API response change.
+
+---
+
+## Completion Record - 2026-05-26
+
+### Actual Changes
+
+- Created `api/agent/contracts/EvidencePackage.php` for `evidence_package.v1` construction and validation.
+- Created `api/agent/config/evidence_package_schema.php` as the schema-style contract.
+- Added `test/evidence_package_test.php` for package construction, nested validation, claim IDs, citation mapping, route mapping, empty/error plugin handling, and truncation.
+- Added `test/agent_evidence_package_runtime_test.php` for Agent writer prompt and Answer Writer Node constraints.
+- Updated `api/agent/orchestrator/AcademicAgentService.php` so Agent Integrating builds a validated `evidence_package` and Agent Writing calls `writeEvidencePackageAnswer()`.
+- Updated `api/agent/orchestrator/LlmClient.php` with `writeEvidencePackageAnswer()` and a prompt that treats `evidence_package` as the only evidence body.
+- Updated `api/agent/orchestrator/traits/AcademicAgentEvidenceTrait.php` with validated package construction and package-derived synthesis/citation helpers.
+- Updated `api/agent/orchestrator/traits/AcademicAgentPluginResultTrait.php` so `Answer Writer Node` input contains `evidence_package` instead of legacy `supported_claims` / `citation_bundle` writer inputs.
+- Updated long-term docs: `docs/architecture/tekg_agent_development_guide.md`, `docs/RELIABILITY.md`, and `docs/exec-plans/tech-debt-tracker.md`.
+
+### Key Decisions
+
+- Agent Writing no longer uses the old scattered writer evidence inputs. It reads `evidence_package.v1` only.
+- Package validation failure is explicit and throws before Writing; there is no silent fallback to raw plugin payloads.
+- Deep Think was intentionally not migrated in v1.
+- Legacy `evidence`, `citations`, and `synthesized_evidence` remain in response/UI compatibility fields, but they are not the Agent writer evidence path.
+
+### Verification
+
+```powershell
+php -l api\agent\contracts\EvidencePackage.php
+php -l api\agent\config\evidence_package_schema.php
+php -l api\agent\orchestrator\AcademicAgentService.php
+php -l api\agent\orchestrator\LlmClient.php
+php -l api\agent\orchestrator\traits\AcademicAgentEvidenceTrait.php
+php -l api\agent\orchestrator\traits\AcademicAgentPluginResultTrait.php
+php -l test\evidence_package_test.php
+php -l test\agent_evidence_package_runtime_test.php
+php test\evidence_package_test.php
+php test\plugin_result_envelope_test.php
+php test\agent_evidence_package_runtime_test.php
+php test\agent_narration_task_complexity_test.php
+rg -n -- "->writeStructuredAnswer\(|->writeEvidencePackageAnswer\(|evidence_package" api\agent\orchestrator test\agent_evidence_package_runtime_test.php docs\RELIABILITY.md docs\architecture\tekg_agent_development_guide.md docs\exec-plans\tech-debt-tracker.md
+```
+
+All syntax checks and PHP tests passed. The final `rg` check confirmed Agent runtime calls `writeEvidencePackageAnswer()` and does not call `writeStructuredAnswer()`.
+
+### Residual Risks
+
+- Live WAMP/Neo4j/LLM/browser paths were not run in this session.
+- Some non-writing consumers still read legacy plugin fields for sufficiency, UI/debug payloads, or session memory.
+- The current package text truncation is byte-based via PHP `strlen/substr`; this is acceptable for v1 but can be improved for Chinese multibyte text.
