@@ -41,7 +41,8 @@ python scripts/checks/check_docs_freshness.py
 - Expanded node 的视觉 affordance / collapse、复杂多节点连续扩展、多类型展开质量仍需后续单独计划处理。
 - G6 subgraph export v1 已完成：当前可见子图可导出 CSV，当前画布可导出 PNG，Export toolbar 已收敛为单按钮菜单，并由 `scripts/checks/check_g6_subgraph_export_smoke.py` 覆盖。SVG 仍是 disabled 的 `SVG Soon`，后续 v2 另行调研。
 - Agent/DeepThink boundary and plugin envelope v1 已完成第一版：`task_complexity`、Agent research templates、`PluginResultEnvelope`、schema-style envelope checks 和 narration checks 已落地。当前仍未跑 live WAMP/Neo4j/LLM/browser，且 envelope 保留 legacy raw payload 兼容层。
-- Agent Evidence Package v1 已完成第一版：Agent Integrating 生成并校验 `evidence_package.v1`，Agent Writing 通过 `writeEvidencePackageAnswer()` 只读 `evidence_package`；Answer Writer Node payload 不再暴露旧 `supported_claims` / `citation_bundle` 作为写作输入。
+- Agent Evidence Package v1 已完成第一版：Agent Integrating 生成并校验 `evidence_package.v1`；Answer Writer Node payload 不再暴露旧 `supported_claims` / `citation_bundle` 作为写作输入。
+- Agent Evidence Walk v1 已完成第一版：Agent Writing 强制走 `evidence_package.v1 -> evidence_walk.v1 -> report_plan.v1 -> draft -> integrity gate -> polish -> integrity gate`，旧 direct evidence-package writer 已移除。
 
 ## Agent / DeepThink Reliability Checks - 2026-05-25
 
@@ -106,6 +107,34 @@ php test\agent_narration_task_complexity_test.php
 - 未跑 live WAMP、Neo4j、LLM、browser 路径；当前验证证明静态 contract 和非 LLM runtime 约束成立。
 - 旧 `evidence`、`citations`、`synthesized_evidence` 仍保留在 Agent response 中用于 UI/兼容展示，但 Agent Writing 不再依赖这些字段。
 - Deep Think 暂未切换到 evidence package；当前 v1 只覆盖 Agent Writing。
+
+## Agent Evidence Walk Reliability Checks - 2026-05-26
+
+第四阶段 Evidence Walk v1 的验证命令：
+
+```powershell
+php -l api\agent\contracts\EvidenceWalk.php
+php -l api\agent\contracts\ReportPlan.php
+php -l api\agent\contracts\ReportIntegrityGate.php
+php -l api\agent\orchestrator\LlmClient.php
+php -l api\agent\orchestrator\AcademicAgentService.php
+php -l api\agent\orchestrator\traits\AcademicAgentPluginResultTrait.php
+php -l api\agent\bootstrap\evidence_support.php
+php test\evidence_package_test.php
+php test\evidence_walk_report_plan_test.php
+php test\report_integrity_gate_test.php
+php test\agent_research_report_prompt_test.php
+php test\agent_evidence_walk_runtime_test.php
+php test\agent_evidence_package_runtime_test.php
+php test\plugin_result_envelope_test.php
+php test\agent_narration_task_complexity_test.php
+```
+
+残留风险：
+
+- 当前验证仍是 lint 和非 live fixture/contract tests；未跑 live WAMP、Neo4j、LLM、browser。
+- `ReportIntegrityGate` 是确定性 guardrail，不等价于完整事实核验；它主要阻止新增 PMID、URL、citation/route marker 和明显强结论越界。缺失计划 section 只记录 warning，避免中文或自由标题报告被误拒。
+- Polisher 未通过 integrity gate 时，runtime 会使用已通过 gate 的 draft 作为保守答案并记录 warning；后续可把该 warning 展示为更明确的写作质量状态。
 
 ## 运行前提
 

@@ -171,8 +171,8 @@ function tekg_agent_node_contracts(): array
             'output' => ['answer_structure'],
         ],
         'Answer Writer Node' => [
-            'input' => ['question', 'analysis', 'answer_structure', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'citation_bundle'],
-            'output' => ['answer'],
+            'input' => ['question', 'analysis', 'answer_structure', 'evidence_package', 'evidence_walk', 'report_plan'],
+            'output' => ['draft_report', 'polished_report', 'integrity_report', 'answer'],
         ],
         'Process Narrator Node' => [
             'input' => ['event_stream', 'analysis', 'entity_resolution', 'planning', 'collection_state', 'active_expert', 'sufficiency_decision', 'graph_result', 'analytics_result', 'cypher_result', 'literature_result', 'literature_synthesis', 'tree_result', 'expression_result', 'genome_result', 'sequence_result', 'citation_result', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure', 'answer'],

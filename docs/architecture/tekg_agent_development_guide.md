@@ -684,10 +684,12 @@ Agent golden set：
 
 - `api/agent/contracts/EvidencePackage.php` 定义 `evidence_package.v1` 构建与校验。
 - `api/agent/config/evidence_package_schema.php` 保存 schema-style contract。
-- `TekgAgentLlmClient::writeEvidencePackageAnswer()` 是 Agent Writing 当前入口。
-- `test/evidence_package_test.php` 和 `test/agent_evidence_package_runtime_test.php` 覆盖 package 构建、嵌套校验、claim-level citation/route mapping、writer prompt 与 Answer Writer Node 输入约束。
+- 第四阶段 v1 已进一步把 Writing 入口升级为 `EvidenceWalk -> ReportPlan -> Draft -> IntegrityGate -> Polish -> IntegrityGate`，旧 direct evidence-package writer 已移除。
+- `test/evidence_package_test.php` 和 `test/agent_evidence_package_runtime_test.php` 覆盖 package 构建、嵌套校验、claim-level citation/route mapping、EvidenceWalk prompt 与 Answer Writer Node 输入约束。
 
 ### 9.4 第四阶段：TE-KG Evidence Walk
+
+状态：第一版已于 2026-05-26 落地，具体收尾见 `docs/exec-plans/completed/agent-evidence-walk-v1.md`。Agent Writing 现在强制走 `evidence_package.v1 -> evidence_walk.v1 -> report_plan.v1 -> draft report -> deterministic integrity gate -> polished report -> deterministic integrity gate`。Deep Think 未改动。
 
 目标：
 
@@ -700,6 +702,14 @@ Agent golden set：
 - 文献插件验证路径相关 claim。
 - 站内插件验证序列、表达、位置等数据入口。
 - 生成 evidence walk table。
+
+第一版实际产物：
+
+- `api/agent/contracts/EvidenceWalk.php` 从 `evidence_package.v1` 派生 claim nodes、walk steps、support edges、citation refs、route refs 和 gaps。
+- `api/agent/contracts/ReportPlan.php` 按 mechanism review、evidence audit、batch comparison、graph ranking、research report 生成确定性报告计划。
+- `api/agent/contracts/ReportIntegrityGate.php` 在 draft 和 polish 后检查 unsupported PMID、URL、citation/route marker、空证据强结论；缺失计划 section 和 evidence walk claim 覆盖不足只作为 warning，避免中文标题或自由标题导致误失败。
+- `TekgAgentLlmClient::writeEvidenceWalkDraft()` 承担 nature-writing 风格初稿，`TekgAgentLlmClient::polishEvidenceWalkAnswer()` 承担 nature-polishing 风格润色；polisher 只允许语言和结构润色，不允许新增 claim/citation/URL。
+- `AcademicAgentService` 不再调用 `writeEvidencePackageAnswer()` 或 `writeStructuredAnswer()`；Writing 失败会显式失败，polished output 未通过 gate 时只允许使用已通过 gate 的 draft 作为保守答案并记录 warning。
 
 ### 9.5 第五阶段：评估与报告
 

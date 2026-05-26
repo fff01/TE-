@@ -173,13 +173,14 @@ final class TekgAgentLlmClient
         return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
     }
 
-    public function writeEvidencePackageAnswer(
+    public function writeEvidenceWalkDraft(
         string $model,
         string $language,
         string $question,
         array $analysis,
-        array $answerStructure,
         array $evidencePackage,
+        array $evidenceWalk,
+        array $reportPlan,
         string $confidence,
         array $limits,
         ?int $timeout = null
@@ -187,11 +188,12 @@ final class TekgAgentLlmClient
         $provider = $this->inferProvider($model);
         $messages = [
             ['role' => 'system', 'content' => $this->systemPrompt($language)],
-            ['role' => 'user', 'content' => $this->buildEvidencePackageAnswerPrompt(
+            ['role' => 'user', 'content' => $this->buildEvidenceWalkDraftPrompt(
                 $question,
                 $analysis,
-                $answerStructure,
                 $evidencePackage,
+                $evidenceWalk,
+                $reportPlan,
                 $confidence,
                 $limits
             )],
@@ -199,9 +201,40 @@ final class TekgAgentLlmClient
 
         $effectiveTimeout = $timeout ?? (int)($this->config['llm_answer_timeout'] ?? 40);
         if (!empty($this->config['llm_relay_url'])) {
-            return $this->callRelay($provider, $model, $messages, true, $effectiveTimeout, 'answer');
+            return $this->callRelay($provider, $model, $messages, true, $effectiveTimeout, 'evidence_walk_draft');
         }
-        return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'answer');
+        return $this->callProvider($provider, $model, $messages, true, $effectiveTimeout, 'evidence_walk_draft');
+    }
+
+    public function polishEvidenceWalkAnswer(
+        string $model,
+        string $language,
+        string $draftAnswer,
+        array $analysis,
+        array $evidencePackage,
+        array $evidenceWalk,
+        array $reportPlan,
+        array $integrityReport,
+        ?int $timeout = null
+    ): array {
+        $provider = $this->inferProvider($model);
+        $messages = [
+            ['role' => 'system', 'content' => $this->systemPrompt($language)],
+            ['role' => 'user', 'content' => $this->buildEvidenceWalkPolishPrompt(
+                $draftAnswer,
+                $analysis,
+                $evidencePackage,
+                $evidenceWalk,
+                $reportPlan,
+                $integrityReport
+            )],
+        ];
+
+        $effectiveTimeout = $timeout ?? (int)($this->config['llm_answer_timeout'] ?? 40);
+        if (!empty($this->config['llm_relay_url'])) {
+            return $this->callRelay($provider, $model, $messages, false, $effectiveTimeout, 'evidence_walk_polish');
+        }
+        return $this->callProvider($provider, $model, $messages, false, $effectiveTimeout, 'evidence_walk_polish');
     }
 
     public function writeDirectAnswer(
@@ -368,29 +401,61 @@ final class TekgAgentLlmClient
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
-    private function buildEvidencePackageAnswerPrompt(
+    private function buildEvidenceWalkDraftPrompt(
         string $question,
         array $analysis,
-        array $answerStructure,
         array $evidencePackage,
+        array $evidenceWalk,
+        array $reportPlan,
         string $confidence,
         array $limits
     ): string {
         $payload = [
             'question' => $question,
             'analysis' => $analysis,
-            'answer_structure' => $answerStructure,
-            'evidence_package' => $evidencePackage,
+            'evidence_package' => $this->promptSafePayload($evidencePackage),
+            'evidence_walk' => $this->promptSafePayload($evidenceWalk),
+            'report_plan' => $this->promptSafePayload($reportPlan),
             'confidence' => $confidence,
             'limits' => $limits,
         ];
 
-        return "Write only from evidence_package. Treat evidence_package as the sole evidence body for the final answer.\n" .
-            "Use question, analysis, answer_structure, confidence, and limits only as framing or formatting guidance, not as additional evidence.\n" .
-            "Follow answer_structure where possible. Do not improvise extra sections outside section_plan unless needed for one short limitation note.\n" .
-            "Do not restate raw JSON. Convert package claims, evidence_items, citation_map, route_map, and errors into a natural academic answer.\n" .
-            "If route_map includes Markdown links or URLs, preserve those links exactly and keep them clickable.\n" .
-            "If the package has no claims, say that the current evidence package does not contain enough support rather than inventing a conclusion.\n\n" .
+        return "Write an evidence-walk draft report using nature-writing policy.\n" .
+            "Use evidence first: start from the verified evidence and walk sequence before final prose.\n" .
+            "Build the argument before prose: internally organize the report around report_plan and evidence_walk, then write the answer.\n" .
+            "Make a claim-evidence map explicit in the report where useful, connecting each major claim to available evidence, citation, or route references.\n" .
+            "Use bounded claims only. Mark weak support, uncertainty, missing inputs and evidence gaps directly.\n" .
+            "Do not add evidence, claims, PMID values, URLs, citation IDs, mechanisms, entities, or routes that are absent from the payload.\n" .
+            "Treat evidence_package as the evidence body; use evidence_walk as the reasoning path; use report_plan as the section and ordering contract.\n" .
+            "Do not restate raw JSON and do not mention unavailable internal plugin payloads.\n\n" .
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function buildEvidenceWalkPolishPrompt(
+        string $draftAnswer,
+        array $analysis,
+        array $evidencePackage,
+        array $evidenceWalk,
+        array $reportPlan,
+        array $integrityReport
+    ): string {
+        $payload = [
+            'draft_answer' => $draftAnswer,
+            'analysis' => $analysis,
+            'evidence_package' => $this->promptSafePayload($evidencePackage),
+            'evidence_walk' => $this->promptSafePayload($evidenceWalk),
+            'report_plan' => $this->promptSafePayload($reportPlan),
+            'integrity_report' => $integrityReport,
+        ];
+
+        return "Polish this evidence-walk draft using nature-polishing policy.\n" .
+            "Polish language and structure only: improve clarity, flow, concision, section transitions, and academic tone.\n" .
+            "Use no new claims, no new PMID values, no new URLs, and no new citations or citation IDs.\n" .
+            "Do not add entities, mechanisms, evidence, references, routes, links, or conclusions that are absent from the draft and payload.\n" .
+            "preserve links and citations exactly when they are already supported by evidence_package or the draft.\n" .
+            "If integrity_report identifies unsupported material, downgrade unsupported claims rather than strengthening them.\n" .
+            "Return only the final polished report text. Do not include revision notes, editor notes, or meta commentary in the answer.\n" .
+            "Do not restate raw JSON and do not mention unavailable internal plugin payloads.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
     }
 
@@ -455,6 +520,19 @@ final class TekgAgentLlmClient
             "Focus on the main conclusion and the most important supporting fact.\n" .
             "When citing, prefer explicit PubMed markers like PMID 12345678. If you use indexed markers, use [1], [2], [3] in the citations array order.\n\n" .
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function promptSafePayload(array $payload): array
+    {
+        $forbiddenKeys = ['raw_result' => true, 'display_details' => true, 'plugin_results' => true];
+        $safe = [];
+        foreach ($payload as $key => $value) {
+            if (is_string($key) && isset($forbiddenKeys[$key])) {
+                continue;
+            }
+            $safe[$key] = is_array($value) ? $this->promptSafePayload($value) : $value;
+        }
+        return $safe;
     }
 
     private function callRelay(

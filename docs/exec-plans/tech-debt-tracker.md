@@ -55,9 +55,17 @@
 - 状态：第一版 `PluginResultEnvelope` 已落地，见 `completed/agent-deepthink-boundary-plugin-envelope.md`。
 - 已完成：Agent/DeepThink 插件结果在消费边界增加 `result_envelope`，并保留 legacy raw payload；`plugin_result_envelope_test.php` 覆盖成功、空结果、失败、route、literature/citation 和 legacy `status=error` 映射。
 - 已完成：Agent Evidence Package v1 已于 2026-05-26 落地，Agent Writing 只读 `evidence_package.v1`，不再以 legacy raw plugin payload、散装 `supported_claims` 或 `citation_bundle` 作为写作证据主体。
+- 已完成：Agent Evidence Walk v1 已于 2026-05-26 落地，Agent Writing 现在从 `evidence_package.v1` 派生 `evidence_walk.v1` 和 `report_plan.v1`，再走 draft / polish 双模型与确定性 integrity gate；旧 direct evidence-package writer 已移除。
 - 债务：旧消费者仍有路径读取 legacy `results.*` 或 plugin-specific raw arrays，主要用于 sufficiency、UI 展示、node payload debug 和 session memory，尚未全部迁移到 envelope-first。
 - 风险：非 Writing 的控制逻辑仍可能因插件 legacy 字段漂移而表现不稳定。
 - 下一步：后续阶段逐步把 sufficiency、UI/debug payload、session memory 迁移到 envelope/evidence package 的稳定字段。
+
+### Agent Evidence Walk integrity gate calibration - 2026-05-26
+
+- 状态：第一版 `ReportIntegrityGate` 已落地，见 `completed/agent-evidence-walk-v1.md`。
+- 已完成：Gate 检查 unsupported PMID、URL、citation/route marker、空证据强结论，并把缺失计划 section、未覆盖 evidence walk claim 记录为 warning。
+- 风险：计划 section warning 依赖报告中出现 section title；它现在不阻断中文或自由标题报告，但 warning 可能偏多。
+- 下一步：建立 Agent report golden set 后，按真实报告格式校准 section 检查，必要时增加 title alias 或 section-key 映射。
 
 ### Agent task complexity classifier calibration - 2026-05-25
 

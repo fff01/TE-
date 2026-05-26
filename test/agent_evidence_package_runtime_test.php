@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../api/agent/contracts/EvidencePackage.php';
+require_once __DIR__ . '/../api/agent/contracts/EvidenceWalk.php';
+require_once __DIR__ . '/../api/agent/contracts/ReportPlan.php';
 require_once __DIR__ . '/../api/agent/orchestrator/LlmClient.php';
 require_once __DIR__ . '/../api/agent/orchestrator/traits/AcademicAgentPluginResultTrait.php';
 
@@ -92,21 +94,35 @@ assert_same(true, $validation['ok'], 'runtime evidence_package validates');
 assert_same(1, $evidencePackage['metrics']['claim_count'], 'runtime evidence_package claim count');
 assert_same('citation_1', $evidencePackage['claims'][0]['citation_ids'][0], 'runtime evidence_package citation mapping');
 
+$evidenceWalk = EvidenceWalk::fromEvidencePackage($evidencePackage, ['intent' => 'literature'], ['selected_plugins' => ['Literature Plugin']], ['status' => 'sufficient']);
+$walkValidation = EvidenceWalk::validate($evidenceWalk);
+assert_same(true, $walkValidation['ok'], 'runtime evidence_walk validates');
+
+$reportPlan = ReportPlan::fromEvidenceWalk($question, ['intent' => 'literature'], $evidenceWalk, ['response_mode' => 'literature_support']);
+$planValidation = ReportPlan::validate($reportPlan);
+assert_same(true, $planValidation['ok'], 'runtime report_plan validates');
+
 $client = new TekgAgentLlmClient([]);
 $reflection = new ReflectionClass($client);
-$method = $reflection->getMethod('buildEvidencePackageAnswerPrompt');
+assert_true(!$reflection->hasMethod('writeEvidencePackageAnswer'), 'old direct evidence_package writer method is removed');
+assert_true(!$reflection->hasMethod('buildEvidencePackageAnswerPrompt'), 'old direct evidence_package prompt builder is removed');
+
+$method = $reflection->getMethod('buildEvidenceWalkDraftPrompt');
 $prompt = $method->invoke(
     $client,
     $question,
     ['intent' => 'literature'],
-    ['response_mode' => 'literature_support', 'section_plan' => ['Main evidence']],
     $evidencePackage,
+    $evidenceWalk,
+    $reportPlan,
     'medium',
     ['No direct experimental validation in this package.']
 );
 
-assert_true(str_contains($prompt, 'Write only from evidence_package'), 'writer prompt pins evidence_package as only evidence body');
+assert_true(str_contains($prompt, 'evidence-walk draft report'), 'writer prompt uses evidence-walk draft path');
 assert_true(str_contains($prompt, '"evidence_package"'), 'writer prompt includes evidence_package key');
+assert_true(str_contains($prompt, '"evidence_walk"'), 'writer prompt includes evidence_walk key');
+assert_true(str_contains($prompt, '"report_plan"'), 'writer prompt includes report_plan key');
 foreach (['supported_claims', 'conflicting_claims', 'missing_evidence', '"citations"', 'raw_result', 'display_details', 'full plugin_results'] as $forbidden) {
     assert_true(!str_contains($prompt, $forbidden), "writer prompt excludes {$forbidden}");
 }
@@ -137,7 +153,9 @@ assert_true(!array_key_exists('plugin_results', $writerInput), 'Answer Writer No
 assert_same($evidencePackage, $writerInput['evidence_package'], 'Answer Writer Node input uses package exactly');
 
 $agentServiceSource = file_get_contents(__DIR__ . '/../api/agent/orchestrator/AcademicAgentService.php');
-assert_true(is_string($agentServiceSource) && str_contains($agentServiceSource, '->writeEvidencePackageAnswer('), 'Agent runtime calls evidence_package writer');
+assert_true(is_string($agentServiceSource) && str_contains($agentServiceSource, 'buildValidatedEvidencePackage('), 'Agent runtime still builds a validated evidence_package');
+assert_true(is_string($agentServiceSource) && !str_contains($agentServiceSource, '->writeEvidencePackageAnswer('), 'Agent runtime no longer calls the direct evidence_package writer');
+assert_true(is_string($agentServiceSource) && str_contains($agentServiceSource, '->writeEvidenceWalkDraft('), 'Agent runtime calls the evidence_walk draft writer');
 assert_true(is_string($agentServiceSource) && !str_contains($agentServiceSource, '->writeStructuredAnswer('), 'Agent runtime does not call legacy structured writer');
 
 echo "Agent EvidencePackage runtime tests passed.\n";

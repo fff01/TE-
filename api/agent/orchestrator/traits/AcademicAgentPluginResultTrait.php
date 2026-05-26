@@ -264,7 +264,13 @@ trait TekgAcademicAgentPluginResultTrait
         array $sufficiencyDecision = [],
         array $answerStructure = [],
         array $synthesizedEvidence = [],
-        array $evidencePackage = []
+        array $evidencePackage = [],
+        array $evidenceWalk = [],
+        array $reportPlan = [],
+        string $draftReport = '',
+        string $polishedReport = '',
+        array $integrityReport = [],
+        string $finalAnswer = ''
     ): array {
         $collectedResults = [];
         foreach ($pluginResults as $result) {
@@ -431,8 +437,15 @@ trait TekgAcademicAgentPluginResultTrait
                     'analysis' => $analysis,
                     'answer_structure' => $answerStructure,
                     'evidence_package' => $evidencePackage,
+                    'evidence_walk' => $evidenceWalk,
+                    'report_plan' => $reportPlan,
                 ],
-                'output' => ['answer' => null],
+                'output' => [
+                    'draft_report' => $draftReport,
+                    'polished_report' => $polishedReport,
+                    'integrity_report' => $integrityReport,
+                    'answer' => $finalAnswer !== '' ? $finalAnswer : ($polishedReport !== '' ? $polishedReport : ($draftReport !== '' ? $draftReport : null)),
+                ],
             ],
             'Process Narrator Node' => [
                 'input' => [

@@ -11,6 +11,9 @@ require_once __DIR__ . '/traits/AcademicAgentPluginResultTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentNarrationTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentEvidenceTrait.php';
 require_once dirname(__DIR__) . '/contracts/EvidencePackage.php';
+require_once dirname(__DIR__) . '/contracts/EvidenceWalk.php';
+require_once dirname(__DIR__) . '/contracts/ReportPlan.php';
+require_once dirname(__DIR__) . '/contracts/ReportIntegrityGate.php';
 
 final class TekgAcademicAgentService
 {
@@ -349,8 +352,11 @@ final class TekgAcademicAgentService
         $limits = $this->aggregateLimits($pluginResults, $evidence);
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
         $writingModel = $this->resolveWritingModel($analysis, $payload, $pluginResults);
+        $polisherModel = $this->resolvePolisherModel($payload, $writingModel);
         $this->activateWorkflowStage($workflowState, 'Integrating', (string)($workflowState['current_stage'] ?? 'Executing'), $emit, $eventSequence, $sessionId);
         $evidencePackage = $this->buildValidatedEvidencePackage($question, $analysis, $pluginResults, $requestId);
+        $evidenceWalk = EvidenceWalk::fromEvidencePackage($evidencePackage, $analysis, $planning, $sufficiencyDecision);
+        $evidenceWalkValidation = EvidenceWalk::validate($evidenceWalk);
         $synthesizedEvidence = $this->buildSynthesizedEvidenceFromPackage($evidencePackage);
         $answerStructureStartedAt = microtime(true);
         $this->logDiagnostic($requestId, 'answer_structure_started', [
@@ -373,6 +379,8 @@ final class TekgAcademicAgentService
             'section_count' => count((array)($answerStructure['section_plan'] ?? [])),
             'duration_ms' => $answerStructureDurationMs,
         ]);
+        $reportPlan = ReportPlan::fromEvidenceWalk($question, $analysis, $evidenceWalk, $answerStructure);
+        $reportPlanValidation = ReportPlan::validate($reportPlan);
 
         $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence);
         $this->emitEvent($emit, $eventSequence, [
@@ -381,7 +389,7 @@ final class TekgAcademicAgentService
             'node' => 'Evidence Synthesis Node',
             'source' => 'Evidence Synthesis Node',
             'inputs_used' => ['result_envelopes', 'evidence_package'],
-            'outputs_changed' => ['evidence_package', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure'],
+            'outputs_changed' => ['evidence_package', 'evidence_walk', 'report_plan', 'supported_claims', 'conflicting_claims', 'missing_evidence', 'claim_clusters', 'answer_structure'],
             'message' => $this->narrateEvent(
                 $narratorModel,
                 $processLanguage,
@@ -396,6 +404,8 @@ final class TekgAcademicAgentService
             ),
             'payload' => [
                 'evidence_package' => $evidencePackage,
+                'evidence_walk' => $evidenceWalk,
+                'report_plan' => $reportPlan,
                 'synthesized_evidence' => $synthesizedEvidence,
                 'answer_structure' => $answerStructure,
             ],
@@ -405,48 +415,141 @@ final class TekgAcademicAgentService
         $analysisForWriting = $this->analysisForWriting($analysis);
         $this->logDiagnostic($requestId, 'answer_generation_started', [
             'model' => $writingModel,
+            'polisher_model' => $polisherModel,
             'response_mode' => (string)($answerStructure['response_mode'] ?? ''),
             'citation_count' => count($citations),
             'confidence' => $confidence,
         ]);
         $answer = '';
+        $draftReport = '';
+        $polishedReport = '';
+        $draftLlm = [
+            'ok' => false,
+            'provider' => $this->inferProvider($writingModel),
+            'model' => $writingModel,
+            'content' => '',
+            'error' => null,
+        ];
+        $polishLlm = [
+            'ok' => false,
+            'provider' => $this->inferProvider($polisherModel),
+            'model' => $polisherModel,
+            'content' => '',
+            'error' => null,
+        ];
+        $integrityReport = [
+            'evidence_walk_validation' => $evidenceWalkValidation,
+            'report_plan_validation' => $reportPlanValidation,
+            'draft' => null,
+            'polish' => null,
+            'warnings' => [],
+        ];
         $writingFailed = false;
         $failureReason = '';
         $writingStartedAt = microtime(true);
-        try {
-            $llm = $this->llm->writeEvidencePackageAnswer(
-                $writingModel,
-                $answerLanguage,
-                $question,
-                $analysisForWriting,
-                $answerStructure,
-                $evidencePackage,
-                $confidence,
-                $limits,
-                $this->answerTimeoutForModel($writingModel)
-            );
-        } catch (Throwable $error) {
-            $llm = [
-                'ok' => false,
-                'provider' => $this->inferProvider($writingModel),
-                'model' => $writingModel,
-                'content' => '',
-                'error' => $error->getMessage(),
-            ];
-            $this->logDiagnostic($requestId, 'answer_generation_error', [
-                'error' => $error->getMessage(),
-            ]);
+
+        if (($evidenceWalkValidation['ok'] ?? false) !== true || ($reportPlanValidation['ok'] ?? false) !== true) {
+            $writingFailed = true;
+            $failureReason = 'EvidenceWalk or ReportPlan validation failed before writing.';
         }
 
-        if (($llm['ok'] ?? false) === true) {
-            $answer = trim((string)($llm['content'] ?? ''));
+        if (!$writingFailed) {
+            try {
+                $draftLlm = $this->llm->writeEvidenceWalkDraft(
+                    $writingModel,
+                    $answerLanguage,
+                    $question,
+                    $analysisForWriting,
+                    $evidencePackage,
+                    $evidenceWalk,
+                    $reportPlan,
+                    $confidence,
+                    $limits,
+                    $this->answerTimeoutForModel($writingModel)
+                );
+            } catch (Throwable $error) {
+                $draftLlm = [
+                    'ok' => false,
+                    'provider' => $this->inferProvider($writingModel),
+                    'model' => $writingModel,
+                    'content' => '',
+                    'error' => $error->getMessage(),
+                ];
+                $this->logDiagnostic($requestId, 'answer_generation_error', [
+                    'stage' => 'draft',
+                    'error' => $error->getMessage(),
+                ]);
+            }
+
+            if (($draftLlm['ok'] ?? false) === true) {
+                $draftReport = trim((string)($draftLlm['content'] ?? ''));
+            }
+            if ($draftReport === '') {
+                $writingFailed = true;
+                $failureReason = trim((string)($draftLlm['error'] ?? 'The evidence-walk draft writer did not return usable content.'));
+            } else {
+                $draftIntegrity = ReportIntegrityGate::check($draftReport, $evidencePackage, $evidenceWalk, $reportPlan);
+                $integrityReport['draft'] = $draftIntegrity;
+                if (($draftIntegrity['ok'] ?? false) !== true) {
+                    $writingFailed = true;
+                    $failureReason = 'The evidence-walk draft failed integrity checks: ' . implode('; ', (array)($draftIntegrity['errors'] ?? []));
+                }
+            }
         }
-        if ($answer === '') {
+
+        if (!$writingFailed) {
+            try {
+                $polishLlm = $this->llm->polishEvidenceWalkAnswer(
+                    $polisherModel,
+                    $answerLanguage,
+                    $draftReport,
+                    $analysisForWriting,
+                    $evidencePackage,
+                    $evidenceWalk,
+                    $reportPlan,
+                    (array)$integrityReport['draft'],
+                    $this->answerTimeoutForModel($polisherModel)
+                );
+            } catch (Throwable $error) {
+                $polishLlm = [
+                    'ok' => false,
+                    'provider' => $this->inferProvider($polisherModel),
+                    'model' => $polisherModel,
+                    'content' => '',
+                    'error' => $error->getMessage(),
+                ];
+                $this->logDiagnostic($requestId, 'answer_generation_error', [
+                    'stage' => 'polish',
+                    'error' => $error->getMessage(),
+                ]);
+            }
+
+            if (($polishLlm['ok'] ?? false) === true) {
+                $polishedReport = trim((string)($polishLlm['content'] ?? ''));
+            }
+            if ($polishedReport === '') {
+                $writingFailed = true;
+                $failureReason = trim((string)($polishLlm['error'] ?? 'The evidence-walk polisher did not return usable content.'));
+            } else {
+                $polishIntegrity = ReportIntegrityGate::check($polishedReport, $evidencePackage, $evidenceWalk, $reportPlan);
+                $integrityReport['polish'] = $polishIntegrity;
+                if (($polishIntegrity['ok'] ?? false) === true) {
+                    $answer = $polishedReport;
+                } else {
+                    $answer = $draftReport;
+                    $integrityReport['warnings'][] = 'Polished report failed integrity checks; using the validated draft report as the conservative answer.';
+                }
+            }
+        }
+        if (!$writingFailed && $answer === '') {
             $writingFailed = true;
-            $failureReason = trim((string)($llm['error'] ?? 'The final writing node did not return usable content.'));
+            $failureReason = 'The final writing node did not produce a validated answer.';
         }
         $this->logDiagnostic($requestId, 'answer_generation_completed', [
-            'llm_ok' => (bool)($llm['ok'] ?? false),
+            'draft_ok' => (bool)($draftLlm['ok'] ?? false),
+            'polish_ok' => (bool)($polishLlm['ok'] ?? false),
+            'draft_integrity_ok' => (bool)($integrityReport['draft']['ok'] ?? false),
+            'polish_integrity_ok' => (bool)($integrityReport['polish']['ok'] ?? false),
             'writing_failed' => $writingFailed,
             'writing_duration_ms' => (int)round((microtime(true) - $writingStartedAt) * 1000),
             'answer_length' => tekg_agent_strlen($answer),
@@ -470,7 +573,7 @@ final class TekgAcademicAgentService
             'language' => $answerLanguage,
             'session_id' => $sessionId,
             'model' => $writingModel,
-            'model_provider' => $llm['provider'] ?? $this->inferProvider($writingModel),
+            'model_provider' => $this->inferProvider($answer === $polishedReport && $polishedReport !== '' ? $polisherModel : $writingModel),
             'models' => [
                 'core' => $coreModel,
                 'sufficiency' => $sufficiencyModel,
@@ -478,6 +581,8 @@ final class TekgAcademicAgentService
                 'narrator' => $narratorModel,
                 'answer_structure' => $answerStructureModel,
                 'writer' => $writingModel,
+                'writer_draft' => $writingModel,
+                'writer_polisher' => $polisherModel,
             ],
             'analysis' => $analysis,
             'answer' => $answer,
@@ -490,6 +595,11 @@ final class TekgAcademicAgentService
             'evidence' => $evidence,
             'citations' => $citations,
             'evidence_package' => $evidencePackage,
+            'evidence_walk' => $evidenceWalk,
+            'report_plan' => $reportPlan,
+            'draft_report' => $draftReport,
+            'polished_report' => $polishedReport,
+            'integrity_report' => $integrityReport,
             'confidence' => $confidence,
             'limits' => array_values(array_unique($limits)),
             'planning' => $planning,
@@ -514,7 +624,13 @@ final class TekgAcademicAgentService
                 $sufficiencyDecision,
                 $answerStructure,
                 $synthesizedEvidence,
-                $evidencePackage
+                $evidencePackage,
+                $evidenceWalk,
+                $reportPlan,
+                $draftReport,
+                $polishedReport,
+                $integrityReport,
+                $answer
             )),
         ];
 
@@ -662,6 +778,19 @@ final class TekgAcademicAgentService
         }
 
         return trim((string)($this->config['deepseek_model'] ?? 'deepseek-chat'));
+    }
+
+    private function resolvePolisherModel(array $payload, string $writingModel): string
+    {
+        if (trim((string)($payload['polisher_model'] ?? '')) !== '') {
+            return trim((string)$payload['polisher_model']);
+        }
+
+        if (trim((string)($this->config['agent_polisher_model'] ?? '')) !== '') {
+            return trim((string)($this->config['agent_polisher_model'] ?? ''));
+        }
+
+        return $writingModel;
     }
 
     private function answerTimeoutForModel(string $model): int
