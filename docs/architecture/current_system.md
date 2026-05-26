@@ -64,6 +64,7 @@
 - `docs/architecture/agent_gpt55_handoff.md` 面向专门处理智能问答 agent 的 AI。
 - 本 harness 默认服务整个 TE-KG 项目，尤其是非 agent 页面、API、数据路径和图谱运行时。
 - 除非任务明确要求 agent，不要把 `api/agent/`、`assets/js/pages/agent.js` 作为默认修改范围。
+- Agent/DeepThink boundary and plugin envelope v1 已于 2026-05-25 落地：`task_complexity`、Agent research templates 和 `PluginResultEnvelope` 已进入代码，但仍保留 legacy raw payload 兼容层。
 
 ## Current harness rule
 

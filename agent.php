@@ -59,6 +59,52 @@ if (is_file(__DIR__ . '/api/config.local.php')) {
 
 $defaultAgentModel = trim((string)($local['deepseek_reasoner_model'] ?? $local['deepseek_model'] ?? 'deepseek-reasoner'));
 
+$agentResearchTemplates = [
+    [
+        'label' => 'Mechanism review',
+        'prompt' => 'How does LINE-1 contribute to cancer?',
+    ],
+    [
+        'label' => 'Evidence audit',
+        'prompt' => "What papers support the relationship between LINE-1 and Alzheimer's disease?",
+    ],
+    [
+        'label' => 'Batch comparison',
+        'prompt' => 'Compare the evidence strength linking L1HS, AluY, and HERVK to cancer.',
+    ],
+    [
+        'label' => 'Graph ranking',
+        'prompt' => 'Which disease has the strongest association with transposable elements in the knowledge graph?',
+    ],
+    [
+        'label' => 'Research report',
+        'prompt' => 'Generate a research report for L1HS including sequence, genomic location, expression, disease links, and literature evidence.',
+    ],
+];
+
+$deepThinkTemplates = [
+    [
+        'label' => 'Sequence lookup',
+        'prompt' => 'What is the sequence of L1HS?',
+    ],
+    [
+        'label' => 'Genome location',
+        'prompt' => 'Where is L1HS located in the genome?',
+    ],
+    [
+        'label' => 'Expression lookup',
+        'prompt' => 'In which tissues is L1HS expressed?',
+    ],
+    [
+        'label' => 'Classification lookup',
+        'prompt' => 'Which subfamily does L1HS belong to?',
+    ],
+    [
+        'label' => 'Site navigation',
+        'prompt' => 'Where can I view the Genome Annotation Distribution for L1HS?',
+    ],
+];
+
 require __DIR__ . '/head.php';
 ?>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -80,6 +126,10 @@ require __DIR__ . '/head.php';
                 <?= htmlspecialchars($ui['mode_agent'], ENT_QUOTES, 'UTF-8') ?>
               </button>
             </div>
+            <section class="agent-research-templates" id="agentResearchTemplates" hidden aria-label="Mode-specific task templates">
+              <p class="agent-research-templates-title" id="agentResearchTemplatesTitle">Deep Think quick templates</p>
+              <div class="agent-research-template-list" id="agentResearchTemplateList"></div>
+            </section>
           </div>
         </section>
       </div>
@@ -144,6 +194,8 @@ require __DIR__ . '/head.php';
     'deepThinkStreamApiUrl' => tekg_api_url('deep_think_stream.php'),
     'defaultModel' => $defaultAgentModel,
     'defaultMode' => 'deepthink',
+    'agentResearchTemplates' => $agentResearchTemplates,
+    'deepThinkTemplates' => $deepThinkTemplates,
     'ui' => $ui,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
 <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/agent.js'), ENT_QUOTES, 'UTF-8') ?>"></script>

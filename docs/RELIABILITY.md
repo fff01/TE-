@@ -40,6 +40,46 @@ python scripts/checks/check_docs_freshness.py
 - Same-label disambiguation 残留风险：当前 smoke 主要覆盖 Aging；更多同名跨类型实体样本仍需扩展。当前精确定位使用 Neo4j `elementId()`，适合本地单库 runtime，未来如需跨库稳定链接可能要引入稳定业务 id。
 - Expanded node 的视觉 affordance / collapse、复杂多节点连续扩展、多类型展开质量仍需后续单独计划处理。
 - G6 subgraph export v1 已完成：当前可见子图可导出 CSV，当前画布可导出 PNG，Export toolbar 已收敛为单按钮菜单，并由 `scripts/checks/check_g6_subgraph_export_smoke.py` 覆盖。SVG 仍是 disabled 的 `SVG Soon`，后续 v2 另行调研。
+- Agent/DeepThink boundary and plugin envelope v1 已完成第一版：`task_complexity`、Agent research templates、`PluginResultEnvelope`、schema-style envelope checks 和 narration checks 已落地。当前仍未跑 live WAMP/Neo4j/LLM/browser，且 envelope 保留 legacy raw payload 兼容层。
+
+## Agent / DeepThink Reliability Checks - 2026-05-25
+
+第一阶段“巩固边界”和第二阶段“统一插件契约”的 Final Verifier PASS 命令：
+
+```powershell
+php -l agent.php
+php -l api\agent\orchestrator\EntityNormalizer.php
+php -l api\agent\orchestrator\traits\AcademicAgentNarrationTrait.php
+php -l api\agent\orchestrator\traits\AcademicAgentPluginResultTrait.php
+php -l api\agent\orchestrator\traits\DeepThinkRoutingTrait.php
+php -l api\agent\contracts\PluginResultEnvelope.php
+php -l api\agent\config\plugin_result_envelope_schema.php
+php test\task_complexity_test.php
+php test\plugin_result_envelope_test.php
+php test\agent_narration_task_complexity_test.php
+node --check assets\js\pages\agent.js
+```
+
+实际实现范围：
+
+- `api/agent/orchestrator/EntityNormalizer.php`
+- `api/agent/orchestrator/traits/AcademicAgentNarrationTrait.php`
+- `api/agent/contracts/PluginResultEnvelope.php`
+- `api/agent/config/plugin_result_envelope_schema.php`
+- `api/agent/orchestrator/traits/AcademicAgentPluginResultTrait.php`
+- `api/agent/orchestrator/traits/DeepThinkRoutingTrait.php`
+- `agent.php`
+- `assets/js/pages/agent.js`
+- `assets/css/pages/agent.css`
+- `test/task_complexity_test.php`
+- `test/plugin_result_envelope_test.php`
+- `test/agent_narration_task_complexity_test.php`
+
+残留风险：
+
+- 未跑 live WAMP、Neo4j、LLM、browser 路径；当前验证主要是 lint 和 fixture/contract tests。
+- `PluginResultEnvelope` 仍兼容 legacy raw payload，旧消费者尚未全部迁移到 envelope-first。
+- `task_complexity` 是启发式分类，适合作为产品边界提示和轻量路由信号，不应被当作严格语义分类器。
 
 ## 运行前提
 

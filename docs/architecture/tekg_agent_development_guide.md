@@ -637,6 +637,8 @@ Agent golden set：
 
 ### 9.1 第一阶段：巩固边界
 
+状态：第一版已于 2026-05-25 落地，具体收尾见 `docs/exec-plans/completed/agent-deepthink-boundary-plugin-envelope.md`。
+
 目标：
 
 - DT 保持全站默认即时问答。
@@ -649,6 +651,8 @@ Agent golden set：
 - Agent 页面增加研究任务模板：机制综述、证据审计、批量比较、图谱排名、报告生成。
 
 ### 9.2 第二阶段：统一插件契约
+
+状态：第一版已于 2026-05-25 落地，当前通过 `PluginResultEnvelope` 在消费边界兼容 legacy payload；旧消费者迁移留到 evidence package 阶段逐步完成。
 
 目标：
 

@@ -40,6 +40,23 @@ trait TekgAcademicAgentNarrationTrait
             ),
         ];
 
+        if (($analysis['recommended_mode'] ?? '') === 'deepthink') {
+            $analysisLines[] = $this->narrateEvent(
+                $model,
+                $processLanguage,
+                [
+                    'type' => 'analysis',
+                    'focus' => 'task_boundary',
+                    'intent' => $analysis['intent'] ?? '',
+                    'complexity' => $analysis['complexity'] ?? '',
+                    'task_complexity' => $analysis['task_complexity'] ?? '',
+                    'recommended_mode' => $analysis['recommended_mode'] ?? '',
+                    'task_complexity_reason' => $analysis['task_complexity_reason'] ?? '',
+                ],
+                'This is a quick lookup; Deep Think is usually faster. If you continue with Agent, I will collect evidence through the research workflow.'
+            );
+        }
+
         foreach ($analysisLines as $line) {
             if ($line === '') {
                 continue;
@@ -51,6 +68,9 @@ trait TekgAcademicAgentNarrationTrait
                 'payload' => [
                     'intent' => $analysis['intent'] ?? '',
                     'complexity' => $analysis['complexity'] ?? '',
+                    'task_complexity' => $analysis['task_complexity'] ?? '',
+                    'recommended_mode' => $analysis['recommended_mode'] ?? '',
+                    'task_complexity_reason' => $analysis['task_complexity_reason'] ?? '',
                     'normalized_entities' => $analysis['normalized_entities'] ?? [],
                 ],
             ]);

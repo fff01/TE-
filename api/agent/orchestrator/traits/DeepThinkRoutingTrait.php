@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/contracts/PluginResultEnvelope.php';
+
 trait TekgDeepThinkRoutingTrait
 {
     private function lightweightPlanning(array $analysis): array
@@ -114,7 +116,15 @@ trait TekgDeepThinkRoutingTrait
             'planning' => $planning,
             'config' => $this->expertConfig($model),
         ]);
+        $legacyResult = $result;
         $result = $this->augmentPluginResult($pluginName, $result, $analysis, $planning);
+        if (!isset($result['result_envelope']) || !is_array($result['result_envelope'])) {
+            $result['result_envelope'] = PluginResultEnvelope::fromPluginResult($pluginName, $legacyResult, [
+                'intent' => (string)($analysis['intent'] ?? ''),
+                'analysis' => $analysis,
+                'planning' => $planning,
+            ]);
+        }
         $this->logDiagnostic($requestId, 'deepthink_plugin_completed', [
             'plugin_name' => $pluginName,
             'status' => (string)($result['status'] ?? 'unknown'),

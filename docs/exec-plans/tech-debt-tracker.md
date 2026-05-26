@@ -50,6 +50,20 @@
 
 ## 中优先级
 
+### Agent plugin envelope legacy consumers - 2026-05-25
+
+- 状态：第一版 `PluginResultEnvelope` 已落地，见 `completed/agent-deepthink-boundary-plugin-envelope.md`。
+- 已完成：Agent/DeepThink 插件结果在消费边界增加 `result_envelope`，并保留 legacy raw payload；`plugin_result_envelope_test.php` 覆盖成功、空结果、失败、route、literature/citation 和 legacy `status=error` 映射。
+- 债务：旧消费者仍有路径读取 legacy `results.*` 或 plugin-specific raw arrays，尚未全部迁移到 envelope-first。
+- 风险：在 evidence package 落地前，Writing、sufficiency 或 synthesis 仍可能依赖 raw dumps，导致插件契约统一不彻底。
+- 下一步：在第三阶段 evidence package 计划中逐步迁移消费者，使 Writing 和 sufficiency 只依赖 envelope/evidence package 的稳定字段。
+
+### Agent task complexity classifier calibration - 2026-05-25
+
+- 状态：第一版 `task_complexity` 已落地在 `EntityNormalizer`，并由 `task_complexity_test.php` 和 `agent_narration_task_complexity_test.php` 覆盖。
+- 风险：当前分类是启发式，适合产品边界提示和 lightweight routing，不是经过 benchmark 校准的严格语义分类。
+- 下一步：建立 DT/Agent golden set 后，用真实问题集校准 `simple_lookup`、`single_hop`、`research_synthesis`、`mechanism_chain` 和 `ambiguous` 的边界。
+
 ### 旧 DB fallback 回归风险
 
 - 现象：仓库历史中仍有 `tekg2`、`tekg21` 相关文件。

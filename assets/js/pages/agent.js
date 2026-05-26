@@ -33,6 +33,9 @@
   const modePickerNode = document.getElementById('agentModePicker');
   const modeDeepThinkButton = document.getElementById('modeDeepThink');
   const modeAgentButton = document.getElementById('modeAgent');
+  const researchTemplatesNode = document.getElementById('agentResearchTemplates');
+  const researchTemplatesTitleNode = document.getElementById('agentResearchTemplatesTitle');
+  const researchTemplateListNode = document.getElementById('agentResearchTemplateList');
   const chatScroll = document.getElementById('agentChatScroll');
   const inspector = document.getElementById('agentInspector');
   const inspectorTitle = document.getElementById('agentInspectorTitle');
@@ -302,6 +305,48 @@
     return ui.start_title_deepthink || ui.start_title || 'Use Deep Think to start chatting';
   }
 
+  function normalizeTemplates(templates) {
+    if (!Array.isArray(templates)) {
+      return [];
+    }
+    return templates
+      .map((template) => ({
+        label: String(template && template.label ? template.label : '').trim(),
+        prompt: String(template && template.prompt ? template.prompt : '').trim(),
+      }))
+      .filter((template) => template.label && template.prompt);
+  }
+
+  function templatesForMode(mode) {
+    return normalizeTemplates(mode === 'agent' ? config.agentResearchTemplates : config.deepThinkTemplates);
+  }
+
+  function templateTitleForMode(mode) {
+    return mode === 'agent' ? 'Agent research task templates' : 'Deep Think quick templates';
+  }
+
+  function renderResearchTemplates() {
+    if (!researchTemplateListNode) {
+      return;
+    }
+    const templates = templatesForMode(currentMode);
+    if (!templates.length) {
+      if (researchTemplatesNode) {
+        researchTemplatesNode.hidden = true;
+      }
+      return;
+    }
+    if (researchTemplatesTitleNode) {
+      researchTemplatesTitleNode.textContent = templateTitleForMode(currentMode);
+    }
+    researchTemplateListNode.innerHTML = templates.map((template) => `
+      <button type="button" class="agent-research-template-chip" data-research-prompt="${escapeHtml(template.prompt)}">
+        <span class="agent-research-template-label">${escapeHtml(template.label)}</span>
+        <span class="agent-research-template-prompt">${escapeHtml(template.prompt)}</span>
+      </button>
+    `).join('');
+  }
+
   function setMode(mode, options = {}) {
     const nextMode = mode === 'agent' ? 'agent' : 'deepthink';
     if (modeLocked && !options.force) {
@@ -317,6 +362,10 @@
 
     if (emptyTitleNode) {
       emptyTitleNode.textContent = modeTitle(currentMode);
+    }
+    if (researchTemplatesNode) {
+      renderResearchTemplates();
+      researchTemplatesNode.hidden = !templatesForMode(currentMode).length;
     }
     if (modeDeepThinkButton) {
       const active = currentMode === 'deepthink';
@@ -1348,6 +1397,16 @@
     });
   }
 
+  if (researchTemplateListNode) {
+    researchTemplateListNode.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-research-prompt]');
+      if (!button) return;
+      questionInput.value = String(button.dataset.researchPrompt || '');
+      questionInput.focus();
+      questionInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  }
+
   conversationNode.addEventListener('click', (event) => {
     const toolEvent = event.target.closest('.agent-tool-event');
     if (!toolEvent) return;
@@ -1402,6 +1461,7 @@
   });
 
   form.addEventListener('submit', submitQuestion);
+  renderResearchTemplates();
   setMode(currentMode, { force: true });
 })();
 

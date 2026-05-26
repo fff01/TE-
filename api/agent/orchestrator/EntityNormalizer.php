@@ -21,10 +21,11 @@ final class TekgAgentEntityNormalizer
         $targetTypes = $this->detectTargetTypes($question, $intent);
         $keywords = $this->extractKeywords($question);
         $complexity = $this->detectComplexity($question, $intent, $normalizedEntities, $targetTypes);
+        $taskComplexity = $this->detectTaskComplexity($question, $intent, $normalizedEntities);
         $aliasChains = $this->buildAliasChains($normalizedEntities);
         $tokens = array_values(array_filter(preg_split('/\s+/u', trim($question)) ?: []));
 
-        return [
+        return array_merge([
             'language' => $language,
             'intent' => $intent,
             'complexity' => $complexity,
@@ -48,7 +49,7 @@ final class TekgAgentEntityNormalizer
                 || $intent === 'graph_analytics'
                 || $this->containsAny($question, ['recent', 'latest', 'evidence', 'paper', 'papers', 'pubmed', 'literature', '最新', '证据', '文献', '论文'])
                 || count($normalizedEntities) <= 1,
-        ];
+        ], $taskComplexity);
     }
 
     private function collectEntities(string $question): array
@@ -237,6 +238,86 @@ final class TekgAgentEntityNormalizer
             return 'single_hop_reasoning';
         }
         return 'simple_lookup';
+    }
+
+    private function detectTaskComplexity(string $question, string $intent, array $entities): array
+    {
+        $hasMechanismWords = $this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to', 'result in', '机制', '为什么', '如何', '导致', '通路', '因果']);
+        if ($intent === 'mechanism' || $hasMechanismWords) {
+            return $this->makeTaskComplexity('mechanism_chain', 'agent', 'Mechanism or causal-chain question.');
+        }
+
+        $hasResearchWords = $this->containsAny($question, [
+            'paper',
+            'papers',
+            'reference',
+            'references',
+            'pubmed',
+            'literature',
+            'citation',
+            'citations',
+            'evidence',
+            'support',
+            'compare',
+            'versus',
+            'vs',
+            'difference',
+            'topology',
+            'topological',
+            'graph structure',
+            'largest number',
+            'most associated',
+            'most connected',
+            'highest degree',
+            'rank',
+            'ranking',
+            'centrality',
+            'report',
+            'review',
+            'dossier',
+            '文献',
+            '论文',
+            '参考文献',
+            '引用',
+            '证据',
+            '支撑',
+            '比较',
+            '对比',
+            '区别',
+            '差异',
+            '最多',
+            '最大',
+            '排名',
+            '拓扑',
+            '结构',
+            '关联度',
+            '中心性',
+            '报告',
+            '综述',
+        ]);
+        if ($intent === 'literature' || $intent === 'comparison' || $intent === 'graph_analytics' || $hasResearchWords) {
+            return $this->makeTaskComplexity('research_synthesis', 'agent', 'Research, evidence, comparison, analytics, or report task.');
+        }
+
+        $hasSiteNavigationWords = $this->containsAny($question, ['where can i find', 'where do i find', 'where to find', 'which page', 'what page', 'open page', 'show page', 'url', 'link', 'entry', '入口', '网址', '链接', '页面', '在哪看', '哪里看', '在哪里看', '从哪里看', '跳转', '打开', '查看页面', 'Genome Annotation Distribution', 'Genome Browser', 'JBrowse']);
+        if (in_array($intent, ['sequence', 'genome', 'expression', 'classification'], true) || $hasSiteNavigationWords) {
+            return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct lookup covered by Deep Think.');
+        }
+
+        if ($intent === 'relationship' || count($entities) >= 1) {
+            return $this->makeTaskComplexity('single_hop', 'deepthink', 'Single-hop relationship listing.');
+        }
+
+        return $this->makeTaskComplexity('ambiguous', 'deepthink', 'Ambiguous task; use Deep Think for clarification.');
+    }
+
+    private function makeTaskComplexity(string $taskComplexity, string $recommendedMode, string $reason): array
+    {
+        return [
+            'task_complexity' => $taskComplexity,
+            'recommended_mode' => $recommendedMode,
+            'task_complexity_reason' => $reason,
+        ];
     }
 
     private function detectTargetTypes(string $question, string $intent): array

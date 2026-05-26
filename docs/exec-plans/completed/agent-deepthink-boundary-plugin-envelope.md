@@ -86,9 +86,9 @@ Do not modify:
 
 ### Task 1: Read Explorer Reports and Finalize File Ownership
 
-- [ ] Wait for Explorer A, B, and C.
-- [ ] Update this plan with exact file targets and excluded areas.
-- [ ] Confirm whether implementation can proceed under this plan.
+- [x] Wait for Explorer A, B, and C.
+- [x] Update this plan with exact file targets and excluded areas.
+- [x] Confirm whether implementation can proceed under this plan.
 
 Explorer evidence:
 
@@ -284,11 +284,11 @@ If any command depends on unavailable local services, document that clearly and 
 
 ### Task 9: Documentation and Plan Completion
 
-- [ ] Update `docs/RELIABILITY.md` if new task complexity/envelope tests become canonical reliability checks.
-- [ ] Update `docs/exec-plans/tech-debt-tracker.md` if old raw plugin parsing remains as known debt.
-- [ ] Update `docs/architecture/tekg_agent_development_guide.md` and/or `docs/architecture/current_system.md` if implementation makes the boundary/envelope live rather than aspirational.
-- [ ] Move this plan to `docs/exec-plans/completed/` after implementation.
-- [ ] Add actual modified files, verification results, residual risks, and follow-up recommendations.
+- [x] Update `docs/RELIABILITY.md` if new task complexity/envelope tests become canonical reliability checks.
+- [x] Update `docs/exec-plans/tech-debt-tracker.md` if old raw plugin parsing remains as known debt.
+- [x] Update `docs/architecture/tekg_agent_development_guide.md` and/or `docs/architecture/current_system.md` if implementation makes the boundary/envelope live rather than aspirational.
+- [x] Move this plan to `docs/exec-plans/completed/` after implementation.
+- [x] Add actual modified files, verification results, residual risks, and follow-up recommendations.
 
 ## User Confirmation Required
 
@@ -297,3 +297,52 @@ This plan changes Agent/DeepThink runtime behavior and plugin result contracts. 
 1. Explorer reports have been reviewed.
 2. Exact file scope has been corrected.
 3. User confirms entry into implementation.
+
+---
+
+## Completion Closeout - 2026-05-25
+
+Status: completed first implementation pass for Stage 1 boundary hardening and Stage 2 plugin contract unification.
+
+### Actual changed implementation files
+
+- `api/agent/orchestrator/EntityNormalizer.php`: added product-facing `task_complexity`, `recommended_mode`, and `task_complexity_reason` on top of existing analysis output.
+- `api/agent/orchestrator/traits/AcademicAgentNarrationTrait.php`: added user-facing Agent recommendation narration for simple tasks without exposing internal field names.
+- `api/agent/contracts/PluginResultEnvelope.php`: added the shared compatibility envelope adapter for heterogeneous plugin results.
+- `api/agent/config/plugin_result_envelope_schema.php`: added schema-style envelope contract definition.
+- `api/agent/orchestrator/traits/AcademicAgentPluginResultTrait.php`: wraps Agent plugin results with `result_envelope` while retaining legacy raw payloads.
+- `api/agent/orchestrator/traits/DeepThinkRoutingTrait.php`: wraps Deep Think plugin shortcut/routing results with `result_envelope` while retaining legacy raw payloads.
+- `agent.php`: added Agent research template surface.
+- `assets/js/pages/agent.js`: added template click/fill behavior.
+- `assets/css/pages/agent.css`: added minimal styling for the research templates.
+- `test/task_complexity_test.php`: added task complexity classifier coverage.
+- `test/plugin_result_envelope_test.php`: added envelope schema/normalization coverage.
+- `test/agent_narration_task_complexity_test.php`: added narration coverage for simple-task Agent recommendation.
+
+### Final Verifier PASS commands
+
+```powershell
+php -l agent.php
+php -l api\agent\orchestrator\EntityNormalizer.php
+php -l api\agent\orchestrator\traits\AcademicAgentNarrationTrait.php
+php -l api\agent\orchestrator\traits\AcademicAgentPluginResultTrait.php
+php -l api\agent\orchestrator\traits\DeepThinkRoutingTrait.php
+php -l api\agent\contracts\PluginResultEnvelope.php
+php -l api\agent\config\plugin_result_envelope_schema.php
+php test\task_complexity_test.php
+php test\plugin_result_envelope_test.php
+php test\agent_narration_task_complexity_test.php
+node --check assets\js\pages\agent.js
+```
+
+### Residual risks
+
+- Live WAMP, Neo4j, LLM, and browser runtime were not exercised in this pass.
+- `PluginResultEnvelope` intentionally remains legacy-compatible; raw plugin payloads are still preserved.
+- Not every consumer has migrated to envelope-first reads. Some synthesis and sufficiency paths still inspect legacy `results.*` payloads.
+- `task_complexity` is an intentionally lightweight heuristic classifier, not a learned or benchmark-calibrated router.
+
+### Follow-up technical debt
+
+- Old consumers that still read legacy `results.*` should be migrated gradually during the future evidence package phase.
+- Evidence package work should move Writing and sufficiency checks toward envelope/evidence-item inputs rather than raw plugin dumps.

@@ -1,13 +1,21 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/contracts/PluginResultEnvelope.php';
+
 trait TekgAcademicAgentPluginResultTrait
 {
     private function augmentPluginResult(string $pluginName, array $result, array $analysis, array $planning): array
     {
+        $legacyResult = $result;
         $rawResult = tekg_agent_json_safe((array)($result['results'] ?? []));
         $result['raw_result'] = $rawResult;
         $result['compressed_result'] = $this->compressPluginResult($pluginName, $result, $analysis, $planning);
+        $result['result_envelope'] = PluginResultEnvelope::fromPluginResult($pluginName, $legacyResult, [
+            'intent' => (string)($analysis['intent'] ?? ''),
+            'analysis' => $analysis,
+            'planning' => $planning,
+        ]);
         return $result;
     }
 
