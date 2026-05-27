@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../config/agent_prompts.php';
+
 final class TekgAgentLlmClient
 {
     public function __construct(private readonly array $config)
@@ -21,7 +23,7 @@ final class TekgAgentLlmClient
         $provider = $this->inferProvider($model);
         $messages = [
             ['role' => 'system', 'content' => $this->systemPrompt($language)],
-            ['role' => 'user', 'content' => $this->buildUserPrompt($question, $planning, $pluginCalls, $evidence, $citations, $confidence, $limits)],
+            ['role' => 'user', 'content' => $this->buildUserPrompt($question, $planning, $pluginCalls, $evidence, $citations, $confidence, $limits, $language)],
         ];
 
         if (!empty($this->config['llm_relay_url'])) {
@@ -38,8 +40,8 @@ final class TekgAgentLlmClient
         }
 
         $messages = [
-            ['role' => 'system', 'content' => $this->narratorSystemPrompt('english')],
-            ['role' => 'user', 'content' => $this->buildNarratorPrompt($event)],
+            ['role' => 'system', 'content' => $this->narratorSystemPrompt($language)],
+            ['role' => 'user', 'content' => $this->buildNarratorPrompt($event, $language)],
         ];
 
         try {
@@ -66,7 +68,7 @@ final class TekgAgentLlmClient
         $messages = [
             [
                 'role' => 'system',
-                'content' => 'Return only valid JSON. Do not use Markdown fences. Do not add explanatory text outside the JSON object.',
+                'content' => $this->jsonSystemPrompt($this->languageFromPayload($payload)),
             ],
             [
                 'role' => 'user',
@@ -114,9 +116,7 @@ final class TekgAgentLlmClient
     {
         return $this->generateJson(
             $model,
-            'Assess whether the currently collected evidence is sufficient to answer the question. ' .
-            'Return JSON with keys is_sufficient (boolean), reason (string), missing_dimensions (array of strings), recommended_next_experts (array of strings). ' .
-            'Do not recommend experts that already ran successfully unless the payload explicitly indicates that their result was empty or weak.',
+            $this->jsonInstructionPrompt('sufficiency', $this->languageFromPayload($payload)),
             $payload,
             $timeout,
             'sufficiency'
@@ -127,9 +127,7 @@ final class TekgAgentLlmClient
     {
         return $this->generateJson(
             $model,
-            'Build an answer_structure JSON object for a TE-KG academic answer. ' .
-            'Return JSON with keys response_mode, opening_claim, section_plan, claim_order, citation_policy, uncertainty_notes. ' .
-            'section_plan and claim_order must be arrays of strings. uncertainty_notes must be an array of strings.',
+            $this->jsonInstructionPrompt('answer_structure', $this->languageFromPayload($payload)),
             $payload,
             $timeout,
             'answer_structure'
@@ -162,7 +160,8 @@ final class TekgAgentLlmClient
                 $missingEvidence,
                 $citations,
                 $confidence,
-                $limits
+                $limits,
+                $language
             )],
         ];
 
@@ -195,7 +194,8 @@ final class TekgAgentLlmClient
                 $evidenceWalk,
                 $reportPlan,
                 $confidence,
-                $limits
+                $limits,
+                $language
             )],
         ];
 
@@ -226,7 +226,8 @@ final class TekgAgentLlmClient
                 $evidencePackage,
                 $evidenceWalk,
                 $reportPlan,
-                $integrityReport
+                $integrityReport,
+                $language
             )],
         ];
 
@@ -263,7 +264,8 @@ final class TekgAgentLlmClient
                 $citations,
                 $confidence,
                 $limits,
-                $extraContext
+                $extraContext,
+                $language
             )],
         ];
 
@@ -300,7 +302,8 @@ final class TekgAgentLlmClient
                 $citations,
                 $confidence,
                 $limits,
-                $hint
+                $hint,
+                $language
             )],
         ];
 
@@ -322,20 +325,22 @@ final class TekgAgentLlmClient
 
     private function systemPrompt(string $language): string
     {
-        if ($language === 'chinese') {
-            return '你是 TE-KG Academic Agent。你只能基于已经提供的结构化插件结果、标准化证据对象和可追溯引用来作答。不要编造不存在的关系、机制或结论，也不要输出原始 chain-of-thought。请像研究助理一样自然组织回答：先给核心判断，再展开证据链或机制链；可以分段或编号，但不要强制使用固定标题。必须明确区分强证据、弱证据和证据空缺；不能把“没有查到”写成否定结论。正文引用尽量使用 PMID 风格。使用 Markdown。';
-        }
-
-        return 'You are TE-KG Academic Agent. Answer only from the structured plugin results, standardized evidence objects, and traceable citations that are provided. Do not invent unsupported relations, mechanisms, or conclusions, and do not reveal raw chain-of-thought. Write like a research assistant: give the main judgment first, then develop the mechanism or evidence chain in natural paragraphs. You may use numbering when helpful, but do not force fixed section headings. Explicitly distinguish strong evidence, weak evidence, and evidence gaps. Never turn "no result" into a negative scientific conclusion. Prefer PMID-style in-text citations when available. Use Markdown.';
+        return TekgAgentPromptLibrary::systemPrompt($language);
     }
 
     private function narratorSystemPrompt(string $language): string
     {
-        if ($language === 'chinese') {
-            return '你是 TE-KG Agent 的过程叙述器。你只能基于提供的真实事件对象写 1 到 2 句简短过程说明。只能描述已经真实发生的事情，不能补脑，不能编造额外步骤，不能暴露原始 chain-of-thought。语气自然、克制、研究型。';
-        }
+        return TekgAgentPromptLibrary::narratorSystemPrompt($language);
+    }
 
-        return 'You are the TE-KG Agent process narrator. Write 1 to 2 short sentences that describe only the real execution event that is provided. Do not invent extra steps, do not speculate, and do not reveal raw chain-of-thought. Keep the tone concise, natural, and research-oriented.';
+    private function jsonSystemPrompt(string $language): string
+    {
+        return TekgAgentPromptLibrary::jsonSystemPrompt($language);
+    }
+
+    private function jsonInstructionPrompt(string $name, string $language): string
+    {
+        return TekgAgentPromptLibrary::jsonInstructionPrompt($name, $language);
     }
 
     private function buildUserPrompt(
@@ -345,7 +350,8 @@ final class TekgAgentLlmClient
         array $evidence,
         array $citations,
         string $confidence,
-        array $limits
+        array $limits,
+        string $language = 'english'
     ): string {
         $payload = [
             'question' => $question,
@@ -357,18 +363,12 @@ final class TekgAgentLlmClient
             'limits' => $limits,
         ];
 
-        return "Use the following structured evidence to answer the research question.\n" .
-            "Write a natural academic explanation rather than a fixed report template.\n" .
-            "If the question asks for mechanism, prefer a causal chain. If it asks for comparison, prefer a contrastive structure. If the evidence is weak or incomplete, say so explicitly.\n" .
-            "If Site Navigator Plugin evidence provides Markdown links or URLs, preserve those links exactly and keep them clickable.\n\n" .
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return TekgAgentPromptLibrary::genericUserPrompt($language, $payload);
     }
 
-    private function buildNarratorPrompt(array $event): string
+    private function buildNarratorPrompt(array $event, string $language = 'english'): string
     {
-        return "Summarize this execution event for the user in 1 to 2 short sentences.\n" .
-            "Only describe what really happened in this event.\n\n" .
-            json_encode($event, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return TekgAgentPromptLibrary::narratorPrompt($language, $event);
     }
 
     private function buildStructuredAnswerPrompt(
@@ -380,7 +380,8 @@ final class TekgAgentLlmClient
         array $missingEvidence,
         array $citations,
         string $confidence,
-        array $limits
+        array $limits,
+        string $language = 'english'
     ): string {
         $payload = [
             'question' => $question,
@@ -394,11 +395,7 @@ final class TekgAgentLlmClient
             'limits' => $limits,
         ];
 
-        return "Write the final answer only from the structured answer plan and evidence below.\n" .
-            "Follow answer_structure strictly. Do not improvise extra sections outside section_plan unless needed for one short limitation note.\n" .
-            "Do not restate raw JSON. Convert the plan into a natural academic answer.\n" .
-            "If Site Navigator Plugin evidence provides Markdown links or URLs, preserve those links exactly and keep them clickable.\n\n" .
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return TekgAgentPromptLibrary::structuredAnswerPrompt($language, $payload);
     }
 
     private function buildEvidenceWalkDraftPrompt(
@@ -408,7 +405,8 @@ final class TekgAgentLlmClient
         array $evidenceWalk,
         array $reportPlan,
         string $confidence,
-        array $limits
+        array $limits,
+        string $language = 'english'
     ): string {
         $payload = [
             'question' => $question,
@@ -420,15 +418,7 @@ final class TekgAgentLlmClient
             'limits' => $limits,
         ];
 
-        return "Write an evidence-walk draft report using nature-writing policy.\n" .
-            "Use evidence first: start from the verified evidence and walk sequence before final prose.\n" .
-            "Build the argument before prose: internally organize the report around report_plan and evidence_walk, then write the answer.\n" .
-            "Make a claim-evidence map explicit in the report where useful, connecting each major claim to available evidence, citation, or route references.\n" .
-            "Use bounded claims only. Mark weak support, uncertainty, missing inputs and evidence gaps directly.\n" .
-            "Do not add evidence, claims, PMID values, URLs, citation IDs, mechanisms, entities, or routes that are absent from the payload.\n" .
-            "Treat evidence_package as the evidence body; use evidence_walk as the reasoning path; use report_plan as the section and ordering contract.\n" .
-            "Do not restate raw JSON and do not mention unavailable internal plugin payloads.\n\n" .
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return TekgAgentPromptLibrary::evidenceWalkDraftPrompt($language, $payload);
     }
 
     private function buildEvidenceWalkPolishPrompt(
@@ -437,7 +427,8 @@ final class TekgAgentLlmClient
         array $evidencePackage,
         array $evidenceWalk,
         array $reportPlan,
-        array $integrityReport
+        array $integrityReport,
+        string $language = 'english'
     ): string {
         $payload = [
             'draft_answer' => $draftAnswer,
@@ -448,15 +439,7 @@ final class TekgAgentLlmClient
             'integrity_report' => $integrityReport,
         ];
 
-        return "Polish this evidence-walk draft using nature-polishing policy.\n" .
-            "Polish language and structure only: improve clarity, flow, concision, section transitions, and academic tone.\n" .
-            "Use no new claims, no new PMID values, no new URLs, and no new citations or citation IDs.\n" .
-            "Do not add entities, mechanisms, evidence, references, routes, links, or conclusions that are absent from the draft and payload.\n" .
-            "preserve links and citations exactly when they are already supported by evidence_package or the draft.\n" .
-            "If integrity_report identifies unsupported material, downgrade unsupported claims rather than strengthening them.\n" .
-            "Return only the final polished report text. Do not include revision notes, editor notes, or meta commentary in the answer.\n" .
-            "Do not restate raw JSON and do not mention unavailable internal plugin payloads.\n\n" .
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return TekgAgentPromptLibrary::evidenceWalkPolishPrompt($language, $payload);
     }
 
     private function buildDirectAnswerPrompt(
@@ -468,7 +451,8 @@ final class TekgAgentLlmClient
         array $citations,
         string $confidence,
         array $limits,
-        array $extraContext
+        array $extraContext,
+        string $language = 'english'
     ): string {
         $payload = [
             'question' => $question,
@@ -482,14 +466,7 @@ final class TekgAgentLlmClient
             'extra_context' => $extraContext,
         ];
 
-        return "Write the final answer directly from the evidence below.\n" .
-            "Start with the main conclusion, then add the most important supporting facts.\n" .
-            "Keep the answer concise for simple factual questions, and only mention uncertainty if the evidence is incomplete or conflicting.\n" .
-            "If extra_context includes a full sequence and the user explicitly asked for the complete sequence, reproduce that sequence verbatim in the answer.\n" .
-            "When citing, prefer explicit PubMed markers like PMID 12345678. If you use indexed markers, use [1], [2], [3] in the citations array order.\n" .
-            "If Site Navigator Plugin evidence provides Markdown links or URLs, preserve those links exactly and keep them clickable.\n" .
-            "Do not invent unsupported details and do not restate raw JSON.\n\n" .
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return TekgAgentPromptLibrary::directAnswerPrompt($language, $payload);
     }
 
     private function buildEvidenceSummaryPrompt(
@@ -501,7 +478,8 @@ final class TekgAgentLlmClient
         array $citations,
         string $confidence,
         array $limits,
-        string $hint
+        string $hint,
+        string $language = 'english'
     ): string {
         $payload = [
             'question' => $question,
@@ -515,11 +493,32 @@ final class TekgAgentLlmClient
             'hint' => $hint,
         ];
 
-        return "Write a short evidence-based summary in no more than 3 sentences.\n" .
-            "Do not repeat a full sequence and do not enumerate the full list again if it has already been shown separately.\n" .
-            "Focus on the main conclusion and the most important supporting fact.\n" .
-            "When citing, prefer explicit PubMed markers like PMID 12345678. If you use indexed markers, use [1], [2], [3] in the citations array order.\n\n" .
-            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        return TekgAgentPromptLibrary::evidenceSummaryPrompt($language, $payload);
+    }
+
+    private function languageFromPayload(array $payload): string
+    {
+        foreach (['answer_language', 'process_language', 'language'] as $key) {
+            if (isset($payload[$key]) && is_string($payload[$key])) {
+                return TekgAgentPromptLibrary::normalizeLanguage($payload[$key]);
+            }
+        }
+
+        $analysis = $payload['analysis'] ?? [];
+        if (is_array($analysis)) {
+            foreach (['answer_language', 'process_language', 'language'] as $key) {
+                if (isset($analysis[$key]) && is_string($analysis[$key])) {
+                    return TekgAgentPromptLibrary::normalizeLanguage($analysis[$key]);
+                }
+            }
+        }
+
+        $question = (string)($payload['question'] ?? '');
+        if ($question !== '' && preg_match('/[\x{4e00}-\x{9fff}]/u', $question)) {
+            return 'chinese';
+        }
+
+        return 'english';
     }
 
     private function promptSafePayload(array $payload): array

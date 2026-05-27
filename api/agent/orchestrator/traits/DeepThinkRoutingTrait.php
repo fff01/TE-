@@ -215,9 +215,7 @@ trait TekgDeepThinkRoutingTrait
 
         $generated = $this->llm->generateJson(
             $model,
-            'You are a single-model tool-using academic assistant. Decide whether more plugin evidence is needed. ' .
-            'Return JSON with keys done (boolean), next_plugin (string), reason (string). ' .
-            'Only choose next_plugin from candidate_plugins. If the existing evidence is already enough for a concise answer, set done=true.',
+            TekgAgentPromptLibrary::jsonInstructionPrompt('deepthink_router', (string)($analysis['answer_language'] ?? $analysis['language'] ?? 'english')),
             $payload,
             max(8, (int)($this->config['llm_json_timeout'] ?? 20)),
             'deepthink_router'

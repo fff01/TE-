@@ -262,6 +262,90 @@ Residual risk:
 - These canaries prove the repaired boundary cases, not broad semantic answer quality.
 - Phase 5C should add semantic evaluation over saved and future live runs before making claims about Agent research-answer superiority.
 
+## Phase 5C Semantic Evaluation Checks - 2026-05-26
+
+Phase 5C added a deterministic semantic proxy over saved DT vs Agent runs. It does not call live APIs and does not modify Deep Think or Agent runtime routing.
+
+Primary files:
+
+- `scripts/eval/semantic_eval.py`
+- `scripts/eval/run_dt_agent_live_eval.py`
+- `test/dt_agent_semantic_eval_test.py`
+- `test/dt_agent_live_eval_score_test.py`
+
+Saved-run outputs:
+
+- `docs/eval/runs/phase5b_flash_full/semantic_case_results.jsonl`
+- `docs/eval/runs/phase5b_flash_full/semantic_summary.json`
+- `docs/eval/runs/phase5b_flash_full/semantic_summary.md`
+- `docs/eval/runs/phase5b_flash_full/semantic_analysis.md`
+
+Verification commands:
+
+```powershell
+python test\dt_agent_live_eval_score_test.py
+python test\dt_agent_semantic_eval_test.py
+python -m py_compile scripts\eval\run_dt_agent_live_eval.py scripts\eval\semantic_eval.py test\dt_agent_live_eval_score_test.py test\dt_agent_semantic_eval_test.py
+python scripts\eval\semantic_eval.py --run-dir docs\eval\runs\phase5b_flash_full
+python scripts\eval\run_dt_agent_live_eval.py --rescore-existing --semantic-proxy --out-dir docs\eval\runs\phase5b_flash_full
+python scripts/checks/check_docs_freshness.py
+python scripts/checks/check_api_contracts.py
+```
+
+Phase 5B saved-run semantic proxy result:
+
+- Agent wins: 13/30.
+- Deep Think wins: 11/30.
+- Ties: 6/30.
+- Average claim support score: 0.726.
+- Average citation relevance score: 0.562.
+- Average missing-evidence handling score: 0.672.
+- Average research usefulness score: 0.679.
+
+Reliability interpretation:
+
+- The semantic proxy gives stronger evidence than artifact counts alone, but it is still deterministic triage.
+- It cannot verify biomedical truth or claim-level citation support.
+- Deep Think remains the default immediate QA path.
+- Agent remains appropriate for research-style synthesis candidates, especially when semantic proxy and manual review show added value.
+- Test coverage includes no-network validation of the live runner main loop with `--semantic-proxy` and saved-run fallback behavior when `raw_events` files are absent.
+
+## Agent Bilingual Prompt Library Checks - 2026-05-27
+
+Agent prompt text is now centralized in `api/agent/config/agent_prompts.php`.
+
+Runtime changes:
+
+- `TekgAgentLlmClient` delegates prompt text to `TekgAgentPromptLibrary`.
+- Agent prompts support Chinese and English branches for system, narrator, generic user, structured answer, evidence-walk draft, evidence-walk polish, direct answer, evidence summary, JSON system, sufficiency, answer structure, DeepThink routing, Cypher Explorer, and Literature Reading instructions.
+- `tekg_agent_detect_language()` supports explicit Chinese aliases including `zh`, `zh-cn`, `zh_cn`, `中文`, `汉语`, and `漢語`.
+- Payload-array language detection falls back to the `question` field when explicit language fields are absent.
+- Agent and Deep Think process narration no longer force English; narration follows resolved answer/process language.
+
+Verification commands:
+
+```powershell
+php test\agent_prompt_language_test.php
+php test\agent_evaluation_report_runtime_test.php
+php test\agent_simple_preflight_gate_test.php
+php test\agent_research_report_prompt_test.php
+php test\agent_evidence_package_runtime_test.php
+php -l api\agent\bootstrap.php
+php -l api\agent\orchestrator\LlmClient.php
+php -l api\agent\config\agent_prompts.php
+php -l api\agent\orchestrator\AcademicAgentService.php
+php -l api\agent\orchestrator\DeepThinkService.php
+php -l api\agent\orchestrator\traits\DeepThinkRoutingTrait.php
+php -l api\agent\plugins\CypherExplorerPlugin.php
+php -l api\agent\plugins\LiteratureReadingPlugin.php
+php -l test\agent_prompt_language_test.php
+```
+
+Residual risk:
+
+- No live LLM relay/API call was run for this prompt refactor.
+- Tests verify prompt construction and language routing, not actual model output quality.
+
 ## 运行前提
 
 - WAMP 由用户手动启动。

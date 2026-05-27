@@ -7,5 +7,10 @@
     "low": 27,
     "none": 3
   },
-  "agent_overkill_count": 5
+  "agent_overkill_count": 5,
+  "semantic_winner_counts": {
+    "agent": 13,
+    "deep_think": 11,
+    "tie": 6
+  }
 }

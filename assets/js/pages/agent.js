@@ -86,6 +86,10 @@
     'Integrating->Writing',
   ];
   const WORKFLOW_BACK_EDGE = 'Executing->Collecting';
+  const WORKFLOW_STAGE_INDEX = WORKFLOW_STAGES.reduce((map, stage, index) => {
+    map[stage.id] = index;
+    return map;
+  }, {});
 
   function escapeHtml(value) {
     return String(value || '')
@@ -340,7 +344,7 @@
       researchTemplatesTitleNode.textContent = templateTitleForMode(currentMode);
     }
     researchTemplateListNode.innerHTML = templates.map((template) => `
-      <button type="button" class="agent-research-template-chip" data-research-prompt="${escapeHtml(template.prompt)}">
+      <button type="button" class="agent-research-template-chip" data-research-prompt="${escapeHtml(template.prompt)}" title="${escapeHtml(template.prompt)}">
         <span class="agent-research-template-label">${escapeHtml(template.label)}</span>
         <span class="agent-research-template-prompt">${escapeHtml(template.prompt)}</span>
       </button>
@@ -471,6 +475,7 @@
 
   function setWorkflowState(turn, payload) {
     if (!turn || !turn.workflow) return;
+    if (turn.finalized) return;
     const next = defaultWorkflowState();
     const incomingStatuses = payload && typeof payload === 'object' ? payload.stage_statuses : null;
     if (incomingStatuses && typeof incomingStatuses === 'object') {
@@ -482,10 +487,50 @@
     next.current_stage = String((payload && payload.current_stage) || next.current_stage || 'Understanding');
     next.traversed_edges = Array.isArray(payload && payload.traversed_edges) ? payload.traversed_edges.slice() : [];
     next.complete = !!(payload && payload.complete);
+    if (next.complete) {
+      completeWorkflowForDone(turn);
+      return;
+    }
+    const currentIndex = WORKFLOW_STAGE_INDEX[String(turn.workflow.current_stage || '')] ?? -1;
+    const nextIndex = WORKFLOW_STAGE_INDEX[next.current_stage] ?? currentIndex;
+    if (nextIndex < currentIndex) {
+      return;
+    }
     turn.workflow = next;
       turn.currentStage = next.current_stage || turn.currentStage || '';
       applyWorkflowState(turn);
     }
+
+  function activateInitialWorkflowStage(turn) {
+    if (!turn || !turn.workflow) return;
+    const next = defaultWorkflowState();
+    next.current_stage = 'Understanding';
+    next.stage_statuses.Understanding = 'active';
+    turn.workflow = next;
+    setTurnStage(turn, 'Understanding');
+    applyWorkflowState(turn);
+  }
+
+  function completeWorkflowForDone(turn) {
+    if (!turn || !turn.workflow) return;
+    const next = defaultWorkflowState();
+    WORKFLOW_STAGES.forEach((stage) => {
+      next.stage_statuses[stage.id] = 'done';
+    });
+    next.current_stage = 'Writing';
+    next.traversed_edges = WORKFLOW_FORWARD_EDGES.slice();
+    next.complete = true;
+    turn.workflow = next;
+    turn.currentStage = 'Writing';
+    applyWorkflowState(turn);
+  }
+
+  function thinkingTitleForMode(mode) {
+    if (mode === 'agent') {
+      return ui.agent_thinking_title || 'Agent thinking';
+    }
+    return ui.thinking_title || 'Deep thinking';
+  }
 
   function createTurn(question, options = {}) {
     ensureConversationStarted();
@@ -502,7 +547,7 @@
       <div class="agent-assistant-row">
         <section class="agent-thinking" data-role="thinking">
           <div class="agent-thinking-head">
-            <span class="agent-thinking-title">${escapeHtml(ui.thinking_title || 'Deep thinking')}</span>
+            <span class="agent-thinking-title">${escapeHtml(thinkingTitleForMode(mode))}</span>
               <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml('Starting')}</span>
           </div>
           ${showWorkflow ? createWorkflowMarkup() : ''}
@@ -1030,6 +1075,7 @@
       if (payload.workflow_state && typeof payload.workflow_state === 'object') {
         setWorkflowState(turn, payload.workflow_state);
       }
+      completeWorkflowForDone(turn);
       finalizeTurn(turn);
     }
   }
@@ -1219,6 +1265,7 @@
     }
 
     const turn = createTurn(question, { showWorkflow: true, mode: 'agent' });
+    activateInitialWorkflowStage(turn);
     startThinkingTimer(turn);
     const abortController = new AbortController();
     activeAbortController = abortController;

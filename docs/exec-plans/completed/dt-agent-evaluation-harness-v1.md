@@ -18,8 +18,8 @@
 - Create `api/agent/contracts/ModeComparisonEvaluation.php`.
 - Add deterministic fixture tests for DT report, Agent report, and comparison scoring.
 - Add `agent_eval_model_strategy` config documentation and runtime config keys for writer/polisher recommendations:
-  - writer / nature-writing: prefer `deepseek-v4-pro` for complex report generation.
-  - polisher / nature-polishing: prefer `deepseek-v4-flash`.
+  - writer / evidence-grounded drafting: prefer `deepseek-v4-pro` for complex report generation.
+  - polisher / evidence-preserving polishing: prefer `deepseek-v4-flash`.
   - default evaluator/bulk smoke: prefer `deepseek-v4-flash`; reserve `deepseek-v4-pro` for complex cases.
 - Add minimal Agent response field `evaluation_report` generated from existing runtime artifacts.
 - Update long-term docs with Phase 5A design, same-runtime requirement, and next optimization directions.
@@ -110,7 +110,7 @@ Requirements:
 
 - Document that Phase 5A is deterministic harness only.
 - Document next phase: live DeepSeek evaluation over the 30 cases, then expand to 80-120 cases.
-- Document cost-aware model strategy: flash for broad evaluation, pro for complex research cases and nature-writing drafts.
+- Document cost-aware model strategy: flash for broad evaluation, pro for complex research cases and evidence-first drafting.
 
 ## Verification
 

@@ -5,6 +5,7 @@
 - Agent completed: 24
 - Agent overkill count: 5
 - Agent value added: {'low': 27, 'none': 3}
+- Semantic winner counts: {'agent': 13, 'deep_think': 11, 'tie': 6}
 
 | Case | Expected | DT ok | Agent ok | Value added | Overkill | DT ms | Agent ms |
 |---|---|---:|---:|---|---:|---:|---:|

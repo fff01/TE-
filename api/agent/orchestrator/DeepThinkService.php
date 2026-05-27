@@ -64,7 +64,7 @@ final class TekgDeepThinkService
             $sessionId = tekg_agent_make_session_id();
         }
         $answerLanguage = tekg_agent_detect_language($question, trim((string)($payload['language'] ?? 'english')));
-        $processLanguage = 'english';
+        $processLanguage = $this->resolveProcessLanguage($answerLanguage);
 
         $sessionMemory = tekg_agent_load_session_memory($sessionId);
         $analysis = $this->normalizer->analyze($question, $answerLanguage);
@@ -425,6 +425,11 @@ final class TekgDeepThinkService
         return $this->isSimpleIntent($intent)
             ? trim((string)($this->config['deepseek_model'] ?? 'deepseek-chat'))
             : trim((string)($this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-reasoner'));
+    }
+
+    private function resolveProcessLanguage(string $answerLanguage): string
+    {
+        return tekg_agent_detect_language(['language' => $answerLanguage], '');
     }
 
     private function answerTimeoutForModel(array $runtimeConfig, string $model): int

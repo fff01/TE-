@@ -8639,5 +8639,20 @@
         "message": "Expecting value: line 1 column 1 (char 0)"
       }
     ]
+  },
+  "semantic_evaluation": {
+    "schema_version": "dt_agent_semantic_proxy.v1",
+    "case_id": "P5A_B_016",
+    "claim_support_score": 0.0,
+    "citation_relevance_score": 0.0,
+    "missing_evidence_score": 0.0,
+    "research_usefulness_score": 0.0,
+    "semantic_winner": "deep_think",
+    "semantic_notes": [
+      "v1 deterministic proxy only: uses saved answer text and artifact presence; it does not call an external LLM or verify biomedical truth.",
+      "Agent answer text is missing or unavailable in saved artifacts.",
+      "Agent evidence_walk/evidence_package artifacts are missing or empty.",
+      "Agent citation artifacts are missing or empty."
+    ]
   }
 }

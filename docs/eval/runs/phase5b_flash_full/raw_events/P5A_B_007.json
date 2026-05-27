@@ -38810,5 +38810,17 @@
     "agent_overkill": true,
     "dt_errors": [],
     "agent_errors": []
+  },
+  "semantic_evaluation": {
+    "schema_version": "dt_agent_semantic_proxy.v1",
+    "case_id": "P5A_B_007",
+    "claim_support_score": 1.0,
+    "citation_relevance_score": 1.0,
+    "missing_evidence_score": 0.0,
+    "research_usefulness_score": 0.75,
+    "semantic_winner": "deep_think",
+    "semantic_notes": [
+      "v1 deterministic proxy only: uses saved answer text and artifact presence; it does not call an external LLM or verify biomedical truth."
+    ]
   }
 }

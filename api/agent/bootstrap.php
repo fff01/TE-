@@ -122,12 +122,46 @@ function tekg_agent_substr(string $value, int $start, ?int $length = null): stri
     return $length === null ? substr($value, $start) : substr($value, $start, $length);
 }
 
-function tekg_agent_detect_language(string $question, string $fallback = 'english'): string
+function tekg_agent_normalize_language_code(string $language): string
 {
+    $value = tekg_agent_lower(trim(str_replace('_', '-', $language)));
+    if (in_array($value, ['chinese', 'zh', 'zh-cn', 'zh-hans', 'zh-hant', 'cn', '中文', '汉语', '漢語'], true)) {
+        return 'chinese';
+    }
+    if (in_array($value, ['english', 'en', 'en-us', 'en-gb'], true)) {
+        return 'english';
+    }
+    return '';
+}
+
+function tekg_agent_detect_language(array|string $questionOrPayload, string $fallbackOrQuestion = 'english'): string
+{
+    $question = is_array($questionOrPayload) ? $fallbackOrQuestion : $questionOrPayload;
+    $fallback = is_array($questionOrPayload) ? '' : $fallbackOrQuestion;
+    if (is_array($questionOrPayload)) {
+        $hasExplicitLanguage = false;
+        foreach (['language', 'answer_language', 'process_language'] as $key) {
+            if (isset($questionOrPayload[$key]) && is_string($questionOrPayload[$key])) {
+                $normalized = tekg_agent_normalize_language_code($questionOrPayload[$key]);
+                if ($normalized === 'chinese') {
+                    return 'chinese';
+                }
+                if ($normalized === 'english') {
+                    $hasExplicitLanguage = true;
+                    $fallback = 'english';
+                }
+            }
+        }
+        if (!$hasExplicitLanguage && isset($questionOrPayload['question']) && is_string($questionOrPayload['question'])) {
+            $question = $questionOrPayload['question'];
+        }
+    }
+
     if (preg_match('/[\x{4e00}-\x{9fff}]/u', $question)) {
         return 'chinese';
     }
-    return in_array($fallback, ['chinese', 'english'], true) ? $fallback : 'english';
+    $normalizedFallback = tekg_agent_normalize_language_code($fallback);
+    return $normalizedFallback !== '' ? $normalizedFallback : 'english';
 }
 
 function tekg_agent_make_session_id(): string

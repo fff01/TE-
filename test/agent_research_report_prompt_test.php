@@ -87,7 +87,7 @@ $writerPrompt = $writerPromptMethod->invoke(
 assert_contains('"evidence_package"', $writerPrompt, 'writer prompt includes evidence_package');
 assert_contains('"evidence_walk"', $writerPrompt, 'writer prompt includes evidence_walk');
 assert_contains('"report_plan"', $writerPrompt, 'writer prompt includes report_plan');
-assert_contains('evidence first', $writerPrompt, 'writer prompt uses nature-writing evidence-first policy');
+assert_contains('evidence first', $writerPrompt, 'writer prompt uses evidence-grounded drafting policy');
 assert_contains('Build the argument before prose', $writerPrompt, 'writer prompt requires argument before prose');
 assert_contains('claim-evidence map', $writerPrompt, 'writer prompt requires claim-evidence map');
 assert_contains('bounded claims', $writerPrompt, 'writer prompt requires bounded claims');

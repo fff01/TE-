@@ -159,7 +159,7 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
 
         $generated = $this->llm->generateJson(
             $model,
-            'Group the provided literature citations into JSON fields supported_claims, conflicting_claims, missing_evidence, and claim_clusters. Each claim cluster must include claim, summary, and citations (array of PMID or title strings).',
+            TekgAgentPromptLibrary::jsonInstructionPrompt('literature_reading', (string)($analysis['answer_language'] ?? $analysis['language'] ?? 'english')),
             $payload
         );
 

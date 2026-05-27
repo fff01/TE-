@@ -139,6 +139,7 @@
   max-width: min(100%, 360px);
   display: grid;
   gap: 3px;
+  min-width: 0;
   padding: 10px 14px;
   border: 1px solid #dbe3f5;
   border-radius: 18px;
@@ -163,12 +164,22 @@
 }
 
 .agent-research-template-label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #5166be;
   font-size: 0.84rem;
   font-weight: 800;
 }
 
 .agent-research-template-prompt {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #4f5e76;
   font-size: 0.92rem;
   line-height: 1.45;

@@ -16,6 +16,12 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+EVAL_DIR = Path(__file__).resolve().parent
+if str(EVAL_DIR) not in sys.path:
+    sys.path.insert(0, str(EVAL_DIR))
+
+from semantic_eval import score_semantic_proxy
+
 DEFAULT_CASES = ROOT / "docs" / "eval" / "dt_agent_golden_cases.jsonl"
 
 
@@ -363,6 +369,19 @@ def append_jsonl(path: Path, value: Any) -> None:
         handle.write(json.dumps(value, ensure_ascii=False, separators=(",", ":")) + "\n")
 
 
+def build_case_result_row(record: dict[str, Any]) -> dict[str, Any]:
+    case = record["case"]
+    row = {
+        "case_id": case.get("case_id"),
+        "question": case.get("question"),
+        "expected_best_mode": case.get("expected_best_mode"),
+        "evaluation": record["evaluation"],
+    }
+    if isinstance(record.get("semantic_evaluation"), dict):
+        row["semantic_evaluation"] = record["semantic_evaluation"]
+    return row
+
+
 def write_summary(out_dir: Path, results: list[dict[str, Any]]) -> None:
     total = len(results)
     summary = {
@@ -376,6 +395,17 @@ def write_summary(out_dir: Path, results: list[dict[str, Any]]) -> None:
     for item in results:
         key = item["evaluation"]["agent_value_added"]
         summary["agent_value_added"][key] = int(summary["agent_value_added"].get(key, 0)) + 1
+    semantic_evaluations = [
+        item["semantic_evaluation"]
+        for item in results
+        if isinstance(item.get("semantic_evaluation"), dict)
+    ]
+    if semantic_evaluations:
+        winner_counts: dict[str, int] = {}
+        for semantic in semantic_evaluations:
+            key = str(semantic.get("semantic_winner") or "unknown")
+            winner_counts[key] = winner_counts.get(key, 0) + 1
+        summary["semantic_winner_counts"] = dict(sorted(winner_counts.items()))
     write_json(out_dir / "summary.json", summary)
     lines = [
         "# DT vs Agent Live Evaluation Summary",
@@ -385,10 +415,14 @@ def write_summary(out_dir: Path, results: list[dict[str, Any]]) -> None:
         f"- Agent completed: {summary['agent_ok']}",
         f"- Agent overkill count: {summary['agent_overkill_count']}",
         f"- Agent value added: {summary['agent_value_added']}",
+    ]
+    if "semantic_winner_counts" in summary:
+        lines.append(f"- Semantic winner counts: {summary['semantic_winner_counts']}")
+    lines.extend([
         "",
         "| Case | Expected | DT ok | Agent ok | Value added | Overkill | DT ms | Agent ms |",
         "|---|---|---:|---:|---|---:|---:|---:|",
-    ]
+    ])
     for item in results:
         ev = item["evaluation"]
         lines.append(
@@ -411,13 +445,14 @@ def main() -> int:
     parser.add_argument("--poll-interval", type=float, default=2.0)
     parser.add_argument("--model", default="deepseek-v4-flash")
     parser.add_argument("--rescore-existing", action="store_true")
+    parser.add_argument("--semantic-proxy", action="store_true")
     args = parser.parse_args()
 
     if args.rescore_existing:
         out_dir = Path(args.out_dir)
         if not out_dir:
             raise SystemExit("--rescore-existing requires --out-dir")
-        return rescore_existing(out_dir)
+        return rescore_existing(out_dir, semantic_proxy=args.semantic_proxy)
 
     cases = read_cases(Path(args.cases))
     if args.case_id:
@@ -448,13 +483,10 @@ def main() -> int:
             agent_result = {"ok": False, "answer": "", "errors": [{"type": "agent_exception", "message": str(exc)}], "timings": {"total_ms": 0}}
         evaluation = score_locally(case, dt_result, agent_result)
         record = {"case": case, "dt": dt_result, "agent": agent_result, "evaluation": evaluation}
+        if args.semantic_proxy:
+            record["semantic_evaluation"] = score_semantic_proxy(case, dt_result, agent_result)
         write_json(out_dir / "raw_events" / f"{case_id}.json", record)
-        append_jsonl(out_dir / "case_results.jsonl", {
-            "case_id": case_id,
-            "question": case.get("question"),
-            "expected_best_mode": case.get("expected_best_mode"),
-            "evaluation": evaluation,
-        })
+        append_jsonl(out_dir / "case_results.jsonl", build_case_result_row(record))
         results.append(record)
         print(
             f"  dt_ok={evaluation['dt_ok']} agent_ok={evaluation['agent_ok']} "
@@ -466,7 +498,7 @@ def main() -> int:
     return 0
 
 
-def rescore_existing(out_dir: Path) -> int:
+def rescore_existing(out_dir: Path, semantic_proxy: bool = False) -> int:
     raw_dir = out_dir / "raw_events"
     if not raw_dir.is_dir():
         raise SystemExit(f"Missing raw_events directory: {raw_dir}")
@@ -486,13 +518,12 @@ def rescore_existing(out_dir: Path) -> int:
         evaluation = score_locally(case, record["dt"], agent)
         record["agent"] = agent
         record["evaluation"] = evaluation
+        if semantic_proxy:
+            record["semantic_evaluation"] = score_semantic_proxy(case, record["dt"], agent)
+        else:
+            record.pop("semantic_evaluation", None)
         raw_file.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
-        append_jsonl(out_dir / "case_results.jsonl", {
-            "case_id": case.get("case_id"),
-            "question": case.get("question"),
-            "expected_best_mode": case.get("expected_best_mode"),
-            "evaluation": evaluation,
-        })
+        append_jsonl(out_dir / "case_results.jsonl", build_case_result_row(record))
         results.append(record)
     write_summary(out_dir, results)
     print(f"Rescored existing live eval results in {out_dir}")

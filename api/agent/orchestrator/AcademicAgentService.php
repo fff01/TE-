@@ -74,7 +74,7 @@ final class TekgAcademicAgentService
         ]);
 
         $answerLanguage = tekg_agent_detect_language($question, trim((string)($payload['language'] ?? 'english')));
-        $processLanguage = 'english';
+        $processLanguage = $this->resolveProcessLanguage($answerLanguage);
         $coreModel = $this->resolveCoreModel($payload);
         $sufficiencyModel = $this->resolveSufficiencyModel($payload);
         $expertModel = $this->resolveExpertModel($payload);
@@ -868,6 +868,11 @@ final class TekgAcademicAgentService
         }
 
         return $writingModel;
+    }
+
+    private function resolveProcessLanguage(string $answerLanguage): string
+    {
+        return tekg_agent_detect_language(['language' => $answerLanguage], '');
     }
 
     private function answerTimeoutForModel(string $model): int

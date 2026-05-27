@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development. Coordinator dispatches medium subagents only. Do not modify Neo4j, graph runtime, taxonomy, or expression runtime.
 
-**Goal:** Implement fourth-stage Agent differentiation with a deterministic TE-KG Evidence Walk, a two-model Writer/Polisher chain inspired by nature-writing and nature-polishing, and a deterministic integrity gate.
+**Goal:** Implement fourth-stage Agent differentiation with a deterministic TE-KG Evidence Walk, a two-model Writer/Polisher chain using evidence-grounded drafting and evidence-preserving polishing, and a deterministic integrity gate.
 
 **Architecture:** EvidencePackage remains the mandatory evidence source. New deterministic builders derive `evidence_walk.v1` and `report_plan.v1` from the package. Agent Writing uses two LLM calls: first draft from the writing model/policy, then polish from a second model/policy. A deterministic integrity gate validates that the polished report does not add unsupported citations, URLs, or claims beyond package/walk evidence.
 
@@ -15,7 +15,7 @@
 ### In scope
 - Add `EvidenceWalk` contract/builder.
 - Add `ReportPlan` contract/builder.
-- Add two LLM client methods for nature-writing draft and nature-polishing revise.
+- Add two LLM client methods for evidence-first drafting and evidence-preserving polishing.
 - Add deterministic `ReportIntegrityGate`.
 - Wire Agent Writing to draft -> polish -> integrity gate.
 - Add non-LLM tests for builders, prompt constraints, and integrity gate.
@@ -31,8 +31,8 @@
 
 1. `evidence_walk.v1` is derived only from `evidence_package.v1`.
 2. `report_plan.v1` is deterministic and selected by intent/task type: mechanism review, evidence audit, batch comparison, graph ranking, or research report.
-3. Writer model call uses nature-writing style policy: evidence first, section plan, claim-evidence map, bounded claims.
-4. Polisher model call uses nature-polishing style policy: polish without adding claims/citations/URLs, downgrade unsupported claims, preserve citation and route integrity.
+3. Writer model call uses evidence-first drafting policy: evidence first, section plan, claim-evidence map, bounded claims.
+4. Polisher model call uses evidence-preserving polishing policy: polish without adding claims/citations/URLs, downgrade unsupported claims, preserve citation and route integrity.
 5. Integrity gate checks the polished report against package/walk references and blocks unsupported new PMID/URL/citation IDs or suspicious strong claims.
 6. Final Agent response should prefer polished report if integrity passes; otherwise fail clearly or return draft with integrity failure metadata, but must not silently accept invalid polish.
 7. Keep Agent response fields compatible by adding `evidence_walk`, `report_plan`, `draft_report`, `polished_report`, `integrity_report` without removing existing fields.
@@ -74,8 +74,8 @@ Files:
 - Create/modify `test/agent_research_report_prompt_test.php`
 
 Test-first requirements:
-- Prompt for draft contains nature-writing policy terms and includes only `evidence_package`, `evidence_walk`, `report_plan` as evidence body.
-- Prompt for polish contains nature-polishing constraints and explicitly forbids new claims, PMID, URLs, and citations.
+- Prompt for draft contains evidence-first drafting policy terms and includes only `evidence_package`, `evidence_walk`, `report_plan` as evidence body.
+- Prompt for polish contains evidence-preserving polishing constraints and explicitly forbids new claims, PMID, URLs, and citations.
 - Prompt does not include raw plugin payload keys.
 
 ### Task 4: Agent runtime integration

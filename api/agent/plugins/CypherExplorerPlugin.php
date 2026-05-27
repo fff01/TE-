@@ -135,7 +135,7 @@ final class TekgAgentCypherExplorerPlugin implements TekgAgentPluginInterface
 
         $generated = $this->llm->generateJson(
             $model,
-            'Generate a single read-only Cypher query for graph exploration. Return a JSON object with keys query_intent, generated_cypher, params. The query must be aggregation-friendly, use MATCH/OPTIONAL MATCH/WHERE/WITH/RETURN/ORDER BY/LIMIT only, and must include LIMIT.',
+            TekgAgentPromptLibrary::jsonInstructionPrompt('cypher_explorer', (string)($analysis['answer_language'] ?? $analysis['language'] ?? 'english')),
             $payload
         );
 

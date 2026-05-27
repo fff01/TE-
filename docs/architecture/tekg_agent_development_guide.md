@@ -1,12 +1,20 @@
 # TE-KG Agent 开发指南：让 Agent 真正区别于 Deep Think
 
 > 本文档基于 2026-05-18 的一次结构化阅读整理。阅读方式不是逐字翻译论文，而是按五轮主题读取本地引入资料的摘要、方法、实验、结论、局限，并补充 KG-Agent 相关高质量论文。目标是把理论变成 TE-KG 可执行的产品与工程路线。
+>
+> 2026-05-27 更新：本文仍保留“未来蓝图”的理论框架，但第 9 节已补充截至 Phase 5C 的实际落地状态。当前事实以 `docs/RELIABILITY.md`、`docs/exec-plans/completed/` 和 `docs/eval/runs/` 中的验证记录为准；本文用于解释方向、边界和下一步研发判断。
 
 ## 0. 一句话结论
 
 Deep Think 应该成为 TE-KG 的即时问答层：快速、轻量、站内导航友好、单轮可完成。
 
 Agent 不应该继续与 Deep Think 竞争普通问答。Agent 应该成为 TE-KG 的异步研究工作流：可计划、可恢复、可审计、可导出，能够把知识图谱拓扑、站内结构化数据、文献证据和用户目标组织成研究级产物。
+
+截至 Phase 5C 的实际结论更具体：
+
+- Deep Think 已经有 live evidence 支持其作为全站默认即时问答模式。Phase 5B 中 DT 30/30 成功，且在简单查询、页面导航、局部事实问题上更快、更稳。
+- Agent 已经完成 evidence package、evidence walk、report plan、integrity gate、compact preflight、DT/Agent live eval 和 deterministic semantic proxy 的第一版，但它仍不是普通问答默认入口。
+- Agent 的当前价值是研究任务候选：机制综述、证据审计、图谱排名、批量比较、报告生成。Phase 5C semantic proxy 在 Phase 5B saved run 上给出 Agent wins 13/30、Deep Think wins 11/30、tie 6/30，说明 Agent 有研究型任务潜力，但仍不能声称已完成 claim-level biomedical truth verification。
 
 本文提出一个适合论文表达的核心方向：
 
@@ -211,6 +219,12 @@ Agent 的设计原则：
 如果一个问题可以在 1-2 个插件内完成，并且不需要证据比较、批量任务或报告导出，默认交给 Deep Think。
 
 如果一个问题需要 3 个以上证据源、多个实体、长文献阅读、图拓扑分析、失败恢复或可导出结果，才进入 Agent。
+
+当前实现补充：
+
+- Agent 在 simple Deep Think-suitable task 上已有 compact preflight gate。即使用户强行走 Agent，简单查询也会尽量跳过完整 Evidence Walk Writing，返回兼容 Agent API 的轻量边界响应。
+- Live eval scorer 已避免把这种 compact Agent 因“调用了多个轻量插件”误判为 overkill；现在 overkill 还要求 artifact score 足够高。
+- 这条规则仍是产品边界，不是最终语义分类器。`task_complexity` 与 research-signal 仍含启发式成分，未来需要更多样本和语义评估校准。
 
 ## 3. 推荐 Agent 总体架构
 
@@ -615,6 +629,13 @@ Agent golden set：
 | Failure attribution | 失败原因是否可定位 |
 | User artifact success | 是否产出用户需要的表/报告/链接 |
 
+当前已落地的评估分层：
+
+- Phase 5A：deterministic comparison contract，比较 DT 与 Agent 的完成状态、artifact depth、overkill、latency、value-added proxy。
+- Phase 5B：通过网页同款后端路径完成 live eval：DT 使用 `api/deep_think_stream.php`，Agent 使用 `api/agent_runs.php` + `api/agent_run_status.php`。
+- Phase 5B.1：修复边界 canary，`P5A_B_005`、`P5A_B_029`、`P5A_B_001` 最新 live 记录均为 `dt_ok=true`、`agent_ok=true`、`agent_overkill=false`、errors 为空。
+- Phase 5C：新增 deterministic semantic proxy，输出 `claim_support_score`、`citation_relevance_score`、`missing_evidence_score`、`research_usefulness_score` 和 `semantic_winner`。它是 triage，不是事实核验器。
+
 ### 8.3 TE-KG GAIA-style 测试题
 
 好的 Agent 测试题应满足：
@@ -708,12 +729,12 @@ Agent golden set：
 - `api/agent/contracts/EvidenceWalk.php` 从 `evidence_package.v1` 派生 claim nodes、walk steps、support edges、citation refs、route refs 和 gaps。
 - `api/agent/contracts/ReportPlan.php` 按 mechanism review、evidence audit、batch comparison、graph ranking、research report 生成确定性报告计划。
 - `api/agent/contracts/ReportIntegrityGate.php` 在 draft 和 polish 后检查 unsupported PMID、URL、citation/route marker、空证据强结论；缺失计划 section 和 evidence walk claim 覆盖不足只作为 warning，避免中文标题或自由标题导致误失败。
-- `TekgAgentLlmClient::writeEvidenceWalkDraft()` 承担 nature-writing 风格初稿，`TekgAgentLlmClient::polishEvidenceWalkAnswer()` 承担 nature-polishing 风格润色；polisher 只允许语言和结构润色，不允许新增 claim/citation/URL。
+- `TekgAgentLlmClient::writeEvidenceWalkDraft()` 承担证据优先写作策略初稿，`TekgAgentLlmClient::polishEvidenceWalkAnswer()` 承担保留证据的润色策略；polisher 只允许语言和结构润色，不允许新增 claim/citation/URL。
 - `AcademicAgentService` 不再调用 `writeEvidencePackageAnswer()` 或 `writeStructuredAnswer()`；Writing 失败会显式失败，polished output 未通过 gate 时只允许使用已通过 gate 的 draft 作为保守答案并记录 warning。
 
 ### 9.5 第五阶段：评估与报告
 
-状态：Phase 5A 第一版已落地为 DT vs Agent deterministic evaluation harness。当前阶段不跑真实 DeepSeek API，而是先固定同款网页入口、双轨 golden cases、评估契约和 Agent 自评字段。真实 API 批量评估留到 Phase 5B。
+状态：Phase 5A、Phase 5B、Phase 5B.1 和 Phase 5C 均已完成第一版。当前评估体系已经从 deterministic artifact proxy 推进到 saved-run semantic proxy，但还没有进入 claim-level biomedical fact checking。
 
 目标：
 
@@ -733,9 +754,9 @@ Phase 5A 实际产物：
 - `api/agent/contracts/ModeComparisonEvaluation.php` 提供 deterministic comparison contract，输出 DT report、Agent report、`agent_value_added`、`agent_overkill`、`depth_delta`、`artifact_delta` 和推荐模式。
 - `AcademicAgentService` 在最终 response 中新增 `evaluation_report`，只使用当前 Agent runtime 已有字段，不改变 API 请求结构。
 - 同款入口规则已固定：DT 真实评估应调用 `api/deep_think_stream.php`；Agent 真实评估应调用 `api/agent_runs.php` + `api/agent_run_status.php`，不使用旧 `agent_stream.php` 或直接 worker 入口。
-- 模型策略：默认 broad evaluation 使用 `deepseek-v4-flash`；`agent_polisher_model` 已支持配置并默认为 `deepseek-v4-flash`；不把 `agent_writing_model` 默认改成 `deepseek-v4-pro`。后续复杂/失败样本可通过 payload 覆盖 writer 为 pro 做对照。
+- 模型策略：默认 broad evaluation 使用 `deepseek-v4-flash`；`agent_polisher_model` 已支持配置并默认为 `deepseek-v4-flash`；不把 `agent_writing_model` 默认改成 `deepseek-v4-pro`。复杂/失败样本可通过 payload 覆盖 writer 为 pro 做对照。
 
-下一步 Phase 5B：
+Phase 5B：
 
 状态：Phase 5B 已完成第一轮 `deepseek-v4-flash` live evaluation，结果见 `docs/eval/runs/phase5b_flash_full/analysis.md`。
 
@@ -746,12 +767,60 @@ Phase 5B 结论：
 - Agent 在 5 个简单/边界 DT 任务上出现 overkill，平均延迟显著高于 DT。
 - Agent 的主要失败来自 Writing 阶段：Site Navigator URL 被 integrity gate 误判、简单定义题 Writing 超时，以及少数 create/poll 非 JSON/404 异常。
 
-下一步 Phase 5C：
+Phase 5B.1：
 
-- 优先修 routing 和 integrity gate，而不是直接上 pro。
-- 为 Site Navigator route URL 增加 Markdown URL normalization 与 route evidence allowance。
-- 增加语义 evaluator，评估 claim faithfulness、citation relevance、missing-evidence reporting 和 report usefulness。
-- 只对复杂/失败样本使用 `deepseek-v4-pro` 复跑，判断 pro 是否带来足够质量增益。
+状态：Phase 5B.1 已完成边界和 URL gate 修复，收尾见 `docs/exec-plans/completed/phase5b1-boundary-and-url-gate-fixes.md`。
+
+实际修复：
+
+- `ReportIntegrityGate` 支持 Site Navigator route URL 的 Markdown punctuation normalization，并允许 evidence route 带 `#fragment` 时同一路径/查询的 fragmentless URL。
+- Agent compact preflight gate 修复了 live run 中 `$confidence` 类型与 `inferConfidence()` 字符串标签不一致的问题。
+- Python live scorer 的 `agent_overkill` 判定对齐 PHP contract，避免 compact Agent 因多个轻量插件被误判。
+
+通过的 canary：
+
+- `P5A_B_005`
+- `P5A_B_029`
+- `P5A_B_001`
+
+最新 live 结果均满足：DT 成功、Agent 成功、`agent_overkill=false`、错误数组为空。
+
+Phase 5C：
+
+状态：Phase 5C 已完成 deterministic semantic proxy，收尾见 `docs/exec-plans/completed/phase5c-semantic-evaluation.md` 和 `docs/eval/runs/phase5b_flash_full/semantic_analysis.md`。
+
+实际产物：
+
+- `scripts/eval/semantic_eval.py`：saved-run semantic proxy scorer。
+- `scripts/eval/run_dt_agent_live_eval.py --semantic-proxy`：live runner 可选接入语义代理评分。
+- `test/dt_agent_semantic_eval_test.py`：覆盖 Agent-win、unsupported long Agent answer、Deep Think compact boundary 和 summary-only fallback。
+- `test/dt_agent_live_eval_score_test.py`：覆盖默认无 semantic 字段、rescore semantic 字段、无网络主循环 `--semantic-proxy`。
+- `docs/eval/runs/phase5b_flash_full/semantic_case_results.jsonl`
+- `docs/eval/runs/phase5b_flash_full/semantic_summary.json`
+- `docs/eval/runs/phase5b_flash_full/semantic_summary.md`
+- `docs/eval/runs/phase5b_flash_full/semantic_analysis.md`
+
+Phase 5C 结果：
+
+- Agent wins: 13/30。
+- Deep Think wins: 11/30。
+- Tie: 6/30。
+- Average claim support score: 0.726。
+- Average citation relevance score: 0.562。
+- Average missing-evidence handling score: 0.672。
+- Average research usefulness score: 0.679。
+
+解释：
+
+- 这比 artifact count 更接近“研究答案是否有用”，但仍只是 deterministic triage。
+- 它不能证明某个生物医学 claim 为真，也不能证明某个 PMID 逐 claim 支撑结论。
+- 当前结论应表述为：Agent 在部分研究型任务上显示出可测的语义代理优势；Deep Think 仍是即时问答默认模式。
+
+下一步 Phase 5D 或人工审计：
+
+- 对 Agent-win 和 tie cases 做 claim-level sampling。
+- 检查 claim、supporting evidence、citation relevance、missing-evidence statement 是否逐项成立。
+- 只在 claim-level audit 后，才适合扩大 Agent 的默认推荐范围或写强质量结论。
 
 ## 10. 不建议做的方向
 
@@ -810,6 +879,10 @@ Agent：
 一句话：
 
 **Deep Think answers questions. Agent produces inspectable research artifacts.**
+
+截至 2026-05-27 的实际状态可以更保守地表述为：
+
+**Deep Think is the reliable default QA layer. Agent is an emerging research-workflow layer with auditable artifacts and early semantic-proxy evidence, but it still needs claim-level review before being treated as a stronger scientific answerer.**
 
 ## 13. 参考资料
 
