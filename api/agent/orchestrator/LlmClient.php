@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../config/agent_prompts.php';
+require_once __DIR__ . '/../contracts/NodeLlmResult.php';
 
 final class TekgAgentLlmClient
 {
@@ -110,6 +111,111 @@ final class TekgAgentLlmClient
         }
 
         return null;
+    }
+
+    public function runSixStageNode(string $stage, string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        $stage = strtolower(trim($stage));
+        $schema = $this->sixStageSchema($stage);
+        if ($schema === null) {
+            return new NodeLlmResult(
+                $stage,
+                '',
+                null,
+                false,
+                ["stage: unknown six-stage node {$stage}"],
+                null
+            );
+        }
+
+        $fixture = $this->sixStageFixture($stage);
+        if ($fixture !== null) {
+            return NodeLlmResult::fromRawJson($stage, $fixture, $schema);
+        }
+
+        $provider = $this->inferProvider($model);
+        if (!$this->canCallModel($provider)) {
+            return new NodeLlmResult(
+                $stage,
+                '',
+                null,
+                false,
+                [$this->sixStageErrorContext($stage, $provider, $model, 'provider credentials are missing')],
+                is_string($schema['version'] ?? null) ? $schema['version'] : null
+            );
+        }
+
+        $messages = [
+            [
+                'role' => 'system',
+                'content' => $this->jsonSystemPrompt($language),
+            ],
+            [
+                'role' => 'user',
+                'content' => $this->buildSixStageNodePrompt($stage, $language, $payload, $schema),
+            ],
+        ];
+
+        try {
+            $effectiveTimeout = $timeout ?? (int)($this->config['llm_six_stage_node_timeout'] ?? $this->config['llm_json_timeout'] ?? 20);
+            $response = !empty($this->config['llm_relay_url'])
+                ? $this->callRelay($provider, $model, $messages, false, $effectiveTimeout, 'six_stage_' . $stage)
+                : $this->callProvider($provider, $model, $messages, false, $effectiveTimeout, 'six_stage_' . $stage);
+        } catch (Throwable $e) {
+            return new NodeLlmResult(
+                $stage,
+                '',
+                null,
+                false,
+                [$this->sixStageErrorContext($stage, $provider, $model, $e->getMessage())],
+                is_string($schema['version'] ?? null) ? $schema['version'] : null
+            );
+        }
+
+        $rawText = trim((string)($response['content'] ?? ''));
+        if ($rawText === '') {
+            $responseError = trim((string)($response['error'] ?? 'empty response'));
+            return new NodeLlmResult(
+                $stage,
+                '',
+                null,
+                false,
+                [$this->sixStageErrorContext($stage, $provider, $model, $responseError)],
+                is_string($schema['version'] ?? null) ? $schema['version'] : null
+            );
+        }
+
+        return NodeLlmResult::fromRawJson($stage, $rawText, $schema);
+    }
+
+    public function runUnderstandingNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runSixStageNode('understanding', $model, $language, $payload, $timeout);
+    }
+
+    public function runPlanningNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runSixStageNode('planning', $model, $language, $payload, $timeout);
+    }
+
+    public function runCollectingNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runSixStageNode('collecting', $model, $language, $payload, $timeout);
+    }
+
+    public function runExecutingReviewNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runSixStageNode('executing', $model, $language, $payload, $timeout);
+    }
+
+    public function runIntegratingNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runSixStageNode('integrating', $model, $language, $payload, $timeout);
+    }
+
+    public function runWritingDecisionNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runSixStageNode('writing', $model, $language, $payload, $timeout);
     }
 
     public function assessSufficiency(string $model, array $payload, ?int $timeout = null): ?array
@@ -341,6 +447,76 @@ final class TekgAgentLlmClient
     private function jsonInstructionPrompt(string $name, string $language): string
     {
         return TekgAgentPromptLibrary::jsonInstructionPrompt($name, $language);
+    }
+
+    private function buildSixStageNodePrompt(string $stage, string $language, array $payload, array $schema): string
+    {
+        $prompt = $this->sixStagePrompt($stage, $language);
+        $nodePayload = [
+            'stage' => $stage,
+            'expected_schema' => $schema,
+            'input_payload' => $payload,
+        ];
+
+        return $prompt . "\n\n" . json_encode($nodePayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+    }
+
+    private function sixStagePrompt(string $stage, string $language): string
+    {
+        $prompts = require __DIR__ . '/../config/agent_node_prompts.php';
+        $languageKey = TekgAgentPromptLibrary::normalizeLanguage($language) === 'chinese' ? 'zh' : 'en';
+        return (string)($prompts[$stage][$languageKey] ?? $prompts[$stage]['en'] ?? '');
+    }
+
+    private function sixStageSchema(string $stage): ?array
+    {
+        $schemas = require __DIR__ . '/../config/agent_node_schemas.php';
+        foreach ($schemas as $schema) {
+            if (is_array($schema) && ($schema['stage'] ?? null) === $stage) {
+                return $schema;
+            }
+        }
+        return null;
+    }
+
+    private function sixStageFixture(string $stage): ?string
+    {
+        if (!$this->sixStageFixturesEnabled()) {
+            return null;
+        }
+
+        $fixtures = $this->config['six_stage_node_fixtures'] ?? [];
+        if (!is_array($fixtures) || !array_key_exists($stage, $fixtures)) {
+            return null;
+        }
+
+        $fixture = $fixtures[$stage];
+        if (is_string($fixture)) {
+            return $fixture;
+        }
+        if (is_array($fixture)) {
+            return json_encode($fixture, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: null;
+        }
+        return null;
+    }
+
+    private function sixStageFixturesEnabled(): bool
+    {
+        return (bool)($this->config['agent_test_mode'] ?? false);
+    }
+
+    private function sixStageErrorContext(string $stage, string $provider, string $model, string $message): string
+    {
+        $detail = trim($message);
+        if ($detail === '') {
+            $detail = 'unknown LLM error';
+        }
+
+        $context = "llm: stage={$stage} provider={$provider} model={$model}: {$detail}";
+        if (!empty($this->config['llm_relay_url'])) {
+            $context .= ' relay=' . (string)$this->config['llm_relay_url'];
+        }
+        return $context;
     }
 
     private function buildUserPrompt(

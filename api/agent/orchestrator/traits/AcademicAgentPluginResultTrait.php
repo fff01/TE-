@@ -253,6 +253,51 @@ trait TekgAcademicAgentPluginResultTrait
         ];
     }
 
+    private function pluginResultForLlmReview(string $pluginName, array $result): array
+    {
+        $displayDetails = (array)($result['display_details'] ?? []);
+        $compressed = (array)($result['compressed_result'] ?? []);
+        $carryForward = (array)($compressed['carry_forward_fields'] ?? []);
+        $evidenceItems = [];
+        foreach (array_slice((array)($displayDetails['evidence_items'] ?? $result['evidence_items'] ?? []), 0, 8) as $item) {
+            $normalized = tekg_agent_normalize_evidence_item($item, $pluginName);
+            if ($normalized !== null) {
+                $evidenceItems[] = $normalized;
+            }
+        }
+
+        return tekg_agent_json_safe([
+            'plugin_name' => $pluginName,
+            'status' => (string)($result['status'] ?? 'unknown'),
+            'query_summary' => (string)($result['query_summary'] ?? ''),
+            'display_summary' => (string)($result['display_summary'] ?? ''),
+            'result_counts' => (array)($result['result_counts'] ?? []),
+            'latency_ms' => (int)($result['latency_ms'] ?? 0),
+            'errors' => array_values(array_slice((array)($result['errors'] ?? []), 0, 8)),
+            'compressed_result' => [
+                'key_findings' => array_values(array_slice((array)($compressed['key_findings'] ?? []), 0, 8)),
+                'coverage' => (array)($compressed['coverage'] ?? []),
+                'limitations' => array_values(array_slice((array)($compressed['limitations'] ?? []), 0, 8)),
+                'candidate_claims' => array_values(array_slice((array)($compressed['candidate_claims'] ?? []), 0, 8)),
+                'carry_forward_fields' => [
+                    'plugin_name' => $pluginName,
+                    'status' => (string)($carryForward['status'] ?? $result['status'] ?? 'unknown'),
+                    'query_summary' => (string)($carryForward['query_summary'] ?? $result['query_summary'] ?? ''),
+                    'display_summary' => (string)($carryForward['display_summary'] ?? $result['display_summary'] ?? ''),
+                    'result_counts' => (array)($carryForward['result_counts'] ?? $result['result_counts'] ?? []),
+                    'preview_items' => array_values(array_slice((array)($carryForward['preview_items'] ?? []), 0, 5)),
+                    'evidence_preview' => array_values(array_slice((array)($carryForward['evidence_preview'] ?? []), 0, 5)),
+                    'top_rows' => array_values(array_slice((array)($carryForward['top_rows'] ?? []), 0, 5)),
+                    'result_shape' => (array)($carryForward['result_shape'] ?? []),
+                    'why_it_matters' => (string)($carryForward['why_it_matters'] ?? ''),
+                ],
+            ],
+            'preview_items' => array_values(array_slice((array)($displayDetails['preview_items'] ?? []), 0, 5)),
+            'evidence_items' => array_values(array_slice($evidenceItems, 0, 5)),
+            'citations' => array_values(array_slice((array)($displayDetails['citations'] ?? $result['citations'] ?? []), 0, 8)),
+        ]);
+    }
+
     private function buildNodePayloads(
         string $question,
         array $analysis,

@@ -292,6 +292,17 @@
   box-shadow: 0 12px 24px rgba(67, 95, 188, 0.18);
 }
 
+.agent-stage.is-error .agent-stage-circle {
+  border-color: #d96174;
+  background: #fff4f6;
+  color: #b13d50;
+  box-shadow: 0 12px 24px rgba(177, 61, 80, 0.14);
+}
+
+.agent-stage.is-error .agent-stage-label {
+  color: #9d3d4d;
+}
+
 .agent-stage.is-active .agent-stage-circle {
   background: #ffffff;
   color: #3f5fd0;

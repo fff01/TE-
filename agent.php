@@ -11,6 +11,8 @@ $protoSubtitle = 'Traceable academic research assistant';
 $pageExtraStylesheets = [
     tekg_assets_url('css/pages/agent.css'),
 ];
+$agentJsPath = __DIR__ . '/assets/js/pages/agent.js';
+$agentJsVersion = is_file($agentJsPath) ? (string) filemtime($agentJsPath) : '1';
 
 $ui = [
     'page_title' => 'Academic Agent',
@@ -198,5 +200,5 @@ require __DIR__ . '/head.php';
     'deepThinkTemplates' => $deepThinkTemplates,
     'ui' => $ui,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
-<script src="<?= htmlspecialchars(tekg_assets_url('js/pages/agent.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+<script src="<?= htmlspecialchars(tekg_assets_url('js/pages/agent.js') . '?v=' . $agentJsVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . '/foot.php'; ?>

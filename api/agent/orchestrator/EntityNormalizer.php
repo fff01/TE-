@@ -242,6 +242,11 @@ final class TekgAgentEntityNormalizer
 
     private function detectTaskComplexity(string $question, string $intent, array $entities): array
     {
+        $hasSiteNavigationWords = $this->containsAny($question, ['where can i find', 'where do i find', 'where to find', 'which page', 'what page', 'open page', 'show page', 'url', 'link', 'entry', '入口', '网址', '链接', '页面', '在哪看', '哪里看', '在哪里看', '从哪里看', '跳转', '打开', '查看页面', 'Genome Annotation Distribution', 'Genome Browser', 'JBrowse']);
+        if ($hasSiteNavigationWords) {
+            return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct site navigation covered by Deep Think.');
+        }
+
         $hasMechanismWords = $this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to', 'result in', '机制', '为什么', '如何', '导致', '通路', '因果']);
         if ($intent === 'mechanism' || $hasMechanismWords) {
             return $this->makeTaskComplexity('mechanism_chain', 'agent', 'Mechanism or causal-chain question.');
@@ -299,7 +304,6 @@ final class TekgAgentEntityNormalizer
             return $this->makeTaskComplexity('research_synthesis', 'agent', 'Research, evidence, comparison, analytics, or report task.');
         }
 
-        $hasSiteNavigationWords = $this->containsAny($question, ['where can i find', 'where do i find', 'where to find', 'which page', 'what page', 'open page', 'show page', 'url', 'link', 'entry', '入口', '网址', '链接', '页面', '在哪看', '哪里看', '在哪里看', '从哪里看', '跳转', '打开', '查看页面', 'Genome Annotation Distribution', 'Genome Browser', 'JBrowse']);
         if (in_array($intent, ['sequence', 'genome', 'expression', 'classification'], true) || $hasSiteNavigationWords) {
             return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct lookup covered by Deep Think.');
         }

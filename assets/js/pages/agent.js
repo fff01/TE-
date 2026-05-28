@@ -90,6 +90,20 @@
     map[stage.id] = index;
     return map;
   }, {});
+  const WORKFLOW_STAGE_ALIASES = WORKFLOW_STAGES.reduce((map, stage) => {
+    map[stage.id.toLowerCase()] = stage.id;
+    return map;
+  }, {
+    understanding: 'Understanding',
+    planning: 'Planning',
+    collecting: 'Collecting',
+    executing: 'Executing',
+    integrating: 'Integrating',
+    writing: 'Writing',
+    tool_execution_review: 'Executing',
+    writing_decision: 'Writing',
+  });
+  const WORKFLOW_TERMINAL_STATUSES = ['done', 'error'];
 
   function escapeHtml(value) {
     return String(value || '')
@@ -408,6 +422,14 @@
     };
   }
 
+  function normalizeLlmStageName(stage) {
+    const key = String(stage || '')
+      .trim()
+      .replace(/[\s-]+/g, '_')
+      .toLowerCase();
+    return WORKFLOW_STAGE_ALIASES[key] || '';
+  }
+
   function createWorkflowMarkup() {
     const main = WORKFLOW_STAGES.map((stage, index) => {
       const edgeClass = WORKFLOW_FORWARD_EDGES[index] === 'Collecting->Executing'
@@ -432,6 +454,14 @@
     `;
   }
 
+  function ensureWorkflowMarkup(turn) {
+    if (!turn || !turn.node) return;
+    if (turn.node.querySelector('[data-role="workflow"]')) return;
+    const thinkingBody = turn.node.querySelector('[data-role="thinking-body"]');
+    if (!thinkingBody) return;
+    thinkingBody.insertAdjacentHTML('beforebegin', createWorkflowMarkup());
+  }
+
   function applyWorkflowState(turn) {
     if (!turn || !turn.workflow) return;
     const workflowNode = turn.node.querySelector('[data-role="workflow"]');
@@ -444,8 +474,8 @@
       const rightStage = WORKFLOW_STAGES[index + 1] && WORKFLOW_STAGES[index + 1].id;
       const leftStatus = String(stageStatuses[leftStage] || 'pending');
       const rightStatus = String(stageStatuses[rightStage] || 'pending');
-      const leftReached = leftStatus === 'done';
-      const rightReached = rightStatus === 'done' || rightStatus === 'active';
+      const leftReached = WORKFLOW_TERMINAL_STATUSES.includes(leftStatus);
+      const rightReached = WORKFLOW_TERMINAL_STATUSES.includes(rightStatus) || rightStatus === 'active';
       if (leftReached && rightReached) {
         traversed.add(edgeKey);
       }
@@ -454,8 +484,9 @@
     workflowNode.querySelectorAll('[data-stage]').forEach((node) => {
       const stage = String(node.dataset.stage || '');
       const status = String(stageStatuses[stage] || 'pending');
-      node.classList.remove('is-pending', 'is-active', 'is-done');
-      node.classList.add(`is-${status}`);
+      const safeStatus = ['pending', 'active', 'done', 'error'].includes(status) ? status : 'pending';
+      node.classList.remove('is-pending', 'is-active', 'is-done', 'is-error');
+      node.classList.add(`is-${safeStatus}`);
     });
 
     workflowNode.querySelectorAll('[data-edge]').forEach((edge) => {
@@ -481,10 +512,10 @@
     if (incomingStatuses && typeof incomingStatuses === 'object') {
       WORKFLOW_STAGES.forEach((stage) => {
         const status = String(incomingStatuses[stage.id] || next.stage_statuses[stage.id] || 'pending');
-        next.stage_statuses[stage.id] = ['pending', 'active', 'done'].includes(status) ? status : 'pending';
+        next.stage_statuses[stage.id] = ['pending', 'active', 'done', 'error'].includes(status) ? status : 'pending';
       });
     }
-    next.current_stage = String((payload && payload.current_stage) || next.current_stage || 'Understanding');
+    next.current_stage = normalizeLlmStageName(payload && payload.current_stage) || String((payload && payload.current_stage) || next.current_stage || 'Understanding');
     next.traversed_edges = Array.isArray(payload && payload.traversed_edges) ? payload.traversed_edges.slice() : [];
     next.complete = !!(payload && payload.complete);
     if (next.complete) {
@@ -501,14 +532,64 @@
       applyWorkflowState(turn);
     }
 
-  function activateInitialWorkflowStage(turn) {
+  function setWorkflowStageFromLlmEvent(turn, stage, status) {
     if (!turn || !turn.workflow) return;
+    if (turn.finalized && status !== 'error') return;
+    const normalizedStage = normalizeLlmStageName(stage);
+    if (!normalizedStage) return;
     const next = defaultWorkflowState();
-    next.current_stage = 'Understanding';
-    next.stage_statuses.Understanding = 'active';
+    const stageIndex = WORKFLOW_STAGE_INDEX[normalizedStage] ?? 0;
+    WORKFLOW_STAGES.forEach((item, index) => {
+      if (index < stageIndex) {
+        next.stage_statuses[item.id] = 'done';
+      } else if (index === stageIndex) {
+        next.stage_statuses[item.id] = status === 'error' ? 'error' : 'done';
+      } else if (status !== 'error' && index === stageIndex + 1) {
+        next.stage_statuses[item.id] = 'active';
+      }
+    });
+    if (status !== 'error' && normalizedStage === 'Writing') {
+      next.stage_statuses.Writing = 'active';
+    }
+    next.current_stage = normalizedStage;
+    next.traversed_edges = WORKFLOW_FORWARD_EDGES.slice(0, Math.max(0, stageIndex));
+    next.complete = false;
     turn.workflow = next;
-    setTurnStage(turn, 'Understanding');
+    setTurnStage(turn, normalizedStage);
     applyWorkflowState(turn);
+  }
+
+  function extractLlmEventPayload(event) {
+    return event && event.payload && typeof event.payload === 'object' ? event.payload : {};
+  }
+
+  function llmEventStage(event) {
+    const payload = extractLlmEventPayload(event);
+    return normalizeLlmStageName(payload.stage || event.stage || event.stage_name || event.node_stage);
+  }
+
+  function llmEventSummary(event) {
+    const payload = extractLlmEventPayload(event);
+    const summary = payload.summary || event.summary || event.message || '';
+    if (Array.isArray(summary)) {
+      return summary.filter(Boolean).join('; ');
+    }
+    if (summary && typeof summary === 'object') {
+      return JSON.stringify(summary);
+    }
+    return String(summary || '').trim();
+  }
+
+  function llmEventErrorMessage(event) {
+    const payload = extractLlmEventPayload(event);
+    const errors = Array.isArray(payload.errors)
+      ? payload.errors
+      : (Array.isArray(event.errors) ? event.errors : []);
+    const errorText = errors
+      .map((item) => (typeof item === 'string' ? item : JSON.stringify(item)))
+      .filter(Boolean)
+      .join('; ');
+    return String(event.message || payload.summary || errorText || 'The LLM node failed.').trim();
   }
 
   function completeWorkflowForDone(turn) {
@@ -536,6 +617,8 @@
     ensureConversationStarted();
     const showWorkflow = options.showWorkflow !== false;
     const mode = options.mode === 'agent' ? 'agent' : 'deepthink';
+    const deferWorkflow = showWorkflow && options.deferWorkflow === true;
+    const initialStage = showWorkflow && options.initialStage ? String(options.initialStage) : '';
     const turnId = `turn-${++turnCounter}`;
     const node = document.createElement('article');
     node.className = 'agent-turn is-pending';
@@ -548,9 +631,9 @@
         <section class="agent-thinking" data-role="thinking">
           <div class="agent-thinking-head">
             <span class="agent-thinking-title">${escapeHtml(thinkingTitleForMode(mode))}</span>
-              <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml('Starting')}</span>
+              <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml(initialStage || 'Starting')}</span>
           </div>
-          ${showWorkflow ? createWorkflowMarkup() : ''}
+          ${showWorkflow && !deferWorkflow ? createWorkflowMarkup() : ''}
           <div class="agent-thinking-body" data-role="thinking-body"></div>
         </section>
         <section class="agent-answer" data-role="answer"></section>
@@ -577,12 +660,19 @@
       writingFailed: false,
       failureReason: '',
       mode,
-        currentStage: '',
-        workflow: showWorkflow ? defaultWorkflowState() : null,
-      };
+      currentStage: initialStage,
+      workflow: showWorkflow ? defaultWorkflowState() : null,
+    };
     turnStore.set(turnId, turn);
     if (showWorkflow) {
+      if (initialStage && turn.workflow && turn.workflow.stage_statuses[initialStage] !== undefined) {
+        turn.workflow.current_stage = initialStage;
+        turn.workflow.stage_statuses[initialStage] = 'active';
+      }
       applyWorkflowState(turn);
+      if (initialStage) {
+        updateThinkingMeta(turn, false);
+      }
     }
     scrollConversationToBottom(true);
     return turn;
@@ -666,7 +756,7 @@
     const elapsed = formatElapsed(performance.now() - turn.startedAt);
     const stageLabel = String(turn.currentStage || 'Starting');
     meta.textContent = done
-      ? `${ui.thinking_done || 'Done'} · ${elapsed}`
+      ? `${turn.writingFailed ? (ui.thinking_failed || 'Failed') : (ui.thinking_done || 'Done')} · ${elapsed}`
       : `${stageLabel} · ${elapsed}`;
   }
 
@@ -708,7 +798,7 @@
       return;
     }
     turn.finalized = true;
-    if (turn.workflow && !turn.workflow.complete) {
+    if (turn.workflow && !turn.workflow.complete && !turn.writingFailed) {
       turn.workflow.stage_statuses = turn.workflow.stage_statuses || {};
       WORKFLOW_STAGES.forEach((stage) => {
         turn.workflow.stage_statuses[stage.id] = 'done';
@@ -716,6 +806,8 @@
       turn.workflow.current_stage = 'Writing';
       turn.workflow.complete = true;
       turn.currentStage = 'Writing';
+      applyWorkflowState(turn);
+    } else if (turn.workflow) {
       applyWorkflowState(turn);
     }
     const answerNode = turn.node.querySelector('[data-role="answer"]');
@@ -977,8 +1069,32 @@
 
     if (event.type === 'stage_state') {
       if (turn.workflow) {
+        ensureWorkflowMarkup(turn);
         setWorkflowState(turn, event.payload && typeof event.payload === 'object' ? event.payload : {});
       }
+      return;
+    }
+
+    if (event.type === 'node_llm_result') {
+      const stage = llmEventStage(event) || 'Integrating';
+      setWorkflowStageFromLlmEvent(turn, stage, 'done');
+      const summary = llmEventSummary(event);
+      if (summary) {
+        createThinkingLine(turn, `${stage}: ${summary}`, 'bullet');
+      }
+      return;
+    }
+
+    if (event.type === 'node_llm_error') {
+      const stage = llmEventStage(event) || turn.currentStage || 'Writing';
+      const message = llmEventErrorMessage(event);
+      setWorkflowStageFromLlmEvent(turn, stage, 'error');
+      createThinkingLine(turn, `${stage}: ${message}`, 'error');
+      turn.writingFailed = true;
+      turn.failureReason = message;
+      turn.receivedDone = true;
+      setAnswerFailure(turn, message);
+      finalizeTurn(turn);
       return;
     }
 
@@ -1264,8 +1380,7 @@
       activeAbortController.abort();
     }
 
-    const turn = createTurn(question, { showWorkflow: true, mode: 'agent' });
-    activateInitialWorkflowStage(turn);
+    const turn = createTurn(question, { showWorkflow: true, mode: 'agent', deferWorkflow: true });
     startThinkingTimer(turn);
     const abortController = new AbortController();
     activeAbortController = abortController;

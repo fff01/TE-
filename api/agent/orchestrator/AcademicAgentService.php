@@ -69,6 +69,7 @@ final class TekgAcademicAgentService
             'mode' => (string)($payload['mode'] ?? 'academic'),
             'execution_timeout' => (int)($runtimeConfig['agent_execution_timeout'] ?? 0),
             'llm_json_timeout' => (int)($runtimeConfig['llm_json_timeout'] ?? 0),
+            'llm_six_stage_node_timeout' => (int)($runtimeConfig['llm_six_stage_node_timeout'] ?? 0),
             'llm_answer_timeout' => (int)($runtimeConfig['llm_answer_timeout'] ?? 0),
             'llm_narrator_timeout' => (int)($runtimeConfig['llm_narrator_timeout'] ?? 0),
         ]);
@@ -106,6 +107,7 @@ final class TekgAcademicAgentService
         $detailCounter = 0;
         $eventSequence = 0;
         $workflowState = $this->initialWorkflowState();
+        $sixStageArtifacts = [];
         $collectionState = $this->initialCollectionState($analysis, $planning, $routingPolicy, $pluginQueue);
         $sufficiencyDecision = [
             'is_sufficient' => false,
@@ -114,11 +116,102 @@ final class TekgAcademicAgentService
             'recommended_next_experts' => array_values((array)($collectionState['remaining_candidates'] ?? [])),
         ];
 
+        if ($this->shouldUseCompactPreflightGate($question, $analysis)) {
+            $response = $this->buildCompactPreflightResponse(
+                $question,
+                trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
+                $requestId,
+                $answerLanguage,
+                $sessionId,
+                $analysis,
+                $planning,
+                $reasoningTrace,
+                $pluginCalls,
+                [],
+                'low',
+                ['Full Agent workflow skipped by compact preflight before six-stage LLM nodes.'],
+                [
+                    'core' => $coreModel,
+                    'sufficiency' => $sufficiencyModel,
+                    'expert' => $expertModel,
+                    'narrator' => $narratorModel,
+                    'answer_structure' => $answerStructureModel,
+                    'writer' => $coreModel,
+                    'writer_draft' => $coreModel,
+                    'writer_polisher' => $coreModel,
+                ],
+                [],
+                $pluginResults,
+                $collectionState,
+                $sufficiencyDecision,
+                $workflowState
+            );
+            $response['six_stage_artifacts'] = [];
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'answer',
+                'request_id' => $requestId,
+                'session_id' => $sessionId,
+                'language' => $answerLanguage,
+                'message' => (string)$response['answer'],
+            ]);
+            $this->emitEvent($emit, $eventSequence, [
+                'type' => 'done',
+                'request_id' => $requestId,
+                'session_id' => $sessionId,
+                'payload' => [
+                    'confidence' => $response['confidence'],
+                    'used_plugins' => $response['used_plugins'],
+                    'answer' => (string)$response['answer'],
+                    'language' => $answerLanguage,
+                    'writing_failed' => false,
+                    'failure_stage' => '',
+                    'failure_reason' => '',
+                    'workflow_state' => $response['workflow_state'],
+                ],
+            ]);
+            return $response;
+        }
+
         $this->activateWorkflowStage($workflowState, 'Understanding', null, $emit, $eventSequence, $sessionId);
+        $understandingNode = $this->llm->runUnderstandingNode($coreModel, $processLanguage, [
+            'question' => $question,
+            'deterministic_analysis' => $analysis,
+            'session_memory' => $sessionMemory,
+        ]);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'understanding', $understandingNode, $emit, $eventSequence, $sessionId);
+        if (!$understandingNode->ok) {
+            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Understanding', $understandingNode, $sixStageArtifacts, $workflowState);
+        }
+        $analysis['six_stage_understanding'] = $understandingNode->parsed_json;
         $this->emitAnalysisThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $analysis, $eventSequence);
         $this->activateWorkflowStage($workflowState, 'Planning', 'Understanding', $emit, $eventSequence, $sessionId);
+        $planningNode = $this->llm->runPlanningNode($coreModel, $processLanguage, [
+            'question' => $question,
+            'understanding_result' => $understandingNode->parsed_json,
+            'deterministic_plan' => $planning,
+            'candidate_plugin_queue' => $pluginQueue,
+            'routing_policy' => $routingPolicy,
+        ]);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId);
+        if (!$planningNode->ok) {
+            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Planning', $planningNode, $sixStageArtifacts, $workflowState);
+        }
+        $planning['six_stage_plan'] = $planningNode->parsed_json;
         $this->emitPlanningThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $planning, $eventSequence);
         $this->activateWorkflowStage($workflowState, 'Collecting', 'Planning', $emit, $eventSequence, $sessionId);
+        $collectingNode = $this->llm->runCollectingNode($sufficiencyModel, $processLanguage, [
+            'question' => $question,
+            'understanding_result' => $understandingNode->parsed_json,
+            'research_plan' => $planningNode->parsed_json,
+            'collection_state' => $collectionState,
+            'plugin_results' => $pluginResults,
+            'remaining_plugins' => $pluginQueue,
+        ]);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'collecting', $collectingNode, $emit, $eventSequence, $sessionId);
+        if (!$collectingNode->ok) {
+            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $sufficiencyModel, 'Collecting', $collectingNode, $sixStageArtifacts, $workflowState);
+        }
+        $collectionState['six_stage_collection_decisions'][] = $collectingNode->parsed_json;
         $this->logDiagnostic($requestId, 'planning_completed', [
             'intent' => (string)($analysis['intent'] ?? ''),
             'complexity' => (string)($analysis['complexity'] ?? ''),
@@ -178,6 +271,17 @@ final class TekgAcademicAgentService
             $pluginResults[$pluginName] = $result;
             $pluginCalls[] = $result;
             $collectionState = $this->updateCollectionState($collectionState, $pluginName, $result);
+            $executingReviewNode = $this->llm->runExecutingReviewNode($coreModel, $processLanguage, [
+                'question' => $question,
+                'plugin_name' => $pluginName,
+                'plugin_result' => $this->pluginResultForLlmReview($pluginName, $result),
+                'collection_state' => $collectionState,
+                'research_plan' => $planningNode->parsed_json,
+            ]);
+            $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $executingReviewNode, $emit, $eventSequence, $sessionId, $pluginName);
+            if (!$executingReviewNode->ok) {
+                return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $executingReviewNode, $sixStageArtifacts, $workflowState);
+            }
 
             $detailId = 'tool-' . (++$detailCounter);
             $payloadForUi = $this->toolPayloadForUi($result);
@@ -316,6 +420,17 @@ final class TekgAcademicAgentService
 
                 $pluginResults['Citation Resolver'] = $citationResult;
                 $pluginCalls[] = $citationResult;
+                $citationReviewNode = $this->llm->runExecutingReviewNode($coreModel, $processLanguage, [
+                    'question' => $question,
+                    'plugin_name' => 'Citation Resolver',
+                    'plugin_result' => $this->pluginResultForLlmReview('Citation Resolver', $citationResult),
+                    'collection_state' => $collectionState,
+                    'research_plan' => $planningNode->parsed_json,
+                ]);
+                $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $citationReviewNode, $emit, $eventSequence, $sessionId, 'Citation Resolver');
+                if (!$citationReviewNode->ok) {
+                    return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $citationReviewNode, $sixStageArtifacts, $workflowState);
+                }
                 $detailId = 'tool-' . (++$detailCounter);
                 $payloadForUi = $this->toolPayloadForUi($citationResult);
 
@@ -452,6 +567,17 @@ final class TekgAcademicAgentService
         ]);
         $reportPlan = ReportPlan::fromEvidenceWalk($question, $analysis, $evidenceWalk, $answerStructure);
         $reportPlanValidation = ReportPlan::validate($reportPlan);
+        $integratingNode = $this->llm->runIntegratingNode($coreModel, $processLanguage, [
+            'question' => $question,
+            'evidence_package' => $evidencePackage,
+            'evidence_walk' => $evidenceWalk,
+            'report_plan' => $reportPlan,
+            'synthesized_evidence' => $synthesizedEvidence,
+        ]);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'integrating', $integratingNode, $emit, $eventSequence, $sessionId);
+        if (!$integratingNode->ok) {
+            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Integrating', $integratingNode, $sixStageArtifacts, $workflowState);
+        }
 
         $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence);
         $this->emitEvent($emit, $eventSequence, [
@@ -482,6 +608,17 @@ final class TekgAcademicAgentService
             ],
         ]);
         $this->activateWorkflowStage($workflowState, 'Writing', 'Integrating', $emit, $eventSequence, $sessionId);
+        $writingDecisionNode = $this->llm->runWritingDecisionNode($writingModel, $processLanguage, [
+            'question' => $question,
+            'claim_evidence_map' => $integratingNode->parsed_json,
+            'report_plan' => $reportPlan,
+            'limits' => $limits,
+            'confidence' => $confidence,
+        ]);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'writing', $writingDecisionNode, $emit, $eventSequence, $sessionId);
+        if (!$writingDecisionNode->ok) {
+            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $writingModel, 'Writing', $writingDecisionNode, $sixStageArtifacts, $workflowState);
+        }
 
         $analysisForWriting = $this->analysisForWriting($analysis);
         $this->logDiagnostic($requestId, 'answer_generation_started', [
@@ -683,6 +820,7 @@ final class TekgAcademicAgentService
                 'writing_ms' => (int)round((microtime(true) - $writingStartedAt) * 1000),
             ],
             'workflow_state' => $workflowState,
+            'six_stage_artifacts' => $sixStageArtifacts,
             'node_contracts' => tekg_agent_node_contracts(),
             'node_payloads' => tekg_agent_json_safe($this->buildNodePayloads(
                 $question,
@@ -767,6 +905,188 @@ final class TekgAcademicAgentService
         return $response;
     }
 
+    private function recordSixStageArtifact(
+        array &$sixStageArtifacts,
+        string $stage,
+        NodeLlmResult $result,
+        ?callable $emit,
+        int &$eventSequence,
+        string $sessionId,
+        string $pluginName = ''
+    ): void {
+        $artifact = $this->nodeLlmArtifact($result, $pluginName);
+        if ($stage === 'executing') {
+            $artifact['required_schema'] = 'tool_execution_review.v1';
+            $sixStageArtifacts[$stage][] = $artifact;
+        } else {
+            $sixStageArtifacts[$stage] = $artifact;
+        }
+
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => $result->ok ? 'node_llm_result' : 'node_llm_error',
+            'session_id' => $sessionId,
+            'node' => $this->nodeNameForSixStageArtifact($stage),
+            'source' => $this->nodeNameForSixStageArtifact($stage),
+            'stage' => $this->stageLabelForSixStageArtifact($stage),
+            'schema_version' => (string)($result->schema_version ?? ''),
+            'ok' => $result->ok,
+            'artifact' => $result->parsed_json,
+            'errors' => $result->errors,
+            'summary' => $artifact['summary'],
+            'message' => $artifact['summary'],
+            'payload' => [
+                'stage' => $this->stageLabelForSixStageArtifact($stage),
+                'schema_version' => (string)($result->schema_version ?? ''),
+                'ok' => $result->ok,
+                'artifact' => $result->parsed_json,
+                'errors' => $result->errors,
+                'summary' => $artifact['summary'],
+            ],
+        ]);
+    }
+
+    private function nodeLlmArtifact(NodeLlmResult $result, string $pluginName = ''): array
+    {
+        return [
+            'stage' => $this->stageLabelForSixStageArtifact($result->stage),
+            'schema_version' => (string)($result->schema_version ?? ''),
+            'ok' => $result->ok,
+            'artifact' => $result->parsed_json,
+            'errors' => $result->errors,
+            'summary' => $this->nodeLlmSummary($result, $pluginName),
+            'plugin_name' => $pluginName,
+        ];
+    }
+
+    private function nodeLlmSummary(NodeLlmResult $result, string $pluginName = ''): string
+    {
+        if (!$result->ok) {
+            $message = implode('; ', $result->errors);
+            return $this->stageLabelForSixStageArtifact($result->stage) . ' LLM artifact failed' . ($message !== '' ? ': ' . $message : '.');
+        }
+
+        $artifact = $result->parsed_json ?? [];
+        foreach (['question_summary', 'research_goal', 'decision_rationale', 'evidence_summary', 'writing_strategy'] as $key) {
+            $value = trim((string)($artifact[$key] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        if ($result->stage === 'integrating') {
+            return 'Claim-evidence map generated.';
+        }
+        if ($result->stage === 'executing' && $pluginName !== '') {
+            return "Tool execution review generated for {$pluginName}.";
+        }
+        return $this->stageLabelForSixStageArtifact($result->stage) . ' LLM artifact generated.';
+    }
+
+    private function nodeNameForSixStageArtifact(string $stage): string
+    {
+        return match ($stage) {
+            'understanding' => 'Question Understanding Node',
+            'planning' => 'Planning Node',
+            'collecting' => 'Evidence Collection Node',
+            'executing' => 'Expert Execution Review Node',
+            'integrating' => 'Evidence Synthesis Node',
+            'writing' => 'Answer Writer Node',
+            default => 'AcademicAgentService',
+        };
+    }
+
+    private function stageLabelForSixStageArtifact(string $stage): string
+    {
+        return match ($stage) {
+            'understanding' => 'Understanding',
+            'planning' => 'Planning',
+            'collecting' => 'Collecting',
+            'executing' => 'ExecutingReview',
+            'integrating' => 'Integrating',
+            'writing' => 'WritingDecision',
+            default => $stage,
+        };
+    }
+
+    private function buildSixStageFailureResponse(
+        string $question,
+        array $payload,
+        string $requestId,
+        string $answerLanguage,
+        string $sessionId,
+        string $model,
+        string $failureStage,
+        NodeLlmResult $result,
+        array $sixStageArtifacts,
+        array $workflowState
+    ): array {
+        $workflowStage = $failureStage === 'Executing' ? 'Executing' : $failureStage;
+        if (isset($workflowState['stage_statuses'][$workflowStage])) {
+            $workflowState['stage_statuses'][$workflowStage] = 'failed';
+        }
+        $workflowState['current_stage'] = $workflowStage;
+        $workflowState['complete'] = true;
+
+        $failureReason = implode('; ', $result->errors);
+        if ($failureReason === '') {
+            $failureReason = 'Required six-stage LLM artifact failed.';
+        }
+
+        return [
+            'question' => $question,
+            'mode' => trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
+            'request_id' => $requestId,
+            'language' => $answerLanguage,
+            'session_id' => $sessionId,
+            'model' => $model,
+            'model_provider' => $this->inferProvider($model),
+            'models' => ['core' => $model],
+            'analysis' => [],
+            'answer' => '',
+            'writing_failed' => true,
+            'failure_stage' => $failureStage,
+            'failure_reason' => $failureReason,
+            'reasoning_trace' => [[
+                'step' => 'six_stage_llm',
+                'title' => $failureStage,
+                'status' => 'failed',
+                'details' => $failureReason,
+            ]],
+            'used_plugins' => [],
+            'plugin_calls' => [],
+            'evidence' => [],
+            'citations' => [],
+            'evidence_package' => [],
+            'evidence_walk' => [],
+            'report_plan' => [],
+            'draft_report' => '',
+            'polished_report' => '',
+            'integrity_report' => [
+                'warnings' => ['Required six-stage LLM artifact failed before the run could continue.'],
+            ],
+            'confidence' => 'low',
+            'limits' => [],
+            'planning' => [],
+            'collection_state' => [],
+            'sufficiency_decision' => [],
+            'answer_structure' => [],
+            'synthesized_evidence' => [],
+            'timings' => [
+                'answer_structure_ms' => 0,
+                'writing_ms' => 0,
+            ],
+            'workflow_state' => $workflowState,
+            'six_stage_artifacts' => $sixStageArtifacts,
+            'node_contracts' => tekg_agent_node_contracts(),
+            'node_payloads' => tekg_agent_json_safe([
+                'six_stage_failure' => [
+                    'node' => $this->nodeNameForSixStageArtifact($result->stage),
+                    'output' => $this->nodeLlmArtifact($result),
+                ],
+            ]),
+        ];
+    }
+
     private function runtimeConfig(array $payload, string $requestId): array
     {
         $config = $this->config;
@@ -776,12 +1096,16 @@ final class TekgAcademicAgentService
         $config['agent_execution_timeout'] = max(90, $executionTimeout);
         $config['llm_narrator_timeout'] = max(4, (int)($config['llm_narrator_timeout'] ?? 6));
         $config['llm_json_timeout'] = max(10, (int)($config['llm_json_timeout'] ?? 15));
+        $config['llm_six_stage_node_timeout'] = max(20, (int)($config['llm_six_stage_node_timeout'] ?? 45));
         $config['llm_answer_timeout'] = max(15, (int)($config['llm_answer_timeout'] ?? 20));
         $config['llm_answer_chat_timeout'] = max(15, (int)($config['llm_answer_chat_timeout'] ?? 18));
         $config['llm_answer_reasoner_timeout'] = max(25, (int)($config['llm_answer_reasoner_timeout'] ?? 35));
 
         if (isset($payload['llm_json_timeout'])) {
             $config['llm_json_timeout'] = max(5, (int)$payload['llm_json_timeout']);
+        }
+        if (isset($payload['llm_six_stage_node_timeout'])) {
+            $config['llm_six_stage_node_timeout'] = max(10, (int)$payload['llm_six_stage_node_timeout']);
         }
         if (isset($payload['llm_answer_timeout'])) {
             $config['llm_answer_timeout'] = max(5, (int)$payload['llm_answer_timeout']);
@@ -815,27 +1139,32 @@ final class TekgAcademicAgentService
 
     private function resolveCoreModel(array $payload): string
     {
-        return trim((string)($payload['model'] ?? $this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-reasoner'));
+        $payloadCoreModel = trim((string)($payload['core_model'] ?? $payload['agent_core_model'] ?? ''));
+        if ($payloadCoreModel !== '') {
+            return $payloadCoreModel;
+        }
+
+        return trim((string)($this->config['agent_core_model'] ?? $this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-v4-pro'));
     }
 
     private function resolveSufficiencyModel(array $payload): string
     {
-        return trim((string)($payload['sufficiency_model'] ?? $this->resolveCoreModel($payload)));
+        return trim((string)($payload['sufficiency_model'] ?? $this->config['agent_sufficiency_model'] ?? $this->resolveCoreModel($payload)));
     }
 
     private function resolveExpertModel(array $payload): string
     {
-        return trim((string)($payload['expert_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
+        return trim((string)($payload['expert_model'] ?? $this->config['agent_expert_model'] ?? 'deepseek-v4-pro'));
     }
 
     private function resolveNarratorModel(array $payload): string
     {
-        return trim((string)($payload['narrator_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
+        return trim((string)($payload['narrator_model'] ?? $this->config['agent_narrator_model'] ?? 'deepseek-v4-pro'));
     }
 
     private function resolveAnswerStructureModel(array $payload): string
     {
-        return trim((string)($payload['answer_structure_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
+        return trim((string)($payload['answer_structure_model'] ?? $this->config['agent_answer_structure_model'] ?? 'deepseek-v4-pro'));
     }
 
     private function resolveWritingModel(array $analysis, array $payload, array $pluginResults): string
@@ -952,17 +1281,7 @@ final class TekgAcademicAgentService
 
     private function shouldUseCompactPreflightGate(string $question, array $analysis): bool
     {
-        $recommendedMode = $this->normalizeModeName((string)($analysis['recommended_mode'] ?? ''));
-        if ($recommendedMode !== 'deep_think') {
-            return false;
-        }
-
-        $taskComplexity = strtolower(trim((string)($analysis['task_complexity'] ?? '')));
-        if (!in_array($taskComplexity, ['simple_lookup', 'single_hop', 'ambiguous'], true)) {
-            return false;
-        }
-
-        return !$this->hasResearchTaskSignal($question, $analysis);
+        return false;
     }
 
     private function hasResearchTaskSignal(string $question, array $analysis): bool

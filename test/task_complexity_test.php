@@ -38,6 +38,11 @@ $cases = [
         'task_complexity' => 'simple_lookup',
         'recommended_mode' => 'deepthink',
     ],
+    'site navigation page-name lookup stays in Deep Think' => [
+        'question' => '我想看 L1HS 的 Genome Annotation Distribution，应该点哪里？',
+        'task_complexity' => 'simple_lookup',
+        'recommended_mode' => 'deepthink',
+    ],
     'ordinary relationship list stays in Deep Think' => [
         'question' => 'L1HS和哪些疾病相关',
         'task_complexity' => 'single_hop',

@@ -30,8 +30,8 @@ $simpleAnalysis = [
 $simpleQuestion = 'L1HS 的序列是什么？';
 
 assert_true(
-    call_agent_private($service, 'shouldUseCompactPreflightGate', [$simpleQuestion, $simpleAnalysis]) === true,
-    'P5A_B_001 simple sequence lookup should use compact preflight gate.'
+    call_agent_private($service, 'shouldUseCompactPreflightGate', [$simpleQuestion, $simpleAnalysis]) === false,
+    'P5A_B_001 Agent simple sequence lookup should not be compact-gated to Deep Think.'
 );
 
 $siteNavigationAnalysis = [
@@ -41,12 +41,19 @@ $siteNavigationAnalysis = [
     'task_complexity_reason' => 'Direct site navigation covered by Deep Think.',
 ];
 assert_true(
-    call_agent_private($service, 'shouldUseCompactPreflightGate', ['我想看 L1HS 的 Genome Annotation Distribution，应该点哪里？', $siteNavigationAnalysis]) === true,
-    'P5A_B_005 simple site navigation should use compact preflight gate.'
+    call_agent_private($service, 'shouldUseCompactPreflightGate', ['我想看 L1HS 的 Genome Annotation Distribution，应该点哪里？', $siteNavigationAnalysis]) === false,
+    'P5A_B_005 Agent simple site navigation should not be compact-gated to Deep Think.'
+);
+
+$normalizer = new TekgAgentEntityNormalizer();
+$actualSiteNavigationAnalysis = $normalizer->analyze('我想看 L1HS 的 Genome Annotation Distribution，应该点哪里？');
+assert_true(
+    call_agent_private($service, 'shouldUseCompactPreflightGate', ['我想看 L1HS 的 Genome Annotation Distribution，应该点哪里？', $actualSiteNavigationAnalysis]) === false,
+    'P5A_B_005 actual normalizer output should keep analysis but not compact-gate Agent.'
 );
 assert_true(
-    call_agent_private($service, 'shouldUseCompactPreflightGate', ['帮我找 search.php 里看表达数据的入口。', $siteNavigationAnalysis]) === true,
-    'P5A_B_029 simple site navigation should use compact preflight gate.'
+    call_agent_private($service, 'shouldUseCompactPreflightGate', ['帮我找 search.php 里看表达数据的入口。', $siteNavigationAnalysis]) === false,
+    'P5A_B_029 Agent simple site navigation should not use compact preflight gate.'
 );
 
 $mechanismQuestion = '请写一份 LINE-1 如何导致癌症的机制综述报告';
