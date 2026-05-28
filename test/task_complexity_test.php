@@ -73,12 +73,27 @@ $cases = [
         'task_complexity' => 'research_synthesis',
         'recommended_mode' => 'agent',
     ],
+    'multi-facet L1HS report does not become site navigation' => [
+        'question' => 'Generate a research report for L1HS including sequence, genomic location, expression, disease links, and literature evidence.',
+        'task_complexity' => 'research_synthesis',
+        'recommended_mode' => 'agent',
+        'asks_for_site_navigation' => false,
+        'asks_for_sequence' => true,
+        'asks_for_genome' => true,
+        'asks_for_expression' => true,
+        'asks_for_papers' => true,
+    ],
 ];
 
 foreach ($cases as $name => $case) {
     $analysis = $normalizer->analyze($case['question']);
     assert_same($case['task_complexity'], $analysis['task_complexity'] ?? null, "{$name}: task_complexity");
     assert_same($case['recommended_mode'], $analysis['recommended_mode'] ?? null, "{$name}: recommended_mode");
+    foreach (['asks_for_site_navigation', 'asks_for_sequence', 'asks_for_genome', 'asks_for_expression', 'asks_for_papers'] as $flag) {
+        if (array_key_exists($flag, $case)) {
+            assert_same($case[$flag], $analysis[$flag] ?? null, "{$name}: {$flag}");
+        }
+    }
     assert_true(
         isset($analysis['task_complexity_reason'])
             && is_string($analysis['task_complexity_reason'])

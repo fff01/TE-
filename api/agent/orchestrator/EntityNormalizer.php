@@ -25,6 +25,9 @@ final class TekgAgentEntityNormalizer
         $aliasChains = $this->buildAliasChains($normalizedEntities);
         $tokens = array_values(array_filter(preg_split('/\s+/u', trim($question)) ?: []));
 
+        $hasResearchIntent = $this->hasResearchIntentWords($question);
+        $asksForSiteNavigation = $this->asksForSiteNavigation($question) && !$hasResearchIntent;
+
         return array_merge([
             'language' => $language,
             'intent' => $intent,
@@ -39,8 +42,9 @@ final class TekgAgentEntityNormalizer
             'asks_for_genome' => $intent !== 'expression' && $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'located', 'located at', 'where is', 'chromosome', 'chr', 'coordinate', '基因组', '基因组浏览器', '位点', '位置', '定位', '染色体', '坐标', '位于哪里', '位于哪', '位于', '在哪里', '在哪个染色体', '在哪条染色体', '哪个染色体', '哪条染色体', '基因组位置', '基因组坐标', '染色体位置']),
             'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'lineage', 'taxonomy', '分类', '亚家族', '家族', '树', '谱系']),
             'asks_for_sequence' => $this->containsAny($question, ['sequence', 'consensus', 'repbase', 'length', 'orf', 'orfs', 'utr', 'promoter', 'motif', 'structure', 'annotation', '序列', '共识序列', '长度', '结构', '注释', '启动子', '基序']),
-            'asks_for_site_navigation' => $this->containsAny($question, ['where can i find', 'where do i find', 'where to find', 'which page', 'what page', 'open page', 'show page', 'url', 'link', 'entry', '入口', '网址', '链接', '页面', '在哪看', '哪里看', '在哪里看', '从哪里看', '跳转', '打开', '查看页面', 'Genome Annotation Distribution', 'Genome Browser', 'JBrowse']),
+            'asks_for_site_navigation' => $asksForSiteNavigation,
             'asks_for_mechanism' => $intent === 'mechanism',
+            'asks_for_disease_links' => $this->containsAny($question, ['disease link', 'disease links', 'disease association', 'disease associations', 'associated disease', 'associated diseases', '疾病关联', '疾病联系', '相关疾病']),
             'asks_for_graph_analytics' => $intent === 'graph_analytics' || $this->containsAny($question, ['topology', 'topological', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'relation type', 'relation types', 'distribution', '最多', '最大', '拓扑', '结构', '关联度', '连接最多', '分布', '关系类型']),
             'asks_for_cypher_explorer' => $this->containsAny($question, ['cypher', 'pattern', 'patterns', 'graph exploration', 'explore the graph', 'path', 'paths', 'schema', '统计', '模式', '路径', '探索图谱', '探索知识图谱']),
             'asks_for_graph_structure' => $this->containsAny($question, ['topology', 'topological', 'graph structure', 'relation type', 'distribution', 'degree', 'central', '结构', '拓扑', '中心性', '度数', '关系类型']),
@@ -242,17 +246,49 @@ final class TekgAgentEntityNormalizer
 
     private function detectTaskComplexity(string $question, string $intent, array $entities): array
     {
-        $hasSiteNavigationWords = $this->containsAny($question, ['where can i find', 'where do i find', 'where to find', 'which page', 'what page', 'open page', 'show page', 'url', 'link', 'entry', '入口', '网址', '链接', '页面', '在哪看', '哪里看', '在哪里看', '从哪里看', '跳转', '打开', '查看页面', 'Genome Annotation Distribution', 'Genome Browser', 'JBrowse']);
-        if ($hasSiteNavigationWords) {
-            return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct site navigation covered by Deep Think.');
-        }
+        $hasResearchWords = $this->hasResearchIntentWords($question);
+        $hasSiteNavigationWords = $this->asksForSiteNavigation($question);
 
         $hasMechanismWords = $this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to', 'result in', '机制', '为什么', '如何', '导致', '通路', '因果']);
         if ($intent === 'mechanism' || $hasMechanismWords) {
             return $this->makeTaskComplexity('mechanism_chain', 'agent', 'Mechanism or causal-chain question.');
         }
 
-        $hasResearchWords = $this->containsAny($question, [
+        if ($hasSiteNavigationWords && !$hasResearchWords) {
+            return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct site navigation covered by Deep Think.');
+        }
+
+        if ($intent === 'literature' || $intent === 'comparison' || $intent === 'graph_analytics' || $hasResearchWords) {
+            return $this->makeTaskComplexity('research_synthesis', 'agent', 'Research, evidence, comparison, analytics, or report task.');
+        }
+
+        if ($hasSiteNavigationWords) {
+            return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct site navigation covered by Deep Think.');
+        }
+
+        if (in_array($intent, ['sequence', 'genome', 'expression', 'classification'], true) || $hasSiteNavigationWords) {
+            return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct lookup covered by Deep Think.');
+        }
+
+        if ($intent === 'relationship' || count($entities) >= 1) {
+            return $this->makeTaskComplexity('single_hop', 'deepthink', 'Single-hop relationship listing.');
+        }
+
+        return $this->makeTaskComplexity('ambiguous', 'deepthink', 'Ambiguous task; use Deep Think for clarification.');
+    }
+
+    private function makeTaskComplexity(string $taskComplexity, string $recommendedMode, string $reason): array
+    {
+        return [
+            'task_complexity' => $taskComplexity,
+            'recommended_mode' => $recommendedMode,
+            'task_complexity_reason' => $reason,
+        ];
+    }
+
+    private function hasResearchIntentWords(string $question): bool
+    {
+        return $this->containsAny($question, [
             'paper',
             'papers',
             'reference',
@@ -300,28 +336,37 @@ final class TekgAgentEntityNormalizer
             '报告',
             '综述',
         ]);
-        if ($intent === 'literature' || $intent === 'comparison' || $intent === 'graph_analytics' || $hasResearchWords) {
-            return $this->makeTaskComplexity('research_synthesis', 'agent', 'Research, evidence, comparison, analytics, or report task.');
-        }
-
-        if (in_array($intent, ['sequence', 'genome', 'expression', 'classification'], true) || $hasSiteNavigationWords) {
-            return $this->makeTaskComplexity('simple_lookup', 'deepthink', 'Direct lookup covered by Deep Think.');
-        }
-
-        if ($intent === 'relationship' || count($entities) >= 1) {
-            return $this->makeTaskComplexity('single_hop', 'deepthink', 'Single-hop relationship listing.');
-        }
-
-        return $this->makeTaskComplexity('ambiguous', 'deepthink', 'Ambiguous task; use Deep Think for clarification.');
     }
 
-    private function makeTaskComplexity(string $taskComplexity, string $recommendedMode, string $reason): array
+    private function asksForSiteNavigation(string $question): bool
     {
-        return [
-            'task_complexity' => $taskComplexity,
-            'recommended_mode' => $recommendedMode,
-            'task_complexity_reason' => $reason,
-        ];
+        return $this->containsAny($question, [
+            'where can i find',
+            'where do i find',
+            'where to find',
+            'which page',
+            'what page',
+            'open page',
+            'show page',
+            'url',
+            'link',
+            'entry',
+            '入口',
+            '网址',
+            '链接',
+            '页面',
+            '在哪看',
+            '哪里看',
+            '在哪里看',
+            '从哪里看',
+            '点哪里',
+            '点哪',
+            '应该点哪里',
+            '怎么进入',
+            '跳转',
+            '打开',
+            '查看页面',
+        ]);
     }
 
     private function detectTargetTypes(string $question, string $intent): array

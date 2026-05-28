@@ -58,23 +58,21 @@ $events = $harness->capture([
 ]);
 
 $suggestionEvents = array_values(array_filter($events, static function (array $event): bool {
-    return ($event['payload']['recommended_mode'] ?? null) === 'deepthink'
-        && ($event['payload']['task_complexity'] ?? null) === 'simple_lookup';
+    $message = (string)($event['message'] ?? '');
+    return str_contains($message, 'Deep Think')
+        || str_contains($message, 'quick lookup')
+        || str_contains($message, 'usually faster');
 }));
 
-assert_true($suggestionEvents !== [], 'Deep Think recommendation should be present in analysis payload.');
+assert_true($suggestionEvents === [], 'Agent narration should not recommend Deep Think or discourage Agent use.');
 
-$suggestionText = implode("\n", array_map(static fn(array $event): string => (string)($event['message'] ?? ''), $suggestionEvents));
-assert_true(str_contains($suggestionText, 'Deep Think'), 'Deep Think recommendation should be visible to the user.');
-assert_true(str_contains($suggestionText, 'Agent'), 'Recommendation should state Agent can continue.');
-assert_true(str_contains($suggestionText, 'task_complexity') === false, 'User-facing recommendation should not expose internal field names.');
-assert_true(str_contains($suggestionText, 'recommended_mode') === false, 'User-facing recommendation should not expose internal field names.');
+$allText = implode("\n", array_map(static fn(array $event): string => (string)($event['message'] ?? ''), $events));
+assert_true(str_contains($allText, 'Deep Think') === false, 'User-facing Agent narration should not mention Deep Think as a better path.');
+assert_true(str_contains($allText, 'quick lookup') === false, 'User-facing Agent narration should not label the run as a quick lookup.');
+assert_true(str_contains($allText, 'task_complexity') === false, 'User-facing recommendation should not expose internal field names.');
+assert_true(str_contains($allText, 'recommended_mode') === false, 'User-facing recommendation should not expose internal field names.');
 assert_true(
-    ($suggestionEvents[0]['payload']['task_complexity_reason'] ?? null) === 'Direct lookup covered by Deep Think.',
-    'Task complexity reason should be preserved in payload.'
-);
-assert_true(
-    ($suggestionEvents[0]['payload']['complexity'] ?? null) === 'single_hop_reasoning',
+    ($events[0]['payload']['complexity'] ?? null) === 'single_hop_reasoning',
     'Legacy complexity should remain in payload.'
 );
 

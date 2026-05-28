@@ -40,6 +40,7 @@ trait TekgAcademicAgentPlanningTrait
     private function buildKnowledgeGaps(array $analysis): array
     {
         $intent = (string)($analysis['intent'] ?? 'relationship');
+        $isResearchSynthesis = (string)($analysis['task_complexity'] ?? '') === 'research_synthesis';
         $gaps = [
             [
                 'gap_type' => 'entity normalization',
@@ -64,6 +65,15 @@ trait TekgAcademicAgentPlanningTrait
             ];
         }
 
+        if (($analysis['asks_for_disease_links'] ?? false) || ($isResearchSynthesis && in_array('Disease', (array)($analysis['requested_target_types'] ?? []), true))) {
+            $gaps[] = [
+                'gap_type' => 'structured disease relations',
+                'why_needed' => 'The answer needs local graph evidence for TE-disease links before disease claims can be reported.',
+                'priority' => 82,
+                'candidate_tools' => ['Graph Plugin'],
+            ];
+        }
+
         if (($analysis['asks_for_papers'] ?? false) || $intent === 'literature') {
             $gaps[] = [
                 'gap_type' => 'literature evidence',
@@ -73,7 +83,7 @@ trait TekgAcademicAgentPlanningTrait
             ];
         }
 
-        if (($analysis['asks_for_site_navigation'] ?? false)) {
+        if (($analysis['asks_for_site_navigation'] ?? false) && !$isResearchSynthesis) {
             $gaps[] = [
                 'gap_type' => 'site navigation',
                 'why_needed' => 'The user is asking where a TE-KG page, panel, route, or dataset entry can be opened.',
@@ -267,6 +277,14 @@ trait TekgAcademicAgentPlanningTrait
         }
         if ($queue === []) {
             $queue = array_map(static fn(array $item): string => (string)$item['plugin'], (array)($planning['tool_plan'] ?? []));
+        }
+        if ((string)($analysis['task_complexity'] ?? '') === 'research_synthesis') {
+            foreach ((array)($planning['tool_plan'] ?? []) as $item) {
+                $plugin = trim((string)($item['plugin'] ?? ''));
+                if ($plugin !== '' && !in_array($plugin, $queue, true)) {
+                    $queue[] = $plugin;
+                }
+            }
         }
         $intent = (string)($analysis['intent'] ?? 'relationship');
         if ($queue === []) {

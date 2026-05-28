@@ -24,6 +24,16 @@ trait TekgAcademicAgentEvidenceTrait
             }
         }
 
+        $researchRequired = $this->missingResearchSynthesisPlugins($analysis, $planning, $pluginResults);
+        if ($researchRequired !== []) {
+            return [
+                'is_sufficient' => false,
+                'reason' => 'The research report still has required evidence layers that have not run.',
+                'missing_dimensions' => array_map(static fn(string $plugin): string => 'required research plugin ' . $plugin . ' has not run', $researchRequired),
+                'recommended_next_experts' => $researchRequired,
+            ];
+        }
+
         $hardStop = $this->evaluateHardStopCondition($analysis, $pluginResults, $routingPolicy);
         if ($hardStop !== null) {
             return $hardStop;
@@ -162,6 +172,39 @@ trait TekgAcademicAgentEvidenceTrait
             'reason' => $missing === [] ? 'The minimum evidence gate has been satisfied.' : 'The minimum evidence gate is still missing required dimensions.',
             'missing_dimensions' => $missing,
         ];
+    }
+
+    private function missingResearchSynthesisPlugins(array $analysis, array $planning, array $pluginResults): array
+    {
+        if ((string)($analysis['task_complexity'] ?? '') !== 'research_synthesis') {
+            return [];
+        }
+
+        $required = [];
+        foreach ((array)($planning['tool_plan'] ?? []) as $item) {
+            $plugin = trim((string)($item['plugin'] ?? ''));
+            if ($plugin === '' || $plugin === 'Citation Resolver' || $plugin === 'Site Navigator Plugin') {
+                continue;
+            }
+            $required[] = $plugin;
+        }
+
+        if ($required === []) {
+            return [];
+        }
+
+        $missing = [];
+        foreach (array_values(array_unique($required)) as $plugin) {
+            if (!isset($pluginResults[$plugin])) {
+                $missing[] = $plugin;
+                continue;
+            }
+            if (!in_array((string)($pluginResults[$plugin]['status'] ?? ''), ['ok', 'partial', 'empty'], true)) {
+                $missing[] = $plugin;
+            }
+        }
+
+        return array_values(array_unique($missing));
     }
 
     private function recommendedNextExperts(array $routingPolicy, array $pluginResults, array $missingDimensions): array

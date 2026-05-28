@@ -158,6 +158,9 @@ php test\agent_narration_task_complexity_test.php
 - Deep Think 真实评估必须调用 `api/deep_think_stream.php`，和 `agent.php` 的 `deepThinkStreamApiUrl` 一致。
 - Agent 真实评估必须调用 `api/agent_runs.php` 创建 run，并轮询 `api/agent_run_status.php`，和网页 Agent 一致。
 - 不用旧 `agent_stream.php` 做主评估入口，不直接调用 `agent_run_execute.php` 冒充用户入口。
+- 任何声称评估 Agent/Deep Think 真实质量的结论都必须跑 live API；不能用“省成本”为理由跳过 API。
+- 评估归档必须保存前端用户会看到的真实过程流和最终回答，包括 Agent thinking/阶段事件、工具结果摘要、错误、`done` payload、最终 answer。只看中间 artifact、只看静态测试、只看 deterministic proxy，都不能作为真实质量结论。
+- Canary 可以先缩小样本数，但单个样本仍必须记录完整 raw events、过程文本和最终回答；如果没有这些证据，只能标为 static/unit verification，不能标为 live evaluation。
 
 模型策略：
 

@@ -226,7 +226,7 @@ function tekg_agent_mark_stale_run_if_needed(string $runId, array $state, array 
 
     if ($status === 'running') {
         $runStartedAt = $startedAt ?? $createdAt;
-        $timeoutSeconds = max(90, (int)($config['agent_execution_timeout'] ?? 900)) + 30;
+        $timeoutSeconds = max(90, (int)($config['agent_execution_timeout'] ?? 7200)) + 30;
         if (($now - $runStartedAt) > $timeoutSeconds) {
             $failureStage = trim((string)($state['current_stage'] ?? ''));
             if ($failureStage === '') {
