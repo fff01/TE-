@@ -50,9 +50,9 @@ def main() -> None:
 
             require(state["title"] == "Download", f"unexpected page title: {state}")
             require(state["summaryCards"] >= 3, f"download summary cards missing: {state}")
-            require("Expression" in state["categoryFilters"], f"Expression category filter missing: {state}")
-            require("Graph" in state["categoryFilters"], f"Graph category filter missing: {state}")
-            require("Taxonomy" in state["categoryFilters"], f"Taxonomy category filter missing: {state}")
+            require(any(label.startswith("Expression") for label in state["categoryFilters"]), f"Expression category filter missing: {state}")
+            require(any(label.startswith("Graph") for label in state["categoryFilters"]), f"Graph category filter missing: {state}")
+            require(any(label.startswith("Taxonomy") for label in state["categoryFilters"]), f"Taxonomy category filter missing: {state}")
             require(state["cardCount"] >= 6, f"download cards missing: {state}")
             require(state["availableBadges"] >= 6, f"available status badges missing: {state}")
             require(state["sizeBadges"] >= 6, f"file size badges missing: {state}")
@@ -69,6 +69,7 @@ def main() -> None:
             require(graph_state, "Graph filter should show at least one card")
             require(all(label == "Graph" for label in graph_state), f"Graph filter should show only Graph cards: {graph_state}")
 
+            page.locator('[data-download-category="All"]').click()
             page.locator("#download-search").fill("taxonomy")
             search_count = page.locator(".download-card").count()
             require(search_count >= 1, "search should find taxonomy-related downloads")

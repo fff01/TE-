@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   const header = document.getElementById('protoHeader');
   function syncHeader() {
     if (!header) return;
@@ -9,20 +9,43 @@
 
   const dataNode = document.getElementById('download-page-data');
   const rows = dataNode ? JSON.parse(dataNode.textContent || '[]') : [];
-  const body = document.getElementById('download-table-body');
+  const cardList = document.getElementById('download-card-list');
   const summary = document.getElementById('download-summary');
   const pagination = document.getElementById('download-pagination');
   const searchInput = document.getElementById('download-search');
   const sizeSelect = document.getElementById('download-page-size');
   const emptyState = document.getElementById('download-empty');
-  if (!body || !summary || !pagination || !searchInput || !sizeSelect || !emptyState) return;
+  const categoryButtons = Array.from(document.querySelectorAll('[data-download-category]'));
+  if (!cardList || !summary || !pagination || !searchInput || !sizeSelect || !emptyState) return;
 
   let currentPage = 1;
+  let currentCategory = 'All';
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
   function filteredRows() {
     const query = (searchInput.value || '').trim().toLowerCase();
-    if (!query) return rows;
-    return rows.filter((row) => [row.dataset, row.filename, row.used_in, row.format, row.description].some((value) => String(value || '').toLowerCase().includes(query)));
+    return rows.filter((row) => {
+      const categoryMatch = currentCategory === 'All' || row.category === currentCategory;
+      if (!categoryMatch) return false;
+      if (!query) return true;
+      return [
+        row.category,
+        row.dataset,
+        row.filename,
+        row.used_in,
+        row.format,
+        row.description,
+        row.size_label,
+      ].some((value) => String(value || '').toLowerCase().includes(query));
+    });
   }
 
   function renderPagination(totalPages) {
@@ -39,15 +62,61 @@
       });
       return button;
     };
-    pagination.appendChild(makeButton('‹', Math.max(1, currentPage - 1), false));
+    pagination.appendChild(makeButton('<', Math.max(1, currentPage - 1), false));
     for (let page = 1; page <= totalPages; page += 1) {
       pagination.appendChild(makeButton(String(page), page, page === currentPage));
     }
-    pagination.appendChild(makeButton('›', Math.min(totalPages, currentPage + 1), false));
+    pagination.appendChild(makeButton('>', Math.min(totalPages, currentPage + 1), false));
+  }
+
+  function cardHtml(row) {
+    const available = row.available === true;
+    const action = available
+      ? `<a class="download-card-action" href="${escapeHtml(row.href)}" download>Download</a>`
+      : '<span class="download-card-action is-disabled" aria-disabled="true">Unavailable</span>';
+    const status = available ? 'Available' : 'Unavailable';
+    const statusClass = available ? ' is-available' : '';
+
+    return `
+      <article class="download-card">
+        <div>
+          <div class="download-card-top">
+            <div>
+              <span class="download-card-category">${escapeHtml(row.category)}</span>
+              <h3>${escapeHtml(row.dataset)}</h3>
+            </div>
+            <span class="download-format">${escapeHtml(row.format)}</span>
+          </div>
+          <p class="download-card-description">${escapeHtml(row.description)}</p>
+        </div>
+        <div class="download-card-meta">
+          <div class="download-meta-item">
+            <span>File</span>
+            <strong title="${escapeHtml(row.filename)}">${escapeHtml(row.filename)}</strong>
+          </div>
+          <div class="download-meta-item">
+            <span>Size</span>
+            <strong class="download-file-size">${escapeHtml(row.size_label)}</strong>
+          </div>
+          <div class="download-meta-item">
+            <span>Used In</span>
+            <strong title="${escapeHtml(row.used_in)}">${escapeHtml(row.used_in)}</strong>
+          </div>
+          <div class="download-meta-item">
+            <span>Status</span>
+            <strong>${escapeHtml(status)}</strong>
+          </div>
+        </div>
+        <div class="download-card-footer">
+          <span class="download-status${statusClass}">${escapeHtml(status)}</span>
+          ${action}
+        </div>
+      </article>
+    `;
   }
 
   function render() {
-    const pageSize = Number(sizeSelect.value || 10);
+    const pageSize = Number(sizeSelect.value || 6);
     const items = filteredRows();
     const total = items.length;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -55,51 +124,31 @@
     const start = total === 0 ? 0 : (currentPage - 1) * pageSize;
     const pageItems = items.slice(start, start + pageSize);
 
-    body.innerHTML = '';
     emptyState.hidden = pageItems.length !== 0;
-
-    pageItems.forEach((row) => {
-      const tr = document.createElement('tr');
-      tr.className = 'dataset-row';
-      tr.innerHTML = `
-        <td class="dataset-cell">
-          <button class="dataset-toggle" type="button" aria-expanded="false">
-            <span class="dataset-title-line">
-              <svg class="dataset-caret" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M5.2 2.8 10.4 8l-5.2 5.2-.9-.9L8.6 8 4.3 3.7z"/></svg>
-              <em>${row.dataset}</em>
-            </span>
-          </button>
-          <div class="dataset-description">
-            <div class="dataset-description-inner">${row.description}</div>
-          </div>
-        </td>
-        <td><a class="file-link" href="${row.path}" download>${row.filename}</a></td>
-        <td>${row.used_in}</td>
-        <td>${row.format}</td>
-      `;
-      const toggle = tr.querySelector('.dataset-toggle');
-      toggle.addEventListener('click', () => {
-        const isOpen = tr.classList.contains('is-open');
-        body.querySelectorAll('.dataset-row').forEach((rowEl) => {
-          rowEl.classList.remove('is-open');
-          const btn = rowEl.querySelector('.dataset-toggle');
-          if (btn) btn.setAttribute('aria-expanded', 'false');
-        });
-        if (!isOpen) {
-          tr.classList.add('is-open');
-          toggle.setAttribute('aria-expanded', 'true');
-        }
-      });
-      body.appendChild(tr);
-    });
+    cardList.innerHTML = pageItems.map(cardHtml).join('');
 
     const shownFrom = total === 0 ? 0 : start + 1;
     const shownTo = total === 0 ? 0 : start + pageItems.length;
-    summary.textContent = `Showing ${shownFrom} to ${shownTo} of ${total} entries`;
+    summary.textContent = `Showing ${shownFrom} to ${shownTo} of ${total} datasets`;
     renderPagination(totalPages);
   }
 
-  searchInput.addEventListener('input', () => { currentPage = 1; render(); });
-  sizeSelect.addEventListener('change', () => { currentPage = 1; render(); });
+  categoryButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      currentCategory = button.dataset.downloadCategory || 'All';
+      categoryButtons.forEach((item) => item.classList.toggle('is-active', item === button));
+      currentPage = 1;
+      render();
+    });
+  });
+
+  searchInput.addEventListener('input', () => {
+    currentPage = 1;
+    render();
+  });
+  sizeSelect.addEventListener('change', () => {
+    currentPage = 1;
+    render();
+  });
   render();
 })();
