@@ -86,8 +86,8 @@ $agentResearchTemplates = [
 
 $deepThinkTemplates = [
     [
-        'label' => 'Sequence lookup',
-        'prompt' => 'What is the sequence of L1HS?',
+        'label' => 'Sequence summary',
+        'prompt' => 'What is the consensus length and evidence source of L1HS?',
     ],
     [
         'label' => 'Genome location',
@@ -102,8 +102,8 @@ $deepThinkTemplates = [
         'prompt' => 'Which subfamily does L1HS belong to?',
     ],
     [
-        'label' => 'Site navigation',
-        'prompt' => 'Where can I view the Genome Annotation Distribution for L1HS?',
+        'label' => 'Representative locus',
+        'prompt' => 'What representative genome locus is available for L1HS?',
     ],
 ];
 

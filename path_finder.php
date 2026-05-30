@@ -72,15 +72,39 @@ require __DIR__ . '/head.php';
             </section>
 
             <section class="path-results-panel" aria-live="polite">
-              <div class="path-results-status" id="pathStatus">Enter two entities and run a search to inspect relationship paths.</div>
+              <div class="path-results-head">
+                <div class="path-results-status" id="pathStatus">Enter two entities and run a search to inspect relationship paths.</div>
+                <div class="path-results-view-toggle" id="pathViewToggle" role="group" aria-label="Path result view" hidden>
+                  <button class="path-view-toggle is-active" id="pathTableView" type="button" aria-pressed="true">Table</button>
+                  <button class="path-view-toggle" id="pathGraphView" type="button" aria-pressed="false">Graph</button>
+                </div>
+              </div>
               <div class="path-resolved" id="pathResolved" hidden></div>
               <div class="path-results-list" id="pathResults"></div>
+              <section class="path-graph-panel" id="pathGraphPanel" aria-label="Path graph results" hidden>
+                <div class="path-graph-toolbar">
+                  <div class="path-graph-title">
+                    <strong>Graph result</strong>
+                    <span>Only nodes and edges from the current paths are shown.</span>
+                  </div>
+                  <div class="path-graph-actions">
+                    <button class="path-graph-toggle is-on" id="pathGraphShowNames" type="button" aria-pressed="true">Show names: On</button>
+                    <button class="path-graph-toggle is-on" id="pathGraphShowRelations" type="button" aria-pressed="true">Show relations: On</button>
+                    <button class="path-graph-export" id="pathGraphExport" type="button" disabled>Export</button>
+                  </div>
+                </div>
+                <div class="path-graph-surface" id="pathGraphSurface" aria-label="Path result graph"></div>
+                <div class="path-graph-detail" id="pathGraphDetail">Switch to Graph after a search to inspect nodes and relationships.</div>
+              </section>
             </section>
           </div>
         </section>
       </main>
     </div>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+    <script src="<?= htmlspecialchars(tekg_assets_url('vendor/g6/g6.min.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+    <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-type-meta.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+    <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-shared.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/path_finder.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
   </body>
 </html>

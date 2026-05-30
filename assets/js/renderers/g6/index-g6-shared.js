@@ -215,6 +215,7 @@
     let currentShowAllLabels = options.initialShowAllLabels === true;
     let currentShowEdgeLabels = false;
     let currentAllowInspectCard = true;
+    let currentAllowNodeActions = options.initialAllowNodeActions !== false;
     let currentGraphData = null;
 
     if (currentQueryType === 'disease_class') {
@@ -796,8 +797,8 @@
         ...summary,
         ...sections,
         '<div class="inspect-card__actions">',
-        '<button class="inspect-card__button" type="button" data-node-action="jump">Jump</button>',
-        '<button class="inspect-card__button" type="button" data-node-action="expand">Expand</button>',
+        currentAllowNodeActions ? '<button class="inspect-card__button" type="button" data-node-action="jump">Jump</button>' : '',
+        currentAllowNodeActions ? '<button class="inspect-card__button" type="button" data-node-action="expand">Expand</button>' : '',
         '<button class="inspect-card__button" type="button" data-node-action="details">Details</button>',
         '</div>',
         '</div>',
@@ -816,6 +817,9 @@
         };
         renderInspectCard();
         return true;
+      }
+      if (!currentAllowNodeActions && (nextAction === 'expand' || nextAction === 'jump')) {
+        return false;
       }
       if (nextAction === 'expand') {
         const expanded = await Promise.resolve(hooks.onNodeExpand(node));
@@ -1713,6 +1717,9 @@
         if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'allowInspectCard')) {
           currentAllowInspectCard = graphDataOptions.allowInspectCard === true;
         }
+        if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'allowNodeActions')) {
+          currentAllowNodeActions = graphDataOptions.allowNodeActions !== false;
+        }
         graphDataOptions.showAllLabels = currentShowAllLabels;
         const data = buildGraphData(payloadElements, graphDataOptions);
         currentGraphData = data;
@@ -2263,6 +2270,9 @@
       }
       if (Object.prototype.hasOwnProperty.call(next, 'allowInspectCard')) {
         currentAllowInspectCard = next.allowInspectCard === true;
+      }
+      if (Object.prototype.hasOwnProperty.call(next, 'allowNodeActions')) {
+        currentAllowNodeActions = next.allowNodeActions !== false;
       }
       if (!currentAllowInspectCard) hideInspectCard();
       hooks.syncRouteState({

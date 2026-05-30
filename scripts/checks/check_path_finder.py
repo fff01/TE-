@@ -47,8 +47,25 @@ def main() -> int:
             failures.append("Path Finder JS does not build PubMed PMID links")
         if "compact-path-strip" not in js:
             failures.append("Path Finder JS does not render compact multi-hop path strips")
-        if "path-mini-graph" in js or "g6" in js.lower():
-            failures.append("Path Finder JS appears to use a graph view for direct relations")
+        if "buildGraphElements" not in js or "payload.paths" not in js:
+            failures.append("Path Finder JS does not build graph results from path payloads")
+        if "allowNodeActions: false" not in js:
+            failures.append("Path Finder graph does not disable G6 jump/expand node actions")
+        if "Relation type" in js:
+            failures.append("Path Finder JS still renders raw relation type metadata")
+
+    if (ROOT / "path_finder.php").is_file():
+        page = text("path_finder.php")
+        for marker in [
+            "pathTableView",
+            "pathGraphView",
+            "pathGraphShowNames",
+            "pathGraphShowRelations",
+            "pathGraphExport",
+            "index-g6-shared.js",
+        ]:
+            if marker not in page:
+                failures.append(f"Path Finder page is missing graph marker {marker}")
 
     if (ROOT / "api/path_finder_service.php").is_file():
         service = text("api/path_finder_service.php")
