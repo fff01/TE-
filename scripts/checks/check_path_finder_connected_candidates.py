@@ -104,7 +104,7 @@ def assert_api_contract(source_type: str, source: str, target_type: str, payload
     require("Paper" not in first.get("labels", []), f"candidate should not be Paper: {first}")
     require(first.get("min_hop") in [1, 2, 3], f"candidate min_hop should be 1..3: {first}")
     require(isinstance(first.get("path_count"), int) and first["path_count"] >= 1, f"path_count should be positive: {first}")
-    require(isinstance(first.get("best_path_pmid_count"), int), f"best_path_pmid_count should be an int: {first}")
+    require(isinstance(first.get("pmid_count"), int), f"pmid_count should be an int: {first}")
 
     prefix = str(first.get("name", ""))[:1]
     if prefix:
@@ -139,7 +139,7 @@ def assert_browser_grouping(source_type: str, source: str, target_type: str, exp
     except ImportError:
         fail("Playwright is not installed")
 
-    expected_group = hop_group_label(int(expected_first["min_hop"]))
+    expected_hop_label = hop_group_label(int(expected_first["min_hop"]))
     expected_name = str(expected_first.get("name", "")).strip()
 
     with sync_playwright() as p:
@@ -160,7 +160,7 @@ def assert_browser_grouping(source_type: str, source: str, target_type: str, exp
             target_root = target_input.locator("xpath=ancestor::*[@data-te-autocomplete-root][1]")
             require(target_root.count() == 1, "target input should be wrapped by te-autocomplete root")
             target_root.locator("[data-te-autocomplete-toggle]").click()
-            target_root.locator(".te-autocomplete-group").first.wait_for(timeout=30000)
+            target_root.locator(".te-autocomplete-meta").first.wait_for(timeout=30000)
             state = target_root.evaluate(
                 """
                 root => ({
@@ -187,9 +187,11 @@ def assert_browser_grouping(source_type: str, source: str, target_type: str, exp
             browser.close()
 
     require(not console_errors, "Path Finder autocomplete console errors: " + " | ".join(console_errors[:5]))
-    require(expected_group in state["groups"], f"expected group {expected_group!r} in browser dropdown: {state}")
+    require(state["groups"] == [], f"hop groups should be shown in option meta, not separate headers: {state}")
     require(any(expected_name in option for option in state["options"]), f"expected API candidate {expected_name!r} in browser dropdown: {state}")
-    require(any("path" in meta for meta in state["metas"]), f"connected candidate meta should include path count: {state}")
+    require(any(expected_hop_label in meta for meta in state["metas"]), f"connected candidate meta should include hop label: {state}")
+    require(any("PATH" in meta and "PMID" in meta for meta in state["metas"]), f"connected candidate meta should include PATHS and PMIDs: {state}")
+    require(all("in best path" not in meta for meta in state["metas"]), f"PMID meta should not say in best path: {state}")
     require(fallback_state["optionCount"] > 0, f"invalid source should fall back to all target entities: {fallback_state}")
     require(fallback_state["groups"] == [], f"fallback all-entity dropdown should not show connected groups: {fallback_state}")
 

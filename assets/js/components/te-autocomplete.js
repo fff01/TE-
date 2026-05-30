@@ -174,7 +174,7 @@
       const minHop = Number(option.min_hop || 0);
       normalized.min_hop = [1, 2, 3].includes(minHop) ? minHop : null;
       normalized.path_count = Math.max(0, Number(option.path_count || 0));
-      normalized.best_path_pmid_count = Math.max(0, Number(option.best_path_pmid_count || 0));
+      normalized.pmid_count = Math.max(0, Number(option.pmid_count || option.best_path_pmid_count || 0));
     }
     return normalized;
   }
@@ -240,15 +240,11 @@
       return '';
     }
     const pathCount = Number(option.path_count || 0);
-    const pmidCount = Number(option.best_path_pmid_count || 0);
-    const parts = [];
-    if (pathCount > 0) {
-      parts.push(`${pathCount} path${pathCount === 1 ? '' : 's'}`);
-    }
-    if (pmidCount > 0) {
-      parts.push(`${pmidCount} PMID${pmidCount === 1 ? '' : 's'} in best path`);
-    }
-    return parts.length ? `<span class="te-autocomplete-meta">${escapeHtml(parts.join(' | '))}</span>` : '';
+    const pmidCount = Number(option.pmid_count || 0);
+    const parts = [groupLabel(option.min_hop)];
+    parts.push(`${pathCount} PATH${pathCount === 1 ? '' : 'S'}`);
+    parts.push(`${pmidCount} PMID${pmidCount === 1 ? '' : 's'}`);
+    return `<span class="te-autocomplete-meta">${escapeHtml(parts.join(' | '))}</span>`;
   }
 
   function initAutocomplete(root) {
@@ -292,17 +288,8 @@
         menu.innerHTML = `<div class="te-autocomplete-empty">No ${escapeHtml(sourceConfig(root, input).label)} names match this prefix.</div>`;
         return;
       }
-      let lastGroup = '';
       menu.innerHTML = matches.map((option) => {
-        const group = groupLabel(option.min_hop);
-        const groupHtml = group && group !== lastGroup
-          ? `<div class="te-autocomplete-group">${escapeHtml(group)}</div>`
-          : '';
-        if (group) {
-          lastGroup = group;
-        }
         return [
-          groupHtml,
           `<button type="button" class="te-autocomplete-option" data-te-name="${escapeHtml(option.name)}">`,
           optionHtml(option.name, query),
           optionMeta(option),

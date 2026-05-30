@@ -157,20 +157,20 @@ WHERE elementId(candidate) <> elementId(source)
   AND ($query = '' OR toLower(trim(toString(candidate.name))) STARTS WITH toLower($query))
 WITH candidate,
      length(p) AS hop,
-     reduce(total = 0, rel IN relationships(p) | total + size(coalesce(rel.pmids, []))) AS pmid_count
+     reduce(path_pmids = [], rel IN relationships(p) | path_pmids + coalesce(rel.pmids, [])) AS path_pmids
 WITH candidate,
      min(hop) AS min_hop,
      count(*) AS path_count,
-     collect({hop: hop, pmid_count: pmid_count}) AS path_stats
+     reduce(all_pmids = [], pmids IN collect(path_pmids) | all_pmids + pmids) AS all_pmids
 WITH candidate,
      min_hop,
      path_count,
-     reduce(best = 0, stat IN path_stats |
+     reduce(unique_pmids = [], pmid IN all_pmids |
        CASE
-         WHEN stat.hop = min_hop AND stat.pmid_count > best THEN stat.pmid_count
-         ELSE best
+         WHEN pmid IS NULL OR trim(toString(pmid)) = '' OR trim(toString(pmid)) IN unique_pmids THEN unique_pmids
+         ELSE unique_pmids + trim(toString(pmid))
        END
-     ) AS best_path_pmid_count
+     ) AS unique_pmids
 RETURN elementId(candidate) AS element_id,
        labels(candidate) AS labels,
        trim(toString(candidate.name)) AS name,
@@ -179,8 +179,8 @@ RETURN elementId(candidate) AS element_id,
        candidate.disease_class AS disease_class,
        min_hop AS min_hop,
        path_count AS path_count,
-       best_path_pmid_count AS best_path_pmid_count
-ORDER BY min_hop ASC, best_path_pmid_count DESC, path_count DESC, toLower(name)
+       size(unique_pmids) AS pmid_count
+ORDER BY min_hop ASC, pmid_count DESC, path_count DESC, toLower(name)
 LIMIT %d
 CYPHER,
                 $depth,
@@ -356,7 +356,7 @@ CYPHER,
         $node = $this->normalizeNode($row);
         $node['min_hop'] = max(1, min(3, (int)($row['min_hop'] ?? 3)));
         $node['path_count'] = max(0, (int)($row['path_count'] ?? 0));
-        $node['best_path_pmid_count'] = max(0, (int)($row['best_path_pmid_count'] ?? 0));
+        $node['pmid_count'] = max(0, (int)($row['pmid_count'] ?? 0));
         return $node;
     }
 
