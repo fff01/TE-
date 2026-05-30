@@ -63,12 +63,26 @@ $reportPlan = [
 ];
 
 $draftMethod = $reflection->getMethod('buildEvidenceWalkDraftPrompt');
+$claimEvidenceMap = [
+    'schema_version' => 'claim_evidence_map.v1',
+    'supported_claims' => [],
+    'unsupported_claims' => [],
+    'limitations' => [],
+];
+$writingDecision = [
+    'schema_version' => 'writing_decision.v1',
+    'forbidden_claims' => [],
+    'citation_requirements' => [],
+    'final_checks' => [],
+];
 $zhDraftPrompt = $draftMethod->invoke(
     $client,
     $question,
     $analysis,
     $evidencePackage,
     $evidenceWalk,
+    $claimEvidenceMap,
+    $writingDecision,
     $reportPlan,
     'medium',
     ['max_words' => 900],
@@ -83,6 +97,8 @@ $enDraftPrompt = $draftMethod->invoke(
     ['intent' => 'mechanism', 'answer_language' => 'english'],
     $evidencePackage,
     $evidenceWalk,
+    $claimEvidenceMap,
+    $writingDecision,
     $reportPlan,
     'medium',
     ['max_words' => 900],
@@ -97,6 +113,8 @@ $zhPolishPrompt = $polishMethod->invoke(
     $analysis,
     $evidencePackage,
     $evidenceWalk,
+    $claimEvidenceMap,
+    $writingDecision,
     $reportPlan,
     ['ok' => true, 'errors' => []],
     'chinese'
@@ -113,6 +131,8 @@ $systemMethod = $reflection->getMethod('systemPrompt');
 $zhSystem = $systemMethod->invoke($client, 'zh_cn');
 $enSystem = $systemMethod->invoke($client, 'english');
 assert_contains('只能基于已经提供', $zhSystem, 'system prompt supports zh_cn Chinese branch');
+assert_contains('中文问题必须使用中文回答', $zhSystem, 'Chinese system prompt locks final answer language');
+assert_contains('不要输出俄文', $zhSystem, 'Chinese system prompt explicitly prevents Russian language drift');
 assert_contains('Answer only from the structured plugin results', $enSystem, 'system prompt supports English branch');
 
 $narratorPromptMethod = $reflection->getMethod('buildNarratorPrompt');
@@ -156,7 +176,9 @@ $directMethod = $reflection->getMethod('buildDirectAnswerPrompt');
 $zhDirect = $directMethod->invoke($client, $question, $analysis, [], [], [], [], 'medium', [], [], 'zh-cn');
 $enDirect = $directMethod->invoke($client, 'How does LINE-1 promote cancer?', ['intent' => 'mechanism'], [], [], [], [], 'medium', [], [], 'english');
 assert_contains('直接根据下面的证据写最终回答', $zhDirect, 'direct answer prompt supports zh-cn Chinese branch');
+assert_contains('不要在回答中写出 extra_context', $zhDirect, 'direct answer prompt prevents internal context key leakage');
 assert_contains('Write the final answer directly from the evidence below', $enDirect, 'direct answer prompt supports English branch');
+assert_contains('Do not write the literal word extra_context', $enDirect, 'English direct answer prompt prevents internal context key leakage');
 
 $summaryMethod = $reflection->getMethod('buildEvidenceSummaryPrompt');
 $zhSummary = $summaryMethod->invoke($client, $question, $analysis, [], [], [], [], 'medium', [], '', 'zh_cn');

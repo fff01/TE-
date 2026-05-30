@@ -7,6 +7,7 @@ $sharedEn = implode("\n", [
     'Do not output explanations outside JSON.',
     'Keep all field names in English.',
     'For Chinese questions, field values may be Chinese while field names remain English.',
+    'For English questions, field values should stay English unless the user explicitly requests another language; do not output Russian or any other unrequested language.',
     'Do not invent PMID, URL, graph edges, internal routes, evidence IDs, or site paths.',
     'If evidence is absent, expose the gap in the required schema fields.',
 ]);
@@ -17,6 +18,7 @@ $sharedZh = implode("\n", [
     '不要在 JSON 之外输出解释。',
     '所有字段名保持英文。',
     '中文问题的字段内容可以使用中文，但字段名必须保持英文。',
+    '中文问题的字段内容必须保持中文，除非用户明确要求其他语言；不要输出俄文或其他未被要求的语言。',
     '不要编造 PMID、URL、图谱边、内部路由、证据 ID 或站内路径。',
     '如果证据缺失，必须在 schema 要求的字段中显式暴露缺口。',
 ]);

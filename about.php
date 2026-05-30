@@ -12,6 +12,50 @@ $pageExtraStylesheets = [
 require __DIR__ . '/head.php';
 
 $aboutSections = [
+    'resource' => [
+        'nav' => 'Resource',
+        'title' => 'About TE-KG',
+        'summary' => 'TE-KG is a transposable-element-centered knowledge graph interface for exploring TE entities, diseases, molecular functions, literature evidence, expression contexts, and public data exports in one local database environment.',
+        'sections' => [
+            [
+                'heading' => 'What TE-KG is',
+                'items' => [
+                    'TE-KG organizes transposable element knowledge as connected entities rather than as isolated tables.',
+                    'The public interface combines catalog lookup, graph exploration, path search, expression inspection, and downloadable datasets.',
+                    'The runtime graph target is Neo4j tekg3, and user-facing graph pages should be read as views over that runtime source.',
+                    'The goal is to make TE-related relationships reviewable, especially when a relation depends on literature evidence.',
+                ],
+            ],
+            [
+                'heading' => 'What this guide covers',
+                'items' => [
+                    'The guide explains what each public page is designed to answer.',
+                    'It describes the main controls on each page and the order in which users should use them.',
+                    'It separates lookup, graph browsing, path evidence, expression analysis, and public file download workflows.',
+                    'It also documents evidence-reading cautions so users do not overinterpret journal metrics or missing metadata.',
+                ],
+            ],
+            [
+                'heading' => 'Data access routes',
+                'items' => [
+                    'Use Home for high-level live dataset composition.',
+                    'Use Browse for entity discovery and name lookup.',
+                    'Use Path Finder and TE-KG when relation evidence matters.',
+                    'Use Expression for TE expression contexts.',
+                    'Use Download when you need the public files supporting visible workflows.',
+                ],
+            ],
+            [
+                'heading' => 'Evidence principles',
+                'items' => [
+                    'Relation-level claims should be checked against supporting papers when available.',
+                    'PMID, title, year, journal, IF, JCR, and match type are evidence metadata fields, not interchangeable confidence scores.',
+                    'IF must not be called confidence, and missing IF or JCR should not be guessed.',
+                    'When a page appears inconsistent, check page context and data source before assuming a biological contradiction.',
+                ],
+            ],
+        ],
+    ],
     'home' => [
         'nav' => 'Home',
         'title' => 'Home Overview',
@@ -115,7 +159,7 @@ $aboutSections = [
     'tekg' => [
         'nav' => 'TE-KG',
         'title' => 'TE-KG Graph',
-        'summary' => 'TE-KG is the interactive graph runtime. It exposes Neo4j tekg3 entities and BIO_RELATION edges through a G6-based visual interface with legends, filters, node actions, and evidence support.',
+        'summary' => 'TE-KG is the interactive G6 graph runtime. It exposes Neo4j tekg3 entities and BIO_RELATION edges through a G6-based visual interface with legends, filters, node actions, and evidence support.',
         'sections' => [
             [
                 'heading' => 'Graph interaction',
@@ -230,7 +274,7 @@ $aboutSections = [
             [
                 'heading' => 'Filtering downloads',
                 'items' => [
-                    'Use category buttons such as Expression, Graph, or Taxonomy to narrow the table.',
+                    'Use category filter buttons such as Expression, Graph, or Taxonomy to narrow the table.',
                     'Use Search to match dataset names, filenames, usage descriptions, formats, and row descriptions.',
                     'Expand a dataset row when you need a short explanation before downloading.',
                     'Clear the search text or return to All when you want to see the full public catalog.',
@@ -294,39 +338,49 @@ $aboutSections = [
             <span>About</span>
           </div>
 
+          <section class="about-intro">
+            <span class="about-kicker">TE-KG User Guide</span>
+            <h2>Explore TE knowledge as connected evidence, not as isolated tables.</h2>
+            <p>TE-KG combines a Neo4j-backed knowledge graph, searchable entity pages, path-level evidence tables, expression views, and public downloads. This guide defines the resource, explains the main entry points, and describes how to interpret evidence and page-specific controls.</p>
+          </section>
+
           <section class="about-panel">
             <div class="about-layout">
               <aside class="about-side">
+                <div class="about-side-title">Contents</div>
                 <nav class="about-nav" aria-label="About page sections">
 <?php foreach ($aboutSections as $key => $section): ?>
-                  <a href="#<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" data-pane="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" class="<?= $key === 'home' ? 'is-active' : '' ?>"><?= htmlspecialchars($section['nav'], ENT_QUOTES, 'UTF-8') ?></a>
+                  <a href="#section-<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" data-pane="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" class="<?= $key === 'resource' ? 'is-active' : '' ?>"><?= htmlspecialchars($section['nav'], ENT_QUOTES, 'UTF-8') ?></a>
 <?php endforeach; ?>
                 </nav>
               </aside>
 
               <div class="about-content">
+<?php $sectionIndex = 1; ?>
 <?php foreach ($aboutSections as $key => $section): ?>
-                <section class="about-pane <?= $key === 'home' ? 'is-active' : '' ?>" id="pane-<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>">
-                  <div class="about-block">
-                    <div class="about-block-header">
-                      <h4><?= htmlspecialchars($section['title'], ENT_QUOTES, 'UTF-8') ?></h4>
+                <article class="about-doc-section" id="section-<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" data-section="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>">
+                  <header class="about-doc-header">
+                    <span><?= str_pad((string)$sectionIndex, 2, '0', STR_PAD_LEFT) ?></span>
+                    <div>
+                      <h3><?= htmlspecialchars($section['title'], ENT_QUOTES, 'UTF-8') ?></h3>
                       <p><?= htmlspecialchars($section['summary'], ENT_QUOTES, 'UTF-8') ?></p>
                     </div>
+                  </header>
 
-                    <div class="about-detail-grid">
+                  <div class="about-detail-grid">
 <?php foreach ($section['sections'] as $detail): ?>
-                      <article class="about-detail-card">
-                        <h5><?= htmlspecialchars($detail['heading'], ENT_QUOTES, 'UTF-8') ?></h5>
-                        <ul>
+                    <section class="about-detail-card">
+                      <h4><?= htmlspecialchars($detail['heading'], ENT_QUOTES, 'UTF-8') ?></h4>
+                      <ul>
 <?php foreach ($detail['items'] as $item): ?>
-                          <li><?= htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?></li>
+                        <li><?= htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?></li>
 <?php endforeach; ?>
-                        </ul>
-                      </article>
+                      </ul>
+                    </section>
 <?php endforeach; ?>
-                    </div>
                   </div>
-                </section>
+                </article>
+<?php $sectionIndex += 1; ?>
 <?php endforeach; ?>
               </div>
             </div>

@@ -325,7 +325,54 @@ trait TekgDeepThinkEvidenceTrait
             }
         }
 
+        if (($analysis['intent'] ?? '') === 'relationship' && $this->relationshipQuestionNeedsSynthesis($question)) {
+            $groups = $this->groupRelationshipRowsForWriting((array)($pluginResults['Graph Plugin']['results']['rows'] ?? []));
+            if ($groups !== []) {
+                $context['relationship_groups'] = $groups;
+                $context['relationship_synthesis_instruction'] = 'Cover the main graph dimensions instead of focusing only on the first category: disease links, mechanisms/functions, gene/protein/RNA evidence, and limitations when present.';
+            }
+        }
+
         return $context;
+    }
+
+    private function groupRelationshipRowsForWriting(array $rows): array
+    {
+        $groups = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $target = trim((string)($row['target_name'] ?? ''));
+            if ($target === '') {
+                continue;
+            }
+            $targetType = trim((string)($row['target_type'] ?? ''));
+            $targetLabels = array_map('strval', (array)($row['target_labels'] ?? []));
+            $resolvedType = $targetType !== '' ? $targetType : trim((string)($targetLabels[0] ?? 'Unknown'));
+            if ($resolvedType === '') {
+                $resolvedType = 'Unknown';
+            }
+            if (!isset($groups[$resolvedType])) {
+                $groups[$resolvedType] = [
+                    'count' => 0,
+                    'examples' => [],
+                ];
+            }
+            $groups[$resolvedType]['count']++;
+            if (count($groups[$resolvedType]['examples']) >= 5) {
+                continue;
+            }
+            $description = trim((string)($row['relation_description'] ?? ''));
+            $groups[$resolvedType]['examples'][] = [
+                'target' => $target,
+                'relation' => trim((string)($row['relation_type'] ?? 'related_to')),
+                'description' => $description,
+            ];
+        }
+
+        ksort($groups);
+        return $groups;
     }
 
     private function wantsFullSequenceOutput(string $question): bool
@@ -432,6 +479,9 @@ trait TekgDeepThinkEvidenceTrait
         if (($analysis['intent'] ?? '') !== 'relationship') {
             return null;
         }
+        if ($this->relationshipQuestionNeedsSynthesis($question)) {
+            return null;
+        }
         $rows = (array)($pluginResults['Graph Plugin']['results']['rows'] ?? []);
         if ($rows === []) {
             return null;
@@ -494,6 +544,61 @@ trait TekgDeepThinkEvidenceTrait
         $prefix = "Below is the full relationship list currently connected to {$sourceLabel} in the graph:\n\n";
         $suffix = $citationText !== '' ? "\nSources: {$citationText}" : '';
         return $prefix . implode("\n", $bodyLines) . $suffix;
+    }
+
+    private function relationshipQuestionNeedsSynthesis(string $question): bool
+    {
+        $normalized = tekg_agent_lower($question);
+        $explicitListCues = [
+            '列出',
+            '全部关系',
+            '所有关系',
+            '哪些',
+            '有哪些',
+            'list',
+            'list all',
+            'enumerate',
+            'show all',
+            'full relationship',
+            'all relationship',
+        ];
+        foreach ($explicitListCues as $cue) {
+            if (str_contains($normalized, tekg_agent_lower($cue))) {
+                return false;
+            }
+        }
+
+        $synthesisCues = [
+            '整合',
+            '综合',
+            '总结',
+            '概述',
+            '概览',
+            '综述',
+            '梳理',
+            '归纳',
+            '介绍',
+            '报告',
+            '研究',
+            '信息',
+            'synthesize',
+            'synthesis',
+            'summarize',
+            'summary',
+            'overview',
+            'integrate',
+            'profile',
+            'report',
+            'review',
+            'what do we know',
+        ];
+        foreach ($synthesisCues as $cue) {
+            if (str_contains($normalized, tekg_agent_lower($cue))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function writeDeterministicSummary(
