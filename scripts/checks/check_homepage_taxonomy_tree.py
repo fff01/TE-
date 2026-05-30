@@ -19,10 +19,10 @@ def main() -> int:
     taxonomy_php = read_text("api/taxonomy.php")
     taxonomy_lib = read_text("api/taxonomy_lib.php")
 
-    if "'tree' => 'rmsk_repbase'" not in index_php:
-        failures.append("homepage iframe does not request the rmsk_repbase tree")
-    if "'q' => $homeGraphQuery" in index_php or '"q" => $homeGraphQuery' in index_php:
-        failures.append("homepage iframe still forces a dynamic graph query")
+    if "home-architecture-placeholder.svg" not in index_php:
+        failures.append("homepage does not use the architecture placeholder image")
+    if "preview_graph.html" in index_php or "<iframe" in index_php:
+        failures.append("homepage Overview still embeds the graph iframe instead of the architecture placeholder")
     if "const initialTreeVariant = String(params.get('tree') || window.__TEKG_TREE_VARIANT || 'rmsk_repbase')" not in bootstrap_js:
         failures.append("G6 default tree variant is not rmsk_repbase")
     for variant in ("rmsk_repbase", "all"):
@@ -42,12 +42,12 @@ def main() -> int:
         failures.append("taxonomy tree source aliases still allow the illegal tekg3 tree")
 
     if failures:
-        print("FAIL homepage taxonomy tree restore check")
+        print("FAIL homepage architecture placeholder and taxonomy runtime check")
         for failure in failures:
             print(f"- {failure}")
         return 1
 
-    print("PASS homepage taxonomy tree restore check")
+    print("PASS homepage architecture placeholder and taxonomy runtime check")
     return 0
 
 

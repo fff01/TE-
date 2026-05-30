@@ -18,7 +18,11 @@
 \RequirePackage[left=2.50cm, right=2.50cm, top=2.50cm, bottom=2.50cm]{geometry}
 
 %%一些必要的宏包
-\RequirePackage[unicode=true,colorlinks,urlcolor=blue,linkcolor=blue,bookmarksnumbered=blue]{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\RequirePackage[unicode=true,hidelinks,bookmarksnumbered=true]{hyperref}
+\hypersetup{colorlinks=false,linkcolor=black,citecolor=black,urlcolor=black,pdfborder={0 0 0}}
+\setlength{\emergencystretch}{3em}
+\hypersetup{colorlinks=false,pdfborder={0 0 0}}
 \RequirePackage{latexsym,amssymb,amsmath,amsbsy,amsopn,amstext,amsthm,amsxtra,color,bm,calc,ifpdf}
 \RequirePackage{graphicx}
 \RequirePackage{enumerate}
@@ -29,10 +33,13 @@
 \RequirePackage{xcolor}
 \RequirePackage{fontspec}
 \RequirePackage{subfigure}
-\PassOptionsToPackage{hyphens}{url}
-\RequirePackage{hyperref}
 \RequirePackage{pythonhighlight}
-\RequirePackage{subfigure}
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{longtable}
+\RequirePackage{tabularx}
+\RequirePackage{float}
+\RequirePackage{caption}
 
 \RequirePackage{tcolorbox}
 
@@ -45,15 +52,6 @@
 \makeatletter
 \newcommand\dlmu[2][4cm]{\hskip1pt\underline{\hb@xt@ #1{\hss#2\hss}}\hskip3pt}
 \makeatother
-
-%更改主题
-% \hypersetup{
-%     colorlinks=true,
-%     linkcolor=blue,
-%     filecolor=blue,      
-%     urlcolor=Magenta,
-%     citecolor=orange,
-% }
 
 %%对一些autoref的中文引用名作修改
 \def\equationautorefname{式}
@@ -82,10 +80,11 @@
 %%参考文献设置
 \newcommand{\reference}{
 %\nocite{*}   %打开此选项会列出bib里面的所有参考文献
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{参考文献}
 \bibliographystyle{unsrt} %规定了参考文献的格式
-\begin{center}%居中
-	\bibliography{reference} %调出LaTeX生成参考文献列表
-\end{center}
+\bibliography{reference} %调出LaTeX生成参考文献列表
 }
 
 %%文本框设置
@@ -93,7 +92,7 @@
 \begin{center}
 \begin{tcolorbox}[colback=gray!10,%gray background
                   colframe=black,% black frame colour
-                  width=8cm,% Use 8cm total width,
+                  width=0.95\textwidth,% Use most of the text width,
                   arc=1mm, auto outer arc,
                   boxrule=0.5pt,
                  ]
@@ -104,25 +103,26 @@
 
 %%页眉设置
 \pagestyle{fancy}
+\setlength{\headheight}{15pt}
 \fancyhead[L]{}%%留空则不显示
-\fancyhead[C]{\fangsong 页眉中}%%留空则不显示
+\fancyhead[C]{\fangsong TE-KG 数据库系统报告}%%留空则不显示
 \fancyhead[R]{}%%留空则不显示
 
 
 %封面页设置
 {   
-    \title{ \vspace{2cm} \heiti \Huge \textbf{{XXXX课程报告}} \par
+    \title{ \vspace{2cm} \heiti \Huge \textbf{{TE-KG 数据库系统报告}} \par
     \vspace{1cm} 
-    \heiti \Large {\underline{XXXXXX进展调研}}    
+    \heiti \Large {\underline{面向转座元件疾病证据整合的知识图谱数据库}}    
     \vspace{3cm} }%标题
 
     \author{
     \vspace{0.5cm}
-    \kaishu\Large 姓名\ \dlmu[9cm]{XXX} \qquad \\ %姓名 
+    \kaishu\Large 项目\ \dlmu[9cm]{TE-KG} \qquad \\ %项目 
     \vspace{0.5cm}
-    \kaishu\Large  学号\ \dlmu[9cm]{在此填写学号} \qquad  \\ %学号
+    \kaishu\Large  文档类型\ \dlmu[9cm]{数据库课程报告} \qquad  \\ %文档类型
     \vspace{0.5cm}
-    \kaishu\Large   院所\ \dlmu[9cm]{计算机科学与技术学院} %院所
+    \kaishu\Large   单位\ \dlmu[9cm]{浙江大学} %单位
         }
         
     \date{\today} % 默认为今天的日期，可以注释掉不显示日期
@@ -145,5 +145,5 @@
     }
 \end{figure}
 \maketitle
+\thispagestyle{empty}
 }
-

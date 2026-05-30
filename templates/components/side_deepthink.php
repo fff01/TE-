@@ -21,7 +21,6 @@ $sideDeepThinkConfig = [
         <h2>Deep Think</h2>
         <p id="sideDeepThinkStatus">Ready</p>
       </div>
-      <button class="side-dt-close" id="sideDeepThinkClose" type="button" aria-label="Close Deep Think">Close</button>
     </header>
     <div class="side-dt-messages" id="sideDeepThinkMessages"></div>
     <form class="side-dt-form" id="sideDeepThinkForm">

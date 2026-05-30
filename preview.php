@@ -109,8 +109,8 @@ $previewConfig = [
           </section>
         </div>
 
-        <div class="qa-overlay-layer preview-side-dt-root is-open" id="qaOverlay">
-          <div class="qa-drawer side-dt-drawer" id="qaDrawer">
+        <div class="qa-overlay-layer side-dt preview-side-dt-root is-open" id="qaOverlay">
+          <aside class="qa-drawer side-dt-drawer" id="qaDrawer">
             <button class="qa-drawer-drag side-dt-drag" id="qaDrawerDrag" type="button" aria-label="Move Deep Think assistant"></button>
             <div class="qa-drawer-body">
               <section class="preview-deepthink" id="previewDeepThink" aria-label="Deep Think assistant">
@@ -135,7 +135,7 @@ $previewConfig = [
             <button class="qa-drawer-resize qa-drawer-resize-ne side-dt-resize side-dt-resize-ne" id="qaDrawerResizeNE" type="button" aria-label="Resize Deep Think assistant"></button>
             <button class="qa-drawer-resize qa-drawer-resize-sw side-dt-resize side-dt-resize-sw" id="qaDrawerResizeSW" type="button" aria-label="Resize Deep Think assistant"></button>
             <button class="qa-drawer-resize qa-drawer-resize-se side-dt-resize side-dt-resize-se" id="qaDrawerResizeSE" type="button" aria-label="Resize Deep Think assistant"></button>
-          </div>
+          </aside>
 
           <button class="qa-fab side-dt-fab" id="qaFab" type="button" aria-label="Toggle Deep Think assistant">
             <span class="qa-fab-icon side-dt-fab-icon" aria-hidden="true">AI</span>

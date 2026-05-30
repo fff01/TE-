@@ -22,10 +22,9 @@ def main() -> None:
             state = page.evaluate(
                 """
                 () => {
-                    const cards = Array.from(document.querySelectorAll('.download-card'));
-                    const categories = Array.from(document.querySelectorAll('[data-download-category]'));
-                    const downloadLinks = Array.from(document.querySelectorAll('.download-card-action[href]'));
-                    const paletteText = getComputedStyle(document.querySelector('.download-page-title')).color;
+                    const headers = Array.from(document.querySelectorAll('.download-table thead th')).map((th) => th.textContent.trim());
+                    const rows = Array.from(document.querySelectorAll('#download-table-body tr'));
+                    const downloadLinks = Array.from(document.querySelectorAll('.file-link[href]'));
                     const greenish = Array.from(document.querySelectorAll('*')).some((el) => {
                         const style = getComputedStyle(el);
                         return ['color', 'backgroundColor', 'borderColor'].some((prop) => {
@@ -35,13 +34,19 @@ def main() -> None:
                     });
                     return {
                         title: document.querySelector('.download-page-title')?.textContent?.trim() || '',
+                        panelTitle: document.querySelector('.download-panel h2')?.textContent?.trim() || '',
+                        categoryFilters: Array.from(document.querySelectorAll('[data-download-category]')).map((button) => button.dataset.downloadCategory || ''),
                         summaryCards: document.querySelectorAll('.download-summary-card').length,
-                        categoryFilters: categories.map((button) => button.textContent.trim()),
-                        cardCount: cards.length,
-                        availableBadges: document.querySelectorAll('.download-status.is-available').length,
-                        sizeBadges: Array.from(document.querySelectorAll('.download-file-size')).filter((el) => el.textContent.trim() !== '').length,
+                        cards: document.querySelectorAll('.download-card').length,
+                        hasTable: Boolean(document.querySelector('.download-table')),
+                        hasSearch: Boolean(document.querySelector('#download-search')),
+                        headers,
+                        rowCount: rows.length,
+                        statusMentions: headers.filter((header) => header === 'Status').length + document.querySelectorAll('.download-status').length,
+                        categoryPills: document.querySelectorAll('.download-category-pill').length,
+                        fileSizeBadges: document.querySelectorAll('.download-file-size').length,
                         downloadLinks: downloadLinks.length,
-                        paletteText,
+                        firstHref: downloadLinks[0]?.getAttribute('href') || '',
                         greenish,
                     };
                 }
@@ -49,30 +54,49 @@ def main() -> None:
             )
 
             require(state["title"] == "Download", f"unexpected page title: {state}")
-            require(state["summaryCards"] >= 3, f"download summary cards missing: {state}")
-            require(any(label.startswith("Expression") for label in state["categoryFilters"]), f"Expression category filter missing: {state}")
-            require(any(label.startswith("Graph") for label in state["categoryFilters"]), f"Graph category filter missing: {state}")
-            require(any(label.startswith("Taxonomy") for label in state["categoryFilters"]), f"Taxonomy category filter missing: {state}")
-            require(state["cardCount"] >= 6, f"download cards missing: {state}")
-            require(state["availableBadges"] >= 6, f"available status badges missing: {state}")
-            require(state["sizeBadges"] >= 6, f"file size badges missing: {state}")
-            require(state["downloadLinks"] >= 6, f"download action links missing: {state}")
+            require(state["categoryFilters"] == ["All", "Expression", "Graph", "Taxonomy"], f"category filters missing or out of order: {state}")
+            require(state["summaryCards"] == 0, f"summary cards should not be present: {state}")
+            require(state["cards"] == 0, f"card catalog should not be present: {state}")
+            require(state["hasTable"] is True, f"traditional table missing: {state}")
+            require(state["hasSearch"] is True, f"early table search control missing: {state}")
+            require(state["headers"] == ["Dataset", "File", "Used in", "Format"], f"traditional table headers mismatch: {state}")
+            require(state["rowCount"] >= 10, f"download table rows missing: {state}")
+            require(state["statusMentions"] == 0, f"Status column/badges should be removed: {state}")
+            require(state["categoryPills"] == 0, f"card-era category pills should be removed: {state}")
+            require(state["fileSizeBadges"] == 0, f"card-era file size badges should be removed: {state}")
+            require(state["downloadLinks"] >= 10, f"download links missing: {state}")
+            require("bulk_expression_web" in state["firstHref"], f"download paths should use current expression runtime root: {state}")
             require(state["greenish"] is False, f"legacy green palette should not remain in Download UI: {state}")
 
-            page.locator('[data-download-category="Graph"]').click()
+            page.click('[data-download-category="Graph"]')
             graph_state = page.evaluate(
                 """
-                () => Array.from(document.querySelectorAll('.download-card-category'))
-                    .map((el) => el.textContent.trim())
+                () => ({
+                    rowCount: document.querySelectorAll('#download-table-body tr').length,
+                    bodyText: document.querySelector('#download-table-body')?.textContent || '',
+                })
                 """
             )
-            require(graph_state, "Graph filter should show at least one card")
-            require(all(label == "Graph" for label in graph_state), f"Graph filter should show only Graph cards: {graph_state}")
+            require(graph_state["rowCount"] == 2, f"Graph filter should show the two graph datasets: {graph_state}")
+            require("Graph seed" in graph_state["bodyText"], f"Graph filter should include graph seed: {graph_state}")
 
-            page.locator('[data-download-category="All"]').click()
-            page.locator("#download-search").fill("taxonomy")
-            search_count = page.locator(".download-card").count()
-            require(search_count >= 1, "search should find taxonomy-related downloads")
+            page.click('[data-download-category="All"]')
+            page.fill("#download-search", "taxonomy")
+            page.wait_for_timeout(100)
+            filtered = page.evaluate(
+                """
+                () => ({
+                    rowCount: document.querySelectorAll('#download-table-body tr').length,
+                    summary: document.querySelector('#download-summary')?.textContent?.trim() || '',
+                })
+                """
+            )
+            require(filtered["rowCount"] >= 2, f"search should filter taxonomy datasets: {filtered}")
+            require("entries" in filtered["summary"], f"summary should remain in early table wording: {filtered}")
+
+            page.click(".dataset-toggle")
+            expanded = page.locator(".dataset-row.is-open").count()
+            require(expanded == 1, f"dataset description toggle should open exactly one row, got {expanded}")
         finally:
             browser.close()
 

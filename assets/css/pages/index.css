@@ -56,11 +56,20 @@
         }
 
         .figure-canvas {
+          display: grid;
+          place-items: center;
           min-height: 520px;
           padding: 0;
           border: none;
           border-radius: 0;
-          background: transparent;
+          background: linear-gradient(180deg, #f8fbff 0%, #edf5ff 100%);
+        }
+
+        .architecture-placeholder-image {
+          display: block;
+          width: 100%;
+          height: 520px;
+          object-fit: contain;
         }
 
         .tree-frame {

@@ -59,21 +59,41 @@
     return stage.getBoundingClientRect();
   }
 
+  function getAssistantBounds() {
+    const stageBounds = getStageBounds();
+    const graphSurface = stage.querySelector('.preview-g6-surface-stack');
+    if (!graphSurface) {
+      return {
+        left: 0,
+        top: 0,
+        width: stageBounds.width,
+        height: stageBounds.height,
+      };
+    }
+    const graphBounds = graphSurface.getBoundingClientRect();
+    return {
+      left: Math.max(0, graphBounds.left - stageBounds.left),
+      top: Math.max(0, graphBounds.top - stageBounds.top),
+      width: graphBounds.width,
+      height: graphBounds.height,
+    };
+  }
+
   function getMinDrawerWidth() {
-    return Math.min(340, Math.max(280, getStageBounds().width - 24));
+    return Math.min(340, Math.max(280, getAssistantBounds().width - 24));
   }
 
   function getMinDrawerHeight() {
-    return Math.min(360, Math.max(280, getStageBounds().height - 24));
+    return Math.min(360, Math.max(280, getAssistantBounds().height));
   }
 
   function getMaxDrawerWidth() {
-    const bounds = getStageBounds();
+    const bounds = getAssistantBounds();
     return Math.max(280, Math.min(820, bounds.width - 24));
   }
 
   function getMaxDrawerHeight() {
-    return Math.max(280, getStageBounds().height - 24);
+    return Math.max(280, getAssistantBounds().height);
   }
 
   function clampDrawerWidth(width) {
@@ -87,26 +107,28 @@
   }
 
   function clampDrawerRect(rect) {
-    const bounds = getStageBounds();
+    const bounds = getAssistantBounds();
     const width = clampDrawerWidth(rect.width);
     const height = clampDrawerHeight(rect.height);
-    const maxLeft = Math.max(12, bounds.width - width - 12);
-    const maxTop = Math.max(12, bounds.height - height - 12);
+    const minLeft = bounds.left + 12;
+    const minTop = bounds.top;
+    const maxLeft = Math.max(minLeft, bounds.left + bounds.width - width - 12);
+    const maxTop = Math.max(minTop, bounds.top + bounds.height - height);
     return {
-      left: Math.max(12, Math.min(maxLeft, rect.left)),
-      top: Math.max(12, Math.min(maxTop, rect.top)),
+      left: Math.max(minLeft, Math.min(maxLeft, rect.left)),
+      top: Math.max(minTop, Math.min(maxTop, rect.top)),
       width,
       height,
     };
   }
 
   function getDefaultDrawerRect() {
-    const bounds = getStageBounds();
+    const bounds = getAssistantBounds();
     const width = clampDrawerWidth(440);
-    const height = clampDrawerHeight(680);
+    const height = getMaxDrawerHeight();
     return clampDrawerRect({
-      left: bounds.width - width - 24,
-      top: Math.max(24, bounds.height - height - 24),
+      left: bounds.left + bounds.width - width - 24,
+      top: bounds.top,
       width,
       height,
     });
@@ -126,10 +148,11 @@
   };
 
   function clampFabPosition() {
-    const width = fab.offsetWidth || 72;
-    const height = fab.offsetHeight || 72;
-    fabPosition.x = Math.max(12, Math.min(window.innerWidth - width - 12, fabPosition.x));
-    fabPosition.y = Math.max((header ? header.offsetHeight : 72) + 12, Math.min(window.innerHeight - height - 12, fabPosition.y));
+    const bounds = getStageBounds();
+    const width = fab.offsetWidth || 84;
+    const height = fab.offsetHeight || 84;
+    fabPosition.x = Math.max(12, Math.min(bounds.width - width - 12, fabPosition.x));
+    fabPosition.y = Math.max(12, Math.min(bounds.height - height - 12, fabPosition.y));
   }
 
   function updateFabPosition() {

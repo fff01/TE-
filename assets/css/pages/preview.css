@@ -886,28 +886,16 @@
           left: calc(100% - 448px);
           width: 440px;
           height: 680px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          opacity: 0;
           visibility: hidden;
-          pointer-events: none;
-          transform: translateY(12px) scale(0.985);
-          transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
           user-select: none;
         }
 
-        .qa-overlay-layer.is-open .qa-drawer {
-          opacity: 1;
-          visibility: visible;
-          pointer-events: auto;
-          transform: translateY(0) scale(1);
+        .preview-side-dt-root.side-dt .qa-fab {
+          position: absolute;
         }
 
-        .qa-overlay-layer.is-open .side-dt-fab {
-          opacity: 1;
-          pointer-events: auto;
-          transform: none;
+        .qa-overlay-layer.is-open .qa-drawer {
+          visibility: visible;
         }
 
         .qa-overlay-layer.is-dragging .qa-drawer,
@@ -1094,189 +1082,8 @@
           height: 100vh;
         }
 
-        .qa-drawer-resize {
-          position: absolute;
-          padding: 0;
-          border: 0;
-          background: transparent;
-          z-index: 3;
-        }
-
-        .qa-drawer-resize-w {
-          top: 24px;
-          left: 0;
-          bottom: 14px;
-          width: 14px;
-          cursor: ew-resize;
-        }
-
-        .qa-drawer-resize-e {
-          top: 24px;
-          right: 0;
-          bottom: 14px;
-          width: 14px;
-          cursor: ew-resize;
-        }
-
-        .qa-drawer-resize-s {
-          left: 14px;
-          right: 24px;
-          bottom: 0;
-          height: 14px;
-          cursor: ns-resize;
-        }
-
-        .qa-drawer-resize-nw {
-          top: 0;
-          left: 0;
-          width: 24px;
-          height: 24px;
-          cursor: nwse-resize;
-        }
-
-        .qa-drawer-resize-ne {
-          top: 0;
-          right: 0;
-          width: 24px;
-          height: 24px;
-          cursor: nesw-resize;
-        }
-
-        .qa-drawer-resize-sw {
-          left: 0;
-          bottom: 0;
-          width: 24px;
-          height: 24px;
-          cursor: nesw-resize;
-        }
-
-        .qa-drawer-resize-se {
-          right: 0;
-          bottom: 0;
-          width: 24px;
-          height: 24px;
-          cursor: nwse-resize;
-        }
-
-        .qa-drawer-resize-w::after,
-        .qa-drawer-resize-e::after,
-        .qa-drawer-resize-s::after,
-        .qa-drawer-resize-nw::after,
-        .qa-drawer-resize-ne::after,
-        .qa-drawer-resize-sw::after,
-        .qa-drawer-resize-se::after {
-          content: '';
-          position: absolute;
-          opacity: 0;
-          transition: opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
-        }
-
-        .qa-drawer-resize-w::after,
-        .qa-drawer-resize-e::after {
-          top: 50%;
-          transform: translateY(-50%);
-          width: 4px;
-          height: 56px;
-          border-radius: 999px;
-          background: rgba(120, 146, 190, 0.42);
-        }
-
-        .qa-drawer-resize-w::after {
-          left: 4px;
-        }
-
-        .qa-drawer-resize-e::after {
-          right: 4px;
-        }
-
-        .qa-drawer-resize-s::after {
-          left: 50%;
-          bottom: 4px;
-          transform: translateX(-50%);
-          width: 56px;
-          height: 4px;
-          border-radius: 999px;
-          background: rgba(120, 146, 190, 0.42);
-        }
-
-        .qa-drawer-resize-nw::after,
-        .qa-drawer-resize-ne::after,
-        .qa-drawer-resize-sw::after,
-        .qa-drawer-resize-se::after {
-          width: 12px;
-          height: 12px;
-          background: transparent;
-        }
-
-        .qa-drawer-resize-nw::after {
-          top: 5px;
-          left: 5px;
-          border-left: 3px solid rgba(120, 146, 190, 0.58);
-          border-top: 3px solid rgba(120, 146, 190, 0.58);
-          border-top-left-radius: 10px;
-        }
-
-        .qa-drawer-resize-ne::after {
-          top: 5px;
-          right: 5px;
-          border-right: 3px solid rgba(120, 146, 190, 0.58);
-          border-top: 3px solid rgba(120, 146, 190, 0.58);
-          border-top-right-radius: 10px;
-        }
-
-        .qa-drawer-resize-sw::after {
-          left: 5px;
-          bottom: 5px;
-          border-left: 3px solid rgba(120, 146, 190, 0.58);
-          border-bottom: 3px solid rgba(120, 146, 190, 0.58);
-          border-bottom-left-radius: 10px;
-        }
-
-        .qa-drawer-resize-se::after {
-          right: 5px;
-          bottom: 5px;
-          border-right: 3px solid rgba(120, 146, 190, 0.58);
-          border-bottom: 3px solid rgba(120, 146, 190, 0.58);
-          border-bottom-right-radius: 10px;
-        }
-
-        .qa-drawer-resize-w:hover::after,
-        .qa-drawer-resize-e:hover::after,
-        .qa-drawer-resize-s:hover::after,
-        .qa-drawer-resize-nw:hover::after,
-        .qa-drawer-resize-ne:hover::after,
-        .qa-drawer-resize-sw:hover::after,
-        .qa-drawer-resize-se:hover::after {
-          opacity: 1;
-        }
-
-        .qa-drawer-resize-w:hover::after,
-        .qa-drawer-resize-e:hover::after,
-        .qa-drawer-resize-s:hover::after,
-        .qa-overlay-layer.is-resizing .qa-drawer-resize-w::after,
-        .qa-overlay-layer.is-resizing .qa-drawer-resize-e::after,
-        .qa-overlay-layer.is-resizing .qa-drawer-resize-s::after {
-          opacity: 1;
-          background: rgba(79, 123, 214, 0.68);
-        }
-
-        .qa-overlay-layer.is-resizing .qa-drawer-resize-nw::after,
-        .qa-overlay-layer.is-resizing .qa-drawer-resize-ne::after,
-        .qa-overlay-layer.is-resizing .qa-drawer-resize-sw::after,
-        .qa-overlay-layer.is-resizing .qa-drawer-resize-se::after,
-        .qa-drawer-resize-nw:hover::after,
-        .qa-drawer-resize-ne:hover::after,
-        .qa-drawer-resize-sw:hover::after,
-        .qa-drawer-resize-se:hover::after {
-          opacity: 1;
-          border-left-color: rgba(79, 123, 214, 0.78);
-          border-right-color: rgba(79, 123, 214, 0.78);
-          border-top-color: rgba(79, 123, 214, 0.78);
-          border-bottom-color: rgba(79, 123, 214, 0.78);
-        }
-
         .qa-fab {
-          position: fixed;
+          position: absolute;
           cursor: grab;
           pointer-events: auto;
           z-index: 30;

@@ -21,10 +21,6 @@ $quickLinks = [
     ['title' => 'About', 'href' => site_url_with_state(tekg_app_url('about.php'), $siteLang), 'icon' => 'about'],
 ];
 
-$treeEmbedUrl = site_url_with_state(tekg_assets_url('html/preview_graph.html'), $siteLang, null, [
-    'embed' => 'home-preview',
-    'tree' => 'rmsk_repbase',
-]);
 ?>
       <section class="hero-area">
         <div class="proto-container">
@@ -36,13 +32,16 @@ $treeEmbedUrl = site_url_with_state(tekg_assets_url('html/preview_graph.html'), 
             </div>
             <div class="hero-figure">
               <div class="hero-figure-frame">
-              <div class="figure-canvas">
-                <div class="tree-frame">
-                  <iframe src="<?= htmlspecialchars($treeEmbedUrl, ENT_QUOTES, 'UTF-8') ?>" title="LINE1 dynamic graph preview" loading="lazy"></iframe>
+                <div class="figure-canvas">
+                  <img
+                    class="architecture-placeholder-image"
+                    src="<?= htmlspecialchars(tekg_assets_url('img/home-architecture-placeholder.svg'), ENT_QUOTES, 'UTF-8') ?>"
+                    alt="TE-KG architecture diagram placeholder"
+                    loading="lazy"
+                  >
                 </div>
               </div>
             </div>
-          </div>
           </div>
         </div>
       </section>

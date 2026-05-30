@@ -1,0 +1,38 @@
+\contentsline {section}{\numberline {1}报告范围与事实来源}{1}{section.1}%
+\contentsline {section}{\numberline {2}科学背景与资源问题}{2}{section.2}%
+\contentsline {section}{\numberline {3}系统定位与核心贡献}{2}{section.3}%
+\contentsline {section}{\numberline {4}总体架构}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}分层架构}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}核心运行入口}{4}{subsection.4.2}%
+\contentsline {section}{\numberline {5}数据库规模与数据模型}{5}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Neo4j 运行时规模}{5}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}实体类型构成}{6}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}关系类型与谓词}{7}{subsection.5.3}%
+\contentsline {section}{\numberline {6}TE taxonomy 层}{7}{section.6}%
+\contentsline {subsection}{\numberline {6.1}当前 taxonomy 数据}{8}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}已知 taxonomy 风险}{8}{subsection.6.2}%
+\contentsline {section}{\numberline {7}PubMed 文献证据层}{8}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Paper 节点与 PMID}{8}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}2025 年期刊指标映射}{9}{subsection.7.2}%
+\contentsline {section}{\numberline {8}BIO\_RELATION 证据支持聚合}{10}{section.8}%
+\contentsline {subsection}{\numberline {8.1}聚合设计}{10}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}聚合结果}{10}{subsection.8.2}%
+\contentsline {section}{\numberline {9}Graph API 与 G6 图谱工作区}{11}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Graph API contract}{11}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Evidence records}{12}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}G6 工作区功能}{12}{subsection.9.3}%
+\contentsline {section}{\numberline {10}Expression 数据层}{13}{section.10}%
+\contentsline {subsection}{\numberline {10.1}运行时根目录}{13}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}表达数据规模}{13}{subsection.10.2}%
+\contentsline {subsection}{\numberline {10.3}MySQL summary tables}{14}{subsection.10.3}%
+\contentsline {section}{\numberline {11}首页、Browse 与统计展示}{15}{section.11}%
+\contentsline {subsection}{\numberline {11.1}首页统计}{15}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Browse 页面}{15}{subsection.11.2}%
+\contentsline {section}{\numberline {12}数据获取流程初版说明}{16}{section.12}%
+\contentsline {subsection}{\numberline {12.1}脚本目标}{16}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}当前配置和边界}{16}{subsection.12.2}%
+\contentsline {section}{\numberline {13}可靠性与质量控制}{17}{section.13}%
+\contentsline {section}{\numberline {14}安全、开放与数据解释边界}{18}{section.14}%
+\contentsline {section}{\numberline {15}已知限制与后续维护重点}{19}{section.15}%
+\contentsline {section}{\numberline {16}结论}{19}{section.16}%
+\contentsline {section}{参考文献}{21}{section*.9}%

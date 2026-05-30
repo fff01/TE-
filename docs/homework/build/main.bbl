@@ -1,0 +1,93 @@
+\begin{thebibliography}{10}
+
+\bibitem{tekg_architecture_entry}
+{TE-KG Project}.
+\newblock {TE-KG Architecture Entry}, 2026.
+\newblock Internal repository document: \path{ARCHITECTURE.md}.
+
+\bibitem{tekg_current_system}
+{TE-KG Project}.
+\newblock {TE-KG Current System}, 2026.
+\newblock Internal repository document:
+  \path{docs/architecture/current_system.md}.
+
+\bibitem{tekg_data_sources}
+{TE-KG Project}.
+\newblock {Data Sources}, 2026.
+\newblock Internal repository document:
+  \path{docs/architecture/data_sources.md}.
+
+\bibitem{tekg_database_contract}
+{TE-KG Project}.
+\newblock {Database Contract}, 2026.
+\newblock Internal repository document:
+  \path{docs/architecture/database_contract.md}.
+
+\bibitem{tekg_reliability}
+{TE-KG Project}.
+\newblock {TE-KG Reliability}, 2026.
+\newblock Internal repository document: \path{docs/RELIABILITY.md}.
+
+\bibitem{tekg_pubmed_metadata_v2}
+{TE-KG Project}.
+\newblock {PubMed Metadata Enrichment V2 Implementation Plan}, 2026.
+\newblock Internal repository document:
+  \path{docs/exec-plans/completed/pubmed-metadata-enrichment-v2.md}.
+
+\bibitem{tekg_journal_metrics_import}
+{TE-KG Project}.
+\newblock {Journal Metrics Neo4j Import Implementation Plan}, 2026.
+\newblock Internal repository document:
+  \path{docs/exec-plans/completed/journal-metrics-neo4j-import-plan.md}.
+
+\bibitem{tekg_relation_aggregation}
+{TE-KG Project}.
+\newblock {Journal Metrics Relation Aggregation Implementation Plan}, 2026.
+\newblock Internal repository document:
+  \path{docs/exec-plans/completed/journal-metrics-relation-aggregation.md}.
+
+\bibitem{tekg_g6_evidence}
+{TE-KG Project}.
+\newblock {G6 Evidence Support UX v1}, 2026.
+\newblock Internal repository document:
+  \path{docs/exec-plans/completed/g6-evidence-support-ux-v1.md}.
+
+\bibitem{tekg_g6_tree}
+{TE-KG Project}.
+\newblock {G6 TE Tree Load Regression Plan}, 2026.
+\newblock Internal repository document:
+  \path{docs/exec-plans/completed/g6-te-tree-load-regression.md}.
+
+\bibitem{lander_human_genome_2001}
+{International Human Genome Sequencing Consortium}.
+\newblock {Initial sequencing and analysis of the human genome}.
+\newblock {\em Nature}, 409(6822):860--921, 2001.
+
+\bibitem{payer_burns_te_disease_2019}
+Lee~M. Payer and Kathleen~H. Burns.
+\newblock {Transposable elements in human genetic disease}.
+\newblock {\em Nature Reviews Genetics}, 20(12):760--772, 2019.
+
+\bibitem{burns_te_cancer_2017}
+Kathleen~H. Burns.
+\newblock {Transposable elements in cancer}.
+\newblock {\em Nature Reviews Cancer}, 17(7):415--424, 2017.
+
+\bibitem{chuong_erv_immunity_2016}
+Edward~B. Chuong, Nels~C. Elde, and C{\'e}dric Feschotte.
+\newblock {Regulatory evolution of innate immunity through co-option of
+  endogenous retroviruses}.
+\newblock {\em Science}, 351(6277):1083--1087, 2016.
+
+\bibitem{lanciano_te_expression_2020}
+Sophie Lanciano and Ga{\"e}l Cristofari.
+\newblock {Measuring and interpreting transposable element expression}.
+\newblock {\em Nature Reviews Genetics}, 21(12):721--736, 2020.
+
+\bibitem{wilkinson_fair_2016}
+Mark~D. Wilkinson, Michel Dumontier, I.~J.~Jan Aalbersberg, et~al.
+\newblock {The FAIR Guiding Principles for scientific data management and
+  stewardship}.
+\newblock {\em Scientific Data}, 3:160018, 2016.
+
+\end{thebibliography}

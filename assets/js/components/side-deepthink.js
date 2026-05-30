@@ -2,7 +2,6 @@
   const root = document.getElementById('sideDeepThink');
   const drawer = document.getElementById('sideDeepThinkDrawer');
   const toggleBtn = document.getElementById('sideDeepThinkToggle');
-  const closeBtn = document.getElementById('sideDeepThinkClose');
   const form = document.getElementById('sideDeepThinkForm');
   const input = document.getElementById('sideDeepThinkInput');
   const submitBtn = document.getElementById('sideDeepThinkSubmit');
@@ -118,7 +117,7 @@
   }
 
   function maxDrawerHeight() {
-    return Math.max(280, window.innerHeight - 24);
+    return Math.max(280, window.innerHeight - 48);
   }
 
   function clamp(value, min, max) {
@@ -136,7 +135,7 @@
 
   function clampDrawerRect(rect) {
     const width = clamp(Number(rect.width) || 440, minDrawerWidth(), maxDrawerWidth());
-    const height = clamp(Number(rect.height) || 680, minDrawerHeight(), maxDrawerHeight());
+    const height = clamp(Number(rect.height) || maxDrawerHeight(), minDrawerHeight(), maxDrawerHeight());
     return {
       left: clamp(Number(rect.left) || 16, 12, Math.max(12, window.innerWidth - width - 12)),
       top: clamp(Number(rect.top) || 72, 12, Math.max(12, window.innerHeight - height - 12)),
@@ -147,7 +146,7 @@
 
   function defaultDrawerRect() {
     const width = clamp(440, minDrawerWidth(), maxDrawerWidth());
-    const height = clamp(680, minDrawerHeight(), maxDrawerHeight());
+    const height = maxDrawerHeight();
     return clampDrawerRect({
       left: window.innerWidth - width - 24,
       top: Math.max(24, window.innerHeight - height - 24),
@@ -156,36 +155,62 @@
     });
   }
 
-  function applyFabPosition() {
+  function applyFabCoordinates() {
     shellState.fab = clampFabPosition(shellState.fab || {});
+    root.style.setProperty('--side-dt-fab-left', `${shellState.fab.left}px`);
+    root.style.setProperty('--side-dt-fab-top', `${shellState.fab.top}px`);
+  }
+
+  function applyFabPosition() {
+    applyFabCoordinates();
     root.classList.add('is-positioned');
-    root.style.left = `${shellState.fab.left}px`;
-    root.style.top = `${shellState.fab.top}px`;
-    root.style.right = 'auto';
-    root.style.bottom = 'auto';
-    root.style.width = '';
-    root.style.height = '';
   }
 
   function applyDrawerRect() {
     shellState.drawer = clampDrawerRect(shellState.drawer || defaultDrawerRect());
     root.classList.add('is-positioned');
-    root.style.left = `${shellState.drawer.left}px`;
-    root.style.top = `${shellState.drawer.top}px`;
-    root.style.right = 'auto';
-    root.style.bottom = 'auto';
-    root.style.width = `${shellState.drawer.width}px`;
-    root.style.height = `${shellState.drawer.height}px`;
+    root.style.setProperty('--side-dt-drawer-left', `${shellState.drawer.left}px`);
+    root.style.setProperty('--side-dt-drawer-top', `${shellState.drawer.top}px`);
     drawer.style.width = `${shellState.drawer.width}px`;
     drawer.style.height = `${shellState.drawer.height}px`;
+  }
+
+  function fabBesideDrawerRect(rect) {
+    return {
+      left: rect.left - defaultFabSize - 18,
+      top: rect.top + rect.height - defaultFabSize - 24,
+    };
+  }
+
+  function rectsOverlap(a, b) {
+    return a.left < b.left + b.width
+      && a.left + a.width > b.left
+      && a.top < b.top + b.height
+      && a.top + a.height > b.top;
+  }
+
+  function ensureFabClearOfOpenDrawer() {
+    if (!shellState.drawer) return;
+    shellState.fab = clampFabPosition(shellState.fab || {});
+    const fabRect = {
+      left: shellState.fab.left,
+      top: shellState.fab.top,
+      width: toggleBtn.offsetWidth || defaultFabSize,
+      height: toggleBtn.offsetHeight || defaultFabSize,
+    };
+    if (rectsOverlap(fabRect, shellState.drawer)) {
+      shellState.fab = clampFabPosition(fabBesideDrawerRect(shellState.drawer));
+    }
   }
 
   function applyShellPosition() {
     if (drawerOpen) {
       applyDrawerRect();
+      ensureFabClearOfOpenDrawer();
     } else {
       applyFabPosition();
     }
+    applyFabCoordinates();
   }
 
   function getResizeCursor(handle) {
@@ -239,7 +264,11 @@
       left: fabDragState.baseLeft + dx,
       top: fabDragState.baseTop + dy,
     });
-    applyFabPosition();
+    if (drawerOpen) {
+      applyFabCoordinates();
+    } else {
+      applyFabPosition();
+    }
   }
 
   function finishFabDrag(event) {
@@ -250,7 +279,7 @@
     fabDragState = null;
     root.classList.remove('is-moving');
     saveShellState();
-    if (!movedDuringDrag) setOpen(true);
+    if (!movedDuringDrag) setOpen(!drawerOpen);
   }
 
   function cancelFabDrag(event) {
@@ -576,7 +605,6 @@
   toggleBtn.addEventListener('click', (event) => {
     event.preventDefault();
   });
-  closeBtn?.addEventListener('click', () => setOpen(false));
 
   dragHandle.addEventListener('pointerdown', startDrawerMove);
   dragHandle.addEventListener('pointermove', updateDrawerMove);
