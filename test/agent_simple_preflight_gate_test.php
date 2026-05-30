@@ -56,6 +56,55 @@ assert_true(
     'P5A_B_029 Agent simple site navigation should not use compact preflight gate.'
 );
 
+$directSiteNavigationAnswer = 'Open the [sequence panel](http://localhost/TE-/search.php?q=L1HS#search-sequence-panel) for L1HS.';
+$directSiteNavigationRoute = [
+    'title' => 'Sequence',
+    'description' => 'Open the sequence panel.',
+    'url' => 'http://localhost/TE-/search.php?q=L1HS#search-sequence-panel',
+    'capability' => 'sequence',
+];
+$directSiteNavigationResult = [
+    'plugin_name' => 'Site Navigator Plugin',
+    'status' => 'ok',
+    'query_summary' => 'Matched 1 TE-KG site route candidate.',
+    'display_summary' => 'Matched the question to the Sequence site route.',
+    'results' => [
+        'primary_route' => $directSiteNavigationRoute,
+        'candidate_routes' => [$directSiteNavigationRoute],
+        'answer_markdown' => $directSiteNavigationAnswer,
+    ],
+    'evidence_items' => [[
+        'claim' => $directSiteNavigationAnswer,
+        'source' => 'site_navigation',
+    ]],
+    'citations' => [],
+    'result_counts' => ['routes' => 1],
+    'confidence' => 0.99,
+];
+$directSiteNavigationAnalysis = [
+    'intent' => 'site_navigation',
+    'asks_for_site_navigation' => true,
+];
+$directEvidencePackage = EvidencePackage::fromPluginResults(
+    'Where can I open the L1HS sequence panel in TE-KG?',
+    $directSiteNavigationAnalysis,
+    ['Site Navigator Plugin' => $directSiteNavigationResult]
+);
+$directWritingResult = call_agent_private($service, 'buildDirectSiteNavigationWritingResult', [
+    $directSiteNavigationAnalysis,
+    ['Site Navigator Plugin' => $directSiteNavigationResult],
+    $directEvidencePackage,
+    [],
+    [],
+]);
+assert_true(is_array($directWritingResult), 'Direct site navigation writing result should be built from plugin answer_markdown.');
+assert_true(str_contains((string)($directWritingResult['answer'] ?? ''), 'search-sequence-panel'), 'Direct site navigation answer keeps exact route fragment.');
+assert_true(str_contains(strtolower((string)($directWritingResult['answer'] ?? '')), 'sequence'), 'Direct site navigation answer keeps sequence wording.');
+assert_true(!str_contains((string)($directWritingResult['answer'] ?? ''), 'Deep Think'), 'Direct site navigation answer must not suggest Deep Think.');
+assert_true(($directWritingResult['integrity']['ok'] ?? false) === true, 'Direct site navigation answer still passes ReportIntegrityGate.');
+assert_true(($directWritingResult['writing_decision']['writing_strategy'] ?? '') === 'direct_site_navigation', 'Direct site navigation writing artifact records deterministic strategy.');
+assert_true(($directWritingResult['writing_decision_node'] ?? null) instanceof NodeLlmResult, 'Direct site navigation writing artifact uses NodeLlmResult.');
+
 $mechanismQuestion = '请写一份 LINE-1 如何导致癌症的机制综述报告';
 $mechanismAnalysis = [
     'intent' => 'mechanism',

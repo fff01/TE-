@@ -25,6 +25,28 @@
     return `https://pubmed.ncbi.nlm.nih.gov/${encodeURIComponent(String(pmid || '').trim())}/`;
   }
 
+  function evidenceValue(value) {
+    if (value === null || value === undefined || String(value).trim() === '') {
+      return '—';
+    }
+    return String(value).trim();
+  }
+
+  function evidenceMetricValue(value) {
+    if (value === null || value === undefined || value === '' || Number.isNaN(Number(value))) {
+      return '—';
+    }
+    return Number(value).toFixed(1).replace(/\.0$/, '');
+  }
+
+  function compactText(value, maxLength) {
+    const text = String(value || '').trim();
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return `${text.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+  }
+
   function setLoading(isLoading) {
     submitButton.disabled = !!isLoading;
     sourceInput.disabled = !!isLoading;
@@ -72,14 +94,75 @@
     return `<div class="compact-path-strip" aria-label="Compact path">${parts.join('')}</div>`;
   }
 
-  function renderPmids(pmids) {
-    const list = Array.isArray(pmids) ? pmids : [];
-    if (!list.length) {
-      return '<span class="path-no-pmid">No PMID evidence attached to this edge.</span>';
+  function evidenceRecordsForEdge(edge) {
+    const records = Array.isArray(edge && edge.evidence_records) ? edge.evidence_records : [];
+    if (records.length) {
+      return records
+        .filter((record) => record && typeof record === 'object')
+        .map((record) => ({
+          pmid: String(record.pmid || '').trim(),
+          pubmed_url: String(record.pubmed_url || '').trim(),
+          pubmed_title: record.pubmed_title ?? null,
+          pubmed_journal_title: record.pubmed_journal_title ?? null,
+          pubmed_publication_year: record.pubmed_publication_year ?? null,
+          journal_metric_value: record.journal_metric_value ?? null,
+          journal_metric_source: record.journal_metric_source ?? null,
+          journal_metric_year: record.journal_metric_year ?? null,
+          journal_jcr_quartile: record.journal_jcr_quartile ?? null,
+          journal_metric_match_method: record.journal_metric_match_method ?? null,
+        }))
+        .filter((record) => record.pmid);
     }
-    return list
-      .map((pmid) => `<a class="path-pmid-link" href="${pubmedUrl(pmid)}" target="_blank" rel="noopener noreferrer">PMID ${escapeHtml(pmid)}</a>`)
-      .join('');
+
+    return (Array.isArray(edge && edge.pmids) ? edge.pmids : [])
+      .map((pmid) => String(pmid || '').trim())
+      .filter(Boolean)
+      .map((pmid) => ({
+        pmid,
+        pubmed_url: pubmedUrl(pmid),
+        pubmed_title: null,
+        pubmed_journal_title: null,
+        pubmed_publication_year: null,
+        journal_metric_value: null,
+        journal_metric_source: null,
+        journal_metric_year: null,
+        journal_jcr_quartile: null,
+        journal_metric_match_method: null,
+      }));
+  }
+
+  function renderEvidenceTable(edge) {
+    const records = evidenceRecordsForEdge(edge);
+    if (!records.length) {
+      return '<div class="path-no-pmid">No PMID evidence attached to this edge.</div>';
+    }
+
+    const rows = records.map((record) => {
+      const title = String(record.pubmed_title || '').trim();
+      const journal = String(record.pubmed_journal_title || '').trim();
+      const compactTitle = title ? compactText(title, 96) : '—';
+      const url = record.pubmed_url || pubmedUrl(record.pmid);
+      return [
+        '<tr>',
+        `<td><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(record.pmid)}</a></td>`,
+        `<td>${escapeHtml(evidenceValue(record.pubmed_publication_year))}</td>`,
+        `<td title="${escapeHtml(journal)}"><span class="edge-evidence-cell-compact">${escapeHtml(evidenceValue(record.pubmed_journal_title))}</span></td>`,
+        `<td>${escapeHtml(evidenceMetricValue(record.journal_metric_value))}</td>`,
+        `<td>${escapeHtml(evidenceValue(record.journal_jcr_quartile))}</td>`,
+        `<td>${escapeHtml(evidenceValue(record.journal_metric_match_method))}</td>`,
+        `<td class="edge-evidence-title-cell" title="${escapeHtml(title)}"><span class="edge-evidence-cell-compact">${escapeHtml(compactTitle)}</span></td>`,
+        '</tr>',
+      ].join('');
+    }).join('');
+
+    return [
+      '<div class="edge-evidence-table-wrap">',
+      '<table class="edge-evidence-table">',
+      '<thead><tr><th>PMID</th><th>Year</th><th>Journal</th><th>IF</th><th>JCR</th><th>Match</th><th>Title</th></tr></thead>',
+      `<tbody>${rows}</tbody>`,
+      '</table>',
+      '</div>',
+    ].join('');
   }
 
   function renderEvidence(path) {
@@ -97,7 +180,7 @@
               <span>Relation type</span>
               <strong>${escapeHtml(edge.relation_type || '-')}</strong>
             </div>
-            <div class="path-pmid-list">${renderPmids(edge.pmids)}</div>
+            ${renderEvidenceTable(edge)}
             ${evidence ? `<p>${escapeHtml(evidence)}</p>` : ''}
           </div>
         </details>

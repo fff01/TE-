@@ -25,11 +25,11 @@ require __DIR__ . '/head.php';
               <form class="path-finder-form" id="pathFinderForm">
                 <label class="path-field">
                   <span>Source entity</span>
-                  <input id="pathSource" name="source" type="text" value="L1HS" autocomplete="off" placeholder="L1HS, Alu, ERVL">
+                  <input id="pathSource" name="source" type="text" autocomplete="off" placeholder="L1HS, Alu, ERVL">
                 </label>
                 <label class="path-field">
                   <span>Target entity</span>
-                  <input id="pathTarget" name="target" type="text" value="Alzheimer's disease" autocomplete="off" placeholder="Alzheimer's disease, TP53, A-to-I RNA editing">
+                  <input id="pathTarget" name="target" type="text" autocomplete="off" placeholder="Alzheimer's disease, TP53, A-to-I RNA editing">
                 </label>
                 <label class="path-field path-depth-field">
                   <span>Max hops</span>

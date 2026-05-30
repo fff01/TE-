@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/../bootstrap/evidence_support.php';
+
 final class PluginResultEnvelope
 {
     /**
@@ -19,7 +21,7 @@ final class PluginResultEnvelope
             'intent' => self::inferIntent($pluginName, $result, $context),
             'summary' => self::inferSummary($pluginName, $result),
             'raw' => self::summarizeRawResult($rawResult, $resultCount),
-            'evidence_items' => array_values((array)($result['evidence_items'] ?? [])),
+            'evidence_items' => self::normalizeEvidenceItems($result['evidence_items'] ?? [], $pluginName),
             'citations' => array_values((array)($result['citations'] ?? [])),
             'routes' => self::extractRoutes($result),
             'metrics' => [
@@ -29,6 +31,19 @@ final class PluginResultEnvelope
             ],
             'errors' => self::extractErrors($result),
         ];
+    }
+
+    private static function normalizeEvidenceItems(mixed $items, string $pluginName): array
+    {
+        $normalized = [];
+        foreach ((array)$items as $item) {
+            $evidence = tekg_agent_normalize_evidence_item($item, $pluginName);
+            if ($evidence !== null) {
+                $normalized[] = $evidence;
+            }
+        }
+
+        return $normalized;
     }
 
     private static function normalizeStatus(?string $legacyStatus, array $result, int $resultCount): string

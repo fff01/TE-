@@ -26,6 +26,16 @@ function assert_contains(string $needle, string $haystack, string $message): voi
     assert_true(str_contains($haystack, $needle), $message . " missing {$needle}");
 }
 
+function assert_call_uses_arguments(string $source, string $callName, array $needles, string $message): void
+{
+    $position = strpos($source, $callName);
+    assert_true($position !== false, $message . " missing {$callName}");
+    $snippet = substr($source, $position, 900);
+    foreach ($needles as $needle) {
+        assert_true(str_contains($snippet, $needle), $message . " missing {$needle}");
+    }
+}
+
 $serviceSource = (string)file_get_contents(__DIR__ . '/../api/agent/orchestrator/AcademicAgentService.php');
 foreach ([
     'runUnderstandingNode',
@@ -42,6 +52,10 @@ assert_contains("'node_llm_error'", $serviceSource, 'AcademicAgentService emits 
 assert_contains("'six_stage_artifacts'", $serviceSource, 'AcademicAgentService response exposes six_stage_artifacts');
 assert_contains('tool_execution_review.v1', $serviceSource, 'AcademicAgentService requires executing review artifact');
 assert_contains('pluginResultForLlmReview', $serviceSource, 'AcademicAgentService sends compact plugin review payloads');
+assert_contains('$claimEvidenceMap = (array)$integratingNode->parsed_json;', $serviceSource, 'AcademicAgentService stores claimEvidenceMap from integrating node');
+assert_contains('$writingDecision = (array)$writingDecisionNode->parsed_json;', $serviceSource, 'AcademicAgentService stores writingDecision from writing node');
+assert_call_uses_arguments($serviceSource, '->writeEvidenceWalkDraft(', ['$claimEvidenceMap', '$writingDecision'], 'Draft writer call receives claim map and writing decision');
+assert_call_uses_arguments($serviceSource, '->polishEvidenceWalkAnswer(', ['$claimEvidenceMap', '$writingDecision'], 'Polisher call receives claim map and writing decision');
 
 $badUnderstandingFixture = [
     'schema_version' => 'understanding_result.v1',

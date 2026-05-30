@@ -11,17 +11,16 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
-        $analysis = $context['analysis'] ?? [];
-        $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
+        $entities = tekg_agent_context_resolved_entities($context, 'TE');
 
         $results = [];
         $evidence = [];
         $previewItems = [];
         foreach ($entities as $entity) {
-            if (($entity['type'] ?? '') !== 'TE') {
+            $label = (string)($entity['canonical_label'] ?? $entity['label'] ?? '');
+            if ($label === '') {
                 continue;
             }
-            $label = (string)$entity['label'];
             $hitBundle = $this->loadHitBundle($label);
             if ($hitBundle === null) {
                 continue;
@@ -44,7 +43,29 @@ final class TekgAgentGenomePlugin implements TekgAgentPluginInterface
                 'jbrowse_url' => $jbrowseUrl,
             ];
             if ($chrom !== '' && $start > 0 && $end > 0) {
-                $evidence[] = $label . ' representative locus: ' . $chrom . ':' . $start . '-' . $end . ' with ' . (int)($hitBundle['total_hits'] ?? 0) . ' total hits';
+                $evidence[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    $label . ' has a representative genomic locus at ' . $chrom . ':' . $start . '-' . $end . ' with ' . (int)($hitBundle['total_hits'] ?? 0) . ' total hits.',
+                    $label,
+                    'medium',
+                    [
+                        'representative_locus' => $locus,
+                        'total_hits' => (int)($hitBundle['total_hits'] ?? 0),
+                        'jbrowse_url' => $jbrowseUrl,
+                    ],
+                    [
+                        'title' => $label,
+                        'meta' => $chrom . ':' . $start . '-' . $end,
+                        'body' => 'Representative locus from JBrowse hit bundle.',
+                    ],
+                    [
+                        'evidence_type' => 'genomic_locus',
+                        'coverage_dimension' => 'genomic_location',
+                        'subject' => $label,
+                        'provenance' => ['source' => 'jbrowse_hit_bundle'],
+                        'quality_flags' => ['representative_locus'],
+                    ]
+                );
                 $previewItems[] = [
                     'title' => $label,
                     'meta' => $chrom . ':' . $start . '-' . $end,

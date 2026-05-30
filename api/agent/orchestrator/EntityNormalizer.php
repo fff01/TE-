@@ -45,9 +45,9 @@ final class TekgAgentEntityNormalizer
             'asks_for_site_navigation' => $asksForSiteNavigation,
             'asks_for_mechanism' => $intent === 'mechanism',
             'asks_for_disease_links' => $this->containsAny($question, ['disease link', 'disease links', 'disease association', 'disease associations', 'associated disease', 'associated diseases', '疾病关联', '疾病联系', '相关疾病']),
-            'asks_for_graph_analytics' => $intent === 'graph_analytics' || $this->containsAny($question, ['topology', 'topological', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'relation type', 'relation types', 'distribution', '最多', '最大', '拓扑', '结构', '关联度', '连接最多', '分布', '关系类型']),
-            'asks_for_cypher_explorer' => $this->containsAny($question, ['cypher', 'pattern', 'patterns', 'graph exploration', 'explore the graph', 'path', 'paths', 'schema', '统计', '模式', '路径', '探索图谱', '探索知识图谱']),
-            'asks_for_graph_structure' => $this->containsAny($question, ['topology', 'topological', 'graph structure', 'relation type', 'distribution', 'degree', 'central', '结构', '拓扑', '中心性', '度数', '关系类型']),
+            'asks_for_graph_analytics' => $intent === 'graph_analytics' || $this->containsAny($question, ['topology', 'topological', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'strongest', 'strongest association', 'graph association', 'rank', 'ranked', 'ranking', 'most common', 'node labels', 'relation type', 'relation types', 'distribution', '最多', '最大', '拓扑', '结构', '关联度', '连接最多', '分布', '关系类型']),
+            'asks_for_cypher_explorer' => $this->containsAny($question, ['cypher', 'read-only cypher', 'pattern', 'patterns', 'graph exploration', 'explore the graph', 'node labels', 'most common node labels', 'path', 'paths', 'schema', '统计', '模式', '路径', '探索图谱', '探索知识图谱']),
+            'asks_for_graph_structure' => $this->containsAny($question, ['topology', 'topological', 'graph structure', 'node labels', 'most common', 'relation type', 'distribution', 'degree', 'central', '结构', '拓扑', '中心性', '度数', '关系类型']),
             'compare_mode' => $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异']),
             'needs_external_literature' => $intent === 'mechanism'
                 || $intent === 'graph_analytics'
@@ -194,7 +194,7 @@ final class TekgAgentEntityNormalizer
 
     private function detectIntent(string $question): string
     {
-        if ($this->containsAny($question, ['topology', 'topological', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'relation type', 'relation types', 'distribution', '最多', '最大', '拓扑', '结构', '关联度', '关系类型'])) {
+        if ($this->containsAny($question, ['topology', 'topological', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'strongest', 'strongest association', 'graph association', 'rank', 'ranked', 'ranking', 'most common', 'node labels', 'cypher', 'graph exploration', 'relation type', 'relation types', 'distribution', '最多', '最大', '拓扑', '结构', '关联度', '关系类型'])) {
             return 'graph_analytics';
         }
         if ($this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to', '机制', '为什么', '如何', '导致', '通路', '因果'])) {
@@ -227,7 +227,7 @@ final class TekgAgentEntityNormalizer
         $targetCount = count($targetTypes);
         $hasMechanismWords = $this->containsAny($question, ['how', 'why', 'mechanism', 'pathway', 'causal', 'lead to', 'result in', '机制', '为什么', '如何', '导致', '通路']);
         $hasCompareWords = $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异']);
-        $hasAnalyticsWords = $this->containsAny($question, ['topology', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'relation type', 'distribution', '最多', '最大', '拓扑', '结构', '关联度']);
+        $hasAnalyticsWords = $this->containsAny($question, ['topology', 'graph structure', 'largest number', 'most associated', 'most connected', 'highest degree', 'strongest', 'strongest association', 'graph association', 'rank', 'ranked', 'ranking', 'most common', 'node labels', 'cypher', 'graph exploration', 'relation type', 'distribution', '最多', '最大', '拓扑', '结构', '关联度']);
 
         if ($intent === 'mechanism' || $hasMechanismWords) {
             return 'mechanism_chain';
@@ -310,8 +310,16 @@ final class TekgAgentEntityNormalizer
             'most associated',
             'most connected',
             'highest degree',
+            'strongest',
+            'strongest association',
+            'graph association',
             'rank',
             'ranking',
+            'ranked',
+            'most common',
+            'node labels',
+            'cypher',
+            'graph exploration',
             'centrality',
             'report',
             'review',
@@ -342,15 +350,24 @@ final class TekgAgentEntityNormalizer
     {
         return $this->containsAny($question, [
             'where can i find',
+            'where can i open',
             'where do i find',
+            'where do i open',
             'where to find',
+            'where to open',
             'which page',
             'what page',
+            'which panel',
+            'what panel',
             'open page',
+            'open the',
+            'open panel',
             'show page',
+            'show panel',
             'url',
-            'link',
+            'page link',
             'entry',
+            'panel',
             '入口',
             '网址',
             '链接',

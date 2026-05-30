@@ -12,10 +12,11 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
 
     public function run(array $context): array
     {
+        $startedAt = microtime(true);
         $question = trim((string)($context['question'] ?? ''));
-        $analysis = (array)($context['analysis'] ?? []);
+        $analysis = tekg_agent_context_analysis($context);
         $requestContext = (array)($analysis['request_context'] ?? []);
-        $entity = $this->resolveEntity($analysis, $question);
+        $entity = $this->resolveEntity($analysis, $question, tekg_agent_context_resolved_entities($context, 'TE'));
         $language = tekg_agent_detect_language($question, (string)($analysis['answer_language'] ?? $analysis['language'] ?? ''));
 
         $routes = $this->buildRoutes($entity, (string)($requestContext['current_url'] ?? $context['current_url'] ?? ''));
@@ -33,12 +34,32 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
 
         $primary = $candidateRoutes[0] ?? null;
         if ($primary === null) {
+            $summary = 'No TE-KG site route could be selected.';
             return [
                 'plugin_name' => $this->getName(),
                 'status' => 'empty',
-                'display_summary' => 'No TE-KG site route could be selected.',
-                'results' => [],
+                'query_summary' => $summary,
+                'results' => [
+                    'primary_route' => null,
+                    'candidate_routes' => [],
+                    'answer_markdown' => '',
+                    'confidence' => 0.0,
+                    'matched_entity' => $entity,
+                    'matched_capability' => $capability,
+                ],
+                'display_label' => 'Site navigation',
+                'display_summary' => $summary,
+                'display_details' => [
+                    'result_message' => $summary,
+                    'preview_items' => [],
+                    'evidence_items' => [],
+                ],
                 'result_counts' => ['routes' => 0],
+                'evidence_items' => [],
+                'citations' => [],
+                'errors' => [],
+                'confidence' => 0.0,
+                'latency_ms' => (int)round((microtime(true) - $startedAt) * 1000),
             ];
         }
 
@@ -66,6 +87,8 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
         return [
             'plugin_name' => $this->getName(),
             'status' => 'ok',
+            'query_summary' => sprintf('Matched %d TE-KG site route candidate(s).', count($candidateRoutes)),
+            'display_label' => (string)$primary['title'],
             'display_summary' => sprintf('Matched the question to the %s site route.', (string)$primary['title']),
             'display_details' => [
                 'result_message' => $answerMarkdown,
@@ -86,23 +109,29 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
                 'matched_capability' => $capability,
             ],
             'evidence_items' => [$evidence],
+            'citations' => [],
+            'errors' => [],
+            'confidence' => $confidence,
             'result_counts' => [
                 'routes' => count($candidateRoutes),
-                'primary_confidence_percent' => (int)round($confidence * 100),
             ],
+            'latency_ms' => (int)round((microtime(true) - $startedAt) * 1000),
         ];
     }
 
-    private function resolveEntity(array $analysis, string $question): string
+    private function resolveEntity(array $analysis, string $question, array $entities = []): string
     {
-        foreach ((array)($analysis['normalized_entities'] ?? []) as $entity) {
+        if ($entities === []) {
+            $entities = (array)($analysis['normalized_entities'] ?? []);
+        }
+        foreach ($entities as $entity) {
             if (!is_array($entity)) {
                 continue;
             }
             if (strtolower((string)($entity['type'] ?? '')) !== 'te') {
                 continue;
             }
-            $label = trim((string)($entity['label'] ?? $entity['canonical'] ?? $entity['name'] ?? ''));
+            $label = trim((string)($entity['canonical_label'] ?? $entity['label'] ?? $entity['canonical'] ?? $entity['name'] ?? ''));
             if ($label !== '') {
                 return $label;
             }

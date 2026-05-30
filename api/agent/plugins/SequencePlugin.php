@@ -14,8 +14,7 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $question = trim((string)($context['question'] ?? ''));
-        $analysis = is_array($context['analysis'] ?? null) ? $context['analysis'] : [];
-        $chains = is_array($analysis['alias_chains'] ?? null) ? $analysis['alias_chains'] : [];
+        $chains = tekg_agent_context_alias_chains($context);
         $dataset = $this->loadDataset();
         $showFullSequence = $this->wantsFullSequence($question);
 

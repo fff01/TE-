@@ -15,20 +15,36 @@ final class TekgAgentCitationResolverPlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
-        $pluginResults = is_array($context['plugin_results'] ?? null) ? $context['plugin_results'] : [];
-        $all = [];
-        foreach ($pluginResults as $pluginName => $result) {
-            if ($pluginName === $this->getName()) {
-                continue;
-            }
-            $all = array_merge($all, is_array($result['citations'] ?? null) ? $result['citations'] : []);
-        }
+        $all = tekg_agent_context_citations($context, [$this->getName()]);
 
         $citations = $this->resolver->normalizeMany($all);
         $counts = $this->resolver->summarize($citations);
         $summary = $counts['total'] > 0
             ? 'I unified ' . $counts['total'] . ' citations across the toolchain, with ' . $counts['pmid'] . ' directly traceable PMID-backed records.'
             : 'No stable citations were available to normalize in this round.';
+        $evidenceItems = [];
+        if ($counts['total'] > 0) {
+            $evidenceItems[] = tekg_agent_make_evidence_item(
+                $this->getName(),
+                'Citation Resolver normalized and deduplicated ' . $counts['total'] . ' citation records.',
+                '',
+                'none',
+                ['counts' => $counts],
+                [
+                    'title' => 'Citation normalization',
+                    'meta' => $counts['pmid'] . ' PMID-backed records',
+                    'body' => 'This item describes citation bookkeeping, not scientific support for a biological claim.',
+                ],
+                [
+                    'evidence_type' => 'citation_normalization',
+                    'coverage_dimension' => 'citation',
+                    'provenance' => ['source' => 'upstream_plugin_citations'],
+                    'diagnostic' => ['counts' => $counts],
+                    'citations' => $citations,
+                    'quality_flags' => ['not_biological_claim'],
+                ]
+            );
+        }
 
         return [
             'plugin_name' => $this->getName(),
@@ -54,7 +70,7 @@ final class TekgAgentCitationResolverPlugin implements TekgAgentPluginInterface
                     ],
                     array_slice($citations, 0, 8)
                 ),
-                'evidence_items' => [$summary],
+                'evidence_items' => $evidenceItems,
                 'citations' => $citations,
                 'raw_preview' => ['citations' => $citations],
                 'result_message' => $counts['total'] > 0
@@ -62,7 +78,7 @@ final class TekgAgentCitationResolverPlugin implements TekgAgentPluginInterface
                     : 'There was nothing to normalize because the upstream tools did not contribute usable citation records.',
             ],
             'result_counts' => $counts,
-            'evidence_items' => [$summary],
+            'evidence_items' => $evidenceItems,
             'citations' => $citations,
             'errors' => [],
             'latency_ms' => (int)round((microtime(true) - $started) * 1000),

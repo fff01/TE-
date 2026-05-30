@@ -63,6 +63,9 @@ final class EvidencePackage
                 if (!is_array($sourceEvidence)) {
                     continue;
                 }
+                if (self::isDiagnosticEvidence($sourceEvidence)) {
+                    continue;
+                }
 
                 $claimText = self::claimText($sourceEvidence, $envelope);
                 if ($claimText === '') {
@@ -81,7 +84,13 @@ final class EvidencePackage
                 }
 
                 $evidenceId = 'evidence_' . (count($evidenceItems) + 1);
-                $citationIds = self::appendCitationMap($citationMap, $claimId, $plugin, (array)($envelope['citations'] ?? []));
+                $evidenceCitations = self::evidenceCitations($sourceEvidence);
+                $citationIds = self::appendCitationMap(
+                    $citationMap,
+                    $claimId,
+                    $plugin,
+                    $evidenceCitations !== [] ? $evidenceCitations : (array)($envelope['citations'] ?? [])
+                );
                 $routeIds = self::appendRouteMap($routeMap, $claimId, $plugin, (array)($envelope['routes'] ?? []));
 
                 $evidenceItems[] = [
@@ -269,6 +278,33 @@ final class EvidencePackage
             $ids[] = $id;
         }
         return $ids;
+    }
+
+    private static function evidenceCitations(array $sourceEvidence): array
+    {
+        $citations = [];
+        foreach ((array)($sourceEvidence['citations'] ?? []) as $citation) {
+            if (is_array($citation)) {
+                $citations[] = $citation;
+            }
+        }
+        return function_exists('tekg_agent_dedupe_citations') ? tekg_agent_dedupe_citations($citations) : $citations;
+    }
+
+    private static function isDiagnosticEvidence(array $sourceEvidence): bool
+    {
+        $flags = array_map('strval', (array)($sourceEvidence['quality_flags'] ?? []));
+        if (array_intersect($flags, ['not_evidence', 'not_biological_claim']) !== []) {
+            return true;
+        }
+
+        $type = trim((string)($sourceEvidence['evidence_type'] ?? ''));
+        if (in_array($type, ['citation_normalization', 'system_error', 'empty_result'], true)) {
+            return true;
+        }
+
+        return (string)($sourceEvidence['support_strength'] ?? '') === 'none'
+            && (($sourceEvidence['diagnostic'] ?? []) !== [] || ($sourceEvidence['provenance'] ?? []) !== []);
     }
 
     private static function appendRouteMap(array &$routeMap, string $claimId, string $plugin, array $routes): array

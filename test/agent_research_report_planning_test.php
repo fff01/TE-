@@ -117,4 +117,16 @@ foreach (['Sequence Plugin', 'Genome Plugin', 'Expression Plugin', 'Literature R
     assert_true(in_array($plugin, (array)($partialSufficiency['recommended_next_experts'] ?? []), true), "{$plugin} should remain recommended before research report sufficiency.");
 }
 
+$navigationQuestion = 'Where can I open the L1HS sequence panel in TE-KG?';
+$navigationAnalysis = $normalizer->analyze($navigationQuestion);
+$navigationPlan = $harness->capturePlan($navigationQuestion, $navigationAnalysis, []);
+$navigationPlugins = array_values(array_map(static fn(array $item): string => (string)($item['plugin'] ?? ''), (array)($navigationPlan['tool_plan'] ?? [])));
+assert_true((bool)($navigationAnalysis['asks_for_site_navigation'] ?? false), 'English open-panel question should be recognized as site navigation.');
+assert_true(in_array('Site Navigator Plugin', $navigationPlugins, true), 'English open-panel question should route through Site Navigator Plugin.');
+assert_true(in_array('Sequence Plugin', $navigationPlugins, true), 'English open-panel question may still include Sequence Plugin as supporting context.');
+assert_true(
+    array_search('Site Navigator Plugin', $navigationPlugins, true) < array_search('Sequence Plugin', $navigationPlugins, true),
+    'Site Navigator Plugin should run before Sequence Plugin for sequence panel navigation.'
+);
+
 echo "Agent research report planning tests passed.\n";

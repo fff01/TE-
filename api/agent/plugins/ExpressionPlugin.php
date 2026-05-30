@@ -11,18 +11,19 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
-        $analysis = $context['analysis'] ?? [];
-        $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
+        $entities = tekg_agent_context_resolved_entities($context, 'TE');
 
         $teNames = [];
         foreach ($entities as $entity) {
-            if (($entity['type'] ?? '') === 'TE') {
-                $teNames[] = (string)$entity['label'];
+            $label = trim((string)($entity['canonical_label'] ?? $entity['label'] ?? ''));
+            if ($label !== '') {
+                $teNames[] = $label;
             }
         }
 
         if ($teNames === []) {
-            $graphRows = (array)(($context['plugin_results']['Graph Plugin']['results']['rows'] ?? []) ?: []);
+            $graphResult = tekg_agent_context_plugin_result($context, 'Graph Plugin');
+            $graphRows = (array)(($graphResult['results']['rows'] ?? []) ?: []);
             foreach ($graphRows as $row) {
                 $name = trim((string)($row['source_name'] ?? ''));
                 if ($name !== '') {
@@ -70,7 +71,30 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
                 ];
 
                 foreach ($datasetSummaries as $summary) {
-                    $evidence[] = $teName . ' top ' . $summary['dataset_key'] . ' context: ' . $summary['top_context'];
+                    $evidence[] = tekg_agent_make_evidence_item(
+                        $this->getName(),
+                        $teName . ' has a top expression context in ' . $summary['dataset_key'] . ': ' . $summary['top_context'] . '.',
+                        $teName,
+                        'medium',
+                        [
+                            'dataset_key' => $summary['dataset_key'],
+                            'dataset_label' => $summary['dataset_label'],
+                            'top_context' => $summary['top_context'],
+                            'median_of_median' => $summary['median_of_median'],
+                            'max_of_max' => $summary['max_of_max'],
+                        ],
+                        [
+                            'title' => $teName,
+                            'meta' => $summary['dataset_label'] . ' | ' . $summary['top_context'],
+                        ],
+                        [
+                            'evidence_type' => 'profile_summary',
+                            'coverage_dimension' => 'expression',
+                            'subject' => $teName,
+                            'object' => $summary['top_context'],
+                            'provenance' => ['source' => 'expression_runtime'],
+                        ]
+                    );
                 }
 
                 $primary = $datasetSummaries[0];
@@ -86,6 +110,52 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
         $displaySummary = $results === []
             ? 'The expression database did not add useful context in this round.'
             : 'I also checked the expression datasets and captured the top contexts for the recognized TEs.';
+        if ($results === [] && $errors !== []) {
+            $displaySummary = 'The expression lookup hit a system error and did not produce usable expression evidence.';
+        }
+
+        if ($errors !== []) {
+            foreach ($errors as $errorMessage) {
+                $evidence[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    'Expression lookup did not produce usable evidence because a system error occurred.',
+                    '',
+                    'none',
+                    ['error' => $errorMessage],
+                    [
+                        'title' => 'Expression lookup failed',
+                        'meta' => 'system_error',
+                        'body' => $errorMessage,
+                    ],
+                    [
+                        'evidence_type' => 'system_error',
+                        'coverage_dimension' => 'expression',
+                        'provenance' => ['source' => 'expression_runtime'],
+                        'diagnostic' => ['error' => $errorMessage],
+                        'quality_flags' => ['not_evidence'],
+                    ]
+                );
+            }
+        } elseif ($results === []) {
+            $evidence[] = tekg_agent_make_evidence_item(
+                $this->getName(),
+                'Expression lookup returned no usable expression profiles for the recognized entities.',
+                '',
+                'none',
+                [],
+                [
+                    'title' => 'No expression profiles',
+                    'meta' => 'empty',
+                ],
+                [
+                    'evidence_type' => 'empty_result',
+                    'coverage_dimension' => 'expression',
+                    'provenance' => ['source' => 'expression_runtime'],
+                    'diagnostic' => ['reason' => 'no_usable_profile'],
+                    'quality_flags' => ['not_evidence'],
+                ]
+            );
+        }
 
         return [
             'plugin_name' => $this->getName(),
@@ -105,7 +175,7 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
             'result_counts' => [
                 'profiles' => count($results),
             ],
-            'evidence_items' => array_values(array_unique($evidence)),
+            'evidence_items' => $evidence,
             'citations' => [],
             'errors' => $errors,
             'latency_ms' => (int)round((microtime(true) - $started) * 1000),

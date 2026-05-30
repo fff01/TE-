@@ -17,9 +17,9 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
-        $analysis = is_array($context['analysis'] ?? null) ? $context['analysis'] : [];
+        $analysis = tekg_agent_context_analysis($context);
         $intent = (string)($analysis['intent'] ?? 'relationship');
-        $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
+        $entities = tekg_agent_context_resolved_entities($context);
         $targetTypes = is_array($analysis['requested_target_types'] ?? null) ? $analysis['requested_target_types'] : [];
 
         $teEntities = array_values(array_filter($entities, static fn(array $item): bool => ($item['type'] ?? '') === 'TE'));
@@ -220,6 +220,10 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
             $targetType = $this->resolveTargetType($row);
             $grouped[$targetType] = ($grouped[$targetType] ?? 0) + 1;
             $sentence = $this->rowSentence($row);
+            $rowCitations = $this->backfillCitationTitles(
+                $this->citationResolver->normalizeMany($this->rowCitations($row, $pmidTitleMap), 'local_graph'),
+                $pmidTitleMap
+            );
             if ($sentence !== '') {
                 $evidenceItems[] = tekg_agent_make_evidence_item(
                     $this->getName(),
@@ -235,13 +239,21 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
                         'title' => trim((string)($row['source_name'] ?? '')) !== '' ? trim((string)($row['source_name'] ?? '')) : $sentence,
                         'meta' => trim($targetType . ' | ' . (string)($row['relation_type'] ?? 'related_to')),
                         'body' => $sentence,
+                    ],
+                    [
+                        'evidence_type' => 'graph_relation',
+                        'coverage_dimension' => 'relationship',
+                        'subject' => trim((string)($row['source_name'] ?? '')),
+                        'object' => trim((string)($row['target_name'] ?? '')),
+                        'provenance' => ['source' => 'local_graph'],
+                        'citations' => $rowCitations,
                     ]
                 );
                 if (count($previewItems) < 5) {
                     $previewItems[] = ['title' => $sentence, 'meta' => $targetType];
                 }
             }
-            $citations = array_merge($citations, $this->rowCitations($row, $pmidTitleMap));
+            $citations = array_merge($citations, $rowCitations);
         }
 
         $citations = $this->citationResolver->normalizeMany($citations, 'local_graph');

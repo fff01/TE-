@@ -114,6 +114,8 @@ $prompt = $method->invoke(
     ['intent' => 'literature'],
     $evidencePackage,
     $evidenceWalk,
+    [],
+    [],
     $reportPlan,
     'medium',
     ['No direct experimental validation in this package.']
@@ -123,9 +125,11 @@ assert_true(str_contains($prompt, 'evidence-walk draft report'), 'writer prompt 
 assert_true(str_contains($prompt, '"evidence_package"'), 'writer prompt includes evidence_package key');
 assert_true(str_contains($prompt, '"evidence_walk"'), 'writer prompt includes evidence_walk key');
 assert_true(str_contains($prompt, '"report_plan"'), 'writer prompt includes report_plan key');
-foreach (['supported_claims', 'conflicting_claims', 'missing_evidence', '"citations"', 'raw_result', 'display_details', 'full plugin_results'] as $forbidden) {
+foreach (['raw_result', 'display_details', 'full plugin_results'] as $forbidden) {
     assert_true(!str_contains($prompt, $forbidden), "writer prompt excludes {$forbidden}");
 }
+assert_true(str_contains($prompt, '"claim_evidence_map"'), 'writer prompt includes claim_evidence_map key');
+assert_true(str_contains($prompt, '"writing_decision"'), 'writer prompt includes writing_decision key');
 
 $invalidValidation = EvidencePackage::validate(['schema_version' => 'evidence_package.v1']);
 assert_same(false, $invalidValidation['ok'], 'missing evidence_package fields fail validation');

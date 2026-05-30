@@ -145,7 +145,7 @@ trait TekgAcademicAgentEvidenceTrait
         $citationCount = 0;
         foreach ($pluginResults as $result) {
             $evidenceCount += count((array)($result['evidence_items'] ?? []));
-            $citationCount += count((array)($result['citations'] ?? []));
+            $citationCount += count(tekg_agent_plugin_result_citations((array)$result));
         }
         if ((int)($gate['min_evidence_items'] ?? 0) > $evidenceCount) {
             $missing[] = 'insufficient evidence items';
@@ -672,13 +672,16 @@ trait TekgAcademicAgentEvidenceTrait
 
     private function aggregateCitations(array $pluginResults): array
     {
-        if (isset($pluginResults['Citation Resolver']['citations']) && is_array($pluginResults['Citation Resolver']['citations'])) {
-            return $this->citationResolver->normalizeMany($pluginResults['Citation Resolver']['citations']);
+        if (isset($pluginResults['Citation Resolver']) && is_array($pluginResults['Citation Resolver'])) {
+            $resolved = tekg_agent_plugin_result_citations((array)$pluginResults['Citation Resolver']);
+            if ($resolved !== []) {
+                return $this->citationResolver->normalizeMany($resolved);
+            }
         }
 
         $all = [];
         foreach ($pluginResults as $result) {
-            foreach ((array)($result['citations'] ?? []) as $citation) {
+            foreach (tekg_agent_plugin_result_citations((array)$result) as $citation) {
                 $all[] = $citation;
             }
         }

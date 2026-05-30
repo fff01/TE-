@@ -16,6 +16,7 @@ final class TekgAgentEntityResolverPlugin implements TekgAgentPluginInterface
 
         $previewItems = [];
         $evidenceItems = [];
+        $resolvedEntities = [];
         $aliasCount = 0;
 
         foreach ($chains as $chain) {
@@ -40,6 +41,17 @@ final class TekgAgentEntityResolverPlugin implements TekgAgentPluginInterface
             if ($canonical === '') {
                 continue;
             }
+
+            $resolvedEntities[] = [
+                'label' => $canonical,
+                'canonical_label' => $canonical,
+                'type' => $type,
+                'matched_alias' => $matchedAlias,
+                'aliases' => $aliases,
+                'broad_aliases' => $broadAliases,
+                'confidence' => $confidence,
+                'used_broad_alias' => $usedBroadAlias,
+            ];
 
             $claim = $matchedAlias !== '' && tekg_agent_lower($matchedAlias) !== tekg_agent_lower($canonical)
                 ? 'Resolved "' . $matchedAlias . '" to the canonical ' . $type . ' entity ' . $canonical . '.'
@@ -82,6 +94,7 @@ final class TekgAgentEntityResolverPlugin implements TekgAgentPluginInterface
             'query_summary' => 'Resolved canonical entities and alias chains before the knowledge plugins ran.',
             'results' => [
                 'alias_chains' => $chains,
+                'resolved_entities' => $resolvedEntities,
             ],
             'display_label' => 'Resolved ' . $resolvedCount . ' entities',
             'display_summary' => $summary,

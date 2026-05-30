@@ -86,6 +86,76 @@ assert_same(['citation_1'], $literaturePackage['claims'][0]['citation_ids'], 'cl
 assert_same('12345', $literaturePackage['citation_map'][0]['citation']['pmid'], 'citation payload');
 assert_same('partial', $literaturePackage['metrics']['statuses']['Literature Plugin'], 'normalized raw status');
 
+$itemCitationPackage = EvidencePackage::fromPluginResults('Map item citations.', ['intent' => 'literature'], [
+    [
+        'result_envelope' => [
+            'plugin' => 'Literature Plugin',
+            'status' => 'ok',
+            'legacy_status' => 'ok',
+            'intent' => 'literature',
+            'summary' => 'Literature package.',
+            'raw' => [],
+            'evidence_items' => [
+                [
+                    'claim' => 'Claim A has its own citation.',
+                    'support_strength' => 'high',
+                    'citations' => [
+                        ['pmid' => 'A1', 'title' => 'Claim A citation'],
+                    ],
+                ],
+                [
+                    'claim' => 'Claim B falls back to plugin citations.',
+                    'support_strength' => 'medium',
+                ],
+            ],
+            'citations' => [
+                ['pmid' => 'P1', 'title' => 'Plugin citation one'],
+                ['pmid' => 'P2', 'title' => 'Plugin citation two'],
+            ],
+            'routes' => [],
+            'metrics' => ['duration_ms' => 1, 'result_count' => 2, 'confidence' => null],
+            'errors' => [],
+        ],
+    ],
+]);
+assert_same(['citation_1'], $itemCitationPackage['claims'][0]['citation_ids'], 'item citation wins for first claim');
+assert_same('A1', $itemCitationPackage['citation_map'][0]['citation']['pmid'], 'first claim uses evidence-level citation');
+assert_same(['citation_2', 'citation_3'], $itemCitationPackage['claims'][1]['citation_ids'], 'second claim falls back to plugin citations');
+assert_same('P1', $itemCitationPackage['citation_map'][1]['citation']['pmid'], 'fallback citation one');
+assert_same('P2', $itemCitationPackage['citation_map'][2]['citation']['pmid'], 'fallback citation two');
+
+$diagnosticPackage = EvidencePackage::fromPluginResults('Ignore diagnostics.', ['intent' => 'literature'], [
+    [
+        'result_envelope' => [
+            'plugin' => 'Citation Resolver',
+            'status' => 'ok',
+            'legacy_status' => 'ok',
+            'intent' => 'literature',
+            'summary' => 'Normalized citations.',
+            'raw' => [],
+            'evidence_items' => [
+                [
+                    'claim' => 'Citation Resolver normalized citation records.',
+                    'support_strength' => 'none',
+                    'evidence_type' => 'citation_normalization',
+                    'quality_flags' => ['not_biological_claim'],
+                    'citations' => [
+                        ['pmid' => '999', 'title' => 'Bookkeeping citation'],
+                    ],
+                ],
+            ],
+            'citations' => [
+                ['pmid' => '999', 'title' => 'Bookkeeping citation'],
+            ],
+            'routes' => [],
+            'metrics' => ['duration_ms' => 1, 'result_count' => 1, 'confidence' => null],
+            'errors' => [],
+        ],
+    ],
+]);
+assert_same([], $diagnosticPackage['claims'], 'diagnostic citation normalization is not a supported claim');
+assert_same([], $diagnosticPackage['citation_map'], 'diagnostic citations are not mapped to claims');
+
 $siteEnvelope = [
     'plugin' => 'Site Navigator Plugin',
     'status' => 'ok',

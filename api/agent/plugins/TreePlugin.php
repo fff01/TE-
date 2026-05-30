@@ -16,8 +16,8 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
-        $analysis = $context['analysis'] ?? [];
-        $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
+        $analysis = tekg_agent_context_analysis($context);
+        $entities = tekg_agent_context_resolved_entities($context);
         $teEntities = array_values(array_filter($entities, static fn(array $item): bool => ($item['type'] ?? '') === 'TE'));
         $diseaseEntities = array_values(array_filter($entities, static fn(array $item): bool => ($item['type'] ?? '') === 'Disease'));
 
@@ -28,7 +28,20 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
         if (($analysis['asks_for_classification'] ?? false) && $teEntities === []) {
             foreach ($this->topTeClasses() as $name) {
                 $results[] = ['kind' => 'te_top_class', 'label' => $name];
-                $evidence[] = 'Top-level TE class: ' . $name;
+                $evidence[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    'Top-level TE class: ' . $name . '.',
+                    $name,
+                    'medium',
+                    ['kind' => 'te_top_class', 'label' => $name],
+                    ['title' => $name, 'meta' => 'top-level TE class'],
+                    [
+                        'evidence_type' => 'classification_context',
+                        'coverage_dimension' => 'classification_context',
+                        'subject' => $name,
+                        'provenance' => ['source' => 'taxonomy_runtime'],
+                    ]
+                );
             }
         }
 
@@ -36,7 +49,21 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
             $path = $this->tePath((string)$entity['label']);
             if ($path !== []) {
                 $results[] = ['kind' => 'te_path', 'label' => (string)$entity['label'], 'path' => $path];
-                $evidence[] = (string)$entity['label'] . ' classification path: ' . implode(' -> ', $path);
+                $evidence[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    (string)$entity['label'] . ' classification path: ' . implode(' -> ', $path) . '.',
+                    (string)$entity['label'],
+                    'medium',
+                    ['kind' => 'te_path', 'label' => (string)$entity['label'], 'path' => $path],
+                    ['title' => (string)$entity['label'], 'meta' => implode(' -> ', $path)],
+                    [
+                        'evidence_type' => 'classification_context',
+                        'coverage_dimension' => 'classification_context',
+                        'subject' => (string)$entity['label'],
+                        'object' => end($path) ?: null,
+                        'provenance' => ['source' => 'taxonomy_runtime'],
+                    ]
+                );
                 $previewItems[] = [
                     'title' => (string)$entity['label'],
                     'meta' => implode(' -> ', $path),
@@ -48,7 +75,21 @@ final class TekgAgentTreePlugin implements TekgAgentPluginInterface
             $topClass = $this->diseaseTopClass((string)$entity['label']);
             if ($topClass !== null) {
                 $results[] = ['kind' => 'disease_top_class', 'label' => (string)$entity['label'], 'top_class' => $topClass];
-                $evidence[] = (string)$entity['label'] . ' top disease class: ' . $topClass;
+                $evidence[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    (string)$entity['label'] . ' top disease class: ' . $topClass . '.',
+                    (string)$entity['label'],
+                    'medium',
+                    ['kind' => 'disease_top_class', 'label' => (string)$entity['label'], 'top_class' => $topClass],
+                    ['title' => (string)$entity['label'], 'meta' => $topClass],
+                    [
+                        'evidence_type' => 'classification_context',
+                        'coverage_dimension' => 'classification_context',
+                        'subject' => (string)$entity['label'],
+                        'object' => $topClass,
+                        'provenance' => ['source' => 'disease_top_class_map'],
+                    ]
+                );
                 $previewItems[] = [
                     'title' => (string)$entity['label'],
                     'meta' => $topClass,

@@ -3,6 +3,23 @@ declare(strict_types=1);
 
 final class ReportIntegrityGate
 {
+    public static function normalizeUrlsInText(string $text): string
+    {
+        $text = preg_replace_callback(
+            '/\[[^\]]+\]\(([^)\s]+)\)/u',
+            static function (array $matches): string {
+                return str_replace($matches[1], self::normalizeUrlDashes((string)$matches[1]), $matches[0]);
+            },
+            $text
+        ) ?? $text;
+
+        return preg_replace_callback(
+            '/https?:\/\/[^\s<>"\']+/iu',
+            static fn(array $matches): string => self::normalizeUrlDashes((string)$matches[0]),
+            $text
+        ) ?? $text;
+    }
+
     /**
      * @return array{ok:bool,errors:array<int,string>,warnings:array<int,string>,cited_pmids:array<int,string>,linked_urls:array<int,string>,unsupported_markers:array<int,string>}
      */
@@ -284,11 +301,17 @@ final class ReportIntegrityGate
     private static function cleanUrl(string $url): string
     {
         $url = trim($url);
+        $url = self::normalizeUrlDashes($url);
         $markdownFragmentPos = strpos($url, '](');
         if ($markdownFragmentPos !== false) {
             $url = substr($url, 0, $markdownFragmentPos);
         }
-        return rtrim($url, ".,;:)`*");
+        return preg_replace('/[.,;:)\]`*"\'\x{201D}\x{201C}\x{2019}\x{2018}\x{3002}\x{FF0C}\x{3001}\x{FF1B}\x{FF1A}\x{FF09}\x{300B}\x{3011}\x{300D}\x{300F}]+$/u', '', $url) ?? $url;
+    }
+
+    private static function normalizeUrlDashes(string $url): string
+    {
+        return preg_replace('/[\x{2010}\x{2011}\x{2012}\x{2013}\x{2014}\x{2212}]/u', '-', $url) ?? $url;
     }
 
     /**

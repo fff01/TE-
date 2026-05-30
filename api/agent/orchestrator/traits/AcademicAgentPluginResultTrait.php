@@ -71,6 +71,7 @@ trait TekgAcademicAgentPluginResultTrait
                 'title' => (string)($item['title'] ?? ''),
                 'meta' => (string)($item['meta'] ?? ''),
                 'support_strength' => (string)($item['support_strength'] ?? 'medium'),
+                'citations' => array_values(array_slice((array)($item['citations'] ?? []), 0, 4)),
             ],
             array_slice($evidenceItems, 0, 8)
         ));
@@ -294,7 +295,7 @@ trait TekgAcademicAgentPluginResultTrait
             ],
             'preview_items' => array_values(array_slice((array)($displayDetails['preview_items'] ?? []), 0, 5)),
             'evidence_items' => array_values(array_slice($evidenceItems, 0, 5)),
-            'citations' => array_values(array_slice((array)($displayDetails['citations'] ?? $result['citations'] ?? []), 0, 8)),
+            'citations' => array_values(array_slice(tekg_agent_plugin_result_citations($result), 0, 8)),
         ]);
     }
 
@@ -312,6 +313,8 @@ trait TekgAcademicAgentPluginResultTrait
         array $evidencePackage = [],
         array $evidenceWalk = [],
         array $reportPlan = [],
+        array $claimEvidenceMap = [],
+        array $writingDecision = [],
         string $draftReport = '',
         string $polishedReport = '',
         array $integrityReport = [],
@@ -484,6 +487,8 @@ trait TekgAcademicAgentPluginResultTrait
                     'evidence_package' => $evidencePackage,
                     'evidence_walk' => $evidenceWalk,
                     'report_plan' => $reportPlan,
+                    'claim_evidence_map' => $claimEvidenceMap,
+                    'writing_decision' => $writingDecision,
                 ],
                 'output' => [
                     'draft_report' => $draftReport,

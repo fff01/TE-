@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../api/agent/contracts/PluginResultEnvelope.php';
+require_once __DIR__ . '/../api/agent/bootstrap/evidence_support.php';
 
 $schema = require __DIR__ . '/../api/agent/config/plugin_result_envelope_schema.php';
 
@@ -62,6 +63,35 @@ function assert_envelope_schema(array $schema, array $envelope, array $raw, stri
     assert_true(!array_key_exists('citations', $envelope['raw']), "{$caseName}: raw summary must not include full citations payload");
 }
 
+function assert_evidence_item_contract(array $item, string $caseName): void
+{
+    foreach ([
+        'source_plugin',
+        'entity_scope',
+        'claim',
+        'support_strength',
+        'raw_source_ref',
+        'title',
+        'meta',
+        'body',
+        'evidence_type',
+        'coverage_dimension',
+        'subject',
+        'object',
+        'provenance',
+        'diagnostic',
+        'citations',
+        'quality_flags',
+    ] as $key) {
+        assert_true(array_key_exists($key, $item), "{$caseName}: evidence item missing {$key}");
+    }
+
+    assert_true(is_array($item['provenance']), "{$caseName}: provenance must be array");
+    assert_true(is_array($item['diagnostic']), "{$caseName}: diagnostic must be array");
+    assert_true(is_array($item['citations']), "{$caseName}: citations must be array");
+    assert_true(is_array($item['quality_flags']), "{$caseName}: quality_flags must be array");
+}
+
 assert_schema_types_are_valid($schema);
 
 $graphRaw = [
@@ -87,6 +117,9 @@ assert_same('ok', $graph['legacy_status'], 'graph legacy status');
 assert_same('relationship', $graph['intent'], 'graph intent');
 assert_same(2, $graph['metrics']['result_count'], 'graph result_count from result_counts');
 assert_same(17, $graph['metrics']['duration_ms'], 'graph duration');
+assert_evidence_item_contract($graph['evidence_items'][0], 'graph evidence');
+assert_same('claim', $graph['evidence_items'][0]['evidence_type'], 'graph evidence default type');
+assert_same('unknown', $graph['evidence_items'][0]['coverage_dimension'], 'graph evidence default coverage');
 
 $emptyRaw = [
     'status' => 'empty',
@@ -153,5 +186,61 @@ assert_same('partial', $literature['status'], 'literature status');
 assert_same(1, $literature['metrics']['result_count'], 'literature count from matched_records');
 assert_same(0.72, $literature['metrics']['confidence'], 'literature confidence');
 assert_same(1, count($literature['citations']), 'literature citations');
+
+$legacyEvidenceRaw = [
+    'status' => 'ok',
+    'display_summary' => 'Legacy string evidence.',
+    'evidence_items' => [
+        'A legacy plugin returned plain text evidence.',
+    ],
+];
+$legacyEvidence = PluginResultEnvelope::fromPluginResult('Legacy Plugin', $legacyEvidenceRaw);
+assert_envelope_schema($schema, $legacyEvidence, $legacyEvidenceRaw, 'legacy-string-evidence');
+assert_same(1, count($legacyEvidence['evidence_items']), 'legacy evidence item count');
+assert_evidence_item_contract($legacyEvidence['evidence_items'][0], 'legacy string evidence');
+assert_same('legacy_text', $legacyEvidence['evidence_items'][0]['evidence_type'], 'legacy string evidence type');
+assert_same('unknown', $legacyEvidence['evidence_items'][0]['coverage_dimension'], 'legacy string coverage dimension');
+assert_same(true, $legacyEvidence['evidence_items'][0]['provenance']['legacy_string'] ?? null, 'legacy string provenance marker');
+
+$structured = tekg_agent_make_evidence_item(
+    'Graph Plugin',
+    'LINE-1 is connected to cancer.',
+    'LINE-1',
+    'high',
+    ['row_id' => 7],
+    ['title' => 'LINE-1 evidence'],
+    [
+        'evidence_type' => 'graph_relation',
+        'coverage_dimension' => 'relationship',
+        'subject' => 'LINE-1',
+        'object' => 'Cancer',
+        'provenance' => ['source' => 'tekg3'],
+        'diagnostic' => ['rank' => 1],
+        'citations' => [['pmid' => '12345']],
+        'quality_flags' => ['direct_relation'],
+    ]
+);
+assert_evidence_item_contract($structured, 'structured helper evidence');
+assert_same('graph_relation', $structured['evidence_type'], 'structured helper evidence_type');
+assert_same('relationship', $structured['coverage_dimension'], 'structured helper coverage_dimension');
+assert_same('LINE-1', $structured['subject'], 'structured helper subject');
+assert_same('Cancer', $structured['object'], 'structured helper object');
+assert_same(['source' => 'tekg3'], $structured['provenance'], 'structured helper provenance');
+
+$diagnostic = tekg_agent_make_evidence_item(
+    'Expression Plugin',
+    'Expression lookup returned no usable profiles.',
+    '',
+    'none',
+    [],
+    [],
+    [
+        'evidence_type' => 'empty_result',
+        'coverage_dimension' => 'expression',
+        'quality_flags' => ['not_evidence'],
+    ]
+);
+assert_same('none', $diagnostic['support_strength'], 'diagnostic support strength');
+assert_same('empty_result', $diagnostic['evidence_type'], 'diagnostic evidence_type');
 
 echo "PluginResultEnvelope tests passed.\n";

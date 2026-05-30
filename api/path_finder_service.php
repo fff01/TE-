@@ -155,10 +155,11 @@ CYPHER,
         );
 
         $rows = $this->runNeo4j($cypher, ['sourceId' => $sourceId, 'targetId' => $targetId]);
+        $evidenceRecordsByPmid = $this->loadEvidenceRecordsByPmids($this->collectPathPmids($rows));
         $paths = [];
         foreach ($rows as $index => $row) {
             $nodes = array_map(fn(array $node): array => $this->normalizeNode($node), (array)($row['nodes'] ?? []));
-            $edges = array_map(fn(array $edge): array => $this->normalizeEdge($edge), (array)($row['edges'] ?? []));
+            $edges = array_map(fn(array $edge): array => $this->normalizeEdge($edge, $evidenceRecordsByPmid), (array)($row['edges'] ?? []));
             $pmids = [];
             foreach ($edges as $edge) {
                 $pmids = array_merge($pmids, $edge['pmids']);
@@ -205,7 +206,7 @@ CYPHER,
         ];
     }
 
-    private function normalizeEdge(array $row): array
+    private function normalizeEdge(array $row, array $evidenceRecordsByPmid = []): array
     {
         $pmids = $this->normalizePmids((array)($row['pmids'] ?? []));
         return [
@@ -216,6 +217,94 @@ CYPHER,
             'evidence' => (string)($row['evidence'] ?? ''),
             'pmid_count' => count($pmids),
             'pmids' => $pmids,
+            'evidence_records' => $this->evidenceRecordsForPmids($pmids, $evidenceRecordsByPmid),
+        ];
+    }
+
+    private function collectPathPmids(array $rows): array
+    {
+        $pmids = [];
+        foreach ($rows as $row) {
+            foreach ((array)($row['edges'] ?? []) as $edge) {
+                foreach ((array)($edge['pmids'] ?? []) as $pmid) {
+                    $key = trim((string)$pmid);
+                    if ($key !== '') {
+                        $pmids[$key] = true;
+                    }
+                }
+            }
+        }
+        return array_keys($pmids);
+    }
+
+    private function loadEvidenceRecordsByPmids(array $pmids): array
+    {
+        $pmids = array_values(array_unique(array_filter(array_map(
+            static fn($pmid): string => trim((string)$pmid),
+            $pmids
+        ))));
+        if ($pmids === []) {
+            return [];
+        }
+
+        $records = [];
+        foreach (array_chunk($pmids, 500) as $chunk) {
+            $rows = $this->runNeo4j(
+                <<<'CYPHER'
+MATCH (p:Paper)
+WHERE p.pmid IN $pmids
+RETURN
+  p.pmid AS pmid,
+  p.pubmed_title AS pubmed_title,
+  p.pubmed_journal_title AS pubmed_journal_title,
+  p.pubmed_publication_year AS pubmed_publication_year,
+  p.journal_metric_value AS journal_metric_value,
+  p.journal_metric_source AS journal_metric_source,
+  p.journal_metric_year AS journal_metric_year,
+  p.journal_jcr_quartile AS journal_jcr_quartile,
+  p.journal_metric_match_method AS journal_metric_match_method
+CYPHER,
+                ['pmids' => $chunk]
+            );
+
+            foreach ($rows as $row) {
+                $pmid = trim((string)($row['pmid'] ?? ''));
+                if ($pmid === '') {
+                    continue;
+                }
+                $records[$pmid] = $this->normalizeEvidenceRecord($pmid, $row);
+            }
+        }
+
+        return $records;
+    }
+
+    private function evidenceRecordsForPmids(array $pmids, array $recordsByPmid): array
+    {
+        $records = [];
+        foreach ($pmids as $pmid) {
+            $key = trim((string)$pmid);
+            if ($key === '') {
+                continue;
+            }
+            $records[] = $recordsByPmid[$key] ?? $this->normalizeEvidenceRecord($key, []);
+        }
+        return $records;
+    }
+
+    private function normalizeEvidenceRecord(string $pmid, array $row): array
+    {
+        return [
+            'pmid' => $pmid,
+            'pubmed_url' => 'https://pubmed.ncbi.nlm.nih.gov/' . rawurlencode($pmid) . '/',
+            'pubmed_title' => $this->nullableStringValue($row['pubmed_title'] ?? null),
+            'pubmed_journal_title' => $this->nullableStringValue($row['pubmed_journal_title'] ?? null),
+            'pubmed_publication_year' => $this->nullableIntValue($row['pubmed_publication_year'] ?? null),
+            'journal_metric_value' => $this->nullableFloatValue($row['journal_metric_value'] ?? null),
+            'journal_metric_source' => $this->nullableStringValue($row['journal_metric_source'] ?? null),
+            'journal_metric_year' => $this->nullableIntValue($row['journal_metric_year'] ?? null),
+            'journal_jcr_quartile' => $this->nullableStringValue($row['journal_jcr_quartile'] ?? null),
+            'journal_metric_match_method' => $this->nullableStringValue($row['journal_metric_match_method'] ?? null),
         ];
     }
 
@@ -252,6 +341,25 @@ CYPHER,
     private function allowFuzzy(string $query): bool
     {
         return mb_strlen($query) >= 3 && !preg_match('/^\d+$/', $query);
+    }
+
+    private function nullableFloatValue(mixed $value): ?float
+    {
+        return is_numeric($value) ? (float)$value : null;
+    }
+
+    private function nullableIntValue(mixed $value): ?int
+    {
+        return is_numeric($value) ? (int)$value : null;
+    }
+
+    private function nullableStringValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $text = trim((string)$value);
+        return $text === '' ? null : $text;
     }
 
     private function runNeo4j(string $statement, array $parameters = []): array

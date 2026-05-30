@@ -78,6 +78,8 @@ function completeWorkflowForDone(turn) {
 }
 ${extractFunction('defaultWorkflowState')}
 ${extractFunction('normalizeLlmStageName')}
+${extractFunction('normalizeWorkflowStageStatus')}
+${extractFunction('workflowStateHasErrorStage')}
 ${extractFunction('setWorkflowState')}
 this.api = { defaultWorkflowState, setWorkflowState, appliedStates };
 `;
@@ -133,6 +135,51 @@ assert(
 assert(
   appliedStates.length === 1,
   'A real active workflow_state should be rendered exactly once after the default state is ignored.'
+);
+
+setWorkflowState(turn, {
+  current_stage: 'Writing',
+  stage_statuses: {
+    ...pendingStatuses,
+    Understanding: 'done',
+    Planning: 'done',
+    Collecting: 'done',
+    Executing: 'done',
+    Integrating: 'done',
+    Writing: 'failed',
+  },
+  traversed_edges: [],
+  complete: false,
+});
+
+assert(
+  turn.workflow.stage_statuses.Writing === 'error',
+  'Backend failed workflow stage status must normalize to error instead of pending.'
+);
+
+setWorkflowState(turn, {
+  current_stage: 'Writing',
+  stage_statuses: {
+    ...pendingStatuses,
+    Understanding: 'done',
+    Planning: 'done',
+    Collecting: 'active',
+    Executing: 'pending',
+    Integrating: 'pending',
+    Writing: 'failed',
+  },
+  traversed_edges: [],
+  complete: true,
+});
+
+assert(
+  turn.workflow.stage_statuses.Writing === 'error',
+  'A complete=true workflow_state with Writing failed must keep Writing rendered as error.'
+);
+
+assert(
+  turn.workflow.stage_statuses.Executing !== 'done' && turn.workflow.stage_statuses.Integrating !== 'done',
+  'A complete=true failed workflow_state must not unconditionally mark later stages done.'
 );
 
 console.log('Agent workflow default state guard check passed.');

@@ -19,7 +19,8 @@ final class TekgAgentCypherExplorerPlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $question = trim((string)($context['question'] ?? ''));
-        $analysis = is_array($context['analysis'] ?? null) ? $context['analysis'] : [];
+        $analysis = tekg_agent_context_analysis($context);
+        $analysis['normalized_entities'] = tekg_agent_context_resolved_entities($context);
         $planning = is_array($context['planning'] ?? null) ? $context['planning'] : [];
         $model = trim((string)($context['config']['deepseek_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
 

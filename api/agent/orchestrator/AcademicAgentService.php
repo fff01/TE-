@@ -147,6 +147,7 @@ final class TekgAcademicAgentService
                 $workflowState
             );
             $response['six_stage_artifacts'] = [];
+            $response['answer'] = ReportIntegrityGate::normalizeUrlsInText((string)$response['answer']);
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'answer',
                 'request_id' => $requestId,
@@ -508,6 +509,7 @@ final class TekgAcademicAgentService
             $updatedMemory = $this->updateSessionMemory($sessionMemory, $response['analysis'], $planning, $pluginResults, $citations, $evidence, $collectionState, []);
             tekg_agent_save_session_memory($sessionId, $updatedMemory);
 
+            $response['answer'] = ReportIntegrityGate::normalizeUrlsInText((string)$response['answer']);
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'answer',
                 'request_id' => $requestId,
@@ -578,6 +580,7 @@ final class TekgAcademicAgentService
         if (!$integratingNode->ok) {
             return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Integrating', $integratingNode, $sixStageArtifacts, $workflowState);
         }
+        $claimEvidenceMap = (array)$integratingNode->parsed_json;
 
         $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence);
         $this->emitEvent($emit, $eventSequence, [
@@ -608,17 +611,27 @@ final class TekgAcademicAgentService
             ],
         ]);
         $this->activateWorkflowStage($workflowState, 'Writing', 'Integrating', $emit, $eventSequence, $sessionId);
-        $writingDecisionNode = $this->llm->runWritingDecisionNode($writingModel, $processLanguage, [
-            'question' => $question,
-            'claim_evidence_map' => $integratingNode->parsed_json,
-            'report_plan' => $reportPlan,
-            'limits' => $limits,
-            'confidence' => $confidence,
-        ]);
+        $directSiteNavigationWriting = $this->buildDirectSiteNavigationWritingResult(
+            $analysis,
+            $pluginResults,
+            $evidencePackage,
+            $evidenceWalk,
+            $reportPlan
+        );
+        $writingDecisionNode = $directSiteNavigationWriting !== null
+            ? $directSiteNavigationWriting['writing_decision_node']
+            : $this->llm->runWritingDecisionNode($writingModel, $processLanguage, [
+                'question' => $question,
+                'claim_evidence_map' => $claimEvidenceMap,
+                'report_plan' => $reportPlan,
+                'limits' => $limits,
+                'confidence' => $confidence,
+            ]);
         $this->recordSixStageArtifact($sixStageArtifacts, 'writing', $writingDecisionNode, $emit, $eventSequence, $sessionId);
         if (!$writingDecisionNode->ok) {
             return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $writingModel, 'Writing', $writingDecisionNode, $sixStageArtifacts, $workflowState);
         }
+        $writingDecision = (array)$writingDecisionNode->parsed_json;
 
         $analysisForWriting = $this->analysisForWriting($analysis);
         $this->logDiagnostic($requestId, 'answer_generation_started', [
@@ -656,12 +669,27 @@ final class TekgAcademicAgentService
         $failureReason = '';
         $writingStartedAt = microtime(true);
 
-        if (($evidenceWalkValidation['ok'] ?? false) !== true || ($reportPlanValidation['ok'] ?? false) !== true) {
+        if ($directSiteNavigationWriting !== null) {
+            $answer = (string)$directSiteNavigationWriting['answer'];
+            $draftReport = (string)$directSiteNavigationWriting['draft_report'];
+            $polishedReport = (string)$directSiteNavigationWriting['polished_report'];
+            $draftLlm['ok'] = true;
+            $draftLlm['content'] = $draftReport;
+            $polishLlm['ok'] = true;
+            $polishLlm['content'] = $polishedReport;
+            $integrityReport['draft'] = (array)$directSiteNavigationWriting['integrity'];
+            $integrityReport['polish'] = (array)$directSiteNavigationWriting['integrity'];
+            $integrityReport['warnings'][] = 'direct_site_navigation';
+            if (($directSiteNavigationWriting['integrity']['ok'] ?? false) !== true) {
+                $writingFailed = true;
+                $failureReason = 'The direct site-navigation answer failed integrity checks: ' . implode('; ', (array)($directSiteNavigationWriting['integrity']['errors'] ?? []));
+            }
+        } elseif (($evidenceWalkValidation['ok'] ?? false) !== true || ($reportPlanValidation['ok'] ?? false) !== true) {
             $writingFailed = true;
             $failureReason = 'EvidenceWalk or ReportPlan validation failed before writing.';
         }
 
-        if (!$writingFailed) {
+        if (!$writingFailed && $directSiteNavigationWriting === null) {
             try {
                 $draftLlm = $this->llm->writeEvidenceWalkDraft(
                     $writingModel,
@@ -670,6 +698,8 @@ final class TekgAcademicAgentService
                     $analysisForWriting,
                     $evidencePackage,
                     $evidenceWalk,
+                    $claimEvidenceMap,
+                    $writingDecision,
                     $reportPlan,
                     $confidence,
                     $limits,
@@ -691,6 +721,7 @@ final class TekgAcademicAgentService
 
             if (($draftLlm['ok'] ?? false) === true) {
                 $draftReport = trim((string)($draftLlm['content'] ?? ''));
+                $draftReport = ReportIntegrityGate::normalizeUrlsInText($draftReport);
             }
             if ($draftReport === '') {
                 $writingFailed = true;
@@ -705,7 +736,7 @@ final class TekgAcademicAgentService
             }
         }
 
-        if (!$writingFailed) {
+        if (!$writingFailed && $directSiteNavigationWriting === null) {
             try {
                 $polishLlm = $this->llm->polishEvidenceWalkAnswer(
                     $polisherModel,
@@ -714,6 +745,8 @@ final class TekgAcademicAgentService
                     $analysisForWriting,
                     $evidencePackage,
                     $evidenceWalk,
+                    $claimEvidenceMap,
+                    $writingDecision,
                     $reportPlan,
                     (array)$integrityReport['draft'],
                     $this->answerTimeoutForModel($polisherModel)
@@ -734,6 +767,7 @@ final class TekgAcademicAgentService
 
             if (($polishLlm['ok'] ?? false) === true) {
                 $polishedReport = trim((string)($polishLlm['content'] ?? ''));
+                $polishedReport = ReportIntegrityGate::normalizeUrlsInText($polishedReport);
             }
             if ($polishedReport === '') {
                 $writingFailed = true;
@@ -752,6 +786,9 @@ final class TekgAcademicAgentService
         if (!$writingFailed && $answer === '') {
             $writingFailed = true;
             $failureReason = 'The final writing node did not produce a validated answer.';
+        }
+        if ($answer !== '') {
+            $answer = ReportIntegrityGate::normalizeUrlsInText($answer);
         }
         $this->logDiagnostic($requestId, 'answer_generation_completed', [
             'draft_ok' => (bool)($draftLlm['ok'] ?? false),
@@ -804,6 +841,8 @@ final class TekgAcademicAgentService
             'citations' => $citations,
             'evidence_package' => $evidencePackage,
             'evidence_walk' => $evidenceWalk,
+            'claim_evidence_map' => $claimEvidenceMap,
+            'writing_decision' => $writingDecision,
             'report_plan' => $reportPlan,
             'draft_report' => $draftReport,
             'polished_report' => $polishedReport,
@@ -836,6 +875,8 @@ final class TekgAcademicAgentService
                 $evidencePackage,
                 $evidenceWalk,
                 $reportPlan,
+                $claimEvidenceMap,
+                $writingDecision,
                 $draftReport,
                 $polishedReport,
                 $integrityReport,
@@ -903,6 +944,61 @@ final class TekgAcademicAgentService
         ]);
 
         return $response;
+    }
+
+    private function buildDirectSiteNavigationWritingResult(
+        array $analysis,
+        array $pluginResults,
+        array $evidencePackage,
+        array $evidenceWalk,
+        array $reportPlan
+    ): ?array {
+        if (($analysis['asks_for_site_navigation'] ?? false) !== true) {
+            return null;
+        }
+
+        $siteResult = (array)($pluginResults['Site Navigator Plugin'] ?? []);
+        if (!in_array((string)($siteResult['status'] ?? ''), ['ok', 'partial'], true)) {
+            return null;
+        }
+
+        $answer = trim((string)($siteResult['results']['answer_markdown'] ?? ''));
+        if ($answer === '') {
+            return null;
+        }
+
+        $answer = ReportIntegrityGate::normalizeUrlsInText($answer);
+        $integrity = ReportIntegrityGate::check($answer, $evidencePackage, $evidenceWalk, $reportPlan);
+        $writingDecision = [
+            'schema_version' => 'writing_decision.v1',
+            'stage' => 'writing',
+            'writing_strategy' => 'direct_site_navigation',
+            'required_sections' => ['site_navigation_answer'],
+            'forbidden_claims' => [
+                'Do not rewrite Site Navigator Plugin URLs.',
+                'Do not add mode handoff copy.',
+            ],
+            'citation_requirements' => [
+                'Use only the route URLs already present in Site Navigator Plugin results.answer_markdown.',
+            ],
+            'tone' => 'direct',
+            'final_checks' => [
+                'ReportIntegrityGate::normalizeUrlsInText applied.',
+                'ReportIntegrityGate::check applied.',
+            ],
+        ];
+        $schemas = require dirname(__DIR__) . '/config/agent_node_schemas.php';
+        $rawJson = json_encode($writingDecision, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        $writingDecisionNode = NodeLlmResult::fromRawJson('writing', $rawJson, (array)($schemas['writing_decision.v1'] ?? []));
+
+        return [
+            'answer' => $answer,
+            'draft_report' => $answer,
+            'polished_report' => $answer,
+            'integrity' => $integrity,
+            'writing_decision' => $writingDecision,
+            'writing_decision_node' => $writingDecisionNode,
+        ];
     }
 
     private function recordSixStageArtifact(

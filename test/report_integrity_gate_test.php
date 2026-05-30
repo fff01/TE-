@@ -34,6 +34,7 @@ function assert_contains_string(string $needle, array $haystack, string $message
 assert_true(is_file($gatePath), 'ReportIntegrityGate.php should exist');
 require_once $gatePath;
 assert_true(class_exists('ReportIntegrityGate'), 'ReportIntegrityGate class should be loadable');
+assert_true(method_exists('ReportIntegrityGate', 'normalizeUrlsInText'), 'ReportIntegrityGate exposes normalizeUrlsInText');
 
 $package = [
     'claims' => [
@@ -66,6 +67,13 @@ $package = [
             'route' => [
                 'url' => 'http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel',
                 'href' => '/TE-/search.php?q=L1HS&type=TE#search-karyotype-panel',
+            ],
+        ],
+        [
+            'id' => 'route_3',
+            'route' => [
+                'url' => 'http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-sequence-panel',
+                'href' => '/TE-/search.php?q=L1HS&type=TE#search-sequence-panel',
             ],
         ],
     ],
@@ -171,6 +179,43 @@ assert_same(
     ['http://127.0.0.1/TE-/search.php?q=L1HS&type=TE'],
     $routeUrlWithoutFragment['linked_urls'],
     'route_map URL without fragment is preserved in extracted linked URLs'
+);
+
+$nonBreakingHyphen = html_entity_decode('&#x2011;', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+$routeUrlWithUnicodeHyphens = ReportIntegrityGate::check(
+    'Open route_id: route_3 at http://127.0.0.1/TE' . $nonBreakingHyphen . '/search.php?q=L1HS&type=TE#search' . $nonBreakingHyphen . 'sequence' . $nonBreakingHyphen . 'panel for sequence context.',
+    $package
+);
+assert_same(true, $routeUrlWithUnicodeHyphens['ok'], 'route_map URL with Unicode non-breaking hyphens passes');
+assert_same(
+    ['http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-sequence-panel'],
+    $routeUrlWithUnicodeHyphens['linked_urls'],
+    'route_map URL with Unicode non-breaking hyphens is normalized'
+);
+
+$rightDoubleQuote = html_entity_decode('&#x201D;', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+$routeUrlWithTrailingMarkdownAndUnicodeQuote = ReportIntegrityGate::check(
+    'Open route_id: route_3 at http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-sequence-panel).' . $rightDoubleQuote,
+    $package
+);
+assert_same(true, $routeUrlWithTrailingMarkdownAndUnicodeQuote['ok'], 'route_map URL with trailing Markdown punctuation and Unicode quote passes');
+assert_same(
+    ['http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-sequence-panel'],
+    $routeUrlWithTrailingMarkdownAndUnicodeQuote['linked_urls'],
+    'route_map URL with trailing Markdown punctuation and Unicode quote is normalized'
+);
+
+$emDash = html_entity_decode('&#x2014;', ENT_QUOTES | ENT_HTML5, 'UTF-8');
+$unicodeUrlText = 'Natural language A' . $emDash . 'B stays untouched. '
+    . 'Open http://127.0.0.1/TE' . $emDash . '/search.php?q=L1HS&type=TE#search' . $emDash . 'sequence' . $emDash . 'panel '
+    . 'or [Sequence](http://127.0.0.1/TE' . $nonBreakingHyphen . '/search.php?q=L1HS&type=TE#search' . $nonBreakingHyphen . 'sequence' . $nonBreakingHyphen . 'panel).';
+$normalizedUrlText = ReportIntegrityGate::normalizeUrlsInText($unicodeUrlText);
+assert_same(
+    'Natural language A' . $emDash . 'B stays untouched. '
+        . 'Open http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-sequence-panel '
+        . 'or [Sequence](http://127.0.0.1/TE-/search.php?q=L1HS&type=TE#search-sequence-panel).',
+    $normalizedUrlText,
+    'normalizeUrlsInText normalizes Unicode dashes inside URLs only'
 );
 
 $unrelatedUrlWithMarkdownPunctuation = ReportIntegrityGate::check(

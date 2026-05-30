@@ -18,9 +18,9 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
     {
         $started = microtime(true);
         $question = trim((string)($context['question'] ?? ''));
-        $analysis = is_array($context['analysis'] ?? null) ? $context['analysis'] : [];
-        $literature = is_array(($context['plugin_results']['Literature Plugin'] ?? null)) ? $context['plugin_results']['Literature Plugin'] : [];
-        $citations = array_values((array)($literature['citations'] ?? []));
+        $analysis = tekg_agent_context_analysis($context);
+        $literature = tekg_agent_context_plugin_result($context, 'Literature Plugin');
+        $citations = tekg_agent_plugin_result_citations($literature);
         $selected = array_slice($citations, 0, 12);
 
         if ($selected === []) {
@@ -73,24 +73,32 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
                 continue;
             }
             $citCount = count((array)($cluster['citations'] ?? []));
+            $clusterCitations = $this->clusterCitations($cluster, $selected);
             $previewItems[] = [
                 'title' => $claim,
-                'meta' => 'citations ' . $citCount,
+                'meta' => 'citations ' . count($clusterCitations),
                 'body' => trim((string)($cluster['summary'] ?? '')),
             ];
             $evidenceItems[] = tekg_agent_make_evidence_item(
                 $this->getName(),
                 $claim,
                 $claim,
-                $citCount >= 2 ? 'high' : 'medium',
+                count($clusterCitations) >= 2 ? 'high' : 'medium',
                 [
-                    'citation_count' => $citCount,
+                    'citation_count' => count($clusterCitations),
                     'question_type' => (string)($analysis['intent'] ?? 'literature'),
                 ],
                 [
                     'title' => $claim,
-                    'meta' => 'citations ' . $citCount,
+                    'meta' => 'citations ' . count($clusterCitations),
                     'body' => trim((string)($cluster['summary'] ?? '')),
+                ],
+                [
+                    'evidence_type' => 'literature_synthesis',
+                    'coverage_dimension' => 'literature_evidence',
+                    'subject' => $claim,
+                    'provenance' => ['source' => 'literature_reading_llm'],
+                    'citations' => $clusterCitations,
                 ]
             );
         }
@@ -213,5 +221,33 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
             $result[] = ['source' => $source, 'count' => $count];
         }
         return $result;
+    }
+
+    private function clusterCitations(array $cluster, array $selected): array
+    {
+        $refs = array_values(array_filter(array_map(
+            static fn($value): string => trim((string)$value),
+            (array)($cluster['citations'] ?? [])
+        )));
+        if ($refs === []) {
+            return [];
+        }
+
+        $matches = [];
+        foreach ($selected as $citation) {
+            if (!is_array($citation)) {
+                continue;
+            }
+            $pmid = trim((string)($citation['pmid'] ?? ''));
+            $title = trim((string)($citation['title'] ?? ''));
+            foreach ($refs as $ref) {
+                if (($pmid !== '' && strcasecmp($pmid, $ref) === 0) || ($title !== '' && strcasecmp($title, $ref) === 0)) {
+                    $matches[] = $citation;
+                    continue 2;
+                }
+            }
+        }
+
+        return tekg_agent_dedupe_citations($matches);
     }
 }

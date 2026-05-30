@@ -430,6 +430,27 @@
     return WORKFLOW_STAGE_ALIASES[key] || '';
   }
 
+  function normalizeWorkflowStageStatus(status) {
+    const key = String(status || '').trim().toLowerCase();
+    if (key === 'failed') return 'error';
+    return ['pending', 'active', 'done', 'error'].includes(key) ? key : 'pending';
+  }
+
+  function isFailedRunPayload(payload) {
+    if (!payload || typeof payload !== 'object') return false;
+    const workflowState = payload.workflow_state && typeof payload.workflow_state === 'object'
+      ? payload.workflow_state
+      : null;
+    return payload.writing_failed === true
+      || String(payload.status || '').toLowerCase() === 'failed'
+      || workflowStateHasErrorStage(workflowState && workflowState.stage_statuses);
+  }
+
+  function workflowStateHasErrorStage(stageStatuses) {
+    if (!stageStatuses || typeof stageStatuses !== 'object') return false;
+    return WORKFLOW_STAGES.some((stage) => normalizeWorkflowStageStatus(stageStatuses[stage.id]) === 'error');
+  }
+
   function createWorkflowMarkup() {
     const main = WORKFLOW_STAGES.map((stage, index) => {
       const edgeClass = WORKFLOW_FORWARD_EDGES[index] === 'Collecting->Executing'
@@ -472,8 +493,8 @@
     WORKFLOW_FORWARD_EDGES.forEach((edgeKey, index) => {
       const leftStage = WORKFLOW_STAGES[index] && WORKFLOW_STAGES[index].id;
       const rightStage = WORKFLOW_STAGES[index + 1] && WORKFLOW_STAGES[index + 1].id;
-      const leftStatus = String(stageStatuses[leftStage] || 'pending');
-      const rightStatus = String(stageStatuses[rightStage] || 'pending');
+      const leftStatus = normalizeWorkflowStageStatus(stageStatuses[leftStage] || 'pending');
+      const rightStatus = normalizeWorkflowStageStatus(stageStatuses[rightStage] || 'pending');
       const leftReached = WORKFLOW_TERMINAL_STATUSES.includes(leftStatus);
       const rightReached = WORKFLOW_TERMINAL_STATUSES.includes(rightStatus) || rightStatus === 'active';
       if (leftReached && rightReached) {
@@ -484,7 +505,7 @@
     workflowNode.querySelectorAll('[data-stage]').forEach((node) => {
       const stage = String(node.dataset.stage || '');
       const status = String(stageStatuses[stage] || 'pending');
-      const safeStatus = ['pending', 'active', 'done', 'error'].includes(status) ? status : 'pending';
+      const safeStatus = normalizeWorkflowStageStatus(status);
       node.classList.remove('is-pending', 'is-active', 'is-done', 'is-error');
       node.classList.add(`is-${safeStatus}`);
     });
@@ -509,20 +530,32 @@
     if (turn.finalized) return;
     const next = defaultWorkflowState();
     const incomingStatuses = payload && typeof payload === 'object' ? payload.stage_statuses : null;
+    let hasProgressState = false;
     if (incomingStatuses && typeof incomingStatuses === 'object') {
       WORKFLOW_STAGES.forEach((stage) => {
         const status = String(incomingStatuses[stage.id] || next.stage_statuses[stage.id] || 'pending');
-        next.stage_statuses[stage.id] = ['pending', 'active', 'done', 'error'].includes(status) ? status : 'pending';
+        const normalizedStatus = normalizeWorkflowStageStatus(status);
+        if (normalizedStatus !== 'pending') {
+          hasProgressState = true;
+        }
+        next.stage_statuses[stage.id] = normalizedStatus;
       });
     }
-    next.current_stage = normalizeLlmStageName(payload && payload.current_stage) || String((payload && payload.current_stage) || next.current_stage || 'Understanding');
+    const rawCurrentStage = payload && payload.current_stage;
+    const incomingCurrentStage = normalizeLlmStageName(rawCurrentStage) || String(rawCurrentStage || '');
+    const currentIndex = WORKFLOW_STAGE_INDEX[String(turn.workflow.current_stage || '')] ?? -1;
+    if (!incomingCurrentStage && !hasProgressState && currentIndex >= 0) {
+      return;
+    }
+    next.current_stage = incomingCurrentStage || next.current_stage || '';
     next.traversed_edges = Array.isArray(payload && payload.traversed_edges) ? payload.traversed_edges.slice() : [];
     next.complete = !!(payload && payload.complete);
     if (next.complete) {
-      completeWorkflowForDone(turn);
-      return;
+      if (!workflowStateHasErrorStage(next.stage_statuses)) {
+        completeWorkflowForDone(turn);
+        return;
+      }
     }
-    const currentIndex = WORKFLOW_STAGE_INDEX[String(turn.workflow.current_stage || '')] ?? -1;
     const nextIndex = WORKFLOW_STAGE_INDEX[next.current_stage] ?? currentIndex;
     if (nextIndex < currentIndex) {
       return;
@@ -534,7 +567,8 @@
 
   function setWorkflowStageFromLlmEvent(turn, stage, status) {
     if (!turn || !turn.workflow) return;
-    if (turn.finalized && status !== 'error') return;
+    const normalizedStatus = normalizeWorkflowStageStatus(status);
+    if (turn.finalized && normalizedStatus !== 'error') return;
     const normalizedStage = normalizeLlmStageName(stage);
     if (!normalizedStage) return;
     const next = defaultWorkflowState();
@@ -543,12 +577,12 @@
       if (index < stageIndex) {
         next.stage_statuses[item.id] = 'done';
       } else if (index === stageIndex) {
-        next.stage_statuses[item.id] = status === 'error' ? 'error' : 'done';
-      } else if (status !== 'error' && index === stageIndex + 1) {
+        next.stage_statuses[item.id] = normalizedStatus === 'error' ? 'error' : 'done';
+      } else if (normalizedStatus !== 'error' && index === stageIndex + 1) {
         next.stage_statuses[item.id] = 'active';
       }
     });
-    if (status !== 'error' && normalizedStage === 'Writing') {
+    if (normalizedStatus !== 'error' && normalizedStage === 'Writing') {
       next.stage_statuses.Writing = 'active';
     }
     next.current_stage = normalizedStage;
@@ -1191,7 +1225,9 @@
       if (payload.workflow_state && typeof payload.workflow_state === 'object') {
         setWorkflowState(turn, payload.workflow_state);
       }
-      completeWorkflowForDone(turn);
+      if (!isFailedRunPayload(payload)) {
+        completeWorkflowForDone(turn);
+      }
       finalizeTurn(turn);
     }
   }
@@ -1315,12 +1351,14 @@
 
       if (runState.status === 'completed' || runState.status === 'failed') {
         if (!turn.receivedDone) {
+          const failedRun = runState.status === 'failed' || !!runState.writing_failed;
           handleStreamEvent(turn, {
-            type: runState.status === 'failed' && !runState.answer ? 'error' : 'done',
+            type: failedRun && !runState.answer ? 'error' : 'done',
             request_id: runState.request_id || turn.requestId || '',
             session_id: runState.session_id || sessionId || '',
             message: runState.error || runState.failure_reason || '',
             payload: {
+              status: runState.status || '',
               answer: runState.answer || '',
               language: runState.language || turn.language || 'en',
               writing_failed: !!runState.writing_failed,
@@ -1336,6 +1374,7 @@
               request_id: runState.request_id || turn.requestId || '',
               session_id: runState.session_id || sessionId || '',
               payload: {
+                status: runState.status || '',
                 answer: runState.answer || '',
                 language: runState.language || turn.language || 'en',
                 writing_failed: !!runState.writing_failed,

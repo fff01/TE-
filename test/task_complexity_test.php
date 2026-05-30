@@ -43,6 +43,13 @@ $cases = [
         'task_complexity' => 'simple_lookup',
         'recommended_mode' => 'deepthink',
     ],
+    'english open sequence panel is site navigation' => [
+        'question' => 'Where can I open the L1HS sequence panel in TE-KG?',
+        'task_complexity' => 'simple_lookup',
+        'recommended_mode' => 'deepthink',
+        'asks_for_site_navigation' => true,
+        'asks_for_sequence' => true,
+    ],
     'ordinary relationship list stays in Deep Think' => [
         'question' => 'L1HS和哪些疾病相关',
         'task_complexity' => 'single_hop',

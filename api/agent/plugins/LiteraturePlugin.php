@@ -18,9 +18,9 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
-        $analysis = is_array($context['analysis'] ?? null) ? $context['analysis'] : [];
-        $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
-        $graphResult = $context['plugin_results']['Graph Plugin'] ?? [];
+        $analysis = tekg_agent_context_analysis($context);
+        $entities = tekg_agent_context_resolved_entities($context);
+        $graphResult = tekg_agent_context_plugin_result($context, 'Graph Plugin');
         $errors = [];
         try {
             $localCitations = $this->collectLocalCitations($graphResult, $entities);
@@ -102,6 +102,13 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
                     ]))),
                     'body' => trim((string)($citation['abstract_summary'] ?? '')),
                     'url' => (string)($citation['url'] ?? ''),
+                ],
+                [
+                    'evidence_type' => 'literature_record',
+                    'coverage_dimension' => 'literature_evidence',
+                    'subject' => $title !== '' ? $title : ($pmid !== '' ? 'PMID ' . $pmid : 'Literature record'),
+                    'provenance' => ['source' => (string)($citation['source'] ?? '')],
+                    'citations' => [$citation],
                 ]
             );
         }
@@ -154,7 +161,7 @@ final class TekgAgentLiteraturePlugin implements TekgAgentPluginInterface
 
     private function collectLocalCitations(array $graphResult, array $entities): array
     {
-        $citations = is_array($graphResult['citations'] ?? null) ? $graphResult['citations'] : [];
+        $citations = tekg_agent_plugin_result_citations($graphResult);
         if ($citations !== []) {
             return $this->citationResolver->normalizeMany($citations, 'local_graph');
         }

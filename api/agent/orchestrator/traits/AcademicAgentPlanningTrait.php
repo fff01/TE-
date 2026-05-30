@@ -298,6 +298,9 @@ trait TekgAcademicAgentPlanningTrait
         if ($intent === 'graph_analytics' && !in_array('Graph Analytics Plugin', $queue, true)) {
             $queue[] = 'Graph Analytics Plugin';
         }
+        if (($analysis['asks_for_cypher_explorer'] ?? false) && !in_array('Cypher Explorer Plugin', $queue, true)) {
+            $queue[] = 'Cypher Explorer Plugin';
+        }
         if (($analysis['asks_for_site_navigation'] ?? false) && !in_array('Site Navigator Plugin', $queue, true)) {
             array_splice($queue, in_array('Entity Resolver', $queue, true) ? 1 : 0, 0, ['Site Navigator Plugin']);
         }

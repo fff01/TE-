@@ -15,9 +15,9 @@ final class TekgAgentGraphAnalyticsPlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $started = microtime(true);
-        $analysis = is_array($context['analysis'] ?? null) ? $context['analysis'] : [];
+        $analysis = tekg_agent_context_analysis($context);
         $question = trim((string)($context['question'] ?? ''));
-        $entities = is_array($analysis['normalized_entities'] ?? null) ? $analysis['normalized_entities'] : [];
+        $entities = tekg_agent_context_resolved_entities($context);
         $targetTypes = is_array($analysis['requested_target_types'] ?? null) ? $analysis['requested_target_types'] : [];
 
         $queryPlan = $this->selectQueryPlan($question, $analysis, $entities, $targetTypes);

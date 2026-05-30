@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../path_config.php';
 require_once __DIR__ . '/../site_i18n.php';
 require_once __DIR__ . '/../api/agent/bootstrap.php';
+require_once __DIR__ . '/../api/agent/contracts/PluginResultEnvelope.php';
 
 $pluginPath = __DIR__ . '/../api/agent/plugins/SiteNavigatorPlugin.php';
 if (!is_file($pluginPath)) {
@@ -75,5 +76,38 @@ assert_same('http://localhost/TE-/expression_detail.php?te=L1HS#expression-detai
 $browser = $plugin->run(navigator_context('L1HS的Genome Browser入口'));
 assert_same('search-jbrowse-panel', $browser['results']['primary_route']['fragment'] ?? '', 'search JBrowse panel fragment');
 assert_same('http://localhost/TE-/search.php?q=L1HS&type=TE#search-jbrowse-panel', $browser['results']['primary_route']['url'] ?? '', 'absolute JBrowse panel URL');
+
+$envelope = PluginResultEnvelope::fromPluginResult($plugin->getName(), $genome, ['intent' => 'navigation']);
+assert_same(count($genome['results']['candidate_routes']), $envelope['metrics']['result_count'], 'site navigator result_count must count routes');
+assert_true(!array_key_exists('primary_confidence_percent', $genome['result_counts']), 'confidence percent must not be a result count');
+assert_true(is_float($genome['confidence']) || is_int($genome['confidence']), 'top-level confidence is exposed');
+assert_same((float)$genome['confidence'], $envelope['metrics']['confidence'], 'envelope confidence comes from top-level confidence');
+
+$emptyPlugin = new TekgAgentSiteNavigatorPlugin();
+$navigationMap = new ReflectionProperty(TekgAgentSiteNavigatorPlugin::class, 'navigationMap');
+$navigationMap->setValue($emptyPlugin, ['routes' => []]);
+$empty = $emptyPlugin->run(navigator_context('Unknown route please'));
+assert_same('empty', $empty['status'], 'empty site navigation status');
+assert_same(0, $empty['result_counts']['routes'], 'empty site navigation route count');
+assert_same([], $empty['results']['candidate_routes'], 'empty site navigation candidates');
+assert_true(is_array($empty['display_details']['preview_items']), 'empty display preview_items array');
+assert_true(is_array($empty['evidence_items']), 'empty evidence_items array');
+assert_true(is_array($empty['citations']), 'empty citations array');
+assert_true(is_array($empty['errors']), 'empty errors array');
+foreach ([
+    'query_summary',
+    'results',
+    'display_label',
+    'display_summary',
+    'display_details',
+    'result_counts',
+    'evidence_items',
+    'citations',
+    'errors',
+    'latency_ms',
+] as $key) {
+    assert_true(array_key_exists($key, $empty), "empty site navigation includes {$key}");
+}
+assert_same([], $empty['evidence_items'], 'empty site navigation does not fabricate evidence');
 
 echo "Site Navigator Plugin tests passed.\n";

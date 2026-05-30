@@ -146,7 +146,7 @@ function tekg_agent_load_run_events(string $runId, int $afterSequence = 0): arra
         return [];
     }
     try {
-        while (($line = fgets($handle)) !== false) {
+        while (($line = @fgets($handle)) !== false) {
             $decoded = json_decode(trim($line), true);
             if (!is_array($decoded)) {
                 continue;

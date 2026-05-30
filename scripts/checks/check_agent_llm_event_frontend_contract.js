@@ -41,6 +41,31 @@ requireJsMatch(
   'Agent submit must defer workflow rendering until the first backend stage_state'
 );
 
+requireJsMatch(
+  /function\s+normalizeWorkflowStageStatus\s*\([\s\S]*['"]failed['"][\s\S]*return\s+['"]error['"]/,
+  'Frontend workflow status normalization must map backend "failed" stage states to "error"'
+);
+
+requireJsMatch(
+  /function\s+isFailedRunPayload\s*\([\s\S]*writing_failed[\s\S]*status[\s\S]*failed/,
+  'Agent done handling must detect failed run payloads from writing_failed or status failed'
+);
+
+requireJsMatch(
+  /function\s+isFailedRunPayload\s*\([\s\S]*workflow_state[\s\S]*workflowStateHasErrorStage\s*\(/,
+  'Agent done handling must detect failed stages inside payload.workflow_state'
+);
+
+requireJsMatch(
+  /event\.type\s*===\s*['"]done['"][\s\S]*if\s*\(\s*!isFailedRunPayload\s*\(\s*payload\s*\)\s*\)\s*{[\s\S]*completeWorkflowForDone\s*\(\s*turn\s*\)/,
+  'Done handling must not force-complete workflow stages for failed run payloads'
+);
+
+requireJsMatch(
+  /status\s*:\s*runState\.status\s*\|\|\s*['"]/,
+  'Polling synthesized done payloads must preserve the run status for failed-run visibility'
+);
+
 if (/submitAgentQuestion[\s\S]*activateInitialWorkflowStage\s*\(\s*turn\s*\)/.test(agentJs)) {
   throw new Error('Agent submit must not optimistically activate Understanding before backend stage_state');
 }
