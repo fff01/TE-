@@ -152,6 +152,8 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
     {
         $payload = [
             'question' => $question,
+            'answer_language' => (string)($analysis['answer_language'] ?? $analysis['language'] ?? 'english'),
+            'process_language' => (string)($analysis['process_language'] ?? $analysis['answer_language'] ?? $analysis['language'] ?? 'english'),
             'intent' => (string)($analysis['intent'] ?? 'literature'),
             'citations' => array_map(function (array $citation): array {
                 return [

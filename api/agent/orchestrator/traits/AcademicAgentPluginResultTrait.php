@@ -249,6 +249,10 @@ trait TekgAcademicAgentPluginResultTrait
             'raw_result' => (array)($result['raw_result'] ?? []),
             'raw_preview' => $result['display_details']['raw_preview'] ?? null,
             'errors' => array_values((array)($result['errors'] ?? [])),
+            'warnings' => array_values((array)($result['warnings'] ?? [])),
+            'caveats' => array_values((array)($result['caveats'] ?? [])),
+            'executing_review_status' => (string)($result['executing_review_status'] ?? ''),
+            'executing_review_errors' => array_values((array)($result['executing_review_errors'] ?? [])),
             'result_counts' => (array)($result['result_counts'] ?? []),
             'display_details' => (array)($result['display_details'] ?? []),
         ];

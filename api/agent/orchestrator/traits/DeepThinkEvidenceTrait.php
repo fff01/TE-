@@ -213,6 +213,8 @@ trait TekgDeepThinkEvidenceTrait
     {
         $payload = [
             'question' => $question,
+            'answer_language' => (string)($analysis['answer_language'] ?? $analysis['language'] ?? 'english'),
+            'process_language' => (string)($analysis['process_language'] ?? $analysis['answer_language'] ?? $analysis['language'] ?? 'english'),
             'intent' => (string)($analysis['intent'] ?? ''),
             'complexity' => (string)($analysis['complexity'] ?? ''),
             'normalized_entities' => array_slice((array)($analysis['normalized_entities'] ?? []), 0, 4),

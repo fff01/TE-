@@ -281,7 +281,20 @@ final class TekgAcademicAgentService
             ]);
             $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $executingReviewNode, $emit, $eventSequence, $sessionId, $pluginName);
             if (!$executingReviewNode->ok) {
-                return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $executingReviewNode, $sixStageArtifacts, $workflowState);
+                if ($this->shouldContinueAfterExecutingReviewFailure($result, $executingReviewNode)) {
+                    $result = $this->applyExecutingReviewFailureCaveat($result, $executingReviewNode);
+                    $pluginResults[$pluginName] = $result;
+                    $lastPluginCallIndex = array_key_last($pluginCalls);
+                    if ($lastPluginCallIndex !== null) {
+                        $pluginCalls[$lastPluginCallIndex] = $result;
+                    }
+                    $this->logDiagnostic($requestId, 'executing_review_failed_nonfatal', [
+                        'plugin_name' => $pluginName,
+                        'errors' => $executingReviewNode->errors,
+                    ]);
+                } else {
+                    return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $executingReviewNode, $sixStageArtifacts, $workflowState);
+                }
             }
 
             $detailId = 'tool-' . (++$detailCounter);
@@ -430,7 +443,20 @@ final class TekgAcademicAgentService
                 ]);
                 $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $citationReviewNode, $emit, $eventSequence, $sessionId, 'Citation Resolver');
                 if (!$citationReviewNode->ok) {
-                    return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $citationReviewNode, $sixStageArtifacts, $workflowState);
+                    if ($this->shouldContinueAfterExecutingReviewFailure($citationResult, $citationReviewNode)) {
+                        $citationResult = $this->applyExecutingReviewFailureCaveat($citationResult, $citationReviewNode);
+                        $pluginResults['Citation Resolver'] = $citationResult;
+                        $lastPluginCallIndex = array_key_last($pluginCalls);
+                        if ($lastPluginCallIndex !== null) {
+                            $pluginCalls[$lastPluginCallIndex] = $citationResult;
+                        }
+                        $this->logDiagnostic($requestId, 'executing_review_failed_nonfatal', [
+                            'plugin_name' => 'Citation Resolver',
+                            'errors' => $citationReviewNode->errors,
+                        ]);
+                    } else {
+                        return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $citationReviewNode, $sixStageArtifacts, $workflowState);
+                    }
                 }
                 $detailId = 'tool-' . (++$detailCounter);
                 $payloadForUi = $this->toolPayloadForUi($citationResult);
@@ -1039,6 +1065,37 @@ final class TekgAcademicAgentService
                 'summary' => $artifact['summary'],
             ],
         ]);
+    }
+
+    private function shouldContinueAfterExecutingReviewFailure(array $pluginResult, NodeLlmResult $reviewResult): bool
+    {
+        if ($reviewResult->ok || $reviewResult->stage !== 'executing') {
+            return false;
+        }
+
+        return in_array((string)($pluginResult['status'] ?? ''), ['ok', 'partial'], true);
+    }
+
+    private function applyExecutingReviewFailureCaveat(array $pluginResult, NodeLlmResult $reviewResult): array
+    {
+        $errors = array_values(array_filter(array_map('strval', $reviewResult->errors)));
+        $errorText = implode('; ', $errors);
+        if ($errorText === '') {
+            $errorText = 'ExecutingReview unavailable.';
+        }
+
+        $pluginResult['executing_review_status'] = 'review_failed';
+        $pluginResult['executing_review_errors'] = $errors;
+        $pluginResult['warnings'] = array_values(array_unique(array_merge(
+            (array)($pluginResult['warnings'] ?? []),
+            ['review_failed']
+        )));
+        $pluginResult['caveats'] = array_values(array_unique(array_filter(array_merge(
+            (array)($pluginResult['caveats'] ?? []),
+            ['ExecutingReview unavailable; plugin evidence was retained without a meta-review artifact. ' . $errorText]
+        ))));
+
+        return $pluginResult;
     }
 
     private function nodeLlmArtifact(NodeLlmResult $result, string $pluginName = ''): array

@@ -745,12 +745,19 @@ final class TekgAgentLlmClient
         $decoded = $this->httpJson((string)$this->config['llm_relay_url'], $payload, [], $timeout, $stage);
         $response = $decoded['response'] ?? [];
         $content = (string)($response['choices'][0]['message']['content'] ?? '');
+        if (trim($content) === '') {
+            $this->backoffBeforeEmptyContentRetry();
+            $decoded = $this->httpJson((string)$this->config['llm_relay_url'], $payload, [], $timeout, $stage);
+            $response = $decoded['response'] ?? [];
+            $content = (string)($response['choices'][0]['message']['content'] ?? '');
+        }
+        $trimmedContent = trim($content);
         return [
-            'ok' => $content !== '',
+            'ok' => $trimmedContent !== '',
             'provider' => $provider,
             'model' => $model,
-            'content' => trim($content),
-            'error' => $content !== '' ? null : 'Relay returned an empty response.',
+            'content' => $trimmedContent,
+            'error' => $trimmedContent !== '' ? null : 'Relay returned an empty response.',
         ];
     }
 
@@ -779,12 +786,25 @@ final class TekgAgentLlmClient
         ], $timeout, $stage);
 
         $content = (string)($decoded['choices'][0]['message']['content'] ?? '');
+        if (trim($content) === '') {
+            $this->backoffBeforeEmptyContentRetry();
+            $decoded = $this->httpJson($url, [
+                'model' => $model,
+                'messages' => $messages,
+                'temperature' => 0.2,
+                'enable_thinking' => $enableThinking,
+            ], [
+                'Authorization: Bearer ' . $key,
+            ], $timeout, $stage);
+            $content = (string)($decoded['choices'][0]['message']['content'] ?? '');
+        }
+        $trimmedContent = trim($content);
         return [
-            'ok' => $content !== '',
+            'ok' => $trimmedContent !== '',
             'provider' => $provider,
             'model' => $model,
-            'content' => trim($content),
-            'error' => $content !== '' ? null : 'Provider returned an empty response.',
+            'content' => $trimmedContent,
+            'error' => $trimmedContent !== '' ? null : 'Provider returned an empty response.',
         ];
     }
 
@@ -797,6 +817,11 @@ final class TekgAgentLlmClient
         $url = $provider === 'qwen' ? (string)($this->config['dashscope_url'] ?? '') : (string)($this->config['deepseek_url'] ?? '');
         $key = $provider === 'qwen' ? (string)($this->config['dashscope_key'] ?? '') : (string)($this->config['deepseek_key'] ?? '');
         return $url !== '' && $key !== '';
+    }
+
+    private function backoffBeforeEmptyContentRetry(): void
+    {
+        usleep(max(0, (int)($this->config['llm_empty_content_retry_delay_us'] ?? 100000)));
     }
 
     private function httpJson(string $url, array $payload, array $headers, int $timeout = 90, string $stage = 'llm'): array

@@ -24,6 +24,13 @@ function assert_not_contains(string $needle, string $haystack, string $message):
     assert_true(!str_contains($haystack, $needle), $message . "\nForbidden: {$needle}");
 }
 
+function assert_source_contains(string $path, string $needle, string $message): void
+{
+    $source = file_get_contents($path);
+    assert_true(is_string($source), "Source file can be read: {$path}");
+    assert_contains($needle, $source, $message);
+}
+
 $promptLibraryPath = __DIR__ . '/../api/agent/config/agent_prompts.php';
 assert_true(file_exists($promptLibraryPath), 'centralized Agent prompt library exists');
 
@@ -150,6 +157,15 @@ $languageFromMixedAnalysis = $languageFromPayloadMethod->invoke($client, [
     ],
 ]);
 assert_true($languageFromMixedAnalysis === 'chinese', 'answer_language beats legacy analysis language for JSON prompt language');
+$languageFromTopLevelPayload = $languageFromPayloadMethod->invoke($client, [
+    'question' => 'English question',
+    'answer_language' => 'chinese',
+    'process_language' => 'chinese',
+    'analysis' => [
+        'language' => 'english',
+    ],
+]);
+assert_true($languageFromTopLevelPayload === 'chinese', 'top-level answer_language drives JSON prompt language without question heuristic');
 $zhJsonSystem = $jsonSystemMethod->invoke($client, 'zh-cn');
 $zhSufficiency = $jsonInstructionMethod->invoke($client, 'sufficiency', 'zh-cn');
 $zhAnswerStructure = $jsonInstructionMethod->invoke($client, 'answer_structure', 'chinese');
@@ -189,5 +205,59 @@ assert_contains('Write a short evidence-based summary', $enSummary, 'summary pro
 assert_contains('single read-only Cypher query', TekgAgentPromptLibrary::jsonInstructionPrompt('cypher_explorer', 'english'), 'Cypher Explorer JSON instruction is centralized');
 assert_contains('supported_claims', TekgAgentPromptLibrary::jsonInstructionPrompt('literature_reading', 'english'), 'Literature Reading JSON instruction is centralized');
 assert_contains('single-model tool-using academic assistant', TekgAgentPromptLibrary::jsonInstructionPrompt('deepthink_router', 'english'), 'DeepThink router JSON instruction is centralized');
+
+$answerStructurePayloadMethod = $serviceReflection->getMethod('buildAnswerStructurePayload');
+$agentAnswerStructurePayload = $answerStructurePayloadMethod->invoke(
+    $service,
+    'English wording should not override explicit payload language',
+    ['intent' => 'mechanism', 'answer_language' => 'chinese', 'language' => 'english'],
+    ['supported_claims' => ['Claim'], 'conflicting_claims' => [], 'missing_evidence' => []],
+    [],
+    ['is_sufficient' => true, 'reason' => 'ok', 'missing_dimensions' => []]
+);
+assert_true(($agentAnswerStructurePayload['answer_language'] ?? '') === 'chinese', 'Agent answer_structure payload carries top-level answer_language');
+assert_true(($agentAnswerStructurePayload['process_language'] ?? '') === 'chinese', 'Agent answer_structure payload carries top-level process_language');
+assert_true($languageFromPayloadMethod->invoke($client, $agentAnswerStructurePayload) === 'chinese', 'Agent answer_structure payload resolves Chinese from top-level language fields');
+
+assert_source_contains(
+    __DIR__ . '/../api/agent/orchestrator/traits/AcademicAgentEvidenceTrait.php',
+    "'answer_language' => (string)(\$analysis['answer_language']",
+    'Agent sufficiency payload carries explicit top-level answer_language'
+);
+assert_source_contains(
+    __DIR__ . '/../api/agent/orchestrator/traits/AcademicAgentEvidenceTrait.php',
+    "'process_language' => (string)(\$analysis['process_language']",
+    'Agent sufficiency payload carries explicit top-level process_language'
+);
+assert_source_contains(
+    __DIR__ . '/../api/agent/orchestrator/traits/DeepThinkEvidenceTrait.php',
+    "'answer_language' => (string)(\$analysis['answer_language']",
+    'DeepThink answer_structure payload carries explicit top-level answer_language'
+);
+assert_source_contains(
+    __DIR__ . '/../api/agent/orchestrator/traits/DeepThinkEvidenceTrait.php',
+    "'process_language' => (string)(\$analysis['process_language']",
+    'DeepThink answer_structure payload carries explicit top-level process_language'
+);
+assert_source_contains(
+    __DIR__ . '/../api/agent/plugins/CypherExplorerPlugin.php',
+    "'answer_language' => (string)(\$analysis['answer_language']",
+    'Cypher Explorer JSON payload carries explicit top-level answer_language'
+);
+assert_source_contains(
+    __DIR__ . '/../api/agent/plugins/CypherExplorerPlugin.php',
+    "'process_language' => (string)(\$analysis['process_language']",
+    'Cypher Explorer JSON payload carries explicit top-level process_language'
+);
+assert_source_contains(
+    __DIR__ . '/../api/agent/plugins/LiteratureReadingPlugin.php',
+    "'answer_language' => (string)(\$analysis['answer_language']",
+    'Literature Reading JSON payload carries explicit top-level answer_language'
+);
+assert_source_contains(
+    __DIR__ . '/../api/agent/plugins/LiteratureReadingPlugin.php',
+    "'process_language' => (string)(\$analysis['process_language']",
+    'Literature Reading JSON payload carries explicit top-level process_language'
+);
 
 echo "Agent prompt language tests passed.\n";

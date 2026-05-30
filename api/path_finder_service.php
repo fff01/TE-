@@ -116,6 +116,86 @@ CYPHER,
         return array_map(fn(array $row): array => $this->normalizeNode($row), $rows);
     }
 
+    public function suggestConnectedCandidates(
+        string $sourceQuery,
+        string $sourceType,
+        string $targetType,
+        string $query = '',
+        int $maxDepth = 3,
+        int $limit = 180
+    ): array {
+        $sourceQuery = trim($sourceQuery);
+        $sourceType = path_finder_normalize_entity_type($sourceType);
+        $targetType = path_finder_normalize_entity_type($targetType);
+        if ($targetType === '') {
+            throw new InvalidArgumentException('Unsupported target entity type.');
+        }
+
+        if ($sourceQuery === '') {
+            return [];
+        }
+
+        $source = $this->resolveEntity($sourceQuery, $sourceType);
+        if ($source === null || trim((string)($source['element_id'] ?? '')) === '') {
+            return [];
+        }
+
+        $query = $this->normalizeQuery($query);
+        $depth = max(1, min(3, $maxDepth));
+        $limit = max(1, min(180, $limit));
+        $rows = $this->runNeo4j(
+            sprintf(
+                <<<'CYPHER'
+MATCH (source)
+WHERE elementId(source) = $source_id
+MATCH p = (source)-[:BIO_RELATION*1..%d]-(candidate)
+WHERE elementId(candidate) <> elementId(source)
+  AND $target_type IN labels(candidate)
+  AND NOT 'Paper' IN labels(candidate)
+  AND ALL(node IN nodes(p) WHERE NOT 'Paper' IN labels(node))
+  AND trim(toString(coalesce(candidate.name, ''))) <> ''
+  AND ($query = '' OR toLower(trim(toString(candidate.name))) STARTS WITH toLower($query))
+WITH candidate,
+     length(p) AS hop,
+     reduce(total = 0, rel IN relationships(p) | total + size(coalesce(rel.pmids, []))) AS pmid_count
+WITH candidate,
+     min(hop) AS min_hop,
+     count(*) AS path_count,
+     collect({hop: hop, pmid_count: pmid_count}) AS path_stats
+WITH candidate,
+     min_hop,
+     path_count,
+     reduce(best = 0, stat IN path_stats |
+       CASE
+         WHEN stat.hop = min_hop AND stat.pmid_count > best THEN stat.pmid_count
+         ELSE best
+       END
+     ) AS best_path_pmid_count
+RETURN elementId(candidate) AS element_id,
+       labels(candidate) AS labels,
+       trim(toString(candidate.name)) AS name,
+       candidate.description AS description,
+       candidate.pmid AS pmid,
+       candidate.disease_class AS disease_class,
+       min_hop AS min_hop,
+       path_count AS path_count,
+       best_path_pmid_count AS best_path_pmid_count
+ORDER BY min_hop ASC, best_path_pmid_count DESC, path_count DESC, toLower(name)
+LIMIT %d
+CYPHER,
+                $depth,
+                $limit
+            ),
+            [
+                'source_id' => (string)$source['element_id'],
+                'target_type' => $targetType,
+                'query' => $query,
+            ]
+        );
+
+        return array_map(fn(array $row): array => $this->normalizeConnectedCandidate($row), $rows);
+    }
+
     private function resolveEntity(string $query, string $entityType = ''): ?array
     {
         $normalized = $this->normalizeQuery($query);
@@ -269,6 +349,15 @@ CYPHER,
             'pmid' => (string)($row['pmid'] ?? ''),
             'disease_class' => (string)($row['disease_class'] ?? ''),
         ];
+    }
+
+    private function normalizeConnectedCandidate(array $row): array
+    {
+        $node = $this->normalizeNode($row);
+        $node['min_hop'] = max(1, min(3, (int)($row['min_hop'] ?? 3)));
+        $node['path_count'] = max(0, (int)($row['path_count'] ?? 0));
+        $node['best_path_pmid_count'] = max(0, (int)($row['best_path_pmid_count'] ?? 0));
+        return $node;
     }
 
     private function normalizeEdge(array $row, array $evidenceRecordsByPmid = []): array

@@ -39,6 +39,7 @@ if (!function_exists('tekg_agent_http_request')) {
         ?string $requestId = null,
         string $stage = 'llm'
     ): array {
+        $GLOBALS['six_stage_contract_http_request_count'] = (int)($GLOBALS['six_stage_contract_http_request_count'] ?? 0) + 1;
         $GLOBALS['six_stage_contract_http_request'] = [
             'url' => $url,
             'method' => $method,
@@ -49,6 +50,14 @@ if (!function_exists('tekg_agent_http_request')) {
             'request_id' => $requestId,
             'stage' => $stage,
         ];
+
+        if (isset($GLOBALS['six_stage_contract_http_response_queue']) && is_array($GLOBALS['six_stage_contract_http_response_queue'])) {
+            $body = array_shift($GLOBALS['six_stage_contract_http_response_queue']);
+            return [
+                'status' => 200,
+                'body' => (string)$body,
+            ];
+        }
 
         return [
             'status' => 200,
@@ -312,5 +321,35 @@ assert_true(is_array($capturedPayload), 'zh runner sends JSON payload to relay')
 $userPrompt = (string)($capturedPayload['messages'][1]['content'] ?? '');
 assert_contains_string('只返回 JSON。', $userPrompt, 'zh runner uses Chinese six-stage prompt');
 assert_contains_string('understanding_result.v1', $userPrompt, 'zh runner includes expected schema prompt');
+
+$GLOBALS['six_stage_contract_http_response_queue'] = [
+    json_encode([
+        'response' => [
+            'choices' => [
+                ['message' => ['content' => '']],
+            ],
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+    json_encode([
+        'response' => [
+            'choices' => [
+                ['message' => ['content' => json_encode($validFixturesBySchema['tool_execution_review.v1'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]],
+            ],
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+];
+$GLOBALS['six_stage_contract_http_request_count'] = 0;
+$retryClient = new TekgAgentLlmClient([
+    'llm_relay_url' => 'http://fixture-relay.local/chat',
+    'request_id' => 'six-stage-empty-content-retry',
+]);
+$retryResult = $retryClient->runExecutingReviewNode('deepseek-v4-flash', 'en', [
+    'question' => 'Review the plugin result.',
+    'plugin_name' => 'Literature Reading Plugin',
+    'plugin_result' => ['status' => 'ok'],
+]);
+assert_same(true, $retryResult->ok, 'empty relay content is retried once and the retry result is used');
+assert_same(2, (int)($GLOBALS['six_stage_contract_http_request_count'] ?? 0), 'empty relay content retry performs exactly one extra request');
+unset($GLOBALS['six_stage_contract_http_response_queue'], $GLOBALS['six_stage_contract_http_request_count']);
 
 echo "Six-stage LLM contract tests passed.\n";

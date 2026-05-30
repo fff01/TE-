@@ -34,7 +34,7 @@ require __DIR__ . '/head.php';
                       <option value="<?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?>"<?= $entityType === 'TE' ? ' selected' : '' ?>><?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?></option>
 <?php endforeach; ?>
                     </select>
-                    <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="path-finder-entities" data-te-autocomplete-type-source="#pathSourceType" data-te-autocomplete-clear-on-type-change="true">
+                    <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="path-finder-entities" data-te-autocomplete-type-source="#pathSourceType" data-te-autocomplete-clear-on-type-change="true" data-te-autocomplete-connected-source="#pathTarget" data-te-autocomplete-connected-source-type="#pathTargetType" data-te-autocomplete-connected-target-type="#pathSourceType" data-te-autocomplete-connected-max-depth-source="#pathMaxDepth">
                       <input id="pathSource" name="source" type="text" autocomplete="off" placeholder="Select a TE entity" data-te-autocomplete>
                       <button class="te-autocomplete-toggle" type="button" aria-label="Show source entity names" aria-expanded="false" data-te-autocomplete-toggle></button>
                       <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>
@@ -49,7 +49,7 @@ require __DIR__ . '/head.php';
                       <option value="<?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?>"<?= $entityType === 'Disease' ? ' selected' : '' ?>><?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?></option>
 <?php endforeach; ?>
                     </select>
-                    <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="path-finder-entities" data-te-autocomplete-type-source="#pathTargetType" data-te-autocomplete-clear-on-type-change="true">
+                    <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="path-finder-entities" data-te-autocomplete-type-source="#pathTargetType" data-te-autocomplete-clear-on-type-change="true" data-te-autocomplete-connected-source="#pathSource" data-te-autocomplete-connected-source-type="#pathSourceType" data-te-autocomplete-connected-target-type="#pathTargetType" data-te-autocomplete-connected-max-depth-source="#pathMaxDepth">
                       <input id="pathTarget" name="target" type="text" autocomplete="off" placeholder="Select a Disease entity" data-te-autocomplete>
                       <button class="te-autocomplete-toggle" type="button" aria-label="Show target entity names" aria-expanded="false" data-te-autocomplete-toggle></button>
                       <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>

@@ -126,6 +126,8 @@ final class TekgAgentCypherExplorerPlugin implements TekgAgentPluginInterface
 
         $payload = [
             'question' => $question,
+            'answer_language' => (string)($analysis['answer_language'] ?? $analysis['language'] ?? 'english'),
+            'process_language' => (string)($analysis['process_language'] ?? $analysis['answer_language'] ?? $analysis['language'] ?? 'english'),
             'analysis' => $analysis,
             'planning' => $planning,
             'allowed_clauses' => ['MATCH', 'OPTIONAL MATCH', 'WHERE', 'WITH', 'RETURN', 'ORDER BY', 'LIMIT', 'DISTINCT'],

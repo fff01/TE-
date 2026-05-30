@@ -60,6 +60,39 @@ try {
         exit;
     }
 
+    if ($view === 'connected_candidates') {
+        $source = trim((string)($_GET['source'] ?? ''));
+        $sourceTypeRaw = trim((string)($_GET['source_type'] ?? ''));
+        $targetTypeRaw = trim((string)($_GET['target_type'] ?? ''));
+        $sourceType = $sourceTypeRaw === '' ? '' : path_finder_normalize_entity_type($sourceTypeRaw);
+        $targetType = path_finder_normalize_entity_type($targetTypeRaw);
+        if ($sourceTypeRaw !== '' && $sourceType === '') {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'Unsupported source entity type'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        if ($targetType === '') {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'Unsupported target entity type'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+
+        $query = trim((string)($_GET['q'] ?? ''));
+        $maxDepth = (int)($_GET['max_depth'] ?? 3);
+        $limit = (int)($_GET['limit'] ?? 180);
+        echo json_encode([
+            'ok' => true,
+            'source' => 'tekg3',
+            'database' => tekg_runtime_neo4j_database_name($config),
+            'source_query' => $source,
+            'source_type' => $sourceType,
+            'target_type' => $targetType,
+            'max_depth' => max(1, min(3, $maxDepth)),
+            'items' => $service->suggestConnectedCandidates($source, $sourceType, $targetType, $query, $maxDepth, $limit),
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     if ($view !== '' && $view !== 'paths') {
         http_response_code(400);
         echo json_encode(['ok' => false, 'error' => 'Unsupported view'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

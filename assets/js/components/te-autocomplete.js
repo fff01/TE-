@@ -18,63 +18,179 @@
     return selector ? document.querySelector(selector) : null;
   }
 
+  function controlFromSelector(selector) {
+    const normalized = String(selector || '').trim();
+    return normalized ? document.querySelector(normalized) : null;
+  }
+
   function currentEntityType(root) {
     const control = typeControl(root);
     return String((control && control.value) || root.dataset.teAutocompleteType || 'TE').trim() || 'TE';
   }
 
+  function controlValue(selector) {
+    const control = controlFromSelector(selector);
+    return String((control && control.value) || '').trim();
+  }
+
+  function connectedMaxDepth(root) {
+    const value = Number(controlValue(root.dataset.teAutocompleteConnectedMaxDepthSource) || 3);
+    if (!Number.isFinite(value)) {
+      return 3;
+    }
+    return Math.max(1, Math.min(3, Math.trunc(value)));
+  }
+
+  function connectedSource(root) {
+    return controlValue(root.dataset.teAutocompleteConnectedSource);
+  }
+
+  function connectedSourceType(root) {
+    return controlValue(root.dataset.teAutocompleteConnectedSourceType);
+  }
+
+  function connectedTargetType(root) {
+    return controlValue(root.dataset.teAutocompleteConnectedTargetType) || currentEntityType(root);
+  }
+
   function sourceConfig(root, input) {
     const source = String(root.dataset.teAutocompleteSource || 'taxonomy').trim();
     if (source === 'path-finder-entities') {
+      const sourceEntity = connectedSource(root);
       const entityType = currentEntityType(root);
       const query = String(input.value || '').trim();
-      const params = new URLSearchParams({
+      const fallbackParams = new URLSearchParams({
         view: 'entities',
         type: entityType,
         q: query,
         limit: String(maxVisible),
       });
-      return {
+      const fallback = {
         key: `path-finder-entities:${entityType}:${query.toLowerCase()}`,
-        url: apiUrl(`path_finder.php?${params.toString()}`),
+        url: apiUrl(`path_finder.php?${fallbackParams.toString()}`),
         label: entityType,
+        connected: false,
       };
+      if (sourceEntity) {
+        const sourceType = connectedSourceType(root);
+        const targetType = connectedTargetType(root);
+        const maxDepth = connectedMaxDepth(root);
+        const params = new URLSearchParams({
+          view: 'connected_candidates',
+          source: sourceEntity,
+          source_type: sourceType,
+          target_type: targetType,
+          q: query,
+          max_depth: String(maxDepth),
+          limit: String(maxVisible),
+        });
+        return {
+          key: `path-finder-connected:${sourceType}:${sourceEntity.toLowerCase()}:${targetType}:${query.toLowerCase()}:${maxDepth}`,
+          url: apiUrl(`path_finder.php?${params.toString()}`),
+          label: targetType,
+          connected: true,
+          fallback,
+        };
+      }
+
+      return fallback;
     }
 
     return {
       key: 'taxonomy:items',
       url: taxonomyUrl(),
       label: 'TE',
+      connected: false,
     };
   }
 
-  function loadNames(root, input) {
+  function loadOptions(root, input) {
     const config = sourceConfig(root, input);
+    function fetchOptions(activeConfig) {
+      return fetch(activeConfig.url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`autocomplete API HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((payload) => {
+          if (payload && payload.ok === false) {
+            throw new Error(String(payload.error || 'autocomplete API failed'));
+          }
+          const options = Array.isArray(payload.items)
+            ? payload.items.map((item) => normalizeOption(item, activeConfig.connected)).filter((item) => item.name)
+            : [];
+          if (activeConfig.connected) {
+            return uniqueOptions(options);
+          }
+          return uniqueOptions(options).sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' }));
+        });
+    }
+
     if (cache.has(config.key)) {
       return cache.get(config.key);
     }
-    const promise = fetch(config.url, {
-      headers: { Accept: 'application/json' },
-      credentials: 'same-origin',
-      cache: 'no-store',
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`autocomplete API HTTP ${response.status}`);
+    const promise = fetchOptions(config)
+      .then((options) => {
+        if (!config.connected || options.length || !config.fallback) {
+          return options;
         }
-        return response.json();
+        if (cache.has(config.fallback.key)) {
+          return cache.get(config.fallback.key);
+        }
+        const fallbackPromise = fetchOptions(config.fallback);
+        cache.set(config.fallback.key, fallbackPromise);
+        return fallbackPromise;
       })
-      .then((payload) => {
-        if (payload && payload.ok === false) {
-          throw new Error(String(payload.error || 'autocomplete API failed'));
+      .catch((error) => {
+        if (config.connected && config.fallback) {
+          if (cache.has(config.fallback.key)) {
+            return cache.get(config.fallback.key);
+          }
+          const fallbackPromise = fetchOptions(config.fallback);
+          cache.set(config.fallback.key, fallbackPromise);
+          return fallbackPromise;
         }
-        const names = Array.isArray(payload.items)
-          ? payload.items.map((item) => String(item && item.name ? item.name : '').trim()).filter(Boolean)
-          : [];
-        return [...new Set(names)].sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }));
+        throw error;
       });
     cache.set(config.key, promise);
     return promise;
+  }
+
+  function normalizeOption(item, connected) {
+    if (typeof item === 'string') {
+      return { name: item.trim() };
+    }
+    const option = item && typeof item === 'object' ? item : {};
+    const normalized = {
+      name: String(option.name || '').trim(),
+    };
+    if (connected) {
+      const minHop = Number(option.min_hop || 0);
+      normalized.min_hop = [1, 2, 3].includes(minHop) ? minHop : null;
+      normalized.path_count = Math.max(0, Number(option.path_count || 0));
+      normalized.best_path_pmid_count = Math.max(0, Number(option.best_path_pmid_count || 0));
+    }
+    return normalized;
+  }
+
+  function uniqueOptions(options) {
+    const seen = new Set();
+    const unique = [];
+    options.forEach((option) => {
+      const key = option.name.toLowerCase();
+      if (!key || seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      unique.push(option);
+    });
+    return unique;
   }
 
   function escapeHtml(value) {
@@ -98,12 +214,41 @@
     ].join('');
   }
 
-  function filteredNames(names, query) {
+  function filteredOptions(options, query) {
     const prefix = String(query || '').trim().toLowerCase();
     if (!prefix) {
-      return names.slice(0, maxVisible);
+      return options.slice(0, maxVisible);
     }
-    return names.filter((name) => name.toLowerCase().startsWith(prefix)).slice(0, maxVisible);
+    return options.filter((option) => option.name.toLowerCase().startsWith(prefix)).slice(0, maxVisible);
+  }
+
+  function groupLabel(minHop) {
+    if (minHop === 1) {
+      return 'Direct connection';
+    }
+    if (minHop === 2) {
+      return '2-hop path';
+    }
+    if (minHop === 3) {
+      return '3-hop path';
+    }
+    return '';
+  }
+
+  function optionMeta(option) {
+    if (![1, 2, 3].includes(option.min_hop)) {
+      return '';
+    }
+    const pathCount = Number(option.path_count || 0);
+    const pmidCount = Number(option.best_path_pmid_count || 0);
+    const parts = [];
+    if (pathCount > 0) {
+      parts.push(`${pathCount} path${pathCount === 1 ? '' : 's'}`);
+    }
+    if (pmidCount > 0) {
+      parts.push(`${pmidCount} PMID${pmidCount === 1 ? '' : 's'} in best path`);
+    }
+    return parts.length ? `<span class="te-autocomplete-meta">${escapeHtml(parts.join(' | '))}</span>` : '';
   }
 
   function initAutocomplete(root) {
@@ -140,24 +285,38 @@
       }
     }
 
-    function renderOptions(names) {
+    function renderOptions(options) {
       const query = input.value;
-      const matches = filteredNames(names, query);
+      const matches = filteredOptions(options, query);
       if (!matches.length) {
         menu.innerHTML = `<div class="te-autocomplete-empty">No ${escapeHtml(sourceConfig(root, input).label)} names match this prefix.</div>`;
         return;
       }
-      menu.innerHTML = matches.map((name) => (
-        `<button type="button" class="te-autocomplete-option" data-te-name="${escapeHtml(name)}">${optionHtml(name, query)}</button>`
-      )).join('');
+      let lastGroup = '';
+      menu.innerHTML = matches.map((option) => {
+        const group = groupLabel(option.min_hop);
+        const groupHtml = group && group !== lastGroup
+          ? `<div class="te-autocomplete-group">${escapeHtml(group)}</div>`
+          : '';
+        if (group) {
+          lastGroup = group;
+        }
+        return [
+          groupHtml,
+          `<button type="button" class="te-autocomplete-option" data-te-name="${escapeHtml(option.name)}">`,
+          optionHtml(option.name, query),
+          optionMeta(option),
+          '</button>',
+        ].join('');
+      }).join('');
     }
 
     function loadAndRender() {
       const serial = ++requestSerial;
-      loadNames(root, input)
-        .then((names) => {
+      loadOptions(root, input)
+        .then((options) => {
           if (serial === requestSerial) {
-            renderOptions(names);
+            renderOptions(options);
           }
         })
         .catch(() => {
@@ -207,6 +366,19 @@
         }
       });
     }
+    [
+      root.dataset.teAutocompleteConnectedSource,
+      root.dataset.teAutocompleteConnectedSourceType,
+      root.dataset.teAutocompleteConnectedTargetType,
+      root.dataset.teAutocompleteConnectedMaxDepthSource,
+    ].forEach((selector) => {
+      const dependentControl = controlFromSelector(selector);
+      if (!dependentControl || dependentControl === input || dependentControl === control) {
+        return;
+      }
+      dependentControl.addEventListener('input', refreshMenu);
+      dependentControl.addEventListener('change', refreshMenu);
+    });
     input.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') {
         closeMenu();
