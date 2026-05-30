@@ -1,6 +1,25 @@
 <?php
 declare(strict_types=1);
 
+function path_finder_entity_type_options(): array
+{
+    return ['TE', 'Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate'];
+}
+
+function path_finder_normalize_entity_type(string $type): string
+{
+    $type = trim($type);
+    if ($type === '') {
+        return '';
+    }
+    foreach (path_finder_entity_type_options() as $option) {
+        if (strcasecmp($type, $option) === 0) {
+            return $option;
+        }
+    }
+    return '';
+}
+
 final class PathFinderService
 {
     private array $config;
@@ -10,10 +29,12 @@ final class PathFinderService
         $this->config = $config;
     }
 
-    public function find(string $sourceQuery, string $targetQuery, int $maxDepth): array
+    public function find(string $sourceQuery, string $targetQuery, int $maxDepth, string $sourceType = '', string $targetType = ''): array
     {
         $sourceQuery = trim($sourceQuery);
         $targetQuery = trim($targetQuery);
+        $sourceType = path_finder_normalize_entity_type($sourceType);
+        $targetType = path_finder_normalize_entity_type($targetType);
         $maxDepth = max(1, min(3, $maxDepth));
 
         if ($sourceQuery === '' || $targetQuery === '') {
@@ -24,15 +45,19 @@ final class PathFinderService
             ];
         }
 
-        $source = $this->resolveEntity($sourceQuery);
-        $target = $this->resolveEntity($targetQuery);
+        $source = $this->resolveEntity($sourceQuery, $sourceType);
+        $target = $this->resolveEntity($targetQuery, $targetType);
 
         if ($source === null || $target === null) {
             return [
                 'ok' => false,
-                'error' => $source === null ? 'Source entity was not found.' : 'Target entity was not found.',
+                'error' => $source === null
+                    ? 'Source entity was not found in the selected entity type.'
+                    : 'Target entity was not found in the selected entity type.',
                 'source_query' => $sourceQuery,
                 'target_query' => $targetQuery,
+                'source_type' => $sourceType,
+                'target_type' => $targetType,
                 'source' => $source,
                 'target' => $target,
                 'max_depth' => $maxDepth,
@@ -46,6 +71,8 @@ final class PathFinderService
             'ok' => true,
             'source_query' => $sourceQuery,
             'target_query' => $targetQuery,
+            'source_type' => $sourceType,
+            'target_type' => $targetType,
             'source' => $source,
             'target' => $target,
             'max_depth' => $maxDepth,
@@ -54,13 +81,50 @@ final class PathFinderService
         ];
     }
 
-    private function resolveEntity(string $query): ?array
+    public function suggestEntities(string $entityType, string $query = '', int $limit = 180): array
+    {
+        $entityType = path_finder_normalize_entity_type($entityType);
+        if ($entityType === '') {
+            throw new InvalidArgumentException('Unsupported entity type.');
+        }
+
+        $query = $this->normalizeQuery($query);
+        $limit = max(1, min(300, $limit));
+        $rows = $this->runNeo4j(
+            sprintf(
+                <<<'CYPHER'
+MATCH (n)
+WHERE $entity_type IN labels(n)
+  AND NOT 'Paper' IN labels(n)
+  AND trim(toString(coalesce(n.name, ''))) <> ''
+  AND ($query = '' OR toLower(trim(toString(n.name))) STARTS WITH toLower($query))
+WITH trim(toString(n.name)) AS name, collect(n)[0] AS n
+RETURN elementId(n) AS element_id,
+       labels(n) AS labels,
+       name AS name,
+       n.description AS description,
+       n.pmid AS pmid,
+       n.disease_class AS disease_class
+ORDER BY toLower(name)
+LIMIT %d
+CYPHER,
+                $limit
+            ),
+            ['entity_type' => $entityType, 'query' => $query]
+        );
+
+        return array_map(fn(array $row): array => $this->normalizeNode($row), $rows);
+    }
+
+    private function resolveEntity(string $query, string $entityType = ''): ?array
     {
         $normalized = $this->normalizeQuery($query);
+        $entityType = path_finder_normalize_entity_type($entityType);
         $rows = $this->runNeo4j(
             <<<'CYPHER'
 MATCH (n)
 WHERE NOT 'Paper' IN labels(n)
+  AND ($entity_type = '' OR $entity_type IN labels(n))
   AND (toLower(coalesce(n.name, '')) = toLower($exact) OR coalesce(n.pmid, '') = $pmid)
 RETURN elementId(n) AS element_id,
        labels(n) AS labels,
@@ -78,7 +142,7 @@ ORDER BY
   size(coalesce(n.name, ''))
 LIMIT 10
 CYPHER,
-            ['exact' => $normalized, 'pmid' => $query]
+            ['exact' => $normalized, 'pmid' => $query, 'entity_type' => $entityType]
         );
 
         if (empty($rows) && $this->allowFuzzy($normalized)) {
@@ -86,6 +150,7 @@ CYPHER,
                 <<<'CYPHER'
 MATCH (n)
 WHERE NOT 'Paper' IN labels(n)
+  AND ($entity_type = '' OR $entity_type IN labels(n))
   AND toLower(coalesce(n.name, '')) CONTAINS toLower($keyword)
 RETURN elementId(n) AS element_id,
        labels(n) AS labels,
@@ -103,7 +168,7 @@ ORDER BY
   size(coalesce(n.name, ''))
 LIMIT 10
 CYPHER,
-                ['keyword' => $normalized]
+                ['keyword' => $normalized, 'entity_type' => $entityType]
             );
         }
 

@@ -102,11 +102,11 @@
 
   function getDefaultDrawerRect() {
     const bounds = getStageBounds();
-    const width = clampDrawerWidth(430);
-    const height = clampDrawerHeight(Math.max(getMinDrawerHeight(), bounds.height - 110));
+    const width = clampDrawerWidth(440);
+    const height = clampDrawerHeight(680);
     return clampDrawerRect({
-      left: bounds.width - width - 18,
-      top: 100,
+      left: bounds.width - width - 24,
+      top: Math.max(24, bounds.height - height - 24),
       width,
       height,
     });
@@ -121,8 +121,8 @@
   }
 
   const fabPosition = {
-    x: Math.max(16, window.innerWidth - 104),
-    y: Math.max(96, window.innerHeight - 176),
+    x: 0,
+    y: 0,
   };
 
   function clampFabPosition() {
@@ -135,6 +135,15 @@
   function updateFabPosition() {
     fab.style.left = `${fabPosition.x}px`;
     fab.style.top = `${fabPosition.y}px`;
+  }
+
+  function positionFabBesideDrawer() {
+    const rect = qaWindowRect || getDefaultDrawerRect();
+    const width = fab.offsetWidth || 84;
+    const height = fab.offsetHeight || 84;
+    fabPosition.x = rect.left - width - 18;
+    fabPosition.y = rect.top + rect.height - height - 24;
+    clampFabPosition();
   }
 
   function applyOverlayState() {
@@ -351,7 +360,7 @@
   syncHeaderHeight();
   qaWindowRect = getDefaultDrawerRect();
   applyDrawerRect();
-  clampFabPosition();
+  positionFabBesideDrawer();
   updateFabPosition();
   applyOverlayState();
 })();

@@ -6,6 +6,7 @@ $activePage = 'browse';
 $protoCurrentPath = tekg_app_url('browse.php');
 $protoSubtitle = 'Browse TE classes and records in a structured catalog view';
 $pageExtraStylesheets = [
+    tekg_assets_url('css/components/te-autocomplete.css'),
     tekg_assets_url('css/pages/browse.css'),
 ];
 
@@ -203,9 +204,9 @@ $browseRows = tekg_browse_load_rows();
       </main>
     </div>
     <script id="browse-page-data" type="application/json"><?= json_encode(['browseSearchBase' => $browseSearchUrl, 'browseRows' => $browseRows], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+<script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/browse.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
   </body>
 </html>
-
 
 

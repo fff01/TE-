@@ -23,9 +23,7 @@ $navItems = [
     'path_finder' => ['label' => 'Path Finder', 'href' => tekg_app_url('path_finder.php')],
     'preview' => ['label' => 'TE-KG', 'href' => tekg_app_url('preview.php')],
     'agent' => ['label' => 'Agent', 'href' => tekg_app_url('agent.php')],
-    'genomic' => ['label' => 'Genomic', 'href' => tekg_app_url('genomic.php')],
     'expression' => ['label' => 'Expression', 'href' => tekg_app_url('expression.php')],
-    'epigenetics' => ['label' => 'Epigenetics', 'href' => tekg_app_url('epigenetics.php')],
     'download' => ['label' => 'Download', 'href' => tekg_app_url('download.php')],
     'about' => ['label' => 'About', 'href' => tekg_app_url('about.php')],
 ];

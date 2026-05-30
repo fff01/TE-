@@ -800,7 +800,7 @@ final class TekgAcademicAgentService
             'answer_length' => tekg_agent_strlen($answer),
         ]);
 
-        $workflowState['stage_statuses']['Writing'] = 'done';
+        $workflowState['stage_statuses']['Writing'] = $writingFailed ? 'failed' : 'done';
         $workflowState['current_stage'] = 'Writing';
         $workflowState['complete'] = true;
 

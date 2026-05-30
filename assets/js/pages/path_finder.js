@@ -1,6 +1,8 @@
 (function () {
   const form = document.getElementById('pathFinderForm');
+  const sourceTypeSelect = document.getElementById('pathSourceType');
   const sourceInput = document.getElementById('pathSource');
+  const targetTypeSelect = document.getElementById('pathTargetType');
   const targetInput = document.getElementById('pathTarget');
   const maxDepthSelect = document.getElementById('pathMaxDepth');
   const submitButton = document.getElementById('pathSubmit');
@@ -8,9 +10,24 @@
   const resolvedEl = document.getElementById('pathResolved');
   const resultsEl = document.getElementById('pathResults');
 
-  if (!form || !sourceInput || !targetInput || !maxDepthSelect || !submitButton || !statusEl || !resolvedEl || !resultsEl) {
+  if (!form || !sourceTypeSelect || !sourceInput || !targetTypeSelect || !targetInput || !maxDepthSelect || !submitButton || !statusEl || !resolvedEl || !resultsEl) {
     return;
   }
+
+  const entityExamples = {
+    TE: 'L1HS',
+    Disease: "Alzheimer's disease",
+    Function: 'A-to-I RNA editing',
+    Gene: 'TP53',
+    Protein: 'ORF1p',
+    RNA: 'mRNA',
+    Mutation: 'hypomethylation',
+    Pharmaceutical: 'azacytidine',
+    Toxin: 'oxidative stress',
+    Lipid: 'cholesterol',
+    Peptide: 'peptide',
+    Carbohydrate: 'glucose',
+  };
 
   function escapeHtml(value) {
     return String(value || '')
@@ -49,9 +66,17 @@
 
   function setLoading(isLoading) {
     submitButton.disabled = !!isLoading;
+    sourceTypeSelect.disabled = !!isLoading;
     sourceInput.disabled = !!isLoading;
+    targetTypeSelect.disabled = !!isLoading;
     targetInput.disabled = !!isLoading;
     maxDepthSelect.disabled = !!isLoading;
+  }
+
+  function updateEntityPlaceholder(select, input) {
+    const type = String(select.value || 'entity').trim();
+    const example = entityExamples[type] || type;
+    input.placeholder = `Select a ${type} entity such as ${example}`;
   }
 
   function nodeLabel(node) {
@@ -227,6 +252,8 @@
     event.preventDefault();
     const source = sourceInput.value.trim();
     const target = targetInput.value.trim();
+    const sourceType = sourceTypeSelect.value || 'TE';
+    const targetType = targetTypeSelect.value || 'Disease';
     const maxDepth = maxDepthSelect.value || '3';
 
     resolvedEl.hidden = true;
@@ -241,7 +268,7 @@
     setLoading(true);
     statusEl.textContent = 'Searching paths...';
     try {
-      const params = new URLSearchParams({ source, target, max_depth: maxDepth });
+      const params = new URLSearchParams({ source, target, source_type: sourceType, target_type: targetType, max_depth: maxDepth });
       const response = await fetch(window.__TEKG_PATHS.apiUrl(`path_finder.php?${params.toString()}`), { credentials: 'same-origin' });
       const payload = await response.json();
       if (!response.ok || payload.ok !== true) {
@@ -254,4 +281,9 @@
       setLoading(false);
     }
   });
+
+  updateEntityPlaceholder(sourceTypeSelect, sourceInput);
+  updateEntityPlaceholder(targetTypeSelect, targetInput);
+  sourceTypeSelect.addEventListener('change', () => updateEntityPlaceholder(sourceTypeSelect, sourceInput));
+  targetTypeSelect.addEventListener('change', () => updateEntityPlaceholder(targetTypeSelect, targetInput));
 }());

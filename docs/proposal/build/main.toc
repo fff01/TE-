@@ -1,0 +1,15 @@
+\contentsline {section}{\numberline {1}研究背景与科学问题}{1}{section.1}%
+\contentsline {section}{\numberline {2}核心假设与总体目标}{1}{section.2}%
+\contentsline {section}{\numberline {3}已有基础与初步资源}{2}{section.3}%
+\contentsline {subsection}{\numberline {3.1}运行时系统}{2}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}文献证据与 2025 年影响因子元数据}{2}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}图谱证据浏览与导出}{2}{subsection.3.3}%
+\contentsline {section}{\numberline {4}研究内容与技术路线}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Aim 1：巩固 TE-KG 运行时图谱与 API contract}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Aim 2：建立可审查的 TE--疾病文献证据层}{4}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Aim 3：建立开放、可导出、可复用的用户工作流}{4}{subsection.4.3}%
+\contentsline {section}{\numberline {5}创新点}{4}{section.5}%
+\contentsline {section}{\numberline {6}数据开放与 FAIR 计划}{4}{section.6}%
+\contentsline {section}{\numberline {7}风险、边界与质量控制}{5}{section.7}%
+\contentsline {section}{\numberline {8}预期成果}{5}{section.8}%
+\contentsline {section}{参考文献}{7}{section*.2}%

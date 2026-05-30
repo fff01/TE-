@@ -54,7 +54,7 @@
 
   function enhanceAnswerCitations(turn, answerNode) {
     if (typeof deepThinkClient.enhanceAnswerCitations === 'function') {
-      deepThinkClient.enhanceAnswerCitations(turn, answerNode, 'preview-inline-citation');
+      deepThinkClient.enhanceAnswerCitations(turn, answerNode, 'side-dt-inline-citation');
     }
   }
   function getShell() {
@@ -147,7 +147,7 @@
 
   function createMessage(kind, htmlOrText, asHtml = false) {
     const node = document.createElement('div');
-    node.className = `preview-message preview-message-${kind}`;
+    node.className = `preview-message preview-message-${kind} side-dt-message side-dt-message-${kind}`;
     if (asHtml) {
       node.innerHTML = htmlOrText || '';
     } else {

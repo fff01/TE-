@@ -370,16 +370,16 @@
 
         .link-grid {
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 18px;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 12px;
         }
 
         .link-card {
           background: #fff;
           border: 2px solid #d7e2f3;
           border-radius: 10px;
-          padding: 22px 18px 18px;
-          min-height: 248px;
+          padding: 18px 10px 16px;
+          min-height: 206px;
           box-shadow: none;
           text-align: center;
         }
@@ -389,9 +389,9 @@
         }
 
         .link-card-icon {
-          width: 112px;
-          height: 112px;
-          margin: 0 auto 16px;
+          width: 88px;
+          height: 88px;
+          margin: 0 auto 14px;
           color: #27558f;
         }
 
@@ -404,7 +404,7 @@
         .link-card h4 {
           margin: 0;
           color: #214b8d;
-          font-size: 22px;
+          font-size: 18px;
           font-weight: 700;
         }
 
@@ -420,7 +420,23 @@
 
         @media (max-width: 992px) {
           .link-grid {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .link-card {
+            min-height: 176px;
+            padding: 14px 7px 12px;
+          }
+
+          .link-card-icon {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 10px;
+          }
+
+          .link-card h4 {
+            font-size: 14px;
           }
 
           .hero-content h1 {

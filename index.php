@@ -4,20 +4,19 @@ $pageTitle = 'TE-KG Home';
 $activePage = 'home';
 $protoCurrentPath = tekg_app_url('index.php');
 $protoSubtitle = 'A transposable-element knowledge graph for exploration and discovery';
+$indexCssVersion = (int)@filemtime(tekg_assets_fs_path('css/pages/index.css'));
 $pageExtraStylesheets = [
-    tekg_assets_url('css/pages/index.css'),
+    tekg_assets_url('css/pages/index.css') . '?v=' . $indexCssVersion,
 ];
 require __DIR__ . '/head.php';
 
-$overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into browsing, graph exploration, genomic, expression, epigenetics, download, and project information.';
+$overviewCopy = 'TE-KG is a comprehensive resource designed to support exploration of transposable elements, their associated diseases, molecular functions, and supporting literature in one integrated environment. This homepage highlights the overall scope of the resource, the public dataset scale, and direct paths into browsing, graph exploration, expression, download, and project information.';
 
 $quickLinks = [
     ['title' => 'Browse', 'href' => site_url_with_state(tekg_app_url('browse.php'), $siteLang), 'icon' => 'browse'],
     ['title' => 'Path Finder', 'href' => site_url_with_state(tekg_app_url('path_finder.php'), $siteLang), 'icon' => 'pathfinder'],
     ['title' => 'TE-KG', 'href' => site_url_with_state(tekg_app_url('preview.php'), $siteLang), 'icon' => 'graph'],
-    ['title' => 'Genomic', 'href' => site_url_with_state(tekg_app_url('genomic.php'), $siteLang), 'icon' => 'genomic'],
     ['title' => 'Expression', 'href' => site_url_with_state(tekg_app_url('expression.php'), $siteLang), 'icon' => 'expression'],
-    ['title' => 'Epigenetics', 'href' => site_url_with_state(tekg_app_url('epigenetics.php'), $siteLang), 'icon' => 'epigenetics'],
     ['title' => 'Download', 'href' => site_url_with_state(tekg_app_url('download.php'), $siteLang), 'icon' => 'download'],
     ['title' => 'About', 'href' => site_url_with_state(tekg_app_url('about.php'), $siteLang), 'icon' => 'about'],
 ];

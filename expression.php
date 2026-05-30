@@ -5,6 +5,7 @@ $activePage = 'expression';
 $protoCurrentPath = tekg_app_url('expression.php');
 $protoSubtitle = 'Expression-oriented TE exploration workflows';
 $pageExtraStylesheets = [
+    tekg_assets_url('css/components/te-autocomplete.css'),
     tekg_assets_url('css/pages/expression.css'),
 ];
 
@@ -250,6 +251,7 @@ require __DIR__ . '/head.php';
           </div>
         </div>
       </section>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/expression.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . '/foot.php'; ?>
 

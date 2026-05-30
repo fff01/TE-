@@ -7,6 +7,7 @@ $protoSubtitle = 'Interactive graph preview';
 $protoMainClass = 'preview-main';
 $pageExtraStylesheets = [
     tekg_assets_url('css/tekg_runtime.css'),
+    tekg_assets_url('css/components/side-deepthink.css'),
     tekg_assets_url('css/pages/preview.css'),
 ];
 require __DIR__ . '/head.php';
@@ -108,42 +109,36 @@ $previewConfig = [
           </section>
         </div>
 
-        <div class="qa-overlay-layer is-open" id="qaOverlay">
-          <div class="qa-drawer" id="qaDrawer">
-            <button class="qa-drawer-drag" id="qaDrawerDrag" type="button" aria-label="Move Deep Think assistant"></button>
+        <div class="qa-overlay-layer preview-side-dt-root is-open" id="qaOverlay">
+          <div class="qa-drawer side-dt-drawer" id="qaDrawer">
+            <button class="qa-drawer-drag side-dt-drag" id="qaDrawerDrag" type="button" aria-label="Move Deep Think assistant"></button>
             <div class="qa-drawer-body">
               <section class="preview-deepthink" id="previewDeepThink" aria-label="Deep Think assistant">
-                <header class="preview-deepthink-head">
+                <header class="preview-deepthink-head side-dt-head">
                   <div class="preview-deepthink-titlebar">
-                    <h2>Deep thinking</h2>
-                    <span class="preview-deepthink-status" id="previewDeepThinkStatus">Ready</span>
+                    <h2>Deep Think</h2>
+                    <p class="preview-deepthink-status" id="previewDeepThinkStatus">Ready</p>
                   </div>
-                  <button class="preview-deepthink-clear" id="previewDeepThinkClearGraph" type="button">Back</button>
+                  <button class="preview-deepthink-clear side-dt-close" id="previewDeepThinkClearGraph" type="button">Back</button>
                 </header>
-                <div class="preview-deepthink-messages" id="previewDeepThinkMessages" aria-live="polite"></div>
-                <form class="preview-deepthink-form" id="previewDeepThinkForm">
+                <div class="preview-deepthink-messages side-dt-messages" id="previewDeepThinkMessages" aria-live="polite"></div>
+                <form class="preview-deepthink-form side-dt-form" id="previewDeepThinkForm">
                   <textarea id="previewDeepThinkInput" rows="2" placeholder="Ask about L1HS, LINE-1, diseases, locations, expression, or mechanisms."><?= htmlspecialchars($initialQuery !== '' ? $initialQuery . ' 和哪些疾病相关' : '', ENT_QUOTES, 'UTF-8') ?></textarea>
                   <button id="previewDeepThinkSubmit" type="submit">Send</button>
                 </form>
               </section>
             </div>
-            <button class="qa-drawer-resize qa-drawer-resize-w" id="qaDrawerResizeW" type="button" aria-label="Resize Deep Think assistant width"></button>
-            <button class="qa-drawer-resize qa-drawer-resize-e" id="qaDrawerResizeE" type="button" aria-label="Resize Deep Think assistant width"></button>
-            <button class="qa-drawer-resize qa-drawer-resize-s" id="qaDrawerResizeS" type="button" aria-label="Resize Deep Think assistant height"></button>
-            <button class="qa-drawer-resize qa-drawer-resize-nw" id="qaDrawerResizeNW" type="button" aria-label="Resize Deep Think assistant"></button>
-            <button class="qa-drawer-resize qa-drawer-resize-ne" id="qaDrawerResizeNE" type="button" aria-label="Resize Deep Think assistant"></button>
-            <button class="qa-drawer-resize qa-drawer-resize-sw" id="qaDrawerResizeSW" type="button" aria-label="Resize Deep Think assistant"></button>
-            <button class="qa-drawer-resize qa-drawer-resize-se" id="qaDrawerResizeSE" type="button" aria-label="Resize Deep Think assistant"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-w side-dt-resize side-dt-resize-w" id="qaDrawerResizeW" type="button" aria-label="Resize Deep Think assistant width"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-e side-dt-resize side-dt-resize-e" id="qaDrawerResizeE" type="button" aria-label="Resize Deep Think assistant width"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-s side-dt-resize side-dt-resize-s" id="qaDrawerResizeS" type="button" aria-label="Resize Deep Think assistant height"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-nw side-dt-resize side-dt-resize-nw" id="qaDrawerResizeNW" type="button" aria-label="Resize Deep Think assistant"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-ne side-dt-resize side-dt-resize-ne" id="qaDrawerResizeNE" type="button" aria-label="Resize Deep Think assistant"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-sw side-dt-resize side-dt-resize-sw" id="qaDrawerResizeSW" type="button" aria-label="Resize Deep Think assistant"></button>
+            <button class="qa-drawer-resize qa-drawer-resize-se side-dt-resize side-dt-resize-se" id="qaDrawerResizeSE" type="button" aria-label="Resize Deep Think assistant"></button>
           </div>
 
-          <button class="qa-fab" id="qaFab" type="button" aria-label="Toggle Deep Think assistant">
-            <svg viewBox="0 0 64 64" aria-hidden="true">
-              <rect x="14" y="18" width="36" height="28" rx="10" fill="none" stroke="currentColor" stroke-width="4"/>
-              <circle cx="26" cy="31" r="3" fill="currentColor"/>
-              <circle cx="38" cy="31" r="3" fill="currentColor"/>
-              <path d="M24 40h16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-              <path d="M32 8v7" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-            </svg>
+          <button class="qa-fab side-dt-fab" id="qaFab" type="button" aria-label="Toggle Deep Think assistant">
+            <span class="qa-fab-icon side-dt-fab-icon" aria-hidden="true">AI</span>
           </button>
         </div>
       </section>

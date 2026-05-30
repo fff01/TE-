@@ -157,6 +157,7 @@
   });
   pageJumpInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') jumpToPage(); });
   keywordInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') applyFilters(); });
+  keywordInput.addEventListener('te-autocomplete-select', applyFilters);
   [classSelect, familySelect, subtypeSelect].forEach((select) => {
     select.addEventListener('change', applyFilters);
   });

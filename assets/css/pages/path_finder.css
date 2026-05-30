@@ -74,6 +74,19 @@
   text-transform: uppercase;
 }
 
+.path-entity-control {
+  display: grid;
+  grid-template-columns: minmax(92px, 118px) minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  min-height: 46px;
+  overflow: visible;
+  border: 1px solid #d8e0ea;
+  border-radius: 8px;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
 .path-field input,
 .path-field select {
   width: 100%;
@@ -91,6 +104,39 @@
 .path-field select:focus {
   border-color: #79a6ea;
   box-shadow: 0 0 0 4px rgba(92, 143, 219, 0.14);
+}
+
+.path-entity-control:focus-within {
+  border-color: #79a6ea;
+  box-shadow: 0 0 0 4px rgba(92, 143, 219, 0.14);
+}
+
+.path-entity-control > select,
+.path-entity-control .te-autocomplete > input[data-te-autocomplete] {
+  min-height: 44px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.path-entity-control > select {
+  border-right: 1px solid #e2e8f0;
+  border-radius: 8px 0 0 8px;
+  background: #f7faff;
+  color: #31588f;
+  font-weight: 800;
+  padding: 0 10px;
+}
+
+.path-entity-control .te-autocomplete > input[data-te-autocomplete] {
+  border-radius: 0 8px 8px 0;
+}
+
+.path-entity-control > select:focus,
+.path-entity-control .te-autocomplete > input[data-te-autocomplete]:focus {
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .path-actions {
@@ -394,5 +440,9 @@
 @media (max-width: 720px) {
   .proto-container {
     padding: 0 18px;
+  }
+
+  .path-entity-control {
+    grid-template-columns: minmax(88px, 112px) minmax(0, 1fr);
   }
 }

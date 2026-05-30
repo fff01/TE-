@@ -61,6 +61,7 @@ assert_call_uses_arguments($serviceSource, '->polishEvidenceWalkAnswer(', ['$cla
 assert_contains('$draftReport = ReportIntegrityGate::normalizeUrlsInText($draftReport);', $serviceSource, 'Draft report URL text is normalized before integrity checks');
 assert_contains('$polishedReport = ReportIntegrityGate::normalizeUrlsInText($polishedReport);', $serviceSource, 'Polished report URL text is normalized before integrity checks');
 assert_contains('$answer = ReportIntegrityGate::normalizeUrlsInText($answer);', $serviceSource, 'Final user-visible answer URL text is normalized before emit');
+assert_contains('$workflowState[\'stage_statuses\'][\'Writing\'] = $writingFailed ? \'failed\' : \'done\';', $serviceSource, 'Writing workflow state reflects writing failure instead of always marking done');
 assert_contains('buildDirectSiteNavigationWritingResult(', $serviceSource, 'Agent runtime has direct site navigation writing path');
 assert_contains("'writing_strategy' => 'direct_site_navigation'", $serviceSource, 'Direct site navigation writing path records deterministic strategy');
 assert_contains('$siteResult[\'results\'][\'answer_markdown\']', $serviceSource, 'Direct site navigation writing path uses plugin answer_markdown');

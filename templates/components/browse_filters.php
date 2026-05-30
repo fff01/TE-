@@ -3,7 +3,11 @@
   <div class="browse-filter-grid">
     <div class="browse-filter-group">
       <div class="browse-filter-label">Keyword</div>
-      <input class="browse-filter-input" id="browseKeyword" type="text" placeholder="Search TE names or labels">
+      <div class="te-autocomplete" data-te-autocomplete-root>
+        <input class="browse-filter-input" id="browseKeyword" type="text" placeholder="Search TE names or labels" data-te-autocomplete>
+        <button class="te-autocomplete-toggle" type="button" aria-label="Show TE names" aria-expanded="false" data-te-autocomplete-toggle></button>
+        <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>
+      </div>
     </div>
     <div class="browse-filter-group">
       <div class="browse-filter-label">Class</div>

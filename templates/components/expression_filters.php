@@ -4,7 +4,11 @@
   <div class="expression-filter-grid">
     <div class="expression-filter-group">
       <div class="expression-filter-label">Keyword</div>
-      <input class="expression-filter-input" type="text" name="keyword" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search a TE such as L1HS or AluY">
+      <div class="te-autocomplete" data-te-autocomplete-root>
+        <input class="expression-filter-input" type="text" name="keyword" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search a TE such as L1HS or AluY" data-te-autocomplete data-te-autocomplete-submit="true">
+        <button class="te-autocomplete-toggle" type="button" aria-label="Show TE names" aria-expanded="false" data-te-autocomplete-toggle></button>
+        <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>
+      </div>
     </div>
 
     <div class="expression-filter-group">
