@@ -200,6 +200,7 @@ final class TekgAcademicAgentService
             'deterministic_plan' => $planning,
             'candidate_plugin_queue' => $pluginQueue,
             'routing_policy' => $routingPolicy,
+            'plugin_directory' => tekg_agent_plugin_directory(),
         ]);
         $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId);
         if (!$planningNode->ok) {
@@ -221,6 +222,7 @@ final class TekgAcademicAgentService
             'collection_state' => $collectionState,
             'plugin_results' => $pluginResults,
             'remaining_plugins' => $pluginQueue,
+            'plugin_directory' => tekg_agent_plugin_directory(),
         ]);
         $this->recordSixStageArtifact($sixStageArtifacts, 'collecting', $collectingNode, $emit, $eventSequence, $sessionId);
         if (!$collectingNode->ok) {
@@ -241,12 +243,19 @@ final class TekgAcademicAgentService
             'details' => $planning['narrative'],
         ];
 
+        $executedBusinessPlugins = [];
         for ($index = 0; $index < count($pluginQueue); $index++) {
             $pluginName = $pluginQueue[$index];
             $plugin = $this->plugins[$pluginName] ?? null;
             if (!$plugin instanceof TekgAgentPluginInterface) {
                 continue;
             }
+            if (isset($executedBusinessPlugins[$pluginName])
+                || !$this->academicBusinessPluginMayRun($pluginName, $analysis, $pluginResults)
+            ) {
+                continue;
+            }
+            $executedBusinessPlugins[$pluginName] = true;
 
             if (($workflowState['current_stage'] ?? '') !== 'Collecting') {
                 $previousStage = ($workflowState['current_stage'] ?? '') === 'Executing' ? 'Executing' : null;
@@ -342,7 +351,12 @@ final class TekgAcademicAgentService
             ];
 
             foreach ($this->maybeAppendPlugins($analysis, $planning, $pluginName, $result, $pluginQueue) as $additionalPlugin) {
-                $pluginQueue[] = $additionalPlugin;
+                if (isset($this->plugins[$additionalPlugin])
+                    && $this->academicBusinessPluginMayRun($additionalPlugin, $analysis, $pluginResults)
+                    && !in_array($additionalPlugin, $pluginQueue, true)
+                ) {
+                    $pluginQueue[] = $additionalPlugin;
+                }
             }
 
             $sufficiencyDecision = $this->evaluateSufficiency(
@@ -363,6 +377,8 @@ final class TekgAcademicAgentService
             ]);
             foreach (array_values((array)($sufficiencyDecision['recommended_next_experts'] ?? [])) as $recommendedPlugin) {
                 if ($recommendedPlugin !== ''
+                    && isset($this->plugins[$recommendedPlugin])
+                    && $this->academicBusinessPluginMayRun($recommendedPlugin, $analysis, $pluginResults)
                     && !in_array($recommendedPlugin, $pluginQueue, true)
                     && !in_array($recommendedPlugin, array_keys($pluginResults), true)
                 ) {
@@ -653,13 +669,7 @@ final class TekgAcademicAgentService
             ],
         ]);
         $this->activateWorkflowStage($workflowState, 'Writing', 'Integrating', $emit, $eventSequence, $sessionId);
-        $directSiteNavigationWriting = $this->buildDirectSiteNavigationWritingResult(
-            $analysis,
-            $pluginResults,
-            $evidencePackage,
-            $evidenceWalk,
-            $reportPlan
-        );
+        $directSiteNavigationWriting = null;
         $writingDecisionNode = $directSiteNavigationWriting !== null
             ? $directSiteNavigationWriting['writing_decision_node']
             : $this->llm->runWritingDecisionNode($writingModel, $processLanguage, [

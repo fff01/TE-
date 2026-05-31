@@ -131,6 +131,9 @@ trait TekgDeepThinkEvidenceTrait
     {
         $all = [];
         foreach ($pluginResults as $pluginName => $result) {
+            if ($pluginName === 'Site Navigator Plugin') {
+                continue;
+            }
             foreach ((array)($result['evidence_items'] ?? []) as $item) {
                 $normalized = tekg_agent_normalize_evidence_item($item, $pluginName);
                 if ($normalized !== null) {

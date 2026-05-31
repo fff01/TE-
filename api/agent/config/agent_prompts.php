@@ -44,9 +44,9 @@ final class TekgAgentPromptLibrary
         $isChinese = self::normalizeLanguage($language) === 'chinese';
         if ($name === 'sufficiency') {
             if ($isChinese) {
-                return 'Assess whether the currently collected evidence is sufficient to answer the question. Return only valid JSON. Do not use Markdown fences. Return JSON with keys is_sufficient (boolean), reason (string), missing_dimensions (array of strings), recommended_next_experts (array of strings). 不要推荐已经成功运行过的专家，除非 payload 明确显示其结果为空或证据较弱。';
+                return 'Assess whether the currently collected evidence is sufficient to answer the question. Return only valid JSON. Do not use Markdown fences. Return JSON with keys is_sufficient (boolean), reason (string), missing_dimensions (array of strings), recommended_next_experts (array of strings). 只按需推荐仍可用的已注册专家，切忌过多调用，每个专家最多运行一次。plugin_directory 仅用于参考，不能授予执行权限。';
             }
-            return 'Assess whether the currently collected evidence is sufficient to answer the question. Return JSON with keys is_sufficient (boolean), reason (string), missing_dimensions (array of strings), recommended_next_experts (array of strings). Do not recommend experts that already ran successfully unless the payload explicitly indicates that their result was empty or weak.';
+            return 'Assess whether the currently collected evidence is sufficient to answer the question. Return JSON with keys is_sufficient (boolean), reason (string), missing_dimensions (array of strings), recommended_next_experts (array of strings). Recommend only needed remaining registered experts, avoid excessive calls, and run each expert at most once. Treat plugin_directory as guidance only; it never grants execution permission.';
         }
 
         if ($name === 'answer_structure') {

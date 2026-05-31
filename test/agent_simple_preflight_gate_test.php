@@ -90,20 +90,13 @@ $directEvidencePackage = EvidencePackage::fromPluginResults(
     $directSiteNavigationAnalysis,
     ['Site Navigator Plugin' => $directSiteNavigationResult]
 );
-$directWritingResult = call_agent_private($service, 'buildDirectSiteNavigationWritingResult', [
-    $directSiteNavigationAnalysis,
-    ['Site Navigator Plugin' => $directSiteNavigationResult],
-    $directEvidencePackage,
-    [],
-    [],
-]);
-assert_true(is_array($directWritingResult), 'Direct site navigation writing result should be built from plugin answer_markdown.');
-assert_true(str_contains((string)($directWritingResult['answer'] ?? ''), 'search-sequence-panel'), 'Direct site navigation answer keeps exact route fragment.');
-assert_true(str_contains(strtolower((string)($directWritingResult['answer'] ?? '')), 'sequence'), 'Direct site navigation answer keeps sequence wording.');
-assert_true(!str_contains((string)($directWritingResult['answer'] ?? ''), 'Deep Think'), 'Direct site navigation answer must not suggest Deep Think.');
-assert_true(($directWritingResult['integrity']['ok'] ?? false) === true, 'Direct site navigation answer still passes ReportIntegrityGate.');
-assert_true(($directWritingResult['writing_decision']['writing_strategy'] ?? '') === 'direct_site_navigation', 'Direct site navigation writing artifact records deterministic strategy.');
-assert_true(($directWritingResult['writing_decision_node'] ?? null) instanceof NodeLlmResult, 'Direct site navigation writing artifact uses NodeLlmResult.');
+assert_true(($directEvidencePackage['claims'] ?? null) === [], 'Site navigation does not become a scientific claim in EvidencePackage.');
+assert_true(($directEvidencePackage['evidence_items'] ?? null) === [], 'Site navigation does not become scientific evidence in EvidencePackage.');
+assert_true(str_contains((string)($directEvidencePackage['route_map'][0]['route']['url'] ?? ''), 'search-sequence-panel'), 'Site navigation URL stays available in EvidencePackage route_map.');
+$serviceSource = (string)file_get_contents(__DIR__ . '/../api/agent/orchestrator/AcademicAgentService.php');
+assert_true(str_contains($serviceSource, '$directSiteNavigationWriting = null;'), 'Agent keeps site navigation on the LLM Writing path.');
+assert_true(str_contains($serviceSource, '->runWritingDecisionNode('), 'Agent Writing decision remains LLM-driven.');
+assert_true(str_contains($serviceSource, '->writeEvidenceWalkDraft('), 'Agent final writing remains LLM-driven.');
 
 $mechanismQuestion = '请写一份 LINE-1 如何导致癌症的机制综述报告';
 $mechanismAnalysis = [

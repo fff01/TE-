@@ -34,6 +34,16 @@ function tekg_agent_require_plugin_files(): void
     }
 }
 
+function tekg_agent_plugin_directory(): string
+{
+    $path = __DIR__ . '/plugins/PLUGIN_CATALOG.md';
+    if (!is_file($path)) {
+        return '';
+    }
+    $contents = file_get_contents($path);
+    return is_string($contents) ? $contents : '';
+}
+
 function tekg_agent_require_academic_agent_service(): void
 {
     tekg_agent_require_orchestrator_dependencies();

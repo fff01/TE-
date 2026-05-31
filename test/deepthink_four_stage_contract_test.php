@@ -115,8 +115,8 @@ $GLOBALS['dt_contract_responses'] = array_map(
 
 $results = [
     $client->runDeepThinkUnderstandingNode('deepseek-v4-flash', 'en', ['question' => 'LINE-1 relations']),
-    $client->runDeepThinkPlanningNode('deepseek-v4-flash', 'en', ['understanding' => $fixtures['understanding']]),
-    $client->runDeepThinkExecutingNode('deepseek-v4-flash', 'en', ['planning' => $fixtures['planning']]),
+    $client->runDeepThinkPlanningNode('deepseek-v4-flash', 'en', ['understanding' => $fixtures['understanding'], 'plugin_directory' => 'DT_CATALOG_SENTINEL']),
+    $client->runDeepThinkExecutingNode('deepseek-v4-flash', 'en', ['planning' => $fixtures['planning'], 'plugin_directory' => 'DT_CATALOG_SENTINEL']),
     $client->runDeepThinkWritingNode('deepseek-v4-flash', 'en', ['execution' => $fixtures['executing']]),
 ];
 foreach ($results as $result) {
@@ -126,15 +126,21 @@ foreach ($results as $result) {
 assert_same('LINE-1 has supported graph relations.', $results[3]->parsed_json['answer_markdown'] ?? null, 'Writing artifact carries final Markdown answer');
 
 $models = [];
+$promptsSentToRelay = [];
 foreach ($GLOBALS['dt_contract_requests'] as $request) {
     $payload = json_decode((string)($request['body'] ?? ''), true);
     $models[] = $payload['model'] ?? null;
+    $promptsSentToRelay[] = (string)($payload['messages'][1]['content'] ?? '');
 }
 assert_same(
     ['deepseek-v4-flash', 'deepseek-v4-flash', 'deepseek-v4-flash', 'deepseek-v4-flash'],
     $models,
     'All four DT nodes send the same flash model to the relay'
 );
+assert_true(str_contains($promptsSentToRelay[1] ?? '', 'plugin_directory'), 'DT Planning payload reaches the final LLM prompt');
+assert_true(str_contains($promptsSentToRelay[2] ?? '', 'plugin_directory'), 'DT Executing payload reaches the final LLM prompt');
+assert_true(str_contains($promptsSentToRelay[1] ?? '', 'DT_CATALOG_SENTINEL'), 'DT Planning prompt contains catalog text');
+assert_true(str_contains($promptsSentToRelay[2] ?? '', 'DT_CATALOG_SENTINEL'), 'DT Executing prompt contains catalog text');
 
 $GLOBALS['dt_contract_requests'] = [];
 $GLOBALS['dt_contract_responses'] = [[

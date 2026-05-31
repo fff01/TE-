@@ -46,6 +46,11 @@ final class EvidencePackage
                 continue;
             }
 
+            if ($plugin === 'Site Navigator Plugin') {
+                self::appendRouteMap($routeMap, 'navigation', $plugin, (array)($envelope['routes'] ?? []));
+                continue;
+            }
+
             $sourceEvidenceItems = array_values((array)($envelope['evidence_items'] ?? []));
             if ($sourceEvidenceItems === []) {
                 $summary = trim(self::stringValue($envelope['summary'] ?? ''));

@@ -174,9 +174,14 @@ $siteEnvelope = [
 $sitePackage = EvidencePackage::fromPluginResults('Where can I inspect L1HS sequence?', ['intent' => 'navigation'], [
     ['result_envelope' => $siteEnvelope],
 ]);
-assert_same('Open the sequence panel for L1HS.', $sitePackage['claims'][0]['text'], 'summary creates claim');
+assert_same([], $sitePackage['claims'], 'site navigation does not create a scientific claim');
+assert_same([], $sitePackage['evidence_items'], 'site navigation does not create scientific evidence');
 assert_same('route_1', $sitePackage['route_map'][0]['id'], 'deterministic route id');
-assert_same(['route_1'], $sitePackage['claims'][0]['route_ids'], 'claim route mapping');
+assert_same('/TE-/search.php?q=L1HS#search-sequence-panel', $sitePackage['route_map'][0]['route']['url'], 'site navigation route URL is preserved');
+assert_same(0, $sitePackage['metrics']['claim_count'], 'site navigation claim count stays zero');
+assert_same(0, $sitePackage['metrics']['evidence_count'], 'site navigation evidence count stays zero');
+assert_same(1, $sitePackage['metrics']['route_count'], 'site navigation route count is preserved');
+assert_same(true, EvidencePackage::validate($sitePackage)['ok'], 'route-only site navigation package validates');
 
 $emptyPackage = EvidencePackage::fromPluginResults('No matches?', [], [
     [

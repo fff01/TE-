@@ -78,6 +78,8 @@ function dt_service(array $fixtures): TekgDeepThinkService
 
 final class DtFixturePlugin implements TekgAgentPluginInterface
 {
+    public int $runCount = 0;
+
     public function __construct(private readonly string $name, private readonly array $citations = [])
     {
     }
@@ -89,6 +91,7 @@ final class DtFixturePlugin implements TekgAgentPluginInterface
 
     public function run(array $context): array
     {
+        $this->runCount++;
         return [
             'plugin_name' => $this->name,
             'status' => 'ok',
@@ -116,11 +119,12 @@ $validated = call_dt_private($service, 'validateDeepThinkBusinessPlugins', [[
     'Graph Plugin',
     'Sequence Plugin',
     'Expression Plugin',
+    'Genome Plugin',
 ], true]);
-assert_same(['Graph Plugin', 'Sequence Plugin', 'Expression Plugin'], $validated, 'Three business plugins are allowed');
+assert_same(['Graph Plugin', 'Sequence Plugin', 'Expression Plugin', 'Genome Plugin'], $validated, 'Four or more unique business plugins are allowed');
 
 foreach ([
-    ['Graph Plugin', 'Sequence Plugin', 'Expression Plugin', 'Genome Plugin'],
+    ['Graph Plugin', 'Graph Plugin'],
     ['Entity Resolver'],
     ['Citation Resolver'],
     ['Unknown Plugin'],
@@ -148,6 +152,30 @@ assert_same(
     ]]),
     'Citation Resolver remains available as an extra resolver when business-plugin citations exist'
 );
+foreach ([
+    [false, ['Literature Plugin' => ['status' => 'ok', 'citations' => [['pmid' => '12345']]]]],
+    [true, ['Literature Plugin' => ['status' => 'error', 'citations' => [['pmid' => '12345']]]]],
+    [true, ['Literature Plugin' => ['status' => 'ok', 'citations' => []]]],
+] as [$explicitLiterature, $pluginResults]) {
+    try {
+        call_dt_private($service, 'assertDeepThinkBusinessPluginMayRun', ['Literature Reading Plugin', $explicitLiterature, $pluginResults]);
+        assert_true(false, 'Literature Reading Plugin must require explicit wording and usable Literature Plugin citations');
+    } catch (RuntimeException) {
+    }
+}
+call_dt_private($service, 'assertDeepThinkBusinessPluginMayRun', ['Literature Reading Plugin', true, [
+    'Literature Plugin' => ['status' => 'partial', 'citations' => [['pmid' => '12345']]],
+]]);
+$navigationEvidence = call_dt_private($service, 'aggregateEvidence', [[
+    'Site Navigator Plugin' => [
+        'evidence_items' => [['claim' => 'Open the sequence panel.', 'support_strength' => 'high']],
+    ],
+    'Graph Plugin' => [
+        'evidence_items' => [['claim' => 'LINE-1 has a graph relation.', 'support_strength' => 'medium']],
+    ],
+]]);
+assert_same(1, count($navigationEvidence), 'Site Navigator Plugin does not enter DT scientific evidence');
+assert_same('Graph Plugin', $navigationEvidence[0]['source_plugin'] ?? null, 'DT evidence keeps the scientific source only');
 try {
     call_dt_private($service, 'assertDeepThinkPluginSucceeded', ['Graph Plugin', ['status' => 'error', 'errors' => ['Neo4j unavailable.']]]);
     assert_true(false, 'Plugin status=error must fail Executing');
@@ -170,14 +198,14 @@ $response = $service->stream([
 assert_same(false, $response['failed'] ?? null, 'Successful DT run is not failed');
 assert_same('WRITER_ARTIFACT_ONLY', $response['answer'] ?? null, 'Final answer comes only from Writing artifact');
 assert_same(
-    ['Understanding', 'Planning', 'Executing', 'Writing'],
+    ['Understanding', 'Planning', 'Writing'],
     array_values(array_map(
         static fn(array $event): string => (string)($event['payload']['current_stage'] ?? ''),
         array_values(array_filter($events, static fn(array $event): bool => ($event['type'] ?? '') === 'stage_state' && ($event['payload']['status'] ?? '') === 'started'))
     )),
-    'DT emits the four started stage states in order'
+    'DT naturally skips Executing when the validated remaining plugin list is empty'
 );
-assert_same(4, count(array_filter($events, static fn(array $event): bool => ($event['type'] ?? '') === 'artifact')), 'DT emits artifacts for all four stages');
+assert_same(3, count(array_filter($events, static fn(array $event): bool => ($event['type'] ?? '') === 'artifact')), 'DT emits no synthetic Executing artifact when no business plugin remains');
 
 $multiRoundService = dt_service(dt_fixture_set([
     'planning' => [
@@ -221,15 +249,53 @@ $multiRound = $multiRoundService->handle([
 ]);
 assert_same(false, $multiRound['failed'] ?? null, 'Bounded multi-round Executing run succeeds');
 assert_same(['Entity Resolver', 'Graph Plugin', 'Citation Resolver'], $multiRound['used_plugins'] ?? null, 'Citation Resolver runs outside the one-business-plugin execution budget');
-assert_same(2, count($multiRound['dt_artifacts']['executing'] ?? []), 'Executing records each bounded model decision artifact');
+assert_same(1, count($multiRound['dt_artifacts']['executing'] ?? []), 'Executing naturally ends after the only remaining business plugin runs');
+
+$graphFixture = new DtFixturePlugin('Graph Plugin');
+$sequenceFixture = new DtFixturePlugin('Sequence Plugin');
+$expressionFixture = new DtFixturePlugin('Expression Plugin');
+$genomeFixture = new DtFixturePlugin('Genome Plugin');
+$scalableService = dt_service(dt_fixture_set([
+    'planning' => [
+        'schema_version' => 'dt_planning.v1',
+        'stage' => 'planning',
+        'business_plugins' => ['Graph Plugin', 'Sequence Plugin', 'Expression Plugin', 'Genome Plugin'],
+        'execution_goal' => 'Collect four required evidence layers.',
+        'citation_resolver_allowed' => false,
+        'rationale' => 'The requested report needs four distinct plugins.',
+    ],
+    'executing' => [
+        ['schema_version' => 'dt_executing.v1', 'stage' => 'executing', 'done' => false, 'next_plugin' => 'Graph Plugin', 'reason' => 'Collect graph evidence.', 'evidence_summary' => [], 'gaps' => ['graph']],
+        ['schema_version' => 'dt_executing.v1', 'stage' => 'executing', 'done' => false, 'next_plugin' => 'Sequence Plugin', 'reason' => 'Collect sequence evidence.', 'evidence_summary' => [], 'gaps' => ['sequence']],
+        ['schema_version' => 'dt_executing.v1', 'stage' => 'executing', 'done' => false, 'next_plugin' => 'Expression Plugin', 'reason' => 'Collect expression evidence.', 'evidence_summary' => [], 'gaps' => ['expression']],
+        ['schema_version' => 'dt_executing.v1', 'stage' => 'executing', 'done' => false, 'next_plugin' => 'Genome Plugin', 'reason' => 'Collect genome evidence.', 'evidence_summary' => [], 'gaps' => ['genome']],
+    ],
+]));
+set_dt_plugins($scalableService, [
+    'Entity Resolver' => new DtFixturePlugin('Entity Resolver'),
+    'Graph Plugin' => $graphFixture,
+    'Sequence Plugin' => $sequenceFixture,
+    'Expression Plugin' => $expressionFixture,
+    'Genome Plugin' => $genomeFixture,
+]);
+$scalable = $scalableService->handle([
+    'question' => 'Build a LINE-1 report',
+    'request_id' => 'dt-four-stage-scalable-plan-test',
+    'session_id' => 'dt-four-stage-scalable-plan-test',
+]);
+assert_same(false, $scalable['failed'] ?? null, 'DT accepts a four-plugin validated plan');
+assert_same(4, count($scalable['dt_artifacts']['executing'] ?? []), 'Remaining plugins naturally end execution without an extra model decision');
+foreach ([$graphFixture, $sequenceFixture, $expressionFixture, $genomeFixture] as $fixturePlugin) {
+    assert_same(1, $fixturePlugin->runCount, "{$fixturePlugin->getName()} runs at most once");
+}
 
 $failedEvents = [];
 $failedService = dt_service(dt_fixture_set([
     'planning' => [
         'schema_version' => 'dt_planning.v1',
         'stage' => 'planning',
-        'business_plugins' => ['Graph Plugin', 'Sequence Plugin', 'Expression Plugin', 'Genome Plugin'],
-        'execution_goal' => 'Over budget.',
+        'business_plugins' => ['Graph Plugin', 'Graph Plugin'],
+        'execution_goal' => 'Duplicate plugin.',
         'citation_resolver_allowed' => true,
         'rationale' => 'Fixture must fail.',
     ],
@@ -241,7 +307,7 @@ $failed = $failedService->stream([
 ], static function (array $event) use (&$failedEvents): void {
     $failedEvents[] = $event;
 });
-assert_same(true, $failed['failed'] ?? null, 'Invalid planning artifact fails run');
+assert_same(true, $failed['failed'] ?? null, 'Duplicate planning plugin fails run');
 assert_same('', $failed['answer'] ?? null, 'Failed run answer is empty');
 assert_same('Planning', $failed['failure_stage'] ?? null, 'Planning failure is not mislabeled as Writing');
 assert_same('error', $failedEvents[count($failedEvents) - 2]['type'] ?? null, 'Failure emits explicit error before done');
@@ -285,6 +351,14 @@ $malformedStageFixtures = [
         ],
     ],
     'Executing' => [
+        'planning' => [
+            'schema_version' => 'dt_planning.v1',
+            'stage' => 'planning',
+            'business_plugins' => ['Graph Plugin'],
+            'execution_goal' => 'Reach Executing validation.',
+            'citation_resolver_allowed' => false,
+            'rationale' => 'Fixture exercises malformed Executing output.',
+        ],
         'executing' => [
             'schema_version' => 'dt_executing.v1',
             'stage' => 'executing',
@@ -344,5 +418,6 @@ $serviceSource = (string)file_get_contents(__DIR__ . '/../api/agent/orchestrator
 foreach (['deepthink_stage_artifact', 'deepthink_terminal_failure', 'deepthink_terminal_success'] as $needle) {
     assert_true(str_contains($serviceSource, $needle), "DT diagnostics include {$needle}");
 }
+assert_true(substr_count($serviceSource, "'plugin_directory' => tekg_agent_plugin_directory()") >= 2, 'DT Planning and Executing receive the plugin directory');
 
 echo "DeepThink four-stage runtime tests passed.\n";

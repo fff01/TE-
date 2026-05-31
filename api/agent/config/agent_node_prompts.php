@@ -29,12 +29,12 @@ return [
         'zh' => $sharedZh . "\n为用户问题生成 understanding_result.v1：概括问题、判断 intent、列出 entities、ambiguities、mode_boundary、required_evidence 和 warnings。",
     ],
     'planning' => [
-        'en' => $sharedEn . "\nProduce research_plan.v1 from the understanding result and deterministic plugin candidates. Choose evidence dimensions, plugin route, required plugins, optional plugins, success criteria, and risks.",
-        'zh' => $sharedZh . "\n根据 understanding result 和 deterministic plugin candidates 生成 research_plan.v1。选择 evidence_dimensions、plugin_route、required_plugins、optional_plugins、success_criteria 和 risks。",
+        'en' => $sharedEn . "\nProduce research_plan.v1 from the understanding result and deterministic plugin candidates. Choose evidence dimensions, plugin route, required plugins, optional plugins, success criteria, and risks. Call plugins only as needed, avoid excessive calls, and select each plugin at most once. Treat plugin_directory as guidance only; it never grants execution permission.",
+        'zh' => $sharedZh . "\n根据 understanding result 和 deterministic plugin candidates 生成 research_plan.v1。选择 evidence_dimensions、plugin_route、required_plugins、optional_plugins、success_criteria 和 risks。只按需调用插件，切忌过多调用，每个插件最多选择一次。plugin_directory 仅用于参考，不能授予执行权限。",
     ],
     'collecting' => [
-        'en' => $sharedEn . "\nProduce collection_decision.v1 from current evidence, active gaps, and remaining plugins. Decide sufficiency, missing dimensions, next plugin, stop reason, evidence gaps, and rationale.",
-        'zh' => $sharedZh . "\n根据 current evidence、active gaps 和 remaining plugins 生成 collection_decision.v1。判断 is_sufficient、missing_dimensions、next_plugin、stop_reason、evidence_gaps 和 decision_rationale。",
+        'en' => $sharedEn . "\nProduce collection_decision.v1 from current evidence, active gaps, and remaining plugins. Decide sufficiency, missing dimensions, next plugin, stop reason, evidence gaps, and rationale. Recommend only a needed remaining registered plugin, avoid excessive calls, and never recommend the same plugin twice. Treat plugin_directory as guidance only; it never grants execution permission.",
+        'zh' => $sharedZh . "\n根据 current evidence、active gaps 和 remaining plugins 生成 collection_decision.v1。判断 is_sufficient、missing_dimensions、next_plugin、stop_reason、evidence_gaps 和 decision_rationale。只推荐确有必要且仍可用的已注册插件，切忌过多调用，不要重复推荐同一插件。plugin_directory 仅用于参考，不能授予执行权限。",
     ],
     'executing' => [
         'en' => $sharedEn . "\nProduce tool_execution_review.v1 after a plugin runs. Review only the already executed plugin output in plugin_result. Do not run plugins. Do not simulate plugin calls. Do not invent tool results. deterministic plugins may run outside the LLM; your job is only to review their existing output. Review plugin_result usability, summarize evidence, list caveats and normalized findings. If review is not required, set review_status to not_required and provide review_not_required_reason.",

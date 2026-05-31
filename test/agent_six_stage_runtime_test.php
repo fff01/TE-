@@ -56,8 +56,12 @@ assert_contains('$claimEvidenceMap = (array)$integratingNode->parsed_json;', $se
 assert_contains('$writingDecision = (array)$writingDecisionNode->parsed_json;', $serviceSource, 'AcademicAgentService stores writingDecision from writing node');
 assert_contains('fallbackUnderstandingNodeResult(', $serviceSource, 'AcademicAgentService can fallback from failed Understanding LLM');
 assert_contains('fallbackPlanningNodeResult(', $serviceSource, 'AcademicAgentService can fallback from failed Planning LLM');
+assert_call_uses_arguments($serviceSource, '->runPlanningNode(', ["'plugin_directory' => tekg_agent_plugin_directory()"], 'Agent Planning receives plugin directory');
+assert_call_uses_arguments($serviceSource, '->runCollectingNode(', ["'plugin_directory' => tekg_agent_plugin_directory()"], 'Agent first Collecting receives plugin directory');
 assert_call_uses_arguments($serviceSource, '->writeEvidenceWalkDraft(', ['$claimEvidenceMap', '$writingDecision'], 'Draft writer call receives claim map and writing decision');
 assert_call_uses_arguments($serviceSource, '->polishEvidenceWalkAnswer(', ['$claimEvidenceMap', '$writingDecision'], 'Polisher call receives claim map and writing decision');
+$evidenceTraitSource = (string)file_get_contents(__DIR__ . '/../api/agent/orchestrator/traits/AcademicAgentEvidenceTrait.php');
+assert_contains("'plugin_directory' => tekg_agent_plugin_directory()", $evidenceTraitSource, 'Agent iterative sufficiency receives plugin directory');
 
 $badUnderstandingFixture = [
     'schema_version' => 'understanding_result.v1',
@@ -72,12 +76,25 @@ $badUnderstandingFixture = [
 ];
 
 $service = new TekgAcademicAgentService(['agent_test_mode' => true]);
+$pluginDirectory = tekg_agent_plugin_directory();
+assert_true($pluginDirectory !== '', 'Plugin directory catalog is available to orchestrators');
+assert_contains('Call each plugin at most once per run.', $pluginDirectory, 'Plugin directory documents the single-call rule');
+assert_contains('Navigation-only.', $pluginDirectory, 'Plugin directory excludes Site Navigator from scientific evidence');
+assert_contains('Literature Plugin returned usable citations', $pluginDirectory, 'Plugin directory documents Literature Reading prerequisites');
 $reflection = new ReflectionClass($service);
 assert_true($reflection->hasMethod('fallbackUnderstandingNodeResult'), 'AcademicAgentService exposes Understanding fallback builder');
 assert_true($reflection->hasMethod('fallbackPlanningNodeResult'), 'AcademicAgentService exposes Planning fallback builder');
 
 $understandingFallbackMethod = $reflection->getMethod('fallbackUnderstandingNodeResult');
 $planningFallbackMethod = $reflection->getMethod('fallbackPlanningNodeResult');
+$registeredRecommendationsMethod = $reflection->getMethod('registeredRecommendedExperts');
+$academicPluginGateMethod = $reflection->getMethod('academicBusinessPluginMayRun');
+$aggregateEvidenceMethod = $reflection->getMethod('aggregateEvidence');
+$minimumEvidenceGateMethod = $reflection->getMethod('evaluateMinimumEvidenceGate');
+$evaluateSufficiencyMethod = $reflection->getMethod('evaluateSufficiency');
+$buildValidatedEvidencePackageMethod = $reflection->getMethod('buildValidatedEvidencePackage');
+$buildSynthesizedEvidenceFromPackageMethod = $reflection->getMethod('buildSynthesizedEvidenceFromPackage');
+$maybeAppendPluginsMethod = $reflection->getMethod('maybeAppendPlugins');
 
 $failedUnderstanding = new NodeLlmResult(
     'understanding',
@@ -130,5 +147,119 @@ assert_true($planningFallback instanceof NodeLlmResult, 'Planning fallback retur
 assert_same(true, $planningFallback->ok, 'Planning fallback is accepted as conservative success');
 assert_same('research_plan.v1', $planningFallback->schema_version, 'Planning fallback keeps schema contract');
 assert_true(in_array('llm_unavailable_conservative_fallback', (array)($planningFallback->parsed_json['risks'] ?? []), true), 'Planning fallback records risk');
+
+$filteredRecommendations = $registeredRecommendationsMethod->invoke(
+    $service,
+    ['Unknown Dynamic Plugin', 'Graph Plugin', 'Graph Plugin'],
+    [],
+    []
+);
+assert_same(['Graph Plugin'], $filteredRecommendations, 'Agent dynamic recommendations grant execution only to registered unique plugins');
+foreach ([
+    [false, ['Literature Plugin' => ['status' => 'ok', 'citations' => [['pmid' => '12345']]]]],
+    [true, ['Literature Plugin' => ['status' => 'error', 'citations' => [['pmid' => '12345']]]]],
+    [true, ['Literature Plugin' => ['status' => 'ok', 'citations' => []]]],
+] as [$asksForPapers, $pluginResults]) {
+    assert_same(
+        false,
+        $academicPluginGateMethod->invoke($service, 'Literature Reading Plugin', ['asks_for_papers' => $asksForPapers], $pluginResults),
+        'Agent Literature Reading requires explicit papers and usable Literature Plugin citations'
+    );
+}
+assert_same(
+    true,
+    $academicPluginGateMethod->invoke($service, 'Literature Reading Plugin', ['asks_for_papers' => true], [
+        'Literature Plugin' => ['status' => 'partial', 'citations' => [['pmid' => '12345']]],
+    ]),
+    'Agent Literature Reading allows partial Literature Plugin results with citations'
+);
+foreach ([
+    ['intent' => 'mechanism'],
+    ['intent' => 'comparison'],
+    ['intent' => 'relationship', 'task_complexity' => 'research_synthesis'],
+] as $researchAnalysis) {
+    assert_same(
+        true,
+        $academicPluginGateMethod->invoke($service, 'Literature Reading Plugin', $researchAnalysis, [
+            'Literature Plugin' => ['status' => 'ok', 'citations' => [['pmid' => '12345']]],
+        ]),
+        'Agent Literature Reading allows research semantics with usable Literature Plugin citations'
+    );
+}
+$navigationOnlyGate = $minimumEvidenceGateMethod->invoke($service, [
+    'Site Navigator Plugin' => [
+        'status' => 'ok',
+        'evidence_items' => [['claim' => 'Open a TE-KG page.']],
+        'citations' => [['url' => '/TE-/search.php?q=L1HS']],
+    ],
+], [
+    'minimum_evidence_gate' => [
+        'require_all_plugins' => ['Site Navigator Plugin'],
+        'require_any_plugins' => ['Site Navigator Plugin'],
+        'min_evidence_items' => 1,
+        'min_citations' => 1,
+    ],
+]);
+assert_same(false, $navigationOnlyGate['passed'] ?? null, 'Site Navigator does not satisfy Agent scientific minimum gate');
+assert_true(in_array('insufficient evidence items', (array)($navigationOnlyGate['missing_dimensions'] ?? []), true), 'Site Navigator evidence is excluded from gate counts');
+assert_true(in_array('insufficient traceable citations', (array)($navigationOnlyGate['missing_dimensions'] ?? []), true), 'Site Navigator citations are excluded from gate counts');
+$navigationOnlySufficiency = $evaluateSufficiencyMethod->invoke($service, 'unused-model', 'Open the L1HS page.', [], [], [
+    'Site Navigator Plugin' => [
+        'status' => 'ok',
+        'evidence_items' => [['claim' => 'Open a TE-KG page.']],
+        'citations' => [['url' => '/TE-/search.php?q=L1HS']],
+    ],
+], [], [
+    'minimum_evidence_gate' => [
+        'min_evidence_items' => 1,
+        'min_citations' => 1,
+    ],
+]);
+assert_same(false, $navigationOnlySufficiency['is_sufficient'] ?? null, 'Agent production sufficiency path excludes Site Navigator from scientific minimum gate');
+$navigationEvidencePackage = $buildValidatedEvidencePackageMethod->invoke($service, 'Open the L1HS page.', ['intent' => 'site_navigation'], [
+    'Site Navigator Plugin' => [
+        'plugin_name' => 'Site Navigator Plugin',
+        'status' => 'ok',
+        'results' => [
+            'candidate_routes' => [['title' => 'Search', 'url' => '/TE-/search.php?q=L1HS']],
+        ],
+        'evidence_items' => [['claim' => 'Open a TE-KG page.']],
+        'result_counts' => ['routes' => 1],
+    ],
+], 'agent-six-stage-runtime-navigation-package');
+assert_same([], $navigationEvidencePackage['claims'] ?? null, 'Agent production EvidencePackage excludes Site Navigator scientific claims');
+assert_same('/TE-/search.php?q=L1HS', $navigationEvidencePackage['route_map'][0]['route']['url'] ?? null, 'Agent production EvidencePackage retains Site Navigator URL');
+$navigationSynthesis = $buildSynthesizedEvidenceFromPackageMethod->invoke($service, $navigationEvidencePackage);
+assert_same([], $navigationSynthesis['supported_claims'] ?? null, 'Agent production synthesis excludes Site Navigator supported claims');
+foreach ([
+    ['intent' => 'mechanism'],
+    ['intent' => 'comparison'],
+    ['intent' => 'relationship', 'task_complexity' => 'research_synthesis'],
+] as $researchAnalysis) {
+    assert_same(
+        ['Literature Reading Plugin'],
+        $maybeAppendPluginsMethod->invoke($service, $researchAnalysis, [], 'Literature Plugin', [
+            'status' => 'ok',
+            'result_counts' => ['reviewed' => 1],
+            'citations' => [['pmid' => '12345']],
+        ], []),
+        'Agent production plugin queue appends Literature Reading for research semantics with citations'
+    );
+}
+assert_same(
+    [],
+    $maybeAppendPluginsMethod->invoke($service, ['intent' => 'relationship'], [], 'Literature Plugin', [
+        'status' => 'ok',
+        'result_counts' => ['reviewed' => 1],
+        'citations' => [['pmid' => '12345']],
+    ], []),
+    'Agent production plugin queue does not append Literature Reading for ordinary simple questions'
+);
+$agentEvidence = $aggregateEvidenceMethod->invoke($service, [
+    'Site Navigator Plugin' => ['evidence_items' => [['claim' => 'Open a TE-KG page.', 'support_strength' => 'high']]],
+    'Graph Plugin' => ['evidence_items' => [['claim' => 'LINE-1 has a graph relation.', 'support_strength' => 'medium']]],
+]);
+assert_same(1, count($agentEvidence), 'Site Navigator Plugin does not enter Agent scientific evidence');
+assert_same('Graph Plugin', $agentEvidence[0]['source_plugin'] ?? null, 'Agent evidence keeps the scientific source only');
 
 echo "Six-stage runtime tests passed.\n";

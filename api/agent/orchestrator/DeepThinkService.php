@@ -94,7 +94,7 @@ final class TekgDeepThinkService
                 'bootstrap_plugin' => 'Entity Resolver',
                 'extra_resolver' => 'Citation Resolver',
                 'explicit_literature_request' => $explicitLiterature,
-                'max_business_plugins' => 3,
+                'plugin_directory' => tekg_agent_plugin_directory(),
             ]),
             $artifacts,
             $emit,
@@ -129,7 +129,8 @@ final class TekgDeepThinkService
         }
 
         $remaining = $businessPlugins;
-        for ($round = 0; $round <= count($businessPlugins); $round++) {
+        $executedBusinessPlugins = [];
+        for ($round = 0; $remaining !== []; $round++) {
             $executingNode = $this->runDeepThinkStage(
                 'Executing',
                 fn(): NodeLlmResult => $this->llm->runDeepThinkExecutingNode($model, $answerLanguage, [
@@ -139,7 +140,7 @@ final class TekgDeepThinkService
                     'remaining_planned_plugins' => $remaining,
                     'plugin_results' => $this->compressedPluginResults($pluginResults),
                     'round' => $round + 1,
-                    'max_business_plugins' => 3,
+                    'plugin_directory' => tekg_agent_plugin_directory(),
                 ]),
                 $artifacts,
                 $emit,
@@ -158,7 +159,12 @@ final class TekgDeepThinkService
             if ($nextPlugin === '' || !in_array($nextPlugin, $remaining, true)) {
                 return $this->failDeepThinkRun($base, 'Executing', 'Executing selected a plugin outside the remaining validated plan.', $artifacts, $pluginResults, $emit, $eventSequence);
             }
+            if (isset($executedBusinessPlugins[$nextPlugin])) {
+                return $this->failDeepThinkRun($base, 'Executing', 'Executing selected a business plugin that already ran: ' . $nextPlugin, $artifacts, $pluginResults, $emit, $eventSequence);
+            }
             try {
+                $this->assertDeepThinkBusinessPluginMayRun($nextPlugin, $explicitLiterature, $pluginResults);
+                $executedBusinessPlugins[$nextPlugin] = true;
                 $pluginResults[$nextPlugin] = $this->runPlugin(
                     $nextPlugin, $question, $analysis, $planning, $pluginResults, $model, $model,
                     $answerLanguage, $sessionId, $eventSequence, $detailCounter, $requestId, $emit, $reasoningTrace,
@@ -169,9 +175,6 @@ final class TekgDeepThinkService
                 return $this->failDeepThinkRun($base, 'Executing', $error->getMessage(), $artifacts, $pluginResults, $emit, $eventSequence);
             }
             $remaining = array_values(array_filter($remaining, static fn(string $name): bool => $name !== $nextPlugin));
-            if ($remaining === [] && $round === count($businessPlugins)) {
-                break;
-            }
         }
 
         if ($planning['citation_resolver_allowed'] && $this->shouldRunCitationResolver($pluginResults)) {
@@ -381,9 +384,6 @@ final class TekgDeepThinkService
     private function validateDeepThinkBusinessPlugins(array $plugins, bool $explicitLiteratureRequest): array
     {
         $plugins = array_values(array_map(static fn($name): string => trim((string)$name), $plugins));
-        if (count($plugins) > 3) {
-            throw new RuntimeException('Planning selected more than three business plugins.');
-        }
         if (count(array_unique($plugins)) !== count($plugins)) {
             throw new RuntimeException('Planning selected a duplicate business plugin.');
         }
@@ -392,11 +392,25 @@ final class TekgDeepThinkService
             if ($plugin === '' || !in_array($plugin, $available, true)) {
                 throw new RuntimeException('Planning selected an unknown or reserved business plugin: ' . $plugin);
             }
-            if ($plugin === 'Literature Plugin' && !$explicitLiteratureRequest) {
-                throw new RuntimeException('Literature Plugin requires an explicit literature request.');
+            if (in_array($plugin, ['Literature Plugin', 'Literature Reading Plugin'], true) && !$explicitLiteratureRequest) {
+                throw new RuntimeException($plugin . ' requires an explicit literature request.');
             }
         }
         return $plugins;
+    }
+
+    private function assertDeepThinkBusinessPluginMayRun(string $pluginName, bool $explicitLiteratureRequest, array $pluginResults): void
+    {
+        if ($pluginName !== 'Literature Reading Plugin') {
+            return;
+        }
+        $literature = (array)($pluginResults['Literature Plugin'] ?? []);
+        if (!$explicitLiteratureRequest
+            || !in_array((string)($literature['status'] ?? ''), ['ok', 'partial'], true)
+            || tekg_agent_plugin_result_citations($literature) === []
+        ) {
+            throw new RuntimeException('Literature Reading Plugin requires an explicit literature request and usable Literature Plugin citations.');
+        }
     }
 
     private function hasExplicitLiteratureRequest(string $question): bool

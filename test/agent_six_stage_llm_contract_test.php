@@ -334,6 +334,53 @@ $userPrompt = (string)($capturedPayload['messages'][1]['content'] ?? '');
 assert_contains_string('只返回 JSON。', $userPrompt, 'zh runner uses Chinese six-stage prompt');
 assert_contains_string('understanding_result.v1', $userPrompt, 'zh runner includes expected schema prompt');
 
+$catalogSentinel = 'AGENT_PLUGIN_DIRECTORY_SENTINEL';
+foreach ([
+    'planning' => ['method' => 'runPlanningNode', 'fixture' => $validFixturesBySchema['research_plan.v1']],
+    'collecting' => ['method' => 'runCollectingNode', 'fixture' => $validFixturesBySchema['collection_decision.v1']],
+] as $catalogStage => $catalogCase) {
+    $GLOBALS['six_stage_contract_http_response'] = json_encode([
+        'response' => [
+            'choices' => [
+                ['message' => ['content' => json_encode($catalogCase['fixture'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]],
+            ],
+        ],
+    ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    unset($GLOBALS['six_stage_contract_http_request']);
+    $catalogResult = $zhClient->{$catalogCase['method']}('deepseek-v4-flash', 'en', [
+        'question' => 'Collect LINE-1 evidence.',
+        'plugin_directory' => $catalogSentinel,
+    ]);
+    assert_same(true, $catalogResult->ok, "{$catalogStage} runner accepts relay fixture");
+    $catalogRequest = json_decode((string)($GLOBALS['six_stage_contract_http_request']['body'] ?? ''), true);
+    $catalogPrompt = (string)($catalogRequest['messages'][1]['content'] ?? '');
+    assert_contains_string('plugin_directory', $catalogPrompt, "{$catalogStage} prompt includes plugin_directory key");
+    assert_contains_string($catalogSentinel, $catalogPrompt, "{$catalogStage} prompt includes plugin directory text");
+}
+
+$GLOBALS['six_stage_contract_http_response'] = json_encode([
+    'response' => [
+        'choices' => [
+            ['message' => ['content' => json_encode([
+                'is_sufficient' => true,
+                'reason' => 'Enough evidence.',
+                'missing_dimensions' => [],
+                'recommended_next_experts' => [],
+            ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)]],
+        ],
+    ],
+], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+unset($GLOBALS['six_stage_contract_http_request']);
+$sufficiency = $zhClient->assessSufficiency('deepseek-v4-flash', [
+    'question' => 'Is the LINE-1 evidence enough?',
+    'plugin_directory' => $catalogSentinel,
+]);
+assert_same(true, $sufficiency['is_sufficient'] ?? null, 'iterative sufficiency runner accepts relay fixture');
+$sufficiencyRequest = json_decode((string)($GLOBALS['six_stage_contract_http_request']['body'] ?? ''), true);
+$sufficiencyPrompt = (string)($sufficiencyRequest['messages'][1]['content'] ?? '');
+assert_contains_string('plugin_directory', $sufficiencyPrompt, 'iterative sufficiency prompt includes plugin_directory key');
+assert_contains_string($catalogSentinel, $sufficiencyPrompt, 'iterative sufficiency prompt includes plugin directory text');
+
 $GLOBALS['six_stage_contract_http_response_queue'] = [
     json_encode([
         'response' => [
