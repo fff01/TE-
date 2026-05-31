@@ -27,6 +27,7 @@ final class TekgAgentEntityNormalizer
 
         $hasResearchIntent = $this->hasResearchIntentWords($question);
         $asksForSiteNavigation = $this->asksForSiteNavigation($question) && !$hasResearchIntent;
+        $asksForPapers = $this->asksForLiteratureEvidence($question);
 
         return array_merge([
             'language' => $language,
@@ -37,7 +38,7 @@ final class TekgAgentEntityNormalizer
             'requested_target_types' => $targetTypes,
             'question_keywords' => $keywords,
             'question_tokens' => $tokens,
-            'asks_for_papers' => $this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'literature', 'citation', 'citations', '文献', '论文', '参考文献', '引用', 'pmid']),
+            'asks_for_papers' => $asksForPapers,
             'asks_for_expression' => $this->containsAny($question, ['expression', 'expressed', 'cell line', 'cell lines', 'tissue', 'context', 'transcriptome', '表达', '组织', '细胞系', '转录组']),
             'asks_for_genome' => $intent !== 'expression' && $this->containsAny($question, ['genome', 'genomic', 'browser', 'locus', 'location', 'located', 'located at', 'where is', 'chromosome', 'chr', 'coordinate', '基因组', '基因组浏览器', '位点', '位置', '定位', '染色体', '坐标', '位于哪里', '位于哪', '位于', '在哪里', '在哪个染色体', '在哪条染色体', '哪个染色体', '哪条染色体', '基因组位置', '基因组坐标', '染色体位置']),
             'asks_for_classification' => $this->containsAny($question, ['classif', 'subfamily', 'family', 'tree', 'category', 'lineage', 'taxonomy', '分类', '亚家族', '家族', '树', '谱系']),
@@ -51,7 +52,8 @@ final class TekgAgentEntityNormalizer
             'compare_mode' => $this->containsAny($question, ['compare', 'versus', 'vs', 'difference', '比较', '对比', '区别', '差异']),
             'needs_external_literature' => $intent === 'mechanism'
                 || $intent === 'graph_analytics'
-                || $this->containsAny($question, ['recent', 'latest', 'evidence', 'paper', 'papers', 'pubmed', 'literature', '最新', '证据', '文献', '论文'])
+                || $this->containsAny($question, ['recent', 'latest', '最新'])
+                || $asksForPapers
                 || count($normalizedEntities) <= 1,
         ], $taskComplexity);
     }
@@ -200,7 +202,7 @@ final class TekgAgentEntityNormalizer
         if ($this->containsAny($question, ['how', 'why', 'mechanism', 'cause', 'causal', 'pathway', 'drive', 'lead to', '机制', '为什么', '如何', '导致', '通路', '因果'])) {
             return 'mechanism';
         }
-        if ($this->containsAny($question, ['paper', 'papers', 'reference', 'references', 'pubmed', 'evidence', 'literature', 'citation', '文献', '论文', '参考文献', '引用', '证据'])) {
+        if ($this->asksForLiteratureEvidence($question)) {
             return 'literature';
         }
         if ($this->containsAny($question, ['expression', 'expressed', 'cell line', 'tissue', 'transcriptome', '表达', '组织', '细胞系', '转录组'])) {
@@ -288,17 +290,7 @@ final class TekgAgentEntityNormalizer
 
     private function hasResearchIntentWords(string $question): bool
     {
-        return $this->containsAny($question, [
-            'paper',
-            'papers',
-            'reference',
-            'references',
-            'pubmed',
-            'literature',
-            'citation',
-            'citations',
-            'evidence',
-            'support',
+        return $this->asksForLiteratureEvidence($question) || $this->containsAny($question, [
             'compare',
             'versus',
             'vs',
@@ -324,12 +316,6 @@ final class TekgAgentEntityNormalizer
             'report',
             'review',
             'dossier',
-            '文献',
-            '论文',
-            '参考文献',
-            '引用',
-            '证据',
-            '支撑',
             '比较',
             '对比',
             '区别',
@@ -343,6 +329,25 @@ final class TekgAgentEntityNormalizer
             '中心性',
             '报告',
             '综述',
+        ]);
+    }
+
+    private function asksForLiteratureEvidence(string $question): bool
+    {
+        return $this->containsAny($question, [
+            'paper',
+            'papers',
+            'reference',
+            'references',
+            'pubmed',
+            'literature',
+            'citation',
+            'citations',
+            'pmid',
+            '文献',
+            '论文',
+            '参考文献',
+            '引用',
         ]);
     }
 

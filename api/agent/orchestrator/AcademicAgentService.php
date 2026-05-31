@@ -76,6 +76,7 @@ final class TekgAcademicAgentService
 
         $answerLanguage = tekg_agent_detect_language($question, trim((string)($payload['language'] ?? 'english')));
         $processLanguage = $this->resolveProcessLanguage($answerLanguage);
+        $controlModel = $this->resolveControlModel($payload);
         $coreModel = $this->resolveCoreModel($payload);
         $sufficiencyModel = $this->resolveSufficiencyModel($payload);
         $expertModel = $this->resolveExpertModel($payload);
@@ -131,6 +132,7 @@ final class TekgAcademicAgentService
                 'low',
                 ['Full Agent workflow skipped by compact preflight before six-stage LLM nodes.'],
                 [
+                    'control' => $controlModel,
                     'core' => $coreModel,
                     'sufficiency' => $sufficiencyModel,
                     'expert' => $expertModel,
@@ -174,19 +176,25 @@ final class TekgAcademicAgentService
         }
 
         $this->activateWorkflowStage($workflowState, 'Understanding', null, $emit, $eventSequence, $sessionId);
-        $understandingNode = $this->llm->runUnderstandingNode($coreModel, $processLanguage, [
+        $understandingNode = $this->llm->runUnderstandingNode($controlModel, $processLanguage, [
             'question' => $question,
             'deterministic_analysis' => $analysis,
             'session_memory' => $sessionMemory,
         ]);
         $this->recordSixStageArtifact($sixStageArtifacts, 'understanding', $understandingNode, $emit, $eventSequence, $sessionId);
         if (!$understandingNode->ok) {
-            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Understanding', $understandingNode, $sixStageArtifacts, $workflowState);
+            $this->logDiagnostic($requestId, 'six_stage_control_fallback', [
+                'stage' => 'Understanding',
+                'model' => $controlModel,
+                'errors' => $understandingNode->errors,
+            ]);
+            $understandingNode = $this->fallbackUnderstandingNodeResult($question, $answerLanguage, $analysis, $understandingNode);
+            $this->recordSixStageArtifact($sixStageArtifacts, 'understanding', $understandingNode, $emit, $eventSequence, $sessionId);
         }
         $analysis['six_stage_understanding'] = $understandingNode->parsed_json;
         $this->emitAnalysisThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $analysis, $eventSequence);
         $this->activateWorkflowStage($workflowState, 'Planning', 'Understanding', $emit, $eventSequence, $sessionId);
-        $planningNode = $this->llm->runPlanningNode($coreModel, $processLanguage, [
+        $planningNode = $this->llm->runPlanningNode($controlModel, $processLanguage, [
             'question' => $question,
             'understanding_result' => $understandingNode->parsed_json,
             'deterministic_plan' => $planning,
@@ -195,7 +203,13 @@ final class TekgAcademicAgentService
         ]);
         $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId);
         if (!$planningNode->ok) {
-            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Planning', $planningNode, $sixStageArtifacts, $workflowState);
+            $this->logDiagnostic($requestId, 'six_stage_control_fallback', [
+                'stage' => 'Planning',
+                'model' => $controlModel,
+                'errors' => $planningNode->errors,
+            ]);
+            $planningNode = $this->fallbackPlanningNodeResult($planning, $pluginQueue, $planningNode);
+            $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId);
         }
         $planning['six_stage_plan'] = $planningNode->parsed_json;
         $this->emitPlanningThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $planning, $eventSequence);
@@ -272,7 +286,7 @@ final class TekgAcademicAgentService
             $pluginResults[$pluginName] = $result;
             $pluginCalls[] = $result;
             $collectionState = $this->updateCollectionState($collectionState, $pluginName, $result);
-            $executingReviewNode = $this->llm->runExecutingReviewNode($coreModel, $processLanguage, [
+            $executingReviewNode = $this->llm->runExecutingReviewNode($expertModel, $processLanguage, [
                 'question' => $question,
                 'plugin_name' => $pluginName,
                 'plugin_result' => $this->pluginResultForLlmReview($pluginName, $result),
@@ -293,7 +307,7 @@ final class TekgAcademicAgentService
                         'errors' => $executingReviewNode->errors,
                     ]);
                 } else {
-                    return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $executingReviewNode, $sixStageArtifacts, $workflowState);
+                    return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $expertModel, 'Executing', $executingReviewNode, $sixStageArtifacts, $workflowState);
                 }
             }
 
@@ -434,7 +448,7 @@ final class TekgAcademicAgentService
 
                 $pluginResults['Citation Resolver'] = $citationResult;
                 $pluginCalls[] = $citationResult;
-                $citationReviewNode = $this->llm->runExecutingReviewNode($coreModel, $processLanguage, [
+                $citationReviewNode = $this->llm->runExecutingReviewNode($expertModel, $processLanguage, [
                     'question' => $question,
                     'plugin_name' => 'Citation Resolver',
                     'plugin_result' => $this->pluginResultForLlmReview('Citation Resolver', $citationResult),
@@ -455,7 +469,7 @@ final class TekgAcademicAgentService
                             'errors' => $citationReviewNode->errors,
                         ]);
                     } else {
-                        return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Executing', $citationReviewNode, $sixStageArtifacts, $workflowState);
+                        return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $expertModel, 'Executing', $citationReviewNode, $sixStageArtifacts, $workflowState);
                     }
                 }
                 $detailId = 'tool-' . (++$detailCounter);
@@ -496,6 +510,7 @@ final class TekgAcademicAgentService
         $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
         $writingModel = $this->resolveWritingModel($analysis, $payload, $pluginResults);
         $polisherModel = $this->resolvePolisherModel($payload, $writingModel);
+        $polisherEnabled = $this->resolvePolisherEnabled($payload);
         if ($this->shouldUseCompactPreflightGate($question, $analysis)) {
             $this->logDiagnostic($requestId, 'compact_preflight_gate_triggered', [
                 'recommended_mode' => (string)($analysis['recommended_mode'] ?? ''),
@@ -516,6 +531,7 @@ final class TekgAcademicAgentService
                 $confidence,
                 $limits,
                 [
+                    'control' => $controlModel,
                     'core' => $coreModel,
                     'sufficiency' => $sufficiencyModel,
                     'expert' => $expertModel,
@@ -595,7 +611,7 @@ final class TekgAcademicAgentService
         ]);
         $reportPlan = ReportPlan::fromEvidenceWalk($question, $analysis, $evidenceWalk, $answerStructure);
         $reportPlanValidation = ReportPlan::validate($reportPlan);
-        $integratingNode = $this->llm->runIntegratingNode($coreModel, $processLanguage, [
+        $integratingNode = $this->llm->runIntegratingNode($controlModel, $processLanguage, [
             'question' => $question,
             'evidence_package' => $evidencePackage,
             'evidence_walk' => $evidenceWalk,
@@ -604,7 +620,7 @@ final class TekgAcademicAgentService
         ]);
         $this->recordSixStageArtifact($sixStageArtifacts, 'integrating', $integratingNode, $emit, $eventSequence, $sessionId);
         if (!$integratingNode->ok) {
-            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $coreModel, 'Integrating', $integratingNode, $sixStageArtifacts, $workflowState);
+            return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $controlModel, 'Integrating', $integratingNode, $sixStageArtifacts, $workflowState);
         }
         $claimEvidenceMap = (array)$integratingNode->parsed_json;
 
@@ -762,7 +778,23 @@ final class TekgAcademicAgentService
             }
         }
 
-        if (!$writingFailed && $directSiteNavigationWriting === null) {
+        if (!$writingFailed && $directSiteNavigationWriting === null && !$polisherEnabled) {
+            $polishedReport = $draftReport;
+            $answer = $draftReport;
+            $polishLlm = [
+                'ok' => true,
+                'provider' => $this->inferProvider($polisherModel),
+                'model' => $polisherModel,
+                'content' => $polishedReport,
+                'error' => null,
+                'skipped' => true,
+                'stage' => 'polish',
+            ];
+            $integrityReport['polish'] = (array)$integrityReport['draft'];
+            $integrityReport['warnings'][] = 'Polisher skipped by configuration; using the validated draft report.';
+        }
+
+        if (!$writingFailed && $directSiteNavigationWriting === null && $polisherEnabled) {
             try {
                 $polishLlm = $this->llm->polishEvidenceWalkAnswer(
                     $polisherModel,
@@ -837,6 +869,14 @@ final class TekgAcademicAgentService
             'details' => $synthesizingMessage,
         ];
 
+        $finalAnswerModel = $this->resolveFinalAnswerModel(
+            $answer,
+            $draftReport,
+            $polishedReport,
+            $writingModel,
+            $polisherModel,
+            $polisherEnabled
+        );
         $response = [
             'question' => $question,
             'mode' => trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
@@ -844,8 +884,9 @@ final class TekgAcademicAgentService
             'language' => $answerLanguage,
             'session_id' => $sessionId,
             'model' => $writingModel,
-            'model_provider' => $this->inferProvider($answer === $polishedReport && $polishedReport !== '' ? $polisherModel : $writingModel),
+            'model_provider' => $this->inferProvider($finalAnswerModel),
             'models' => [
+                'control' => $controlModel,
                 'core' => $coreModel,
                 'sufficiency' => $sufficiencyModel,
                 'expert' => $expertModel,
@@ -1025,6 +1066,80 @@ final class TekgAcademicAgentService
             'writing_decision' => $writingDecision,
             'writing_decision_node' => $writingDecisionNode,
         ];
+    }
+
+    private function fallbackUnderstandingNodeResult(
+        string $question,
+        string $answerLanguage,
+        array $analysis,
+        NodeLlmResult $failedResult
+    ): NodeLlmResult {
+        $entities = [];
+        foreach ((array)($analysis['normalized_entities'] ?? []) as $entity) {
+            if (!is_array($entity)) {
+                continue;
+            }
+            $name = trim((string)($entity['canonical_label'] ?? $entity['label'] ?? $entity['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $entities[] = [
+                'name' => $name,
+                'type' => (string)($entity['type'] ?? 'entity'),
+            ];
+        }
+
+        $payload = [
+            'schema_version' => 'understanding_result.v1',
+            'stage' => 'understanding',
+            'language' => $answerLanguage === 'chinese' ? 'zh' : 'en',
+            'question_summary' => $question,
+            'intent' => (string)($analysis['intent'] ?? 'relationship'),
+            'entities' => $entities,
+            'ambiguities' => array_values(array_map('strval', (array)($analysis['ambiguities'] ?? []))),
+            'mode_boundary' => 'agent_research_conservative_fallback',
+            'required_evidence' => array_values(array_map('strval', (array)($analysis['required_evidence'] ?? []))),
+            'warnings' => array_values(array_unique(array_merge(
+                ['llm_unavailable_conservative_fallback'],
+                array_map('strval', $failedResult->errors)
+            ))),
+        ];
+
+        return new NodeLlmResult(
+            'understanding',
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+            $payload,
+            true,
+            [],
+            'understanding_result.v1'
+        );
+    }
+
+    private function fallbackPlanningNodeResult(array $planning, array $pluginQueue, NodeLlmResult $failedResult): NodeLlmResult
+    {
+        $payload = [
+            'schema_version' => 'research_plan.v1',
+            'stage' => 'planning',
+            'research_goal' => (string)($planning['summary'] ?? 'Continue with the deterministic TE-KG research plan.'),
+            'evidence_dimensions' => array_values(array_map('strval', (array)($planning['required_evidence'] ?? []))),
+            'plugin_route' => array_values(array_map('strval', $pluginQueue)),
+            'required_plugins' => array_values(array_map('strval', array_slice($pluginQueue, 0, 2))),
+            'optional_plugins' => array_values(array_map('strval', array_slice($pluginQueue, 2))),
+            'success_criteria' => ['Use only deterministic plugin evidence and mark uncertain claims conservatively.'],
+            'risks' => array_values(array_unique(array_merge(
+                ['llm_unavailable_conservative_fallback'],
+                array_map('strval', $failedResult->errors)
+            ))),
+        ];
+
+        return new NodeLlmResult(
+            'planning',
+            json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '',
+            $payload,
+            true,
+            [],
+            'research_plan.v1'
+        );
     }
 
     private function recordSixStageArtifact(
@@ -1290,6 +1405,16 @@ final class TekgAcademicAgentService
         tekg_agent_append_diagnostic_log($requestId, $event, $payload);
     }
 
+    private function resolveControlModel(array $payload): string
+    {
+        $payloadControlModel = trim((string)($payload['control_model'] ?? $payload['agent_control_model'] ?? ''));
+        if ($payloadControlModel !== '') {
+            return $payloadControlModel;
+        }
+
+        return trim((string)($this->config['agent_control_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-v4-flash'));
+    }
+
     private function resolveCoreModel(array $payload): string
     {
         $payloadCoreModel = trim((string)($payload['core_model'] ?? $payload['agent_core_model'] ?? ''));
@@ -1302,7 +1427,16 @@ final class TekgAcademicAgentService
 
     private function resolveSufficiencyModel(array $payload): string
     {
-        return trim((string)($payload['sufficiency_model'] ?? $this->config['agent_sufficiency_model'] ?? $this->resolveCoreModel($payload)));
+        $payloadSufficiencyModel = trim((string)($payload['sufficiency_model'] ?? $payload['collecting_model'] ?? ''));
+        if ($payloadSufficiencyModel !== '') {
+            return $payloadSufficiencyModel;
+        }
+
+        if (trim((string)($this->config['agent_collecting_model'] ?? '')) !== '') {
+            return trim((string)$this->config['agent_collecting_model']);
+        }
+
+        return $this->resolveControlModel($payload);
     }
 
     private function resolveExpertModel(array $payload): string
@@ -1317,7 +1451,7 @@ final class TekgAcademicAgentService
 
     private function resolveAnswerStructureModel(array $payload): string
     {
-        return trim((string)($payload['answer_structure_model'] ?? $this->config['agent_answer_structure_model'] ?? 'deepseek-v4-pro'));
+        return trim((string)($payload['answer_structure_model'] ?? $this->config['agent_answer_structure_model'] ?? $this->resolveControlModel($payload)));
     }
 
     private function resolveWritingModel(array $analysis, array $payload, array $pluginResults): string
@@ -1347,6 +1481,36 @@ final class TekgAcademicAgentService
 
         if (trim((string)($this->config['agent_polisher_model'] ?? '')) !== '') {
             return trim((string)($this->config['agent_polisher_model'] ?? ''));
+        }
+
+        return $writingModel;
+    }
+
+    private function resolvePolisherEnabled(array $payload): bool
+    {
+        if (array_key_exists('polisher_enabled', $payload)) {
+            return tekg_agent_bool_value($payload['polisher_enabled'], false);
+        }
+        if (array_key_exists('agent_polisher_enabled', $payload)) {
+            return tekg_agent_bool_value($payload['agent_polisher_enabled'], false);
+        }
+        return tekg_agent_bool_value($this->config['agent_polisher_enabled'] ?? false, false);
+    }
+
+    private function resolveFinalAnswerModel(
+        string $answer,
+        string $draftReport,
+        string $polishedReport,
+        string $writingModel,
+        string $polisherModel,
+        bool $polisherEnabled
+    ): string {
+        if ($polisherEnabled && $polishedReport !== '' && $answer === $polishedReport) {
+            return $polisherModel;
+        }
+
+        if ($draftReport !== '' && $answer === $draftReport) {
+            return $writingModel;
         }
 
         return $writingModel;

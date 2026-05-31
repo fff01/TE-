@@ -1073,3 +1073,66 @@
     justify-content: space-between;
   }
 }
+
+.agent-deepthink-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 8px 0 10px;
+  padding: 10px;
+  border: 1px solid rgba(94, 120, 170, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.agent-deepthink-progress[hidden] {
+  display: none;
+}
+
+.agent-deepthink-progress .deepthink-progress-stage {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #71809b;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.agent-deepthink-progress .deepthink-progress-number {
+  position: relative;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid rgba(94, 120, 170, 0.26);
+  border-radius: 50%;
+  background: #fff;
+  font-weight: 800;
+}
+
+.agent-deepthink-progress .is-done,
+.agent-deepthink-progress .is-active {
+  color: #3154bd;
+}
+
+.agent-deepthink-progress .is-active .deepthink-progress-number {
+  border-color: #486ad5;
+  background: #fff;
+  color: #3154bd;
+}
+
+.agent-deepthink-progress .is-active .deepthink-progress-number::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 2px solid transparent;
+  border-top-color: #5b74d8;
+  border-right-color: rgba(91, 116, 216, 0.35);
+  border-radius: 50%;
+  animation: agentStageSpin 1s linear infinite;
+}
+
+.agent-deepthink-progress .is-failed {
+  color: #b83d55;
+}

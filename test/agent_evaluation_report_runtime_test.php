@@ -24,16 +24,16 @@ function assert_not_contains(string $needle, string $haystack, string $message):
 
 $serviceSource = (string)file_get_contents(__DIR__ . '/../api/agent/orchestrator/AcademicAgentService.php');
 $bootstrapSource = (string)file_get_contents(__DIR__ . '/../api/agent/bootstrap.php');
-$localConfigSource = (string)file_get_contents(__DIR__ . '/../api/config.local.php');
 
 assert_contains("contracts/ModeComparisonEvaluation.php", $serviceSource, 'AcademicAgentService requires ModeComparisonEvaluation');
 assert_contains("\$response['evaluation_report'] = \$evaluationReport", $serviceSource, 'Agent response includes evaluation_report');
 assert_contains('ModeComparisonEvaluation::fromAgentResponse(', $serviceSource, 'Agent runtime builds evaluation_report from same response artifacts');
 assert_contains("'agent_polisher_model'", $bootstrapSource, 'bootstrap resolves agent_polisher_model');
 assert_contains('TEKG_AGENT_POLISHER_MODEL', $bootstrapSource, 'bootstrap supports polisher model env override');
-assert_contains("'agent_writing_model' => 'deepseek-v4-pro'", $localConfigSource, 'local config makes pro the default Agent writer');
-assert_contains("'agent_polisher_model' => 'deepseek-v4-pro'", $localConfigSource, 'local config makes pro the default Agent polisher');
-assert_contains("'deepseek_model' => 'deepseek-v4-flash'", $localConfigSource, 'local config keeps DeepThink flash model');
+assert_contains("'agent_writing_model' => trim((string)(\$local['agent_writing_model'] ?? tekg_agent_env_value(['TEKG_AGENT_WRITING_MODEL'], 'deepseek-v4-pro')))", $bootstrapSource, 'bootstrap default policy keeps Agent writer configurable with stable pro fallback');
+assert_contains("'agent_polisher_model' => trim((string)(\$local['agent_polisher_model'] ?? tekg_agent_env_value(['TEKG_AGENT_POLISHER_MODEL'], \$controlModel)))", $bootstrapSource, 'bootstrap default policy keeps polisher configurable and defaults to the control model');
+assert_contains("'agent_polisher_enabled' => tekg_agent_bool_value(\$local['agent_polisher_enabled'] ?? tekg_agent_env_value(['TEKG_AGENT_POLISHER_ENABLED'], 'false'), false)", $bootstrapSource, 'bootstrap default policy keeps the Agent polisher disabled');
+assert_not_contains('config.local.php', $serviceSource, 'AcademicAgentService must not depend on private local config paths');
 
 $agentResponse = [
     'question' => 'LINE-1 是如何导致癌症的？',

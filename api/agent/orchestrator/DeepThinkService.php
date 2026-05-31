@@ -52,322 +52,375 @@ final class TekgDeepThinkService
         $runtimeConfig = $this->runtimeConfig($payload, $requestId);
         $this->llm = new TekgAgentLlmClient($runtimeConfig);
         $this->applyExecutionBudget($runtimeConfig);
-        $this->logDiagnostic($requestId, 'deepthink_request_started', [
-            'question' => $question,
-            'mode' => 'deepthink',
-        ]);
-
         $model = $this->resolveModel($payload);
-        $narratorModel = $this->resolveNarratorModel($payload, $model);
         $sessionId = trim((string)($payload['session_id'] ?? ''));
         if ($sessionId === '') {
             $sessionId = tekg_agent_make_session_id();
         }
         $answerLanguage = tekg_agent_detect_language($question, trim((string)($payload['language'] ?? 'english')));
-        $processLanguage = $this->resolveProcessLanguage($answerLanguage);
-
-        $sessionMemory = tekg_agent_load_session_memory($sessionId);
-        $analysis = $this->normalizer->analyze($question, $answerLanguage);
-        $analysis['answer_language'] = $answerLanguage;
-        $analysis['language'] = 'english';
-        $analysis['session_memory'] = $sessionMemory;
-        $analysis['request_context'] = [
-            'source_page' => (string)($payload['source_page'] ?? ''),
-            'current_url' => (string)($payload['current_url'] ?? ''),
-            'page_context' => (array)($payload['page_context'] ?? []),
-            'graph_context' => (array)($payload['graph_context'] ?? []),
-        ];
-        $writingModel = $this->resolveWritingModel($payload, $analysis);
-
         $eventSequence = 0;
         $detailCounter = 0;
         $reasoningTrace = [];
         $pluginResults = [];
-        $planning = $this->lightweightPlanning($analysis);
-        $this->emitAnalysisThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $analysis, $eventSequence);
+        $artifacts = ['understanding' => null, 'planning' => null, 'executing' => [], 'writing' => null];
+        $normalizerInput = $this->normalizer->analyze($question, $answerLanguage);
+        $base = compact('question', 'requestId', 'sessionId', 'answerLanguage', 'model');
 
-        $entityResult = $this->runPlugin(
-            'Entity Resolver',
-            $question,
-            $analysis,
-            $planning,
-            $pluginResults,
-            $model,
-            $narratorModel,
-            $processLanguage,
-            $sessionId,
-            $eventSequence,
-            $detailCounter,
-            $requestId,
+        $understanding = $this->runDeepThinkStage(
+            'Understanding',
+            fn(): NodeLlmResult => $this->llm->runDeepThinkUnderstandingNode($model, $answerLanguage, [
+                'question' => $question,
+                'answer_language' => $answerLanguage,
+                'rule_normalizer' => $normalizerInput,
+            ]),
+            $artifacts,
             $emit,
-            $reasoningTrace,
-            'I will stabilize entity names first so the later tool calls do not drift across aliases.'
+            $eventSequence,
+            $sessionId,
+            $requestId
         );
-        $pluginResults['Entity Resolver'] = $entityResult;
+        if (!$understanding->ok) {
+            return $this->failDeepThinkRun($base, 'Understanding', $understanding, $artifacts, $pluginResults, $emit, $eventSequence);
+        }
+        $analysis = $this->analysisFromUnderstanding((array)$understanding->parsed_json, $question);
+        $explicitLiterature = $this->hasExplicitLiteratureRequest($question);
 
-        $maxSteps = $this->maxPluginSteps($payload, $analysis);
-        for ($step = 0; $step < $maxSteps; $step++) {
-            $decision = $this->decideNextPlugin($question, $analysis, $pluginResults, $model, $requestId);
-            $nextPlugin = trim((string)($decision['next_plugin'] ?? ''));
-            $done = (bool)($decision['done'] ?? false);
-
-            if ($done || $nextPlugin === '') {
-                $this->emitReflection(
-                    $emit,
-                    $eventSequence,
-                    $sessionId,
-                    $narratorModel,
-                    $processLanguage,
-                    'The currently collected evidence is enough to move into synthesis.',
-                    [
-                        'type' => 'reflection',
-                        'decision' => $decision,
-                        'plugin_results' => $this->compressedPluginResults($pluginResults),
-                    ]
-                );
-                break;
-            }
-
-            if (!isset($this->plugins[$nextPlugin]) || isset($pluginResults[$nextPlugin])) {
-                break;
-            }
-
-            $result = $this->runPlugin(
-                $nextPlugin,
-                $question,
-                $analysis,
-                $planning,
-                $pluginResults,
-                $model,
-                $narratorModel,
-                $processLanguage,
-                $sessionId,
-                $eventSequence,
-                $detailCounter,
-                $requestId,
-                $emit,
-                $reasoningTrace,
-                trim((string)($decision['reason'] ?? ''))
+        $planningNode = $this->runDeepThinkStage(
+            'Planning',
+            fn(): NodeLlmResult => $this->llm->runDeepThinkPlanningNode($model, $answerLanguage, [
+                'question' => $question,
+                'understanding' => $understanding->parsed_json,
+                'available_business_plugins' => $this->deepThinkBusinessPluginNames(),
+                'bootstrap_plugin' => 'Entity Resolver',
+                'extra_resolver' => 'Citation Resolver',
+                'explicit_literature_request' => $explicitLiterature,
+                'max_business_plugins' => 3,
+            ]),
+            $artifacts,
+            $emit,
+            $eventSequence,
+            $sessionId,
+            $requestId
+        );
+        if (!$planningNode->ok) {
+            return $this->failDeepThinkRun($base, 'Planning', $planningNode, $artifacts, $pluginResults, $emit, $eventSequence);
+        }
+        try {
+            $businessPlugins = $this->validateDeepThinkBusinessPlugins(
+                (array)($planningNode->parsed_json['business_plugins'] ?? []),
+                $explicitLiterature
             );
-            $pluginResults[$nextPlugin] = $result;
+        } catch (Throwable $error) {
+            return $this->failDeepThinkRun($base, 'Planning', $error->getMessage(), $artifacts, $pluginResults, $emit, $eventSequence);
+        }
+        $planning = [
+            'business_plugins' => $businessPlugins,
+            'citation_resolver_allowed' => (bool)($planningNode->parsed_json['citation_resolver_allowed'] ?? false),
+        ];
 
-            $remaining = $this->candidatePluginOrder($analysis, $pluginResults);
-            if ($remaining !== []) {
-                $this->emitReflection(
-                    $emit,
-                    $eventSequence,
-                    $sessionId,
-                    $narratorModel,
-                    $processLanguage,
-                    'I collected another evidence layer and will decide whether another plugin is still needed.',
-                    [
-                        'type' => 'reflection',
-                        'plugin_name' => $nextPlugin,
-                        'result' => [
-                            'status' => (string)($result['status'] ?? 'unknown'),
-                            'display_summary' => (string)($result['display_summary'] ?? ''),
-                            'result_counts' => (array)($result['result_counts'] ?? []),
-                        ],
-                        'remaining_candidates' => $remaining,
-                    ]
+        try {
+            $pluginResults['Entity Resolver'] = $this->runPlugin(
+                'Entity Resolver', $question, $analysis, $planning, $pluginResults, $model, $model,
+                $answerLanguage, $sessionId, $eventSequence, $detailCounter, $requestId, $emit, $reasoningTrace
+            );
+            $this->assertDeepThinkPluginSucceeded('Entity Resolver', $pluginResults['Entity Resolver']);
+        } catch (Throwable $error) {
+            return $this->failDeepThinkRun($base, 'Executing', $error->getMessage(), $artifacts, $pluginResults, $emit, $eventSequence);
+        }
+
+        $remaining = $businessPlugins;
+        for ($round = 0; $round <= count($businessPlugins); $round++) {
+            $executingNode = $this->runDeepThinkStage(
+                'Executing',
+                fn(): NodeLlmResult => $this->llm->runDeepThinkExecutingNode($model, $answerLanguage, [
+                    'question' => $question,
+                    'understanding' => $understanding->parsed_json,
+                    'planning' => $planningNode->parsed_json,
+                    'remaining_planned_plugins' => $remaining,
+                    'plugin_results' => $this->compressedPluginResults($pluginResults),
+                    'round' => $round + 1,
+                    'max_business_plugins' => 3,
+                ]),
+                $artifacts,
+                $emit,
+                $eventSequence,
+                $sessionId,
+                $requestId
+            );
+            if (!$executingNode->ok) {
+                return $this->failDeepThinkRun($base, 'Executing', $executingNode, $artifacts, $pluginResults, $emit, $eventSequence);
+            }
+            $decision = (array)$executingNode->parsed_json;
+            if ((bool)($decision['done'] ?? false)) {
+                break;
+            }
+            $nextPlugin = trim((string)($decision['next_plugin'] ?? ''));
+            if ($nextPlugin === '' || !in_array($nextPlugin, $remaining, true)) {
+                return $this->failDeepThinkRun($base, 'Executing', 'Executing selected a plugin outside the remaining validated plan.', $artifacts, $pluginResults, $emit, $eventSequence);
+            }
+            try {
+                $pluginResults[$nextPlugin] = $this->runPlugin(
+                    $nextPlugin, $question, $analysis, $planning, $pluginResults, $model, $model,
+                    $answerLanguage, $sessionId, $eventSequence, $detailCounter, $requestId, $emit, $reasoningTrace,
+                    (string)($decision['reason'] ?? '')
                 );
+                $this->assertDeepThinkPluginSucceeded($nextPlugin, $pluginResults[$nextPlugin]);
+            } catch (Throwable $error) {
+                return $this->failDeepThinkRun($base, 'Executing', $error->getMessage(), $artifacts, $pluginResults, $emit, $eventSequence);
+            }
+            $remaining = array_values(array_filter($remaining, static fn(string $name): bool => $name !== $nextPlugin));
+            if ($remaining === [] && $round === count($businessPlugins)) {
+                break;
             }
         }
 
-        if ($this->shouldRunCitationResolver($pluginResults) && !isset($pluginResults['Citation Resolver'])) {
-            $pluginResults['Citation Resolver'] = $this->runPlugin(
-                'Citation Resolver',
-                $question,
-                $analysis,
-                $planning,
-                $pluginResults,
-                $model,
-                $narratorModel,
-                $processLanguage,
-                $sessionId,
-                $eventSequence,
-                $detailCounter,
-                $requestId,
-                $emit,
-                $reasoningTrace,
-                'I will normalize the citation layer now so the final answer can cite stable records.'
-            );
+        if ($planning['citation_resolver_allowed'] && $this->shouldRunCitationResolver($pluginResults)) {
+            try {
+                $pluginResults['Citation Resolver'] = $this->runPlugin(
+                    'Citation Resolver', $question, $analysis, $planning, $pluginResults, $model, $model,
+                    $answerLanguage, $sessionId, $eventSequence, $detailCounter, $requestId, $emit, $reasoningTrace
+                );
+                $this->assertDeepThinkPluginSucceeded('Citation Resolver', $pluginResults['Citation Resolver']);
+            } catch (Throwable $error) {
+                return $this->failDeepThinkRun($base, 'Executing', $error->getMessage(), $artifacts, $pluginResults, $emit, $eventSequence);
+            }
         }
 
         $evidence = $this->aggregateEvidence($pluginResults);
         $citations = $this->aggregateCitations($pluginResults);
         $limits = $this->aggregateLimits($pluginResults, $evidence);
-        $confidence = $this->inferConfidence($pluginResults, $evidence, $citations);
-        $synthesizedEvidence = $this->buildSynthesizedEvidence($pluginResults, $evidence);
-
-        $this->emitEvent($emit, $eventSequence, [
-            'type' => 'synthesizing',
-            'session_id' => $sessionId,
-            'node' => 'Deep Think',
-            'source' => 'Deep Think',
-            'inputs_used' => ['plugin_results', 'evidence_bundle', 'citation_bundle'],
-            'outputs_changed' => ['supported_claims', 'answer'],
-            'message' => $this->narrateEvent(
-                $narratorModel,
-                $processLanguage,
-                [
-                    'type' => 'synthesizing',
-                    'plugin_results' => $this->compressedPluginResults($pluginResults),
-                    'evidence_count' => count($evidence),
-                    'citation_count' => count($citations),
-                ],
-                'I am now synthesizing the plugin results into a final answer.'
-            ),
-            'payload' => [
-                'synthesized_evidence' => $synthesizedEvidence,
-            ],
-        ]);
-
-        $writingStartedAt = microtime(true);
-        $answer = '';
-        $writingFailed = false;
-        $failureReason = '';
-        $deterministicAnswer = $this->buildDeterministicAnswer($question, $answerLanguage, $analysis, $pluginResults, $citations);
-        if ($deterministicAnswer !== null) {
-            $answer = $deterministicAnswer['body'];
-            $this->logDiagnostic($requestId, 'deepthink_answer_generation_started', [
-                'model' => 'deterministic+summary',
-                'path' => (string)($deterministicAnswer['path'] ?? 'deterministic'),
-                'intent' => (string)($analysis['intent'] ?? 'relationship'),
-            ]);
-            $summary = $this->writeDeterministicSummary(
-                $writingModel,
-                $answerLanguage,
-                $question,
-                $analysis,
-                $synthesizedEvidence,
-                $citations,
-                $confidence,
-                $limits,
-                (string)($deterministicAnswer['summary_hint'] ?? '')
-            );
-            if ($summary !== '') {
-                $answer .= ($answerLanguage === 'chinese' ? "\n\n简要总结：\n" : "\n\nSummary:\n") . $summary;
-            }
-        } else {
-            $this->logDiagnostic($requestId, 'deepthink_answer_generation_started', [
-                'model' => $writingModel,
-                'path' => 'direct_answer',
-                'intent' => (string)($analysis['intent'] ?? 'relationship'),
-            ]);
-            try {
-                $llm = $this->llm->writeDirectAnswer(
-                    $writingModel,
-                    $answerLanguage,
-                    $question,
-                    $this->analysisForWriting($analysis),
-                    $this->limitClaimTexts((array)($synthesizedEvidence['supported_claims'] ?? []), 6),
-                    $this->limitClaimTexts((array)($synthesizedEvidence['conflicting_claims'] ?? []), 3),
-                    $this->limitClaimTexts((array)($synthesizedEvidence['missing_evidence'] ?? []), 4),
-                    $this->lightweightCitations($citations, 8),
-                    $confidence,
-                    $limits,
-                    $this->extraWritingContext($question, $analysis, $pluginResults),
-                    $this->answerTimeoutForModel($runtimeConfig, $writingModel)
-                );
-            } catch (Throwable $error) {
-                $llm = [
-                    'ok' => false,
-                    'provider' => $this->inferProvider($writingModel),
-                    'model' => $writingModel,
-                    'content' => '',
-                    'error' => $error->getMessage(),
-                ];
-            }
-
-            if (($llm['ok'] ?? false) === true) {
-                $answer = trim((string)($llm['content'] ?? ''));
-            }
-            if ($answer === '') {
-                $writingFailed = true;
-                $failureReason = trim((string)($llm['error'] ?? 'The Deep Think writer did not return usable content.'));
-            }
+        $writing = $this->runDeepThinkStage(
+            'Writing',
+            fn(): NodeLlmResult => $this->llm->runDeepThinkWritingNode($model, $answerLanguage, [
+                'question' => $question,
+                'understanding' => $understanding->parsed_json,
+                'planning' => $planningNode->parsed_json,
+                'executing' => $artifacts['executing'],
+                'plugin_results' => $this->compressedPluginResults($pluginResults),
+                'evidence' => $evidence,
+                'citations' => $citations,
+                'limitations' => $limits,
+            ]),
+            $artifacts,
+            $emit,
+            $eventSequence,
+            $sessionId,
+            $requestId
+        );
+        if (!$writing->ok) {
+            return $this->failDeepThinkRun($base, 'Writing', $writing, $artifacts, $pluginResults, $emit, $eventSequence);
         }
-
-        $timings = [
-            'writing_ms' => (int)round((microtime(true) - $writingStartedAt) * 1000),
-        ];
-        $this->logDiagnostic($requestId, 'deepthink_answer_generation_completed', [
-            'writing_failed' => $writingFailed,
-            'answer_length' => tekg_agent_strlen($answer),
-            'timings' => $timings,
-        ]);
-
-        if ($writingFailed) {
-            $this->emitEvent($emit, $eventSequence, [
-                'type' => 'error',
-                'request_id' => $requestId,
-                'session_id' => $sessionId,
-                'node' => 'Deep Think',
-                'source' => 'Deep Think',
-                'message' => $failureReason !== '' ? $failureReason : 'The final writing step failed.',
-                'payload' => [
-                    'writing_failed' => true,
-                    'failure_stage' => 'Writing',
-                    'failure_reason' => $failureReason,
-                ],
-            ]);
-        } else {
-            $this->emitEvent($emit, $eventSequence, [
-                'type' => 'answer',
-                'request_id' => $requestId,
-                'session_id' => $sessionId,
-                'node' => 'Deep Think',
-                'source' => 'Deep Think',
-                'message' => $answer,
-                'language' => $answerLanguage,
-            ]);
+        $answer = trim((string)($writing->parsed_json['answer_markdown'] ?? ''));
+        if ($answer === '') {
+            return $this->failDeepThinkRun($base, 'Writing', 'Writing artifact answer_markdown is empty.', $artifacts, $pluginResults, $emit, $eventSequence);
         }
 
         $response = [
-            'question' => $question,
-            'mode' => 'deepthink',
-            'request_id' => $requestId,
-            'session_id' => $sessionId,
-            'language' => $answerLanguage,
-            'model' => $writingModel,
-            'models' => [
-                'reasoner' => $model,
-                'narrator' => $narratorModel,
-                'writer' => $writingModel,
-            ],
-            'analysis' => $analysis,
-            'answer' => $answer,
-            'writing_failed' => $writingFailed,
-            'failure_stage' => $writingFailed ? 'Writing' : '',
-            'failure_reason' => $failureReason,
-            'used_plugins' => array_values(array_keys($pluginResults)),
-            'plugin_calls' => array_values($pluginResults),
-            'evidence' => $evidence,
-            'citations' => $citations,
-            'synthesized_evidence' => $synthesizedEvidence,
-            'confidence' => $confidence,
-            'timings' => $timings,
+            'question' => $question, 'mode' => 'deepthink', 'request_id' => $requestId, 'session_id' => $sessionId,
+            'language' => $answerLanguage, 'model' => $model, 'models' => ['understanding' => $model, 'planning' => $model, 'executing' => $model, 'writing' => $model],
+            'failed' => false, 'writing_failed' => false, 'failure_stage' => '', 'failure_reason' => '', 'answer' => $answer,
+            'analysis' => $analysis, 'dt_artifacts' => $artifacts, 'used_plugins' => array_keys($pluginResults), 'plugin_calls' => array_values($pluginResults),
+            'evidence' => $evidence, 'citations' => $citations, 'limits' => $limits,
         ];
+        $this->emitEvent($emit, $eventSequence, ['type' => 'answer', 'request_id' => $requestId, 'session_id' => $sessionId, 'message' => $answer, 'language' => $answerLanguage]);
+        $this->emitEvent($emit, $eventSequence, ['type' => 'done', 'request_id' => $requestId, 'session_id' => $sessionId, 'payload' => $this->terminalPayload(false, false, '', '', $answer, $answerLanguage)]);
+        $this->logDiagnostic($requestId, 'deepthink_terminal_success', ['answer' => $answer, 'model' => $model]);
+        return $response;
+    }
 
-        $this->updateSessionMemory($sessionId, $analysis, $pluginResults, $citations);
-
+    private function runDeepThinkStage(
+        string $stage,
+        callable $runner,
+        array &$artifacts,
+        ?callable $emit,
+        int &$eventSequence,
+        string $sessionId,
+        string $requestId
+    ): NodeLlmResult {
+        $key = strtolower($stage);
+        $this->emitStageState($emit, $eventSequence, $sessionId, $requestId, $stage, 'started');
+        $result = $runner();
+        $artifact = [
+            'stage' => $stage,
+            'ok' => $result->ok,
+            'schema_version' => $result->schema_version,
+            'artifact' => $result->parsed_json,
+            'errors' => $result->errors,
+        ];
+        if ($key === 'executing') {
+            $artifacts[$key][] = $artifact;
+        } else {
+            $artifacts[$key] = $artifact;
+        }
         $this->emitEvent($emit, $eventSequence, [
-            'type' => 'done',
+            'type' => 'artifact',
             'request_id' => $requestId,
             'session_id' => $sessionId,
-            'node' => 'Deep Think',
-            'source' => 'Deep Think',
+            'node' => $stage,
+            'source' => $stage,
+            'payload' => $artifact,
+        ]);
+        $this->logDiagnostic($requestId, 'deepthink_stage_artifact', $artifact);
+        $this->emitStageState($emit, $eventSequence, $sessionId, $requestId, $stage, $result->ok ? 'completed' : 'failed');
+        return $result;
+    }
+
+    private function emitStageState(
+        ?callable $emit,
+        int &$eventSequence,
+        string $sessionId,
+        string $requestId,
+        string $stage,
+        string $status
+    ): void {
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'stage_state',
+            'request_id' => $requestId,
+            'session_id' => $sessionId,
+            'node' => $stage,
+            'source' => $stage,
             'payload' => [
-                'answer' => $answer,
-                'language' => $answerLanguage,
-                'writing_failed' => $writingFailed,
-                'failure_stage' => $response['failure_stage'],
-                'failure_reason' => $failureReason,
+                'current_stage' => $stage,
+                'status' => $status,
             ],
         ]);
+    }
 
-        return $response;
+    private function failDeepThinkRun(
+        array $base,
+        string $failureStage,
+        NodeLlmResult|string $failure,
+        array $artifacts,
+        array $pluginResults,
+        ?callable $emit,
+        int &$eventSequence
+    ): array {
+        $reason = is_string($failure)
+            ? trim($failure)
+            : trim(implode('; ', $failure->errors));
+        if ($reason === '') {
+            $reason = $failureStage . ' artifact failed.';
+        }
+        $writingFailed = $failureStage === 'Writing';
+        $payload = $this->terminalPayload(true, $writingFailed, $failureStage, $reason, '', (string)$base['answerLanguage']);
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'error',
+            'request_id' => (string)$base['requestId'],
+            'session_id' => (string)$base['sessionId'],
+            'node' => $failureStage,
+            'source' => $failureStage,
+            'message' => $reason,
+            'payload' => $payload,
+        ]);
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'done',
+            'request_id' => (string)$base['requestId'],
+            'session_id' => (string)$base['sessionId'],
+            'node' => $failureStage,
+            'source' => $failureStage,
+            'payload' => $payload,
+        ]);
+        $this->logDiagnostic((string)$base['requestId'], 'deepthink_terminal_failure', $payload);
+        return [
+            'question' => (string)$base['question'],
+            'mode' => 'deepthink',
+            'request_id' => (string)$base['requestId'],
+            'session_id' => (string)$base['sessionId'],
+            'language' => (string)$base['answerLanguage'],
+            'model' => (string)$base['model'],
+            'failed' => true,
+            'writing_failed' => $writingFailed,
+            'failure_stage' => $failureStage,
+            'failure_reason' => $reason,
+            'answer' => '',
+            'dt_artifacts' => $artifacts,
+            'used_plugins' => array_keys($pluginResults),
+            'plugin_calls' => array_values($pluginResults),
+        ];
+    }
+
+    private function terminalPayload(
+        bool $failed,
+        bool $writingFailed,
+        string $failureStage,
+        string $failureReason,
+        string $answer,
+        string $language
+    ): array {
+        return [
+            'failed' => $failed,
+            'writing_failed' => $writingFailed,
+            'failure_stage' => $failureStage,
+            'failure_reason' => $failureReason,
+            'answer' => $answer,
+            'language' => $language,
+        ];
+    }
+
+    private function analysisFromUnderstanding(array $artifact, string $question): array
+    {
+        $entities = array_values((array)($artifact['entities'] ?? []));
+        return [
+            'intent' => (string)($artifact['intent'] ?? 'relationship'),
+            'answer_language' => (string)($artifact['answer_language'] ?? 'en'),
+            'language' => (string)($artifact['answer_language'] ?? 'en'),
+            'normalized_entities' => $entities,
+            'alias_chains' => $entities,
+            'asks_for_papers' => $this->hasExplicitLiteratureRequest($question),
+        ];
+    }
+
+    private function deepThinkBusinessPluginNames(): array
+    {
+        return array_values(array_filter(
+            array_keys($this->plugins),
+            static fn(string $name): bool => !in_array($name, ['Entity Resolver', 'Citation Resolver'], true)
+        ));
+    }
+
+    private function validateDeepThinkBusinessPlugins(array $plugins, bool $explicitLiteratureRequest): array
+    {
+        $plugins = array_values(array_map(static fn($name): string => trim((string)$name), $plugins));
+        if (count($plugins) > 3) {
+            throw new RuntimeException('Planning selected more than three business plugins.');
+        }
+        if (count(array_unique($plugins)) !== count($plugins)) {
+            throw new RuntimeException('Planning selected a duplicate business plugin.');
+        }
+        $available = $this->deepThinkBusinessPluginNames();
+        foreach ($plugins as $plugin) {
+            if ($plugin === '' || !in_array($plugin, $available, true)) {
+                throw new RuntimeException('Planning selected an unknown or reserved business plugin: ' . $plugin);
+            }
+            if ($plugin === 'Literature Plugin' && !$explicitLiteratureRequest) {
+                throw new RuntimeException('Literature Plugin requires an explicit literature request.');
+            }
+        }
+        return $plugins;
+    }
+
+    private function hasExplicitLiteratureRequest(string $question): bool
+    {
+        $normalized = tekg_agent_lower($question);
+        foreach (['papers', 'literature', 'pubmed', 'citations', 'pmid', '文献', '论文', '引用'] as $needle) {
+            if (str_contains($normalized, tekg_agent_lower($needle))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function assertDeepThinkPluginSucceeded(string $pluginName, array $result): void
+    {
+        if ((string)($result['status'] ?? '') !== 'error') {
+            return;
+        }
+        $errors = array_values(array_filter(array_map(
+            static fn($error): string => trim((string)$error),
+            (array)($result['errors'] ?? [])
+        )));
+        $detail = $errors !== [] ? implode('; ', $errors) : 'Plugin returned status=error.';
+        throw new RuntimeException($pluginName . ' failed: ' . $detail);
     }
 
     private function runtimeConfig(array $payload, string $requestId): array
@@ -397,12 +450,17 @@ final class TekgDeepThinkService
 
     private function resolveModel(array $payload): string
     {
-        return trim((string)($payload['model'] ?? $this->config['deepseek_reasoner_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-reasoner'));
+        return 'deepseek-v4-flash';
     }
 
     private function resolveNarratorModel(array $payload, string $fallbackModel): string
     {
         return trim((string)($payload['narrator_model'] ?? $fallbackModel));
+    }
+
+    private function deterministicDiagnosticModel(array $deterministicAnswer): string
+    {
+        return (bool)($deterministicAnswer['summary_required'] ?? false) ? 'deterministic+summary' : 'deterministic';
     }
 
     private function resolveAnswerStructureModel(array $payload, array $analysis): string

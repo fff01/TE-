@@ -17,6 +17,27 @@ function tekg_agent_env_value(array $names, ?string $default = null): ?string
     return $default;
 }
 
+function tekg_agent_bool_value(mixed $value, bool $default = false): bool
+{
+    if (is_bool($value)) {
+        return $value;
+    }
+    if ($value === null) {
+        return $default;
+    }
+    $normalized = strtolower(trim((string)$value));
+    if ($normalized === '') {
+        return $default;
+    }
+    if (in_array($normalized, ['1', 'true', 'yes', 'on'], true)) {
+        return true;
+    }
+    if (in_array($normalized, ['0', 'false', 'no', 'off'], true)) {
+        return false;
+    }
+    return $default;
+}
+
 function tekg_agent_local_config(): array
 {
     return tekg_runtime_load_local_config();
@@ -69,17 +90,20 @@ function tekg_agent_config(): array
     }
     $local = tekg_agent_local_config();
     $neo4jConfig = tekg_runtime_neo4j_config($local);
+    $controlModel = trim((string)($local['agent_control_model'] ?? tekg_agent_env_value(['TEKG_AGENT_CONTROL_MODEL'], 'deepseek-v4-flash')));
     $config = [
         'dashscope_url' => trim((string)($local['dashscope_url'] ?? tekg_agent_env_value(['DASHSCOPE_API_URL_BIOLOGY', 'DASHSCOPE_API_URL'], 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'))),
         'dashscope_key' => trim((string)($local['dashscope_key'] ?? tekg_agent_env_value(['DASHSCOPE_API_KEY_BIOLOGY', 'DASHSCOPE_API_KEY'], ''))),
         'dashscope_model' => trim((string)($local['dashscope_model'] ?? tekg_agent_env_value(['DASHSCOPE_MODEL_BIOLOGY', 'DASHSCOPE_MODEL'], 'qwen3.5-35b-a3b'))),
+        'agent_control_model' => $controlModel,
         'agent_core_model' => trim((string)($local['agent_core_model'] ?? tekg_agent_env_value(['TEKG_AGENT_CORE_MODEL'], 'deepseek-v4-pro'))),
-        'agent_sufficiency_model' => trim((string)($local['agent_sufficiency_model'] ?? tekg_agent_env_value(['TEKG_AGENT_SUFFICIENCY_MODEL'], 'deepseek-v4-pro'))),
+        'agent_sufficiency_model' => trim((string)($local['agent_sufficiency_model'] ?? tekg_agent_env_value(['TEKG_AGENT_SUFFICIENCY_MODEL'], $controlModel))),
         'agent_expert_model' => trim((string)($local['agent_expert_model'] ?? tekg_agent_env_value(['TEKG_AGENT_EXPERT_MODEL'], 'deepseek-v4-pro'))),
-        'agent_narrator_model' => trim((string)($local['agent_narrator_model'] ?? tekg_agent_env_value(['TEKG_AGENT_NARRATOR_MODEL'], 'deepseek-v4-pro'))),
-        'agent_answer_structure_model' => trim((string)($local['agent_answer_structure_model'] ?? tekg_agent_env_value(['TEKG_AGENT_ANSWER_STRUCTURE_MODEL'], 'deepseek-v4-pro'))),
+        'agent_narrator_model' => trim((string)($local['agent_narrator_model'] ?? tekg_agent_env_value(['TEKG_AGENT_NARRATOR_MODEL'], $controlModel))),
+        'agent_answer_structure_model' => trim((string)($local['agent_answer_structure_model'] ?? tekg_agent_env_value(['TEKG_AGENT_ANSWER_STRUCTURE_MODEL'], $controlModel))),
         'agent_writing_model' => trim((string)($local['agent_writing_model'] ?? tekg_agent_env_value(['TEKG_AGENT_WRITING_MODEL'], 'deepseek-v4-pro'))),
-        'agent_polisher_model' => trim((string)($local['agent_polisher_model'] ?? tekg_agent_env_value(['TEKG_AGENT_POLISHER_MODEL'], 'deepseek-v4-pro'))),
+        'agent_polisher_model' => trim((string)($local['agent_polisher_model'] ?? tekg_agent_env_value(['TEKG_AGENT_POLISHER_MODEL'], $controlModel))),
+        'agent_polisher_enabled' => tekg_agent_bool_value($local['agent_polisher_enabled'] ?? tekg_agent_env_value(['TEKG_AGENT_POLISHER_ENABLED'], 'false'), false),
         'deepseek_url' => trim((string)($local['deepseek_url'] ?? tekg_agent_env_value(['DEEPSEEK_API_URL'], 'https://api.deepseek.com/v1/chat/completions'))),
         'deepseek_key' => trim((string)($local['deepseek_key'] ?? tekg_agent_env_value(['DEEPSEEK_API_KEY'], ''))),
         'deepseek_model' => trim((string)($local['deepseek_model'] ?? tekg_agent_env_value(['DEEPSEEK_MODEL'], 'deepseek-chat'))),

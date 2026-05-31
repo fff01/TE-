@@ -45,6 +45,22 @@ def main() -> None:
             )
             inspected = page.evaluate("() => window.__TEKG_PATH_FINDER_GRAPH_DEBUG.inspectFirstNode()")
             require(inspected is True, "Path Finder graph debug bridge should inspect the first node")
+            graph_debug_state = page.evaluate(
+                """
+                () => {
+                  const subgraph = window.__TEKG_PATH_FINDER_GRAPH_DEBUG.getVisibleSubgraph();
+                  const nodes = subgraph?.nodes || [];
+                  const highlighted = nodes.filter((node) => node.endpointHighlight === true);
+                  const minSize = nodes.reduce((value, node) => Math.min(value, Number(node.size || 0)), Infinity);
+                  return {
+                    nodeCount: nodes.length,
+                    edgeCount: subgraph?.edges?.length || 0,
+                    highlighted: highlighted.map((node) => ({ label: node.label, size: node.size })),
+                    minSize: Number.isFinite(minSize) ? minSize : 0,
+                  };
+                }
+                """
+            )
             node_action_state = page.evaluate(
                 """
                 () => ({
@@ -82,6 +98,11 @@ def main() -> None:
     require(state["showRelationsPressed"] == "true" and "On" in state["showRelationsText"], f"Show relations should default on: {state}")
     require(state["exportDisabled"] is False, f"Export should be enabled after graph render: {state}")
     require(state["canvasCount"] > 0, f"Graph surface should contain a G6 canvas: {state}")
+    require(graph_debug_state["nodeCount"] > 0, f"Graph should expose visible nodes: {graph_debug_state}")
+    require(graph_debug_state["edgeCount"] > 0, f"Graph should expose visible edges: {graph_debug_state}")
+    require(len(graph_debug_state["highlighted"]) == 2, f"Source and target should be highlighted: {graph_debug_state}")
+    require(all(node["size"] >= 104 for node in graph_debug_state["highlighted"]), f"Highlighted nodes should be enlarged: {graph_debug_state}")
+    require(graph_debug_state["minSize"] >= 72, f"Path Finder graph nodes should use enlarged minimum sizes: {graph_debug_state}")
     require(node_action_state["jumpCount"] == 0, f"Path Finder node card should not show Jump: {node_action_state}")
     require(node_action_state["expandCount"] == 0, f"Path Finder node card should not show Expand: {node_action_state}")
     require(node_action_state["detailCount"] > 0, f"Path Finder node card should still show Details: {node_action_state}")

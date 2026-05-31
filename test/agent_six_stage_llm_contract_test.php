@@ -28,6 +28,11 @@ function assert_contains_string(string $needle, string $haystack, string $messag
     assert_true(str_contains($haystack, $needle), $message . " missing {$needle}");
 }
 
+function assert_not_contains_string(string $needle, string $haystack, string $message): void
+{
+    assert_true(!str_contains($haystack, $needle), $message . " unexpectedly contained {$needle}");
+}
+
 if (!function_exists('tekg_agent_http_request')) {
     function tekg_agent_http_request(
         string $url,
@@ -52,10 +57,16 @@ if (!function_exists('tekg_agent_http_request')) {
         ];
 
         if (isset($GLOBALS['six_stage_contract_http_response_queue']) && is_array($GLOBALS['six_stage_contract_http_response_queue'])) {
-            $body = array_shift($GLOBALS['six_stage_contract_http_response_queue']);
+            $queued = array_shift($GLOBALS['six_stage_contract_http_response_queue']);
+            if (is_array($queued)) {
+                return [
+                    'status' => (int)($queued['status'] ?? 200),
+                    'body' => (string)($queued['body'] ?? ''),
+                ];
+            }
             return [
                 'status' => 200,
-                'body' => (string)$body,
+                'body' => (string)$queued,
             ];
         }
 
@@ -318,6 +329,7 @@ assert_same(true, $zhResult->ok, 'zh runner path validates relay JSON response')
 $capturedRequest = (array)($GLOBALS['six_stage_contract_http_request'] ?? []);
 $capturedPayload = json_decode((string)($capturedRequest['body'] ?? ''), true);
 assert_true(is_array($capturedPayload), 'zh runner sends JSON payload to relay');
+assert_same(20, $capturedPayload['timeout'] ?? null, 'relay payload includes effective timeout');
 $userPrompt = (string)($capturedPayload['messages'][1]['content'] ?? '');
 assert_contains_string('只返回 JSON。', $userPrompt, 'zh runner uses Chinese six-stage prompt');
 assert_contains_string('understanding_result.v1', $userPrompt, 'zh runner includes expected schema prompt');
@@ -351,5 +363,44 @@ $retryResult = $retryClient->runExecutingReviewNode('deepseek-v4-flash', 'en', [
 assert_same(true, $retryResult->ok, 'empty relay content is retried once and the retry result is used');
 assert_same(2, (int)($GLOBALS['six_stage_contract_http_request_count'] ?? 0), 'empty relay content retry performs exactly one extra request');
 unset($GLOBALS['six_stage_contract_http_response_queue'], $GLOBALS['six_stage_contract_http_request_count']);
+
+$secretRelayBody = 'upstream Authorization: Bearer sk-secret-relay-key ' . str_repeat('x', 900);
+$secretRelaySummary = 'summary Authorization: Bearer sk-secret-summary-key ' . str_repeat('y', 900);
+$GLOBALS['six_stage_contract_http_response_queue'] = [
+    [
+        'status' => 500,
+        'body' => json_encode([
+            'ok' => false,
+            'error_type' => 'upstream_http_error',
+            'upstream_status' => 429,
+            'error' => 'upstream rate limit from provider',
+            'upstream_body' => $secretRelayBody,
+            'upstream_body_summary' => $secretRelaySummary,
+            'upstream_body_truncated' => true,
+            'upstream_body_length' => 948,
+        ], JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR),
+    ],
+];
+$relayErrorClient = new TekgAgentLlmClient([
+    'llm_relay_url' => 'http://fixture-relay.local/chat?api_key=sk-secret-url-key',
+]);
+$relayErrorResult = $relayErrorClient->runUnderstandingNode('deepseek-v4-flash', 'en', [
+    'question' => 'How is LINE-1 related to cancer?',
+    'language' => 'english',
+]);
+$relayErrorText = implode("\n", $relayErrorResult->errors);
+assert_same(false, $relayErrorResult->ok, 'relay HTTP error fails the node');
+assert_contains_string('LLM provider returned HTTP 500', $relayErrorText, 'relay HTTP error keeps status');
+assert_contains_string('error_type=upstream_http_error', $relayErrorText, 'relay HTTP error includes error_type');
+assert_contains_string('upstream_status=429', $relayErrorText, 'relay HTTP error includes upstream_status');
+assert_contains_string('error=upstream rate limit from provider', $relayErrorText, 'relay HTTP error includes relay error text');
+assert_contains_string('upstream_body_summary=summary Authorization: [redacted]', $relayErrorText, 'relay HTTP error includes redacted upstream body summary');
+assert_contains_string('upstream_body_truncated=1', $relayErrorText, 'relay HTTP error includes upstream body truncated flag');
+assert_contains_string('upstream_body_length=948', $relayErrorText, 'relay HTTP error includes upstream body length');
+assert_not_contains_string('sk-secret-relay-key', $relayErrorText, 'relay HTTP error redacts API keys');
+assert_not_contains_string('sk-secret-summary-key', $relayErrorText, 'relay HTTP error redacts summary API keys');
+assert_not_contains_string('sk-secret-url-key', $relayErrorText, 'relay HTTP error redacts relay URL API keys');
+assert_true(strlen($relayErrorText) < 750, 'relay HTTP error detail is bounded');
+unset($GLOBALS['six_stage_contract_http_response_queue']);
 
 echo "Six-stage LLM contract tests passed.\n";

@@ -72,7 +72,13 @@ register_shutdown_function(static function () use (&$requestId, $emit): void {
     $emit([
         'type' => 'done',
         'request_id' => $requestId,
-        'payload' => ['failed' => true],
+        'payload' => [
+            'failed' => true,
+            'writing_failed' => false,
+            'failure_stage' => 'Endpoint',
+            'failure_reason' => 'The Deep Think request terminated unexpectedly before the final answer could be delivered.',
+            'answer' => '',
+        ],
     ]);
 });
 
@@ -108,6 +114,12 @@ try {
     $emit([
         'type' => 'done',
         'request_id' => $requestId,
-        'payload' => ['failed' => true],
+        'payload' => [
+            'failed' => true,
+            'writing_failed' => false,
+            'failure_stage' => 'Endpoint',
+            'failure_reason' => $error->getMessage(),
+            'answer' => '',
+        ],
     ]);
 }

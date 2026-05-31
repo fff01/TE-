@@ -54,6 +54,8 @@ assert_contains('tool_execution_review.v1', $serviceSource, 'AcademicAgentServic
 assert_contains('pluginResultForLlmReview', $serviceSource, 'AcademicAgentService sends compact plugin review payloads');
 assert_contains('$claimEvidenceMap = (array)$integratingNode->parsed_json;', $serviceSource, 'AcademicAgentService stores claimEvidenceMap from integrating node');
 assert_contains('$writingDecision = (array)$writingDecisionNode->parsed_json;', $serviceSource, 'AcademicAgentService stores writingDecision from writing node');
+assert_contains('fallbackUnderstandingNodeResult(', $serviceSource, 'AcademicAgentService can fallback from failed Understanding LLM');
+assert_contains('fallbackPlanningNodeResult(', $serviceSource, 'AcademicAgentService can fallback from failed Planning LLM');
 assert_call_uses_arguments($serviceSource, '->writeEvidenceWalkDraft(', ['$claimEvidenceMap', '$writingDecision'], 'Draft writer call receives claim map and writing decision');
 assert_call_uses_arguments($serviceSource, '->polishEvidenceWalkAnswer(', ['$claimEvidenceMap', '$writingDecision'], 'Polisher call receives claim map and writing decision');
 
@@ -69,34 +71,64 @@ $badUnderstandingFixture = [
     'warnings' => [],
 ];
 
-$service = new TekgAcademicAgentService([
-    'agent_test_mode' => true,
-    'deepseek_model' => 'fixture-model',
-    'deepseek_reasoner_model' => 'fixture-model',
-    'agent_writing_model' => 'fixture-model',
-    'six_stage_node_fixtures' => [
-        'understanding' => $badUnderstandingFixture,
+$service = new TekgAcademicAgentService(['agent_test_mode' => true]);
+$reflection = new ReflectionClass($service);
+assert_true($reflection->hasMethod('fallbackUnderstandingNodeResult'), 'AcademicAgentService exposes Understanding fallback builder');
+assert_true($reflection->hasMethod('fallbackPlanningNodeResult'), 'AcademicAgentService exposes Planning fallback builder');
+
+$understandingFallbackMethod = $reflection->getMethod('fallbackUnderstandingNodeResult');
+$planningFallbackMethod = $reflection->getMethod('fallbackPlanningNodeResult');
+
+$failedUnderstanding = new NodeLlmResult(
+    'understanding',
+    '',
+    null,
+    false,
+    ['llm: stage=understanding provider=deepseek model=deepseek-v4-pro: Relay timed out.'],
+    'understanding_result.v1'
+);
+$deterministicAnalysis = [
+    'intent' => 'mechanism',
+    'answer_language' => 'english',
+    'normalized_entities' => [
+        ['canonical_label' => 'LINE-1', 'type' => 'transposable_element'],
     ],
-]);
+];
+$understandingFallback = $understandingFallbackMethod->invoke(
+    $service,
+    'How can LINE-1 contribute to disease?',
+    'english',
+    $deterministicAnalysis,
+    $failedUnderstanding
+);
+assert_true($understandingFallback instanceof NodeLlmResult, 'Understanding fallback returns NodeLlmResult');
+assert_same(true, $understandingFallback->ok, 'Understanding fallback is accepted as conservative success');
+assert_same('understanding_result.v1', $understandingFallback->schema_version, 'Understanding fallback keeps schema contract');
+assert_same('mechanism', (string)($understandingFallback->parsed_json['intent'] ?? ''), 'Understanding fallback preserves normalizer intent');
+assert_true(in_array('llm_unavailable_conservative_fallback', (array)($understandingFallback->parsed_json['warnings'] ?? []), true), 'Understanding fallback records warning');
 
-$events = [];
-$response = $service->stream([
-    'question' => 'Please produce a graph ranking of transposable element disease associations and explain the evidence.',
-    'language' => 'english',
-    'request_id' => 'six-stage-runtime-bad-fixture',
-    'session_id' => 'six-stage-runtime-bad-fixture-session',
-], static function (array $event) use (&$events): void {
-    $events[] = $event;
-});
-
-assert_same(true, (bool)($response['writing_failed'] ?? false), 'Bad required understanding artifact fails the run');
-assert_same('Understanding', (string)($response['failure_stage'] ?? ''), 'Failure stage identifies Understanding');
-assert_true(isset($response['six_stage_artifacts']['understanding']), 'Response records understanding artifact state');
-assert_same(false, (bool)($response['six_stage_artifacts']['understanding']['ok'] ?? true), 'Bad understanding artifact is recorded as ok=false');
-assert_true((array)($response['six_stage_artifacts']['understanding']['errors'] ?? []) !== [], 'Bad understanding artifact exposes validation errors');
-
-$eventTypes = array_map(static fn(array $event): string => (string)($event['type'] ?? ''), $events);
-assert_true(in_array('node_llm_error', $eventTypes, true), 'Bad required artifact emits node_llm_error');
-assert_true(!in_array('tool_selected', $eventTypes, true), 'Run stops before plugin execution after required node failure');
+$failedPlanning = new NodeLlmResult(
+    'planning',
+    '',
+    null,
+    false,
+    ['llm: stage=planning provider=deepseek model=deepseek-v4-pro: Relay returned an empty response.'],
+    'research_plan.v1'
+);
+$deterministicPlan = [
+    'summary' => 'Question: How can LINE-1 contribute to disease?; intent=mechanism',
+    'required_evidence' => ['structured relations', 'mechanism literature'],
+    'knowledge_gaps' => [],
+];
+$planningFallback = $planningFallbackMethod->invoke(
+    $service,
+    $deterministicPlan,
+    ['Entity Resolver', 'Graph Plugin', 'Literature Plugin'],
+    $failedPlanning
+);
+assert_true($planningFallback instanceof NodeLlmResult, 'Planning fallback returns NodeLlmResult');
+assert_same(true, $planningFallback->ok, 'Planning fallback is accepted as conservative success');
+assert_same('research_plan.v1', $planningFallback->schema_version, 'Planning fallback keeps schema contract');
+assert_true(in_array('llm_unavailable_conservative_fallback', (array)($planningFallback->parsed_json['risks'] ?? []), true), 'Planning fallback records risk');
 
 echo "Six-stage runtime tests passed.\n";

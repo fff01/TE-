@@ -19,6 +19,7 @@
   }
 
   const ui = config.ui || {};
+  const deepThinkClient = window.TEKGDeepThinkClient || {};
   const storageKey = 'tekg-academic-agent-session';
 
   const app = document.getElementById('agentApp');
@@ -692,10 +693,15 @@
       receivedAnswer: false,
       receivedDone: false,
       writingFailed: false,
+      failed: false,
       failureReason: '',
       mode,
       currentStage: initialStage,
       workflow: showWorkflow ? defaultWorkflowState() : null,
+      streamState: mode === 'deepthink' && typeof deepThinkClient.createStreamState === 'function'
+        ? deepThinkClient.createStreamState()
+        : null,
+      progressNode: null,
     };
     turnStore.set(turnId, turn);
     if (showWorkflow) {
@@ -798,6 +804,76 @@
     if (!turn || !stage) return;
     turn.currentStage = String(stage);
     updateThinkingMeta(turn, false);
+  }
+
+  function applyDeepThinkStreamState(turn, event) {
+    if (!turn || typeof deepThinkClient.reduceStreamEvent !== 'function') return null;
+    turn.streamState = deepThinkClient.reduceStreamEvent(turn.streamState, event);
+    if (turn.streamState.progressVisible && !turn.progressNode && typeof deepThinkClient.createProgressMarkup === 'function') {
+      const thinkingBody = turn.node.querySelector('[data-role="thinking-body"]');
+      if (thinkingBody) {
+        thinkingBody.insertAdjacentHTML('beforebegin', deepThinkClient.createProgressMarkup('agent-deepthink-progress'));
+        turn.progressNode = turn.node.querySelector('[data-role="deepthink-progress"]');
+      }
+    }
+    if (turn.progressNode && typeof deepThinkClient.applyProgressState === 'function') {
+      deepThinkClient.applyProgressState(turn.progressNode, turn.streamState);
+    }
+    if (turn.streamState.stage) setTurnStage(turn, turn.streamState.stage);
+    return turn.streamState;
+  }
+
+  function handleDeepThinkStreamEvent(turn, event) {
+    const streamState = applyDeepThinkStreamState(turn, event);
+
+    if (event.type === 'analysis' || event.type === 'planning' || event.type === 'planning_step'
+      || event.type === 'tool_progress' || event.type === 'reflection' || event.type === 'synthesizing') {
+      if (event.message) createThinkingLine(turn, String(event.message), 'bullet');
+      return;
+    }
+    if (event.type === 'tool_selected' || event.type === 'tool_start') {
+      if (event.message) createThinkingLine(turn, String(event.message), 'bullet');
+      return;
+    }
+    if (event.type === 'tool_result') {
+      createToolEvent(turn, event);
+      if (event.message) createThinkingLine(turn, String(event.message), 'bullet');
+      return;
+    }
+    if (event.type === 'answer') {
+      if (!streamState || !streamState.renderAnswer) return;
+      turn.receivedAnswer = true;
+      turn.pendingAnswer = streamState.answer;
+      setAnswer(turn, streamState.answer, String(event.language || turn.language || 'en'));
+      return;
+    }
+    if (event.type === 'error') {
+      turn.failed = true;
+      turn.writingFailed = true;
+      turn.failureReason = String(event.payload?.failure_reason || event.message || 'The request failed.');
+      if (!streamState || streamState.appendError) {
+        createThinkingLine(turn, turn.failureReason, 'error');
+      }
+      return;
+    }
+    if (event.type === 'heartbeat') {
+      updateThinkingMeta(turn, false);
+      return;
+    }
+    if (event.type === 'done') {
+      turn.receivedDone = true;
+      const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+      turn.failed = !!(streamState && streamState.failed);
+      turn.writingFailed = turn.failed;
+      turn.failureReason = String(payload.failure_reason || turn.failureReason || '');
+      if (streamState && streamState.renderAnswer) {
+        turn.pendingAnswer = streamState.answer;
+        setAnswer(turn, streamState.answer, String(payload.language || turn.language || 'en'));
+      } else if (turn.failed) {
+        setAnswerFailure(turn, turn.failureReason || 'Deep Think failed before a final answer was emitted.');
+      }
+      finalizeTurn(turn);
+    }
   }
 
   function setAnswer(turn, markdown, language) {
@@ -1100,6 +1176,11 @@
 
   function handleStreamEvent(turn, event) {
     if (!event || typeof event !== 'object') return;
+
+    if (turn.mode === 'deepthink') {
+      handleDeepThinkStreamEvent(turn, event);
+      return;
+    }
 
     if (event.type === 'stage_state') {
       if (turn.workflow) {

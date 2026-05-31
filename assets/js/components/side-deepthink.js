@@ -447,6 +447,20 @@
     return node;
   }
 
+  function applyStreamState(turn, event) {
+    if (!turn || typeof deepThinkClient.reduceStreamEvent !== 'function') return null;
+    turn.streamState = deepThinkClient.reduceStreamEvent(turn.streamState, event);
+    if (turn.streamState.progressVisible && !turn.progressNode && typeof deepThinkClient.createProgressMarkup === 'function') {
+      turn.progressNode = createMessage('progress', deepThinkClient.createProgressMarkup(), true)
+        .querySelector('[data-role="deepthink-progress"]');
+    }
+    if (turn.progressNode && typeof deepThinkClient.applyProgressState === 'function') {
+      deepThinkClient.applyProgressState(turn.progressNode, turn.streamState);
+    }
+    if (turn.streamState.stage) setTurnStage(turn, turn.streamState.stage.toLowerCase());
+    return turn.streamState;
+  }
+
   function parseStreamChunk(chunk) {
     return typeof deepThinkClient.parseStreamChunk === 'function' ? deepThinkClient.parseStreamChunk(chunk) : null;
   }
@@ -470,6 +484,7 @@
 
   function handleStreamEvent(turn, event) {
     if (!event || typeof event !== 'object') return;
+    const streamState = applyStreamState(turn, event);
     if (event.request_id) turn.requestId = String(event.request_id);
     if (event.session_id) {
       sessionId = String(event.session_id);
@@ -478,49 +493,45 @@
       } catch (_error) {}
     }
 
-    if (event.type === 'analysis') {
-      setTurnStage(turn, 'understanding');
-      return;
-    }
-    if (event.type === 'planning' || event.type === 'planning_step') {
-      setTurnStage(turn, 'planning');
+    if (event.type === 'stage_state') {
       return;
     }
     if (event.type === 'tool_selected' || event.type === 'tool_start') {
-      setTurnStage(turn, 'executing');
       return;
     }
     if (event.type === 'tool_result') {
-      setTurnStage(turn, 'executing');
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       mergeTurnCitations(turn, payload.citations || payload.display_details?.citations || []);
       return;
     }
-    if (event.type === 'reflection' || event.type === 'synthesizing') {
-      setTurnStage(turn, event.type === 'synthesizing' ? 'integrating' : 'collecting');
-      return;
-    }
     if (event.type === 'answer') {
-      setTurnStage(turn, 'writing');
-      turn.answer = String(event.message || '');
-      createAnswerMessage(turn, turn.answer);
+      if (!streamState || !streamState.renderAnswer) return;
+      turn.answer = streamState.answer;
+      turn.answerNode = createAnswerMessage(turn, streamState.answer);
       return;
     }
     if (event.type === 'error') {
       turn.failed = true;
-      createMessage('error', String(event.message || 'Deep Think failed.'));
-      stopTurnTimer(turn, 'failed');
+      if (!streamState || streamState.appendError) {
+        createMessage('error', String(event.message || 'Deep Think failed.'));
+      }
       return;
     }
     if (event.type === 'done') {
       turn.done = true;
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
-      if (!turn.answer && payload.answer) {
-        turn.answer = String(payload.answer || '');
+      turn.failed = !!(streamState && streamState.failed);
+      if (turn.failed && turn.answerNode) {
+        turn.answerNode.remove();
+        turn.answerNode = null;
+        turn.answer = '';
+      }
+      if (streamState && streamState.renderAnswer) {
+        turn.answer = streamState.answer;
         if (Array.isArray(payload.citations)) {
           mergeTurnCitations(turn, payload.citations);
         }
-        createAnswerMessage(turn, turn.answer);
+        turn.answerNode = createAnswerMessage(turn, turn.answer);
       }
       stopTurnTimer(turn, turn.failed ? 'failed' : 'done');
     }
@@ -537,6 +548,9 @@
       done: false,
       failed: false,
       citations: [],
+      streamState: typeof deepThinkClient.createStreamState === 'function' ? deepThinkClient.createStreamState() : null,
+      progressNode: null,
+      answerNode: null,
       stage: 'starting',
       startedAt: performance.now ? performance.now() : Date.now(),
       timerId: null,

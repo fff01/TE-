@@ -201,7 +201,102 @@
     return `${Math.max(0, ms / 1000).toFixed(1)}s`;
   }
 
+  const DEEPTHINK_STAGES = ['Understanding', 'Planning', 'Executing', 'Writing'];
+
+  function normalizeDeepThinkStage(stage) {
+    const key = String(stage || '').trim().toLowerCase();
+    return DEEPTHINK_STAGES.find((candidate) => candidate.toLowerCase() === key) || '';
+  }
+
+  function createStreamState() {
+    return {
+      stage: '',
+      progressVisible: false,
+      answer: '',
+      failed: false,
+      done: false,
+      errorShown: false,
+      appendError: false,
+      renderAnswer: false,
+      stopTimer: false,
+    };
+  }
+
+  function reduceStreamEvent(previousState, event) {
+    const state = {
+      ...createStreamState(),
+      ...(previousState && typeof previousState === 'object' ? previousState : {}),
+      appendError: false,
+      renderAnswer: false,
+      stopTimer: false,
+    };
+    if (!event || typeof event !== 'object') return state;
+    const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+
+    if (event.type === 'stage_state') {
+      const nextStage = normalizeDeepThinkStage(payload.current_stage || payload.stage);
+      state.progressVisible = true;
+      if (nextStage) state.stage = nextStage;
+      return state;
+    }
+
+    if (event.type === 'error') {
+      state.failed = true;
+      state.appendError = !state.errorShown;
+      state.errorShown = true;
+      return state;
+    }
+
+    if (event.type === 'answer') {
+      if (state.failed) return state;
+      state.answer = String(event.message || '');
+      state.renderAnswer = !!state.answer;
+      return state;
+    }
+
+    if (event.type === 'done') {
+      state.done = true;
+      state.stopTimer = true;
+      state.failed = state.failed || payload.failed === true || payload.writing_failed === true;
+      if (state.failed) {
+        state.answer = '';
+        return state;
+      }
+      if (!state.answer && payload.answer) {
+        state.answer = String(payload.answer || '');
+        state.renderAnswer = !!state.answer;
+      }
+    }
+
+    return state;
+  }
+
+  function createProgressMarkup(className = 'deepthink-progress') {
+    return `
+      <div class="${escapeHtml(className)}" data-role="deepthink-progress" hidden>
+        ${DEEPTHINK_STAGES.map((stage, index) => `
+          <div class="deepthink-progress-stage" data-deepthink-stage="${escapeHtml(stage)}">
+            <span class="deepthink-progress-number">${index + 1}</span>
+            <span class="deepthink-progress-label">${escapeHtml(stage)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function applyProgressState(progressNode, state) {
+    if (!progressNode || !state) return;
+    progressNode.hidden = !state.progressVisible;
+    const currentIndex = DEEPTHINK_STAGES.indexOf(state.stage);
+    progressNode.querySelectorAll('[data-deepthink-stage]').forEach((node, index) => {
+      node.classList.toggle('is-active', index === currentIndex);
+      node.classList.toggle('is-done', currentIndex > index);
+      node.classList.toggle('is-failed', state.failed && index === currentIndex);
+    });
+  }
+
   window.TEKGDeepThinkClient = {
+    DEEPTHINK_STAGES,
     escapeHtml,
     renderMarkdown,
     normalizeCitationTitle,
@@ -212,5 +307,9 @@
     parseStreamChunk,
     readEventStream,
     formatElapsed,
+    createStreamState,
+    reduceStreamEvent,
+    createProgressMarkup,
+    applyProgressState,
   };
 })();

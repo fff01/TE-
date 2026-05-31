@@ -342,16 +342,30 @@
     const elements = buildGraphElements(currentPayload);
     const source = nodeLabel(currentPayload.source || {});
     const target = nodeLabel(currentPayload.target || {});
+    const endpointHighlightIds = uniqueStringArray([
+      graphNodeId(currentPayload.source || {}),
+      graphNodeId(currentPayload.target || {}),
+    ]);
     await ensureGraphRunner();
     await graphRunner.renderElements(elements, { query: `${source} to ${target}` }, {
       skipInitialStatus: true,
       graphDataOptions: {
-        showAllLabels: graphShowNames,
-        showEdgeLabels: graphShowRelations,
-        allowInspectCard: true,
-        allowNodeActions: false,
-        restrictToAnchorComponent: false,
-        forceAnchorLabel: true,
+        showAllLabels: graphShowNames, // 含义：是否显示节点名称。TE-KG default: controlled by Show names, initially false.
+        showEdgeLabels: graphShowRelations, // 含义：是否显示边上的关系名称。TE-KG default: controlled by Show relations, initially false.
+        allowInspectCard: true, // 含义：是否允许点击节点/边后显示详情卡片。TE-KG default: true.
+        allowNodeActions: false, // 含义：是否允许节点卡片里的 Jump/Expand 按钮。TE-KG default: true; Path Finder disables Jump/Expand.
+        restrictToAnchorComponent: false, // 含义：过滤后是否只保留与 anchor 连通的组件。TE-KG default: true.
+        forceAnchorLabel: true, // 含义：是否强制显示第一个/anchor 节点标签。TE-KG default: false.
+        preferFullLabels: true, // 含义：是否优先显示完整节点名，而不是为了塞进圆里而截断。TE-KG default: false.
+        endpointHighlightIds, // 含义：需要 source/target ripple 高光的节点 id。TE-KG default: [].
+        nodeSizeScale: 1.5, // 含义：所有节点直径的整体倍率。TE-KG default: 1.
+        nodeMinSize: 50, // 含义：普通节点最小直径。TE-KG default: 0.
+        endpointNodeMinSize: 0, // 含义：搜索起点/终点节点的最小直径。TE-KG default: 0.
+        layoutDistanceScale: 3, // 含义：边/连接的理想长度倍率；越大节点越分散。TE-KG default: 1.
+        collisionPaddingScale: 8, // 含义：节点碰撞安全距离倍率；越大越不容易重叠。TE-KG default: 1.
+        collisionIterations: 52, // 含义：碰撞计算迭代次数；越大越努力分开节点，但更耗时。TE-KG default: 16.
+        chargeScale: 4, // 含义：节点之间排斥力倍率；越大整体越向外散开。TE-KG default: 1.
+        edgeLabelFontSize: 15, // 含义：边上关系名称的字体大小。TE-KG default: 9.
       },
     });
     updateGraphDebugBridge();

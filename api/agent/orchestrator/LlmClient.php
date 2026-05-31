@@ -6,6 +6,9 @@ require_once __DIR__ . '/../contracts/NodeLlmResult.php';
 
 final class TekgAgentLlmClient
 {
+    /** @var array<string,int> */
+    private array $deepThinkFixtureOffsets = [];
+
     public function __construct(private readonly array $config)
     {
     }
@@ -216,6 +219,116 @@ final class TekgAgentLlmClient
     public function runWritingDecisionNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
     {
         return $this->runSixStageNode('writing', $model, $language, $payload, $timeout);
+    }
+
+    public function runDeepThinkNode(string $stage, string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        $stage = strtolower(trim($stage));
+        $schemas = require __DIR__ . '/../config/dt_node_schemas.php';
+        $schema = $schemas[$stage] ?? null;
+        if (!is_array($schema)) {
+            return new NodeLlmResult($stage, '', null, false, ["stage: unknown DT node {$stage}"], null);
+        }
+
+        $fixture = $this->deepThinkFixture($stage);
+        if ($fixture !== null) {
+            return NodeLlmResult::fromRawJson($stage, $fixture, $schema);
+        }
+
+        $provider = $this->inferProvider($model);
+        if (!$this->canCallModel($provider)) {
+            return new NodeLlmResult(
+                $stage,
+                '',
+                null,
+                false,
+                [$this->sixStageErrorContext($stage, $provider, $model, 'provider credentials are missing')],
+                (string)($schema['version'] ?? '')
+            );
+        }
+
+        $prompts = require __DIR__ . '/../config/dt_node_prompts.php';
+        $languageKey = TekgAgentPromptLibrary::normalizeLanguage($language) === 'chinese' ? 'zh' : 'en';
+        $messages = [
+            ['role' => 'system', 'content' => $this->jsonSystemPrompt($language)],
+            ['role' => 'user', 'content' => (string)($prompts[$stage][$languageKey] ?? $prompts[$stage]['en'] ?? '')
+                . "\n\n"
+                . json_encode(['stage' => $stage, 'expected_schema' => $schema, 'input_payload' => $payload], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)],
+        ];
+
+        try {
+            $effectiveTimeout = $timeout ?? (int)($this->config['llm_json_timeout'] ?? 20);
+            $response = !empty($this->config['llm_relay_url'])
+                ? $this->callRelay($provider, $model, $messages, false, $effectiveTimeout, 'dt_' . $stage, false)
+                : $this->callProvider($provider, $model, $messages, false, $effectiveTimeout, 'dt_' . $stage, false);
+        } catch (Throwable $e) {
+            return new NodeLlmResult(
+                $stage,
+                '',
+                null,
+                false,
+                [$this->sixStageErrorContext($stage, $provider, $model, $e->getMessage())],
+                (string)($schema['version'] ?? '')
+            );
+        }
+
+        $rawText = trim((string)($response['content'] ?? ''));
+        if ($rawText === '') {
+            return new NodeLlmResult(
+                $stage,
+                '',
+                null,
+                false,
+                [$this->sixStageErrorContext($stage, $provider, $model, (string)($response['error'] ?? 'empty response'))],
+                (string)($schema['version'] ?? '')
+            );
+        }
+
+        return NodeLlmResult::fromRawJson($stage, $rawText, $schema);
+    }
+
+    public function runDeepThinkUnderstandingNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runDeepThinkNode('understanding', $model, $language, $payload, $timeout);
+    }
+
+    public function runDeepThinkPlanningNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runDeepThinkNode('planning', $model, $language, $payload, $timeout);
+    }
+
+    public function runDeepThinkExecutingNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runDeepThinkNode('executing', $model, $language, $payload, $timeout);
+    }
+
+    public function runDeepThinkWritingNode(string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
+    {
+        return $this->runDeepThinkNode('writing', $model, $language, $payload, $timeout);
+    }
+
+    private function deepThinkFixture(string $stage): ?string
+    {
+        if (!(bool)($this->config['agent_test_mode'] ?? false)) {
+            return null;
+        }
+        $fixtures = $this->config['dt_node_fixtures'] ?? [];
+        if (!is_array($fixtures) || !array_key_exists($stage, $fixtures)) {
+            return null;
+        }
+        $fixture = $fixtures[$stage];
+        if (is_array($fixture) && array_is_list($fixture)) {
+            $offset = $this->deepThinkFixtureOffsets[$stage] ?? 0;
+            $fixture = $fixture[$offset] ?? null;
+            $this->deepThinkFixtureOffsets[$stage] = $offset + 1;
+        }
+        if (is_string($fixture)) {
+            return $fixture;
+        }
+        if (is_array($fixture)) {
+            return json_encode($fixture, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: null;
+        }
+        return null;
     }
 
     public function assessSufficiency(string $model, array $payload, ?int $timeout = null): ?array
@@ -522,7 +635,7 @@ final class TekgAgentLlmClient
 
         $context = "llm: stage={$stage} provider={$provider} model={$model}: {$detail}";
         if (!empty($this->config['llm_relay_url'])) {
-            $context .= ' relay=' . (string)$this->config['llm_relay_url'];
+            $context .= ' relay=' . $this->redactHttpErrorSecrets((string)$this->config['llm_relay_url']);
         }
         return $context;
     }
@@ -732,7 +845,8 @@ final class TekgAgentLlmClient
         array $messages,
         bool $enableThinking = true,
         int $timeout = 90,
-        string $stage = 'llm'
+        string $stage = 'llm',
+        bool $retryEmptyContent = true
     ): array
     {
         $payload = [
@@ -741,11 +855,12 @@ final class TekgAgentLlmClient
             'messages' => $messages,
             'temperature' => 0.2,
             'enable_thinking' => $enableThinking,
+            'timeout' => $timeout,
         ];
         $decoded = $this->httpJson((string)$this->config['llm_relay_url'], $payload, [], $timeout, $stage);
         $response = $decoded['response'] ?? [];
         $content = (string)($response['choices'][0]['message']['content'] ?? '');
-        if (trim($content) === '') {
+        if ($retryEmptyContent && trim($content) === '') {
             $this->backoffBeforeEmptyContentRetry();
             $decoded = $this->httpJson((string)$this->config['llm_relay_url'], $payload, [], $timeout, $stage);
             $response = $decoded['response'] ?? [];
@@ -767,7 +882,8 @@ final class TekgAgentLlmClient
         array $messages,
         bool $enableThinking = true,
         int $timeout = 90,
-        string $stage = 'llm'
+        string $stage = 'llm',
+        bool $retryEmptyContent = true
     ): array
     {
         $url = $provider === 'qwen' ? (string)($this->config['dashscope_url'] ?? '') : (string)($this->config['deepseek_url'] ?? '');
@@ -786,7 +902,7 @@ final class TekgAgentLlmClient
         ], $timeout, $stage);
 
         $content = (string)($decoded['choices'][0]['message']['content'] ?? '');
-        if (trim($content) === '') {
+        if ($retryEmptyContent && trim($content) === '') {
             $this->backoffBeforeEmptyContentRetry();
             $decoded = $this->httpJson($url, [
                 'model' => $model,
@@ -838,13 +954,75 @@ final class TekgAgentLlmClient
             trim((string)($this->config['request_id'] ?? '')) !== '' ? (string)$this->config['request_id'] : null,
             'llm_' . $stage
         );
-        $decoded = json_decode((string)$response['body'], true);
+        $rawBody = (string)$response['body'];
+        $decoded = json_decode($rawBody, true);
         if (!is_array($decoded)) {
+            if ((int)$response['status'] >= 400) {
+                throw new RuntimeException('LLM provider returned HTTP ' . (int)$response['status'] . ': ' . $this->summarizeRawHttpErrorBody($rawBody));
+            }
             throw new RuntimeException('LLM provider returned invalid JSON.');
         }
         if ((int)$response['status'] >= 400) {
-            throw new RuntimeException('LLM provider returned HTTP ' . (int)$response['status']);
+            throw new RuntimeException('LLM provider returned HTTP ' . (int)$response['status'] . $this->formatHttpErrorDetail($decoded, $rawBody));
         }
         return $decoded;
+    }
+
+    private function formatHttpErrorDetail(array $decoded, string $rawBody): string
+    {
+        $parts = [];
+        foreach (['error_type', 'upstream_status', 'upstream_error', 'upstream_message', 'error', 'message', 'detail', 'upstream_body_summary', 'upstream_body_truncated', 'upstream_body_length', 'upstream_body'] as $key) {
+            if (!array_key_exists($key, $decoded)) {
+                continue;
+            }
+            $value = $this->stringifyHttpErrorValue($decoded[$key]);
+            if ($value === '') {
+                continue;
+            }
+            $limit = ($key === 'upstream_body' || $key === 'upstream_body_summary') ? 180 : 120;
+            $parts[] = $key . '=' . $this->truncateHttpErrorText($this->redactHttpErrorSecrets($value), $limit);
+        }
+
+        if ($parts === []) {
+            $parts[] = 'body=' . $this->summarizeRawHttpErrorBody($rawBody);
+        }
+
+        return ': ' . $this->truncateHttpErrorText(implode(' ', $parts), 520);
+    }
+
+    private function stringifyHttpErrorValue(mixed $value): string
+    {
+        if (is_scalar($value) || $value === null) {
+            return trim((string)$value);
+        }
+
+        $encoded = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return is_string($encoded) ? trim($encoded) : '';
+    }
+
+    private function summarizeRawHttpErrorBody(string $body): string
+    {
+        $summary = trim($body);
+        if ($summary === '') {
+            return 'empty response body';
+        }
+        return $this->truncateHttpErrorText($this->redactHttpErrorSecrets($summary), 360);
+    }
+
+    private function redactHttpErrorSecrets(string $text): string
+    {
+        $text = preg_replace('/Bearer\s+[A-Za-z0-9._~+\/=-]+/i', 'Bearer [redacted]', $text) ?? $text;
+        $text = preg_replace('/sk-[A-Za-z0-9._-]{8,}/i', 'sk-[redacted]', $text) ?? $text;
+        $text = preg_replace('/((?:api[_-]?key|access[_-]?token|authorization|dashscope[_-]?key|deepseek[_-]?key)\s*["\']?\s*[:=]\s*["\']?)[^"\'\s,}]+/i', '$1[redacted]', $text) ?? $text;
+        return $text;
+    }
+
+    private function truncateHttpErrorText(string $text, int $limit): string
+    {
+        $normalized = trim((string)preg_replace('/\s+/', ' ', $text));
+        if (strlen($normalized) <= $limit) {
+            return $normalized;
+        }
+        return substr($normalized, 0, max(0, $limit - 3)) . '...';
     }
 }

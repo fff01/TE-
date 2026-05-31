@@ -1,7 +1,16 @@
 <?php
 return [
     'dashscope_key' => 'your DashScope API key',
-    'dashscope_model' => 'qwen3.5-plus',
+    'dashscope_model' => 'deepseek-v4-flash',
+    'agent_control_model' => 'deepseek-v4-flash',
+    'agent_core_model' => 'deepseek-v4-pro',
+    'agent_sufficiency_model' => 'deepseek-v4-flash',
+    'agent_expert_model' => 'deepseek-v4-pro',
+    'agent_narrator_model' => 'deepseek-v4-flash',
+    'agent_answer_structure_model' => 'deepseek-v4-flash',
+    'agent_writing_model' => 'deepseek-v4-pro',
+    'agent_polisher_model' => 'deepseek-v4-flash',
+    'agent_polisher_enabled' => false,
     'dashscope_url' => 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
     'llm_relay_url' => 'http://127.0.0.1:18087/chat',
     'agent_execution_timeout' => 7200,

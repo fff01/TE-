@@ -23,6 +23,14 @@ function assert_true(bool $condition, string $message): void
 $normalizer = new TekgAgentEntityNormalizer();
 
 $cases = [
+    'sequence evidence source stays local' => [
+        'question' => 'What is the consensus length and evidence source of L1HS?',
+        'task_complexity' => 'simple_lookup',
+        'recommended_mode' => 'deepthink',
+        'intent' => 'sequence',
+        'asks_for_sequence' => true,
+        'asks_for_papers' => false,
+    ],
     'sequence lookup stays in Deep Think' => [
         'question' => 'L1HS的序列是什么',
         'task_complexity' => 'simple_lookup',
@@ -96,6 +104,9 @@ foreach ($cases as $name => $case) {
     $analysis = $normalizer->analyze($case['question']);
     assert_same($case['task_complexity'], $analysis['task_complexity'] ?? null, "{$name}: task_complexity");
     assert_same($case['recommended_mode'], $analysis['recommended_mode'] ?? null, "{$name}: recommended_mode");
+    if (array_key_exists('intent', $case)) {
+        assert_same($case['intent'], $analysis['intent'] ?? null, "{$name}: intent");
+    }
     foreach (['asks_for_site_navigation', 'asks_for_sequence', 'asks_for_genome', 'asks_for_expression', 'asks_for_papers'] as $flag) {
         if (array_key_exists($flag, $case)) {
             assert_same($case[$flag], $analysis[$flag] ?? null, "{$name}: {$flag}");

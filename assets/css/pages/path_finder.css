@@ -316,8 +316,8 @@
 
 .path-graph-surface {
   position: relative;
-  height: min(62vh, 620px);
-  min-height: 460px;
+  height: min(74vh, 760px);
+  min-height: 560px;
   border: 1px solid #dbe7f5;
   border-radius: 10px;
   overflow: hidden;
@@ -592,7 +592,7 @@
   }
 
   .path-graph-surface {
-    height: 520px;
-    min-height: 420px;
+    height: 620px;
+    min-height: 520px;
   }
 }

@@ -403,6 +403,17 @@ trait TekgDeepThinkEvidenceTrait
                 'path' => 'direct_site_navigation',
                 'body' => $siteNavigation,
                 'summary_hint' => 'Preserve every Markdown link exactly. Do not rewrite URLs as plain text.',
+                'summary_required' => false,
+            ];
+        }
+
+        $sequenceFact = $this->buildDirectSequenceFactAnswer($question, $answerLanguage, $analysis, $pluginResults, $citations);
+        if ($sequenceFact !== null) {
+            return [
+                'path' => 'direct_sequence_fact',
+                'body' => $sequenceFact,
+                'summary_hint' => 'This is already a complete local sequence fact answer.',
+                'summary_required' => false,
             ];
         }
 
@@ -412,6 +423,7 @@ trait TekgDeepThinkEvidenceTrait
                 'path' => 'direct_full_sequence',
                 'body' => $sequence,
                 'summary_hint' => 'Provide only a short summary after the full sequence. Do not repeat the sequence itself.',
+                'summary_required' => false,
             ];
         }
 
@@ -421,6 +433,7 @@ trait TekgDeepThinkEvidenceTrait
                 'path' => 'direct_full_relationship_list',
                 'body' => $relationships,
                 'summary_hint' => 'Provide only a short summary after the full relationship list. Do not enumerate the full list again.',
+                'summary_required' => false,
             ];
         }
 
@@ -444,6 +457,9 @@ trait TekgDeepThinkEvidenceTrait
     private function buildDirectFullSequenceAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?string
     {
         if (($analysis['intent'] ?? '') !== 'sequence') {
+            return null;
+        }
+        if (!$this->wantsFullSequenceOutput($question)) {
             return null;
         }
 
@@ -474,6 +490,60 @@ trait TekgDeepThinkEvidenceTrait
         $body = "```text\n{$sequence}\n```\n";
         $suffix = $citationText !== '' ? "\nSources: {$citationText}" : '';
         return $prefix . $body . $suffix;
+    }
+
+    private function buildDirectSequenceFactAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?string
+    {
+        if (($analysis['intent'] ?? '') !== 'sequence') {
+            return null;
+        }
+        if ($this->wantsFullSequenceOutput($question)) {
+            return null;
+        }
+
+        $matched = (array)($pluginResults['Sequence Plugin']['results']['matched_records'] ?? []);
+        $first = $matched[0] ?? null;
+        if (!is_array($first)) {
+            return null;
+        }
+        $entry = (array)($first['entry'] ?? []);
+        $label = (string)($entry['name'] ?? $first['repbase_name'] ?? $first['entity_label'] ?? 'the TE');
+        $length = null;
+        if (isset($entry['length'])) {
+            $length = (int)$entry['length'];
+        } elseif (isset($first['length'])) {
+            $length = (int)$first['length'];
+        } else {
+            $sequence = preg_replace('/\s+/u', '', (string)($entry['sequence'] ?? '')) ?? '';
+            $length = $sequence !== '' ? strlen($sequence) : null;
+        }
+        if ($length === null || $length <= 0) {
+            return null;
+        }
+
+        $sourceLabels = [];
+        foreach ($citations as $citation) {
+            if (!is_array($citation)) {
+                continue;
+            }
+            $source = trim((string)($citation['source'] ?? ''));
+            if ($source !== '') {
+                $sourceLabels[] = strcasecmp($source, 'repbase') === 0 ? 'Repbase' : $source;
+            }
+        }
+        if ($sourceLabels === []) {
+            $sourceLabels[] = 'Repbase-backed sequence library';
+        }
+        $sourceText = implode(', ', array_values(array_unique($sourceLabels)));
+        $citationText = $this->formatSequenceCitations($citations);
+
+        if ($answerLanguage === 'chinese') {
+            $answer = "{$label} 的匹配共识序列长度为 {$length} bp。证据来源是 {$sourceText}。";
+            return $citationText !== '' ? $answer . "\n参考来源：{$citationText}" : $answer;
+        }
+
+        $answer = "{$label}'s matched consensus sequence length is {$length} bp. The evidence source is {$sourceText}.";
+        return $citationText !== '' ? $answer . "\nSources: {$citationText}" : $answer;
     }
 
     private function buildDirectRelationshipAnswer(string $question, string $answerLanguage, array $analysis, array $pluginResults, array $citations): ?string

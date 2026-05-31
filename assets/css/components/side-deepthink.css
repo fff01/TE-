@@ -349,6 +349,74 @@
   opacity: 0.72;
 }
 
+.deepthink-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  padding: 9px;
+  border: 1px solid rgba(94, 120, 170, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.deepthink-progress[hidden] {
+  display: none;
+}
+
+.deepthink-progress-stage {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #71809b;
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.deepthink-progress-number {
+  position: relative;
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(94, 120, 170, 0.26);
+  border-radius: 50%;
+  background: #fff;
+  font-weight: 800;
+}
+
+.deepthink-progress-stage.is-done,
+.deepthink-progress-stage.is-active {
+  color: #3154bd;
+}
+
+.deepthink-progress-stage.is-active .deepthink-progress-number {
+  border-color: #486ad5;
+  background: #fff;
+  color: #3154bd;
+}
+
+.deepthink-progress-stage.is-active .deepthink-progress-number::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 2px solid transparent;
+  border-top-color: #5b74d8;
+  border-right-color: rgba(91, 116, 216, 0.35);
+  border-radius: 50%;
+  animation: deepthinkStageSpin 1s linear infinite;
+}
+
+.deepthink-progress-stage.is-failed {
+  color: #b83d55;
+}
+
+@keyframes deepthinkStageSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 640px) {
   .side-dt {
     inset: 0;

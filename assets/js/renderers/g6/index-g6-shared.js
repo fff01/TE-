@@ -5,7 +5,7 @@
     return;
   }
 
-  const { Graph } = G6Lib;
+  const { Circle, ExtensionCategory, Graph, register } = G6Lib;
 
   const TYPE_META = window.__TEKG_G6_TYPE_META && typeof window.__TEKG_G6_TYPE_META === 'object'
     ? window.__TEKG_G6_TYPE_META
@@ -82,6 +82,7 @@
 
   const TE_MIN_RADIUS = 12.5;
   const AGGREGATE_TE_CHILD_SIZE_RATIO = 1.5;
+  let pathFinderRippleRegistered = false;
 
   function noop() {}
 
@@ -1142,6 +1143,7 @@
     function showAllLabelText(node) {
       const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
       if (!raw) return '';
+      if (node?.preferFullLabel === true) return raw;
       return fitLabelToCircle(raw, Math.max(16, Number(node?.size) || 16));
     }
 
@@ -1365,6 +1367,15 @@
       const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
       const forceAnchorLabel = options.forceAnchorLabel === true;
       const showAllLabels = options.showAllLabels === true;
+      const nodeSizeScale = Math.max(1, Number(options.nodeSizeScale) || 1);
+      const nodeMinSize = Math.max(0, Number(options.nodeMinSize) || 0);
+      const endpointNodeMinSize = Math.max(nodeMinSize, Number(options.endpointNodeMinSize) || 0);
+      const preferFullLabels = options.preferFullLabels === true;
+      const endpointHighlightIds = new Set(
+        (Array.isArray(options.endpointHighlightIds) ? options.endpointHighlightIds : [])
+          .map((id) => String(id || '').trim())
+          .filter(Boolean),
+      );
       const visibleTypes = options.visibleTypes && typeof options.visibleTypes === 'object'
         ? options.visibleTypes
         : null;
@@ -1410,9 +1421,12 @@
           fillColor: TYPE_COLORS[nodeType] || '#94a3b8',
           strokeColor: TYPE_STROKES[nodeType] || '#111111',
           showAllLabels,
+          preferFullLabel: preferFullLabels,
+          endpointHighlight: endpointHighlightIds.has(String(data.id || '')),
           alwaysShowLabel:
             (includePaperNodes && (data.type || 'TE') === 'Paper') ||
-            (forceAnchorLabel && String(data.id || '') === anchorNodeId),
+            (forceAnchorLabel && String(data.id || '') === anchorNodeId) ||
+            endpointHighlightIds.has(String(data.id || '')),
         };
 
         nodes.push(node);
@@ -1427,6 +1441,16 @@
         node.baseSize = node.size;
         node.fillColor = teFillColorForName(canonicalName);
         node.strokeColor = darkenHexColor(node.fillColor, 0.28);
+      }
+
+      if (nodeSizeScale > 1 || nodeMinSize > 0 || endpointNodeMinSize > 0) {
+        for (const node of nodes) {
+          const baseSize = Math.max(10, Number(node.size) || 10);
+          const scaledSize = Math.round(baseSize * nodeSizeScale);
+          const minSize = node.endpointHighlight ? endpointNodeMinSize : nodeMinSize;
+          node.size = Math.max(scaledSize, minSize || 0);
+          node.baseSize = node.size;
+        }
       }
 
       const diseaseCategoryNodes = nodes.filter((node) => node.nodeType === 'DiseaseCategory');
@@ -1723,6 +1747,12 @@
         graphDataOptions.showAllLabels = currentShowAllLabels;
         const data = buildGraphData(payloadElements, graphDataOptions);
         currentGraphData = data;
+        const hasEndpointHighlights = data.nodes.some((node) => node.endpointHighlight === true);
+        const rippleNodeAvailable = hasEndpointHighlights && ensurePathFinderRippleNodeRegistered();
+        const layoutDistanceScale = Math.max(1, Number(graphDataOptions.layoutDistanceScale) || 1);
+        const collisionPaddingScale = Math.max(1, Number(graphDataOptions.collisionPaddingScale) || 1);
+        const chargeScale = Math.max(1, Number(graphDataOptions.chargeScale) || 1);
+        const edgeLabelFontSize = Math.max(9, Number(graphDataOptions.edgeLabelFontSize) || 9);
 
         if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
           hideInspectCard();
@@ -1753,11 +1783,19 @@
           autoFit: false,
           data,
           node: {
+            type: (d) => (d.endpointHighlight && rippleNodeAvailable ? 'path-finder-ripple-circle' : 'circle'),
             style: {
               size: (d) => d.size,
               fill: (d) => d.fillColor || TYPE_COLORS[d.nodeType] || '#94a3b8',
               stroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#111111',
-              lineWidth: 2,
+              lineWidth: (d) => (d.endpointHighlight ? 5 : 2),
+              shadowColor: (d) => (d.endpointHighlight ? 'rgba(37, 99, 235, 0.42)' : 'rgba(15, 23, 42, 0.08)'),
+              shadowBlur: (d) => (d.endpointHighlight ? 26 : 0),
+              shadowOffsetX: 0,
+              shadowOffsetY: 0,
+              halo: (d) => d.endpointHighlight === true,
+              haloStroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#2563eb',
+              haloOpacity: 0.28,
               labelText: (d) => {
                 if (d.showAllLabels) return showAllLabelText(d);
                 if (d.nodeType === 'TE' && teShouldShowLabel(d)) return d.displayLabel || d.rawLabel || '';
@@ -1796,7 +1834,7 @@
                 if (!relationType && pmidCount <= 0) return '';
                 return pmidCount > 0 ? `${relationType} (${pmidCount})` : relationType;
               },
-              labelFontSize: 9,
+              labelFontSize: edgeLabelFontSize,
               labelFill: '#334155',
               labelBackground: true,
               labelBackgroundFill: 'rgba(255,255,255,0.82)',
@@ -1810,10 +1848,10 @@
                 const source = resolveNode(edge.source, data.nodes);
                 const target = resolveNode(edge.target, data.nodes);
                 if (!source || !target) return 80;
-                if (source.nodeType === 'DiseaseClass' || target.nodeType === 'DiseaseClass') return 120;
-                if (source.team === target.team) return 96;
-                if (source.nodeType === 'Disease' || target.nodeType === 'Disease') return 300;
-                return 220;
+                if (source.nodeType === 'DiseaseClass' || target.nodeType === 'DiseaseClass') return 120 * layoutDistanceScale;
+                if (source.team === target.team) return 96 * layoutDistanceScale;
+                if (source.nodeType === 'Disease' || target.nodeType === 'Disease') return 300 * layoutDistanceScale;
+                return 220 * layoutDistanceScale;
               },
               strength: (edge) => {
                 const source = resolveNode(edge.source, data.nodes);
@@ -1828,19 +1866,20 @@
             manyBody: {
               strength: (node) => {
                 const size = typeof node.size === 'number' ? node.size : 16;
-                if (node.nodeType === 'DiseaseClass') return -(240 + size * 4.6);
-                return -(170 + size * 3.8);
+                if (node.nodeType === 'DiseaseClass') return -(240 + size * 4.6) * chargeScale;
+                return -(170 + size * 3.8) * chargeScale;
               },
             },
             collide: {
               radius: (node) => {
-                if (node.nodeType === 'DiseaseClass') return node.size / 2 + 50;
-                if (node.nodeType === 'TE') return node.size / 2 + 42;
-                if (node.nodeType === 'Disease') return node.size / 2 + 38;
-                return node.size / 2 + 34;
+                const highlightPadding = node.endpointHighlight ? 28 : 0;
+                if (node.nodeType === 'DiseaseClass') return node.size / 2 + (50 + highlightPadding) * collisionPaddingScale;
+                if (node.nodeType === 'TE') return node.size / 2 + (42 + highlightPadding) * collisionPaddingScale;
+                if (node.nodeType === 'Disease') return node.size / 2 + (38 + highlightPadding) * collisionPaddingScale;
+                return node.size / 2 + (34 + highlightPadding) * collisionPaddingScale;
               },
               strength: 1,
-              iterations: 16,
+              iterations: Math.max(16, Number(graphDataOptions.collisionIterations) || 16),
             },
           },
           behaviors: [
@@ -1984,6 +2023,58 @@
       }
     }
 
+    function ensurePathFinderRippleNodeRegistered() {
+      if (pathFinderRippleRegistered) return true;
+      if (!Circle || !register || !ExtensionCategory) return false;
+      try {
+        class PathFinderRippleCircle extends Circle {
+          onCreate() {
+            const keyShape = this.shapeMap?.key;
+            const keyStyle = keyShape?.style || {};
+            const fill = this.attributes?.fill || keyStyle.fill || '#2f63b9';
+            const r = Number(keyStyle.r || this.attributes?.r || 24) || 24;
+            const length = 4;
+            Array.from({ length }).forEach((_, index) => {
+              const ripple = this.upsert(
+                `path-finder-ripple-${index}`,
+                'circle',
+                {
+                  r,
+                  fill,
+                  fillOpacity: 0.24,
+                  stroke: fill,
+                  strokeOpacity: 0.34,
+                  lineWidth: 2,
+                  pointerEvents: 'none',
+                },
+                this,
+              );
+              if (ripple && typeof ripple.animate === 'function') {
+                ripple.animate(
+                  [
+                    { r, fillOpacity: 0.24, strokeOpacity: 0.34 },
+                    { r: r + length * 6, fillOpacity: 0, strokeOpacity: 0 },
+                  ],
+                  {
+                    duration: 1000 * length,
+                    iterations: Infinity,
+                    delay: 800 * index,
+                    easing: 'ease-cubic',
+                  },
+                );
+              }
+            });
+          }
+        }
+        register(ExtensionCategory.NODE, 'path-finder-ripple-circle', PathFinderRippleCircle);
+        pathFinderRippleRegistered = true;
+      } catch (error) {
+        console.warn('Failed to register Path Finder ripple node; using halo fallback.', error);
+        pathFinderRippleRegistered = false;
+      }
+      return pathFinderRippleRegistered;
+    }
+
     async function expandGraph(requestLike, options = {}) {
       const request = normalizeGraphRequest(requestLike);
       const query = String(request.query || '').trim();
@@ -2067,6 +2158,8 @@
             rawLabel: String(node.rawLabel || node.displayLabel || node.id || ''),
             type: String(node.nodeType || node.type || 'TE'),
             nodeType: String(node.nodeType || node.type || 'TE'),
+            size: Number(node.size || 0) || 0,
+            endpointHighlight: node.endpointHighlight === true,
             description: String(node.description || ''),
             pmid: String(node.pmid || ''),
             degree: Number(node.databaseDegree || node.degree || 0) || 0,
