@@ -328,6 +328,116 @@ $aboutSections = [
         ],
     ],
 ];
+
+function about_anchor_slug(string $text): string
+{
+    $slug = strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $text), '-'));
+    return $slug !== '' ? $slug : 'section';
+}
+
+function about_media_spec(string $sectionKey, string $heading): ?array
+{
+    $media = [
+        'resource:What TE-KG is' => [
+            'filename' => 'about-resource-overview.png',
+            'type' => 'PNG',
+            'alt' => 'TE-KG resource overview placeholder showing the major public interface routes.',
+            'caption' => 'Resource overview placeholder for the core TE-KG entry points and connected evidence model.',
+        ],
+        'resource:Data access routes' => [
+            'filename' => 'about-resource-data-routes.png',
+            'type' => 'PNG',
+            'alt' => 'TE-KG data access route placeholder connecting Home, Browse, Path Finder, TE-KG, Expression, and Download.',
+            'caption' => 'Route map placeholder for deciding which public page to use for a given task.',
+        ],
+        'resource:Evidence principles' => [
+            'filename' => 'about-resource-evidence-table.png',
+            'type' => 'PNG',
+            'alt' => 'Evidence table placeholder highlighting PMID, title, journal, IF, JCR, and match type fields.',
+            'caption' => 'Evidence table placeholder for reviewing relation-level publication metadata.',
+        ],
+        'home:What the page contains' => [
+            'filename' => 'about-home-overview.png',
+            'type' => 'PNG',
+            'alt' => 'Home page overview placeholder showing project summary, dataset status, and quick links.',
+            'caption' => 'Home overview placeholder for the first-screen project orientation area.',
+        ],
+        'home:How to read Dataset Status' => [
+            'filename' => 'about-home-dataset-status.png',
+            'type' => 'PNG',
+            'alt' => 'Home Dataset Status placeholder showing entity, TE classification, and relation composition charts.',
+            'caption' => 'Dataset Status placeholder for the live Neo4j summary charts and classification controls.',
+        ],
+        'browse:What the page is for' => [
+            'filename' => 'about-browse-main.png',
+            'type' => 'PNG',
+            'alt' => 'Browse page placeholder showing the main catalog lookup table and entity discovery surface.',
+            'caption' => 'Browse main placeholder for table-first entity lookup and record comparison.',
+        ],
+        'browse:Using the selector' => [
+            'filename' => 'about-browse-selector.gif',
+            'type' => 'GIF',
+            'alt' => 'Browse selector GIF placeholder showing category choice, typing, suggestion selection, and table update.',
+            'caption' => 'Browse selector GIF placeholder for the database-driven entity selection workflow.',
+        ],
+        'pathfinder:Search structure' => [
+            'filename' => 'about-pathfinder-search.gif',
+            'type' => 'GIF',
+            'alt' => 'Path Finder search GIF placeholder showing source and target category and entity selectors.',
+            'caption' => 'Path Finder search GIF placeholder for composing a constrained two-entity query.',
+        ],
+        'pathfinder:Reading path results' => [
+            'filename' => 'about-pathfinder-results.png',
+            'type' => 'PNG',
+            'alt' => 'Path Finder results placeholder showing entity and relation sequence after a path search.',
+            'caption' => 'Path result placeholder for reading entity-to-entity connections and relation predicates.',
+        ],
+        'pathfinder:Evidence checks' => [
+            'filename' => 'about-pathfinder-evidence.png',
+            'type' => 'PNG',
+            'alt' => 'Path Finder evidence placeholder showing relation-level publication rows and journal metadata.',
+            'caption' => 'Path evidence placeholder for checking supporting publications relation by relation.',
+        ],
+        'tekg:Graph interaction' => [
+            'filename' => 'about-tekg-graph.gif',
+            'type' => 'GIF',
+            'alt' => 'TE-KG graph GIF placeholder showing graph search, zoom, node action, and evidence opening.',
+            'caption' => 'TE-KG graph GIF placeholder for the interactive G6 exploration workflow.',
+        ],
+        'tekg:Legend and filters' => [
+            'filename' => 'about-tekg-legend.png',
+            'type' => 'PNG',
+            'alt' => 'TE-KG legend placeholder showing entity legends, relation legends, and filter controls.',
+            'caption' => 'TE-KG legend placeholder for understanding visible graph categories and view filters.',
+        ],
+        'agent:What to ask' => [
+            'filename' => 'about-agent-main.png',
+            'type' => 'PNG',
+            'alt' => 'Agent page placeholder showing the natural-language question input and guided answer surface.',
+            'caption' => 'Agent main placeholder for asking navigation and interpretation questions.',
+        ],
+        'expression:Choosing a TE' => [
+            'filename' => 'about-expression-main.png',
+            'type' => 'PNG',
+            'alt' => 'Expression page placeholder showing TE selection and expression summary views.',
+            'caption' => 'Expression main placeholder for selecting a TE and reviewing expression context.',
+        ],
+        'download:Table layout' => [
+            'filename' => 'about-download-main.png',
+            'type' => 'PNG',
+            'alt' => 'Download page placeholder showing public dataset rows, file links, usage, and format columns.',
+            'caption' => 'Download main placeholder for comparing public TE-KG export files.',
+        ],
+        'download:Filtering downloads' => [
+            'filename' => 'about-download-filter.gif',
+            'type' => 'GIF',
+            'alt' => 'Download filter GIF placeholder showing category filters, search text, row expansion, and clearing filters.',
+            'caption' => 'Download filter GIF placeholder for narrowing and inspecting the public file catalog.',
+        ],
+    ];
+    $key = $sectionKey . ':' . $heading;
+    return $media[$key] ?? null;
+}
 ?>
       <section class="about-shell">
         <div class="proto-container">
@@ -347,10 +457,18 @@ $aboutSections = [
           <section class="about-panel">
             <div class="about-layout">
               <aside class="about-side">
+                <label class="about-search" for="about-search-input">
+                  <span>Search</span>
+                  <input id="about-search-input" type="search" placeholder="Search this guide" autocomplete="off">
+                </label>
                 <div class="about-side-title">Contents</div>
                 <nav class="about-nav" aria-label="About page sections">
 <?php foreach ($aboutSections as $key => $section): ?>
-                  <a href="#section-<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" data-pane="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" class="<?= $key === 'resource' ? 'is-active' : '' ?>"><?= htmlspecialchars($section['nav'], ENT_QUOTES, 'UTF-8') ?></a>
+                  <a class="about-nav-parent <?= $key === 'resource' ? 'is-active' : '' ?>" href="#section-<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" data-pane="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($section['nav'], ENT_QUOTES, 'UTF-8') ?></a>
+<?php foreach ($section['sections'] as $detailIndex => $detail): ?>
+<?php $detailId = 'section-' . $key . '-' . about_anchor_slug($detail['heading']); ?>
+                  <a class="about-nav-child" href="#<?= htmlspecialchars($detailId, ENT_QUOTES, 'UTF-8') ?>" data-pane="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>" data-subsection="<?= htmlspecialchars($detailId, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($detail['heading'], ENT_QUOTES, 'UTF-8') ?></a>
+<?php endforeach; ?>
 <?php endforeach; ?>
                 </nav>
               </aside>
@@ -368,14 +486,38 @@ $aboutSections = [
                   </header>
 
                   <div class="about-detail-grid">
-<?php foreach ($section['sections'] as $detail): ?>
-                    <section class="about-detail-card">
+<?php foreach ($section['sections'] as $detailIndex => $detail): ?>
+<?php $detailId = 'section-' . $key . '-' . about_anchor_slug($detail['heading']); ?>
+<?php $media = about_media_spec($key, $detail['heading']); ?>
+                    <section class="about-doc-subsection" id="<?= htmlspecialchars($detailId, ENT_QUOTES, 'UTF-8') ?>" data-subsection-title="<?= htmlspecialchars($detail['heading'], ENT_QUOTES, 'UTF-8') ?>">
+                    <div class="about-detail-card">
                       <h4><?= htmlspecialchars($detail['heading'], ENT_QUOTES, 'UTF-8') ?></h4>
                       <ul>
 <?php foreach ($detail['items'] as $item): ?>
                         <li><?= htmlspecialchars($item, ENT_QUOTES, 'UTF-8') ?></li>
 <?php endforeach; ?>
                       </ul>
+                    </div>
+<?php if ($media !== null): ?>
+<?php
+    $mediaFsPath = tekg_assets_fs_path('img/about/' . $media['filename']);
+    $mediaUrl = tekg_assets_url('img/about/' . $media['filename']);
+    $mediaExists = is_file($mediaFsPath);
+?>
+                    <figure class="about-placeholder-media" data-media-filename="<?= htmlspecialchars($media['filename'], ENT_QUOTES, 'UTF-8') ?>" aria-label="<?= htmlspecialchars($media['filename'], ENT_QUOTES, 'UTF-8') ?> media">
+<?php if ($mediaExists): ?>
+                      <img class="about-media-image" src="<?= htmlspecialchars($mediaUrl, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($media['alt'], ENT_QUOTES, 'UTF-8') ?>" loading="lazy" decoding="async">
+<?php else: ?>
+                      <div class="about-placeholder-stage" data-media-type="<?= htmlspecialchars($media['type'], ENT_QUOTES, 'UTF-8') ?>">
+                        <span class="about-placeholder-type"><?= htmlspecialchars($media['type'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <span class="about-placeholder-file"><?= htmlspecialchars($media['filename'], ENT_QUOTES, 'UTF-8') ?></span>
+                      </div>
+<?php endif; ?>
+                      <figcaption>
+                        <?= htmlspecialchars($media['caption'], ENT_QUOTES, 'UTF-8') ?>
+                      </figcaption>
+                    </figure>
+<?php endif; ?>
                     </section>
 <?php endforeach; ?>
                   </div>
@@ -387,9 +529,7 @@ $aboutSections = [
           </section>
         </div>
       </section>
+      <p class="about-no-results" hidden>No matching guide sections.</p>
 
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/about.js') . '?v=' . $aboutJsVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
-    </main>
-  </div>
-</body>
-</html>
+<?php require __DIR__ . '/foot.php'; ?>
