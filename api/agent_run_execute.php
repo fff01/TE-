@@ -13,6 +13,7 @@ function tekg_agent_execute_run(string $runId): int
             $state['status'] = 'failed';
             $state['error'] = 'Run payload or state is missing.';
             $state['failure_reason'] = 'Run payload or state is missing.';
+            $state['presentation_failure_reason'] = tekg_agent_run_presentation_failure_message('Worker', (string)($state['language'] ?? ''));
             $state['finished_at'] = gmdate('c');
             tekg_agent_save_run_state($runId, $state);
         }
@@ -31,6 +32,9 @@ function tekg_agent_execute_run(string $runId): int
     tekg_agent_save_run_state($runId, $state);
 
     $requestId = (string)($state['request_id'] ?? $payload['request_id'] ?? '');
+    if (trim((string)($state['language'] ?? '')) === '') {
+        $state['language'] = tekg_agent_detect_language($payload, (string)($payload['question'] ?? ''));
+    }
     tekg_agent_append_diagnostic_log($requestId !== '' ? $requestId : tekg_agent_make_request_id(), 'agent_run_worker_started', [
         'run_id' => $runId,
         'started_at' => $state['started_at'],
@@ -61,6 +65,7 @@ function tekg_agent_execute_run(string $runId): int
         $state['writing_failed'] = (bool)($response['writing_failed'] ?? false);
         $state['failure_stage'] = (string)($response['failure_stage'] ?? '');
         $state['failure_reason'] = (string)($response['failure_reason'] ?? '');
+        $state['presentation_failure_reason'] = (string)($response['presentation_failure_reason'] ?? '');
         $state['used_plugins'] = array_values(array_map('strval', (array)($response['used_plugins'] ?? [])));
         $state['workflow_state'] = tekg_agent_json_safe((array)($response['workflow_state'] ?? $state['workflow_state'] ?? []));
         $state['current_stage'] = (string)($state['workflow_state']['current_stage'] ?? $state['current_stage'] ?? '');
@@ -74,11 +79,13 @@ function tekg_agent_execute_run(string $runId): int
             'sapi' => PHP_SAPI,
         ]);
         if (!$doneEmitted) {
+            $presentationFailure = tekg_agent_run_presentation_failure_message('Worker', (string)($state['language'] ?? ''));
             $errorEvent = [
                 'type' => 'error',
                 'request_id' => (string)($state['request_id'] ?? ''),
                 'session_id' => (string)($state['session_id'] ?? ''),
-                'message' => $error->getMessage(),
+                'message' => $presentationFailure,
+                'language' => (string)($state['language'] ?? ''),
                 'sequence' => (int)($state['last_sequence'] ?? 0) + 1,
             ];
             $emit($errorEvent);
@@ -91,6 +98,8 @@ function tekg_agent_execute_run(string $runId): int
                     'writing_failed' => true,
                     'failure_stage' => 'Worker',
                     'failure_reason' => $error->getMessage(),
+                    'presentation_failure_reason' => $presentationFailure,
+                    'language' => (string)($state['language'] ?? ''),
                     'workflow_state' => $state['workflow_state'] ?? tekg_agent_default_workflow_state(),
                 ],
                 'sequence' => (int)($state['last_sequence'] ?? 0) + 2,
@@ -102,6 +111,7 @@ function tekg_agent_execute_run(string $runId): int
         $state['writing_failed'] = true;
         $state['failure_stage'] = 'Worker';
         $state['failure_reason'] = $error->getMessage();
+        $state['presentation_failure_reason'] = tekg_agent_run_presentation_failure_message('Worker', (string)($state['language'] ?? ''));
         $state['finished_at'] = gmdate('c');
         tekg_agent_save_run_state($runId, $state);
         return 1;

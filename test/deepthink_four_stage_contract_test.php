@@ -100,6 +100,10 @@ foreach ($fixtures as $stage => $fixture) {
     assert_true(isset($prompts[$stage]['en'], $prompts[$stage]['zh']), "{$stage} DT bilingual prompts exist");
     assert_true(str_contains($prompts[$stage]['en'], 'JSON'), "{$stage} English prompt requires JSON");
     assert_true(str_contains($prompts[$stage]['zh'], 'JSON'), "{$stage} Chinese prompt requires JSON");
+    assert_true(str_contains($prompts[$stage]['en'], 'request language'), "{$stage} English prompt locks generated narration to the request language");
+    assert_true(str_contains($prompts[$stage]['zh'], '请求语言'), "{$stage} Chinese prompt locks generated narration to the request language");
+    assert_true(str_contains($prompts[$stage]['en'], 'Do not translate'), "{$stage} English prompt protects raw scientific data");
+    assert_true(str_contains($prompts[$stage]['zh'], '不要翻译'), "{$stage} Chinese prompt protects raw scientific data");
 }
 assert_true(in_array('answer_markdown', $schemas['writing']['required'] ?? [], true), 'Writing schema requires answer_markdown');
 

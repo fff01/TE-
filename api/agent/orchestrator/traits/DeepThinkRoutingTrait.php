@@ -96,17 +96,15 @@ trait TekgDeepThinkRoutingTrait
             throw new RuntimeException('Unknown plugin: ' . $pluginName);
         }
 
-        $fallbackSelected = $selectionReason !== '' ? $selectionReason : $this->toolSelectedMessage($pluginName);
+        $selectedMessage = $this->toolSelectedMessage($pluginName, $processLanguage);
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'tool_selected',
             'session_id' => $sessionId,
             'plugin_name' => $pluginName,
-            'message' => $this->narrateEvent(
-                $narratorModel,
-                $processLanguage,
-                ['type' => 'tool_selected', 'plugin_name' => $pluginName, 'reason' => $selectionReason],
-                $fallbackSelected
-            ),
+            'message' => $selectedMessage,
+            'payload' => [
+                'selection_reason' => $selectionReason,
+            ],
         ]);
 
         $result = $plugin->run([
@@ -134,18 +132,14 @@ trait TekgDeepThinkRoutingTrait
 
         $payloadForUi = $this->toolPayloadForUi($result);
         $detailId = 'tool-' . (++$detailCounter);
+        $resultMessage = $this->toolResultMessage($pluginName, $processLanguage);
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'tool_result',
             'session_id' => $sessionId,
             'plugin_name' => $pluginName,
             'display_label' => (string)($result['display_label'] ?? $pluginName),
-            'summary' => (string)($result['display_summary'] ?? $result['query_summary'] ?? ''),
-            'message' => $this->narrateEvent(
-                $narratorModel,
-                $processLanguage,
-                ['type' => 'tool_result', 'plugin_name' => $pluginName, 'result' => $result],
-                (string)(($result['display_details']['result_message'] ?? '') ?: ($result['display_summary'] ?? $result['query_summary'] ?? ''))
-            ),
+            'summary' => $resultMessage,
+            'message' => $resultMessage,
             'detail_payload_id' => $detailId,
             'payload' => $payloadForUi,
         ]);
@@ -415,23 +409,36 @@ trait TekgDeepThinkRoutingTrait
         ]);
     }
 
-    private function toolSelectedMessage(string $pluginName): string
+    private function toolSelectedMessage(string $pluginName, string $language = 'en'): string
     {
-        return match ($pluginName) {
-            'Entity Resolver' => 'I will stabilize entity names first so later evidence lookup does not drift across aliases.',
-            'Graph Plugin' => 'I will check the local graph first because this question needs structured relations.',
-            'Graph Analytics Plugin' => 'I will use graph analytics because this question is about ranking, counts, or topology.',
-            'Cypher Explorer Plugin' => 'I will use a custom Cypher exploration because the fixed graph templates may not be enough.',
-            'Site Navigator Plugin' => 'I will locate the exact TE-KG page or panel that matches this request.',
-            'Literature Plugin' => 'I will add literature evidence because citation support is still useful here.',
-            'Literature Reading Plugin' => 'I will synthesize the retrieved papers into grouped claims before answering.',
-            'Tree Plugin' => 'I will recover lineage context because this question is about classification.',
-            'Expression Plugin' => 'I will inspect the expression layer because the question asks for expression context.',
-            'Genome Plugin' => 'I will inspect genomic locus context for the recognized entity.',
-            'Sequence Plugin' => 'I will inspect sequence and structure facts for the recognized entity.',
-            'Citation Resolver' => 'I will normalize the collected citation records before the final answer.',
-            default => 'I will use the next plugin that best fits the question.',
-        };
+        return $this->isChinesePresentationLanguage($language)
+            ? '我将使用 ' . $pluginName . ' 收集下一步所需证据。'
+            : 'I will use ' . $pluginName . ' to collect the next required evidence.';
+    }
+
+    private function toolResultMessage(string $pluginName, string $language = 'en'): string
+    {
+        return $this->isChinesePresentationLanguage($language)
+            ? $pluginName . ' 已完成。科研详情保留如下。'
+            : $pluginName . ' completed. Scientific details are preserved below.';
+    }
+
+    private function stageDisplayLabel(string $stage, string $language = 'en'): string
+    {
+        return $stage;
+    }
+
+    private function localizedFailureMessage(string $stage, string $language = 'en'): string
+    {
+        $displayStage = $this->stageDisplayLabel($stage, $language);
+        return $this->isChinesePresentationLanguage($language)
+            ? $displayStage . ' 阶段失败，请稍后重试。'
+            : $displayStage . ' failed. Please try again.';
+    }
+
+    private function isChinesePresentationLanguage(string $language): bool
+    {
+        return TekgAgentPromptLibrary::normalizeLanguage($language) === 'chinese';
     }
 
     private function expertConfig(string $model): array

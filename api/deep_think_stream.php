@@ -47,7 +47,11 @@ $emit = static function (array $event): void {
 };
 
 $requestId = null;
-register_shutdown_function(static function () use (&$requestId, $emit): void {
+$answerLanguage = 'en';
+$endpointFailureMessage = static fn(string $language): string => $language === 'zh'
+    ? 'Deep Think 处理失败，请稍后重试。'
+    : 'Deep Think failed. Please try again.';
+register_shutdown_function(static function () use (&$requestId, &$answerLanguage, $endpointFailureMessage, $emit): void {
     $lastError = error_get_last();
     if (!is_array($lastError)) {
         return;
@@ -64,10 +68,12 @@ register_shutdown_function(static function () use (&$requestId, $emit): void {
             'line' => (int)($lastError['line'] ?? 0),
         ]);
     }
+    $rawReason = 'The Deep Think request terminated unexpectedly before the final answer could be delivered.';
+    $presentationReason = $endpointFailureMessage($answerLanguage);
     $emit([
         'type' => 'error',
         'request_id' => $requestId,
-        'message' => 'The Deep Think request terminated unexpectedly before the final answer could be delivered.',
+        'message' => $presentationReason,
     ]);
     $emit([
         'type' => 'done',
@@ -76,8 +82,10 @@ register_shutdown_function(static function () use (&$requestId, $emit): void {
             'failed' => true,
             'writing_failed' => false,
             'failure_stage' => 'Endpoint',
-            'failure_reason' => 'The Deep Think request terminated unexpectedly before the final answer could be delivered.',
+            'failure_reason' => $rawReason,
+            'presentation_failure_reason' => $presentationReason,
             'answer' => '',
+            'language' => $answerLanguage,
         ],
     ]);
 });
@@ -92,6 +100,11 @@ try {
     if (!is_array($payload)) {
         throw new InvalidArgumentException('Invalid JSON body.');
     }
+    $requestedLanguage = strtolower(trim((string)($payload['language'] ?? '')));
+    $question = (string)($payload['question'] ?? '');
+    $answerLanguage = in_array($requestedLanguage, ['zh', 'chinese'], true) || preg_match('/[\x{3400}-\x{9fff}]/u', $question) === 1
+        ? 'zh'
+        : 'en';
     $requestId = trim((string)($payload['request_id'] ?? ''));
     if ($requestId === '') {
         $requestId = tekg_agent_make_request_id();
@@ -106,10 +119,11 @@ try {
             'error' => $error->getMessage(),
         ]);
     }
+    $presentationReason = $endpointFailureMessage($answerLanguage);
     $emit([
         'type' => 'error',
         'request_id' => $requestId,
-        'message' => $error->getMessage(),
+        'message' => $presentationReason,
     ]);
     $emit([
         'type' => 'done',
@@ -119,7 +133,9 @@ try {
             'writing_failed' => false,
             'failure_stage' => 'Endpoint',
             'failure_reason' => $error->getMessage(),
+            'presentation_failure_reason' => $presentationReason,
             'answer' => '',
+            'language' => $answerLanguage,
         ],
     ]);
 }

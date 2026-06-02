@@ -7,6 +7,8 @@ $sharedEn = implode("\n", [
     'Do not output explanations outside JSON.',
     'Use the supplied schema exactly.',
     'Do not invent evidence, citations, PMID, URLs, graph edges, or plugin results.',
+    'Write every generated narration field and answer_markdown in the request language.',
+    'Do not translate or rewrite entity names, paper titles, URLs, registered plugin names, sequences, relationship types, or raw data.',
 ]);
 
 $sharedZh = implode("\n", [
@@ -15,6 +17,8 @@ $sharedZh = implode("\n", [
     '不要在 JSON 之外输出解释。',
     '严格使用给定 schema。',
     '不要编造证据、引用、PMID、URL、图谱边或插件结果。',
+    '所有生成的叙述字段和 answer_markdown 必须使用请求语言。',
+    '不要翻译或改写实体名、论文标题、URL、已注册插件名、序列、关系类型或 raw data。',
 ]);
 
 return [

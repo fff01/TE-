@@ -181,7 +181,7 @@ final class TekgAcademicAgentService
             'deterministic_analysis' => $analysis,
             'session_memory' => $sessionMemory,
         ]);
-        $this->recordSixStageArtifact($sixStageArtifacts, 'understanding', $understandingNode, $emit, $eventSequence, $sessionId);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'understanding', $understandingNode, $emit, $eventSequence, $sessionId, '', $processLanguage);
         if (!$understandingNode->ok) {
             $this->logDiagnostic($requestId, 'six_stage_control_fallback', [
                 'stage' => 'Understanding',
@@ -189,7 +189,7 @@ final class TekgAcademicAgentService
                 'errors' => $understandingNode->errors,
             ]);
             $understandingNode = $this->fallbackUnderstandingNodeResult($question, $answerLanguage, $analysis, $understandingNode);
-            $this->recordSixStageArtifact($sixStageArtifacts, 'understanding', $understandingNode, $emit, $eventSequence, $sessionId);
+            $this->recordSixStageArtifact($sixStageArtifacts, 'understanding', $understandingNode, $emit, $eventSequence, $sessionId, '', $processLanguage);
         }
         $analysis['six_stage_understanding'] = $understandingNode->parsed_json;
         $this->emitAnalysisThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $analysis, $eventSequence);
@@ -202,7 +202,7 @@ final class TekgAcademicAgentService
             'routing_policy' => $routingPolicy,
             'plugin_directory' => tekg_agent_plugin_directory(),
         ]);
-        $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId, '', $processLanguage);
         if (!$planningNode->ok) {
             $this->logDiagnostic($requestId, 'six_stage_control_fallback', [
                 'stage' => 'Planning',
@@ -210,7 +210,7 @@ final class TekgAcademicAgentService
                 'errors' => $planningNode->errors,
             ]);
             $planningNode = $this->fallbackPlanningNodeResult($planning, $pluginQueue, $planningNode);
-            $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId);
+            $this->recordSixStageArtifact($sixStageArtifacts, 'planning', $planningNode, $emit, $eventSequence, $sessionId, '', $processLanguage);
         }
         $planning['six_stage_plan'] = $planningNode->parsed_json;
         $this->emitPlanningThoughtFlow($emit, $sessionId, $narratorModel, $processLanguage, $planning, $eventSequence);
@@ -224,7 +224,7 @@ final class TekgAcademicAgentService
             'remaining_plugins' => $pluginQueue,
             'plugin_directory' => tekg_agent_plugin_directory(),
         ]);
-        $this->recordSixStageArtifact($sixStageArtifacts, 'collecting', $collectingNode, $emit, $eventSequence, $sessionId);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'collecting', $collectingNode, $emit, $eventSequence, $sessionId, '', $processLanguage);
         if (!$collectingNode->ok) {
             return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $sufficiencyModel, 'Collecting', $collectingNode, $sixStageArtifacts, $workflowState);
         }
@@ -274,7 +274,7 @@ final class TekgAcademicAgentService
                         'plugin_name' => $pluginName,
                         'planning' => $planning,
                     ],
-                    $this->toolSelectedMessage($pluginName, $planning)
+                    $this->toolSelectedMessage($pluginName, $planning, $processLanguage)
                 ),
             ]);
             $result = $plugin->run([
@@ -302,7 +302,7 @@ final class TekgAcademicAgentService
                 'collection_state' => $collectionState,
                 'research_plan' => $planningNode->parsed_json,
             ]);
-            $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $executingReviewNode, $emit, $eventSequence, $sessionId, $pluginName);
+            $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $executingReviewNode, $emit, $eventSequence, $sessionId, $pluginName, $processLanguage);
             if (!$executingReviewNode->ok) {
                 if ($this->shouldContinueAfterExecutingReviewFailure($result, $executingReviewNode)) {
                     $result = $this->applyExecutingReviewFailureCaveat($result, $executingReviewNode);
@@ -386,7 +386,7 @@ final class TekgAcademicAgentService
                 }
             }
 
-            $reflection = $this->reflectionMessage($pluginName, $result, $pluginQueue, $index);
+            $reflection = $this->reflectionMessage($pluginName, $result, $pluginQueue, $index, $processLanguage);
             if ($reflection !== '') {
                 $this->emitEvent($emit, $eventSequence, [
                     'type' => 'reflection',
@@ -450,7 +450,7 @@ final class TekgAcademicAgentService
                             'plugin_name' => 'Citation Resolver',
                             'planning' => $planning,
                         ],
-                        $this->toolSelectedMessage('Citation Resolver', $planning)
+                        $this->toolSelectedMessage('Citation Resolver', $planning, $processLanguage)
                     ),
                 ]);
                 $citationResult = $citationPlugin->run([
@@ -471,7 +471,7 @@ final class TekgAcademicAgentService
                     'collection_state' => $collectionState,
                     'research_plan' => $planningNode->parsed_json,
                 ]);
-                $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $citationReviewNode, $emit, $eventSequence, $sessionId, 'Citation Resolver');
+                $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $citationReviewNode, $emit, $eventSequence, $sessionId, 'Citation Resolver', $processLanguage);
                 if (!$citationReviewNode->ok) {
                     if ($this->shouldContinueAfterExecutingReviewFailure($citationResult, $citationReviewNode)) {
                         $citationResult = $this->applyExecutingReviewFailureCaveat($citationResult, $citationReviewNode);
@@ -634,13 +634,13 @@ final class TekgAcademicAgentService
             'report_plan' => $reportPlan,
             'synthesized_evidence' => $synthesizedEvidence,
         ]);
-        $this->recordSixStageArtifact($sixStageArtifacts, 'integrating', $integratingNode, $emit, $eventSequence, $sessionId);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'integrating', $integratingNode, $emit, $eventSequence, $sessionId, '', $processLanguage);
         if (!$integratingNode->ok) {
             return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $controlModel, 'Integrating', $integratingNode, $sixStageArtifacts, $workflowState);
         }
         $claimEvidenceMap = (array)$integratingNode->parsed_json;
 
-        $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence);
+        $synthesizingMessage = $this->synthesizingMessage($planning, $pluginResults, $evidence, $processLanguage);
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'synthesizing',
             'session_id' => $sessionId,
@@ -679,7 +679,7 @@ final class TekgAcademicAgentService
                 'limits' => $limits,
                 'confidence' => $confidence,
             ]);
-        $this->recordSixStageArtifact($sixStageArtifacts, 'writing', $writingDecisionNode, $emit, $eventSequence, $sessionId);
+        $this->recordSixStageArtifact($sixStageArtifacts, 'writing', $writingDecisionNode, $emit, $eventSequence, $sessionId, '', $processLanguage);
         if (!$writingDecisionNode->ok) {
             return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $writingModel, 'Writing', $writingDecisionNode, $sixStageArtifacts, $workflowState);
         }
@@ -911,6 +911,7 @@ final class TekgAcademicAgentService
             'writing_failed' => $writingFailed,
             'failure_stage' => $writingFailed ? 'Writing' : '',
             'failure_reason' => $failureReason,
+            'presentation_failure_reason' => $writingFailed ? $this->academicPresentationFailureMessage('Writing', $processLanguage) : '',
             'reasoning_trace' => $reasoningTrace,
             'used_plugins' => array_map(static fn(array $call): string => (string)($call['plugin_name'] ?? ''), $pluginCalls),
             'plugin_calls' => $pluginCalls,
@@ -991,11 +992,12 @@ final class TekgAcademicAgentService
                 'session_id' => $sessionId,
                 'node' => 'Answer Writer Node',
                 'source' => 'Answer Writer Node',
-                'message' => 'The final writing node failed, so no academic answer was emitted for this run.',
+                'message' => $response['presentation_failure_reason'],
                 'payload' => [
                     'writing_failed' => true,
                     'failure_stage' => 'Writing',
                     'failure_reason' => $failureReason,
+                    'presentation_failure_reason' => $response['presentation_failure_reason'],
                 ],
             ]);
         }
@@ -1011,6 +1013,7 @@ final class TekgAcademicAgentService
                 'writing_failed' => $writingFailed,
                 'failure_stage' => $writingFailed ? 'Writing' : '',
                 'failure_reason' => $failureReason,
+                'presentation_failure_reason' => $response['presentation_failure_reason'],
                 'workflow_state' => $workflowState,
             ],
         ]);
@@ -1159,9 +1162,10 @@ final class TekgAcademicAgentService
         ?callable $emit,
         int &$eventSequence,
         string $sessionId,
-        string $pluginName = ''
+        string $pluginName = '',
+        string $processLanguage = 'english'
     ): void {
-        $artifact = $this->nodeLlmArtifact($result, $pluginName);
+        $artifact = $this->nodeLlmArtifact($result, $pluginName, $processLanguage);
         if ($stage === 'executing') {
             $artifact['required_schema'] = 'tool_execution_review.v1';
             $sixStageArtifacts[$stage][] = $artifact;
@@ -1223,7 +1227,7 @@ final class TekgAcademicAgentService
         return $pluginResult;
     }
 
-    private function nodeLlmArtifact(NodeLlmResult $result, string $pluginName = ''): array
+    private function nodeLlmArtifact(NodeLlmResult $result, string $pluginName = '', string $processLanguage = 'english'): array
     {
         return [
             'stage' => $this->stageLabelForSixStageArtifact($result->stage),
@@ -1231,16 +1235,18 @@ final class TekgAcademicAgentService
             'ok' => $result->ok,
             'artifact' => $result->parsed_json,
             'errors' => $result->errors,
-            'summary' => $this->nodeLlmSummary($result, $pluginName),
+            'summary' => $this->nodeLlmSummary($result, $pluginName, $processLanguage),
             'plugin_name' => $pluginName,
         ];
     }
 
-    private function nodeLlmSummary(NodeLlmResult $result, string $pluginName = ''): string
+    private function nodeLlmSummary(NodeLlmResult $result, string $pluginName = '', string $processLanguage = 'english'): string
     {
         if (!$result->ok) {
             $message = implode('; ', $result->errors);
-            return $this->stageLabelForSixStageArtifact($result->stage) . ' LLM artifact failed' . ($message !== '' ? ': ' . $message : '.');
+            return $this->isChineseProcessLanguage($processLanguage)
+                ? $this->stageLabelForSixStageArtifact($result->stage) . ' LLM 产物失败' . ($message !== '' ? '：' . $message : '。')
+                : $this->stageLabelForSixStageArtifact($result->stage) . ' LLM artifact failed' . ($message !== '' ? ': ' . $message : '.');
         }
 
         $artifact = $result->parsed_json ?? [];
@@ -1252,12 +1258,21 @@ final class TekgAcademicAgentService
         }
 
         if ($result->stage === 'integrating') {
-            return 'Claim-evidence map generated.';
+            return $this->isChineseProcessLanguage($processLanguage) ? '已生成主张与证据映射。' : 'Claim-evidence map generated.';
         }
         if ($result->stage === 'executing' && $pluginName !== '') {
-            return "Tool execution review generated for {$pluginName}.";
+            return $this->isChineseProcessLanguage($processLanguage) ? "已为 {$pluginName} 生成工具执行审查。" : "Tool execution review generated for {$pluginName}.";
         }
-        return $this->stageLabelForSixStageArtifact($result->stage) . ' LLM artifact generated.';
+        return $this->isChineseProcessLanguage($processLanguage)
+            ? $this->stageLabelForSixStageArtifact($result->stage) . ' LLM 产物已生成。'
+            : $this->stageLabelForSixStageArtifact($result->stage) . ' LLM artifact generated.';
+    }
+
+    private function academicPresentationFailureMessage(string $stage, string $processLanguage): string
+    {
+        return $this->isChineseProcessLanguage($processLanguage)
+            ? $stage . ' 阶段失败，未生成学术回答。'
+            : $stage . ' failed, so no academic answer was generated.';
     }
 
     private function nodeNameForSixStageArtifact(string $stage): string
@@ -1324,6 +1339,7 @@ final class TekgAcademicAgentService
             'writing_failed' => true,
             'failure_stage' => $failureStage,
             'failure_reason' => $failureReason,
+            'presentation_failure_reason' => $this->academicPresentationFailureMessage($failureStage, $answerLanguage),
             'reasoning_trace' => [[
                 'step' => 'six_stage_llm',
                 'title' => $failureStage,
@@ -1359,7 +1375,7 @@ final class TekgAcademicAgentService
             'node_payloads' => tekg_agent_json_safe([
                 'six_stage_failure' => [
                     'node' => $this->nodeNameForSixStageArtifact($result->stage),
-                    'output' => $this->nodeLlmArtifact($result),
+                    'output' => $this->nodeLlmArtifact($result, '', $answerLanguage),
                 ],
             ]),
         ];

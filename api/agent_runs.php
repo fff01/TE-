@@ -60,11 +60,14 @@ try {
         $state['status'] = 'failed';
         $state['error'] = 'The background worker could not be started.';
         $state['failure_reason'] = 'The background worker could not be started.';
+        $state['presentation_failure_reason'] = tekg_agent_run_presentation_failure_message('Startup', (string)($state['language'] ?? ''));
         $state['finished_at'] = gmdate('c');
         tekg_agent_save_run_state($runId, $state);
         tekg_agent_json_response(500, [
             'ok' => false,
             'error' => 'The background worker could not be started.',
+            'presentation_failure_reason' => $state['presentation_failure_reason'],
+            'language' => (string)($state['language'] ?? ''),
             'run_id' => $runId,
             'request_id' => $requestId,
             'session_id' => $sessionId,
@@ -81,11 +84,14 @@ try {
         }
         $state['error'] = $reason;
         $state['failure_reason'] = $reason;
+        $state['presentation_failure_reason'] = tekg_agent_run_presentation_failure_message('Startup', (string)($state['language'] ?? ''));
         $state['finished_at'] = gmdate('c');
         tekg_agent_save_run_state($runId, $state);
         tekg_agent_json_response(500, [
             'ok' => false,
             'error' => $reason,
+            'presentation_failure_reason' => $state['presentation_failure_reason'],
+            'language' => (string)($state['language'] ?? ''),
             'run_id' => $runId,
             'request_id' => $requestId,
             'session_id' => $sessionId,

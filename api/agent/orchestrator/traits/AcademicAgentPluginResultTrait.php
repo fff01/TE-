@@ -171,13 +171,17 @@ trait TekgAcademicAgentPluginResultTrait
         };
     }
 
-    private function toolSelectedMessage(string $pluginName, array $planning): string
+    private function toolSelectedMessage(string $pluginName, array $planning, string $processLanguage = 'english'): string
     {
         $gapNames = array_values(array_filter(array_map(
             static fn(array $gap): string => trim((string)($gap['gap_type'] ?? '')),
             (array)($planning['knowledge_gaps'] ?? [])
         )));
         $gapText = $gapNames === [] ? 'the current evidence gap' : implode(', ', $gapNames);
+
+        if ($this->isChineseProcessLanguage($processLanguage)) {
+            return '我将使用 ' . $pluginName . ' 补充当前证据缺口：' . $gapText . '。';
+        }
 
         return match ($pluginName) {
             'Entity Resolver' => 'I will stabilize entity names first so later evidence lookup does not drift across aliases.',
@@ -196,23 +200,28 @@ trait TekgAcademicAgentPluginResultTrait
         };
     }
 
-    private function synthesizingMessage(array $planning, array $pluginResults, array $evidence): string
+    private function synthesizingMessage(array $planning, array $pluginResults, array $evidence, string $processLanguage = 'english'): string
     {
         $used = implode(', ', array_keys($pluginResults));
         $gapCount = count((array)($planning['knowledge_gaps'] ?? []));
-        return 'I am now synthesizing the resolved entities, ' . $gapCount . ' identified knowledge gaps, and ' . count($evidence) . ' evidence items into a coherent answer. Tools used: ' . $used . '.';
+        return $this->isChineseProcessLanguage($processLanguage)
+            ? '我正在整合已解析的实体、' . $gapCount . ' 个已识别知识缺口和 ' . count($evidence) . ' 条证据，以形成连贯回答。已使用工具：' . $used . '。'
+            : 'I am now synthesizing the resolved entities, ' . $gapCount . ' identified knowledge gaps, and ' . count($evidence) . ' evidence items into a coherent answer. Tools used: ' . $used . '.';
     }
 
-    private function reflectionMessage(string $pluginName, array $result, array $pluginQueue, int $currentIndex): string
+    private function reflectionMessage(string $pluginName, array $result, array $pluginQueue, int $currentIndex, string $processLanguage = 'english'): string
     {
         $remaining = array_values(array_slice($pluginQueue, $currentIndex + 1));
-        $remainingText = $remaining === [] ? 'No additional tools are currently queued.' : 'Next queued tools: ' . implode(', ', $remaining) . '.';
+        $chinese = $this->isChineseProcessLanguage($processLanguage);
+        $remainingText = $remaining === []
+            ? ($chinese ? '当前没有排队中的其他工具。' : 'No additional tools are currently queued.')
+            : ($chinese ? '接下来排队的工具：' . implode(', ', $remaining) . '。' : 'Next queued tools: ' . implode(', ', $remaining) . '.');
         $counts = (array)($result['result_counts'] ?? []);
         $status = trim((string)($result['status'] ?? 'ok'));
         $summary = trim((string)($result['display_summary'] ?? $result['query_summary'] ?? ''));
 
         if ($status !== '' && $status !== 'ok') {
-            return 'This tool did not produce a strong result. ' . $remainingText;
+            return ($chinese ? '该工具未产生足够有力的结果。' : 'This tool did not produce a strong result.') . ' ' . $remainingText;
         }
 
         if ($summary !== '') {
@@ -220,11 +229,11 @@ trait TekgAcademicAgentPluginResultTrait
         }
 
         if ($counts !== []) {
-            return 'This tool returned ' . implode(', ', array_map(
+            return ($chinese ? '该工具返回：' : 'This tool returned ') . implode(', ', array_map(
                 static fn(string $key, $value): string => $key . '=' . (string)$value,
                 array_keys($counts),
                 array_values($counts)
-            )) . '. ' . $remainingText;
+            )) . ($chinese ? '。' : '.') . ' ' . $remainingText;
         }
 
         return $remainingText;

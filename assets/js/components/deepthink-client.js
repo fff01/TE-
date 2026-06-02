@@ -202,6 +202,47 @@
   }
 
   const DEEPTHINK_STAGES = ['Understanding', 'Planning', 'Executing', 'Writing'];
+  function detectLanguage(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'zh' || normalized === 'chinese') return 'zh';
+    if (normalized === 'en' || normalized === 'english') return 'en';
+    return /[\u3400-\u9fff]/.test(normalized) ? 'zh' : 'en';
+  }
+
+  function stageDisplayLabel(stage, _language = 'en') {
+    return normalizeDeepThinkStage(stage) || String(stage || '');
+  }
+
+  function uiText(key, language = 'en') {
+    const zh = {
+      ready: 'Ready',
+      starting: 'Starting',
+      thinking_title: 'Deep thinking',
+      done: 'Done',
+      failed: 'Failed',
+      cancelled: '请求已取消。',
+      stream_ended: 'Deep Think 数据流提前结束。',
+      answer_missing: 'Deep Think 未返回答案。',
+      error: 'Deep Think 处理失败，请稍后重试。',
+    };
+    const en = {
+      ready: 'Ready',
+      starting: 'Starting',
+      thinking_title: 'Deep thinking',
+      done: 'Done',
+      failed: 'Failed',
+      cancelled: 'The request was cancelled.',
+      stream_ended: 'The Deep Think stream ended before a done event was received.',
+      answer_missing: 'Deep Think completed without returning an answer.',
+      error: 'Deep Think failed. Please try again.',
+    };
+    const catalog = detectLanguage(language) === 'zh' ? zh : en;
+    return catalog[key] || '';
+  }
+
+  function errorMessage(language = 'en', _rawMessage = '') {
+    return uiText('error', language);
+  }
 
   function normalizeDeepThinkStage(stage) {
     const key = String(stage || '').trim().toLowerCase();
@@ -219,6 +260,7 @@
       appendError: false,
       renderAnswer: false,
       stopTimer: false,
+      language: 'en',
     };
   }
 
@@ -232,6 +274,7 @@
     };
     if (!event || typeof event !== 'object') return state;
     const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+    if (payload.language || event.language) state.language = detectLanguage(payload.language || event.language);
 
     if (event.type === 'stage_state') {
       const nextStage = normalizeDeepThinkStage(payload.current_stage || payload.stage);
@@ -271,13 +314,13 @@
     return state;
   }
 
-  function createProgressMarkup(className = 'deepthink-progress') {
+  function createProgressMarkup(className = 'deepthink-progress', language = 'en') {
     return `
       <div class="${escapeHtml(className)}" data-role="deepthink-progress" hidden>
         ${DEEPTHINK_STAGES.map((stage, index) => `
           <div class="deepthink-progress-stage" data-deepthink-stage="${escapeHtml(stage)}">
             <span class="deepthink-progress-number">${index + 1}</span>
-            <span class="deepthink-progress-label">${escapeHtml(stage)}</span>
+            <span class="deepthink-progress-label">${escapeHtml(stageDisplayLabel(stage, language))}</span>
           </div>
         `).join('')}
       </div>
@@ -289,6 +332,9 @@
     progressNode.hidden = !state.progressVisible;
     const currentIndex = DEEPTHINK_STAGES.indexOf(state.stage);
     progressNode.querySelectorAll('[data-deepthink-stage]').forEach((node, index) => {
+      const stage = String(node.dataset.deepthinkStage || '');
+      const label = node.querySelector('.deepthink-progress-label');
+      if (label) label.textContent = stageDisplayLabel(stage, state.language);
       node.classList.toggle('is-active', index === currentIndex);
       node.classList.toggle('is-done', currentIndex > index);
       node.classList.toggle('is-failed', state.failed && index === currentIndex);
@@ -307,6 +353,10 @@
     parseStreamChunk,
     readEventStream,
     formatElapsed,
+    detectLanguage,
+    stageDisplayLabel,
+    uiText,
+    errorMessage,
     createStreamState,
     reduceStreamEvent,
     createProgressMarkup,

@@ -641,11 +641,13 @@
     applyWorkflowState(turn);
   }
 
-  function thinkingTitleForMode(mode) {
+  function thinkingTitleForMode(mode, language = 'en') {
     if (mode === 'agent') {
       return ui.agent_thinking_title || 'Agent thinking';
     }
-    return ui.thinking_title || 'Deep thinking';
+    return typeof deepThinkClient.uiText === 'function'
+      ? deepThinkClient.uiText('thinking_title', language)
+      : (ui.thinking_title || 'Deep thinking');
   }
 
   function createTurn(question, options = {}) {
@@ -654,6 +656,9 @@
     const mode = options.mode === 'agent' ? 'agent' : 'deepthink';
     const deferWorkflow = showWorkflow && options.deferWorkflow === true;
     const initialStage = showWorkflow && options.initialStage ? String(options.initialStage) : '';
+    const turnLanguage = typeof deepThinkClient.detectLanguage === 'function'
+      ? deepThinkClient.detectLanguage(question)
+      : 'en';
     const turnId = `turn-${++turnCounter}`;
     const node = document.createElement('article');
     node.className = 'agent-turn is-pending';
@@ -665,8 +670,8 @@
       <div class="agent-assistant-row">
         <section class="agent-thinking" data-role="thinking">
           <div class="agent-thinking-head">
-            <span class="agent-thinking-title">${escapeHtml(thinkingTitleForMode(mode))}</span>
-              <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml(initialStage || 'Starting')}</span>
+            <span class="agent-thinking-title">${escapeHtml(thinkingTitleForMode(mode, turnLanguage))}</span>
+              <span class="agent-thinking-meta" data-role="thinking-meta">${escapeHtml(initialStage || (typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('starting', turnLanguage) : 'Starting'))}</span>
           </div>
           ${showWorkflow && !deferWorkflow ? createWorkflowMarkup() : ''}
           <div class="agent-thinking-body" data-role="thinking-body"></div>
@@ -682,7 +687,7 @@
       startedAt: performance.now(),
       timerId: null,
       finalized: false,
-      language: 'en',
+      language: turnLanguage,
       toolIds: [],
       evidence: [],
       citations: [],
@@ -794,9 +799,14 @@
     const meta = turn.node.querySelector('[data-role="thinking-meta"]');
     if (!meta) return;
     const elapsed = formatElapsed(performance.now() - turn.startedAt);
-    const stageLabel = String(turn.currentStage || 'Starting');
+    const stageLabel = turn.currentStage && typeof deepThinkClient.stageDisplayLabel === 'function'
+      ? deepThinkClient.stageDisplayLabel(turn.currentStage, turn.language)
+      : String(turn.currentStage || (typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('starting', turn.language) : 'Starting'));
+    const terminalLabel = turn.mode === 'deepthink' && typeof deepThinkClient.uiText === 'function'
+      ? deepThinkClient.uiText(turn.writingFailed ? 'failed' : 'done', turn.language)
+      : (turn.writingFailed ? (ui.thinking_failed || 'Failed') : (ui.thinking_done || 'Done'));
     meta.textContent = done
-      ? `${turn.writingFailed ? (ui.thinking_failed || 'Failed') : (ui.thinking_done || 'Done')} · ${elapsed}`
+      ? `${terminalLabel} · ${elapsed}`
       : `${stageLabel} · ${elapsed}`;
   }
 
@@ -812,7 +822,7 @@
     if (turn.streamState.progressVisible && !turn.progressNode && typeof deepThinkClient.createProgressMarkup === 'function') {
       const thinkingBody = turn.node.querySelector('[data-role="thinking-body"]');
       if (thinkingBody) {
-        thinkingBody.insertAdjacentHTML('beforebegin', deepThinkClient.createProgressMarkup('agent-deepthink-progress'));
+        thinkingBody.insertAdjacentHTML('beforebegin', deepThinkClient.createProgressMarkup('agent-deepthink-progress', turn.language));
         turn.progressNode = turn.node.querySelector('[data-role="deepthink-progress"]');
       }
     }
@@ -850,7 +860,10 @@
     if (event.type === 'error') {
       turn.failed = true;
       turn.writingFailed = true;
-      turn.failureReason = String(event.payload?.failure_reason || event.message || 'The request failed.');
+      turn.rawFailureReason = String(event.payload?.failure_reason || event.message || '');
+      turn.failureReason = typeof deepThinkClient.errorMessage === 'function'
+        ? deepThinkClient.errorMessage(turn.language, turn.rawFailureReason)
+        : String(event.message || 'The request failed.');
       if (!streamState || streamState.appendError) {
         createThinkingLine(turn, turn.failureReason, 'error');
       }
@@ -865,12 +878,13 @@
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       turn.failed = !!(streamState && streamState.failed);
       turn.writingFailed = turn.failed;
-      turn.failureReason = String(payload.failure_reason || turn.failureReason || '');
+      turn.rawFailureReason = String(payload.failure_reason || turn.rawFailureReason || '');
+      turn.failureReason = String(payload.presentation_failure_reason || turn.failureReason || '');
       if (streamState && streamState.renderAnswer) {
         turn.pendingAnswer = streamState.answer;
         setAnswer(turn, streamState.answer, String(payload.language || turn.language || 'en'));
       } else if (turn.failed) {
-        setAnswerFailure(turn, turn.failureReason || 'Deep Think failed before a final answer was emitted.');
+        setAnswerFailure(turn, turn.failureReason || (typeof deepThinkClient.errorMessage === 'function' ? deepThinkClient.errorMessage(turn.language) : 'Deep Think failed before a final answer was emitted.'));
       }
       finalizeTurn(turn);
     }
@@ -1205,11 +1219,6 @@
       const message = llmEventErrorMessage(event);
       setWorkflowStageFromLlmEvent(turn, stage, 'error');
       createThinkingLine(turn, `${stage}: ${message}`, 'error');
-      turn.writingFailed = true;
-      turn.failureReason = message;
-      turn.receivedDone = true;
-      setAnswerFailure(turn, message);
-      finalizeTurn(turn);
       return;
     }
 
@@ -1279,7 +1288,8 @@
       createThinkingLine(turn, String(event.message || 'The request failed.'), 'error');
       if (event.payload && typeof event.payload === 'object' && event.payload.writing_failed) {
         turn.writingFailed = true;
-        turn.failureReason = String(event.payload.failure_reason || event.message || '');
+        turn.rawFailureReason = String(event.payload.failure_reason || '');
+        turn.failureReason = String(event.payload.presentation_failure_reason || event.message || '');
       }
       return;
     }
@@ -1294,7 +1304,8 @@
       turn.receivedDone = true;
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       turn.writingFailed = !!payload.writing_failed;
-      turn.failureReason = String(payload.failure_reason || turn.failureReason || '');
+      turn.rawFailureReason = String(payload.failure_reason || turn.rawFailureReason || '');
+      turn.failureReason = String(payload.presentation_failure_reason || turn.failureReason || '');
       if (payload.answer) {
         turn.pendingAnswer = String(payload.answer || '');
       }
@@ -1352,7 +1363,12 @@
       const message = payload && payload.error
         ? String(payload.error)
         : `Request failed with HTTP ${response.status}`;
-      throw new Error(message);
+      const error = new Error(message);
+      if (payload && typeof payload === 'object') {
+        error.presentationFailureReason = String(payload.presentation_failure_reason || '');
+        error.language = String(payload.language || '');
+      }
+      throw error;
     }
     return payload;
   }
@@ -1437,7 +1453,7 @@
             type: failedRun && !runState.answer ? 'error' : 'done',
             request_id: runState.request_id || turn.requestId || '',
             session_id: runState.session_id || sessionId || '',
-            message: runState.error || runState.failure_reason || '',
+            message: runState.presentation_failure_reason || runState.error || runState.failure_reason || '',
             payload: {
               status: runState.status || '',
               answer: runState.answer || '',
@@ -1445,6 +1461,7 @@
               writing_failed: !!runState.writing_failed,
               failure_stage: runState.failure_stage || '',
               failure_reason: runState.failure_reason || runState.error || '',
+              presentation_failure_reason: runState.presentation_failure_reason || '',
               used_plugins: Array.isArray(runState.used_plugins) ? runState.used_plugins : [],
               workflow_state: runState.workflow_state || null,
             },
@@ -1461,6 +1478,7 @@
                 writing_failed: !!runState.writing_failed,
                 failure_stage: runState.failure_stage || '',
                 failure_reason: runState.failure_reason || runState.error || '',
+                presentation_failure_reason: runState.presentation_failure_reason || '',
                 used_plugins: Array.isArray(runState.used_plugins) ? runState.used_plugins : [],
                 workflow_state: runState.workflow_state || null,
               },
@@ -1552,10 +1570,11 @@
       finalizeTurn(turn);
     } catch (error) {
       const message = error && error.name === 'AbortError'
-        ? 'The request was cancelled.'
-        : (error && error.message ? error.message : 'Unknown request failure');
+        ? (typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('cancelled', turn.language) : 'The request was cancelled.')
+        : (String(error && error.presentationFailureReason ? error.presentationFailureReason : '').trim()
+          || (typeof deepThinkClient.errorMessage === 'function' ? deepThinkClient.errorMessage(turn.language, error && error.message) : (error && error.message ? error.message : 'Unknown request failure')));
       handleStreamEvent(turn, { type: 'error', message });
-      setAnswer(turn, message, 'en');
+      setAnswer(turn, message, turn.language || 'en');
       finalizeTurn(turn);
       throw error;
     } finally {
@@ -1621,10 +1640,10 @@
       finalizeTurn(turn);
     } catch (error) {
       const message = error && error.name === 'AbortError'
-        ? 'The request was cancelled.'
-        : (error && error.message ? error.message : (ui.deepthink_error || 'Deep Think failed.'));
+        ? (typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('cancelled', turn.language) : 'The request was cancelled.')
+        : (typeof deepThinkClient.errorMessage === 'function' ? deepThinkClient.errorMessage(turn.language, error && error.message) : (ui.deepthink_error || 'Deep Think failed.'));
       handleStreamEvent(turn, { type: 'error', message });
-      setAnswer(turn, message, 'en');
+      setAnswer(turn, message, turn.language);
       finalizeTurn(turn);
       throw error;
     } finally {

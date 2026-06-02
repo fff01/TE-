@@ -36,6 +36,15 @@ function equal(actual, expected, message) {
 
 const initial = client.createStreamState();
 equal(client.DEEPTHINK_STAGES, ['Understanding', 'Planning', 'Executing', 'Writing'], 'Deep Think stages must stay fixed');
+assert(client.detectLanguage('LINE-1 和哪些疾病相关？') === 'zh', 'Shared client must detect Chinese questions.');
+assert(client.detectLanguage('Which diseases are related to LINE-1?') === 'en', 'Shared client must detect English questions.');
+assert(client.stageDisplayLabel('Understanding', 'zh') === 'Understanding', 'Chinese questions must keep English stage display labels.');
+assert(client.stageDisplayLabel('Understanding', 'en') === 'Understanding', 'English stage display label must remain English.');
+assert(client.uiText('thinking_title', 'zh') === 'Deep thinking', 'Chinese questions must keep the Deep thinking shell title in English.');
+assert(client.errorMessage('zh', 'raw backend error') === 'Deep Think 处理失败，请稍后重试。', 'Chinese visible errors must use localized presentation copy.');
+assert(client.errorMessage('en', 'raw backend error') === 'Deep Think failed. Please try again.', 'English visible errors must use localized presentation copy.');
+assert(/Understanding/.test(client.createProgressMarkup('deepthink-progress', 'zh')), 'Chinese progress markup must keep English display labels.');
+assert(/Understanding/.test(client.createProgressMarkup('deepthink-progress', 'en')), 'English progress markup must use English display labels.');
 assert(initial.progressVisible === false, 'Progress must start hidden.');
 
 const afterAnalysis = reduce(initial, { type: 'analysis', message: 'Inspecting question' });
@@ -111,6 +120,7 @@ for (const [label, entrySource] of [
   assert(/reduceStreamEvent/.test(entrySource), `${label} must consume the shared reducer.`);
   assert(/createProgressMarkup/.test(entrySource), `${label} must render the shared four-stage progress markup.`);
   assert(/applyProgressState/.test(entrySource), `${label} must apply shared progress state.`);
+  assert(/errorMessage/.test(entrySource), `${label} must render localized Deep Think error presentation copy.`);
 }
 
 for (const [label, entrySource] of [

@@ -41,10 +41,13 @@ trait TekgAcademicAgentPlanningTrait
     {
         $intent = (string)($analysis['intent'] ?? 'relationship');
         $isResearchSynthesis = (string)($analysis['task_complexity'] ?? '') === 'research_synthesis';
+        $zh = $this->planningUsesChinese($analysis);
         $gaps = [
             [
-                'gap_type' => 'entity normalization',
-                'why_needed' => 'The system must resolve stable canonical entities and alias chains before any evidence lookup can be trusted.',
+                'gap_type' => $zh ? '实体标准化' : 'entity normalization',
+                'why_needed' => $zh
+                    ? '系统需要先解析稳定的标准实体和别名链，后续证据查询才可信。'
+                    : 'The system must resolve stable canonical entities and alias chains before any evidence lookup can be trusted.',
                 'priority' => 100,
                 'candidate_tools' => ['Entity Resolver'],
             ],
@@ -52,14 +55,18 @@ trait TekgAcademicAgentPlanningTrait
 
         if ($intent === 'mechanism') {
             $gaps[] = [
-                'gap_type' => 'structured relations',
-                'why_needed' => 'Mechanism questions first need local graph relations that can connect TE entities to functions, genes, mutations, proteins, RNAs, or diseases.',
+                'gap_type' => $zh ? '结构化关系' : 'structured relations',
+                'why_needed' => $zh
+                    ? '机制类问题需要先查看本地图谱关系，以连接 TE 实体与功能、基因、突变、蛋白、RNA 或疾病。'
+                    : 'Mechanism questions first need local graph relations that can connect TE entities to functions, genes, mutations, proteins, RNAs, or diseases.',
                 'priority' => 90,
                 'candidate_tools' => ['Graph Plugin'],
             ];
             $gaps[] = [
-                'gap_type' => 'mechanism literature',
-                'why_needed' => 'Mechanism claims need literature evidence to confirm whether the graph patterns are supported by traceable publications.',
+                'gap_type' => $zh ? '机制文献证据' : 'mechanism literature',
+                'why_needed' => $zh
+                    ? '机制性结论需要文献证据，用来确认图谱模式是否有可追溯论文支持。'
+                    : 'Mechanism claims need literature evidence to confirm whether the graph patterns are supported by traceable publications.',
                 'priority' => 80,
                 'candidate_tools' => ['Literature Plugin'],
             ];
@@ -67,8 +74,10 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_disease_links'] ?? false) || ($isResearchSynthesis && in_array('Disease', (array)($analysis['requested_target_types'] ?? []), true))) {
             $gaps[] = [
-                'gap_type' => 'structured disease relations',
-                'why_needed' => 'The answer needs local graph evidence for TE-disease links before disease claims can be reported.',
+                'gap_type' => $zh ? '结构化疾病关系' : 'structured disease relations',
+                'why_needed' => $zh
+                    ? '在报告疾病相关结论前，需要先取得 TE-疾病连接的本地图谱证据。'
+                    : 'The answer needs local graph evidence for TE-disease links before disease claims can be reported.',
                 'priority' => 82,
                 'candidate_tools' => ['Graph Plugin'],
             ];
@@ -76,8 +85,10 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_papers'] ?? false) || $intent === 'literature') {
             $gaps[] = [
-                'gap_type' => 'literature evidence',
-                'why_needed' => 'The user explicitly asked for papers or literature support.',
+                'gap_type' => $zh ? '文献证据' : 'literature evidence',
+                'why_needed' => $zh
+                    ? '用户明确要求论文、文献或引用支持。'
+                    : 'The user explicitly asked for papers or literature support.',
                 'priority' => 85,
                 'candidate_tools' => ['Literature Plugin'],
             ];
@@ -85,8 +96,10 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_site_navigation'] ?? false) && !$isResearchSynthesis) {
             $gaps[] = [
-                'gap_type' => 'site navigation',
-                'why_needed' => 'The user is asking where a TE-KG page, panel, route, or dataset entry can be opened.',
+                'gap_type' => $zh ? '站内导航' : 'site navigation',
+                'why_needed' => $zh
+                    ? '用户询问应在哪里打开 TE-KG 页面、面板、路由或数据入口。'
+                    : 'The user is asking where a TE-KG page, panel, route, or dataset entry can be opened.',
                 'priority' => 94,
                 'candidate_tools' => ['Site Navigator Plugin'],
             ];
@@ -94,8 +107,8 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_classification'] ?? false) || $intent === 'classification') {
             $gaps[] = [
-                'gap_type' => 'classification context',
-                'why_needed' => 'The answer needs lineage or taxonomy background.',
+                'gap_type' => $zh ? '分类背景' : 'classification context',
+                'why_needed' => $zh ? '回答需要谱系或 taxonomy 背景。' : 'The answer needs lineage or taxonomy background.',
                 'priority' => 70,
                 'candidate_tools' => ['Tree Plugin'],
             ];
@@ -103,8 +116,8 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_expression'] ?? false) || $intent === 'expression') {
             $gaps[] = [
-                'gap_type' => 'expression context',
-                'why_needed' => 'The answer needs expression-related context or top biological settings.',
+                'gap_type' => $zh ? '表达背景' : 'expression context',
+                'why_needed' => $zh ? '回答需要表达相关背景或主要生物学场景。' : 'The answer needs expression-related context or top biological settings.',
                 'priority' => 65,
                 'candidate_tools' => ['Expression Plugin'],
             ];
@@ -112,8 +125,8 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_genome'] ?? false) || $intent === 'genome') {
             $gaps[] = [
-                'gap_type' => 'genomic loci',
-                'why_needed' => 'The answer needs locus-level context or genome browser coordinates.',
+                'gap_type' => $zh ? '基因组位点' : 'genomic loci',
+                'why_needed' => $zh ? '回答需要位点级背景或基因组浏览器坐标。' : 'The answer needs locus-level context or genome browser coordinates.',
                 'priority' => 65,
                 'candidate_tools' => ['Genome Plugin'],
             ];
@@ -121,8 +134,8 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_sequence'] ?? false) || $intent === 'sequence') {
             $gaps[] = [
-                'gap_type' => 'sequence and structure context',
-                'why_needed' => 'The answer needs sequence-backed annotation, consensus length, or structure hints.',
+                'gap_type' => $zh ? '序列与结构背景' : 'sequence and structure context',
+                'why_needed' => $zh ? '回答需要序列支持的注释、共识长度或结构线索。' : 'The answer needs sequence-backed annotation, consensus length, or structure hints.',
                 'priority' => 75,
                 'candidate_tools' => ['Sequence Plugin'],
             ];
@@ -130,8 +143,10 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_graph_analytics'] ?? false) || $intent === 'graph_analytics') {
             $gaps[] = [
-                'gap_type' => 'graph analytics',
-                'why_needed' => 'This question asks for global graph statistics, ranking, structure, or topology rather than a single local entity neighborhood.',
+                'gap_type' => $zh ? '图谱分析' : 'graph analytics',
+                'why_needed' => $zh
+                    ? '该问题需要全局图谱统计、排名、结构或拓扑，而不是单个实体邻域。'
+                    : 'This question asks for global graph statistics, ranking, structure, or topology rather than a single local entity neighborhood.',
                 'priority' => 92,
                 'candidate_tools' => ['Graph Analytics Plugin'],
             ];
@@ -139,8 +154,10 @@ trait TekgAcademicAgentPlanningTrait
 
         if (($analysis['asks_for_cypher_explorer'] ?? false) || ($analysis['asks_for_graph_structure'] ?? false)) {
             $gaps[] = [
-                'gap_type' => 'graph exploration',
-                'why_needed' => 'This question may require exploratory read-only Cypher beyond the fixed entity-neighborhood templates.',
+                'gap_type' => $zh ? '图谱探索' : 'graph exploration',
+                'why_needed' => $zh
+                    ? '该问题可能需要固定实体邻域模板之外的只读 Cypher 探索。'
+                    : 'This question may require exploratory read-only Cypher beyond the fixed entity-neighborhood templates.',
                 'priority' => 76,
                 'candidate_tools' => ['Cypher Explorer Plugin'],
             ];
@@ -148,8 +165,10 @@ trait TekgAcademicAgentPlanningTrait
 
         if (in_array($intent, ['literature', 'mechanism', 'comparison'], true) || ($analysis['needs_external_literature'] ?? false)) {
             $gaps[] = [
-                'gap_type' => 'literature synthesis',
-                'why_needed' => 'Retrieved citations still need to be grouped into supported claims, conflicts, and evidence gaps.',
+                'gap_type' => $zh ? '文献综合' : 'literature synthesis',
+                'why_needed' => $zh
+                    ? '已检索到的引用仍需归并为支持性结论、冲突证据和证据缺口。'
+                    : 'Retrieved citations still need to be grouped into supported claims, conflicts, and evidence gaps.',
                 'priority' => 72,
                 'candidate_tools' => ['Literature Reading Plugin'],
             ];
@@ -157,8 +176,10 @@ trait TekgAcademicAgentPlanningTrait
 
         if (count($gaps) === 1) {
             $gaps[] = [
-                'gap_type' => 'structured relations',
-                'why_needed' => 'No specialized gap dominates this question, so the local graph is the best first evidence layer.',
+                'gap_type' => $zh ? '结构化关系' : 'structured relations',
+                'why_needed' => $zh
+                    ? '当前没有更专门的缺口占主导，因此本地图谱是最合适的第一层证据。'
+                    : 'No specialized gap dominates this question, so the local graph is the best first evidence layer.',
                 'priority' => 70,
                 'candidate_tools' => ['Graph Plugin'],
             ];
@@ -188,7 +209,9 @@ trait TekgAcademicAgentPlanningTrait
         ];
         $plan[] = [
             'plugin' => 'Entity Resolver',
-            'reason' => 'Resolve canonical entities, alias chains, and broad alias fallback boundaries.',
+            'reason' => $this->planningUsesChinese($analysis)
+                ? '解析标准实体、别名链和宽泛别名边界。'
+                : 'Resolve canonical entities, alias chains, and broad alias fallback boundaries.',
         ];
         $seen['Entity Resolver'] = true;
 
@@ -208,7 +231,9 @@ trait TekgAcademicAgentPlanningTrait
         if (($analysis['needs_external_literature'] ?? false) && !isset($seen['Literature Plugin'])) {
             $plan[] = [
                 'plugin' => 'Literature Plugin',
-                'reason' => 'External literature may be needed if the graph does not yield enough direct support.',
+                'reason' => $this->planningUsesChinese($analysis)
+                    ? '如果图谱没有给出足够直接支持，可能需要外部文献。'
+                    : 'External literature may be needed if the graph does not yield enough direct support.',
             ];
         }
 
@@ -225,22 +250,39 @@ trait TekgAcademicAgentPlanningTrait
     {
         $subtasks = [];
         $intent = (string)($analysis['intent'] ?? 'relationship');
+        $zh = $this->planningUsesChinese($analysis);
         $entityLabels = array_map(static fn(array $entity): string => (string)($entity['canonical_label'] ?? $entity['label'] ?? ''), (array)($analysis['normalized_entities'] ?? []));
-        $entityText = $entityLabels !== [] ? implode(', ', array_filter($entityLabels)) : 'the recognized entities';
+        $entityText = $entityLabels !== [] ? implode(', ', array_filter($entityLabels)) : ($zh ? '已识别实体' : 'the recognized entities');
 
-        $subtasks[] = 'Resolve the canonical identity and alias boundaries for ' . $entityText . '.';
+        $subtasks[] = $zh
+            ? '解析 ' . $entityText . ' 的标准身份和别名边界。'
+            : 'Resolve the canonical identity and alias boundaries for ' . $entityText . '.';
         foreach (array_slice($knowledgeGaps, 0, 4) as $gap) {
-            $subtasks[] = 'Collect evidence for ' . (string)$gap['gap_type'] . ' because ' . tekg_agent_lower((string)$gap['why_needed']);
+            $subtasks[] = $zh
+                ? '为' . (string)$gap['gap_type'] . '补充证据：' . (string)$gap['why_needed']
+                : 'Collect evidence for ' . (string)$gap['gap_type'] . ' because ' . tekg_agent_lower((string)$gap['why_needed']);
         }
         if ($intent === 'mechanism') {
-            $subtasks[] = 'Integrate the strongest relation and literature evidence into a causal mechanism chain without inventing unsupported steps.';
+            $subtasks[] = $zh
+                ? '整合最有力的关系和文献证据，形成机制链，同时避免编造无支持步骤。'
+                : 'Integrate the strongest relation and literature evidence into a causal mechanism chain without inventing unsupported steps.';
         } elseif ($intent === 'comparison') {
-            $subtasks[] = 'Compare the evidence sides directly and keep unsupported claims separate from supported ones.';
+            $subtasks[] = $zh
+                ? '直接比较各方证据，并将无支持结论与已支持结论分开。'
+                : 'Compare the evidence sides directly and keep unsupported claims separate from supported ones.';
         } else {
-            $subtasks[] = 'Synthesize only the strongest supported claims into a concise academic answer.';
+            $subtasks[] = $zh
+                ? '只将最强的已支持结论综合为简洁的学术回答。'
+                : 'Synthesize only the strongest supported claims into a concise academic answer.';
         }
 
         return array_values(array_unique(array_filter($subtasks)));
+    }
+
+    private function planningUsesChinese(array $analysis): bool
+    {
+        $language = strtolower(trim((string)($analysis['process_language'] ?? $analysis['answer_language'] ?? $analysis['language'] ?? '')));
+        return in_array($language, ['zh', 'zh_cn', 'chinese'], true);
     }
 
     private function initialCollectionState(array $analysis, array $planning, array $routingPolicy, array $pluginQueue): array

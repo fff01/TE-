@@ -77,7 +77,8 @@ final class TekgDeepThinkService
             $emit,
             $eventSequence,
             $sessionId,
-            $requestId
+            $requestId,
+            $answerLanguage
         );
         if (!$understanding->ok) {
             return $this->failDeepThinkRun($base, 'Understanding', $understanding, $artifacts, $pluginResults, $emit, $eventSequence);
@@ -100,7 +101,8 @@ final class TekgDeepThinkService
             $emit,
             $eventSequence,
             $sessionId,
-            $requestId
+            $requestId,
+            $answerLanguage
         );
         if (!$planningNode->ok) {
             return $this->failDeepThinkRun($base, 'Planning', $planningNode, $artifacts, $pluginResults, $emit, $eventSequence);
@@ -146,7 +148,8 @@ final class TekgDeepThinkService
                 $emit,
                 $eventSequence,
                 $sessionId,
-                $requestId
+                $requestId,
+                $answerLanguage
             );
             if (!$executingNode->ok) {
                 return $this->failDeepThinkRun($base, 'Executing', $executingNode, $artifacts, $pluginResults, $emit, $eventSequence);
@@ -208,7 +211,8 @@ final class TekgDeepThinkService
             $emit,
             $eventSequence,
             $sessionId,
-            $requestId
+            $requestId,
+            $answerLanguage
         );
         if (!$writing->ok) {
             return $this->failDeepThinkRun($base, 'Writing', $writing, $artifacts, $pluginResults, $emit, $eventSequence);
@@ -238,10 +242,11 @@ final class TekgDeepThinkService
         ?callable $emit,
         int &$eventSequence,
         string $sessionId,
-        string $requestId
+        string $requestId,
+        string $language
     ): NodeLlmResult {
         $key = strtolower($stage);
-        $this->emitStageState($emit, $eventSequence, $sessionId, $requestId, $stage, 'started');
+        $this->emitStageState($emit, $eventSequence, $sessionId, $requestId, $stage, 'started', $language);
         $result = $runner();
         $artifact = [
             'stage' => $stage,
@@ -264,7 +269,7 @@ final class TekgDeepThinkService
             'payload' => $artifact,
         ]);
         $this->logDiagnostic($requestId, 'deepthink_stage_artifact', $artifact);
-        $this->emitStageState($emit, $eventSequence, $sessionId, $requestId, $stage, $result->ok ? 'completed' : 'failed');
+        $this->emitStageState($emit, $eventSequence, $sessionId, $requestId, $stage, $result->ok ? 'completed' : 'failed', $language);
         return $result;
     }
 
@@ -274,7 +279,8 @@ final class TekgDeepThinkService
         string $sessionId,
         string $requestId,
         string $stage,
-        string $status
+        string $status,
+        string $language
     ): void {
         $this->emitEvent($emit, $eventSequence, [
             'type' => 'stage_state',
@@ -284,7 +290,9 @@ final class TekgDeepThinkService
             'source' => $stage,
             'payload' => [
                 'current_stage' => $stage,
+                'display_label' => $this->stageDisplayLabel($stage, $language),
                 'status' => $status,
+                'language' => $language,
             ],
         ]);
     }
@@ -312,7 +320,7 @@ final class TekgDeepThinkService
             'session_id' => (string)$base['sessionId'],
             'node' => $failureStage,
             'source' => $failureStage,
-            'message' => $reason,
+            'message' => (string)$payload['presentation_failure_reason'],
             'payload' => $payload,
         ]);
         $this->emitEvent($emit, $eventSequence, [
@@ -355,6 +363,7 @@ final class TekgDeepThinkService
             'writing_failed' => $writingFailed,
             'failure_stage' => $failureStage,
             'failure_reason' => $failureReason,
+            'presentation_failure_reason' => $failed ? $this->localizedFailureMessage($failureStage, $language) : '',
             'answer' => $answer,
             'language' => $language,
         ];

@@ -5,14 +5,17 @@ trait TekgAcademicAgentNarrationTrait
 {
     private function emitAnalysisThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $analysis, int &$eventSequence): void
     {
-        $entities = array_values(array_filter(array_map(function (array $entity): string {
+        $chinese = $this->isChineseProcessLanguage($processLanguage);
+        $entities = array_values(array_filter(array_map(function (array $entity) use ($chinese): string {
             $label = trim((string)($entity['canonical_label'] ?? $entity['label'] ?? ''));
             $type = trim((string)($entity['entity_type'] ?? ''));
             $matchedAlias = trim((string)($entity['matched_alias'] ?? ''));
             if ($label === '') {
                 return '';
             }
-            $aliasPart = $matchedAlias !== '' ? ' via ' . $matchedAlias : ' directly';
+            $aliasPart = $matchedAlias !== ''
+                ? ($chinese ? '，匹配别名 ' . $matchedAlias : ' via ' . $matchedAlias)
+                : ($chinese ? '，直接匹配' : ' directly');
             return $label . ($type !== '' ? ' (' . $type . ')' : '') . $aliasPart;
         }, (array)($analysis['normalized_entities'] ?? []))));
 
@@ -25,7 +28,9 @@ trait TekgAcademicAgentNarrationTrait
                     'focus' => 'entities',
                     'entities' => $analysis['normalized_entities'] ?? [],
                 ],
-                'Recognized entities: ' . ($entities === [] ? 'none yet.' : implode(', ', $entities) . '.')
+                $chinese
+                    ? '识别到的实体：' . ($entities === [] ? '暂未识别。' : implode('；', $entities) . '。')
+                    : 'Recognized entities: ' . ($entities === [] ? 'none yet.' : implode(', ', $entities) . '.')
             ),
             $this->narrateEvent(
                 $model,
@@ -36,7 +41,9 @@ trait TekgAcademicAgentNarrationTrait
                     'intent' => $analysis['intent'] ?? '',
                     'complexity' => $analysis['complexity'] ?? '',
                 ],
-                'Question type: ' . (string)($analysis['intent'] ?? 'relationship') . '. Complexity: ' . (string)($analysis['complexity'] ?? 'simple_lookup') . '.'
+                $chinese
+                    ? '问题类型：' . (string)($analysis['intent'] ?? 'relationship') . '。复杂度：' . (string)($analysis['complexity'] ?? 'simple_lookup') . '。'
+                    : 'Question type: ' . (string)($analysis['intent'] ?? 'relationship') . '. Complexity: ' . (string)($analysis['complexity'] ?? 'simple_lookup') . '.'
             ),
         ];
 
@@ -63,7 +70,9 @@ trait TekgAcademicAgentNarrationTrait
     private function emitPlanningThoughtFlow(?callable $emit, string $sessionId, string $model, string $processLanguage, array $planning, int &$eventSequence): void
     {
         foreach (array_slice((array)($planning['knowledge_gaps'] ?? []), 0, 2) as $gap) {
-            $fallback = 'Current knowledge gap: ' . (string)($gap['gap_type'] ?? 'unknown') . ' because ' . tekg_agent_lower((string)($gap['why_needed'] ?? 'it is still needed')) . '.';
+            $fallback = $this->isChineseProcessLanguage($processLanguage)
+                ? '当前知识缺口：' . (string)($gap['gap_type'] ?? 'unknown') . '，因为 ' . (string)($gap['why_needed'] ?? '仍然需要补充证据') . '。'
+                : 'Current knowledge gap: ' . (string)($gap['gap_type'] ?? 'unknown') . ' because ' . tekg_agent_lower((string)($gap['why_needed'] ?? 'it is still needed')) . '.';
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'planning_step',
                 'session_id' => $sessionId,
@@ -85,7 +94,7 @@ trait TekgAcademicAgentNarrationTrait
                     $model,
                     $processLanguage,
                     ['type' => 'planning_step', 'focus' => 'subtask', 'subtask' => $subtask],
-                    (string)$subtask
+                    $this->isChineseProcessLanguage($processLanguage) ? '子任务：' . (string)$subtask : (string)$subtask
                 ),
                 'payload' => ['subtask' => $subtask],
             ]);
@@ -105,5 +114,10 @@ trait TekgAcademicAgentNarrationTrait
     {
         $type = (string)($event['type'] ?? '');
         return in_array($type, ['analysis', 'planning_step', 'tool_selected', 'tool_result', 'reflection', 'synthesizing'], true);
+    }
+
+    private function isChineseProcessLanguage(string $language): bool
+    {
+        return in_array(strtolower(trim($language)), ['zh', 'zh_cn', 'chinese'], true);
     }
 }

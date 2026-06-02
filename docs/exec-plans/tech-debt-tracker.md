@@ -88,6 +88,12 @@
 - 风险：Agent 会变成慢版 DT，延迟和成本增加，同时稀释研究工作流定位。
 - 下一步：在 Agent preflight 中，如果 `analysis.recommended_mode=deep_think` 且无报告/审计/排名/批量需求，直接返回建议使用 DT 或 compact answer，不进入完整 Evidence Walk Writing。
 
+### Agent disabled direct site-navigation Writing branch - 2026-06-01
+
+- 现状：`AcademicAgentService::buildDirectSiteNavigationWritingResult()` 已禁用，但 helper 和不可达分支仍残留；生产路径中 `$directSiteNavigationWriting` 固定为 `null`。
+- 风险：旧分支和过时测试会误导后续维护者，使 Agent Writing 路径看起来仍存在双轨行为。
+- 下一步：在独立清理任务中删除 helper、不可达分支和过时测试；保留 `route_map` 与 URL integrity contract。
+
 ### Agent task complexity classifier calibration - 2026-05-25
 
 - 状态：第一版 `task_complexity` 已落地在 `EntityNormalizer`，并由 `task_complexity_test.php` 和 `agent_narration_task_complexity_test.php` 覆盖。

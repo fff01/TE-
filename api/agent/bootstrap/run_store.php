@@ -70,6 +70,7 @@ function tekg_agent_default_workflow_state(): array
 
 function tekg_agent_create_run_state(string $runId, array $payload): array
 {
+    $language = tekg_agent_detect_language($payload, (string)($payload['question'] ?? ''));
     return [
         'run_id' => $runId,
         'request_id' => (string)($payload['request_id'] ?? ''),
@@ -86,13 +87,21 @@ function tekg_agent_create_run_state(string $runId, array $payload): array
         'events_count' => 0,
         'last_sequence' => 0,
         'answer' => '',
-        'language' => '',
+        'language' => $language,
         'writing_failed' => false,
         'failure_stage' => '',
         'failure_reason' => '',
+        'presentation_failure_reason' => '',
         'error' => '',
         'used_plugins' => [],
     ];
+}
+
+function tekg_agent_run_presentation_failure_message(string $stage, string $language): string
+{
+    return tekg_agent_detect_language(['language' => $language], '') === 'chinese'
+        ? $stage . ' 阶段失败，未生成学术回答。'
+        : $stage . ' failed, so no academic answer was generated.';
 }
 
 function tekg_agent_save_run_state(string $runId, array $state): void
@@ -185,6 +194,7 @@ function tekg_agent_update_run_state_for_event(array $state, array $event): arra
             $state['writing_failed'] = true;
             $state['failure_stage'] = (string)($payload['failure_stage'] ?? 'Writing');
             $state['failure_reason'] = (string)($payload['failure_reason'] ?? $state['error']);
+            $state['presentation_failure_reason'] = (string)($payload['presentation_failure_reason'] ?? $state['error']);
         }
     }
     if ($type === 'done' && is_array($event['payload'] ?? null)) {
@@ -195,6 +205,7 @@ function tekg_agent_update_run_state_for_event(array $state, array $event): arra
         $state['writing_failed'] = (bool)($payload['writing_failed'] ?? $state['writing_failed'] ?? false);
         $state['failure_stage'] = (string)($payload['failure_stage'] ?? $state['failure_stage'] ?? '');
         $state['failure_reason'] = (string)($payload['failure_reason'] ?? $state['failure_reason'] ?? '');
+        $state['presentation_failure_reason'] = (string)($payload['presentation_failure_reason'] ?? $state['presentation_failure_reason'] ?? '');
         if (is_array($payload['workflow_state'] ?? null)) {
             $state['workflow_state'] = tekg_agent_json_safe((array)$payload['workflow_state']);
             $state['current_stage'] = (string)($state['workflow_state']['current_stage'] ?? '');
@@ -244,6 +255,7 @@ function tekg_agent_mark_stale_run_if_needed(string $runId, array $state, array 
     $state['error'] = $reason;
     $state['failure_stage'] = $failureStage;
     $state['failure_reason'] = $reason;
+    $state['presentation_failure_reason'] = tekg_agent_run_presentation_failure_message($failureStage, (string)($state['language'] ?? ''));
     $state['finished_at'] = gmdate('c');
     $state['updated_at'] = gmdate('c');
     tekg_agent_save_run_state($runId, $state);

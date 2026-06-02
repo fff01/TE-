@@ -80,7 +80,7 @@ final class DtFixturePlugin implements TekgAgentPluginInterface
 {
     public int $runCount = 0;
 
-    public function __construct(private readonly string $name, private readonly array $citations = [])
+    public function __construct(private readonly string $name, private readonly array $citations = [], private readonly array $overrides = [])
     {
     }
 
@@ -92,7 +92,7 @@ final class DtFixturePlugin implements TekgAgentPluginInterface
     public function run(array $context): array
     {
         $this->runCount++;
-        return [
+        return array_replace_recursive([
             'plugin_name' => $this->name,
             'status' => 'ok',
             'results' => ['fixture' => $this->name],
@@ -102,7 +102,7 @@ final class DtFixturePlugin implements TekgAgentPluginInterface
             'evidence_items' => [],
             'citations' => $this->citations,
             'errors' => [],
-        ];
+        ], $this->overrides);
     }
 }
 
@@ -242,14 +242,97 @@ set_dt_plugins($multiRoundService, [
     'Graph Plugin' => new DtFixturePlugin('Graph Plugin', [['pmid' => '12345']]),
     'Citation Resolver' => new DtFixturePlugin('Citation Resolver', [['pmid' => '12345']]),
 ]);
-$multiRound = $multiRoundService->handle([
+$multiRoundEvents = [];
+$multiRound = $multiRoundService->stream([
     'question' => 'LINE-1 relationships',
     'request_id' => 'dt-four-stage-multi-round-test',
     'session_id' => 'dt-four-stage-multi-round-test',
-]);
+], static function (array $event) use (&$multiRoundEvents): void {
+    $multiRoundEvents[] = $event;
+});
 assert_same(false, $multiRound['failed'] ?? null, 'Bounded multi-round Executing run succeeds');
 assert_same(['Entity Resolver', 'Graph Plugin', 'Citation Resolver'], $multiRound['used_plugins'] ?? null, 'Citation Resolver runs outside the one-business-plugin execution budget');
 assert_same(1, count($multiRound['dt_artifacts']['executing'] ?? []), 'Executing naturally ends after the only remaining business plugin runs');
+$graphSelected = array_values(array_filter($multiRoundEvents, static fn(array $event): bool => ($event['type'] ?? '') === 'tool_selected' && ($event['plugin_name'] ?? '') === 'Graph Plugin'))[0] ?? [];
+assert_same('Collect graph evidence.', $graphSelected['payload']['selection_reason'] ?? null, 'DT tool_selected payload preserves the raw LLM selection reason');
+assert_same('I will use Graph Plugin to collect the next required evidence.', $graphSelected['message'] ?? null, 'English DT tool_selected narration uses a deterministic presentation template');
+$graphResult = array_values(array_filter($multiRoundEvents, static fn(array $event): bool => ($event['type'] ?? '') === 'tool_result' && ($event['plugin_name'] ?? '') === 'Graph Plugin'))[0] ?? [];
+assert_same('Graph Plugin completed. Scientific details are preserved below.', $graphResult['summary'] ?? null, 'English DT tool_result summary uses presentation copy');
+assert_same('Graph Plugin completed. Scientific details are preserved below.', $graphResult['message'] ?? null, 'English DT tool_result message uses presentation copy');
+
+$zhService = dt_service(dt_fixture_set([
+    'understanding' => [
+        'schema_version' => 'dt_understanding.v1',
+        'stage' => 'understanding',
+        'question_summary' => '查询 LINE-1 关系。',
+        'answer_language' => 'zh',
+        'intent' => 'relationship',
+        'entities' => [['name' => 'LINE-1', 'type' => 'TE']],
+        'answer_goal' => '总结有支持的关系。',
+        'evidence_requirements' => ['graph'],
+        'warnings' => [],
+    ],
+    'planning' => [
+        'schema_version' => 'dt_planning.v1',
+        'stage' => 'planning',
+        'business_plugins' => ['Graph Plugin'],
+        'execution_goal' => '收集图谱关系。',
+        'citation_resolver_allowed' => false,
+        'rationale' => '使用本地图谱。',
+    ],
+    'executing' => [
+        [
+            'schema_version' => 'dt_executing.v1',
+            'stage' => 'executing',
+            'done' => false,
+            'next_plugin' => 'Graph Plugin',
+            'reason' => '这是可能漂移的 LLM reason。',
+            'evidence_summary' => [],
+            'gaps' => ['graph'],
+        ],
+    ],
+    'writing' => [
+        'schema_version' => 'dt_writing.v1',
+        'stage' => 'writing',
+        'answer_markdown' => 'LINE-1 与 Disease:Alzheimer 相关。',
+        'limitations' => [],
+    ],
+]));
+$protectedRaw = [
+    'entity' => 'LINE-1',
+    'paper_title' => 'A LINE-1 paper title',
+    'url' => 'https://example.test/LINE-1?relation=ASSOCIATED_WITH',
+    'plugin_registry_name' => 'Graph Plugin',
+    'sequence' => 'ACGTN',
+    'relation_type' => 'ASSOCIATED_WITH',
+];
+set_dt_plugins($zhService, [
+    'Entity Resolver' => new DtFixturePlugin('Entity Resolver'),
+    'Graph Plugin' => new DtFixturePlugin('Graph Plugin', [], ['results' => $protectedRaw]),
+]);
+$zhEvents = [];
+$zhResponse = $zhService->stream([
+    'question' => 'LINE-1 和哪些疾病相关？',
+    'request_id' => 'dt-four-stage-language-zh-test',
+    'session_id' => 'dt-four-stage-language-zh-test',
+], static function (array $event) use (&$zhEvents): void {
+    $zhEvents[] = $event;
+});
+assert_same(false, $zhResponse['failed'] ?? null, 'Chinese DT language fixture succeeds');
+$zhStartedStages = array_values(array_filter($zhEvents, static fn(array $event): bool => ($event['type'] ?? '') === 'stage_state' && ($event['payload']['status'] ?? '') === 'started'));
+assert_same('Understanding', $zhStartedStages[0]['payload']['display_label'] ?? null, 'Chinese DT stage display label remains English while current_stage stays stable');
+assert_same('Understanding', $zhStartedStages[0]['payload']['current_stage'] ?? null, 'DT stage id remains stable for Chinese requests');
+$zhSelected = array_values(array_filter($zhEvents, static fn(array $event): bool => ($event['type'] ?? '') === 'tool_selected' && ($event['plugin_name'] ?? '') === 'Graph Plugin'))[0] ?? [];
+assert_same('这是可能漂移的 LLM reason。', $zhSelected['payload']['selection_reason'] ?? null, 'Chinese DT tool_selected payload preserves raw LLM reason');
+assert_same('我将使用 Graph Plugin 收集下一步所需证据。', $zhSelected['message'] ?? null, 'Chinese DT tool_selected narration uses deterministic Chinese presentation copy');
+$zhResult = array_values(array_filter($zhEvents, static fn(array $event): bool => ($event['type'] ?? '') === 'tool_result' && ($event['plugin_name'] ?? '') === 'Graph Plugin'))[0] ?? [];
+assert_same('Graph Plugin 已完成。科研详情保留如下。', $zhResult['summary'] ?? null, 'Chinese DT tool_result summary uses presentation copy');
+assert_same('Graph Plugin 已完成。科研详情保留如下。', $zhResult['message'] ?? null, 'Chinese DT tool_result message uses presentation copy');
+foreach ($protectedRaw as $key => $value) {
+    assert_same($value, $zhResult['payload']['raw_result'][$key] ?? null, "DT presentation copy preserves raw scientific field {$key}");
+}
+assert_same('Planning 阶段失败，请稍后重试。', call_dt_private($zhService, 'localizedFailureMessage', ['Planning', 'zh']), 'Chinese DT errors use localized narration while preserving the English shell stage');
+assert_same('Planning failed. Please try again.', call_dt_private($zhService, 'localizedFailureMessage', ['Planning', 'en']), 'English DT errors use localized presentation copy');
 
 $graphFixture = new DtFixturePlugin('Graph Plugin');
 $sequenceFixture = new DtFixturePlugin('Sequence Plugin');
@@ -414,6 +497,8 @@ $endpointSource = (string)file_get_contents(__DIR__ . '/../api/deep_think_stream
 foreach (["'failed' => true", "'writing_failed' => false", "'failure_stage' => 'Endpoint'", "'failure_reason'", "'answer' => ''"] as $needle) {
     assert_true(str_contains($endpointSource, $needle), "Endpoint terminal payload includes {$needle}");
 }
+assert_true(str_contains($endpointSource, "'presentation_failure_reason'"), 'Endpoint terminal payload includes localized presentation failure copy');
+assert_true(str_contains($endpointSource, "'language' => \$answerLanguage"), 'Endpoint terminal payload exposes the detected request language');
 $serviceSource = (string)file_get_contents(__DIR__ . '/../api/agent/orchestrator/DeepThinkService.php');
 foreach (['deepthink_stage_artifact', 'deepthink_terminal_failure', 'deepthink_terminal_success'] as $needle) {
     assert_true(str_contains($serviceSource, $needle), "DT diagnostics include {$needle}");

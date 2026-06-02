@@ -84,6 +84,8 @@ assert_contains('Literature Plugin returned usable citations', $pluginDirectory,
 $reflection = new ReflectionClass($service);
 assert_true($reflection->hasMethod('fallbackUnderstandingNodeResult'), 'AcademicAgentService exposes Understanding fallback builder');
 assert_true($reflection->hasMethod('fallbackPlanningNodeResult'), 'AcademicAgentService exposes Planning fallback builder');
+assert_true($reflection->hasMethod('nodeLlmSummary'), 'AcademicAgentService exposes node summary presentation builder');
+assert_true($reflection->hasMethod('academicPresentationFailureMessage'), 'AcademicAgentService exposes localized presentation failure builder');
 
 $understandingFallbackMethod = $reflection->getMethod('fallbackUnderstandingNodeResult');
 $planningFallbackMethod = $reflection->getMethod('fallbackPlanningNodeResult');
@@ -95,6 +97,8 @@ $evaluateSufficiencyMethod = $reflection->getMethod('evaluateSufficiency');
 $buildValidatedEvidencePackageMethod = $reflection->getMethod('buildValidatedEvidencePackage');
 $buildSynthesizedEvidenceFromPackageMethod = $reflection->getMethod('buildSynthesizedEvidenceFromPackage');
 $maybeAppendPluginsMethod = $reflection->getMethod('maybeAppendPlugins');
+$nodeLlmSummaryMethod = $reflection->getMethod('nodeLlmSummary');
+$academicPresentationFailureMessageMethod = $reflection->getMethod('academicPresentationFailureMessage');
 
 $failedUnderstanding = new NodeLlmResult(
     'understanding',
@@ -147,6 +151,21 @@ assert_true($planningFallback instanceof NodeLlmResult, 'Planning fallback retur
 assert_same(true, $planningFallback->ok, 'Planning fallback is accepted as conservative success');
 assert_same('research_plan.v1', $planningFallback->schema_version, 'Planning fallback keeps schema contract');
 assert_true(in_array('llm_unavailable_conservative_fallback', (array)($planningFallback->parsed_json['risks'] ?? []), true), 'Planning fallback records risk');
+assert_same(
+    '已为 Graph Plugin 生成工具执行审查。',
+    $nodeLlmSummaryMethod->invoke($service, new NodeLlmResult('executing', '', [], true, [], 'tool_execution_review.v1'), 'Graph Plugin', 'chinese'),
+    'Chinese Agent node summary localizes narration while preserving plugin registry names'
+);
+assert_same(
+    'Writing 阶段失败，未生成学术回答。',
+    $academicPresentationFailureMessageMethod->invoke($service, 'Writing', 'chinese'),
+    'Chinese Agent Writing failure uses localized presentation copy with English shell stage'
+);
+assert_same(
+    'Writing failed, so no academic answer was generated.',
+    $academicPresentationFailureMessageMethod->invoke($service, 'Writing', 'english'),
+    'English Agent Writing failure keeps English presentation copy'
+);
 
 $filteredRecommendations = $registeredRecommendationsMethod->invoke(
     $service,

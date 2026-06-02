@@ -116,7 +116,10 @@
 
   function updateTurnStatus(turn, final = false) {
     if (!turn) return;
-    const label = STAGE_LABELS[turn.stage] || turn.stage || STAGE_LABELS.idle;
+    const stableStage = String(turn.stage || '');
+    const label = typeof deepThinkClient.stageDisplayLabel === 'function' && stableStage
+      ? deepThinkClient.stageDisplayLabel(stableStage, turn.language)
+      : (STAGE_LABELS[turn.stage] || turn.stage || (typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('ready', turn.language) : STAGE_LABELS.idle));
     const elapsed = formatElapsed((performance.now ? performance.now() : Date.now()) - turn.startedAt);
     setStatus(final || turn.stage !== 'idle' ? `${label} \u00b7 ${elapsed}` : label);
   }
@@ -170,7 +173,7 @@
     if (!turn || typeof deepThinkClient.reduceStreamEvent !== 'function') return null;
     turn.streamState = deepThinkClient.reduceStreamEvent(turn.streamState, event);
     if (turn.streamState.progressVisible && !turn.progressNode && typeof deepThinkClient.createProgressMarkup === 'function') {
-      turn.progressNode = createMessage('progress', deepThinkClient.createProgressMarkup(), true)
+      turn.progressNode = createMessage('progress', deepThinkClient.createProgressMarkup('deepthink-progress', turn.language), true)
         .querySelector('[data-role="deepthink-progress"]');
     }
     if (turn.progressNode && typeof deepThinkClient.applyProgressState === 'function') {
@@ -340,7 +343,7 @@
     if (event.type === 'error') {
       turn.failed = true;
       if (!streamState || streamState.appendError) {
-        createMessage('error', String(event.message || 'Deep Think failed.'));
+        createMessage('error', typeof deepThinkClient.errorMessage === 'function' ? deepThinkClient.errorMessage(turn.language, event.message) : String(event.message || 'Deep Think failed.'));
       }
       return;
     }
@@ -383,6 +386,7 @@
       stage: 'starting',
       startedAt: performance.now ? performance.now() : Date.now(),
       timerId: null,
+      language: typeof deepThinkClient.detectLanguage === 'function' ? deepThinkClient.detectLanguage(question) : 'en',
     };
     activeTurn = turn;
     activeAbortController = new AbortController();
@@ -419,15 +423,15 @@
 
       await readEventStream(response, (event) => handleStreamEvent(turn, event));
       if (!turn.done) {
-        throw new Error('The Deep Think stream ended before a done event was received.');
+        throw new Error(typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('stream_ended', turn.language) : 'The Deep Think stream ended before a done event was received.');
       }
       if (!turn.answer && !turn.failed) {
-        throw new Error('Deep Think completed without returning an answer.');
+        throw new Error(typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('answer_missing', turn.language) : 'Deep Think completed without returning an answer.');
       }
     } catch (error) {
       const message = error && error.name === 'AbortError'
-        ? 'The request was cancelled.'
-        : (error && error.message ? error.message : 'Unknown Deep Think failure');
+        ? (typeof deepThinkClient.uiText === 'function' ? deepThinkClient.uiText('cancelled', turn.language) : 'The request was cancelled.')
+        : (typeof deepThinkClient.errorMessage === 'function' ? deepThinkClient.errorMessage(turn.language, error && error.message) : (error && error.message ? error.message : 'Unknown Deep Think failure'));
       if (activeTurn === turn && !turn.failed) {
         createMessage('error', message);
         stopTurnTimer(turn, 'failed');
