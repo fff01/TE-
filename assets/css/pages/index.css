@@ -109,6 +109,17 @@
           letter-spacing: 0.04em;
         }
 
+        .section-title-subcopy {
+          max-width: 720px;
+          margin: 12px auto 0;
+          color: #526d96;
+          font-size: 15px;
+          line-height: 1.8;
+          font-weight: 400;
+          letter-spacing: 0;
+          text-transform: none;
+        }
+
         .status-layout {
           position: relative;
           display: grid;

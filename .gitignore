@@ -6,6 +6,9 @@ reference/
 __pycache__/
 *.pyc
 
+# Node dependencies
+node_modules/
+
 # Large reference or genome files
 *.fa
 *.fasta

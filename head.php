@@ -20,8 +20,8 @@ $sideDeepThinkVersion = max(
 $navItems = [
     'home' => ['label' => 'Home', 'href' => tekg_app_url('index.php')],
     'browse' => ['label' => 'Browse', 'href' => tekg_app_url('browse.php')],
-    'path_finder' => ['label' => 'Path Finder', 'href' => tekg_app_url('path_finder.php')],
-    'preview' => ['label' => 'TE-KG', 'href' => tekg_app_url('preview.php')],
+    'path_finder' => ['label' => 'Path', 'href' => tekg_app_url('path_finder.php')],
+    'preview' => ['label' => 'Graph', 'href' => tekg_app_url('preview.php')],
     'agent' => ['label' => 'Agent', 'href' => tekg_app_url('agent.php')],
     'expression' => ['label' => 'Expression', 'href' => tekg_app_url('expression.php')],
     'download' => ['label' => 'Download', 'href' => tekg_app_url('download.php')],

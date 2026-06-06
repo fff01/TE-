@@ -62,6 +62,7 @@ try {
             'statement' =>
                 <<<'CYPHER'
 MATCH (n)
+WHERE NOT 'Paper' IN labels(n)
 WITH labels(n) AS node_labels
 WITH CASE
   WHEN size(node_labels) = 0 THEN 'Other'
@@ -112,7 +113,7 @@ CYPHER,
         'relationships_total' => $relationshipsTotal,
         'te_level' => $teLevel,
         'entity_composition' => home_stats_entity_composition($entityRows),
-        'relation_composition' => home_stats_top_relation_composition($relationRows),
+        'relation_composition' => home_stats_relation_composition($relationRows),
         'te_classification_composition' => home_stats_te_classification_composition($teClassificationRows),
         'generated_at' => gmdate('c'),
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -151,6 +152,9 @@ function home_stats_entity_composition(array $rows): array
         if ($label === '') {
             $label = 'Other';
         }
+        if (home_stats_is_paper_label($label)) {
+            continue;
+        }
         if (!array_key_exists($label, $counts)) {
             $counts[$label] = 0;
         }
@@ -169,7 +173,7 @@ function home_stats_entity_composition(array $rows): array
     return $composition;
 }
 
-function home_stats_top_relation_composition(array $rows): array
+function home_stats_relation_composition(array $rows): array
 {
     $broadPredicates = [
         'associate with' => true,
@@ -191,31 +195,39 @@ function home_stats_top_relation_composition(array $rows): array
         ];
     }
 
-    $topRows = array_slice($normalizedRows, 0, 5);
-    $otherRows = array_slice($normalizedRows, 5);
-    $otherCount = 0;
-    foreach ($otherRows as $row) {
-        $otherCount += (int)$row['count'];
-    }
-    if ($otherCount > 0) {
-        $topRows[] = ['label' => 'Other', 'count' => $otherCount];
-    }
-
     $total = 0;
-    foreach ($topRows as $row) {
+    foreach ($normalizedRows as $row) {
         $total += (int)$row['count'];
     }
 
     $composition = [];
-    foreach ($topRows as $row) {
+    $otherCount = 0;
+    foreach ($normalizedRows as $row) {
         $count = (int)$row['count'];
+        if ($total > 0 && ($count / $total) < 0.01) {
+            $otherCount += $count;
+            continue;
+        }
         $composition[] = [
             'label' => (string)$row['label'],
             'count' => $count,
             'percentage' => home_stats_percentage($count, $total),
         ];
     }
+    if ($otherCount > 0) {
+        $composition[] = [
+            'label' => 'others',
+            'count' => $otherCount,
+            'percentage' => home_stats_percentage($otherCount, $total),
+        ];
+    }
     return $composition;
+}
+
+function home_stats_is_paper_label(string $label): bool
+{
+    $normalized = mb_strtolower(trim($label));
+    return in_array($normalized, ['paper', 'publication', 'literature'], true);
 }
 
 function home_stats_te_classification_composition(array $rows): array

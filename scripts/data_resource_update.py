@@ -1,4 +1,4 @@
-﻿import time
+import time
 import json
 import logging
 import requests
@@ -20,9 +20,8 @@ TE_NAMES_FILE = r"C:\Users\fongi\Desktop\TE\data\TE_names.txt"   # 转座子名�
 SEARCH_QUERY = '("DNA Transposable Elements"[MeSH] OR "retrotransposon" OR "transposon" OR "retrotransposons" OR "transposons" OR "Retrotransposition" OR "transposition") AND ("humans"[MeSH Terms] OR "human" OR "homo sapiens")'
 MAX_RESULTS = 40000                           # 最大处理文献数量，测试时可改小
 
-API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")                                # DeepSeek API key from environment
-API_URL = os.environ.get("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
-DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+API_KEY = "sk-e079c0460f4544339534eda3a8b133c8"                                # API密钥
+API_URL = "https://api.deepseek.com/v1/chat/completions"
 OUTPUT_FILE = r"C:\Users\fongi\Desktop\TE\data_update\te_kg2_update.jsonl"                     # 输出文件（JSONL格式）
 FAILED_LOG = r"C:\Users\fongi\Desktop\TE\data_update\failed_pmids_update.txt"                    # 失败记录文件
 SKIPPED_LOG = r"C:\Users\fongi\Desktop\TE\data_update\skipped_pmids_update.txt"                  # 跳过记录文件（无转座子名称或无实体）
@@ -355,14 +354,12 @@ F. Paper: report → any entity (except Paper)
         "title": safe_title,
         "abstract": safe_abstract
     }
-    if not API_KEY:
-        raise RuntimeError("DEEPSEEK_API_KEY environment variable is required for DeepSeek IE calls")
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": DEEPSEEK_MODEL,
+        "model": "deepseek-chat",
         "messages": [
             {"role": "system", "content": "你是一个专业的生物医学信息提取助手。"},
             {"role": "user", "content": prompt}

@@ -14,8 +14,8 @@ $overviewCopy = 'TE-KG is a comprehensive resource designed to support explorati
 
 $quickLinks = [
     ['title' => 'Browse', 'href' => site_url_with_state(tekg_app_url('browse.php'), $siteLang), 'icon' => 'browse'],
-    ['title' => 'Path Finder', 'href' => site_url_with_state(tekg_app_url('path_finder.php'), $siteLang), 'icon' => 'pathfinder'],
-    ['title' => 'TE-KG', 'href' => site_url_with_state(tekg_app_url('preview.php'), $siteLang), 'icon' => 'graph'],
+    ['title' => 'Path', 'href' => site_url_with_state(tekg_app_url('path_finder.php'), $siteLang), 'icon' => 'pathfinder'],
+    ['title' => 'Graph', 'href' => site_url_with_state(tekg_app_url('preview.php'), $siteLang), 'icon' => 'graph'],
     ['title' => 'Expression', 'href' => site_url_with_state(tekg_app_url('expression.php'), $siteLang), 'icon' => 'expression'],
     ['title' => 'Download', 'href' => site_url_with_state(tekg_app_url('download.php'), $siteLang), 'icon' => 'download'],
     ['title' => 'About', 'href' => site_url_with_state(tekg_app_url('about.php'), $siteLang), 'icon' => 'about'],
@@ -50,6 +50,7 @@ $quickLinks = [
         <div class="proto-container">
           <div class="section-title">
             <h3>Dataset Status</h3>
+            <p class="section-title-subcopy">Built from 2,308 core human TE papers and multi-layer annotation resources.</p>
           </div>
           <div class="status-layout" data-home-stats data-home-stats-url="<?= htmlspecialchars(tekg_api_url('home_stats.php'), ENT_QUOTES, 'UTF-8') ?>">
             <div class="status-donut-grid">
