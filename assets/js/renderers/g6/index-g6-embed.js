@@ -114,6 +114,9 @@
     setViewState(next) {
       return runner.setViewState(next);
     },
+    setExpressionOverlay(overlay) {
+      return runner.setExpressionOverlay(overlay);
+    },
     setKeyNodeLevel(level) {
       return runner.setKeyNodeLevel(level);
     },

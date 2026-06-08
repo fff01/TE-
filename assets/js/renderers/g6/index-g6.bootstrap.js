@@ -31,6 +31,8 @@
     exportMenuSvg: document.getElementById('export-menu-svg'),
     expandModeBtn: document.getElementById('toggle-expand-mode'),
     expandModeText: document.getElementById('expand-mode-text'),
+    expressionLayerButton: document.getElementById('graph-expression-layer'),
+    expressionLayerText: document.getElementById('graph-expression-layer-text'),
     detail: document.getElementById('node-details'),
     treeSurface: document.getElementById('g6-default-tree-surface'),
     dynamicSurface: document.getElementById('g6-dynamic-surface'),
@@ -103,6 +105,10 @@
   let exportMenuOpenedAtOnPointerDown = 0;
   let exportMenuOpenReason = '';
   let exportMenuOpenedAt = 0;
+  let expressionLayerContext = 'off';
+  let expressionOverlaySeq = 0;
+  const expressionSummaryCache = new Map();
+  const EXPRESSION_LAYER_CONTEXTS = ['off', 'global', 'normal_tissue', 'normal_cell_line', 'cancer_cell_line'];
 
   window.currentLang = 'en';
   window.fixedView = true;
@@ -475,6 +481,137 @@
   function getCurrentGraphElements() {
     if (currentGraphSource === 'answer') return currentAnswerGraphElements;
     return currentQueryGraphElements;
+  }
+
+  function expressionContextLabel(context) {
+    return {
+      off: 'Off',
+      global: 'Global',
+      normal_tissue: 'Normal Tissue',
+      normal_cell_line: 'Normal Cell Line',
+      cancer_cell_line: 'Cancer Cell Line',
+    }[context] || 'Off';
+  }
+
+  function expressionToggleLabel(context) {
+    return `Expression: ${expressionContextLabel(context)}`;
+  }
+
+  function getNextExpressionLayerContext(context) {
+    const index = EXPRESSION_LAYER_CONTEXTS.indexOf(context);
+    return EXPRESSION_LAYER_CONTEXTS[(index + 1) % EXPRESSION_LAYER_CONTEXTS.length];
+  }
+
+  function expressionNodeName(data) {
+    return String(data?.rawLabel || data?.label || data?.id || '')
+      .replace(/^(Class I|Class II|Subclass|Order|Superfamily|Family):\s*/i, '')
+      .trim();
+  }
+
+  function collectVisibleTeNamesForExpression(elements = filterElementsForLegend(getCurrentGraphElements())) {
+    const names = new Set();
+    for (const item of Array.isArray(elements) ? elements : []) {
+      const data = item && item.data ? item.data : null;
+      if (!data || data.source || data.target) continue;
+      if (String(data.type || 'TE') !== 'TE') continue;
+      const name = expressionNodeName(data);
+      if (name) names.add(name);
+    }
+    return [...names].slice(0, 80);
+  }
+
+  function uniqueExpressionNames(names) {
+    return [...new Set((names || []).map((name) => String(name || '').trim()).filter(Boolean))];
+  }
+
+  function expressionRecordMap(records) {
+    const mapped = {};
+    for (const record of Array.isArray(records) ? records : []) {
+      if (!record || typeof record !== 'object') continue;
+      for (const key of [record.requested_name, record.te_name]) {
+        const normalized = String(key || '').trim().toLowerCase();
+        if (normalized) mapped[normalized] = record;
+      }
+    }
+    return mapped;
+  }
+
+  function expressionOverlayPayload(context, records, names) {
+    const recordMap = expressionRecordMap(records);
+    const values = [];
+    for (const name of names) {
+      const record = recordMap[String(name || '').trim().toLowerCase()];
+      if (!record || record.available !== true) continue;
+      const bucket = context === 'global' ? record.global : record[context];
+      const value = Number(bucket && bucket.median_value);
+      if (Number.isFinite(value)) values.push(value);
+    }
+    return {
+      enabled: context !== 'off',
+      context,
+      context_label: expressionContextLabel(context),
+      records: recordMap,
+      max_value: values.length ? Math.max(...values) : 0,
+      evidence_boundary: 'Expression values provide activity context only and do not prove causal graph relations.',
+    };
+  }
+
+  async function fetchExpressionSummaries(names, context) {
+    const cleanNames = uniqueExpressionNames(names);
+    if (!cleanNames.length || context === 'off') return [];
+    const key = `${context}|${cleanNames.slice().sort((a, b) => a.localeCompare(b)).join('|')}`;
+    if (expressionSummaryCache.has(key)) return expressionSummaryCache.get(key);
+
+    const endpoint = window.__TEKG_PATHS?.apiUrl
+      ? window.__TEKG_PATHS.apiUrl('graph_expression.php')
+      : '/TE-/api/graph_expression.php';
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ te_names: cleanNames, context }),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload || payload.ok !== true) {
+      throw new Error(payload && payload.error ? payload.error : 'Expression layer request failed.');
+    }
+    const records = Array.isArray(payload.records) ? payload.records : [];
+    expressionSummaryCache.set(key, records);
+    return records;
+  }
+
+  async function pushExpressionOverlayToBridge(renderedElements = filterElementsForLegend(getCurrentGraphElements())) {
+    const seq = ++expressionOverlaySeq;
+    const context = expressionLayerContext;
+    const names = collectVisibleTeNamesForExpression(renderedElements);
+    const bridge = dynamicFrame ? await getDynamicEmbedBridge() : null;
+
+    if (context === 'off') {
+      if (bridge && typeof bridge.setExpressionOverlay === 'function') {
+        await bridge.setExpressionOverlay(expressionOverlayPayload('off', [], []));
+      }
+      return;
+    }
+
+    if (!names.length) {
+      if (bridge && typeof bridge.setExpressionOverlay === 'function') {
+        await bridge.setExpressionOverlay(expressionOverlayPayload(context, [], []));
+      }
+      return;
+    }
+
+    try {
+      const records = await fetchExpressionSummaries(names, context);
+      if (seq !== expressionOverlaySeq || context !== expressionLayerContext) return;
+      if (bridge && typeof bridge.setExpressionOverlay === 'function') {
+        await bridge.setExpressionOverlay(expressionOverlayPayload(context, records, names));
+      }
+    } catch (error) {
+      if (seq !== expressionOverlaySeq) return;
+      if (bridge && typeof bridge.setExpressionOverlay === 'function') {
+        await bridge.setExpressionOverlay(expressionOverlayPayload('off', [], []));
+      }
+      console.warn('Expression evidence layer failed:', error);
+    }
   }
 
   function getCurrentLegendNodeTypes() {
@@ -865,6 +1002,13 @@
     button.setAttribute('aria-pressed', active === true ? 'true' : 'false');
   }
 
+  function syncExpressionLayerButtonState() {
+    syncToggleButtonState(els.expressionLayerButton, expressionLayerContext !== 'off');
+    if (els.expressionLayerText) {
+      els.expressionLayerText.textContent = expressionToggleLabel(expressionLayerContext);
+    }
+  }
+
   async function renderDynamicElementsFromCache(elements, options = {}) {
     const source = options && options.source === 'answer' ? 'answer' : 'query';
     const request = normalizeGraphRequest(options && options.request ? options.request : buildCurrentGraphRequest());
@@ -914,6 +1058,7 @@
       ensureRelationLegendState();
       clearLegendFilterPending();
       renderGraphLegend();
+      await pushExpressionOverlayToBridge(renderElements);
 
       notifyStateChange();
       return true;
@@ -1173,6 +1318,7 @@
     syncToggleButtonState(els.showLabelsBtn, window.showLabels);
     syncToggleButtonState(els.fixedBtn, window.fixedView);
     syncToggleButtonState(els.expandModeBtn, expandModeEnabled);
+    syncExpressionLayerButtonState();
     const canExportGraph = currentMode === 'dynamic' && !graphIsLoading && !!dynamicFrame;
     if (els.exportMenuToggle) els.exportMenuToggle.disabled = !canExportGraph;
     if (els.exportMenuCsv) els.exportMenuCsv.disabled = !canExportGraph;
@@ -1390,6 +1536,7 @@
       ensureRelationLegendState();
       clearLegendFilterPending();
       renderGraphLegend();
+      await pushExpressionOverlayToBridge(filterElementsForLegend(currentAnswerGraphElements));
 
       notifyStateChange();
       return true;
@@ -1856,6 +2003,7 @@
           request,
         });
       } else {
+        await pushExpressionOverlayToBridge(filterElementsForLegend(currentQueryGraphElements));
         notifyStateChange();
       }
       return true;
@@ -1915,6 +2063,7 @@
       }
       clearLegendFilterPending();
       renderGraphLegend();
+      await pushExpressionOverlayToBridge(filterElementsForLegend(currentQueryGraphElements));
       notifyStateChange();
       setDetail(buildDetail(
         node.displayLabel || node.rawLabel || query,
@@ -2238,6 +2387,16 @@
         relationMinPmids = nextValue;
         updateButtons();
         markLegendFilterPending();
+      });
+    }
+
+    if (els.expressionLayerButton) {
+      els.expressionLayerButton.addEventListener('click', () => {
+        expressionLayerContext = getNextExpressionLayerContext(expressionLayerContext);
+        updateButtons();
+        pushExpressionOverlayToBridge().catch((error) => {
+          console.warn('Expression layer update failed:', error);
+        });
       });
     }
 
