@@ -2085,15 +2085,15 @@
               haloStroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#2563eb',
               haloOpacity: 0.28,
               labelText: (d) => {
-                if (d.showAllLabels) return showAllLabelText(d);
                 if (d.importantLabel || shouldShowDefaultLabel(d)) return importantLabelText(d);
+                if (d.showAllLabels) return showAllLabelText(d);
                 return '';
               },
               labelPlacement: 'center',
               labelFill: '#111111',
               labelFontSize: (d) => {
-                if (d.showAllLabels) return showAllLabelFontSize(d);
                 if (d.importantLabel || shouldShowDefaultLabel(d)) return importantLabelFontSize(d);
+                if (d.showAllLabels) return showAllLabelFontSize(d);
                 return 10;
               },
               labelFontWeight: 700,
