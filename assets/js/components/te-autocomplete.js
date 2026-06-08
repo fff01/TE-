@@ -214,7 +214,10 @@
     ].join('');
   }
 
-  function filteredOptions(options, query) {
+  function filteredOptions(root, options, query) {
+    if (String(root.dataset.teAutocompleteSource || '').trim() === 'path-finder-entities') {
+      return options.slice(0, maxVisible);
+    }
     const prefix = String(query || '').trim().toLowerCase();
     if (!prefix) {
       return options.slice(0, maxVisible);
@@ -283,7 +286,7 @@
 
     function renderOptions(options) {
       const query = input.value;
-      const matches = filteredOptions(options, query);
+      const matches = filteredOptions(root, options, query);
       if (!matches.length) {
         menu.innerHTML = `<div class="te-autocomplete-empty">No ${escapeHtml(sourceConfig(root, input).label)} names match this prefix.</div>`;
         return;

@@ -11,6 +11,11 @@ $pageExtraStylesheets = [
     tekg_assets_url('css/pages/path_finder.css'),
 ];
 $pathFinderEntityTypes = path_finder_entity_type_options();
+$pathFinderVersion = max(
+    (int)@filemtime(__FILE__),
+    (int)@filemtime(tekg_assets_fs_path('js/components/te-autocomplete.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/pages/path_finder.js'))
+);
 
 require __DIR__ . '/head.php';
 ?>
@@ -101,7 +106,7 @@ require __DIR__ . '/head.php';
         </section>
       </main>
     </div>
-    <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+    <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js') . '?v=' . $pathFinderVersion, ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('vendor/g6/g6.min.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-type-meta.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-shared.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
