@@ -218,6 +218,7 @@
     let currentAllowInspectCard = true;
     let currentAllowNodeActions = options.initialAllowNodeActions !== false;
     let currentGraphData = null;
+    let currentExpressionOverlay = { enabled: false, context: 'off', records: {}, max_value: 0 };
 
     if (currentQueryType === 'disease_class') {
       if (!currentClassQuery) currentClassQuery = currentQuery;
@@ -792,6 +793,8 @@
       } else if (briefPath) {
         sections.push(`<div class="inspect-card__desc">${escapeHtml(compactText(briefPath, 120))}</div>`);
       }
+      const expressionHtml = renderExpressionEvidenceHtml(node, !expanded);
+      if (expressionHtml) sections.push(expressionHtml);
 
       return [
         '<div class="inspect-card__body">',
@@ -875,6 +878,10 @@
       const evidence = String(edge?.evidence || '').trim();
       const expanded = inspectCardState?.expanded === true;
       const coverage = Number(edge?.support_metric_coverage);
+      const expressionNode = expressionNodeEndpoint(edge, nodes);
+      const expressionHtml = expanded && expressionNode
+        ? renderExpressionEvidenceHtml(expressionNode, false).replace('Expression Evidence', 'Expression Context')
+        : '';
       const rows = [
         kvRow('Relation', relation),
         kvRow('Type', relationType),
@@ -889,6 +896,7 @@
         expanded && rows ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Relation</p><div class="inspect-card__kv">${rows}</div></div>` : '',
         expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
         expanded ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence || (isClassificationRelation(relationType) ? 'This is a taxonomy/classification edge, not a literature evidence edge.' : 'No evidence text attached to this edge.'))}</div></div>` : '',
+        expressionHtml,
         '<div class="inspect-card__actions">',
         `<button class="inspect-card__button" type="button" data-inspect-action="toggle">${expanded ? 'Collapse' : 'Expand'}</button>`,
         '</div>',
@@ -1268,6 +1276,150 @@
       return description || '';
     }
 
+    function normalizeExpressionLookupKey(value) {
+      return String(value || '')
+        .replace(/^(Class I|Class II|Subclass|Order|Superfamily|Family):\s*/i, '')
+        .trim()
+        .toLowerCase();
+    }
+
+    function expressionContextName(context) {
+      return {
+        global: 'Global',
+        normal_tissue: 'Normal Tissue',
+        normal_cell_line: 'Normal Cell Line',
+        cancer_cell_line: 'Cancer Cell Line',
+      }[String(context || '')] || 'Expression';
+    }
+
+    function expressionRecordForNode(node) {
+      const records = currentExpressionOverlay && typeof currentExpressionOverlay.records === 'object'
+        ? currentExpressionOverlay.records
+        : {};
+      for (const value of [node?.rawLabel, node?.displayLabel, node?.id]) {
+        const key = normalizeExpressionLookupKey(value);
+        if (key && records[key]) return records[key];
+      }
+      return null;
+    }
+
+    function expressionBucket(record, context) {
+      if (!record || record.available !== true) return null;
+      if (context === 'global') return record.global || null;
+      return record[context] || null;
+    }
+
+    function expressionValue(record, context) {
+      const bucket = expressionBucket(record, context);
+      const value = Number(bucket && bucket.median_value);
+      return Number.isFinite(value) ? value : null;
+    }
+
+    function expressionStrength(value) {
+      const maxValue = Math.max(0, Number(currentExpressionOverlay?.max_value) || 0);
+      if (!Number.isFinite(value) || value <= 0 || maxValue <= 0) return 0;
+      return Math.max(0, Math.min(1, Math.log10(value + 1) / Math.log10(maxValue + 1)));
+    }
+
+    function expressionDetailUrl(node) {
+      const label = String(node?.rawLabel || node?.displayLabel || '').trim();
+      if (!label) return '';
+      const base = window.__TEKG_PATHS?.appUrl
+        ? window.__TEKG_PATHS.appUrl('expression_detail.php')
+        : '/TE-/expression_detail.php';
+      const url = new URL(base, window.location.origin);
+      url.searchParams.set('te', label);
+      url.searchParams.set('metric', 'median');
+      url.searchParams.set('sort', 'high_to_low');
+      return url.toString();
+    }
+
+    function renderExpressionEvidenceHtml(node, compact = false) {
+      if (!currentExpressionOverlay?.enabled || !node || node.nodeType !== 'TE') return '';
+      const context = String(currentExpressionOverlay.context || 'global');
+      const record = node.expressionRecord || expressionRecordForNode(node);
+      if (!record || record.available !== true) {
+        const empty = 'No expression summary is available for this TE in the current layer.';
+        return compact
+          ? `<div class="inspect-card__desc">${escapeHtml(empty)}</div>`
+          : `<div class="inspect-card__section"><p class="inspect-card__section-title">Expression Evidence</p><div class="inspect-card__desc">${escapeHtml(empty)}</div></div>`;
+      }
+
+      const bucket = expressionBucket(record, context) || {};
+      const value = expressionValue(record, context);
+      const label = String(bucket.label || bucket.short_label || 'No top context label');
+      const contextLabel = expressionContextName(context);
+      const rows = [
+        kvRow('Layer', contextLabel),
+        kvRow('Top context', label),
+        value !== null ? kvRow('Median', value.toLocaleString(undefined, { maximumFractionDigits: 2 })) : '',
+        kvRow('Context count', bucket.context_count),
+        kvRow('Breadth', bucket.breadth),
+      ].filter(Boolean).join('');
+      const link = expressionDetailUrl(node);
+      const linkHtml = link ? `<a class="inspect-card__button" href="${escapeHtml(link)}" target="_top">Open Expression</a>` : '';
+      const boundary = 'Expression values provide activity context only; they do not prove causal graph relations.';
+      if (compact) {
+        return `<div class="inspect-card__desc">${escapeHtml(contextLabel)}: ${escapeHtml(label)}${value !== null ? `; median ${escapeHtml(value.toLocaleString(undefined, { maximumFractionDigits: 2 }))}` : ''}</div>`;
+      }
+      return [
+        '<div class="inspect-card__section">',
+        '<p class="inspect-card__section-title">Expression Evidence</p>',
+        rows ? `<div class="inspect-card__kv">${rows}</div>` : '',
+        `<div class="inspect-card__desc">${escapeHtml(boundary)}</div>`,
+        linkHtml ? `<div class="inspect-card__actions">${linkHtml}</div>` : '',
+        '</div>',
+      ].join('');
+    }
+
+    function expressionNodeEndpoint(edge, nodes) {
+      const source = resolveNode(edge?.source, nodes);
+      const target = resolveNode(edge?.target, nodes);
+      if (source?.nodeType === 'TE') return source;
+      if (target?.nodeType === 'TE') return target;
+      return null;
+    }
+
+    function applyExpressionOverlayToNodes(nodes) {
+      const enabled = currentExpressionOverlay?.enabled === true;
+      const context = String(currentExpressionOverlay?.context || 'off');
+      for (const node of nodes) {
+        if (!node) continue;
+        if (!node.baseFillColor) node.baseFillColor = node.fillColor;
+        if (!node.baseStrokeColor) node.baseStrokeColor = node.strokeColor;
+        node.expressionRecord = null;
+        node.expressionContext = enabled ? context : 'off';
+        node.expressionValue = null;
+        node.expressionLineWidth = node.endpointHighlight ? 5 : 2;
+        node.opacity = 1;
+        node.fillColor = node.baseFillColor;
+        node.strokeColor = node.baseStrokeColor;
+
+        if (!enabled) continue;
+        if (node.nodeType !== 'TE') {
+          node.opacity = 0.5;
+          continue;
+        }
+
+        const record = expressionRecordForNode(node);
+        node.expressionRecord = record;
+        const value = expressionValue(record, context);
+        node.expressionValue = value;
+        if (!record || record.available !== true || value === null) {
+          node.fillColor = '#d8dee9';
+          node.strokeColor = '#94a3b8';
+          node.opacity = 0.38;
+          continue;
+        }
+
+        const strength = expressionStrength(value);
+        node.fillColor = interpolateHexColor('#dbeafe', '#1d4ed8', Math.max(0.14, strength));
+        node.strokeColor = interpolateHexColor('#60a5fa', '#0f172a', Math.max(0.2, strength));
+        node.expressionLineWidth = node.endpointHighlight ? 5 : 4;
+        node.opacity = 1;
+      }
+    }
+
     function relationLabelForEdge(edge) {
       if (edge?.synthetic) return 'classified as';
       const rawRelation = String(edge?.relation || '').trim();
@@ -1349,6 +1501,10 @@
       const pmidCount = Math.max(0, Number(edge?.support_pmid_count) || (Array.isArray(edge?.pmids) ? edge.pmids.length : 0));
       const coverage = Number(edge?.support_metric_coverage);
       const coverageText = Number.isFinite(coverage) ? coverage.toFixed(2) : '—';
+      const expressionNode = expressionNodeEndpoint(edge, nodes);
+      const expressionHtml = expressionNode
+        ? renderExpressionEvidenceHtml(expressionNode, true)
+        : '';
 
       return [
         '<div class="edge-evidence-detail">',
@@ -1358,6 +1514,7 @@
         `<strong>${escapeHtml(targetLabel)}</strong>`,
         '</div>',
         `<div class="edge-evidence-summary">PMID support: ${escapeHtml(pmidCount)} · Metric coverage: ${escapeHtml(coverageText)}. Expand the edge card to inspect PubMed evidence.</div>`,
+        expressionHtml,
         '</div>',
       ].join('');
     }
@@ -1466,6 +1623,12 @@
           node.strokeColor = darkenHexColor(fillColor, 0.24);
         }
       }
+
+      for (const node of nodes) {
+        node.baseFillColor = node.fillColor;
+        node.baseStrokeColor = node.strokeColor;
+      }
+      applyExpressionOverlayToNodes(nodes);
 
       const baseEdges = [];
       for (const item of elements || []) {
@@ -1611,6 +1774,41 @@
         })));
         graph.updateEdgeData(currentGraphData.edges.map((edge) => ({
           id: edge.id,
+        })));
+        if (typeof graph.draw === 'function') {
+          return Promise.resolve(graph.draw()).then(() => true);
+        }
+      }
+      return Promise.resolve(false);
+    }
+
+    function setExpressionOverlay(overlay) {
+      currentExpressionOverlay = overlay && typeof overlay === 'object'
+        ? {
+            enabled: overlay.enabled === true,
+            context: String(overlay.context || 'off'),
+            context_label: String(overlay.context_label || ''),
+            records: overlay.records && typeof overlay.records === 'object' ? overlay.records : {},
+            max_value: Math.max(0, Number(overlay.max_value) || 0),
+            evidence_boundary: String(overlay.evidence_boundary || ''),
+          }
+        : { enabled: false, context: 'off', records: {}, max_value: 0 };
+
+      if (!currentGraphData || !Array.isArray(currentGraphData.nodes)) {
+        return Promise.resolve(false);
+      }
+
+      applyExpressionOverlayToNodes(currentGraphData.nodes);
+      if (graph && typeof graph.updateNodeData === 'function') {
+        graph.updateNodeData(currentGraphData.nodes.map((node) => ({
+          id: node.id,
+          fillColor: node.fillColor,
+          strokeColor: node.strokeColor,
+          opacity: node.opacity,
+          expressionLineWidth: node.expressionLineWidth,
+          expressionRecord: node.expressionRecord,
+          expressionContext: node.expressionContext,
+          expressionValue: node.expressionValue,
         })));
         if (typeof graph.draw === 'function') {
           return Promise.resolve(graph.draw()).then(() => true);
@@ -1788,7 +1986,8 @@
               size: (d) => d.size,
               fill: (d) => d.fillColor || TYPE_COLORS[d.nodeType] || '#94a3b8',
               stroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#111111',
-              lineWidth: (d) => (d.endpointHighlight ? 5 : 2),
+              opacity: (d) => (typeof d.opacity === 'number' ? d.opacity : 1),
+              lineWidth: (d) => d.expressionLineWidth || (d.endpointHighlight ? 5 : 2),
               shadowColor: (d) => (d.endpointHighlight ? 'rgba(37, 99, 235, 0.42)' : 'rgba(15, 23, 42, 0.08)'),
               shadowBlur: (d) => (d.endpointHighlight ? 26 : 0),
               shadowOffsetX: 0,
@@ -2430,6 +2629,7 @@
       resize,
       setFixedView,
       setViewState,
+      setExpressionOverlay,
       setKeyNodeLevel,
       setLanguage,
       getCurrentQuery: () => currentQuery,

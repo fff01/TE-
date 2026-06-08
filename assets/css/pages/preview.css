@@ -61,6 +61,10 @@
           text-transform: uppercase;
         }
 
+        #graph-expression-layer {
+          min-width: 178px;
+        }
+
         #toggle-fixed-view,
         #toggle-expand-mode {
           display: none !important;
