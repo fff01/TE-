@@ -48,7 +48,6 @@ $previewConfig = [
           <section class="panel preview-graph-panel" aria-label="TE-KG graph workspace">
             <div class="toolbar preview-graph-toolbar">
               <div class="search preview-entity-search">
-                <span class="preview-search-icon" aria-hidden="true">Search</span>
                 <div class="preview-entity-control">
                   <select id="graphSearchType" aria-label="Graph search entity type">
 <?php foreach ($graphSearchEntityTypes as $entityType): ?>
