@@ -14,6 +14,7 @@
     graphTitle: document.getElementById('graph-title'),
     graphSearchType: document.getElementById('graphSearchType'),
     searchInput: document.getElementById('node-search'),
+    graphSearchSubmit: document.getElementById('graph-search-submit'),
     edgeLabelsBtn: document.getElementById('toggle-edge-labels'),
     edgeLabelsText: document.getElementById('edge-labels-text'),
     showLabelsBtn: document.getElementById('toggle-show-labels'),
@@ -1301,6 +1302,16 @@
     els.searchInput.placeholder = `Select a ${type} entity, e.g. ${example}`;
   }
 
+  function submitGraphSearch() {
+    if (!els.searchInput) return;
+    loadDynamicGraph({
+      query: els.searchInput.value,
+      queryType: selectedGraphSearchType(),
+    }).catch((error) => {
+      setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+    });
+  }
+
   function buildCurrentGraphRequest() {
     if (currentGraphQueryType === 'disease_class') {
       const classQuery = String(currentGraphClassQuery || currentGraphQuery || '').trim();
@@ -2474,13 +2485,12 @@
     if (els.searchInput) {
       els.searchInput.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter') return;
-        loadDynamicGraph({
-          query: els.searchInput.value,
-          queryType: selectedGraphSearchType(),
-        }).catch((error) => {
-          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-        });
+        submitGraphSearch();
       });
+    }
+
+    if (els.graphSearchSubmit) {
+      els.graphSearchSubmit.addEventListener('click', submitGraphSearch);
     }
 
     if (els.graphSearchType) {

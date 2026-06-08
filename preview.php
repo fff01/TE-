@@ -59,6 +59,7 @@ $previewConfig = [
                     <button class="te-autocomplete-toggle" type="button" aria-label="Show graph entity names" aria-expanded="false" data-te-autocomplete-toggle></button>
                     <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>
                   </div>
+                  <button id="graph-search-submit" class="preview-search-submit" type="button">Search</button>
                 </div>
               </div>
               <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
