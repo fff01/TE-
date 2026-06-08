@@ -764,10 +764,20 @@
           min-width: 0;
           font-size: 14px;
           color: #334155;
+          border-radius: 6px;
+          cursor: pointer;
+          padding: 3px 5px;
+          margin: -3px -5px;
+          transition: background 0.16s ease, box-shadow 0.16s ease;
         }
 
         .graph-legend-item.is-disease-combined {
           margin-top: 5px;
+        }
+
+        .graph-legend-item.is-highlight-active {
+          background: rgba(37, 99, 235, 0.08);
+          box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.22);
         }
 
         .graph-legend-check {
@@ -818,11 +828,19 @@
           flex: 0 0 auto;
         }
 
+        .graph-legend-item.is-highlight-active .graph-legend-swatch {
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+        }
+
         .graph-relation-line {
           width: 28px;
           height: 0;
           border-top: 3px solid var(--legend-color, #94a3b8);
           flex: 0 0 auto;
+        }
+
+        .graph-legend-item.is-highlight-active .graph-relation-line {
+          filter: drop-shadow(0 0 2px rgba(37, 99, 235, 0.35));
         }
 
         .graph-relation-line.is-dashed {

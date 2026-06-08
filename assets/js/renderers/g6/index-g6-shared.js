@@ -210,6 +210,20 @@
     return `${raw.slice(0, maxChars - 1)}...`;
   }
 
+  function stripDiseaseCategoryDisplayPrefix(label) {
+    return String(label || '')
+      .trim()
+      .replace(/^\s*(?:\d{1,2}|[IVXLCDM]{1,6})[\s.:-]+(?=[A-Za-z])/i, '')
+      .trim();
+  }
+
+  function displayLabelForNode(translatedLabel, nodeType) {
+    const translated = String(translatedLabel || '').trim();
+    return nodeType === 'DiseaseCategory'
+      ? stripDiseaseCategoryDisplayPrefix(translated)
+      : translated;
+  }
+
   function wrapFullLabel(text, diameter, maxLines = 3) {
     const raw = String(text || '').trim().replace(/\s+/g, ' ');
     if (!raw) return '';
@@ -219,10 +233,59 @@
     if (raw.length <= charsPerLine) return raw;
 
     const hasSpaces = raw.includes(' ');
-    const separator = hasSpaces ? ' ' : '';
-    const segments = hasSpaces
-      ? raw.split(' ')
-      : raw.split(/(?=[/()_-])|(?<=[/()_-])/).filter(Boolean);
+    if (hasSpaces) {
+      const words = raw.split(' ').filter(Boolean);
+      const stopWords = new Set(['a', 'an', 'and', 'as', 'at', 'by', 'for', 'from', 'in', 'of', 'on', 'or', 'the', 'to', 'with']);
+      const candidates = [];
+
+      function collect(start, lines, targetLineCount) {
+        if (lines.length === targetLineCount - 1) {
+          candidates.push([...lines, words.slice(start).join(' ')]);
+          return;
+        }
+        const remainingLines = targetLineCount - lines.length - 1;
+        const maxEnd = words.length - remainingLines;
+        for (let end = start + 1; end <= maxEnd; end += 1) {
+          collect(end, [...lines, words.slice(start, end).join(' ')], targetLineCount);
+        }
+      }
+
+      const maxCandidateLines = Math.min(safeMaxLines, words.length);
+      for (let lineCount = 2; lineCount <= maxCandidateLines; lineCount += 1) {
+        collect(0, [], lineCount);
+      }
+      let best = null;
+      let bestScore = Number.POSITIVE_INFINITY;
+      for (const lines of candidates) {
+        const lengths = lines.map((line) => line.length);
+        const longest = Math.max(...lengths);
+        const overflow = lengths.reduce((sum, length) => sum + Math.max(0, length - charsPerLine) ** 2 * 3, 0);
+        const ragged = lengths.reduce((sum, length) => sum + (longest - length) ** 2, 0);
+        const orphanPenalty = lines.reduce((sum, line) => {
+          const lower = line.trim().toLowerCase();
+          if (stopWords.has(lower)) return sum + 1000;
+          if (/^(?:of|and|or|the|a|an|to|in|for|with)\b/i.test(line) && line.length <= 16) return sum + 450;
+          if (/\b(?:of|and|or|the|a|an|to|in|for|with)$/i.test(line) && line.length <= 12) return sum + 180;
+          return sum;
+        }, 0);
+        const continuationPenalty = lines.reduce((sum, line, index) => {
+          if (index >= lines.length - 1) return sum;
+          const next = String(lines[index + 1] || '').trim();
+          return /^(?:of|and|or|the|a|an|to|in|for|with)\b/i.test(next) ? sum + 800 : sum;
+        }, 0);
+        const lineCountPenalty = lines.length * 42;
+        const score = overflow + ragged + orphanPenalty + continuationPenalty + lineCountPenalty;
+        if (score < bestScore) {
+          bestScore = score;
+          best = lines;
+        }
+      }
+
+      if (best) return best.join('\n');
+    }
+
+    const separator = '';
+    const segments = raw.split(/(?=[/()_-])|(?<=[/()_-])/).filter(Boolean);
     const lines = [];
     let index = 0;
 
@@ -269,12 +332,12 @@
     let currentQueryType = normalizeQueryType(options.initialQueryType);
     let currentClassQuery = String(options.initialClassQuery || '').trim();
     let currentLang = 'en';
-    let currentShowAllLabels = options.initialShowAllLabels === true;
     let currentShowEdgeLabels = false;
     let currentAllowInspectCard = true;
     let currentAllowNodeActions = options.initialAllowNodeActions !== false;
     let currentGraphData = null;
     let currentExpressionOverlay = { enabled: false, context: 'off', records: {}, max_value: 0 };
+    let currentLegendFocus = null;
 
     if (currentQueryType === 'disease_class') {
       if (!currentClassQuery) currentClassQuery = currentQuery;
@@ -882,16 +945,8 @@
         return false;
       }
       if (nextAction === 'expand') {
+        hideInspectCard();
         const expanded = await Promise.resolve(hooks.onNodeExpand(node));
-        if (expanded) {
-          inspectCardState = {
-            ...inspectCardState,
-            kind: 'node',
-            node,
-            expanded: true,
-          };
-          renderInspectCard();
-        }
         return expanded === true;
       }
       if (nextAction === 'jump') {
@@ -1151,56 +1206,18 @@
       return teFixedRadii.get(canonicalName) || degreeToSize(fallbackDegree) / 2;
     }
 
-    function teShouldShowLabel(node) {
-      if (node?.alwaysShowLabel) return true;
-      const canonicalName = canonicalTeLineageName(node?.rawLabel || node?.displayLabel);
-      const depth = teLineageDepths.get(canonicalName);
-      return (Number.isFinite(depth) && depth <= 2) || (Math.max(0, Number(node?.databaseDegree) || 0) > 10);
-    }
-
-    function teLabelFontSize(node) {
-      const text = String(node?.displayLabel || node?.rawLabel || '').trim();
-      const diameter = Math.max(16, Number(node?.size) || 16);
-      if (!text) return 12;
-      const estimated = (diameter - 10) / Math.max(3, text.length * 0.62);
-      return Math.max(8, Math.min(16, estimated));
-    }
-
-    function secondaryShouldShowLabel(node) {
+    function isImportantLabelNode(node) {
       const nodeType = String(node?.nodeType || '');
-      if (nodeType === 'DiseaseClass') return true;
-      if (nodeType === 'DiseaseCategory') return true;
-      if (nodeType === 'Paper') return !!node?.alwaysShowLabel;
-
-      const labelThresholds = {
-        Disease: 34,
-        Function: 34,
-        Gene: 30,
-        Protein: 30,
-        RNA: 30,
-        Mutation: 30,
-        Pharmaceutical: 32,
-        Toxin: 30,
-        Lipid: 30,
-        Peptide: 30,
-        Carbohydrate: 30,
-      };
-
-      return Object.prototype.hasOwnProperty.call(labelThresholds, nodeType)
-        && Math.max(0, Number(node?.size) || 0) >= labelThresholds[nodeType];
-    }
-
-    function shouldShowDefaultLabel(node) {
-      if (!node) return false;
-      if (node.alwaysShowLabel) return true;
-      if (node.nodeType === 'TE') return teShouldShowLabel(node);
-      return secondaryShouldShowLabel(node);
+      return nodeType === 'TE'
+        || nodeType === 'Disease'
+        || nodeType === 'DiseaseClass'
+        || nodeType === 'DiseaseCategory';
     }
 
     function importantLabelText(node) {
       const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
       if (!raw) return '';
-      return wrapFullLabel(raw, Math.max(24, Number(node?.size) || 24), 3);
+      return wrapFullLabel(raw, Math.max(28, Number(node?.size) || 28), 4);
     }
 
     function importantLabelFontSize(node) {
@@ -1210,8 +1227,8 @@
       const lines = importantLabelText(node).split('\n').filter(Boolean);
       const longest = lines.reduce((max, line) => Math.max(max, line.length), 0);
       const estimated = (diameter - 8) / Math.max(4, longest * 0.62);
-      const upper = node?.nodeType === 'TE' ? 14 : 12;
-      return Math.max(8, Math.min(upper, estimated));
+      const upper = node?.nodeType === 'TE' ? 14 : 13;
+      return Math.max(9, Math.min(upper, estimated));
     }
 
     function secondaryLabelText(node) {
@@ -1225,23 +1242,7 @@
       const diameter = Math.max(16, Number(node?.size) || 16);
       if (!text) return 10;
       const estimated = (diameter - 8) / Math.max(3, text.length * 0.7);
-      return Math.max(7, Math.min(12, estimated));
-    }
-
-    function showAllLabelText(node) {
-      const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
-      if (!raw) return '';
-      if (node?.preferFullLabel === true) return raw;
-      return fitLabelToCircle(raw, Math.max(16, Number(node?.size) || 16));
-    }
-
-    function showAllLabelFontSize(node) {
-      const text = showAllLabelText(node);
-      const diameter = Math.max(16, Number(node?.size) || 16);
-      if (!text) return 10;
-      const estimated = (diameter - 8) / Math.max(3, text.length * 0.68);
-      const upper = node?.nodeType === 'TE' ? 14 : 12;
-      return Math.max(7, Math.min(upper, estimated));
+      return Math.max(7, Math.min(11, estimated));
     }
 
     async function loadEnglishResources() {
@@ -1500,6 +1501,99 @@
       }
     }
 
+    function normalizeLegendFocus(focus) {
+      if (!focus || typeof focus !== 'object') return null;
+      const kind = String(focus.kind || '').trim();
+      const value = String(focus.value || '').trim();
+      if ((kind !== 'entity' && kind !== 'relation') || !value) return null;
+      return { kind, value };
+    }
+
+    function entityLegendMatchesNode(node, value) {
+      const nodeType = String(node?.nodeType || '');
+      if (value === 'Disease') {
+        return nodeType === 'Disease' || nodeType === 'DiseaseClass' || nodeType === 'DiseaseCategory';
+      }
+      return nodeType === value;
+    }
+
+    function relationLegendMatchesEdge(edge, value) {
+      return String(edge?.relationKey || edge?.relationType || edge?.relation || '').trim() === value;
+    }
+
+    function applyLegendFocusToGraphData() {
+      if (!currentGraphData || !Array.isArray(currentGraphData.nodes) || !Array.isArray(currentGraphData.edges)) {
+        return { nodes: [], edges: [] };
+      }
+      const focus = normalizeLegendFocus(currentLegendFocus);
+      for (const node of currentGraphData.nodes) {
+        node.legendOpacity = 1;
+        node.legendFocused = false;
+      }
+      for (const edge of currentGraphData.edges) {
+        edge.legendOpacity = 1;
+        edge.legendFocused = false;
+      }
+      if (!focus) return { nodes: currentGraphData.nodes, edges: currentGraphData.edges };
+
+      const highlightedNodeIds = new Set();
+      if (focus.kind === 'entity') {
+        for (const node of currentGraphData.nodes) {
+          if (entityLegendMatchesNode(node, focus.value)) highlightedNodeIds.add(String(node.id || ''));
+        }
+        for (const node of currentGraphData.nodes) {
+          const focused = highlightedNodeIds.has(String(node.id || ''));
+          node.legendOpacity = focused ? 1 : 0.18;
+          node.legendFocused = focused;
+        }
+        for (const edge of currentGraphData.edges) {
+          const source = String(edge.source || '');
+          const target = String(edge.target || '');
+          const focused = highlightedNodeIds.has(source) || highlightedNodeIds.has(target);
+          edge.legendOpacity = focused ? 0.82 : 0.12;
+          edge.legendFocused = focused;
+        }
+      } else {
+        for (const edge of currentGraphData.edges) {
+          if (!relationLegendMatchesEdge(edge, focus.value)) continue;
+          highlightedNodeIds.add(String(edge.source || ''));
+          highlightedNodeIds.add(String(edge.target || ''));
+        }
+        for (const node of currentGraphData.nodes) {
+          const focused = highlightedNodeIds.has(String(node.id || ''));
+          node.legendOpacity = focused ? 1 : 0.18;
+          node.legendFocused = focused;
+        }
+        for (const edge of currentGraphData.edges) {
+          const focused = relationLegendMatchesEdge(edge, focus.value);
+          edge.legendOpacity = focused ? 1 : 0.12;
+          edge.legendFocused = focused;
+        }
+      }
+      return { nodes: currentGraphData.nodes, edges: currentGraphData.edges };
+    }
+
+    function pushLegendFocusVisualState() {
+      const { nodes, edges } = applyLegendFocusToGraphData();
+      if (!graph) return Promise.resolve(false);
+      if (typeof graph.updateNodeData === 'function' && nodes.length) {
+        graph.updateNodeData(nodes.map((node) => ({
+          id: node.id,
+          legendOpacity: node.legendOpacity,
+          legendFocused: node.legendFocused,
+        })));
+      }
+      if (typeof graph.updateEdgeData === 'function' && edges.length) {
+        graph.updateEdgeData(edges.map((edge) => ({
+          id: edge.id,
+          legendOpacity: edge.legendOpacity,
+          legendFocused: edge.legendFocused,
+        })));
+      }
+      if (typeof graph.draw === 'function') return Promise.resolve(graph.draw()).then(() => true);
+      return Promise.resolve(true);
+    }
+
     function relationLabelForEdge(edge) {
       if (edge?.synthetic) return 'classified as';
       const rawRelation = String(edge?.relation || '').trim();
@@ -1604,13 +1698,11 @@
       const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
       const forceAnchorLabel = options.forceAnchorLabel === true;
       const graphRippleAnchor = options.graphRippleAnchor !== false;
-      const showAllLabels = options.showAllLabels === true;
       const hasNodeSizeScale = Object.prototype.hasOwnProperty.call(options, 'nodeSizeScale');
       const hasNodeMinSize = Object.prototype.hasOwnProperty.call(options, 'nodeMinSize');
       const nodeSizeScale = Math.max(1, Number(hasNodeSizeScale ? options.nodeSizeScale : 1.42) || 1);
       const nodeMinSize = Math.max(0, Number(hasNodeMinSize ? options.nodeMinSize : 38) || 0);
       const endpointNodeMinSize = Math.max(nodeMinSize, Number(options.endpointNodeMinSize) || 0);
-      const preferFullLabels = options.preferFullLabels === true;
       const endpointHighlightIds = new Set(
         (Array.isArray(options.endpointHighlightIds) ? options.endpointHighlightIds : [])
           .map((id) => String(id || '').trim())
@@ -1647,7 +1739,7 @@
             : degreeToSize(data.degree),
           nodeType,
           rawLabel: data.rawLabel || data.label || data.id,
-          displayLabel: translateName(data.label || data.rawLabel || data.id),
+          displayLabel: displayLabelForNode(translateName(data.label || data.rawLabel || data.id), nodeType),
           databaseDegree: Math.max(0, Number(data.degree) || 0),
           description: translateDescription(data.type || 'TE', data.label || data.rawLabel || data.id, data.description || ''),
           pmid: String(data.pmid || ''),
@@ -1660,8 +1752,6 @@
           classQuery: nodeType === 'DiseaseClass' ? String(data.rawLabel || data.label || data.id) : '',
           fillColor: TYPE_COLORS[nodeType] || '#94a3b8',
           strokeColor: TYPE_STROKES[nodeType] || '#111111',
-          showAllLabels,
-          preferFullLabel: preferFullLabels,
           endpointHighlight: endpointHighlightIds.has(String(data.id || '')),
           graphRipple: graphRippleAnchor && String(data.id || '') === anchorNodeId,
           alwaysShowLabel:
@@ -1786,16 +1876,8 @@
         : candidateNodes.filter((node) => mainComponentNodeIds.has(node.id));
       const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
 
-      if (showAllLabels) {
-        for (const node of visibleNodes) {
-          const baseSize = Math.max(18, Number(node.size) || 18);
-          node.size = Math.round(baseSize * 1.22 + 4);
-          node.showAllLabels = true;
-        }
-      }
-
       for (const node of visibleNodes) {
-        node.importantLabel = shouldShowDefaultLabel(node);
+        node.importantLabel = isImportantLabelNode(node);
       }
 
       for (const edge of baseEdges) {
@@ -1848,21 +1930,25 @@
         const baseSize = Math.max(10, Number(node.baseSize || node.size) || 10);
         return {
           ...node,
-          size: currentShowAllLabels ? Math.round(Math.max(18, baseSize) * 1.22 + 4) : baseSize,
-          showAllLabels: currentShowAllLabels,
-          importantLabel: shouldShowDefaultLabel(node),
+          size: baseSize,
+          importantLabel: isImportantLabelNode(node),
         };
       });
       currentGraphData.nodes = nextNodes;
+      applyLegendFocusToGraphData();
 
       if (graph && typeof graph.updateNodeData === 'function' && typeof graph.updateEdgeData === 'function') {
         graph.updateNodeData(nextNodes.map((node) => ({
           id: node.id,
           size: node.size,
-          showAllLabels: node.showAllLabels,
+          importantLabel: node.importantLabel,
+          legendOpacity: node.legendOpacity,
+          legendFocused: node.legendFocused,
         })));
         graph.updateEdgeData(currentGraphData.edges.map((edge) => ({
           id: edge.id,
+          legendOpacity: edge.legendOpacity,
+          legendFocused: edge.legendFocused,
         })));
         if (typeof graph.draw === 'function') {
           return Promise.resolve(graph.draw()).then(() => true);
@@ -1888,12 +1974,15 @@
       }
 
       applyExpressionOverlayToNodes(currentGraphData.nodes);
+      applyLegendFocusToGraphData();
       if (graph && typeof graph.updateNodeData === 'function') {
         graph.updateNodeData(currentGraphData.nodes.map((node) => ({
           id: node.id,
           fillColor: node.fillColor,
           strokeColor: node.strokeColor,
           opacity: node.opacity,
+          legendOpacity: node.legendOpacity,
+          legendFocused: node.legendFocused,
           expressionLineWidth: node.expressionLineWidth,
           expressionRecord: node.expressionRecord,
           expressionContext: node.expressionContext,
@@ -1976,6 +2065,7 @@
 
     async function renderElements(elements, requestLike, options = {}) {
       const request = normalizeGraphRequest(requestLike);
+      currentLegendFocus = null;
       const query = String(request.query || currentQuery || '').trim() || 'LINE1';
       const sourceLabel = options.sourceLabel === 'qa' ? 'qa' : 'query';
       currentQuery = query;
@@ -1989,7 +2079,6 @@
           classQuery: currentClassQuery,
           keyNodeLevel: currentKeyNodeLevel,
           fixedView,
-          showLabels: currentShowAllLabels,
           lang: 'en',
         });
       }
@@ -2019,9 +2108,6 @@
 
         const payloadElements = Array.isArray(elements) ? elements : [];
         const graphDataOptions = { ...(options.graphDataOptions || {}) };
-        if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'showAllLabels')) {
-          currentShowAllLabels = graphDataOptions.showAllLabels === true;
-        }
         if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'showEdgeLabels')) {
           currentShowEdgeLabels = graphDataOptions.showEdgeLabels === true;
         }
@@ -2031,9 +2117,9 @@
         if (Object.prototype.hasOwnProperty.call(graphDataOptions, 'allowNodeActions')) {
           currentAllowNodeActions = graphDataOptions.allowNodeActions !== false;
         }
-        graphDataOptions.showAllLabels = currentShowAllLabels;
         const data = buildGraphData(payloadElements, graphDataOptions);
         currentGraphData = data;
+        applyLegendFocusToGraphData();
         const hasRippleHighlights = data.nodes.some((node) => node.endpointHighlight === true || node.graphRipple === true);
         const rippleNodeAvailable = hasRippleHighlights && ensurePathFinderRippleNodeRegistered();
         const layoutDistanceScale = Math.max(1, Number(graphDataOptions.layoutDistanceScale) || 1.45);
@@ -2075,8 +2161,15 @@
               size: (d) => d.size,
               fill: (d) => d.fillColor || TYPE_COLORS[d.nodeType] || '#94a3b8',
               stroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#111111',
-              opacity: (d) => (typeof d.opacity === 'number' ? d.opacity : 1),
-              lineWidth: (d) => d.expressionLineWidth || ((d.endpointHighlight || d.graphRipple) ? 5 : 2),
+              opacity: (d) => {
+                const baseOpacity = typeof d.opacity === 'number' ? d.opacity : 1;
+                const legendOpacity = typeof d.legendOpacity === 'number' ? d.legendOpacity : 1;
+                return Math.min(baseOpacity, legendOpacity);
+              },
+              lineWidth: (d) => {
+                const baseWidth = d.expressionLineWidth || ((d.endpointHighlight || d.graphRipple) ? 5 : 2);
+                return d.legendFocused ? baseWidth + 2 : baseWidth;
+              },
               shadowColor: (d) => ((d.endpointHighlight || d.graphRipple) ? 'rgba(37, 99, 235, 0.42)' : 'rgba(15, 23, 42, 0.08)'),
               shadowBlur: (d) => ((d.endpointHighlight || d.graphRipple) ? 26 : 0),
               shadowOffsetX: 0,
@@ -2085,18 +2178,16 @@
               haloStroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#2563eb',
               haloOpacity: 0.28,
               labelText: (d) => {
-                if (d.importantLabel || shouldShowDefaultLabel(d)) return importantLabelText(d);
-                if (d.showAllLabels) return showAllLabelText(d);
-                return '';
+                if (d.importantLabel || isImportantLabelNode(d)) return importantLabelText(d);
+                return secondaryLabelText(d);
               },
               labelPlacement: 'center',
               labelFill: '#111111',
               labelFontSize: (d) => {
-                if (d.importantLabel || shouldShowDefaultLabel(d)) return importantLabelFontSize(d);
-                if (d.showAllLabels) return showAllLabelFontSize(d);
-                return 10;
+                if (d.importantLabel || isImportantLabelNode(d)) return importantLabelFontSize(d);
+                return secondaryLabelFontSize(d);
               },
-              labelFontWeight: 700,
+              labelFontWeight: (d) => ((d.importantLabel || isImportantLabelNode(d)) ? 700 : 600),
               labelStroke: '#ffffff',
               labelLineWidth: 3,
               labelLineJoin: 'round',
@@ -2111,8 +2202,9 @@
                 const alpha = boundedEvidenceOpacity(edge);
                 return mixEdgeColor(source?.nodeType, target?.nodeType, alpha);
               },
-              lineWidth: (edge) => boundedEvidenceWidth(edge),
+              lineWidth: (edge) => boundedEvidenceWidth(edge) + (edge.legendFocused ? 1.5 : 0),
               lineDash: (edge) => edge.lineDash || [],
+              opacity: (edge) => (typeof edge.legendOpacity === 'number' ? edge.legendOpacity : 1),
               labelText: (edge) => {
                 if (!currentShowEdgeLabels) return '';
                 const relationType = String(edge.relationKey || edge.relation || edge.relationType || '').trim();
@@ -2242,6 +2334,7 @@
 
     async function loadGraph(requestLike, options = {}) {
       const request = normalizeGraphRequest(requestLike);
+      currentLegendFocus = null;
       const query = String(request.query || '').trim() || 'LINE1';
       hooks.setStatus(`Loading graph for ${query} (key-node level ${currentKeyNodeLevel}) ...`);
 
@@ -2273,17 +2366,6 @@
             const parentBridge = window.parent.__TEKG_G6_BRIDGE;
             if (parentBridge && typeof parentBridge.getVisibleTypes === 'function') {
               graphDataOptions.visibleTypes = parentBridge.getVisibleTypes();
-            }
-          }
-        }
-        if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'showAllLabels')) {
-          const currentBridge = window.__TEKG_G6_BRIDGE;
-          if (currentBridge && typeof currentBridge.getShowLabels === 'function') {
-            graphDataOptions.showAllLabels = currentBridge.getShowLabels();
-          } else if (window.parent && window.parent !== window) {
-            const parentBridge = window.parent.__TEKG_G6_BRIDGE;
-            if (parentBridge && typeof parentBridge.getShowLabels === 'function') {
-              graphDataOptions.showAllLabels = parentBridge.getShowLabels();
             }
           }
         }
@@ -2396,9 +2478,6 @@
 
       const payload = await response.json();
       const graphDataOptions = { ...(options.graphDataOptions || {}) };
-      if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'showAllLabels')) {
-        graphDataOptions.showAllLabels = currentShowAllLabels;
-      }
       if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'showEdgeLabels')) {
         graphDataOptions.showEdgeLabels = currentShowEdgeLabels;
       }
@@ -2408,11 +2487,25 @@
 
       const expandedData = buildGraphData(payload.elements || [], graphDataOptions);
       const { nextNodes, nextEdges } = mergeCurrentGraphData(expandedData);
+      const expandNodeId = String(request.expandNodeId || '').trim();
       for (const node of nextNodes) {
-        node.graphRipple = true;
-        node.importantLabel = true;
+        node.graphRipple = false;
+        node.importantLabel = isImportantLabelNode(node);
       }
-      if (graph && (nextNodes.length || nextEdges.length)) {
+      const rippleUpdates = [];
+      if (expandNodeId && currentGraphData && Array.isArray(currentGraphData.nodes)) {
+        for (const node of currentGraphData.nodes) {
+          const shouldRipple = node.graphRipple === true || String(node.id || '') === expandNodeId;
+          if (node.graphRipple !== shouldRipple) {
+            node.graphRipple = shouldRipple;
+            rippleUpdates.push({
+              id: node.id,
+              graphRipple: shouldRipple,
+            });
+          }
+        }
+      }
+      if (graph && (nextNodes.length || nextEdges.length || rippleUpdates.length)) {
         try {
           if (typeof graph.addNodeData === 'function' && nextNodes.length) {
             graph.addNodeData(nextNodes);
@@ -2420,6 +2513,10 @@
           if (typeof graph.addEdgeData === 'function' && nextEdges.length) {
             graph.addEdgeData(nextEdges);
           }
+          if (typeof graph.updateNodeData === 'function' && rippleUpdates.length) {
+            graph.updateNodeData(rippleUpdates);
+          }
+          await pushLegendFocusVisualState();
           if (typeof graph.draw === 'function') {
             await graph.draw();
           }
@@ -2639,8 +2736,7 @@
         classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
-        showLabels: currentShowAllLabels,
-          lang: 'en',
+        lang: 'en',
       });
       return Promise.resolve(fixedView);
     }
@@ -2648,9 +2744,6 @@
     function setViewState(next = {}) {
       if (Object.prototype.hasOwnProperty.call(next, 'fixedView')) {
         fixedView = next.fixedView === true;
-      }
-      if (Object.prototype.hasOwnProperty.call(next, 'showAllLabels')) {
-        currentShowAllLabels = next.showAllLabels === true;
       }
       if (Object.prototype.hasOwnProperty.call(next, 'showEdgeLabels')) {
         currentShowEdgeLabels = next.showEdgeLabels === true;
@@ -2668,7 +2761,6 @@
         classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
-        showLabels: currentShowAllLabels,
         lang: 'en',
       });
       return applyCurrentViewState();
@@ -2682,7 +2774,6 @@
         classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
-        showLabels: currentShowAllLabels,
         lang: currentLang,
       });
       if (!currentQuery) return Promise.resolve();
@@ -2697,11 +2788,15 @@
         classQuery: currentClassQuery,
         keyNodeLevel: currentKeyNodeLevel,
         fixedView,
-        showLabels: currentShowAllLabels,
         lang: 'en',
       });
       if (!currentQuery) return Promise.resolve();
       return loadGraph(buildCurrentRequest());
+    }
+
+    function setLegendFocus(focus) {
+      currentLegendFocus = normalizeLegendFocus(focus);
+      return pushLegendFocusVisualState();
     }
 
     function init() {
@@ -2727,6 +2822,7 @@
       setExpressionOverlay,
       setKeyNodeLevel,
       setLanguage,
+      setLegendFocus,
       getCurrentQuery: () => currentQuery,
       getCurrentRequest: () => buildCurrentRequest(),
       getVisibleSubgraph,
@@ -2737,7 +2833,6 @@
       exportPngDataUrl,
       getFixedView: () => fixedView,
       getKeyNodeLevel: () => currentKeyNodeLevel,
-      getShowAllLabels: () => currentShowAllLabels,
       escapeHtml,
     };
   }

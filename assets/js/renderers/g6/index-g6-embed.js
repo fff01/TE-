@@ -117,11 +117,20 @@
     setExpressionOverlay(overlay) {
       return runner.setExpressionOverlay(overlay);
     },
+    setLegendFocus(focus) {
+      return runner.setLegendFocus(focus);
+    },
     setKeyNodeLevel(level) {
       return runner.setKeyNodeLevel(level);
     },
     setLanguage(lang) {
       return runner.setLanguage(lang);
+    },
+    setLegendHighlight(focus) {
+      return runner.setLegendFocus(focus);
+    },
+    setLegendFocus(focus) {
+      return runner.setLegendFocus(focus);
     },
     resize() {
       runner.resize();

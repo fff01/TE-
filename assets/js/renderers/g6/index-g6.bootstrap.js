@@ -17,8 +17,6 @@
     graphSearchSubmit: document.getElementById('graph-search-submit'),
     edgeLabelsBtn: document.getElementById('toggle-edge-labels'),
     edgeLabelsText: document.getElementById('edge-labels-text'),
-    showLabelsBtn: document.getElementById('toggle-show-labels'),
-    showLabelsText: document.getElementById('show-labels-text'),
     fixedBtn: document.getElementById('toggle-fixed-view'),
     fixedText: document.getElementById('fixed-view-text'),
     backBtn: document.getElementById('back-graph'),
@@ -59,8 +57,6 @@
       searchPlaceholder: 'Search LINE1, L1HS, disease, or function',
       showEdgeLabelsOn: 'Show relations: On',
       showEdgeLabelsOff: 'Show relations: Off',
-      showNamesOn: 'Show names: On',
-      showNamesOff: 'Show names: Off',
       fixedOn: 'Fixed view: On',
       fixedOff: 'Fixed view: Off',
       back: 'Back',
@@ -97,6 +93,7 @@
   let activeLegendMode = 'entity';
   let relationLegendState = {};
   let relationMinPmids = 0;
+  let activeLegendHighlight = null;
   let expandModeEnabled = false;
   let expandedNodeKeys = new Set();
   let graphIsLoading = false;
@@ -115,7 +112,6 @@
   window.currentLang = 'en';
   window.fixedView = true;
   window.showEdgeLabels = false;
-  window.showLabels = false;
   window.currentKeyNodeLevel = 1;
   window.focusLevel = 0;
   if (typeof window.cy === 'undefined') {
@@ -687,7 +683,6 @@
 
   function buildCurrentGraphDataOptions(extra = {}) {
     return Object.assign({
-      showAllLabels: window.showLabels,
       showEdgeLabels: window.showEdgeLabels,
       allowInspectCard: true,
       visibleTypes: getVisibleTypePayload(),
@@ -772,8 +767,13 @@
         const safeColor = escapeHtml(style.color || '#94a3b8');
         const checked = visibleMap[relationType] !== false ? ' checked' : '';
         const dashedClass = style.dashed ? ' is-dashed' : '';
+        const activeClass = activeLegendHighlight
+          && activeLegendHighlight.kind === 'relation'
+          && activeLegendHighlight.value === relationType
+            ? ' is-highlight-active'
+            : '';
         return [
-          '<div class="graph-legend-item">',
+          `<div class="graph-legend-item${activeClass}" data-highlight-kind="relation" data-highlight-value="${safeType}">`,
           `  <input class="graph-legend-check" type="checkbox" data-relation="${safeType}" aria-label="${safeType}"${checked}>`,
           `  <span class="graph-relation-line${dashedClass}" style="--legend-color:${safeColor};"></span>`,
           `  <span class="graph-legend-text">${safeType}</span>`,
@@ -790,8 +790,13 @@
       const safeLabel = escapeHtml(item.label);
       const safeColor = escapeHtml(item.color);
       const checked = visibleMap[item.type] !== false ? ' checked' : '';
+      const activeClass = activeLegendHighlight
+        && activeLegendHighlight.kind === 'entity'
+        && activeLegendHighlight.value === item.type
+          ? ' is-highlight-active'
+          : '';
       return [
-        `<div class="graph-legend-item${item.type === 'Disease' ? ' is-disease-combined' : ''}">`,
+        `<div class="graph-legend-item${item.type === 'Disease' ? ' is-disease-combined' : ''}${activeClass}" data-highlight-kind="entity" data-highlight-value="${safeType}">`,
         `  <input class="graph-legend-check" type="checkbox" data-type="${safeType}" aria-label="${safeLabel}"${checked}>`,
         `  <span class="graph-legend-swatch" style="--legend-color:${safeColor};"></span>`,
         `  <span class="graph-legend-text">${safeLabel}</span>`,
@@ -861,7 +866,6 @@
     if (bridge && typeof bridge.setViewState === 'function') {
       return Promise.resolve(bridge.setViewState({
         fixedView: window.fixedView,
-        showAllLabels: window.showLabels,
         showEdgeLabels: window.showEdgeLabels,
         allowInspectCard: window.fixedView && !expandModeEnabled,
       }));
@@ -887,6 +891,30 @@
     if (!legendFilterPending) return Promise.resolve(false);
     clearLegendFilterPending();
     return applyLegendTypeFilter();
+  }
+
+  function setLegendHighlight(nextHighlight = null, options = {}) {
+    const normalized = nextHighlight && typeof nextHighlight === 'object'
+      ? {
+          kind: String(nextHighlight.kind || '').trim() === 'relation' ? 'relation' : 'entity',
+          value: String(nextHighlight.value || '').trim(),
+        }
+      : null;
+    activeLegendHighlight = normalized && normalized.value ? normalized : null;
+    if (options.renderLegend !== false) renderGraphLegend();
+
+    if (currentMode !== 'dynamic') return Promise.resolve(false);
+    const bridge = dynamicFrame && dynamicFrame.contentWindow
+      ? dynamicFrame.contentWindow.__TEKG_G6_EMBED
+      : null;
+    if (bridge && typeof bridge.setLegendFocus === 'function') {
+      return Promise.resolve(bridge.setLegendFocus(activeLegendHighlight));
+    }
+    return Promise.resolve(false);
+  }
+
+  function clearLegendHighlight(options = {}) {
+    return setLegendHighlight(null, options);
   }
 
   function setDetail(html) {
@@ -928,7 +956,6 @@
       classQuery: currentGraphClassQuery,
       treeVariant: currentTreeVariant,
       fixedView: !!window.fixedView,
-      showLabels: !!window.showLabels,
       expandModeEnabled,
       relationMinPmids,
       visibleRelations: getVisibleRelationPayload(),
@@ -1016,6 +1043,7 @@
     const request = normalizeGraphRequest(options && options.request ? options.request : buildCurrentGraphRequest());
     const renderElements = filterElementsForLegend(elements);
 
+    activeLegendHighlight = null;
     currentSelectedNode = null;
     showDynamicSurface();
     updateButtons();
@@ -1037,6 +1065,9 @@
       const bridge = await dynamicBridgePromise;
       if (!bridge || typeof bridge.renderElements !== 'function') {
         throw new Error('G6 embed bridge cannot render cached graph elements');
+      }
+      if (typeof bridge.setLegendFocus === 'function') {
+        await bridge.setLegendFocus(null);
       }
 
       const graphDataOptions = source === 'answer'
@@ -1085,7 +1116,6 @@
         state.queryType || '',
         state.classQuery || '',
         state.fixedView ? '1' : '0',
-        state.showLabels ? '1' : '0',
         state.expandModeEnabled ? '1' : '0',
         String(state.relationMinPmids || 0),
       ].join('|');
@@ -1095,7 +1125,6 @@
         'answer',
         state.query || '',
         state.fixedView ? '1' : '0',
-        state.showLabels ? '1' : '0',
         String((state.elements || []).length),
         state.expandModeEnabled ? '1' : '0',
         String(state.relationMinPmids || 0),
@@ -1122,7 +1151,6 @@
         kind: 'answer',
         query: currentGraphQuery,
         fixedView: !!window.fixedView,
-        showLabels: !!window.showLabels,
         elements: cloneAnswerElements(currentAnswerGraphElements),
         expandModeEnabled,
         relationMinPmids,
@@ -1135,7 +1163,6 @@
       queryType: currentGraphQueryType,
       classQuery: currentGraphClassQuery,
       fixedView: !!window.fixedView,
-      showLabels: !!window.showLabels,
       expandModeEnabled,
       relationMinPmids,
     };
@@ -1370,13 +1397,11 @@
     if (els.graphTitle) els.graphTitle.textContent = t.graphTitle;
     updateGraphSearchPlaceholder();
     if (els.edgeLabelsText) els.edgeLabelsText.textContent = window.showEdgeLabels ? t.showEdgeLabelsOn : t.showEdgeLabelsOff;
-    if (els.showLabelsText) els.showLabelsText.textContent = window.showLabels ? t.showNamesOn : t.showNamesOff;
     if (els.fixedText) els.fixedText.textContent = window.fixedView ? t.fixedOn : t.fixedOff;
     if (els.backText) els.backText.textContent = t.back || 'Back';
     if (els.resetText) els.resetText.textContent = t.reset;
     if (els.expandModeText) els.expandModeText.textContent = expandModeEnabled ? t.expandModeOn : t.expandModeOff;
     syncToggleButtonState(els.edgeLabelsBtn, window.showEdgeLabels);
-    syncToggleButtonState(els.showLabelsBtn, window.showLabels);
     syncToggleButtonState(els.fixedBtn, window.fixedView);
     syncToggleButtonState(els.expandModeBtn, expandModeEnabled);
     syncExpressionLayerButtonState();
@@ -1438,7 +1463,6 @@
     const url = new URL(window.__TEKG_PATHS.assetsUrl('html/preview_g6_embed.html'), window.location.origin);
     url.searchParams.set('key_level', String(window.currentKeyNodeLevel));
     url.searchParams.set('fixed', window.fixedView ? '1' : '0');
-    url.searchParams.set('show_labels', window.showLabels ? '1' : '0');
     const query = String(request.query || '').trim();
     if (query) {
       url.searchParams.set('q', query);
@@ -1558,6 +1582,7 @@
     currentGraphQueryType = '';
     currentGraphClassQuery = '';
     currentSelectedNode = null;
+    activeLegendHighlight = null;
     currentAnswerGraphElements = cloneAnswerElements(elements);
     currentQueryGraphElements = [];
 
@@ -1580,6 +1605,9 @@
       const bridge = await dynamicBridgePromise;
       if (!bridge || typeof bridge.renderElements !== 'function') {
         throw new Error('G6 embed bridge cannot render QA elements');
+      }
+      if (typeof bridge.setLegendFocus === 'function') {
+        await bridge.setLegendFocus(null);
       }
 
       const rendered = await bridge.renderElements(filterElementsForLegend(currentAnswerGraphElements), { query: currentGraphQuery }, {
@@ -1853,7 +1881,6 @@
       pushCurrentStateToHistory();
     }
     window.fixedView = preset.fixed_view !== false;
-    window.showLabels = true;
     updateButtons();
     return renderAnswerGraphElements(elements, query, { ...options, pushHistory: false });
   }
@@ -1875,7 +1902,6 @@
 
     if (state.kind === 'query') {
       window.fixedView = !!state.fixedView;
-      window.showLabels = !!state.showLabels;
       expandModeEnabled = !!state.expandModeEnabled;
       relationMinPmids = Math.max(0, Number(state.relationMinPmids) || 0);
       if (els.relationMinPmidsInput) els.relationMinPmidsInput.value = String(relationMinPmids);
@@ -1889,7 +1915,6 @@
 
     if (state.kind === 'answer') {
       window.fixedView = !!state.fixedView;
-      window.showLabels = !!state.showLabels;
       expandModeEnabled = !!state.expandModeEnabled;
       relationMinPmids = Math.max(0, Number(state.relationMinPmids) || 0);
       if (els.relationMinPmidsInput) els.relationMinPmidsInput.value = String(relationMinPmids);
@@ -2020,6 +2045,7 @@
     currentRelationLegendMeta = [];
     rawRelationLegendMeta = [];
     relationLegendState = {};
+    activeLegendHighlight = null;
     expandedNodeKeys = new Set();
     showDynamicSurface();
     if (els.searchInput) els.searchInput.value = q;
@@ -2045,6 +2071,9 @@
       const bridge = await dynamicBridgePromise;
       if (!bridge || typeof bridge.loadGraph !== 'function') {
         throw new Error('G6 embed bridge cannot load graph requests');
+      }
+      if (typeof bridge.setLegendFocus === 'function') {
+        await bridge.setLegendFocus(null);
       }
 
       const payload = await bridge.loadGraph(request, {
@@ -2403,6 +2432,23 @@
     });
 
     if (els.graphLegendList) {
+      els.graphLegendList.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+        if (target.closest('.graph-legend-check')) return;
+        const item = target.closest('.graph-legend-item[data-highlight-kind][data-highlight-value]');
+        if (!(item instanceof HTMLElement)) return;
+        const kind = String(item.dataset.highlightKind || '').trim() === 'relation' ? 'relation' : 'entity';
+        const value = String(item.dataset.highlightValue || '').trim();
+        if (!value) return;
+        const isSame = activeLegendHighlight
+          && activeLegendHighlight.kind === kind
+          && activeLegendHighlight.value === value;
+        setLegendHighlight(isSame ? null : { kind, value }).catch((error) => {
+          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
+        });
+      });
+
       els.graphLegendList.addEventListener('change', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLInputElement) || !target.classList.contains('graph-legend-check')) return;
@@ -2438,6 +2484,7 @@
         const mode = String(target.dataset.legendMode || '').trim();
         if (!mode || mode === activeLegendMode) return;
         activeLegendMode = mode === 'relation' ? 'relation' : 'entity';
+        setLegendHighlight(null, { renderLegend: false }).catch(() => {});
         updateButtons();
         renderGraphLegend();
       });
@@ -2578,15 +2625,6 @@
       });
     }
 
-    if (els.showLabelsBtn) {
-      els.showLabelsBtn.addEventListener('click', () => {
-        window.showLabels = !window.showLabels;
-        updateCurrentGraphViewState().catch((error) => {
-          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-        });
-      });
-    }
-
     if (els.edgeLabelsBtn) {
       els.edgeLabelsBtn.addEventListener('click', () => {
         window.showEdgeLabels = !window.showEdgeLabels;
@@ -2707,17 +2745,6 @@
     },
     getFixedView() {
       return !!window.fixedView;
-    },
-    setShowLabels(next) {
-      window.showLabels = !!next;
-      updateButtons();
-      if (currentMode === 'dynamic') {
-        return updateCurrentGraphViewState().then(() => window.showLabels);
-      }
-      return Promise.resolve(window.showLabels);
-    },
-    getShowLabels() {
-      return !!window.showLabels;
     },
     getShowEdgeLabels() {
       return !!window.showEdgeLabels;

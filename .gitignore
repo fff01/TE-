@@ -1,7 +1,7 @@
 # Large local datasets
 data/
 reference/
-
+docs/
 # Python generated files
 __pycache__/
 *.pyc

@@ -294,6 +294,20 @@
     return `${raw.slice(0, maxChars - 1)}...`;
   }
 
+  function stripDiseaseCategoryDisplayPrefix(label) {
+    return String(label || '')
+      .trim()
+      .replace(/^\s*(?:\d{1,2}|[IVXLCDM]{1,6})[\s.:-]+(?=[A-Za-z])/i, '')
+      .trim();
+  }
+
+  function displayLabelForNode(rawLabel, nodeType) {
+    const translated = translateName(rawLabel, nodeType);
+    return nodeType === 'DiseaseCategory'
+      ? stripDiseaseCategoryDisplayPrefix(translated)
+      : translated;
+  }
+
   function hexToRgb(hex) {
     const raw = String(hex || '').trim();
     const rgbMatch = raw.match(/^rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\s*\)$/i);
@@ -461,7 +475,7 @@
         size: degreeToSize(data.degree),
         nodeType: data.type || 'TE',
         rawLabel: data.rawLabel || data.label || data.id,
-        displayLabel: translateName(data.label || data.rawLabel || data.id, data.type || 'TE'),
+        displayLabel: displayLabelForNode(data.label || data.rawLabel || data.id, data.type || 'TE'),
         databaseDegree: Math.max(0, Number(data.degree) || 0),
         description: translateDescription(data.type || 'TE', data.label || data.rawLabel || data.id, data.description || ''),
         diseaseClass: String(data.disease_class || ''),

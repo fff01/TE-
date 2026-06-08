@@ -70,7 +70,6 @@ $previewConfig = [
                 <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
               </button>
               <button id="toggle-edge-labels" class="is-toggle" type="button" aria-pressed="false"><span id="edge-labels-text">Show relations: Off</span></button>
-              <button id="toggle-show-labels" class="is-toggle" type="button" aria-pressed="false"><span id="show-labels-text">Show names: Off</span></button>
               <button id="graph-expression-layer" class="is-toggle" type="button" aria-pressed="false" aria-label="Expression evidence layer"><span id="graph-expression-layer-text">Expression: Off</span></button>
               <button id="toggle-fixed-view" class="is-toggle" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
               <button id="back-graph" type="button" disabled><span id="back-text">Back</span></button>
