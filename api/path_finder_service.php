@@ -89,6 +89,7 @@ final class PathFinderService
         }
 
         $query = $this->normalizeQuery($query);
+        $match = $this->autocompleteMatchConfig($entityType, $query);
         $limit = max(1, min(300, $limit));
         $rows = $this->runNeo4j(
             sprintf(
@@ -97,20 +98,35 @@ MATCH (n)
 WHERE $entity_type IN labels(n)
   AND NOT 'Paper' IN labels(n)
   AND trim(toString(coalesce(n.name, ''))) <> ''
-  AND ($query = '' OR toLower(trim(toString(n.name))) STARTS WITH toLower($query))
-WITH trim(toString(n.name)) AS name, collect(n)[0] AS n
+WITH n, trim(toString(n.name)) AS name, toLower(trim(toString(n.name))) AS lower_name
+WHERE $query = ''
+   OR any(term IN $terms WHERE lower_name STARTS WITH term)
+   OR any(term IN $terms WHERE size(term) >= 3 AND lower_name CONTAINS term)
+WITH name, collect(n)[0] AS n,
+     min(CASE
+       WHEN lower_name IN $preferred_names THEN 0
+       WHEN any(term IN $terms WHERE lower_name = term) THEN 1
+       WHEN any(term IN $terms WHERE lower_name STARTS WITH term) THEN 2
+       WHEN any(term IN $terms WHERE size(term) >= 3 AND lower_name CONTAINS term) THEN 3
+       ELSE 4
+     END) AS match_rank
 RETURN elementId(n) AS element_id,
        labels(n) AS labels,
        name AS name,
        n.description AS description,
        n.pmid AS pmid,
        n.disease_class AS disease_class
-ORDER BY toLower(name)
+ORDER BY match_rank ASC, toLower(name)
 LIMIT %d
 CYPHER,
                 $limit
             ),
-            ['entity_type' => $entityType, 'query' => $query]
+            [
+                'entity_type' => $entityType,
+                'query' => $query,
+                'terms' => $match['terms'],
+                'preferred_names' => $match['preferred_names'],
+            ]
         );
 
         return array_map(fn(array $row): array => $this->normalizeNode($row), $rows);
@@ -141,6 +157,7 @@ CYPHER,
         }
 
         $query = $this->normalizeQuery($query);
+        $match = $this->autocompleteMatchConfig($targetType, $query);
         $depth = max(1, min(3, $maxDepth));
         $limit = max(1, min(180, $limit));
         $rows = $this->runNeo4j(
@@ -154,15 +171,26 @@ WHERE elementId(candidate) <> elementId(source)
   AND NOT 'Paper' IN labels(candidate)
   AND ALL(node IN nodes(p) WHERE NOT 'Paper' IN labels(node))
   AND trim(toString(coalesce(candidate.name, ''))) <> ''
-  AND ($query = '' OR toLower(trim(toString(candidate.name))) STARTS WITH toLower($query))
 WITH candidate,
+     toLower(trim(toString(candidate.name))) AS lower_name,
      length(p) AS hop,
      reduce(path_pmids = [], rel IN relationships(p) | path_pmids + coalesce(rel.pmids, [])) AS path_pmids
+WHERE $query = ''
+   OR any(term IN $terms WHERE lower_name STARTS WITH term)
+   OR any(term IN $terms WHERE size(term) >= 3 AND lower_name CONTAINS term)
 WITH candidate,
+     min(CASE
+       WHEN lower_name IN $preferred_names THEN 0
+       WHEN any(term IN $terms WHERE lower_name = term) THEN 1
+       WHEN any(term IN $terms WHERE lower_name STARTS WITH term) THEN 2
+       WHEN any(term IN $terms WHERE size(term) >= 3 AND lower_name CONTAINS term) THEN 3
+       ELSE 4
+     END) AS match_rank,
      min(hop) AS min_hop,
      count(*) AS path_count,
      reduce(all_pmids = [], pmids IN collect(path_pmids) | all_pmids + pmids) AS all_pmids
 WITH candidate,
+     match_rank,
      min_hop,
      path_count,
      reduce(unique_pmids = [], pmid IN all_pmids |
@@ -180,7 +208,7 @@ RETURN elementId(candidate) AS element_id,
        min_hop AS min_hop,
        path_count AS path_count,
        size(unique_pmids) AS pmid_count
-ORDER BY min_hop ASC, pmid_count DESC, path_count DESC, toLower(name)
+ORDER BY match_rank ASC, min_hop ASC, pmid_count DESC, path_count DESC, toLower(name)
 LIMIT %d
 CYPHER,
                 $depth,
@@ -190,6 +218,8 @@ CYPHER,
                 'source_id' => (string)$source['element_id'],
                 'target_type' => $targetType,
                 'query' => $query,
+                'terms' => $match['terms'],
+                'preferred_names' => $match['preferred_names'],
             ]
         );
 
@@ -490,6 +520,31 @@ CYPHER,
     private function normalizeQuery(string $query): string
     {
         return trim(preg_replace('/\s+/', ' ', $query) ?? $query);
+    }
+
+    private function autocompleteMatchConfig(string $entityType, string $query): array
+    {
+        $normalized = mb_strtolower($this->normalizeQuery($query));
+        $terms = [];
+        if ($normalized !== '') {
+            $terms[] = $normalized;
+        }
+
+        $preferredNames = [];
+        if ($entityType === 'TE' && in_array($normalized, ['l1', 'line1', 'line-1', 'line 1'], true)) {
+            $terms = array_merge($terms, ['l1', 'line1', 'line-1', 'line 1']);
+            $preferredNames[] = 'l1 (line-1)';
+        }
+
+        $terms = array_values(array_unique(array_filter(
+            $terms,
+            static fn(string $term): bool => trim($term) !== ''
+        )));
+
+        return [
+            'terms' => $terms,
+            'preferred_names' => array_values(array_unique($preferredNames)),
+        ];
     }
 
     private function allowFuzzy(string $query): bool
