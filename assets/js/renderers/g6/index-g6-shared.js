@@ -210,6 +210,47 @@
     return `${raw.slice(0, maxChars - 1)}...`;
   }
 
+  function wrapFullLabel(text, diameter, maxLines = 3) {
+    const raw = String(text || '').trim().replace(/\s+/g, ' ');
+    if (!raw) return '';
+    const safeDiameter = Math.max(24, Number(diameter) || 24);
+    const safeMaxLines = Math.max(1, Number(maxLines) || 3);
+    const charsPerLine = Math.max(5, Math.floor((safeDiameter - 10) / 7.2));
+    if (raw.length <= charsPerLine) return raw;
+
+    const hasSpaces = raw.includes(' ');
+    const separator = hasSpaces ? ' ' : '';
+    const segments = hasSpaces
+      ? raw.split(' ')
+      : raw.split(/(?=[/()_-])|(?<=[/()_-])/).filter(Boolean);
+    const lines = [];
+    let index = 0;
+
+    while (index < segments.length && lines.length < safeMaxLines) {
+      if (lines.length === safeMaxLines - 1) {
+        lines.push(segments.slice(index).join(separator));
+        break;
+      }
+
+      let current = '';
+      while (index < segments.length) {
+        const segment = segments[index];
+        const next = current ? `${current}${separator}${segment}` : segment;
+        if (next.length > charsPerLine && current) break;
+        current = next;
+        index += 1;
+      }
+
+      if (current) lines.push(current);
+      if (!current && index < segments.length) {
+        lines.push(segments[index]);
+        index += 1;
+      }
+    }
+
+    return lines.join('\n');
+  }
+
   function resolveNode(edgeSide, nodes) {
     if (edgeSide && typeof edgeSide === 'object') return edgeSide;
     return nodes.find((node) => node.id === edgeSide) || null;
@@ -1149,6 +1190,30 @@
         && Math.max(0, Number(node?.size) || 0) >= labelThresholds[nodeType];
     }
 
+    function shouldShowDefaultLabel(node) {
+      if (!node) return false;
+      if (node.alwaysShowLabel) return true;
+      if (node.nodeType === 'TE') return teShouldShowLabel(node);
+      return secondaryShouldShowLabel(node);
+    }
+
+    function importantLabelText(node) {
+      const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
+      if (!raw) return '';
+      return wrapFullLabel(raw, Math.max(24, Number(node?.size) || 24), 3);
+    }
+
+    function importantLabelFontSize(node) {
+      const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
+      const diameter = Math.max(24, Number(node?.size) || 24);
+      if (!raw) return 10;
+      const lines = importantLabelText(node).split('\n').filter(Boolean);
+      const longest = lines.reduce((max, line) => Math.max(max, line.length), 0);
+      const estimated = (diameter - 8) / Math.max(4, longest * 0.62);
+      const upper = node?.nodeType === 'TE' ? 14 : 12;
+      return Math.max(8, Math.min(upper, estimated));
+    }
+
     function secondaryLabelText(node) {
       const raw = String(node?.displayLabel || node?.rawLabel || '').trim();
       if (!raw) return '';
@@ -1538,9 +1603,12 @@
       const includePaperNodes = options.includePaperNodes === true;
       const restrictToAnchorComponent = options.restrictToAnchorComponent !== false;
       const forceAnchorLabel = options.forceAnchorLabel === true;
+      const graphRippleAnchor = options.graphRippleAnchor !== false;
       const showAllLabels = options.showAllLabels === true;
-      const nodeSizeScale = Math.max(1, Number(options.nodeSizeScale) || 1);
-      const nodeMinSize = Math.max(0, Number(options.nodeMinSize) || 0);
+      const hasNodeSizeScale = Object.prototype.hasOwnProperty.call(options, 'nodeSizeScale');
+      const hasNodeMinSize = Object.prototype.hasOwnProperty.call(options, 'nodeMinSize');
+      const nodeSizeScale = Math.max(1, Number(hasNodeSizeScale ? options.nodeSizeScale : 1.42) || 1);
+      const nodeMinSize = Math.max(0, Number(hasNodeMinSize ? options.nodeMinSize : 38) || 0);
       const endpointNodeMinSize = Math.max(nodeMinSize, Number(options.endpointNodeMinSize) || 0);
       const preferFullLabels = options.preferFullLabels === true;
       const endpointHighlightIds = new Set(
@@ -1595,6 +1663,7 @@
           showAllLabels,
           preferFullLabel: preferFullLabels,
           endpointHighlight: endpointHighlightIds.has(String(data.id || '')),
+          graphRipple: graphRippleAnchor && String(data.id || '') === anchorNodeId,
           alwaysShowLabel:
             (includePaperNodes && (data.type || 'TE') === 'Paper') ||
             (forceAnchorLabel && String(data.id || '') === anchorNodeId) ||
@@ -1725,6 +1794,10 @@
         }
       }
 
+      for (const node of visibleNodes) {
+        node.importantLabel = shouldShowDefaultLabel(node);
+      }
+
       for (const edge of baseEdges) {
         if (!visibleNodeIds.has(edge.source) || !visibleNodeIds.has(edge.target)) continue;
         const relationStyle = relationStyleForType(edge.relationKey);
@@ -1777,6 +1850,7 @@
           ...node,
           size: currentShowAllLabels ? Math.round(Math.max(18, baseSize) * 1.22 + 4) : baseSize,
           showAllLabels: currentShowAllLabels,
+          importantLabel: shouldShowDefaultLabel(node),
         };
       });
       currentGraphData.nodes = nextNodes;
@@ -1960,11 +2034,11 @@
         graphDataOptions.showAllLabels = currentShowAllLabels;
         const data = buildGraphData(payloadElements, graphDataOptions);
         currentGraphData = data;
-        const hasEndpointHighlights = data.nodes.some((node) => node.endpointHighlight === true);
-        const rippleNodeAvailable = hasEndpointHighlights && ensurePathFinderRippleNodeRegistered();
-        const layoutDistanceScale = Math.max(1, Number(graphDataOptions.layoutDistanceScale) || 1);
-        const collisionPaddingScale = Math.max(1, Number(graphDataOptions.collisionPaddingScale) || 1);
-        const chargeScale = Math.max(1, Number(graphDataOptions.chargeScale) || 1);
+        const hasRippleHighlights = data.nodes.some((node) => node.endpointHighlight === true || node.graphRipple === true);
+        const rippleNodeAvailable = hasRippleHighlights && ensurePathFinderRippleNodeRegistered();
+        const layoutDistanceScale = Math.max(1, Number(graphDataOptions.layoutDistanceScale) || 1.45);
+        const collisionPaddingScale = Math.max(1, Number(graphDataOptions.collisionPaddingScale) || 2.6);
+        const chargeScale = Math.max(1, Number(graphDataOptions.chargeScale) || 1.55);
         const edgeLabelFontSize = Math.max(9, Number(graphDataOptions.edgeLabelFontSize) || 9);
 
         if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
@@ -1996,15 +2070,15 @@
           autoFit: false,
           data,
           node: {
-            type: (d) => (d.endpointHighlight && rippleNodeAvailable ? 'path-finder-ripple-circle' : 'circle'),
+            type: (d) => ((d.endpointHighlight || d.graphRipple) && rippleNodeAvailable ? 'path-finder-ripple-circle' : 'circle'),
             style: {
               size: (d) => d.size,
               fill: (d) => d.fillColor || TYPE_COLORS[d.nodeType] || '#94a3b8',
               stroke: (d) => d.strokeColor || TYPE_STROKES[d.nodeType] || '#111111',
               opacity: (d) => (typeof d.opacity === 'number' ? d.opacity : 1),
-              lineWidth: (d) => d.expressionLineWidth || (d.endpointHighlight ? 5 : 2),
-              shadowColor: (d) => (d.endpointHighlight ? 'rgba(37, 99, 235, 0.42)' : 'rgba(15, 23, 42, 0.08)'),
-              shadowBlur: (d) => (d.endpointHighlight ? 26 : 0),
+              lineWidth: (d) => d.expressionLineWidth || ((d.endpointHighlight || d.graphRipple) ? 5 : 2),
+              shadowColor: (d) => ((d.endpointHighlight || d.graphRipple) ? 'rgba(37, 99, 235, 0.42)' : 'rgba(15, 23, 42, 0.08)'),
+              shadowBlur: (d) => ((d.endpointHighlight || d.graphRipple) ? 26 : 0),
               shadowOffsetX: 0,
               shadowOffsetY: 0,
               halo: (d) => d.endpointHighlight === true,
@@ -2012,16 +2086,14 @@
               haloOpacity: 0.28,
               labelText: (d) => {
                 if (d.showAllLabels) return showAllLabelText(d);
-                if (d.nodeType === 'TE' && teShouldShowLabel(d)) return d.displayLabel || d.rawLabel || '';
-                if (secondaryShouldShowLabel(d)) return secondaryLabelText(d);
+                if (d.importantLabel || shouldShowDefaultLabel(d)) return importantLabelText(d);
                 return '';
               },
               labelPlacement: 'center',
               labelFill: '#111111',
               labelFontSize: (d) => {
                 if (d.showAllLabels) return showAllLabelFontSize(d);
-                if (d.nodeType === 'TE' && teShouldShowLabel(d)) return teLabelFontSize(d);
-                if (secondaryShouldShowLabel(d)) return secondaryLabelFontSize(d);
+                if (d.importantLabel || shouldShowDefaultLabel(d)) return importantLabelFontSize(d);
                 return 10;
               },
               labelFontWeight: 700,
@@ -2086,14 +2158,14 @@
             },
             collide: {
               radius: (node) => {
-                const highlightPadding = node.endpointHighlight ? 28 : 0;
-                if (node.nodeType === 'DiseaseClass') return node.size / 2 + (50 + highlightPadding) * collisionPaddingScale;
-                if (node.nodeType === 'TE') return node.size / 2 + (42 + highlightPadding) * collisionPaddingScale;
-                if (node.nodeType === 'Disease') return node.size / 2 + (38 + highlightPadding) * collisionPaddingScale;
-                return node.size / 2 + (34 + highlightPadding) * collisionPaddingScale;
+                const highlightPadding = (node.endpointHighlight || node.graphRipple) ? 36 : 0;
+                if (node.nodeType === 'DiseaseClass') return node.size / 2 + (58 + highlightPadding) * collisionPaddingScale;
+                if (node.nodeType === 'TE') return node.size / 2 + (52 + highlightPadding) * collisionPaddingScale;
+                if (node.nodeType === 'Disease') return node.size / 2 + (48 + highlightPadding) * collisionPaddingScale;
+                return node.size / 2 + (44 + highlightPadding) * collisionPaddingScale;
               },
               strength: 1,
-              iterations: Math.max(16, Number(graphDataOptions.collisionIterations) || 16),
+              iterations: Math.max(24, Number(graphDataOptions.collisionIterations) || 28),
             },
           },
           behaviors: [
@@ -2336,6 +2408,10 @@
 
       const expandedData = buildGraphData(payload.elements || [], graphDataOptions);
       const { nextNodes, nextEdges } = mergeCurrentGraphData(expandedData);
+      for (const node of nextNodes) {
+        node.graphRipple = true;
+        node.importantLabel = true;
+      }
       if (graph && (nextNodes.length || nextEdges.length)) {
         try {
           if (typeof graph.addNodeData === 'function' && nextNodes.length) {
