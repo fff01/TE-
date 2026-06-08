@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/path_config.php';
+require_once __DIR__ . '/api/path_finder_service.php';
 $pageTitle = 'TE-KG Preview';
 $activePage = 'preview';
 $protoCurrentPath = tekg_app_url('preview.php');
@@ -7,6 +8,7 @@ $protoSubtitle = 'Interactive graph preview';
 $protoMainClass = 'preview-main';
 $pageExtraStylesheets = [
     tekg_assets_url('css/tekg_runtime.css'),
+    tekg_assets_url('css/components/te-autocomplete.css'),
     tekg_assets_url('css/components/side-deepthink.css'),
     tekg_assets_url('css/pages/preview.css'),
 ];
@@ -14,9 +16,12 @@ require __DIR__ . '/head.php';
 
 $siteLang = site_lang();
 $initialQuery = trim((string)($_GET['q'] ?? ''));
+$graphSearchEntityTypes = path_finder_entity_type_options();
 $previewVersion = max(
     (int)@filemtime(__FILE__),
+    (int)@filemtime(tekg_assets_fs_path('css/components/te-autocomplete.css')),
     (int)@filemtime(tekg_assets_fs_path('css/pages/preview.css')),
+    (int)@filemtime(tekg_assets_fs_path('js/components/te-autocomplete.js')),
     (int)@filemtime(tekg_assets_fs_path('js/components/deepthink-client.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-shell.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-deepthink.js')),
@@ -42,9 +47,20 @@ $previewConfig = [
         <div class="main preview-graph-workspace" id="previewGraphWorkspace">
           <section class="panel preview-graph-panel" aria-label="TE-KG graph workspace">
             <div class="toolbar preview-graph-toolbar">
-              <div class="search">
+              <div class="search preview-entity-search">
                 <span class="preview-search-icon" aria-hidden="true">Search</span>
-                <input id="node-search" type="text" placeholder="Search LINE1, L1HS, disease, or function">
+                <div class="preview-entity-control">
+                  <select id="graphSearchType" aria-label="Graph search entity type">
+<?php foreach ($graphSearchEntityTypes as $entityType): ?>
+                    <option value="<?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?>"<?= $entityType === 'TE' ? ' selected' : '' ?>><?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?></option>
+<?php endforeach; ?>
+                  </select>
+                  <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="path-finder-entities" data-te-autocomplete-type-source="#graphSearchType" data-te-autocomplete-clear-on-type-change="true">
+                    <input id="node-search" type="text" autocomplete="off" placeholder="Select a TE entity" data-te-autocomplete>
+                    <button class="te-autocomplete-toggle" type="button" aria-label="Show graph entity names" aria-expanded="false" data-te-autocomplete-toggle></button>
+                    <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>
+                  </div>
+                </div>
               </div>
               <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
                 <span id="focus-view-text">Focus mode: Global</span>
@@ -153,6 +169,7 @@ $previewConfig = [
         window.__TEKG_G6_BOOTSTRAP_OWN_TREE = true;
       </script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/components/deepthink-client.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('vendor/marked/marked.umd.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('vendor/g6/g6.min.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/tekg_runtime_data.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>

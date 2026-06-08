@@ -12,6 +12,7 @@
     title: document.getElementById('page-title'),
     badge: document.getElementById('page-badge'),
     graphTitle: document.getElementById('graph-title'),
+    graphSearchType: document.getElementById('graphSearchType'),
     searchInput: document.getElementById('node-search'),
     edgeLabelsBtn: document.getElementById('toggle-edge-labels'),
     edgeLabelsText: document.getElementById('edge-labels-text'),
@@ -1248,7 +1249,56 @@
   function normalizeQueryType(value) {
     const normalized = String(value || '').trim().toLowerCase();
     if (normalized === 'disease_class' || normalized === 'diseaseclass') return 'disease_class';
+    const graphTypes = {
+      te: 'TE',
+      disease: 'Disease',
+      function: 'Function',
+      gene: 'Gene',
+      protein: 'Protein',
+      rna: 'RNA',
+      mutation: 'Mutation',
+      pharmaceutical: 'Pharmaceutical',
+      toxin: 'Toxin',
+      lipid: 'Lipid',
+      peptide: 'Peptide',
+      carbohydrate: 'Carbohydrate',
+    };
+    if (Object.prototype.hasOwnProperty.call(graphTypes, normalized)) return graphTypes[normalized];
     return '';
+  }
+
+  const entityExamples = {
+    TE: 'L1HS',
+    Disease: "Alzheimer's disease",
+    Function: 'A-to-I RNA editing',
+    Gene: 'TP53',
+    Protein: 'ORF1p',
+    RNA: 'mRNA',
+    Mutation: 'hypomethylation',
+    Pharmaceutical: 'azacytidine',
+    Toxin: 'oxidative stress',
+    Lipid: 'cholesterol',
+    Peptide: 'peptide',
+    Carbohydrate: 'glucose',
+  };
+
+  function selectedGraphSearchType() {
+    return normalizeQueryType(els.graphSearchType ? els.graphSearchType.value : '') || 'TE';
+  }
+
+  function syncGraphSearchType(type) {
+    if (!els.graphSearchType) return;
+    const normalized = normalizeQueryType(type);
+    if (!normalized || normalized === 'disease_class') return;
+    const hasOption = Array.from(els.graphSearchType.options || []).some((option) => option.value === normalized);
+    if (hasOption) els.graphSearchType.value = normalized;
+  }
+
+  function updateGraphSearchPlaceholder() {
+    if (!els.searchInput) return;
+    const type = selectedGraphSearchType();
+    const example = entityExamples[type] || type || 'entity';
+    els.searchInput.placeholder = `Select a ${type} entity, e.g. ${example}`;
   }
 
   function buildCurrentGraphRequest() {
@@ -1262,7 +1312,7 @@
     }
     return {
       query: String(currentGraphQuery || '').trim(),
-      queryType: '',
+      queryType: currentGraphQueryType || '',
       classQuery: '',
     };
   }
@@ -1282,7 +1332,7 @@
       }
       return {
         query,
-        queryType: '',
+        queryType,
         classQuery: '',
       };
     }
@@ -1290,7 +1340,7 @@
     if (typeof requestLike === 'string') {
       return {
         query: String(requestLike || '').trim(),
-        queryType: '',
+        queryType: selectedGraphSearchType(),
         classQuery: '',
       };
     }
@@ -1307,7 +1357,7 @@
     if (els.title) els.title.textContent = t.pageTitle;
     if (els.badge) els.badge.textContent = t.badge;
     if (els.graphTitle) els.graphTitle.textContent = t.graphTitle;
-    if (els.searchInput) els.searchInput.placeholder = t.searchPlaceholder;
+    updateGraphSearchPlaceholder();
     if (els.edgeLabelsText) els.edgeLabelsText.textContent = window.showEdgeLabels ? t.showEdgeLabelsOn : t.showEdgeLabelsOff;
     if (els.showLabelsText) els.showLabelsText.textContent = window.showLabels ? t.showNamesOn : t.showNamesOff;
     if (els.fixedText) els.fixedText.textContent = window.fixedView ? t.fixedOn : t.fixedOff;
@@ -1952,6 +2002,7 @@
     currentGraphQuery = q;
     currentGraphQueryType = request.queryType || '';
     currentGraphClassQuery = currentGraphQueryType === 'disease_class' ? String(request.classQuery || q).trim() : '';
+    syncGraphSearchType(currentGraphQueryType);
     currentSelectedNode = null;
     currentAnswerGraphElements = [];
     currentQueryGraphElements = [];
@@ -2423,10 +2474,17 @@
     if (els.searchInput) {
       els.searchInput.addEventListener('keydown', (event) => {
         if (event.key !== 'Enter') return;
-        loadDynamicGraph(els.searchInput.value).catch((error) => {
+        loadDynamicGraph({
+          query: els.searchInput.value,
+          queryType: selectedGraphSearchType(),
+        }).catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
       });
+    }
+
+    if (els.graphSearchType) {
+      els.graphSearchType.addEventListener('change', updateGraphSearchPlaceholder);
     }
 
     if (els.resetBtn) {
@@ -2567,6 +2625,7 @@
         currentGraphQuery = nextQuery || String(currentGraphQuery || '').trim();
         currentGraphQueryType = nextQueryType;
         currentGraphClassQuery = nextClassQuery;
+        syncGraphSearchType(currentGraphQueryType);
         notifyStateChange();
       }
     },

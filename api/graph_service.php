@@ -34,7 +34,7 @@ final class GraphService
                 ];
             }
             if ($anchor === null) {
-                $anchor = $this->findAnchorNode($query, $normalized);
+                $anchor = $this->findAnchorNode($query, $normalized, $requestedType);
             }
         }
 
@@ -109,6 +109,18 @@ final class GraphService
         $normalized = mb_strtolower(trim($queryType));
         return match ($normalized) {
             'disease_class', 'diseaseclass' => 'DiseaseClass',
+            'te' => 'TE',
+            'disease' => 'Disease',
+            'function' => 'Function',
+            'gene' => 'Gene',
+            'protein' => 'Protein',
+            'rna' => 'RNA',
+            'mutation' => 'Mutation',
+            'pharmaceutical' => 'Pharmaceutical',
+            'toxin' => 'Toxin',
+            'lipid' => 'Lipid',
+            'peptide' => 'Peptide',
+            'carbohydrate' => 'Carbohydrate',
             default => '',
         };
     }
@@ -1648,13 +1660,17 @@ CYPHER,
         return true;
     }
 
-    private function findAnchorNode(string $query, string $normalized): ?array
+    private function findAnchorNode(string $query, string $normalized, string $requestedType = ''): ?array
     {
+        $nodeType = $requestedType !== 'DiseaseClass' ? $requestedType : '';
         $exact = $this->runNeo4j(
             <<<'CYPHER'
 MATCH (n)
-WHERE toLower(coalesce(n.name, '')) = toLower($exact)
-   OR coalesce(n.pmid, '') = $pmid
+WHERE ($nodeType = '' OR $nodeType IN labels(n))
+  AND (
+    toLower(coalesce(n.name, '')) = toLower($exact)
+    OR coalesce(n.pmid, '') = $pmid
+  )
 RETURN
   elementId(n) AS element_id,
   labels(n) AS labels,
@@ -1664,7 +1680,7 @@ RETURN
   n.disease_class AS disease_class
 LIMIT 10
 CYPHER,
-            ['exact' => $normalized, 'pmid' => $query]
+            ['exact' => $normalized, 'pmid' => $query, 'nodeType' => $nodeType]
         );
 
         if (!empty($exact)) {
@@ -1687,7 +1703,8 @@ CYPHER,
         $fuzzy = $this->runNeo4j(
             <<<'CYPHER'
 MATCH (n)
-WHERE toLower(coalesce(n.name, '')) CONTAINS toLower($keyword)
+WHERE ($nodeType = '' OR $nodeType IN labels(n))
+  AND toLower(coalesce(n.name, '')) CONTAINS toLower($keyword)
 RETURN
   elementId(n) AS element_id,
   labels(n) AS labels,
@@ -1706,7 +1723,7 @@ ORDER BY
   size(coalesce(n.name, ''))
 LIMIT 10
 CYPHER,
-            ['keyword' => $normalized]
+            ['keyword' => $normalized, 'nodeType' => $nodeType]
         );
 
         if (empty($fuzzy)) {

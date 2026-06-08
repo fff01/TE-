@@ -160,6 +160,21 @@
   function normalizeQueryType(value) {
     const normalized = String(value || '').trim().toLowerCase();
     if (normalized === 'disease_class' || normalized === 'diseaseclass') return 'disease_class';
+    const graphTypes = {
+      te: 'TE',
+      disease: 'Disease',
+      function: 'Function',
+      gene: 'Gene',
+      protein: 'Protein',
+      rna: 'RNA',
+      mutation: 'Mutation',
+      pharmaceutical: 'Pharmaceutical',
+      toxin: 'Toxin',
+      lipid: 'Lipid',
+      peptide: 'Peptide',
+      carbohydrate: 'Carbohydrate',
+    };
+    if (Object.prototype.hasOwnProperty.call(graphTypes, normalized)) return graphTypes[normalized];
     return '';
   }
 
@@ -263,7 +278,7 @@
       }
       return {
         query: String(currentQuery || '').trim(),
-        queryType: '',
+        queryType: currentQueryType || '',
         classQuery: '',
       };
     }
@@ -958,7 +973,7 @@
         }
         return {
           query,
-          queryType: '',
+          queryType,
           classQuery: '',
           expandNodeId,
           expandNodeType,
@@ -2162,8 +2177,10 @@
         const endpoint = new URL(window.__TEKG_PATHS.apiUrl('graph.php'), window.location.origin);
         endpoint.searchParams.set('q', query);
         endpoint.searchParams.set('key_level', String(currentKeyNodeLevel));
+        if (request.queryType) {
+          endpoint.searchParams.set('type', request.queryType);
+        }
         if (request.queryType === 'disease_class') {
-          endpoint.searchParams.set('type', 'disease_class');
           endpoint.searchParams.set('class', request.classQuery || query);
         }
 
@@ -2291,8 +2308,10 @@
       if (request.expandQuery) {
         endpoint.searchParams.set('expand_query', request.expandQuery);
       }
+      if (request.queryType) {
+        endpoint.searchParams.set('type', request.queryType);
+      }
       if (request.queryType === 'disease_class') {
-        endpoint.searchParams.set('type', 'disease_class');
         endpoint.searchParams.set('class', request.classQuery || query);
       }
 

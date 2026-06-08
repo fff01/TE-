@@ -59,6 +59,65 @@
           font-weight: 800;
           letter-spacing: 0.08em;
           text-transform: uppercase;
+          flex: 0 0 auto;
+        }
+
+        .preview-entity-search {
+          min-width: 420px;
+          max-width: 620px;
+          border-radius: 999px;
+          padding: 4px 10px;
+          overflow: visible;
+        }
+
+        .preview-entity-control {
+          display: grid;
+          grid-template-columns: minmax(94px, 118px) minmax(0, 1fr);
+          align-items: stretch;
+          flex: 1 1 auto;
+          min-width: 0;
+          min-height: 38px;
+          overflow: visible;
+          border: 1px solid #d8e0ea;
+          border-radius: 999px;
+          background: #ffffff;
+        }
+
+        .preview-entity-control:focus-within {
+          border-color: #79a6ea;
+          box-shadow: 0 0 0 4px rgba(92, 143, 219, 0.14);
+        }
+
+        .preview-entity-control > select,
+        .preview-entity-control .te-autocomplete > input[data-te-autocomplete] {
+          width: 100%;
+          min-height: 36px;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+          outline: none;
+          color: #36516f;
+          font-size: 14px;
+        }
+
+        .preview-entity-control > select {
+          border-right: 1px solid #e2e8f0;
+          border-radius: 999px 0 0 999px;
+          background: #f7faff;
+          color: #31588f;
+          font-weight: 800;
+          padding: 0 10px;
+        }
+
+        .preview-entity-control .te-autocomplete > input[data-te-autocomplete] {
+          padding: 0 42px 0 12px;
+        }
+
+        .preview-entity-control .te-autocomplete-menu {
+          left: -1px;
+          right: -1px;
+          z-index: 80;
         }
 
         #graph-expression-layer {
