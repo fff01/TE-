@@ -26,6 +26,7 @@ $previewVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-shell.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-deepthink.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-type-meta.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/default-tree-mindmap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6.bootstrap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-shared.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-embed.js'))
@@ -72,7 +73,9 @@ $previewConfig = [
               <button id="toggle-edge-labels" class="is-toggle" type="button" aria-pressed="false"><span id="edge-labels-text">Show relations: Off</span></button>
               <button id="graph-expression-layer" class="is-toggle" type="button" aria-pressed="false" aria-label="Expression evidence layer"><span id="graph-expression-layer-text">Expression: Off</span></button>
               <button id="toggle-fixed-view" class="is-toggle" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
-              <button id="back-graph" type="button" disabled><span id="back-text">Back</span></button>
+              <button id="toggle-taxonomy-display" class="is-toggle taxonomy-display-toggle" type="button" aria-pressed="false"><span id="taxonomy-display-text">Switch: Tree</span></button>
+              <button id="toggle-taxonomy-source" class="is-toggle taxonomy-source-toggle" type="button" aria-pressed="false"><span id="taxonomy-source-text">Switch taxonomy: All</span></button>
+              <button id="back-graph" type="button" disabled hidden><span id="back-text">Back</span></button>
               <div id="export-menu-wrap" class="graph-export-menu-wrap">
                 <button id="export-menu-toggle" class="graph-export-action" type="button" aria-haspopup="true" aria-expanded="false" disabled>
                   <span id="export-menu-text">Export</span>

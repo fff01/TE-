@@ -354,6 +354,118 @@
     };
   }
 
+  function taxonomyGraphNodeSize(depth) {
+    const safeDepth = Math.max(0, Number(depth) || 0);
+    return Math.max(18, 76 - safeDepth * 7);
+  }
+
+  function taxonomyGraphNodeColor(depth, maxDepth) {
+    const safeDepth = Math.max(0, Number(depth) || 0);
+    const safeMax = Math.max(1, Number(maxDepth) || 1);
+    const t = Math.max(0, Math.min(1, safeDepth / safeMax));
+    const start = [24, 53, 125];
+    const end = [191, 215, 255];
+    const rgb = start.map((value, index) => Math.round(value + (end[index] - value) * t));
+    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  }
+
+  function wrapTaxonomyGraphLabel(label, depth) {
+    const raw = String(label || '').trim();
+    if (!raw) return '';
+    if (depth <= 1) return raw;
+    const limit = depth <= 3 ? 14 : 11;
+    if (raw.length <= limit) return raw;
+    return `${raw.slice(0, Math.max(4, limit - 1))}...`;
+  }
+
+  function buildTaxonomyGraphData(source, width, height) {
+    const nodes = [];
+    const edges = [];
+    const nodeEntries = [...source.nodes.values()];
+    const maxDepth = nodeEntries.reduce((max, node) => Math.max(max, Number(node.treeDepth || 0)), 0);
+    const root = source.rootId || nodeEntries.find((node) => Number(node.treeDepth || 0) === 0)?.id || '';
+    const centerX = Math.max(200, width / 2);
+    const centerY = Math.max(160, height / 2);
+    const depthGroups = new Map();
+
+    for (const node of nodeEntries) {
+      const depth = Math.max(0, Number(node.treeDepth || 0));
+      if (!depthGroups.has(depth)) depthGroups.set(depth, []);
+      depthGroups.get(depth).push(node);
+    }
+
+    for (const group of depthGroups.values()) {
+      group.sort((left, right) => String(left.label || '').localeCompare(String(right.label || '')));
+    }
+
+    for (const [depth, group] of depthGroups.entries()) {
+      const radius = depth === 0 ? 0 : Math.max(120, Math.min(width, height) * 0.13 + depth * 120);
+      const offset = depth % 2 === 0 ? Math.PI / Math.max(3, group.length) : 0;
+      group.forEach((node, index) => {
+        const angle = group.length <= 1 ? -Math.PI / 2 : (Math.PI * 2 * index) / group.length + offset;
+        const x = depth === 0 ? centerX : centerX + Math.cos(angle) * radius;
+        const y = depth === 0 ? centerY : centerY + Math.sin(angle) * radius;
+        const label = depth === 0 ? 'Human TE' : getDisplayLabel(node.label, node.description, depth);
+        const size = taxonomyGraphNodeSize(depth);
+        nodes.push({
+          id: node.id,
+          data: {
+            rawLabel: node.label,
+            queryLabel: '',
+            description: node.description,
+            treeDepth: depth,
+            taxonomyOnly: true,
+          },
+          style: {
+            x,
+            y,
+            size,
+            labelText: wrapTaxonomyGraphLabel(label, depth),
+            fill: taxonomyGraphNodeColor(depth, maxDepth),
+            stroke: depth === 0 ? '#0f172a' : '#1d4ed8',
+            lineDash: depth === 0 ? [] : [5, 4],
+          },
+        });
+      });
+    }
+
+    for (const [parentId, childIds] of source.children.entries()) {
+      for (const childId of childIds) {
+        edges.push({
+          id: `${parentId}__taxonomy__${childId}`,
+          source: parentId,
+          target: childId,
+          data: {
+            relation: 'taxonomy parent',
+          },
+        });
+      }
+    }
+
+    return { nodes, edges, rootId: root };
+  }
+
+  function buildTaxonomyGraphDetailHtml(nodeData) {
+    if (!nodeData) {
+      return [
+        '<strong>TE classification graph</strong>',
+        '<br>All nodes are rendered from the selected static taxonomy tree.',
+        '<br><span class="meta">Dashed node outline: taxonomy-only display node. It is not inserted into Neo4j.</span>',
+      ].join('');
+    }
+    const data = nodeData.data || {};
+    const label = nodeData.style?.labelText || data.rawLabel || nodeData.id || '';
+    const depth = Number(data.treeDepth || 0);
+    const description = String(data.description || '').trim();
+    return [
+      `<strong>${escapeHtml(label)}</strong>`,
+      `<br><span class="meta">Taxonomy level: ${escapeHtml(depth)}</span>`,
+      '<br><span class="meta">Display status: taxonomy-only node; Neo4j is not modified.</span>',
+      description ? `<br>${escapeHtml(description)}` : '',
+      '<br>Use the Graph search box to open a TE relationship graph when this name exists as a database entity.',
+    ].join('');
+  }
+
   class TEKGIndentedNode extends BaseNode {
     static defaultStyleProps = {
       ports: [
@@ -871,6 +983,118 @@
     }
   }
 
+  async function renderTaxonomyGraph() {
+    const detailEl = getEl('node-details');
+    try {
+      ensureRegistered();
+      setRendererVisibility();
+      if (window.__TEKG_G6_DYNAMIC_GRAPH && typeof window.__TEKG_G6_DYNAMIC_GRAPH.destroy === 'function') {
+        window.__TEKG_G6_DYNAMIC_GRAPH.destroy();
+      }
+
+      await ensureCurrentTreeElements();
+      const source = buildStrictTreeSource();
+      if (!source.rootId) {
+        if (detailEl) detailEl.textContent = 'Taxonomy graph data is unavailable.';
+        return;
+      }
+
+      const host = getEl('g6-default-tree-surface');
+      if (!host) return;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const width = host.clientWidth || host.offsetWidth;
+      const height = host.clientHeight || host.offsetHeight;
+      if (!width || !height) {
+        if (detailEl) detailEl.textContent = 'G6 container has no size yet.';
+        return;
+      }
+
+      destroyGraph();
+      host.innerHTML = '';
+      const graphData = buildTaxonomyGraphData(source, width, height);
+      rootId = graphData.rootId;
+      activeTreeConfig = {
+        defaultDetailHtml: buildTaxonomyGraphDetailHtml(null),
+        buildDetailHtml: buildTaxonomyGraphDetailHtml,
+      };
+
+      const graph = new Graph({
+        container: host,
+        width,
+        height,
+        autoResize: true,
+        autoFit: 'view',
+        padding: [80, 80, 80, 80],
+        animation: false,
+        cursor: 'grab',
+        data: graphData,
+        node: {
+          type: 'circle',
+          style: {
+            x: (datum) => datum.style?.x,
+            y: (datum) => datum.style?.y,
+            size: (datum) => datum.style?.size || 24,
+            fill: (datum) => datum.style?.fill || '#bfdbfe',
+            stroke: (datum) => datum.style?.stroke || '#1d4ed8',
+            lineWidth: (datum) => (datum.id === rootId ? 5 : 2),
+            lineDash: (datum) => datum.style?.lineDash || [],
+            shadowColor: (datum) => (datum.id === rootId ? 'rgba(37, 99, 235, 0.42)' : 'rgba(15, 23, 42, 0.08)'),
+            shadowBlur: (datum) => (datum.id === rootId ? 28 : 0),
+            labelText: (datum) => datum.style?.labelText || datum.data?.rawLabel || '',
+            labelPlacement: 'center',
+            labelFill: (datum) => (datum.id === rootId ? '#ffffff' : '#0f172a'),
+            labelFontSize: (datum) => {
+              const depth = Number(datum.data?.treeDepth || 0);
+              return Math.max(7, 13 - depth * 0.6);
+            },
+            labelFontWeight: (datum) => (datum.id === rootId ? 800 : 650),
+            labelStroke: '#ffffff',
+            labelLineWidth: (datum) => (datum.id === rootId ? 0 : 3),
+          },
+        },
+        edge: {
+          style: {
+            stroke: '#93c5fd',
+            lineWidth: 1.6,
+            opacity: 0.72,
+          },
+        },
+        layout: {
+          type: 'preset',
+        },
+        behaviors: [
+          {
+            type: 'tekg-drag-canvas-fast',
+          },
+          {
+            type: 'zoom-canvas',
+            sensitivity: INTERACTION_TUNING.zoomSensitivity,
+          },
+          {
+            type: 'click-select',
+            enable: (event) => event.targetType === 'node',
+          },
+        ],
+      });
+
+      g6Graph = graph;
+      await graph.render();
+      clearSelectedNode();
+      updateDetail(null);
+
+      graph.on('node:click', async (event) => {
+        const targetId = resolveEventNodeId(event);
+        if (!targetId || typeof graph.getNodeData !== 'function') return;
+        await activateNode(targetId, { shouldFocus: false });
+      });
+    } catch (error) {
+      if (detailEl) {
+        detailEl.textContent = `G6 taxonomy graph failed: ${error && error.message ? error.message : 'unknown error'}`;
+      }
+      console.error('G6 taxonomy graph failed:', error);
+    }
+  }
+
   async function renderDefaultTree() {
     const detailEl = getEl('node-details');
     await ensureCurrentTreeElements();
@@ -931,6 +1155,7 @@
   bindTriggers();
   window.__TEKG_G6_DEFAULT_TREE = {
     render: renderDefaultTree,
+    renderGraph: renderTaxonomyGraph,
     renderStructuredTree,
     destroy: destroyGraph,
     getGraph() {

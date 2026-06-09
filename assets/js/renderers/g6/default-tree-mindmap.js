@@ -10,6 +10,7 @@
     register,
     ExtensionCategory,
     BaseNode,
+    Circle,
     BaseBehavior,
     Badge,
     CommonEvent,
@@ -24,6 +25,7 @@
     typeof register !== 'function' ||
     !ExtensionCategory ||
     !BaseNode ||
+    !Circle ||
     !BaseBehavior ||
     !Badge ||
     !CubicHorizontal
@@ -64,12 +66,23 @@
   const COMPACT_H_GAP = 52;
   const V_GAP = 12;
   const INITIAL_ROOT_LEFT_SHIFT = 120;
+  const TAXONOMY_ALWAYS_LABELS = new Set([
+    // Add exact display labels here when a taxonomy graph node should always show its name.
+  ]);
 
   let g6Graph = null;
   let registered = false;
   let rootId = null;
   let selectedNodeId = null;
   let activeTreeConfig = null;
+  let activeTaxonomyGraphConfig = null;
+  let taxonomyGraphLevelState = {};
+  let taxonomyGraphLevelFocus = null;
+  let taxonomyGraphLegendItems = [];
+  let taxonomyGraphNodeById = new Map();
+  let taxonomyGraphDragging = false;
+  let taxonomyGraphHoverNodeId = null;
+  let taxonomyDetailClickHandler = null;
   let stateTreeRoot = null;
   let lastRenderOptions = null;
   const taxonomyTreeElementsByVariant = new Map();
@@ -313,6 +326,7 @@
         queryLabel: data.query_label,
         description: data.description,
         treeDepth: data.tree_depth || 0,
+        treeIsMeta: data.tree_is_meta === true,
       });
       if (data.tree_depth === 0 && !detectedRootId) detectedRootId = data.id;
     }
@@ -359,6 +373,7 @@
         queryLabel: node.queryLabel,
         description: node.description,
         treeDepth: depth,
+        treeIsMeta: node.treeIsMeta === true,
       },
       _collapsed: true,
       _hidden: false,
@@ -374,6 +389,410 @@
     };
     treeNode.children = childIds.map((childId) => buildTreeNode(childId, source, treeNode)).filter(Boolean);
     return treeNode;
+  }
+
+  function taxonomyLevelKey(depth) {
+    return `level-${Math.max(0, Number(depth) || 0)}`;
+  }
+
+  function taxonomyLevelLabel(depth) {
+    const safeDepth = Math.max(0, Number(depth) || 0);
+    const labels = ['Human TE', 'Class', 'Order', 'Superfamily', 'Family', 'Subfamily'];
+    return labels[safeDepth] || `Level ${safeDepth}`;
+  }
+
+  function taxonomyGraphNodeSize(depth, siblingCount = 0, childCount = 0) {
+    const safeDepth = Math.max(0, Number(depth) || 0);
+    const base = [68, 46, 34, 24, 15, 9][safeDepth] || 7;
+    const siblingPenalty = siblingCount > 160 ? 4 : siblingCount > 90 ? 3 : siblingCount > 48 ? 2 : 0;
+    const childBonus = childCount > 20 ? 3 : childCount > 8 ? 1 : 0;
+    return Math.max(6, base - siblingPenalty + childBonus);
+  }
+
+  function taxonomyGraphNodeColor(depth, maxDepth) {
+    const safeDepth = Math.max(0, Number(depth) || 0);
+    const safeMax = Math.max(1, Number(maxDepth) || 1);
+    const t = Math.max(0, Math.min(1, safeDepth / safeMax));
+    const start = [20, 47, 124];
+    const end = [37, 99, 235];
+    const rgb = start.map((value, index) => Math.round(value + (end[index] - value) * t));
+    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  }
+
+  function isTaxonomyJumpableNode(datum) {
+    const data = datum?.data || datum || {};
+    const query = String(data.queryLabel || data.query_label || '').trim();
+    return data.hasGraphEntity === true && !!query && data.isRoot !== true;
+  }
+
+  function isTaxonomyAlwaysLabeled(label) {
+    const raw = String(label || '').trim();
+    return !!raw && TAXONOMY_ALWAYS_LABELS.has(raw);
+  }
+
+  function wrapTaxonomyGraphLabel(label, depth, force = false) {
+    const raw = String(label || '').trim();
+    if (!raw) return '';
+    if (force) return raw;
+    if (!force && !isTaxonomyAlwaysLabeled(raw)) return '';
+    const limit = depth <= 3 ? 16 : depth === 4 ? 12 : 10;
+    if (raw.length <= limit) return raw;
+    return `${raw.slice(0, Math.max(4, limit - 1))}...`;
+  }
+
+  function seededUnit(seed) {
+    let hash = 2166136261;
+    const text = String(seed || '');
+    for (let index = 0; index < text.length; index += 1) {
+      hash ^= text.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return ((hash >>> 0) % 10000) / 10000;
+  }
+
+  function buildTaxonomyLevelLegendItems(nodes, maxDepth) {
+    const counts = new Map();
+    for (const node of Array.isArray(nodes) ? nodes : []) {
+      const key = node.data?.taxonomyLevelKey || taxonomyLevelKey(node.data?.treeDepth || 0);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    const safeMax = Math.max(0, Number(maxDepth) || 0);
+    return Array.from({ length: safeMax + 1 }, (_, depth) => {
+      const key = taxonomyLevelKey(depth);
+      return {
+        key,
+        depth,
+        label: taxonomyLevelLabel(depth),
+        count: counts.get(key) || 0,
+        color: taxonomyGraphNodeColor(depth, safeMax),
+      };
+    }).filter((item) => item.count > 0);
+  }
+
+  function normalizeTaxonomyLevelState(nextState = {}) {
+    const normalized = {};
+    for (const item of taxonomyGraphLegendItems) {
+      normalized[item.key] = typeof nextState[item.key] === 'boolean'
+        ? nextState[item.key]
+        : item.depth < 6;
+    }
+    return normalized;
+  }
+
+  function taxonomyLevelIsVisible(levelKey) {
+    if (!levelKey) return true;
+    if (!Object.keys(taxonomyGraphLevelState || {}).length) taxonomyGraphLevelState = normalizeTaxonomyLevelState();
+    return taxonomyGraphLevelState[levelKey] !== false;
+  }
+
+  function taxonomyNodeIsVisible(datum) {
+    const key = datum?.data?.taxonomyLevelKey || taxonomyLevelKey(datum?.data?.treeDepth || 0);
+    return taxonomyLevelIsVisible(key);
+  }
+
+  function taxonomyNodeMatchesFocus(datum) {
+    if (!taxonomyGraphLevelFocus) return true;
+    const key = datum?.data?.taxonomyLevelKey || taxonomyLevelKey(datum?.data?.treeDepth || 0);
+    return key === taxonomyGraphLevelFocus;
+  }
+
+  function taxonomyEndpointId(endpoint) {
+    if (endpoint && typeof endpoint === 'object') {
+      return String(endpoint.id || endpoint.data?.id || '');
+    }
+    return String(endpoint || '');
+  }
+
+  function taxonomyNodeOpacity(datum) {
+    if (!taxonomyNodeIsVisible(datum)) return 0;
+    return taxonomyNodeMatchesFocus(datum) ? 1 : 0.16;
+  }
+
+  function taxonomyEdgeVisible(edge) {
+    const sourceId = taxonomyEndpointId(edge?.source);
+    const targetId = taxonomyEndpointId(edge?.target);
+    const source = taxonomyGraphNodeById.get(sourceId);
+    const target = taxonomyGraphNodeById.get(targetId);
+    return taxonomyNodeIsVisible(source) && taxonomyNodeIsVisible(target);
+  }
+
+  function taxonomyEdgeMatchesFocus(edge) {
+    if (!taxonomyGraphLevelFocus) return true;
+    const source = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.source));
+    const target = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.target));
+    return taxonomyNodeMatchesFocus(source) || taxonomyNodeMatchesFocus(target);
+  }
+
+  function taxonomyEdgeOpacity(edge) {
+    if (!taxonomyEdgeVisible(edge)) return 0;
+    return taxonomyEdgeMatchesFocus(edge) ? 0.72 : 0.08;
+  }
+
+  function taxonomyGraphVisibleLabel(datum) {
+    if (!taxonomyNodeIsVisible(datum)) return '';
+    if (taxonomyGraphHoverNodeId && String(datum?.id || '') === taxonomyGraphHoverNodeId) {
+      return wrapTaxonomyGraphLabel(datum?.data?.displayLabel || datum?.data?.rawLabel || datum?.id || '', Number(datum?.data?.treeDepth || 0), true);
+    }
+    if (taxonomyGraphDragging && Number(datum?.data?.treeDepth || 0) > 3) return '';
+    return datum?.style?.labelText || '';
+  }
+
+  async function redrawTaxonomyGraph() {
+    if (!g6Graph || typeof g6Graph.draw !== 'function') return false;
+    await g6Graph.draw();
+    return true;
+  }
+
+  async function rerenderActiveTaxonomyGraph() {
+    if (!activeTaxonomyGraphConfig) return redrawTaxonomyGraph();
+    const nextOptions = Object.assign({}, activeTaxonomyGraphConfig, {
+      visibleTaxonomyLevels: taxonomyGraphLevelState,
+      taxonomyLevelFocus: taxonomyGraphLevelFocus,
+    });
+    await renderTaxonomyGraph(nextOptions);
+    return true;
+  }
+
+  async function applyTaxonomyGraphLevelState(nextState = {}) {
+    taxonomyGraphLevelState = normalizeTaxonomyLevelState(nextState);
+    return rerenderActiveTaxonomyGraph();
+  }
+
+  async function setTaxonomyGraphLevelFocus(nextKey = null) {
+    const key = String(nextKey || '').trim();
+    taxonomyGraphLevelFocus = key || null;
+    return redrawTaxonomyGraph();
+  }
+
+  function buildTaxonomyGraphData(source, width, height) {
+    const root = source.rootId || [...source.nodes.values()].find((node) => Number(node.treeDepth || 0) === 0)?.id || '';
+    const rootTree = root ? buildTreeNode(root, source) : null;
+    if (!rootTree) return { nodes: [], edges: [], rootId: '' };
+    const nodeEntries = [];
+    const parentById = new Map();
+    walkTree(rootTree, (node) => {
+      nodeEntries.push(node);
+      for (const child of Array.isArray(node.children) ? node.children : []) {
+        parentById.set(child.id, node.id);
+      }
+    });
+    const maxDepth = nodeEntries.reduce((max, node) => Math.max(max, Number(node.data?.treeDepth || 0)), 0);
+    const centerX = Math.max(260, width * 0.42);
+    const centerY = Math.max(160, height / 2);
+    const nodes = [];
+    const edges = [];
+    const firstLevelChildren = Array.isArray(rootTree.children) ? rootTree.children : [];
+    const branchIndexById = new Map(firstLevelChildren.map((child, index) => [child.id, index]));
+    const branchById = new Map([[rootTree.id, rootTree.id]]);
+    const branchSize = new Map();
+    const positionById = new Map([[rootTree.id, { x: centerX, y: centerY }]]);
+    const descendantCountById = new Map();
+
+    function countDescendants(node) {
+      const children = Array.isArray(node.children) ? node.children : [];
+      const count = children.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
+      descendantCountById.set(node.id, count);
+      return count;
+    }
+    countDescendants(rootTree);
+
+    function assignBranch(node, branchId) {
+      const depth = Math.max(0, Number(node.data?.treeDepth || 0));
+      const nextBranch = depth === 1 ? node.id : branchId;
+      branchById.set(node.id, nextBranch || rootTree.id);
+      branchSize.set(nextBranch || rootTree.id, (branchSize.get(nextBranch || rootTree.id) || 0) + 1);
+      for (const child of Array.isArray(node.children) ? node.children : []) {
+        assignBranch(child, nextBranch);
+      }
+    }
+    assignBranch(rootTree, rootTree.id);
+
+    function seededAngle(id, fallback = 0) {
+      return Math.PI * 2 * seededUnit(`${id}:angle`) + fallback;
+    }
+
+    walkTree(rootTree, (node) => {
+        const depth = Math.max(0, Number(node.data?.treeDepth || 0));
+        const childCount = Array.isArray(node.children) ? node.children.length : 0;
+        const descendantCount = descendantCountById.get(node.id) || 0;
+        const parentId = parentById.get(node.id) || '';
+        const siblingCount = parentId && source.children.has(parentId) ? source.children.get(parentId).length : firstLevelChildren.length || 1;
+        const branchId = branchById.get(node.id) || rootTree.id;
+        const branchIndex = branchIndexById.has(branchId) ? branchIndexById.get(branchId) : 0;
+        const branchCount = Math.max(1, firstLevelChildren.length);
+        let x = centerX;
+        let y = centerY;
+        if (depth === 1) {
+          const branchAngle = -Math.PI / 2 + (Math.PI * 2 * branchIndex) / branchCount;
+          const branchRadius = Math.min(width, height) * 0.14 + Math.min(72, Math.sqrt(branchSize.get(branchId) || 1) * 2.5);
+          x = centerX + Math.cos(branchAngle) * branchRadius;
+          y = centerY + Math.sin(branchAngle) * branchRadius;
+        } else if (depth > 1) {
+          const parentPosition = positionById.get(parentId) || { x: centerX, y: centerY };
+          const childIds = parentId && source.children.has(parentId) ? source.children.get(parentId) : [];
+          const childIndex = Math.max(0, childIds.indexOf(node.id));
+          const localAngle = (Math.PI * 2 * childIndex) / Math.max(1, childIds.length) + seededAngle(node.id, 0) * 0.18;
+          const crowding = siblingCount > 120 ? 0.58 : siblingCount > 64 ? 0.72 : siblingCount > 32 ? 0.86 : 1;
+          const localRadius = (24 + Math.min(58, Math.sqrt(Math.max(1, siblingCount)) * 4.5)) * crowding;
+          x = parentPosition.x + Math.cos(localAngle) * localRadius;
+          y = parentPosition.y + Math.sin(localAngle) * localRadius;
+        }
+        positionById.set(node.id, { x, y });
+        const label = depth === 0 ? 'Human TE' : getDisplayLabel(node.data?.rawLabel || node.name, node.data?.description, depth);
+        const size = taxonomyGraphNodeSize(depth, siblingCount, childCount);
+        const treeIsMeta = node.data?.treeIsMeta === true;
+        const jumpable = !!String(node.data?.queryLabel || '').trim() && !treeIsMeta && depth > 0;
+        const levelKey = taxonomyLevelKey(depth);
+        nodes.push({
+          id: node.id,
+          data: {
+            rawLabel: node.data?.rawLabel || node.name,
+            displayLabel: label,
+            queryLabel: node.data?.queryLabel || node.data?.rawLabel || '',
+            description: node.data?.description,
+            treeDepth: depth,
+            taxonomyLevelKey: levelKey,
+            taxonomyLevelLabel: taxonomyLevelLabel(depth),
+            taxonomyOnly: !jumpable,
+            hasGraphEntity: jumpable,
+            isRoot: depth === 0,
+            directChildCount: childCount,
+            descendantCount,
+            siblingCount,
+            parentId,
+          },
+          style: {
+            x,
+            y,
+            clusterX: x,
+            clusterY: y,
+            size,
+            labelText: '',
+            fill: taxonomyGraphNodeColor(depth, maxDepth),
+            stroke: depth === 0 ? '#0f172a' : jumpable ? '#1d4ed8' : '#1d4ed8',
+            lineDash: depth === 0 || jumpable ? [] : [5, 4],
+          },
+        });
+    });
+
+    for (const [parentId, childIds] of source.children.entries()) {
+      for (const childId of childIds) {
+        edges.push({
+          id: `${parentId}__taxonomy__${childId}`,
+          source: parentId,
+          target: childId,
+          data: { relation: 'taxonomy parent' },
+        });
+      }
+    }
+
+    taxonomyGraphLegendItems = buildTaxonomyLevelLegendItems(nodes, maxDepth);
+    taxonomyGraphLevelState = normalizeTaxonomyLevelState(
+      activeTaxonomyGraphConfig?.visibleTaxonomyLevels || taxonomyGraphLevelState
+    );
+    const allNodeById = new Map(nodes.map((node) => [String(node.id), node]));
+    const visibleDescendantCountById = new Map();
+
+    function visibleChildIdsOf(nodeId) {
+      const childIds = source.children.get(nodeId) || [];
+      return childIds.filter((childId) => {
+        const child = allNodeById.get(String(childId));
+        return child && taxonomyNodeIsVisible(child);
+      });
+    }
+
+    function countVisibleDescendants(nodeId) {
+      if (visibleDescendantCountById.has(nodeId)) return visibleDescendantCountById.get(nodeId);
+      const visibleChildren = visibleChildIdsOf(nodeId);
+      const count = visibleChildren.reduce((sum, childId) => sum + 1 + countVisibleDescendants(childId), 0);
+      visibleDescendantCountById.set(nodeId, count);
+      return count;
+    }
+
+    for (const node of nodes) {
+      const visibleDirectChildCount = visibleChildIdsOf(String(node.id)).length;
+      const visibleDescendantCount = countVisibleDescendants(String(node.id));
+      node.data.visibleDirectChildCount = visibleDirectChildCount;
+      node.data.visibleDescendantCount = visibleDescendantCount;
+      node.style.labelText = wrapTaxonomyGraphLabel(
+        node.data.displayLabel,
+        Number(node.data.treeDepth || 0),
+        false
+      );
+    }
+    const visibleNodes = nodes.filter((node) => taxonomyNodeIsVisible(node));
+    const visibleNodeIds = new Set(visibleNodes.map((node) => String(node.id)));
+    const visibleEdges = edges.filter((edge) => (
+      visibleNodeIds.has(String(edge.source)) && visibleNodeIds.has(String(edge.target))
+    ));
+    taxonomyGraphNodeById = new Map(visibleNodes.map((node) => [String(node.id), node]));
+
+    return {
+      nodes: visibleNodes,
+      edges: visibleEdges,
+      rootId: root,
+      maxDepth,
+      taxonomyLegendItems: taxonomyGraphLegendItems,
+      originalNodeCount: nodes.length,
+      originalEdgeCount: edges.length,
+    };
+  }
+
+  function buildTaxonomyGraphDetailHtml(nodeData) {
+    if (!nodeData) {
+      return [
+        '<strong>TE classification graph</strong>',
+        '<br>All nodes are rendered from the selected static taxonomy tree.',
+        '<br><span class="meta">Dashed outline: taxonomy-only display node. It is not inserted into Neo4j.</span>',
+      ].join('');
+    }
+    const data = nodeData.data || {};
+    const label = nodeData.style?.labelText || data.rawLabel || nodeData.id || '';
+    const depth = Number(data.treeDepth || 0);
+    const description = String(data.description || '').trim();
+    const rawLabel = String(data.rawLabel || label || '').trim();
+    const jumpable = isTaxonomyJumpableNode(nodeData);
+    const action = jumpable
+      ? `<div class="inspect-card__actions"><button class="inspect-card__button" type="button" data-taxonomy-graph-jump="${escapeHtml(nodeData.id)}">Jump to dynamic graph</button></div>`
+      : `<div class="inspect-card__actions"><button class="inspect-card__button" type="button" data-taxonomy-graph-no-jump="${escapeHtml(rawLabel)}">Taxonomy node only</button></div>`;
+    return [
+      `<strong>${escapeHtml(label)}</strong>`,
+      `<br><span class="meta">${escapeHtml(data.taxonomyLevelLabel || taxonomyLevelLabel(depth))}</span>`,
+      jumpable
+        ? '<br><span class="meta">Display status: jumpable TE node in the taxonomy graph.</span>'
+        : '<br><span class="meta">Display status: taxonomy-only node; Neo4j is not modified.</span>',
+      description ? `<br>${escapeHtml(description)}` : '',
+      action,
+    ].join('');
+  }
+
+  function bindTaxonomyGraphDetailActions(detailEl) {
+    if (!detailEl) return;
+    if (taxonomyDetailClickHandler) {
+      detailEl.removeEventListener('click', taxonomyDetailClickHandler);
+    }
+    taxonomyDetailClickHandler = (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const jumpNodeId = target.getAttribute('data-taxonomy-graph-jump');
+      if (jumpNodeId) {
+        event.preventDefault();
+        const nodeData = g6Graph && typeof g6Graph.getNodeData === 'function' ? g6Graph.getNodeData(jumpNodeId) : null;
+        if (nodeData && activeTaxonomyGraphConfig && typeof activeTaxonomyGraphConfig.onJump === 'function') {
+          Promise.resolve(activeTaxonomyGraphConfig.onJump(nodeData)).catch((error) => {
+            console.error('Taxonomy graph jump failed:', error);
+          });
+        }
+        return;
+      }
+      const label = target.getAttribute('data-taxonomy-graph-no-jump');
+      if (!label) return;
+      event.preventDefault();
+      if (activeTaxonomyGraphConfig && typeof activeTaxonomyGraphConfig.onJumpUnavailable === 'function') {
+        activeTaxonomyGraphConfig.onJumpUnavailable({ data: { rawLabel: label, label } });
+      }
+    };
+    detailEl.addEventListener('click', taxonomyDetailClickHandler);
   }
 
   function walkTree(node, visitor) {
@@ -928,6 +1347,206 @@
     }
   }
 
+  async function renderTaxonomyGraph(options = {}) {
+    const detailEl = getEl('node-details');
+    try {
+      ensureRegistered();
+      setRendererVisibility();
+      const host = getEl('g6-default-tree-surface');
+      if (!host) return;
+
+      await ensureCurrentTreeElements();
+      const source = buildStrictTreeSource();
+      if (!source.rootId) {
+        if (detailEl) detailEl.textContent = 'Taxonomy graph data is unavailable.';
+        return;
+      }
+
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const width = host.clientWidth || host.offsetWidth;
+      const height = host.clientHeight || host.offsetHeight;
+      if (!width || !height) {
+        if (detailEl) detailEl.textContent = 'G6 container has no size yet.';
+        return;
+      }
+
+      destroyGraph();
+      taxonomyGraphDragging = false;
+      taxonomyGraphHoverNodeId = null;
+      host.innerHTML = '';
+      stateTreeRoot = null;
+      activeTaxonomyGraphConfig = options && typeof options === 'object' ? options : {};
+      taxonomyGraphLevelFocus = String(activeTaxonomyGraphConfig.taxonomyLevelFocus || taxonomyGraphLevelFocus || '').trim() || null;
+      bindTaxonomyGraphDetailActions(detailEl);
+      const graphData = buildTaxonomyGraphData(source, width, height);
+      rootId = graphData.rootId;
+      activeTreeConfig = {
+        defaultDetailHtml: buildTaxonomyGraphDetailHtml(null),
+        buildDetailHtml: buildTaxonomyGraphDetailHtml,
+      };
+
+      const graph = new Graph({
+        container: host,
+        width,
+        height,
+        autoResize: true,
+        autoFit: 'view',
+        padding: [80, 80, 80, 80],
+        animation: false,
+        cursor: 'grab',
+        data: graphData,
+        node: {
+          type: 'circle',
+          style: {
+            x: (datum) => datum.style?.x,
+            y: (datum) => datum.style?.y,
+            size: (datum) => datum.style?.size || 24,
+            fill: (datum) => datum.style?.fill || '#bfdbfe',
+            stroke: (datum) => datum.style?.stroke || '#1d4ed8',
+            lineWidth: (datum) => (datum.id === rootId ? 5 : 2),
+            lineDash: (datum) => datum.style?.lineDash || [],
+            opacity: taxonomyNodeOpacity,
+            fillOpacity: taxonomyNodeOpacity,
+            labelText: taxonomyGraphVisibleLabel,
+            labelPlacement: 'center',
+            labelFill: (datum) => (datum.id === rootId ? '#ffffff' : '#0f172a'),
+            labelOpacity: taxonomyNodeOpacity,
+            labelFontSize: (datum) => {
+              const depth = Number(datum.data?.treeDepth || 0);
+              return Math.max(6, 13 - depth * 0.7);
+            },
+            labelFontWeight: (datum) => (datum.id === rootId ? 800 : 650),
+            labelStroke: '#ffffff',
+            labelLineWidth: (datum) => (datum.id === rootId ? 0 : 3),
+          },
+        },
+        edge: {
+          style: {
+            stroke: '#93c5fd',
+            lineWidth: (datum) => (taxonomyGraphLevelFocus && taxonomyEdgeMatchesFocus(datum) ? 2.2 : 1.15),
+            opacity: taxonomyEdgeOpacity,
+          },
+        },
+        layout: {
+          type: 'd3-force',
+          link: {
+            distance: (edge) => {
+              const source = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.source));
+              const target = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.target));
+              const sourceDepth = Number(source?.data?.treeDepth || 0);
+              const targetDepth = Number(target?.data?.treeDepth || 0);
+              if (sourceDepth <= 0 || targetDepth <= 1) return 76;
+              if (targetDepth >= 5) return 12;
+              if (targetDepth >= 4) return 18;
+              return 34;
+            },
+            strength: (edge) => {
+              const target = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.target));
+              const depth = Number(target?.data?.treeDepth || 0);
+              if (depth >= 5) return 0.88;
+              if (depth >= 4) return 0.78;
+              return 0.58;
+            },
+          },
+          manyBody: {
+            strength: (node) => {
+              const depth = Number(node?.data?.treeDepth || 0);
+              const size = Number(node?.style?.size || 16);
+              if (depth <= 0) return -72;
+              if (depth <= 1) return -42;
+              if (depth <= 2) return -18;
+              return -(1.2 + size * 0.12);
+            },
+          },
+          x: {
+            x: (node) => Number(node?.style?.clusterX || node?.style?.x || 0),
+            strength: (node) => {
+              const depth = Number(node?.data?.treeDepth || 0);
+              if (depth <= 1) return 0.24;
+              if (depth >= 5) return 0.12;
+              return 0.16;
+            },
+          },
+          y: {
+            y: (node) => Number(node?.style?.clusterY || node?.style?.y || 0),
+            strength: (node) => {
+              const depth = Number(node?.data?.treeDepth || 0);
+              if (depth <= 1) return 0.24;
+              if (depth >= 5) return 0.12;
+              return 0.16;
+            },
+          },
+          collide: {
+            radius: (node) => {
+              const depth = Number(node?.data?.treeDepth || 0);
+              const size = Number(node?.style?.size || 16);
+              const denseLeaf = depth >= 5;
+              return size / 2 + (denseLeaf ? 1 : depth >= 4 ? 2 : 6);
+            },
+            strength: 0.72,
+            iterations: 3,
+          },
+        },
+        behaviors: [
+          {
+            type: 'drag-element-force',
+            trigger: [],
+            enable: (event) => event.targetType === 'node',
+          },
+          'drag-canvas',
+          {
+            type: 'zoom-canvas',
+            sensitivity: 1,
+          },
+          {
+            type: 'click-select',
+            enable: (event) => event.targetType === 'node',
+          },
+        ],
+      });
+
+      g6Graph = graph;
+      await graph.render();
+      clearSelectedNode();
+      updateDetail(null);
+
+      graph.on(NodeEvent.DRAG_START, async () => {
+        taxonomyGraphDragging = true;
+        await redrawTaxonomyGraph();
+      });
+
+      graph.on(NodeEvent.DRAG_END, async () => {
+        taxonomyGraphDragging = false;
+        await redrawTaxonomyGraph();
+      });
+
+      graph.on(NodeEvent.POINTER_ENTER, async (event) => {
+        const targetId = resolveEventNodeId(event);
+        if (!targetId) return;
+        taxonomyGraphHoverNodeId = String(targetId);
+        await redrawTaxonomyGraph();
+      });
+
+      graph.on(NodeEvent.POINTER_LEAVE, async (event) => {
+        const targetId = resolveEventNodeId(event);
+        if (!targetId || taxonomyGraphHoverNodeId !== String(targetId)) return;
+        taxonomyGraphHoverNodeId = null;
+        await redrawTaxonomyGraph();
+      });
+
+      graph.on('node:click', async (event) => {
+        const targetId = resolveEventNodeId(event);
+        if (!targetId || typeof graph.getNodeData !== 'function') return;
+        await activateNode(targetId);
+      });
+    } catch (error) {
+      if (detailEl) {
+        detailEl.textContent = `G6 taxonomy graph failed: ${error && error.message ? error.message : 'unknown error'}`;
+      }
+      console.error('G6 taxonomy graph failed:', error);
+    }
+  }
+
   async function renderDefaultTree() {
     const detailEl = getEl('node-details');
     await ensureCurrentTreeElements();
@@ -961,6 +1580,12 @@
 
   window.__TEKG_G6_MINDMAP_TREE = {
     render: renderDefaultTree,
+    renderGraph: renderTaxonomyGraph,
+    getLevelLegendItems() {
+      return taxonomyGraphLegendItems.slice();
+    },
+    applyLevelState: applyTaxonomyGraphLevelState,
+    setLevelFocus: setTaxonomyGraphLevelFocus,
     renderStructuredTree,
     destroy: destroyGraph,
     getGraph() {
