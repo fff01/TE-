@@ -63,3 +63,5 @@ python scripts/checks/check_g6_legend_expand_tree_fixes.py
 - 发现结构性问题时，更新 `docs/exec-plans/tech-debt-tracker.md`。
 - 不把聊天记录当长期事实；长期事实必须写回仓库文档。
 - 大改按三角色自查：`Implementer` 做实现，`Reviewer` 找 bug/架构风险，`Verifier` 跑命令并记录证据。
+
+019e64c2-7d14-7093-85fb-29baafd711d3
