@@ -15,10 +15,8 @@ out of date; verify against live code and `current_system.md`.
 - `data_sources.md`: current data sources, paths, and canonical rules.
 - `database_contract.md`: Neo4j / API contract.
 - `frontend_contract.md`: non-agent frontend constraints.
-- `project_full_gpt55_handoff.md`: historical full-project handoff; useful
-  context but not automatically current.
-- `agent_gpt55_handoff.md`: Agent subsystem handoff; use it only for explicit
-  Agent/DeepThink tasks.
+- `../../api/README.md`: current Agent/DeepThink and intelligent QA entry; use
+  it for explicit intelligent QA tasks.
 - `g6-development-rules.md`: G6 graph development constraints and lessons.
 - `te_taxonomy_runtime_canonical_2026-05-16.md`: taxonomy runtime decision
   record.

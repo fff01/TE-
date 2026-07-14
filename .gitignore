@@ -2,6 +2,8 @@
 data/
 reference/
 docs/
+!api/docs/
+!api/docs/*.md
 # Python generated files
 __pycache__/
 *.pyc

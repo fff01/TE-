@@ -10,9 +10,9 @@ project encyclopedia. Read the linked documents before making broad changes.
   `browse.php`, `preview.php`, `expression.php`, and `path_finder.php`.
 - The current Neo4j runtime target is `tekg3`; local runtime configuration
   comes from `api/config.local.php` and `api/runtime_config.php`.
-- Non-agent tasks should focus on ordinary database pages, APIs, data paths,
-  G6 graph behavior, taxonomy, expression, and frontend experience. Do not
-  treat the agent subsystem as the default edit target.
+- Agent and DeepThink are also maintained by the next AI. For ordinary database
+  tasks, avoid touching them by default; for Agent/DeepThink tasks, read the
+  dedicated handoff and plugin catalog first.
 
 ## Current Directory Map
 
@@ -40,7 +40,8 @@ project encyclopedia. Read the linked documents before making broad changes.
 4. `ARCHITECTURE.md`
 5. `docs/exec-plans/README.md`
 6. If the task explicitly involves Agent or DeepThink, then also read
-   `docs/architecture/agent_gpt55_handoff.md` and `api/agent/plugins/PLUGIN_CATALOG.md`.
+   `api/README.md`, `api/docs/intelligent_qa_handoff.md`, and
+   `api/agent/plugins/PLUGIN_CATALOG.md`.
 
 ## Core Runtime Entrypoints
 
@@ -74,7 +75,8 @@ project encyclopedia. Read the linked documents before making broad changes.
   are currently present as in-progress graph-rendering experiments.
 - The Canvas taxonomy demo is experimental and isolated; it should not be
   treated as production runtime until explicitly integrated.
-- Some historical Markdown files are still Chinese or mixed-language. New
+- Some historical Markdown files are still Chinese or mixed-language. Treat them
+  as low-priority archive/background material rather than cleanup blockers. New
   project documentation should be written in English. Runtime Chinese prompt
   assets under `api/prompts/zh*` and `api/prompts/fallback_zh*` are functional
   assets and should not be translated.
@@ -121,6 +123,7 @@ python scripts/checks/check_g6_legend_expand_tree_fixes.py
 
 - Architecture index: `docs/architecture/index.md`
 - Next-session handoff: `AI_HANDOFF.md`
+- Intelligent QA entry: `api/README.md`
 - Execution plans: `docs/exec-plans/`
 - Co-expression notes: `docs/coexpression/`
 - Evaluation records: `docs/eval/runs/`
@@ -128,9 +131,10 @@ python scripts/checks/check_g6_legend_expand_tree_fixes.py
 
 ## Next Recommended Work
 
-1. Finish this AI handoff cleanup by translating or indexing remaining
-   high-value Markdown documentation in English.
-2. Decide whether the current G6 `large-force-graph` experiment should be
+1. Decide whether the current G6 `large-force-graph` experiment should be
    kept, archived, or replaced by the Canvas taxonomy renderer.
-3. Keep co-expression frontend work separate from the existing evidence Graph
+2. Keep co-expression frontend work separate from the existing evidence Graph
    until the display contract is stable.
+3. Maintain Agent/DeepThink when needed, using `api/README.md`,
+   `api/docs/intelligent_qa_handoff.md`, and the plugin catalog before making
+   changes.

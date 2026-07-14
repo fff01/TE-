@@ -104,11 +104,15 @@ Communication boundary:
 ### Agent and DeepThink
 
 The Agent/DeepThink subsystem lives under `api/agent/` and `agent.php`.
-Non-agent tasks should not modify it by default.
+It is part of the next AI maintainer's scope. Non-agent tasks should not modify
+it by default, but Agent/DeepThink tasks should be handled by the next AI after
+reading the dedicated handoff and plugin catalog.
 
 If a task explicitly involves Agent or DeepThink, read:
 
-- `docs/architecture/agent_gpt55_handoff.md`
+- `api/README.md`
+- `api/docs/intelligent_qa_handoff.md`
+- `api/docs/intelligent_qa_architecture.md`
 - `api/agent/plugins/PLUGIN_CATALOG.md`
 - `api/agent/plugins/README.md`
 - `docs/eval/runs/`
@@ -133,6 +137,9 @@ Current broad direction:
   as ordinary documentation.
 - External reference corpora under `reference/` should not be translated or
   cleaned as project documentation.
+- Historical Chinese or mixed-language Markdown should be treated as
+  low-priority archive/background material. It is not a blocker for the current
+  handoff cleanup unless a future task depends on a specific file.
 
 ## Cleanup State
 
@@ -150,6 +157,8 @@ Completed in the 2026-07-14 cleanup pass:
   - `docs/architecture/graph_runtime.md`
 - Rewrote `docs/exec-plans/README.md`, `scripts/README.md`,
   `docs/coexpression/README.md`, and `api/agent/plugins/README.md` in English.
+- Added the isolated intelligent QA documentation set under `api/README.md` and
+  `api/docs/`.
 - Removed the zero-byte `api/agent/agent.md`.
 - Removed temporary `tmp/` screenshot artifacts.
 
@@ -158,8 +167,9 @@ Known remaining work:
 - Historical Chinese or mixed-language Markdown files still exist in
   `docs/architecture/`, `docs/design-docs/`, `docs/exec-plans/`,
   `docs/coexpression/`, and course/paper/proposal folders.
-- Do not bulk-delete these files. Translate or summarize durable decisions into
-  English first, then archive or remove only when clearly superseded.
+- Ignore these files for routine handoff cleanup. Do not bulk-delete them.
+  Translate or summarize durable decisions into English only when a future task
+  needs that specific history.
 
 ## Current Dirty Worktree Warning
 
@@ -195,7 +205,9 @@ plans, documentation, tests, scripts, or durable handoff notes.
    model, then create a dedicated integration plan.
 3. Keep co-expression frontend design separate from the evidence Graph until the
    display contract and visual renderer are settled.
-4. Gradually translate remaining high-value project Markdown into English.
+4. Maintain Agent/DeepThink as part of the project when requested, using
+   `api/README.md`, `api/docs/intelligent_qa_handoff.md`, and the plugin catalog
+   before edits.
 5. Re-run graph and taxonomy checks after any renderer integration.
 
 ## Minimum Verification Set

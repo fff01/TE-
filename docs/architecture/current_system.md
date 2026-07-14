@@ -89,14 +89,14 @@ Do not move root runtime pages merely for cleanup.
 - Neo4j import history lives under `imports/`; older `tekg2` materials are
   historical references and should not be used as runtime configuration.
 
-## Agent Boundary
+## Agent and DeepThink Boundary
 
-- `docs/architecture/agent_gpt55_handoff.md` is for tasks explicitly involving
-  the Agent/DeepThink subsystem.
-- The default harness serves the whole TE-KG project, especially non-agent
-  pages, APIs, data paths, and graph runtime.
-- Unless the task explicitly requires Agent work, do not treat `api/agent/` or
-  `assets/js/pages/agent.js` as default edit targets.
+- `api/README.md` is the current entry for tasks explicitly involving the
+  Agent/DeepThink subsystem.
+- `api/docs/intelligent_qa_handoff.md` is the current intelligent QA handoff.
+- The default harness serves the whole TE-KG project. Agent/DeepThink is in
+  scope for the next AI, but unrelated database-page work should not modify
+  `api/agent/` or `assets/js/pages/agent.js` by default.
 
 ## Harness Rule
 
