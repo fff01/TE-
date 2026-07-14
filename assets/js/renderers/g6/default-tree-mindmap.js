@@ -71,6 +71,7 @@
   ]);
 
   let g6Graph = null;
+  let taxonomyLargeForceRenderer = null;
   let registered = false;
   let rootId = null;
   let selectedNodeId = null;
@@ -538,6 +539,9 @@
   }
 
   async function redrawTaxonomyGraph() {
+    if (taxonomyLargeForceRenderer && typeof taxonomyLargeForceRenderer.redraw === 'function') {
+      return taxonomyLargeForceRenderer.redraw();
+    }
     if (!g6Graph || typeof g6Graph.draw !== 'function') return false;
     await g6Graph.draw();
     return true;
@@ -561,6 +565,9 @@
   async function setTaxonomyGraphLevelFocus(nextKey = null) {
     const key = String(nextKey || '').trim();
     taxonomyGraphLevelFocus = key || null;
+    if (taxonomyLargeForceRenderer && typeof taxonomyLargeForceRenderer.setLegendFocus === 'function') {
+      return taxonomyLargeForceRenderer.setLegendFocus(taxonomyGraphLevelFocus);
+    }
     return redrawTaxonomyGraph();
   }
 
@@ -1196,6 +1203,11 @@
   }
 
   function destroyGraph() {
+    if (taxonomyLargeForceRenderer && typeof taxonomyLargeForceRenderer.destroy === 'function') {
+      taxonomyLargeForceRenderer.destroy();
+      g6Graph = null;
+    }
+    taxonomyLargeForceRenderer = null;
     if (g6Graph && typeof g6Graph.destroy === 'function') g6Graph.destroy();
     g6Graph = null;
   }
@@ -1350,7 +1362,6 @@
   async function renderTaxonomyGraph(options = {}) {
     const detailEl = getEl('node-details');
     try {
-      ensureRegistered();
       setRendererVisibility();
       const host = getEl('g6-default-tree-surface');
       if (!host) return;
@@ -1378,167 +1389,68 @@
       activeTaxonomyGraphConfig = options && typeof options === 'object' ? options : {};
       taxonomyGraphLevelFocus = String(activeTaxonomyGraphConfig.taxonomyLevelFocus || taxonomyGraphLevelFocus || '').trim() || null;
       bindTaxonomyGraphDetailActions(detailEl);
-      const graphData = buildTaxonomyGraphData(source, width, height);
+      const adapter = window.__TEKG_LARGE_FORCE_GRAPH_TAXONOMY_ADAPTER;
+      const core = window.__TEKG_LARGE_FORCE_GRAPH_CORE;
+      if (!adapter || typeof adapter.fromTaxonomySource !== 'function' || !core || typeof core.createRenderer !== 'function') {
+        throw new Error('TE taxonomy large-force renderer is unavailable.');
+      }
+      const graphData = adapter.fromTaxonomySource(source, {
+        width,
+        height,
+        treeVariant: getCurrentTreeVariantKey(),
+        visibleTaxonomyLevels: activeTaxonomyGraphConfig?.visibleTaxonomyLevels || taxonomyGraphLevelState,
+        getDisplayLabel,
+      });
       rootId = graphData.rootId;
+      taxonomyGraphLegendItems = (graphData.legend?.items || []).map((item) => ({
+        key: String(item.key || '').trim(),
+        depth: Math.max(0, Number(item.depth) || 0),
+        kind: String(item.kind || 'taxonomy-level'),
+        label: String(item.label || item.key || '').trim(),
+        color: String(item.color || '#94a3b8'),
+        count: Math.max(0, Number(item.count) || 0),
+        visible: item.visible !== false,
+        focusable: item.focusable !== false,
+      })).filter((item) => item.key && item.label);
+      taxonomyGraphLevelState = normalizeTaxonomyLevelState(
+        activeTaxonomyGraphConfig?.visibleTaxonomyLevels || taxonomyGraphLevelState
+      );
+      taxonomyGraphNodeById = new Map((graphData.nodes || []).map((node) => [String(node.id), {
+        id: node.id,
+        data: {
+          rawLabel: node.rawLabel || node.label,
+          displayLabel: node.displayLabel || node.label,
+          queryLabel: node.payload?.queryLabel || '',
+          description: node.description || node.payload?.description || '',
+          treeDepth: node.level,
+          taxonomyLevelKey: node.legendKeys?.[0] || '',
+          taxonomyLevelLabel: node.payload?.taxonomyLevelLabel || '',
+          taxonomyOnly: node.payload?.taxonomyOnly === true,
+          hasGraphEntity: node.payload?.hasGraphEntity === true,
+          isRoot: node.payload?.isRoot === true,
+        },
+      }]));
       activeTreeConfig = {
         defaultDetailHtml: buildTaxonomyGraphDetailHtml(null),
         buildDetailHtml: buildTaxonomyGraphDetailHtml,
       };
-
-      const graph = new Graph({
+      taxonomyLargeForceRenderer = core.createRenderer({
         container: host,
         width,
         height,
-        autoResize: true,
-        autoFit: 'view',
-        padding: [80, 80, 80, 80],
-        animation: false,
-        cursor: 'grab',
         data: graphData,
-        node: {
-          type: 'circle',
-          style: {
-            x: (datum) => datum.style?.x,
-            y: (datum) => datum.style?.y,
-            size: (datum) => datum.style?.size || 24,
-            fill: (datum) => datum.style?.fill || '#bfdbfe',
-            stroke: (datum) => datum.style?.stroke || '#1d4ed8',
-            lineWidth: (datum) => (datum.id === rootId ? 5 : 2),
-            lineDash: (datum) => datum.style?.lineDash || [],
-            opacity: taxonomyNodeOpacity,
-            fillOpacity: taxonomyNodeOpacity,
-            labelText: taxonomyGraphVisibleLabel,
-            labelPlacement: 'center',
-            labelFill: (datum) => (datum.id === rootId ? '#ffffff' : '#0f172a'),
-            labelOpacity: taxonomyNodeOpacity,
-            labelFontSize: (datum) => {
-              const depth = Number(datum.data?.treeDepth || 0);
-              return Math.max(6, 13 - depth * 0.7);
-            },
-            labelFontWeight: (datum) => (datum.id === rootId ? 800 : 650),
-            labelStroke: '#ffffff',
-            labelLineWidth: (datum) => (datum.id === rootId ? 0 : 3),
+        legendFocus: taxonomyGraphLevelFocus,
+        callbacks: {
+          onNodeClick: async (nodeData) => {
+            updateDetail(nodeData);
+            setSelectedNode(nodeData?.id || '');
           },
         },
-        edge: {
-          style: {
-            stroke: '#93c5fd',
-            lineWidth: (datum) => (taxonomyGraphLevelFocus && taxonomyEdgeMatchesFocus(datum) ? 2.2 : 1.15),
-            opacity: taxonomyEdgeOpacity,
-          },
-        },
-        layout: {
-          type: 'd3-force',
-          link: {
-            distance: (edge) => {
-              const source = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.source));
-              const target = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.target));
-              const sourceDepth = Number(source?.data?.treeDepth || 0);
-              const targetDepth = Number(target?.data?.treeDepth || 0);
-              if (sourceDepth <= 0 || targetDepth <= 1) return 76;
-              if (targetDepth >= 5) return 12;
-              if (targetDepth >= 4) return 18;
-              return 34;
-            },
-            strength: (edge) => {
-              const target = taxonomyGraphNodeById.get(taxonomyEndpointId(edge?.target));
-              const depth = Number(target?.data?.treeDepth || 0);
-              if (depth >= 5) return 0.88;
-              if (depth >= 4) return 0.78;
-              return 0.58;
-            },
-          },
-          manyBody: {
-            strength: (node) => {
-              const depth = Number(node?.data?.treeDepth || 0);
-              const size = Number(node?.style?.size || 16);
-              if (depth <= 0) return -72;
-              if (depth <= 1) return -42;
-              if (depth <= 2) return -18;
-              return -(1.2 + size * 0.12);
-            },
-          },
-          x: {
-            x: (node) => Number(node?.style?.clusterX || node?.style?.x || 0),
-            strength: (node) => {
-              const depth = Number(node?.data?.treeDepth || 0);
-              if (depth <= 1) return 0.24;
-              if (depth >= 5) return 0.12;
-              return 0.16;
-            },
-          },
-          y: {
-            y: (node) => Number(node?.style?.clusterY || node?.style?.y || 0),
-            strength: (node) => {
-              const depth = Number(node?.data?.treeDepth || 0);
-              if (depth <= 1) return 0.24;
-              if (depth >= 5) return 0.12;
-              return 0.16;
-            },
-          },
-          collide: {
-            radius: (node) => {
-              const depth = Number(node?.data?.treeDepth || 0);
-              const size = Number(node?.style?.size || 16);
-              const denseLeaf = depth >= 5;
-              return size / 2 + (denseLeaf ? 1 : depth >= 4 ? 2 : 6);
-            },
-            strength: 0.72,
-            iterations: 3,
-          },
-        },
-        behaviors: [
-          {
-            type: 'drag-element-force',
-            trigger: [],
-            enable: (event) => event.targetType === 'node',
-          },
-          'drag-canvas',
-          {
-            type: 'zoom-canvas',
-            sensitivity: 1,
-          },
-          {
-            type: 'click-select',
-            enable: (event) => event.targetType === 'node',
-          },
-        ],
       });
-
-      g6Graph = graph;
-      await graph.render();
+      await taxonomyLargeForceRenderer.render(graphData);
+      g6Graph = taxonomyLargeForceRenderer.getGraph();
       clearSelectedNode();
       updateDetail(null);
-
-      graph.on(NodeEvent.DRAG_START, async () => {
-        taxonomyGraphDragging = true;
-        await redrawTaxonomyGraph();
-      });
-
-      graph.on(NodeEvent.DRAG_END, async () => {
-        taxonomyGraphDragging = false;
-        await redrawTaxonomyGraph();
-      });
-
-      graph.on(NodeEvent.POINTER_ENTER, async (event) => {
-        const targetId = resolveEventNodeId(event);
-        if (!targetId) return;
-        taxonomyGraphHoverNodeId = String(targetId);
-        await redrawTaxonomyGraph();
-      });
-
-      graph.on(NodeEvent.POINTER_LEAVE, async (event) => {
-        const targetId = resolveEventNodeId(event);
-        if (!targetId || taxonomyGraphHoverNodeId !== String(targetId)) return;
-        taxonomyGraphHoverNodeId = null;
-        await redrawTaxonomyGraph();
-      });
-
-      graph.on('node:click', async (event) => {
-        const targetId = resolveEventNodeId(event);
-        if (!targetId || typeof graph.getNodeData !== 'function') return;
-        await activateNode(targetId);
-      });
     } catch (error) {
       if (detailEl) {
         detailEl.textContent = `G6 taxonomy graph failed: ${error && error.message ? error.message : 'unknown error'}`;

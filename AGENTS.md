@@ -1,40 +1,101 @@
-# TE-KG Codex Entry
+# TE-KG AI Entry
 
-本文件是 Codex 进入 TE-KG 仓库时的短入口页。它不是百科全书；需要细节时按链接继续阅读。
+This is the short entry page for AI maintainers. It is an index, not a full
+project encyclopedia. Read the linked documents before making broad changes.
 
-## 项目定位
+## Project Overview
 
-- TE-KG 是本地 PHP + browser JS + Neo4j + MySQL 项目。
-- 当前运行页面仍位于项目根目录，例如 `index.php`、`browse.php`、`preview.php`、`expression.php`。
-- 当前 Neo4j runtime target 是 `tekg3`，本地配置来自 `api/config.local.php` 和 `api/runtime_config.php`。
-- 非 agent 主任务应主要覆盖普通数据库页面、API、数据路径、G6 图谱和前端体验；不要把 agent 子系统当成默认修改范围。
+- TE-KG is a local PHP + browser JavaScript + Neo4j + MySQL project.
+- Runtime pages still live in the repository root, including `index.php`,
+  `browse.php`, `preview.php`, `expression.php`, and `path_finder.php`.
+- The current Neo4j runtime target is `tekg3`; local runtime configuration
+  comes from `api/config.local.php` and `api/runtime_config.php`.
+- Non-agent tasks should focus on ordinary database pages, APIs, data paths,
+  G6 graph behavior, taxonomy, expression, and frontend experience. Do not
+  treat the agent subsystem as the default edit target.
 
-## 先读这些
+## Current Directory Map
 
-1. `docs/architecture/index.md`
-2. `docs/architecture/current_system.md`
-3. `ARCHITECTURE.md`
-4. `docs/architecture/project_full_gpt55_handoff.md`
-5. 如任务明确涉及智能问答，再读 `docs/architecture/agent_gpt55_handoff.md`
+- `api/`: PHP APIs, graph services, taxonomy/expression endpoints, and the
+  Agent/DeepThink subsystem under `api/agent/`.
+- `assets/`: browser JavaScript, CSS, HTML iframes, local vendors, and graph
+  renderers.
+- `data/`: runtime data, processed caches, bulk expression data, taxonomy
+  assets, logs, and co-expression outputs.
+- `docs/`: architecture notes, execution plans, evaluation records, paper
+  materials, co-expression notes, and handoff documents.
+- `imports/`: Neo4j import history and data import materials.
+- `reference/`: external examples, papers, format references, and source
+  material used for design comparison.
+- `scripts/`: checks, data processing scripts, import helpers, and offline
+  analysis tools.
+- `templates/`: shared PHP templates.
+- `test/`: local test and smoke-test helpers.
 
-## 核心入口
+## Read First
 
-- 页面：`index.php`、`browse.php`、`preview.php`、`expression.php`、`expression_detail.php`、`path_finder.php`
-- 图谱 API：`api/graph.php`、`api/graph_service.php`
-- 图谱前端：`assets/js/renderers/g6/`
-- taxonomy API：`api/taxonomy.php`
-- expression API：`api/expression_data.php`、`api/expression_repository.php`
-- 路径配置：`path_config.php`、`assets/js/tekg_paths.php`、`scripts/path_helpers.py`
+1. `AI_HANDOFF.md`
+2. `docs/architecture/index.md`
+3. `docs/architecture/current_system.md`
+4. `ARCHITECTURE.md`
+5. `docs/exec-plans/README.md`
+6. If the task explicitly involves Agent or DeepThink, then also read
+   `docs/architecture/agent_gpt55_handoff.md` and `api/agent/plugins/PLUGIN_CATALOG.md`.
 
-## 当前硬约束
+## Core Runtime Entrypoints
 
-- 不要把 runtime fallback 改回 `tekg2` 或 `tekg21`。
-- 不要新增第二套 TE taxonomy runtime truth source；当前 taxonomy runtime 规则以 Neo4j/API 为准。
-- 不要把 `data/raw/new_data/bulk_expression_web` 重新作为 expression runtime 根目录；当前根目录是 `data/bulk_expression_web`。
-- 不要在没有验证的情况下重构 root runtime pages。
-- 修 G6 时先确认 API payload、iframe bridge、loader state、legend state，再改渲染逻辑。
+- Pages: `index.php`, `browse.php`, `preview.php`, `expression.php`,
+  `expression_detail.php`, `path_finder.php`, `agent.php`, `download.php`.
+- Graph API: `api/graph.php`, `api/graph_service.php`.
+- Graph frontend: `assets/js/renderers/g6/`.
+- Taxonomy API: `api/taxonomy.php`.
+- Expression API: `api/expression_data.php`, `api/expression_repository.php`.
+- Path helpers: `path_config.php`, `assets/js/tekg_paths.php`,
+  `scripts/path_helpers.py`.
 
-## 常用检查
+## Hard Constraints
+
+- Do not restore runtime fallback to `tekg2` or `tekg21`.
+- Do not add a second TE taxonomy runtime truth source. Runtime taxonomy truth
+  must remain Neo4j/API-backed.
+- Do not restore `data/raw/new_data/bulk_expression_web` as the expression
+  runtime root. The active root is `data/bulk_expression_web`.
+- Do not restructure root runtime pages without dedicated verification.
+- When fixing G6, inspect API payloads, iframe bridge behavior, loader state,
+  legend state, and browser rendering before changing renderer logic.
+- Preserve user work. The current working tree may contain in-progress
+  experiments and course/paper artifacts.
+
+## Current Work State
+
+- A co-expression backend pipeline exists under `scripts/coexpression/` and
+  `data/coexpression/`; it is backend/offline-data work, not frontend runtime.
+- A G6-based `large-force-graph` experiment and a separate Canvas taxonomy demo
+  are currently present as in-progress graph-rendering experiments.
+- The Canvas taxonomy demo is experimental and isolated; it should not be
+  treated as production runtime until explicitly integrated.
+- Some historical Markdown files are still Chinese or mixed-language. New
+  project documentation should be written in English. Runtime Chinese prompt
+  assets under `api/prompts/zh*` and `api/prompts/fallback_zh*` are functional
+  assets and should not be translated.
+
+## Harness Engineering Workflow
+
+- For complex work, create or update an execution plan in
+  `docs/exec-plans/active/` before implementation.
+- Use subagents for complex tasks when available:
+  - Explorer: read-only investigation.
+  - Worker: bounded implementation with explicit file ownership.
+  - Reviewer: bug and architecture-risk review.
+  - Verifier: command execution and evidence capture.
+- The main AI coordinates: it defines scope, assigns tasks, reviews outputs,
+  integrates results, and records durable decisions.
+- Subagent outputs should become repository assets when useful: execution plans,
+  handoff notes, tests, scripts, or updated documentation.
+- Move completed plans to `docs/exec-plans/completed/` and record verification.
+- Record structural risks in `docs/exec-plans/tech-debt-tracker.md`.
+
+## Common Checks
 
 ```powershell
 php -l preview.php
@@ -56,12 +117,20 @@ python scripts/checks/check_g6_relation_legend_expand_mode.py
 python scripts/checks/check_g6_legend_expand_tree_fixes.py
 ```
 
-## 工作方式
+## Documentation Index
 
-- 复杂任务先在 `docs/exec-plans/active/` 建执行计划。
-- 完成后将计划移到 `docs/exec-plans/completed/`，并记录验证结果。
-- 发现结构性问题时，更新 `docs/exec-plans/tech-debt-tracker.md`。
-- 不把聊天记录当长期事实；长期事实必须写回仓库文档。
-- 大改按三角色自查：`Implementer` 做实现，`Reviewer` 找 bug/架构风险，`Verifier` 跑命令并记录证据。
+- Architecture index: `docs/architecture/index.md`
+- Next-session handoff: `AI_HANDOFF.md`
+- Execution plans: `docs/exec-plans/`
+- Co-expression notes: `docs/coexpression/`
+- Evaluation records: `docs/eval/runs/`
+- Paper/course artifacts: `docs/paper/`, `docs/ppt/`, `docs/proposal/`
 
-019e64c2-7d14-7093-85fb-29baafd711d3
+## Next Recommended Work
+
+1. Finish this AI handoff cleanup by translating or indexing remaining
+   high-value Markdown documentation in English.
+2. Decide whether the current G6 `large-force-graph` experiment should be
+   kept, archived, or replaced by the Canvas taxonomy renderer.
+3. Keep co-expression frontend work separate from the existing evidence Graph
+   until the display contract is stable.

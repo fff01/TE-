@@ -1,32 +1,41 @@
 # Frontend Contract
 
-本文记录非 agent 前端的当前约束。目标是让页面改造保持一致，不产生新的视觉系统和运行时分叉。
+This document records current non-agent frontend constraints. The goal is to
+keep page changes consistent and avoid creating new visual systems or runtime
+forks without a plan.
 
-## 页面结构
+## Page Structure
 
-- root runtime pages 当前保留在项目根目录。
-- 典型页面包括 `index.php`、`browse.php`、`preview.php`、`expression.php`、`path_finder.php`。
-- 新页面优先复用现有 `head.php`、`proto-container`、panel、table、button、filter 结构。
+- Root runtime pages remain in the repository root.
+- Typical pages include `index.php`, `browse.php`, `preview.php`,
+  `expression.php`, and `path_finder.php`.
+- New page work should prefer existing `head.php`, `proto-container`, panel,
+  table, button, and filter structures.
 
-## 图谱页面
+## Graph Page
 
-- `preview.php` 是 TE-KG / Network Explorer 的当前入口。
-- G6 图例筛选通过 Apply 应用，不应每次勾选立即重绘。
-- `Show labels` 默认关闭。
-- `Fixed view` 和 `Expand mode` 是状态按钮，不应把图谱重新加载成白屏。
+- `preview.php` is the current TE-KG / Network Explorer entrypoint.
+- G6 legend filtering should apply through an explicit Apply action, not redraw
+  immediately on every checkbox change.
+- `Show labels` defaults to off.
+- `Fixed view` and `Expand mode` are state controls. They must not reload the
+  graph into a blank state.
 
-## 首页
+## Homepage
 
-- 首页 taxonomy / ring chart 是数据入口，不是单纯装饰。
-- 首页统计应优先来自轻量 API 或缓存，避免页面加载时做重查询。
+- Homepage taxonomy and ring charts are data entrypoints, not decoration.
+- Homepage statistics should prefer lightweight APIs or caches and avoid heavy
+  queries during page load.
 
 ## Browse / Expression
 
-- Browse 当前仍是 TE-oriented，不扩展为全实体搜索页。
-- Expression 当前数据根目录是 `data/bulk_expression_web`。
-- Expression 与 Graph 联动可以通过 URL 参数和 overlay API 逐步实现。
+- Browse remains TE-oriented; do not expand it into a full all-entity search page
+  without a dedicated plan.
+- Expression runtime data root is `data/bulk_expression_web`.
+- Expression and Graph integration can be added gradually through URL
+  parameters and overlay APIs.
 
-## 相关检查
+## Related Checks
 
 - `scripts/checks/check_docs_freshness.py`
 - `scripts/checks/check_g6_static_contract.py`

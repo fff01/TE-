@@ -1,75 +1,87 @@
-# TE-KG Exec Plans
+# TE-KG Execution Plans
 
-本目录用于保存 Codex 和人工协作的执行计划。它是 harness 的一部分：复杂任务必须从临时聊天沉淀为可复查、可交接、可验证的仓库资产。
+This directory stores execution plans for Codex/human collaboration. It is part
+of the project harness: complex work should be turned from temporary chat into
+reviewable, handoff-ready, verifiable repository assets.
 
-## 目录
+## Folders
 
-- `active/`：准备执行或正在执行的计划。
-- `completed/`：已经完成并记录验证结果的计划。
-- `tech-debt-tracker.md`：跨任务技术债和后续治理项。
+- `active/`: prepared or in-progress plans.
+- `completed/`: finished plans with execution and verification notes.
+- `tech-debt-tracker.md`: cross-task technical debt and follow-up governance.
 
-## 计划文件模板
+## Plan Template
 
 ```markdown
-# <任务名称>
+# <Task Name>
 
-## 背景
+## Background
 
-说明为什么要做，以及当前问题是什么。
+Why this task exists and what problem it addresses.
 
-## 目标
+## Goals
 
-列出完成后必须成立的结果。
+The results that must be true when the task is complete.
 
-## 不做什么
+## Non-Goals
 
-明确本轮不会处理的范围，避免任务膨胀。
+Explicitly excluded scope.
 
-## 涉及文件范围
+## File Scope
 
-列出预计修改或新增的主要文件。
+Expected files or modules to touch.
 
-## 实施步骤
+## Implementation Steps
 
-按可验证的小步骤写清楚执行顺序。
+Small, verifiable steps in execution order.
 
-## 验收标准
+## Acceptance Criteria
 
-写清楚怎样判断任务完成。
+How to decide the task is complete.
 
-## 验证命令
+## Verification Commands
 
-列出必须运行的命令和预期结果。
+Commands that must be run and expected outcomes.
 
-## 执行记录
+## Execution Log
 
-记录实际做了什么、偏离计划的地方和原因。
+What actually happened, including deviations and reasons.
 
-## 残留风险
+## Residual Risks
 
-记录本轮没有解决但以后需要跟踪的问题。
+Known issues left for future work.
 ```
 
-## 使用规则
+## Use Rules
 
-- 大型功能、架构调整、G6 交互修复、数据源迁移都应先建 active plan。
-- 完成后移动到 `completed/`，并补充验证命令和结果。
-- 如果任务暴露出结构性问题，更新 `tech-debt-tracker.md`。
-- 计划不是替代代码审查；它用于让下一个 Codex session 能接着工作。
+- Large features, architecture changes, G6 interaction fixes, and data-source
+  migrations should start with an active plan.
+- Move finished plans to `completed/` and record verification results.
+- If a task exposes a structural issue, update `tech-debt-tracker.md`.
+- A plan does not replace code review; it allows the next Codex session to
+  continue safely.
+- Project documentation should be English. Historical Chinese plans may remain
+  temporarily, but important ongoing content should be translated or summarized
+  into English before handoff.
 
-## 三角色自查流程
+## Three-Role Self-Review
 
-复杂任务完成前，至少按以下三种视角自查一次：
+Before complex work is called complete, review it from three perspectives:
 
-- `Implementer`：确认实现覆盖计划目标，并且没有扩大范围。
-- `Reviewer`：只找 bug、架构风险、旧路径/旧 DB/多 truth source 回归、遗漏测试。
-- `Verifier`：只运行验证命令，记录输出证据；没有 fresh verification 就不能声称完成。
+- `Implementer`: confirms implementation covers the plan and did not expand
+  scope.
+- `Reviewer`: looks for bugs, architecture risks, old-path regressions, old DB
+  fallback, multiple truth sources, and missing tests.
+- `Verifier`: runs verification commands and records evidence. No fresh
+  verification means no completion claim.
 
-如果未来使用子 agent，可以把这三个角色拆给不同 agent。当前阶段先作为仓库内固定工作协议。
+When subagents are available, these roles can be split across agents. The main
+AI remains responsible for scope, integration, and final judgment.
 
-## 完成条件
+## Completion Conditions
 
-- active plan 中的验收标准逐条有结果。
-- 相关检查脚本已经运行，失败项写入执行记录或技术债。
-- 如质量状态变化，更新 `../QUALITY_SCORE.md`。
-- 如可靠性入口变化，更新 `../RELIABILITY.md`。
+- Every active-plan acceptance criterion has a recorded result.
+- Relevant checks have been run; failures are recorded in the execution log or
+  technical-debt tracker.
+- If quality status changed, update `../QUALITY_SCORE.md`.
+- If reliability entrypoints changed, update `../RELIABILITY.md`.

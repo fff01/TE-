@@ -1,30 +1,39 @@
 # G6 Graph Runtime
 
-本文记录 TE-KG 图谱运行时的当前结构。它不是完整代码说明，而是给 Codex 和人工维护者的最短可用地图。
+This document records the current TE-KG graph runtime structure. It is a compact
+maintenance map, not a complete code explanation.
 
-## 当前入口
+## Current Entrypoints
 
-- 页面入口：`preview.php`
-- 图谱 API：`api/graph.php`
-- 图谱服务：`api/graph_service.php`
-- iframe 页面：`assets/html/preview_graph.html`
-- G6 runtime：`assets/js/renderers/g6/`
+- Page entrypoint: `preview.php`
+- Graph API: `api/graph.php`
+- Graph service: `api/graph_service.php`
+- Iframe page: `assets/html/preview_graph.html`
+- G6 runtime: `assets/js/renderers/g6/`
 
-## 当前交互模型
+## Current Interaction Model
 
-- `preview.php` 负责页面壳、查询栏、图例、顶部开关和父页面状态。
-- iframe 内 G6 runner 负责实际图谱渲染。
-- 父页面和 iframe 之间通过 bridge 通信。
-- 图例支持 entity / relation 两种模式，并通过 Apply 应用筛选。
-- `Fixed view`、`Expand mode`、`Show names`、`Show labels` 应尽量走轻量状态更新，不应触发整图重载。
+- `preview.php` owns the page shell, query bar, legends, top controls, and
+  parent-page state.
+- The iframe G6 runner owns actual graph rendering.
+- Parent page and iframe communicate through a bridge.
+- Legends support entity and relation modes and apply filters through an Apply
+  action.
+- `Fixed view`, `Expand mode`, `Show names`, and `Show labels` should use
+  lightweight state updates when possible. They should not trigger full graph
+  reloads unless necessary.
 
-## 当前风险
+## Current Risks
 
-- G6 browser smoke 已能暴露白屏和 loader 卡住证据。
-- 当前本地 smoke 环境可能阻断 CDN 资源，例如 `@antv/g6` 和 `marked`。
-- `Expand mode` 的业务正确性仍是独立技术债，不应在没有 browser evidence 的情况下继续盲修。
+- G6 browser smoke tests can expose blank canvases and stuck loader states.
+- Local smoke environments may block external CDN resources such as `@antv/g6`
+  and `marked`; prefer local assets where possible.
+- Expand mode business correctness remains an independent technical debt item.
+  Do not repair it blindly without browser evidence.
+- Taxonomy large-graph rendering is currently experimental. Keep it isolated
+  from ordinary evidence graph behavior until accepted.
 
-## 相关检查
+## Related Checks
 
 - `scripts/checks/check_g6_browser_smoke.py`
 - `scripts/checks/check_g6_static_contract.py`
