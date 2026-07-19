@@ -82,7 +82,7 @@
   };
 
   let currentMode = 'tree';
-  let currentTaxonomyDisplayMode = 'graph';
+  let currentTaxonomyDisplayMode = 'tree';
   let currentGraphSource = 'tree';
   let currentGraphQuery = '';
   let currentGraphQueryType = '';
@@ -1328,14 +1328,6 @@
     return variants[(currentIndex + 1) % variants.length].key;
   }
 
-  function getCurrentTaxonomyDisplayMode() {
-    return currentTaxonomyDisplayMode === 'graph' ? 'graph' : 'tree';
-  }
-
-  function getNextTaxonomyDisplayMode() {
-    return getCurrentTaxonomyDisplayMode() === 'tree' ? 'graph' : 'tree';
-  }
-
   function buildTreeVariantDetailHtml() {
     const payload = getCurrentTreeVariantPayload();
     const label = payload && payload.label ? String(payload.label) : 'Tree';
@@ -2017,10 +2009,6 @@
       return renderDefaultTree({ pushHistory: false, variant: state.treeVariant || currentTreeVariant });
     }
 
-    if (state.kind === 'taxonomy_graph') {
-      return renderTaxonomyGraph({ pushHistory: false, variant: state.treeVariant || currentTreeVariant });
-    }
-
     if (state.kind === 'disease_class_tree') {
       return renderDiseaseClassTree({
         query: state.classQuery || state.query,
@@ -2067,11 +2055,6 @@
     return renderCurrentTaxonomyView({ pushHistory: false, variant: nextKey });
   }
 
-  async function toggleTaxonomyDisplayMode() {
-    currentTaxonomyDisplayMode = getNextTaxonomyDisplayMode();
-    return renderCurrentTaxonomyView({ pushHistory: false, variant: currentTreeVariant });
-  }
-
   async function toggleTaxonomySource() {
     const nextKey = getNextTreeVariantKey();
     if (!nextKey || nextKey === currentTreeVariant) return false;
@@ -2079,9 +2062,7 @@
   }
 
   async function renderCurrentTaxonomyView(options = {}) {
-    return getCurrentTaxonomyDisplayMode() === 'graph'
-      ? renderTaxonomyGraph(options)
-      : renderDefaultTree(options);
+    return renderDefaultTree(options);
   }
 
   async function renderDefaultTree(options = {}) {
@@ -2113,61 +2094,6 @@
     }
 
     setDetail(buildTreeVariantDetailHtml());
-    notifyStateChange();
-  }
-
-  async function renderTaxonomyGraph(options = {}) {
-    const requestedVariant = normalizeTreeVariantKey(options && options.variant ? options.variant : currentTreeVariant);
-    currentTreeVariant = requestedVariant;
-    currentTaxonomyDisplayMode = 'graph';
-    window.__TEKG_TREE_VARIANT = currentTreeVariant;
-    if (options.pushHistory === true && currentMode !== 'taxonomy_graph') {
-      pushCurrentStateToHistory();
-    }
-    currentMode = 'taxonomy_graph';
-    currentGraphSource = 'taxonomy_graph';
-    currentGraphQuery = '';
-    currentGraphQueryType = '';
-    currentGraphClassQuery = '';
-    currentSelectedNode = null;
-    currentAnswerGraphElements = [];
-    currentQueryGraphElements = [];
-    showTreeSurface();
-    updateButtons();
-    setGraphLoading(true, 'Preparing TE taxonomy graph ...');
-
-    try {
-      const renderer = window.__TEKG_G6_DEFAULT_TREE;
-      if (!renderer || typeof renderer.renderGraph !== 'function') {
-        throw new Error('TE taxonomy graph renderer is unavailable.');
-      }
-      await renderer.renderGraph({
-        variant: currentTreeVariant,
-        visibleTaxonomyLevels: ensureTaxonomyLegendState(),
-        taxonomyLevelFocus: activeLegendHighlight && activeLegendHighlight.kind === 'taxonomy'
-          ? activeLegendHighlight.value
-          : null,
-        onJumpUnavailable(node) {
-          const label = String(node?.data?.rawLabel || node?.data?.label || node?.id || 'this taxonomy node');
-          setDetail(`<strong>${escapeHtml(label)}</strong><br>This is a taxonomy-only node in the current TE taxonomy graph. It has not been verified as a Neo4j graph entity in this first version.`);
-        },
-        onJump(node) {
-          const label = String(node?.data?.queryLabel || node?.data?.rawLabel || node?.data?.label || '').trim();
-          if (!label) return Promise.resolve(false);
-          return loadDynamicGraph({ query: label, queryType: 'TE' }, { pushHistory: true });
-        },
-      });
-      ensureTaxonomyLegendState();
-      clearLegendFilterPending();
-      renderGraphLegend();
-    } finally {
-      setGraphLoading(false);
-    }
-
-    setDetail(buildTreeVariantDetailHtml().replace(
-      'Click a TE node to inspect it, then click again to enter the dynamic graph.',
-      'Click a taxonomy node to inspect its classification position. Dashed borders mark taxonomy-only nodes in this first version.'
-    ));
     notifyStateChange();
   }
 
@@ -2753,14 +2679,6 @@
     if (els.resetBtn) {
       els.resetBtn.addEventListener('click', () => {
         renderCurrentTaxonomyView({ pushHistory: true }).catch((error) => {
-          setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
-        });
-      });
-    }
-
-    if (els.taxonomyDisplayBtn) {
-      els.taxonomyDisplayBtn.addEventListener('click', () => {
-        toggleTaxonomyDisplayMode().catch((error) => {
           setDetail(`<strong>${textSet().graphError(error && error.message)}</strong>`);
         });
       });

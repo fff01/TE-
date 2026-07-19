@@ -26,11 +26,6 @@ $previewVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-shell.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-deepthink.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-type-meta.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/large-force-graph/large-force-graph-contract.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/large-force-graph/large-force-graph-layout.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/large-force-graph/large-force-graph-styles.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/large-force-graph/large-force-graph-core.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/large-force-graph/adapters/taxonomy-large-force-adapter.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/default-tree-mindmap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6.bootstrap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-shared.js')),
@@ -78,7 +73,6 @@ $previewConfig = [
               <button id="toggle-edge-labels" class="is-toggle" type="button" aria-pressed="false"><span id="edge-labels-text">Show relations: Off</span></button>
               <button id="graph-expression-layer" class="is-toggle" type="button" aria-pressed="false" aria-label="Expression evidence layer"><span id="graph-expression-layer-text">Expression: Off</span></button>
               <button id="toggle-fixed-view" class="is-toggle" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
-              <button id="toggle-taxonomy-display" class="is-toggle taxonomy-display-toggle" type="button" aria-pressed="false"><span id="taxonomy-display-text">Switch: Tree</span></button>
               <button id="toggle-taxonomy-source" class="is-toggle taxonomy-source-toggle" type="button" aria-pressed="false"><span id="taxonomy-source-text">Switch taxonomy: All</span></button>
               <button id="back-graph" type="button" disabled hidden><span id="back-text">Back</span></button>
               <div id="export-menu-wrap" class="graph-export-menu-wrap">
@@ -181,11 +175,6 @@ $previewConfig = [
       <script src="<?= htmlspecialchars(tekg_assets_url('vendor/g6/g6.min.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/tekg_runtime_data.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-type-meta.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
-      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/large-force-graph/large-force-graph-contract.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
-      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/large-force-graph/large-force-graph-layout.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
-      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/large-force-graph/large-force-graph-styles.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
-      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/large-force-graph/large-force-graph-core.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
-      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/large-force-graph/adapters/taxonomy-large-force-adapter.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/default-tree-mindmap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-runtime.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6.bootstrap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>

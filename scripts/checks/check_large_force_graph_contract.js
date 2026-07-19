@@ -38,6 +38,11 @@ const source = {
     ['TREE_LINE', ['TREE_L1HS']],
   ]),
 };
+const sourceSnapshot = JSON.stringify({
+  rootId: source.rootId,
+  nodes: [...source.nodes.entries()],
+  children: [...source.children.entries()],
+});
 
 const graphData = adapter.fromTaxonomySource(source, {
   width: 800,
@@ -48,14 +53,23 @@ const graphData = adapter.fromTaxonomySource(source, {
 
 assert.strictEqual(graphData.meta.source, 'taxonomy');
 assert.strictEqual(graphData.meta.truthSource, 'api/taxonomy.php');
-assert.strictEqual(graphData.nodes.length, 2, 'hidden level nodes should be pruned');
-assert.strictEqual(graphData.edges.length, 1, 'edges with hidden endpoints should be pruned');
+assert.strictEqual(graphData.options.performanceProfile, 'large-static');
+assert.strictEqual(graphData.nodes.length, 3, 'adapter should retain hidden-level nodes in master data');
+assert.strictEqual(graphData.edges.length, 2, 'adapter should retain hidden-level edges in master data');
 assert(graphData.legend.items.some((item) => item.key === 'level-5' && item.count === 1), 'legend should keep counts for hidden levels');
+const visibleGraphData = contract.filterByLegend(graphData, graphData.legend.state);
+assert.strictEqual(visibleGraphData.nodes.length, 2, 'legend filtering should prune hidden-level nodes');
+assert.strictEqual(visibleGraphData.edges.length, 1, 'legend filtering should prune edges with hidden endpoints');
 
 const rootNode = graphData.nodes.find((node) => node.id === 'TREE_TE');
 const lineNode = graphData.nodes.find((node) => node.id === 'TREE_LINE');
 assert(rootNode.pinnedLabel, 'root label should be pinned');
 assert.strictEqual(lineNode.pinnedLabel, true, 'top taxonomy levels should keep labels');
+assert.strictEqual(JSON.stringify({
+  rootId: source.rootId,
+  nodes: [...source.nodes.entries()],
+  children: [...source.children.entries()],
+}), sourceSnapshot, 'taxonomy adapter must not mutate its source maps');
 
 const normalized = contract.normalizeGraphData({
   nodes: [{ id: 'a' }, { id: '' }, { id: 'b' }],

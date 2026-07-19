@@ -79,6 +79,14 @@ There are two in-progress graph-rendering experiments:
 Do not merge either experiment into production without a new execution plan,
 browser screenshots, and checks proving the ordinary evidence Graph still works.
 
+As of 2026-07-19, the force-directed All-TE classification Graph is archived and
+paused. `preview.php` exposes the existing collapsible taxonomy tree only; the
+Tree/Graph display switch was removed, and taxonomy large-force/prototype
+scripts are no longer loaded by the preview runtime. The source remains as
+inactive reference material. The detailed history, frozen files, evidence, and
+resumption rules are recorded in
+`docs/eval/runs/2026-07-19-all-te-classification-pre-dynamic-rebase/ARCHIVE_REPORT.md`.
+
 ### Co-expression Backend
 
 Co-expression work is backend/offline-data oriented at the current stage.

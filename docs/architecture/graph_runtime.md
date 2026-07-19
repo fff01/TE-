@@ -33,6 +33,15 @@ maintenance map, not a complete code explanation.
 - Taxonomy large-graph rendering is currently experimental. Keep it isolated
   from ordinary evidence graph behavior until accepted.
 
+## Taxonomy Runtime Decision
+
+As of 2026-07-19, the force-directed All-TE classification Graph is archived and
+paused. The preview taxonomy workflow always renders the existing collapsible
+tree, the Tree/Graph display switch is removed, and large-force taxonomy scripts
+are not loaded by the runtime. The experimental source is retained only for
+reference. Restoring it requires a new plan and fresh visual, browser, and
+ordinary-Graph regression acceptance.
+
 ## Related Checks
 
 - `scripts/checks/check_g6_browser_smoke.py`

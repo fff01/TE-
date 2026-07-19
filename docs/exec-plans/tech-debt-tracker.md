@@ -50,6 +50,14 @@
 
 ## 中优先级
 
+### Taxonomy browser slug-ID collisions - 2026-07-15
+
+- Status: discovered during All-TE G6 Task 6; not introduced or fixed by the renderer lifecycle work.
+- Current boundary: `api/taxonomy.php?view=tree&source=all` returns `1666/1665`, while `taxonomyPayloadToElements()` and `buildStrictTreeSource()` provide the renderer `1660/1659` canonical elements.
+- Cause: `treeNodeId()` strips trailing punctuation, collapsing six distinct pairs: `LTR12/LTR12_`, `MER34C/MER34C_`, `MER4A1/MER4A1_`, `LTR13/LTR13_`, `LTR3B/LTR3B_`, and `LTR33A/LTR33A_`.
+- Risk: six API-backed taxonomy nodes are merged at the browser canonicalization boundary even though the large-graph adapter retains all elements it receives.
+- Next step: create a separate taxonomy ID migration plan with stable collision-safe IDs and dedicated Tree/Graph, click/query-label, legend-count, and browser regression checks. Do not patch IDs ad hoc inside the renderer.
+
 ### Agent plugin envelope legacy consumers - 2026-05-25
 
 - 状态：第一版 `PluginResultEnvelope` 已落地，见 `completed/agent-deepthink-boundary-plugin-envelope.md`。

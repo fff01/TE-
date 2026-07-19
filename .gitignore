@@ -2,6 +2,25 @@
 data/
 reference/
 docs/
+!docs/
+docs/*
+!docs/exec-plans/
+docs/exec-plans/*
+!docs/exec-plans/active/
+docs/exec-plans/active/*
+!docs/exec-plans/active/all-te-g6-performance-stabilization.md
+!docs/exec-plans/active/coexpression-graph-dual-mode.md
+!docs/exec-plans/completed/
+docs/exec-plans/completed/*
+!docs/exec-plans/completed/all-te-g6-performance-stabilization.md
+!docs/eval/
+docs/eval/*
+!docs/eval/runs/
+docs/eval/runs/*
+!docs/eval/runs/2026-07-15-all-te-large-static/
+!docs/eval/runs/2026-07-15-all-te-large-static/**
+!docs/eval/runs/2026-07-19-all-te-classification-pre-dynamic-rebase/
+!docs/eval/runs/2026-07-19-all-te-classification-pre-dynamic-rebase/**
 !api/docs/
 !api/docs/*.md
 # Python generated files
