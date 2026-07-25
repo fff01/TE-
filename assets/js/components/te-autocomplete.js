@@ -1,5 +1,6 @@
 (() => {
   const cache = new Map();
+  const sourceProviders = new Map();
   const maxVisible = 180;
 
   function apiUrl(path) {
@@ -55,6 +56,15 @@
 
   function sourceConfig(root, input) {
     const source = String(root.dataset.teAutocompleteSource || 'taxonomy').trim();
+    const provider = sourceProviders.get(source);
+    if (provider) {
+      return {
+        key: `provider:${source}`,
+        label: String(provider.label || 'TE').trim() || 'TE',
+        connected: false,
+        provider,
+      };
+    }
     if (source === 'path-finder-entities') {
       const sourceEntity = connectedSource(root);
       const entityType = currentEntityType(root);
@@ -106,6 +116,21 @@
 
   function loadOptions(root, input) {
     const config = sourceConfig(root, input);
+    if (config.provider) {
+      if (cache.has(config.key)) {
+        return cache.get(config.key);
+      }
+      const providerPromise = Promise.resolve(config.provider.loadOptions({
+        query: String(input.value || '').trim(),
+      }))
+        .then((items) => uniqueOptions(
+          (Array.isArray(items) ? items : [])
+            .map((item) => normalizeOption(item, false))
+            .filter((item) => item.name),
+        ).sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: 'base' })));
+      cache.set(config.key, providerPromise);
+      return providerPromise;
+    }
     function fetchOptions(activeConfig) {
       return fetch(activeConfig.url, {
         headers: { Accept: 'application/json' },
@@ -168,7 +193,7 @@
     }
     const option = item && typeof item === 'object' ? item : {};
     const normalized = {
-      name: String(option.name || '').trim(),
+      name: String(option.name || option.te || '').trim(),
     };
     if (connected) {
       const minHop = Number(option.min_hop || 0);
@@ -394,7 +419,15 @@
     document.querySelectorAll('[data-te-autocomplete-root]').forEach(initAutocomplete);
   }
 
-  window.TEKGTeAutocomplete = { initAll };
+  function registerSource(name, provider) {
+    const sourceName = String(name || '').trim();
+    if (!sourceName || !provider || typeof provider.loadOptions !== 'function') return false;
+    sourceProviders.set(sourceName, provider);
+    cache.delete(`provider:${sourceName}`);
+    return true;
+  }
+
+  window.TEKGTeAutocomplete = { initAll, registerSource };
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAll, { once: true });
   } else {

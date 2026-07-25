@@ -1,0 +1,125 @@
+# Co-expression Frontend Contract
+
+Last verified: 2026-07-25
+
+## Runtime Shape
+
+`preview.php` contains two independent graph workspaces:
+
+- Knowledge Graph uses its existing G6 iframe, Neo4j API, legend, details, and
+  history.
+- Co-expression uses `templates/preview/coexpression_workspace.php`, a
+  dedicated iframe, a dedicated G6 instance, and `api/coexpression.php`.
+
+The shared `Knowledge Graph | Co-expression` control moves between the active
+toolbars. Switching workspaces hides rather than destroys either initialized
+renderer. Co-expression stops its force layout while hidden and restores the
+same iframe, coordinates, selection, filters, and zoom when resumed.
+
+## Runtime Data
+
+The Co-expression runtime is MySQL-only:
+
+- `api/coexpression.php` exposes catalog and network actions.
+- `api/coexpression_repository.php` reads the active
+  `v1_abs0.4_fdr0.05_res1.8` rows.
+- offline JSON, TSV, and manifests under `data/coexpression/` are provenance
+  and importer inputs, not browser runtime sources.
+
+One display unit is one center TE in one context class. Payloads are capped at
+50 nodes and 150 edges. All displayed edges are positive Spearman correlations
+that passed the approved correlation/FDR filters.
+
+Missing or unknown TE names never fall back to L1HS. `CR1` intentionally has no
+`cancer_cell_line` display network and must show its two available alternatives.
+
+## Visual Semantics
+
+- center TE: largest TE node with a strong outline and persistent label;
+- partner TE: blue circle;
+- Gene: green node;
+- module hub: stronger outline, not a separate entity type;
+- edge width and opacity: monotonic with positive correlation;
+- no arrows, causal verbs, or default edge labels.
+
+The legend uses an explicit Apply action. Turning off TE visibility hides
+partner TE nodes but preserves the center TE. Turning off Gene visibility
+removes Gene nodes and their incident edges. `Center edges` retains only edges
+incident to the selected center; `All selected edges` also retains internal
+edges whose endpoints pass the node filters.
+
+## Expression Activity
+
+Expression activity belongs to the Co-expression toolbar, not the Knowledge
+Graph toolbar. It uses batched TE-only requests to `api/graph_expression.php`.
+Gene nodes never receive inferred Expression values.
+
+For the active context class:
+
+- every TE with data receives a static activity halo;
+- halo strength is log-normalized within the visible network;
+- low, medium, and high activity increase halo opacity, ripple count, and
+  maximum ripple radius monotonically;
+- only the selected or hovered TE animates;
+- animation speed is not used as a biological variable;
+- missing TE expression remains explicit in details.
+
+The value is a context-class summary. For example, a `normal_tissue` network
+shows each TE's normal-tissue summary and its top tissue label. It does not
+change edge weights, node position, force parameters, or layout cooling.
+Expression activity and co-expression are statistical context, not regulation,
+propagation, mechanism, or causality.
+
+## Details and Tooltips
+
+Center details include module ID/type/size, TE and Gene counts, confidence,
+enriched context, interpretation text, and Expression activity.
+
+Partner details include feature type, role, hub status, correlation to center
+when present, and TE-only Expression activity.
+
+Edge details include source, target, Spearman correlation, FDR, pair type, edge
+role, and the statistical-association boundary. Runtime text is escaped.
+
+## URL, Cache, Retry, and Export
+
+Supported direct URL:
+
+```text
+preview.php?mode=coexpression&te=L1HS&context=cancer_cell_line
+```
+
+Real user mode/selection changes push browser history. Back/Forward restores
+mode, TE, and context without recreating the iframe. Mode restoration does not
+infer a TE from a Knowledge Graph query.
+
+Network and Expression caches are independent, version-bound, LRU-like, and
+capped at six entries. Request epochs and abort signals prevent stale responses
+from replacing newer selections.
+
+Failures retain the selected TE/context and expose Retry. CSV export contains
+visible nodes/edges, correlation, FDR, Expression values, analysis version,
+method, thresholds, and the interpretation limit. PNG export comes from the
+active Co-expression Canvas. Neither export may contain absolute paths.
+
+## Representative Acceptance Matrix
+
+- `L1HS`: dense high-confidence, low-confidence, and not-interpretable contexts;
+- `LTR5 / cancer_cell_line`: smaller gene-rich high-confidence graph and low
+  activity;
+- `MER11B / cancer_cell_line`: TE-only, zero-Gene, not-interpretable graph;
+- `HERVH-int / cancer_cell_line`: dense gene-rich graph with high activity;
+- `CR1 / normal_tissue`: small gene-rich high-confidence graph;
+- `CR1 / cancer_cell_line`: unavailable context with recoverable alternatives.
+
+Desktop acceptance covers 1440x960, 1280x900, and 1024x768. Mobile layout and
+mobile screenshots are out of scope.
+
+## Primary Checks
+
+- `scripts/checks/check_coexpression_task8_static.py`
+- `scripts/checks/check_coexpression_task8_browser.py`
+- `scripts/checks/check_coexpression_task9_static.py`
+- `scripts/checks/check_coexpression_task9_browser.py`
+- `scripts/checks/check_coexpression_graph_browser.py`
+- `scripts/checks/measure_coexpression_graph_performance.py`

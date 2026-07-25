@@ -23,6 +23,31 @@ maintenance map, not a complete code explanation.
   lightweight state updates when possible. They should not trigger full graph
   reloads unless necessary.
 
+## Dual Graph Workspaces
+
+As of 2026-07-25, `preview.php` can host two independent graph workspaces:
+
+- Knowledge Graph: Neo4j-backed evidence and taxonomy behavior in the existing
+  G6 iframe.
+- Co-expression: MySQL-backed TE/Gene correlation networks in a dedicated G6
+  iframe.
+
+`assets/js/pages/preview/preview-workspace-mode.js` coordinates visibility and
+URL history. It does not replace one graph's data inside the other graph's G6
+instance. Each workspace owns its renderer lifecycle, bridge, loading state,
+details, legend, filters, cache, and export behavior. Switching modes preserves
+the initialized workspace and stops hidden Co-expression force activity.
+
+The shared placement and interaction style do not imply shared scientific
+semantics. Knowledge Graph does not expose Expression activity. Co-expression
+owns the TE-only Expression activity control and requests
+`api/graph_expression.php`; Gene nodes never receive inferred Expression
+values. Co-expression edges remain statistical associations and do not imply
+regulation or causality.
+
+The complete Co-expression contract is recorded in
+`docs/coexpression/frontend_contract.md`.
+
 ## Current Risks
 
 - G6 browser smoke tests can expose blank canvases and stuck loader states.
@@ -49,3 +74,5 @@ ordinary-Graph regression acceptance.
 - `scripts/checks/check_g6_no_legacy_disease_node.py`
 - `scripts/checks/check_g6_relation_legend_expand_mode.py`
 - `scripts/checks/check_g6_legend_expand_tree_fixes.py`
+- `scripts/checks/check_coexpression_task8_browser.py`
+- `scripts/checks/check_coexpression_task9_browser.py`

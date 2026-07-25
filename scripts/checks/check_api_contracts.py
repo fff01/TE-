@@ -105,6 +105,18 @@ def main() -> None:
     require(resolved, "taxonomy items did not resolve representative names")
     ok(f"api/taxonomy.php items contract passed: {', '.join(sorted(resolved))}")
 
+    coexpression_catalog = http_json(app_url("api/coexpression.php?action=catalog"))
+    require(coexpression_catalog.get("ok") is True, "co-expression catalog ok must be true")
+    require(coexpression_catalog.get("version") == "v1_abs0.4_fdr0.05_res1.8", "co-expression catalog version mismatch")
+    require(isinstance(coexpression_catalog.get("items"), list) and len(coexpression_catalog["items"]) == 285, "co-expression catalog must list 285 TE items")
+    ok("api/coexpression.php catalog contract passed")
+
+    coexpression_network = http_json(app_url("api/coexpression.php?action=network&te=L1HS&context=cancer_cell_line"))
+    require(coexpression_network.get("ok") is True, "co-expression network ok must be true")
+    require(len(coexpression_network.get("nodes") or []) == 26, "co-expression L1HS network must contain 26 nodes")
+    require(len(coexpression_network.get("edges") or []) == 100, "co-expression L1HS network must contain 100 edges")
+    ok("api/coexpression.php network contract passed")
+
 
 if __name__ == "__main__":
     run_check(main)

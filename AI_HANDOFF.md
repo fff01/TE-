@@ -1,6 +1,6 @@
 # TE-KG AI Handoff
 
-Last reviewed: 2026-07-14
+Last reviewed: 2026-07-25
 
 This document gives the next AI maintainer a compact but actionable project
 handoff. Use it together with `AGENTS.md`, `ARCHITECTURE.md`, and live code.
@@ -87,17 +87,32 @@ inactive reference material. The detailed history, frozen files, evidence, and
 resumption rules are recorded in
 `docs/eval/runs/2026-07-19-all-te-classification-pre-dynamic-rebase/ARCHIVE_REPORT.md`.
 
-### Co-expression Backend
+### Co-expression Runtime
 
-Co-expression work is backend/offline-data oriented at the current stage.
-Important result folders are under `data/coexpression/`; scripts are under
-`scripts/coexpression/`.
+Co-expression is now an integrated, independently rendered mode in
+`preview.php`. It deliberately does not reuse the Knowledge Graph G6 instance.
+The two workspaces share page-level placement and interaction conventions but
+retain separate iframes, bridges, state, loaders, details, legends, filters,
+caches, and exports.
+
+Runtime data is MySQL-only:
+
+- `api/coexpression.php`
+- `api/coexpression_repository.php`
+- `templates/preview/coexpression_workspace.php`
+- `assets/js/pages/preview/coexpression-mode.js`
+- `assets/js/pages/preview/preview-workspace-mode.js`
+- `assets/js/renderers/g6/coexpression/`
+
+Offline JSON/TSV/manifests under `data/coexpression/` remain scientific
+provenance and importer inputs. Browser/API runtime must not read them.
 
 The current main analysis standard is:
 
 - Network filter: `abs0.4_fdr0.05`
 - Module result: `v1_abs0.4_fdr0.05_res1.8`
-- Display subgraphs: `selected_cases`, `high_confidence`, `all_te`
+- Runtime display unit: one center TE and one context class, capped at 50 nodes
+  and 150 edges
 - Summary tables: `all_te_quality_summary.tsv`,
   `display_tier_recommendations.tsv`
 
@@ -106,8 +121,15 @@ Communication boundary:
 - Co-expression is correlation only.
 - Module enrichment explains the gene context of a module; it does not prove TE
   regulation or causality.
-- `L1HS` is the primary case candidate. `HERVH-int`, `LTR5`, and `CR1` are
-  backup or comparison candidates.
+- Unknown and unavailable TE/context selections never fall back to `L1HS`.
+- Expression activity belongs only to Co-expression. It is requested in a
+  batched TE-only layer from `api/graph_expression.php`; it never infers Gene
+  expression and never changes correlation edges or force parameters.
+- Representative acceptance cases are `L1HS`, `LTR5`, `MER11B`, `HERVH-int`,
+  and `CR1`, including the unavailable `CR1 / cancer_cell_line` case.
+
+The durable browser contract and test matrix are in
+`docs/coexpression/frontend_contract.md`.
 
 ### Agent and DeepThink
 
@@ -211,8 +233,8 @@ plans, documentation, tests, scripts, or durable handoff notes.
    or remove after comparing it with the Canvas demo.
 2. Continue improving the Canvas taxonomy demo until the user accepts the visual
    model, then create a dedicated integration plan.
-3. Keep co-expression frontend design separate from the evidence Graph until the
-   display contract and visual renderer are settled.
+3. Maintain the accepted Co-expression runtime contract, representative matrix,
+   and separation from the Knowledge Graph G6 instance.
 4. Maintain Agent/DeepThink as part of the project when requested, using
    `api/README.md`, `api/docs/intelligent_qa_handoff.md`, and the plugin catalog
    before edits.
@@ -231,9 +253,15 @@ node --check assets/js/renderers/g6/index-g6-shared.js
 node --check assets/js/renderers/g6/index-g6-embed.js
 python scripts/checks/check_g6_static_contract.py
 python scripts/checks/check_g6_browser_smoke.py
+python scripts/checks/check_coexpression_task8_static.py
+python scripts/checks/check_coexpression_task8_browser.py
+python scripts/checks/check_coexpression_task9_static.py
+python scripts/checks/check_coexpression_task9_browser.py
 python scripts/checks/check_taxonomy_runtime_truth.py
 python scripts/checks/check_no_legacy_db_fallback.py
 ```
 
 If `check_taxonomy_runtime_truth.py` fails, inspect whether the failure is a
 pre-existing `index.php` taxonomy-helper issue or caused by current changes.
+The latest full Co-expression acceptance evidence is under
+`docs/eval/runs/2026-07-25-coexpression-dual-mode/`.

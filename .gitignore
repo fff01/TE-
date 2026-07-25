@@ -9,10 +9,15 @@ docs/exec-plans/*
 !docs/exec-plans/active/
 docs/exec-plans/active/*
 !docs/exec-plans/active/all-te-g6-performance-stabilization.md
-!docs/exec-plans/active/coexpression-graph-dual-mode.md
+!docs/exec-plans/active/preview-dual-mode-parity-and-state-stability.md
 !docs/exec-plans/completed/
 docs/exec-plans/completed/*
 !docs/exec-plans/completed/all-te-g6-performance-stabilization.md
+!docs/exec-plans/completed/coexpression-graph-dual-mode.md
+!docs/coexpression/
+docs/coexpression/*
+!docs/coexpression/README.md
+!docs/coexpression/frontend_contract.md
 !docs/eval/
 docs/eval/*
 !docs/eval/runs/
@@ -21,6 +26,8 @@ docs/eval/runs/*
 !docs/eval/runs/2026-07-15-all-te-large-static/**
 !docs/eval/runs/2026-07-19-all-te-classification-pre-dynamic-rebase/
 !docs/eval/runs/2026-07-19-all-te-classification-pre-dynamic-rebase/**
+!docs/eval/runs/2026-07-25-coexpression-dual-mode/
+!docs/eval/runs/2026-07-25-coexpression-dual-mode/**
 !api/docs/
 !api/docs/*.md
 # Python generated files

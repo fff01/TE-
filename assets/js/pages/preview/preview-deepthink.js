@@ -286,6 +286,10 @@
     const graphRelevant = /Graph|Cypher|Analytics|Sequence|Genome/i.test(pluginName);
     if (!graphRelevant) return;
 
+    const workspaceMode = window.__TEKG_PREVIEW_WORKSPACE_MODE;
+    if (workspaceMode && typeof workspaceMode.ensureKnowledgeForGraphAction === 'function') {
+      await workspaceMode.ensureKnowledgeForGraphAction();
+    }
     const bridge = getGraphBridge();
     if (!bridge) return;
     const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};

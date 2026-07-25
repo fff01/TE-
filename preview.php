@@ -19,17 +19,25 @@ $initialQuery = trim((string)($_GET['q'] ?? ''));
 $graphSearchEntityTypes = path_finder_entity_type_options();
 $previewVersion = max(
     (int)@filemtime(__FILE__),
+    (int)@filemtime(__DIR__ . '/templates/preview/knowledge_graph_workspace.php'),
+    (int)@filemtime(__DIR__ . '/templates/preview/coexpression_workspace.php'),
     (int)@filemtime(tekg_assets_fs_path('css/components/te-autocomplete.css')),
     (int)@filemtime(tekg_assets_fs_path('css/pages/preview.css')),
     (int)@filemtime(tekg_assets_fs_path('js/components/te-autocomplete.js')),
     (int)@filemtime(tekg_assets_fs_path('js/components/deepthink-client.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-shell.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-deepthink.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/pages/preview/coexpression-mode.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-workspace-mode.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-type-meta.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/default-tree-mindmap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6.bootstrap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-shared.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-embed.js'))
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-embed.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/coexpression/coexpression-contract.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/coexpression/coexpression-dynamic-adapter.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/coexpression/coexpression-renderer.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/coexpression/coexpression-embed.js'))
 );
 $previewConfig = [
     'deepThinkStreamApiUrl' => tekg_api_url('deep_think_stream.php'),
@@ -41,91 +49,22 @@ $previewConfig = [
 ];
 ?>
       <section class="preview-stage" id="previewStage">
+        <div class="preview-top-controls">
+          <div class="preview-taxonomy-mode" id="previewTaxonomyMode" role="tablist" aria-label="Taxonomy source">
+            <button id="preview-taxonomy-all" class="preview-taxonomy-mode-tab" type="button" role="tab" aria-selected="false" aria-pressed="false">All</button>
+            <button id="preview-taxonomy-rmsk-repbase" class="preview-taxonomy-mode-tab is-active" type="button" role="tab" aria-selected="true" aria-pressed="true">RMSK + RepBase</button>
+          </div>
+          <div class="preview-workspace-mode" id="previewWorkspaceMode" role="tablist" aria-label="Graph workspace mode">
+            <button id="preview-mode-knowledge" class="preview-workspace-mode-tab is-active" type="button" role="tab" aria-controls="previewGraphWorkspace" aria-selected="true" aria-pressed="true">Knowledge Graph</button>
+            <button id="preview-mode-coexpression" class="preview-workspace-mode-tab" type="button" role="tab" aria-controls="previewCoexpressionWorkspace" aria-selected="false" aria-pressed="false">Co-expression</button>
+          </div>
+        </div>
         <button class="preview-fullscreen-btn" id="previewFullscreenBtn" type="button" aria-label="Enter fullscreen preview">
           Fullscreen
         </button>
 
-        <div class="main preview-graph-workspace" id="previewGraphWorkspace">
-          <section class="panel preview-graph-panel" aria-label="TE-KG graph workspace">
-            <div class="toolbar preview-graph-toolbar">
-              <div class="search preview-entity-search">
-                <div class="preview-entity-control">
-                  <select id="graphSearchType" aria-label="Graph search entity type">
-<?php foreach ($graphSearchEntityTypes as $entityType): ?>
-                    <option value="<?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?>"<?= $entityType === 'TE' ? ' selected' : '' ?>><?= htmlspecialchars($entityType, ENT_QUOTES, 'UTF-8') ?></option>
-<?php endforeach; ?>
-                  </select>
-                  <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="path-finder-entities" data-te-autocomplete-type-source="#graphSearchType" data-te-autocomplete-clear-on-type-change="true">
-                    <input id="node-search" type="text" autocomplete="off" placeholder="Select a TE entity" data-te-autocomplete>
-                    <button class="te-autocomplete-toggle" type="button" aria-label="Show graph entity names" aria-expanded="false" data-te-autocomplete-toggle></button>
-                    <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>
-                  </div>
-                  <button id="graph-search-submit" class="preview-search-submit" type="button">Search</button>
-                </div>
-              </div>
-              <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
-                <span id="focus-view-text">Focus mode: Global</span>
-              </button>
-              <button id="toggle-expand-mode" class="expand-mode is-toggle" type="button" aria-pressed="false"><span id="expand-mode-text">Expand mode: Off</span></button>
-              <button id="toggle-non-key-nodes" class="non-key-legacy" type="button" style="display:none">
-                <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
-              </button>
-              <button id="toggle-edge-labels" class="is-toggle" type="button" aria-pressed="false"><span id="edge-labels-text">Show relations: Off</span></button>
-              <button id="graph-expression-layer" class="is-toggle" type="button" aria-pressed="false" aria-label="Expression evidence layer"><span id="graph-expression-layer-text">Expression: Off</span></button>
-              <button id="toggle-fixed-view" class="is-toggle" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
-              <button id="toggle-taxonomy-source" class="is-toggle taxonomy-source-toggle" type="button" aria-pressed="false"><span id="taxonomy-source-text">Switch taxonomy: All</span></button>
-              <button id="back-graph" type="button" disabled hidden><span id="back-text">Back</span></button>
-              <div id="export-menu-wrap" class="graph-export-menu-wrap">
-                <button id="export-menu-toggle" class="graph-export-action" type="button" aria-haspopup="true" aria-expanded="false" disabled>
-                  <span id="export-menu-text">Export</span>
-                </button>
-                <div id="export-menu" class="graph-export-menu" role="menu" hidden>
-                  <button id="export-menu-csv" type="button" role="menuitem">CSV</button>
-                  <button id="export-menu-png" type="button" role="menuitem">PNG</button>
-                  <button id="export-menu-svg" type="button" role="menuitem" disabled aria-disabled="true">SVG <span>Soon</span></button>
-                </div>
-              </div>
-            </div>
-            <div class="g6-surface-stack preview-g6-surface-stack">
-              <div id="cy" style="display:none"></div>
-              <div id="g6-default-tree-surface"></div>
-              <div id="g6-dynamic-surface"></div>
-              <div id="graph-preloader" class="graph-preloader" aria-hidden="true">
-                <div class="graph-preloader-inner">
-                  <div class="graph-preloader-icon" aria-hidden="true">
-                    <span></span>
-                    <span></span>
-                  </div>
-                  <div id="te-mechanism-loader-slot" class="te-mechanism-loader-slot" aria-hidden="true"></div>
-                  <div id="graph-preloader-label" class="graph-preloader-label">Loading graph...</div>
-                </div>
-              </div>
-              <div id="graph-type-legend" class="graph-legend-panel" aria-label="Entity legend" aria-hidden="true" hidden>
-                <div class="graph-legend-mode-switch" role="tablist" aria-label="Graph legend mode">
-                  <button id="graph-legend-entity-tab" class="graph-legend-tab is-active" type="button" data-legend-mode="entity" aria-pressed="true">Entity</button>
-                  <span class="graph-legend-mode-separator" aria-hidden="true">/</span>
-                  <button id="graph-legend-relation-tab" class="graph-legend-tab" type="button" data-legend-mode="relation" aria-pressed="false">Relation</button>
-                </div>
-                <div id="graph-legend-title" class="graph-legend-title">Entity Legend</div>
-                <div id="graph-relation-controls" class="graph-relation-controls" hidden>
-                  <label class="graph-relation-min-pmids-label" for="graph-relation-min-pmids">Min PMID</label>
-                  <input id="graph-relation-min-pmids" class="graph-relation-min-pmids" type="number" min="0" max="99" step="1" value="0">
-                </div>
-                <div id="graph-legend-list" class="graph-legend-list"></div>
-                <div class="graph-legend-footer">
-                  <button id="graph-legend-apply" class="graph-legend-apply" type="button" disabled>Apply</button>
-                </div>
-              </div>
-            </div>
-            <div class="nav" id="search-results-nav" style="display:none">
-              <button id="prev-result" type="button">Prev</button>
-              <span id="result-counter">0/0</span>
-              <span id="result-name"></span>
-              <button id="next-result" type="button">Next</button>
-            </div>
-            <div class="detail" id="node-details">Preparing graph workspace...</div>
-          </section>
-        </div>
+<?php require __DIR__ . '/templates/preview/knowledge_graph_workspace.php'; ?>
+<?php require __DIR__ . '/templates/preview/coexpression_workspace.php'; ?>
 
         <div class="qa-overlay-layer side-dt preview-side-dt-root is-open" id="qaOverlay">
           <aside class="qa-drawer side-dt-drawer" id="qaDrawer">
@@ -178,6 +117,9 @@ $previewConfig = [
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/default-tree-mindmap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-runtime.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6.bootstrap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/coexpression/coexpression-contract.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/coexpression-mode.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/preview-workspace-mode.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/preview-shell.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/preview-deepthink.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
   </main>
