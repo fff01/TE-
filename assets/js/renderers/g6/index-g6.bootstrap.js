@@ -661,13 +661,24 @@
     if (graphIsLoading) {
       const loaderContext = resolveLoaderContext(displayLabel, context);
       renderTeMechanismLoader(loaderContext.kind, loaderContext.label);
+      teLoader?.progress?.({
+        overlay: els.graphLoader,
+        phase: context?.phase || 'request',
+        text: context?.phaseText || 'Requesting graph data...',
+      });
     }
     if (els.graphLoaderLabel) {
       els.graphLoaderLabel.textContent = displayLabel;
     }
     if (!graphIsLoading) {
       renderTeMechanismLoader('default', '');
+      teLoader?.hide?.({ overlay: els.graphLoader, slot: els.mechanismLoaderSlot });
     }
+  }
+
+  function setGraphLoadingPhase(phase, phaseText) {
+    if (!graphIsLoading) return;
+    teLoader?.progress?.({ overlay: els.graphLoader, phase, text: phaseText });
   }
 
   function snapshotState() {
@@ -1826,6 +1837,8 @@
     setGraphLoading(true, loaderLabel, {
       kind: loaderKind,
       label: q,
+      phase: 'request',
+      phaseText: 'Requesting graph data...',
     });
 
     try {
@@ -1839,10 +1852,12 @@
       if (!bridge || typeof bridge.loadGraph !== 'function') {
         throw new Error('G6 embed bridge cannot load graph requests');
       }
+      setGraphLoadingPhase('prepare', 'Preparing and transforming graph data...');
       if (typeof bridge.setLegendFocus === 'function') {
         await bridge.setLegendFocus(null);
       }
 
+      setGraphLoadingPhase('render', 'Rendering graph and running force layout...');
       const payload = await bridge.loadGraph(request, {
         graphDataOptions: buildCurrentGraphDataOptions(),
       });

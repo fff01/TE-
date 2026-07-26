@@ -48,7 +48,13 @@
                     <span></span>
                   </div>
                   <div id="te-mechanism-loader-slot" class="te-mechanism-loader-slot" aria-hidden="true"></div>
-                  <div id="graph-preloader-label" class="graph-preloader-label">Loading graph...</div>
+                  <div class="graph-preloader-status" role="status" aria-live="polite">
+                    <div id="graph-preloader-label" class="graph-preloader-label">Loading graph...</div>
+                    <div id="graph-preloader-progress" class="graph-preloader-progress" role="progressbar" aria-label="Graph loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                      <span class="graph-preloader-progress-fill"></span>
+                    </div>
+                    <div id="graph-preloader-phase" class="graph-preloader-phase">Requesting graph data...</div>
+                  </div>
                 </div>
               </div>
               <div id="graph-type-legend" class="graph-legend-panel" aria-label="Entity legend" aria-hidden="true" hidden>

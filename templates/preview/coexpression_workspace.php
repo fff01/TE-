@@ -44,7 +44,13 @@
                     <span></span>
                     <span></span>
                   </div>
-                  <div id="coexpression-preloader-label" class="graph-preloader-label">Loading co-expression network...</div>
+                  <div class="graph-preloader-status" role="status" aria-live="polite">
+                    <div id="coexpression-preloader-label" class="graph-preloader-label">Loading co-expression network...</div>
+                    <div id="coexpression-preloader-progress" class="graph-preloader-progress" role="progressbar" aria-label="Co-expression loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                      <span class="graph-preloader-progress-fill"></span>
+                    </div>
+                    <div id="coexpression-preloader-phase" class="graph-preloader-phase">Requesting co-expression data...</div>
+                  </div>
                 </div>
               </div>
               <div id="coexpression-state" class="coexpression-state" role="status" aria-live="polite" hidden>

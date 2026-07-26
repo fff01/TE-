@@ -582,16 +582,48 @@
           animation-delay: -0.8s;
         }
 
-        .graph-preloader-label {
+        .graph-preloader-status {
           position: absolute;
           top: calc(100% + 14px);
           left: 50%;
           transform: translateX(-50%);
+          width: min(360px, calc(100vw - 64px));
+          text-align: center;
+        }
+
+        .graph-preloader-label {
           white-space: nowrap;
           font-size: 14px;
           font-weight: 700;
           color: #1d4ed8;
           letter-spacing: 0.01em;
+        }
+
+        .graph-preloader-progress {
+          width: 100%;
+          height: 6px;
+          margin-top: 12px;
+          overflow: hidden;
+          border-radius: 3px;
+          background: #dbe7ff;
+          box-shadow: inset 0 0 0 1px rgba(59, 91, 181, 0.08);
+        }
+
+        .graph-preloader-progress-fill {
+          display: block;
+          width: 0;
+          height: 100%;
+          border-radius: inherit;
+          background: #3159d9;
+          transition: width 320ms ease-out;
+        }
+
+        .graph-preloader-phase {
+          min-height: 18px;
+          margin-top: 8px;
+          font-size: 12px;
+          font-weight: 500;
+          color: #64748b;
         }
 
         .te-mechanism-loader-slot {

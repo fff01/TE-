@@ -1,22 +1,6 @@
 <?php
 require_once __DIR__ . '/path_config.php';
 require_once __DIR__ . '/api/path_finder_service.php';
-$pageTitle = 'TE-KG Preview';
-$activePage = 'preview';
-$protoCurrentPath = tekg_app_url('preview.php');
-$protoSubtitle = 'Interactive graph preview';
-$protoMainClass = 'preview-main';
-$pageExtraStylesheets = [
-    tekg_assets_url('css/tekg_runtime.css'),
-    tekg_assets_url('css/components/te-autocomplete.css'),
-    tekg_assets_url('css/components/side-deepthink.css'),
-    tekg_assets_url('css/pages/preview.css'),
-];
-require __DIR__ . '/head.php';
-
-$siteLang = site_lang();
-$initialQuery = trim((string)($_GET['q'] ?? ''));
-$graphSearchEntityTypes = path_finder_entity_type_options();
 $previewVersion = max(
     (int)@filemtime(__FILE__),
     (int)@filemtime(__DIR__ . '/templates/preview/knowledge_graph_workspace.php'),
@@ -43,6 +27,22 @@ $previewVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/coexpression/coexpression-renderer.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/coexpression/coexpression-embed.js'))
 );
+$pageTitle = 'TE-KG Preview';
+$activePage = 'preview';
+$protoCurrentPath = tekg_app_url('preview.php');
+$protoSubtitle = 'Interactive graph preview';
+$protoMainClass = 'preview-main';
+$pageExtraStylesheets = [
+    tekg_assets_url('css/tekg_runtime.css') . '?v=' . $previewVersion,
+    tekg_assets_url('css/components/te-autocomplete.css') . '?v=' . $previewVersion,
+    tekg_assets_url('css/components/side-deepthink.css') . '?v=' . $previewVersion,
+    tekg_assets_url('css/pages/preview.css') . '?v=' . $previewVersion,
+];
+require __DIR__ . '/head.php';
+
+$siteLang = site_lang();
+$initialQuery = trim((string)($_GET['q'] ?? ''));
+$graphSearchEntityTypes = path_finder_entity_type_options();
 $previewConfig = [
     'deepThinkStreamApiUrl' => tekg_api_url('deep_think_stream.php'),
     'sessionStorageKey' => 'tekg-preview-deepthink-session',

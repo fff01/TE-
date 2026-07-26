@@ -190,6 +190,51 @@
     };
   }
 
+  const progressTimers = new WeakMap();
+  const progressPhases = {
+    request: { value: 10, ceiling: 34, text: 'Requesting graph data...' },
+    prepare: { value: 42, ceiling: 64, text: 'Preparing and transforming graph data...' },
+    render: { value: 72, ceiling: 95, text: 'Rendering graph and running force layout...' },
+    complete: { value: 100, ceiling: 100, text: 'Graph ready.' },
+  };
+
+  function stopProgress(overlay) {
+    const timer = overlay ? progressTimers.get(overlay) : 0;
+    if (timer) window.clearInterval(timer);
+    if (overlay) progressTimers.delete(overlay);
+  }
+
+  function setProgress({ overlay, phase = 'request', text = '', value = null }) {
+    if (!overlay) return null;
+    stopProgress(overlay);
+    const config = progressPhases[phase] || progressPhases.request;
+    const progress = overlay.querySelector('.graph-preloader-progress');
+    const fill = overlay.querySelector('.graph-preloader-progress-fill');
+    const phaseLabel = overlay.querySelector('.graph-preloader-phase');
+    let current = Math.max(0, Math.min(100, Number.isFinite(value) ? value : config.value));
+
+    const paint = () => {
+      if (fill) fill.style.width = `${current.toFixed(1)}%`;
+      if (progress) progress.setAttribute('aria-valuenow', String(Math.round(current)));
+    };
+    paint();
+    if (phaseLabel) phaseLabel.textContent = text || config.text;
+
+    if (config.ceiling > current && phase !== 'complete') {
+      const timer = window.setInterval(() => {
+        const remaining = config.ceiling - current;
+        if (remaining <= 0.25) {
+          stopProgress(overlay);
+          return;
+        }
+        current = Math.min(config.ceiling, current + Math.max(0.35, remaining * 0.08));
+        paint();
+      }, 350);
+      progressTimers.set(overlay, timer);
+    }
+    return { phase, value: current, text: text || config.text };
+  }
+
   function render({ overlay, slot, kind, label, colors = {} }) {
     const safeKind = kind === 'retro' || kind === 'dna' ? kind : 'default';
     const palette = { ...defaultColors(), ...colors };
@@ -210,22 +255,25 @@
     return { kind: safeKind, label: normalize(label), rendered: true };
   }
 
-  function show({ overlay, slot, label, nodeOrQuery, kind }) {
+  function show({ overlay, slot, label, nodeOrQuery, kind, phase = 'request', phaseText = '' }) {
     const explicitNodeLabel = typeof nodeOrQuery === 'string' ? normalize(nodeOrQuery) : '';
     const cleanLabel = explicitNodeLabel || labelFromText(label) || 'TE';
     if (overlay) {
       overlay.classList.add('is-visible');
       overlay.setAttribute('aria-hidden', 'false');
     }
-    return render({
+    const result = render({
       overlay,
       slot,
       kind: ['retro', 'dna', 'default'].includes(kind) ? kind : classify(nodeOrQuery || cleanLabel),
       label: cleanLabel,
     });
+    setProgress({ overlay, phase, text: phaseText });
+    return result;
   }
 
   function hide({ overlay, slot }) {
+    stopProgress(overlay);
     if (overlay) {
       overlay.classList.remove('is-visible');
       overlay.setAttribute('aria-hidden', 'true');
@@ -233,5 +281,13 @@
     return render({ overlay, slot, kind: 'default', label: '' });
   }
 
-  window.__TEKG_TE_LOADER = { classify, resolveKind, show, hide, render, labelFromText };
+  window.__TEKG_TE_LOADER = {
+    classify,
+    resolveKind,
+    show,
+    hide,
+    render,
+    progress: setProgress,
+    labelFromText,
+  };
 }());

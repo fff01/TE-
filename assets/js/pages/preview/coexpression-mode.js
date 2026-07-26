@@ -108,6 +108,12 @@
     currentState = state;
     const loading = LOADING_STATES.has(state);
     const loader = window.__TEKG_TE_LOADER;
+    const progress = {
+      'loading-catalog': { phase: 'request', text: 'Checking available co-expression data...' },
+      'loading-network': { phase: 'request', text: 'Requesting co-expression data...' },
+      'loading-iframe': { phase: 'prepare', text: 'Preparing and transforming graph data...' },
+      rendering: { phase: 'render', text: 'Rendering graph and running force layout...' },
+    }[state] || { phase: 'request', text: 'Requesting co-expression data...' };
     const loadingFeature = selectionFeature(currentSelection) || String(els.te?.value || '').trim();
     const publicMessage = loading
       ? (loadingFeature ? `Loading ${loadingFeature} co-expression network...` : 'Loading co-expression network...')
@@ -119,6 +125,8 @@
         label: publicMessage,
         nodeOrQuery: loadingFeature || normalizeFeatureType(els.searchType?.value),
         kind: loaderKind,
+        phase: progress.phase,
+        phaseText: progress.text,
       });
     } else {
       loader?.hide({ overlay: els.preloader, slot: els.mechanismLoaderSlot });

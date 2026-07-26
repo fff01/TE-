@@ -1705,3 +1705,5 @@
 [0725/042721.625:ERROR:cc\raster\one_copy_raster_buffer_provider.cc:282] Creation of StagingBuffer's SharedImage failed.
 [0726/232905.403:ERROR:components\viz\service\display\display.cc:272] Frame latency is negative: -0.183 ms
 [0726/234830.824:ERROR:components\viz\service\display\display.cc:272] Frame latency is negative: -0.116 ms
+[0727/002022.747:ERROR:components\viz\service\display\display.cc:272] Frame latency is negative: -0.186 ms
+[0727/002034.079:ERROR:components\viz\service\display\display.cc:272] Frame latency is negative: -0.135 ms

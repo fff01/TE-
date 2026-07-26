@@ -84,6 +84,15 @@ activations must not restore a captured `loading-*` state. Rejected catalog and
 iframe-bridge promises are cleared so Retry performs a fresh attempt rather than
 reusing a permanently rejected promise.
 
+Both graph modes use the shared TE loader's staged progress contract. The bar
+advances within bounded request, data-preparation, and render/layout ranges; it
+may creep within the active range but never claims completion before the graph
+operation settles. The primary loading label remains above the bar and the
+smaller current-phase label remains below it.
+`preview.php` computes the shared preview asset version before rendering
+`head.php` and applies it to the page stylesheets as well as the scripts. This
+prevents new loader markup from being paired with cached pre-progress CSS.
+
 ## Current Risks
 
 - G6 browser smoke tests can expose blank canvases and stuck loader states.
