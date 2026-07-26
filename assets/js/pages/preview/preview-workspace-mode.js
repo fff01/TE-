@@ -16,26 +16,40 @@
   const coexpressionContextControl = coexpressionWorkspace?.querySelector('.coexpression-context-control');
   const coexpressionMode = window.__TEKG_COEXPRESSION_MODE;
   if (
-    !knowledgeWorkspace
-    || !coexpressionWorkspace
-    || !workspaceControl
-    || !topControls
-    || !knowledgeTab
-    || !coexpressionTab
-    || !taxonomyControl
-    || !taxonomyAllTab
-    || !taxonomyRmskRepbaseTab
-    || !knowledgeToolbar
-    || !coexpressionToolbar
-    || !edgeLabelsButton
-    || !coexpressionContextControl
-    || !coexpressionMode
+    !knowledgeWorkspace || !coexpressionWorkspace || !workspaceControl || !topControls
+    || !knowledgeTab || !coexpressionTab || !taxonomyControl || !taxonomyAllTab
+    || !taxonomyRmskRepbaseTab || !knowledgeToolbar || !coexpressionToolbar
+    || !edgeLabelsButton || !coexpressionContextControl || !coexpressionMode
   ) return;
 
   let currentMode = 'knowledge';
   let knowledgeGraphMode = 'tree';
   let transitionEpoch = 0;
   let switchCount = 0;
+  let pendingKnowledgeLoads = 0;
+  let knowledgeLoadKey = '';
+  let knowledgeLoadPromise = null;
+  let retainedKnowledgeState = window.__TEKG_G6_BRIDGE?.getState?.() || {};
+
+  async function loadKnowledgeGraph(request) {
+    const bridge = window.__TEKG_G6_BRIDGE;
+    if (!bridge?.loadGraph) return null;
+    const key = `${String(request?.queryType || 'TE').toUpperCase()}\u0000${String(request?.query || '').toLowerCase()}`;
+    if (knowledgeLoadPromise && knowledgeLoadKey === key) return knowledgeLoadPromise;
+    pendingKnowledgeLoads += 1;
+    knowledgeLoadKey = key;
+    const promise = Promise.resolve(bridge.loadGraph(request));
+    knowledgeLoadPromise = promise;
+    try {
+      return await promise;
+    } finally {
+      pendingKnowledgeLoads = Math.max(0, pendingKnowledgeLoads - 1);
+      if (knowledgeLoadPromise === promise) {
+        knowledgeLoadPromise = null;
+        knowledgeLoadKey = '';
+      }
+    }
+  }
 
   function updateTab(tab, selected) {
     tab.classList.toggle('is-active', selected);
@@ -47,23 +61,9 @@
   function placeTopControls(mode) {
     if (mode === 'coexpression') {
       coexpressionToolbar.insertBefore(topControls, coexpressionContextControl);
-      return;
+    } else {
+      knowledgeToolbar.insertBefore(topControls, edgeLabelsButton);
     }
-    knowledgeToolbar.insertBefore(topControls, edgeLabelsButton);
-  }
-
-  function setWorkspaceVisibility(mode) {
-    const showKnowledge = mode === 'knowledge';
-    placeTopControls(mode);
-    knowledgeWorkspace.hidden = !showKnowledge;
-    knowledgeWorkspace.setAttribute('aria-hidden', showKnowledge ? 'false' : 'true');
-    if (showKnowledge) {
-      coexpressionWorkspace.hidden = true;
-      coexpressionWorkspace.setAttribute('aria-hidden', 'true');
-    }
-    updateTab(knowledgeTab, showKnowledge);
-    updateTab(coexpressionTab, !showKnowledge);
-    syncTopControlVisibility();
   }
 
   function syncTopControlVisibility() {
@@ -74,6 +74,18 @@
     workspaceControl.setAttribute('aria-hidden', showTaxonomyControl ? 'true' : 'false');
   }
 
+  function setWorkspaceVisibility(mode) {
+    const showKnowledge = mode === 'knowledge';
+    placeTopControls(mode);
+    knowledgeWorkspace.hidden = !showKnowledge;
+    knowledgeWorkspace.setAttribute('aria-hidden', showKnowledge ? 'false' : 'true');
+    coexpressionWorkspace.hidden = showKnowledge;
+    coexpressionWorkspace.setAttribute('aria-hidden', showKnowledge ? 'true' : 'false');
+    updateTab(knowledgeTab, showKnowledge);
+    updateTab(coexpressionTab, !showKnowledge);
+    syncTopControlVisibility();
+  }
+
   function notifyModeChange() {
     window.dispatchEvent(new CustomEvent('tekg:preview-workspace-mode-change', {
       detail: { mode: currentMode },
@@ -82,35 +94,60 @@
   }
 
   function resizeKnowledgeGraph() {
-    const bridge = window.__TEKG_G6_BRIDGE;
-    if (bridge && typeof bridge.resize === 'function') {
-      try {
-        bridge.resize();
-      } catch (_error) {}
-    }
+    try {
+      window.__TEKG_G6_BRIDGE?.resize?.();
+    } catch (_error) {}
   }
 
-  function syncRoute(mode, selection = null, historyAction = 'none') {
-    if (historyAction !== 'push' && historyAction !== 'replace') return false;
-    const url = new URL(window.location.href);
-    if (mode === 'coexpression') {
-      url.searchParams.set('mode', 'coexpression');
-      const te = String(selection?.te || '').trim();
-      const context = String(selection?.context || '').trim();
-      if (te) url.searchParams.set('te', te);
-      else url.searchParams.delete('te');
-      if (context) url.searchParams.set('context', context);
-      else url.searchParams.delete('context');
+  function clearGraphParams(url) {
+    ['mode', 'te', 'gene', 'context', 'q', 'type', 'class', 'tree'].forEach((key) => {
+      url.searchParams.delete(key);
+    });
+    return url;
+  }
+
+  function routeForKnowledge(state = {}) {
+    const url = clearGraphParams(new URL(window.location.href));
+    const mode = String(state.mode || 'tree');
+    if (mode === 'dynamic') {
+      const query = String(state.query || '').trim();
+      const queryType = String(state.queryType || 'TE').trim() || 'TE';
+      if (query) {
+        url.searchParams.set('q', query);
+        url.searchParams.set('type', queryType);
+      }
+      if (queryType === 'disease_class' && state.classQuery) {
+        url.searchParams.set('class', String(state.classQuery));
+      }
     } else {
-      url.searchParams.delete('mode');
-      url.searchParams.delete('te');
-      url.searchParams.delete('context');
+      url.searchParams.set('tree', state.treeVariant === 'all' ? 'all' : 'rmsk_repbase');
     }
+    return url;
+  }
+
+  function routeForCoexpression(selection = {}) {
+    selection = selection || {};
+    const url = clearGraphParams(new URL(window.location.href));
+    url.searchParams.set('mode', 'coexpression');
+    const featureType = String(selection.featureType || selection.feature_type || (selection.gene ? 'Gene' : 'TE')).toLowerCase() === 'gene' ? 'Gene' : 'TE';
+    const feature = String(selection.feature || selection.gene || selection.te || '').trim();
+    const context = String(selection.context || '').trim();
+    if (featureType === 'Gene' && feature) url.searchParams.set('gene', feature);
+    if (featureType === 'TE' && feature) url.searchParams.set('te', feature);
+    if (context) url.searchParams.set('context', context);
+    return url;
+  }
+
+  function writeRoute(action, state) {
+    if (action !== 'push' && action !== 'replace') return false;
+    const url = state.mode === 'coexpression'
+      ? routeForCoexpression(state.selection)
+      : routeForKnowledge(state.knowledge);
     const next = `${url.pathname}${url.search}${url.hash}`;
     const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     if (next === current) return false;
-    window.history[historyAction === 'replace' ? 'replaceState' : 'pushState'](
-      { tekgPreviewMode: mode, selection },
+    window.history[action === 'replace' ? 'replaceState' : 'pushState'](
+      { tekgPreviewMode: state.mode, selection: state.selection || null },
       '',
       next,
     );
@@ -130,58 +167,166 @@
     updateTaxonomyTab(taxonomyRmskRepbaseTab, selected === 'rmsk_repbase');
   }
 
-  async function setTreeVariant(variant) {
+  async function setTreeVariant(variant, options = {}) {
     if (currentMode !== 'knowledge') return false;
     const bridge = window.__TEKG_G6_BRIDGE;
     if (!bridge || typeof bridge.setTreeVariant !== 'function') return false;
     const nextVariant = variant === 'all' ? 'all' : 'rmsk_repbase';
     await bridge.setTreeVariant(nextVariant);
     syncTaxonomyMode(nextVariant);
+    const state = bridge.getState?.() || { mode: 'tree', treeVariant: nextVariant };
+    retainedKnowledgeState = state;
+    writeRoute(options.history || 'push', { mode: 'knowledge', knowledge: state });
     return true;
+  }
+
+  async function selectionFromKnowledge(options = {}) {
+    const state = window.__TEKG_G6_BRIDGE?.getState?.() || retainedKnowledgeState || {};
+    retainedKnowledgeState = state;
+    if (String(state.mode) !== 'dynamic') return null;
+    const rawFeatureType = String(state.queryType || 'TE').trim().toLowerCase();
+    if (rawFeatureType !== 'te' && rawFeatureType !== 'gene') return null;
+    const featureType = rawFeatureType === 'gene' ? 'Gene' : 'TE';
+    const query = String(state.query || '').trim();
+    if (!query) return null;
+    const exact = await coexpressionMode.resolveExactFeature(query, featureType);
+    return {
+      feature: exact?.feature || query,
+      featureType,
+      ...(featureType === 'Gene' ? { gene: exact?.feature || query } : { te: exact?.feature || query }),
+      context: String(options.context || '').trim(),
+    };
   }
 
   async function setMode(mode, options = {}) {
     const requestedMode = mode === 'coexpression' ? 'coexpression' : 'knowledge';
-    const hasSelectionOverride = options.clearSelection === true
-      || !!String(options.te || options.context || '').trim();
     const epoch = ++transitionEpoch;
     const changed = requestedMode !== currentMode;
-    if (!changed && !hasSelectionOverride) return currentMode;
-    currentMode = requestedMode;
-    if (changed) switchCount += 1;
+    const explicitFeatureType = String(options.featureType || (options.gene ? 'Gene' : 'TE')).toLowerCase() === 'gene' ? 'Gene' : 'TE';
+    const explicitFeature = String(options.feature || options.gene || options.te || '').trim();
+    const explicitContext = String(options.context || '').trim();
 
-    setWorkspaceVisibility(requestedMode);
     if (requestedMode === 'knowledge') {
+      const coexpressionState = coexpressionMode.getDiagnostics();
+      const hasStableCoexpressionView = ['ready', 'empty', 'unavailable'].includes(
+        coexpressionState.state,
+      );
+      const coexpressionSelection = !options.restoreRoute && hasStableCoexpressionView
+        ? (coexpressionState.stableSelection || coexpressionState.selection)
+        : null;
+      currentMode = 'knowledge';
+      if (changed) switchCount += 1;
+      setWorkspaceVisibility('knowledge');
       await coexpressionMode.deactivate();
       if (epoch !== transitionEpoch) return currentMode;
+
+      const selectedFeature = String(coexpressionSelection?.feature || coexpressionSelection?.gene || coexpressionSelection?.te || '').trim();
+      const selectedFeatureType = String(coexpressionSelection?.featureType || coexpressionSelection?.feature_type || (coexpressionSelection?.gene ? 'Gene' : 'TE')).toLowerCase() === 'gene' ? 'Gene' : 'TE';
+      if (selectedFeature) {
+        const knowledge = {
+          mode: 'dynamic',
+          query: selectedFeature,
+          queryType: selectedFeatureType,
+          classQuery: '',
+        };
+        retainedKnowledgeState = knowledge;
+        writeRoute(options.history, { mode: 'knowledge', knowledge });
+        const bridge = window.__TEKG_G6_BRIDGE;
+        const state = bridge?.getState?.() || {};
+        const alreadyLoaded = state.mode === 'dynamic'
+          && String(state.query || '').toLowerCase() === selectedFeature.toLowerCase()
+          && String(state.queryType || 'TE').toLowerCase() === selectedFeatureType.toLowerCase();
+        if (!alreadyLoaded) {
+          await loadKnowledgeGraph({
+            query: selectedFeature,
+            queryType: selectedFeatureType,
+          });
+        }
+      } else if (options.restoreRoute) {
+        const route = options.restoreRoute;
+        if (route.query) {
+          await loadKnowledgeGraph({
+            query: route.query,
+            queryType: route.queryType || 'TE',
+            classQuery: route.classQuery || '',
+          });
+        } else {
+          await window.__TEKG_G6_BRIDGE?.setTreeVariant?.(route.treeVariant || 'rmsk_repbase');
+        }
+      }
+      if (epoch !== transitionEpoch) return currentMode;
       resizeKnowledgeGraph();
-      syncRoute('knowledge', null, options.history);
       notifyModeChange();
       return currentMode;
     }
 
-    const coexpressionState = coexpressionMode.getDiagnostics();
-    const stableCoexpressionState = coexpressionState.state !== 'idle'
-      && coexpressionState.state !== 'loading-catalog'
-      && coexpressionState.state !== 'loading-network'
-      && coexpressionState.state !== 'loading-iframe'
-      && coexpressionState.state !== 'rendering';
-    const canResume = !hasSelectionOverride
-      && stableCoexpressionState
-      && (coexpressionState.state !== 'ready' || coexpressionState.iframeCount === 1);
-    if (canResume && typeof coexpressionMode.resume === 'function') {
-      await coexpressionMode.resume();
+    let selection = explicitFeature ? {
+      feature: explicitFeature,
+      featureType: explicitFeatureType,
+      ...(explicitFeatureType === 'Gene' ? { gene: explicitFeature } : { te: explicitFeature }),
+      context: explicitContext,
+    } : null;
+    if (!selection && currentMode === 'knowledge') {
+      selection = await selectionFromKnowledge({ context: explicitContext });
+      if (epoch !== transitionEpoch) return currentMode;
+    }
+    if (!selection) {
+      const retained = coexpressionMode.getDiagnostics().selection;
+      if (retained?.feature || retained?.gene || retained?.te) selection = { ...retained };
+    }
+    if (knowledgeLoadPromise) {
+      try {
+        await knowledgeLoadPromise;
+      } catch (_error) {}
+      if (epoch !== transitionEpoch) return currentMode;
+    }
+
+    currentMode = 'coexpression';
+    if (changed) switchCount += 1;
+    setWorkspaceVisibility('coexpression');
+    const selectedFeature = String(selection?.feature || selection?.gene || selection?.te || '').trim();
+    const selectedFeatureType = String(selection?.featureType || selection?.feature_type || (selection?.gene ? 'Gene' : 'TE')).toLowerCase() === 'gene' ? 'Gene' : 'TE';
+    if (selectedFeature) {
+      const existing = coexpressionMode.getDiagnostics();
+      const accepted = {
+        feature: selectedFeature,
+        featureType: selectedFeatureType,
+        ...(selectedFeatureType === 'Gene' ? { gene: selectedFeature } : { te: selectedFeature }),
+        context: selection.context || existing.selection?.context || '',
+      };
+      writeRoute(options.history, { mode: 'coexpression', selection: accepted });
+      const stable = ![
+        'idle', 'loading-catalog', 'loading-network', 'loading-expression',
+        'loading-iframe', 'rendering',
+      ].includes(existing.state);
+      const sameSelection = String(existing.selection?.feature || existing.selection?.gene || existing.selection?.te || '').toLowerCase() === accepted.feature.toLowerCase()
+        && String(existing.selection?.featureType || existing.selection?.feature_type || (existing.selection?.gene ? 'Gene' : 'TE')).toLowerCase() === accepted.featureType.toLowerCase()
+        && String(existing.selection?.context || '') === String(accepted.context || '');
+      if (changed && stable && sameSelection) {
+        await coexpressionMode.resume();
+      } else {
+        await coexpressionMode.activate(accepted);
+      }
+      const resolvedSelection = coexpressionMode.getDiagnostics().selection;
+      if (resolvedSelection?.feature || resolvedSelection?.gene || resolvedSelection?.te) {
+        writeRoute('replace', { mode: 'coexpression', selection: resolvedSelection });
+      }
     } else {
-      await coexpressionMode.activate({
-        te: options.te,
-        context: options.context,
-      });
+      writeRoute(options.history, { mode: 'coexpression', selection: null });
+      await coexpressionMode.activate({});
     }
     if (epoch !== transitionEpoch) return currentMode;
-    const nextCoexpressionState = coexpressionMode.getDiagnostics();
-    syncRoute('coexpression', nextCoexpressionState.selection, options.history);
     notifyModeChange();
     return currentMode;
+  }
+
+  function requestCoexpressionSelection(selection, options = {}) {
+    return setMode('coexpression', {
+      feature: selection?.feature || selection?.gene || selection?.te,
+      featureType: selection?.featureType || selection?.feature_type || (selection?.gene ? 'Gene' : 'TE'),
+      context: selection?.context,
+      history: options.history || 'push',
+    });
   }
 
   function ensureKnowledgeForGraphAction() {
@@ -196,6 +341,7 @@
       coexpressionVisible: !coexpressionWorkspace.hidden,
       knowledgeSelected: knowledgeTab.getAttribute('aria-selected') === 'true',
       coexpressionSelected: coexpressionTab.getAttribute('aria-selected') === 'true',
+      pendingKnowledgeLoads,
     };
   }
 
@@ -203,18 +349,29 @@
     void setMode('knowledge', { history: 'push' });
   });
   coexpressionTab.addEventListener('click', () => {
-    void setMode('coexpression', { history: 'push', clearSelection: false });
+    void setMode('coexpression', { history: 'push' });
   });
   taxonomyAllTab.addEventListener('click', () => {
-    void setTreeVariant('all');
+    void setTreeVariant('all', { history: 'push' });
   });
   taxonomyRmskRepbaseTab.addEventListener('click', () => {
-    void setTreeVariant('rmsk_repbase');
+    void setTreeVariant('rmsk_repbase', { history: 'push' });
   });
+
   window.addEventListener('tekg:g6-state-change', (event) => {
+    retainedKnowledgeState = event.detail || retainedKnowledgeState;
     knowledgeGraphMode = String(event.detail?.mode || knowledgeGraphMode);
     syncTaxonomyMode(event.detail?.treeVariant);
     syncTopControlVisibility();
+  });
+
+  window.addEventListener('tekg:g6-navigation', (event) => {
+    retainedKnowledgeState = event.detail || retainedKnowledgeState;
+    if (currentMode !== 'knowledge') return;
+    writeRoute(event.detail?.history || 'push', {
+      mode: 'knowledge',
+      knowledge: retainedKnowledgeState,
+    });
   });
 
   [knowledgeTab, coexpressionTab].forEach((tab) => {
@@ -222,43 +379,58 @@
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
       event.preventDefault();
       const nextMode = currentMode === 'knowledge' ? 'coexpression' : 'knowledge';
-      const nextTab = nextMode === 'knowledge' ? knowledgeTab : coexpressionTab;
-      nextTab.focus();
+      (nextMode === 'knowledge' ? knowledgeTab : coexpressionTab).focus();
       void setMode(nextMode, { history: 'push' });
     });
   });
 
   window.__TEKG_PREVIEW_WORKSPACE_MODE = {
     setMode,
+    requestCoexpressionSelection,
     getMode: () => currentMode,
     getDiagnostics,
     ensureKnowledgeForGraphAction,
     setTreeVariant,
+    routeForKnowledge,
+    routeForCoexpression,
+    writeRoute,
   };
 
-  const initialKnowledgeState = window.__TEKG_G6_BRIDGE?.getState?.() || {};
-  knowledgeGraphMode = String(initialKnowledgeState.mode || 'tree');
+  knowledgeGraphMode = String(retainedKnowledgeState.mode || 'tree');
   setWorkspaceVisibility('knowledge');
-  syncTaxonomyMode(initialKnowledgeState.treeVariant);
+  syncTaxonomyMode(retainedKnowledgeState.treeVariant);
+
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'coexpression') {
+    const gene = params.get('gene') || '';
     void setMode('coexpression', {
-      te: params.get('te') || undefined,
+      feature: gene || params.get('te') || undefined,
+      featureType: gene ? 'Gene' : 'TE',
       context: params.get('context') || undefined,
-      clearSelection: !params.get('te'),
+      history: 'none',
     });
   }
+
   window.addEventListener('popstate', () => {
     const route = new URLSearchParams(window.location.search);
     if (route.get('mode') === 'coexpression') {
+      const gene = route.get('gene') || '';
       void setMode('coexpression', {
-        te: route.get('te') || undefined,
+        feature: gene || route.get('te') || undefined,
+        featureType: gene ? 'Gene' : 'TE',
         context: route.get('context') || undefined,
-        clearSelection: !route.get('te'),
         history: 'none',
       });
       return;
     }
-    void setMode('knowledge', { history: 'none' });
+    void setMode('knowledge', {
+      history: 'none',
+      restoreRoute: {
+        query: route.get('q') || '',
+        queryType: route.get('type') || 'TE',
+        classQuery: route.get('class') || '',
+        treeVariant: route.get('tree') || 'rmsk_repbase',
+      },
+    });
   });
 })();

@@ -32,18 +32,99 @@ function tekg_coexpression_catalog(): array {
     $items=[]; foreach($rows as $row){$te=$row['center_te']; if(!isset($items[$te]))$items[$te]=['te'=>$te,'available_contexts'=>[],'best_tier'=>null,'recommended_default'=>false,'_p'=>-1]; $items[$te]['available_contexts'][]=$row['context_key']; $p=TEKG_COEXPRESSION_TIER_PRIORITY[$row['display_tier']]??-1; if($p>$items[$te]['_p']){$items[$te]['_p']=$p;$items[$te]['best_tier']=$row['display_tier'];}$items[$te]['recommended_default']=$items[$te]['recommended_default']||((int)$row['recommended_default']===1);}
     foreach($items as &$item){sort($item['available_contexts']);unset($item['_p']);} unset($item);
     $items = array_values($items); usort($items, static fn(array $a, array $b): int => strnatcasecmp($a['te'], $b['te']));
+    $geneRows=tekg_coexpression_rows(
+        "SELECT DISTINCT n.label gene, w.context_key, w.display_tier, w.recommended_default
+         FROM coexpression_networks w
+         JOIN coexpression_network_nodes n ON n.network_id=w.id
+         WHERE w.version_id=? AND n.feature_type='gene'
+         ORDER BY n.label COLLATE utf8mb4_general_ci, w.context_key",
+        [(int)$v['id']],
+        'i'
+    );
+    $geneItems=[];
+    foreach($geneRows as $row){
+        $gene=trim((string)$row['gene']);
+        if($gene==='')continue;
+        if(!isset($geneItems[$gene]))$geneItems[$gene]=['gene'=>$gene,'available_contexts'=>[],'best_tier'=>null,'_p'=>-1];
+        $geneItems[$gene]['available_contexts'][]=$row['context_key'];
+        $p=TEKG_COEXPRESSION_TIER_PRIORITY[$row['display_tier']]??-1;
+        if($p>$geneItems[$gene]['_p']){$geneItems[$gene]['_p']=$p;$geneItems[$gene]['best_tier']=$row['display_tier'];}
+    }
+    foreach($geneItems as &$item){$item['available_contexts']=array_values(array_unique($item['available_contexts']));sort($item['available_contexts']);unset($item['_p']);} unset($item);
+    $geneItems=array_values($geneItems);usort($geneItems,static fn(array $a,array $b):int=>strnatcasecmp($a['gene'],$b['gene']));
     $thresholds=json_decode((string)$v['thresholds_json'],true); if(!is_array($thresholds))throw new CoexpressionRepositoryException('data_contract_error','The co-expression version metadata is invalid.');
-    return ['version'=>$v['version_key'],'method'=>$v['method'],'thresholds'=>$thresholds,'default_selection'=>['te'=>$v['default_te'],'context'=>$v['default_context']],'contexts'=>array_map(static fn($id,$label)=>['id'=>$id,'label'=>$label],array_keys(TEKG_COEXPRESSION_CONTEXTS),array_values(TEKG_COEXPRESSION_CONTEXTS)),'items'=>$items,'interpretation_limit'=>$v['interpretation_limit']];
+    return ['version'=>$v['version_key'],'method'=>$v['method'],'thresholds'=>$thresholds,'default_selection'=>['feature'=>$v['default_te'],'feature_type'=>'TE','te'=>$v['default_te'],'context'=>$v['default_context']],'contexts'=>array_map(static fn($id,$label)=>['id'=>$id,'label'=>$label],array_keys(TEKG_COEXPRESSION_CONTEXTS),array_values(TEKG_COEXPRESSION_CONTEXTS)),'items'=>$items,'gene_items'=>$geneItems,'interpretation_limit'=>$v['interpretation_limit']];
 }
+
+function tekg_coexpression_network_payload(array $v,array $n,array $selection,?string $selectedNodeId=null): array {
+    $nodes=tekg_coexpression_rows('SELECT node_id id,label,feature_type,role,module_id,is_center,is_module_hub,degree_hint FROM coexpression_network_nodes WHERE network_id=? ORDER BY node_order',[(int)$n['id']],'i'); foreach($nodes as &$node){$node['is_center']=(int)$node['is_center']===1;$node['is_module_hub']=(int)$node['is_module_hub']===1;if($node['degree_hint']!==null)$node['degree_hint']=(float)$node['degree_hint'];}unset($node);
+    if($selectedNodeId!==null){
+        $found=false;
+        foreach($nodes as &$node){
+            $node['is_center']=strcasecmp((string)$node['id'],$selectedNodeId)===0;
+            if($node['is_center']){$node['role']='selected_gene';$found=true;}
+        }
+        unset($node);
+        if(!$found)throw new CoexpressionRepositoryException('data_contract_error','The selected Gene is missing from its approved display network.');
+    }
+    $edges=tekg_coexpression_rows('SELECT source_id source,target_id target,correlation,abs_correlation,fdr,pair_type,role FROM coexpression_network_edges WHERE network_id=? ORDER BY edge_order',[(int)$n['id']],'i'); foreach($edges as &$edge){$edge['correlation']=(float)$edge['correlation'];$edge['abs_correlation']=(float)$edge['abs_correlation'];$edge['fdr']=(float)$edge['fdr'];}unset($edge);
+    if(count($nodes)>50||count($edges)>150)throw new CoexpressionRepositoryException('data_contract_error','The co-expression network exceeds the approved display size.'); $terms=json_decode((string)$n['enrichment_terms_json'],true); if(!is_array($terms))throw new CoexpressionRepositoryException('data_contract_error','The co-expression enrichment metadata is invalid.');
+    $selection['display_tier']=$n['display_tier'];$selection['quality_flag']=$n['quality_flag'];$selection['recommended_default']=(int)$n['recommended_default']===1;
+    return ['version'=>$v['version_key'],'selection'=>$selection,'module'=>['id'=>$n['module_id'],'type'=>$n['module_type'],'size'=>(int)$n['module_size'],'te_count'=>(int)$n['te_count'],'gene_count'=>(int)$n['gene_count'],'confidence'=>$n['confidence'],'candidate_label'=>$n['candidate_label'],'top_enriched_terms'=>array_values($terms)],'interpretation'=>['statement_en'=>$n['statement_en'],'statement_zh'=>$n['statement_zh'],'limit'=>$v['interpretation_limit']],'nodes'=>$nodes,'edges'=>$edges];
+}
+
 function tekg_coexpression_load_network(string $teName,string $context): array {
     if(!array_key_exists($context,TEKG_COEXPRESSION_CONTEXTS))throw new CoexpressionRepositoryException('invalid_context','The requested co-expression context is invalid.');
     $v=tekg_coexpression_active_version(); $known=tekg_coexpression_rows('SELECT DISTINCT center_te FROM coexpression_networks WHERE version_id=? AND LOWER(center_te)=LOWER(?)',[(int)$v['id'],trim($teName)],'is');
     if(count($known)!==1)throw new CoexpressionRepositoryException('unknown_te','The requested TE is not present in the approved co-expression catalog.'); $te=$known[0]['center_te'];
     $available=tekg_coexpression_rows('SELECT context_key FROM coexpression_networks WHERE version_id=? AND center_te=? ORDER BY context_key',[(int)$v['id'],$te],'is'); $contexts=array_column($available,'context_key');
     $network=tekg_coexpression_rows('SELECT * FROM coexpression_networks WHERE version_id=? AND center_te=? AND context_key=? LIMIT 1',[(int)$v['id'],$te,$context],'iss');
-    if($network===[])throw new CoexpressionRepositoryException('network_unavailable',"No display network is available for {$te} in {$context}.",['available_contexts'=>$contexts]); $n=$network[0];
-    $nodes=tekg_coexpression_rows('SELECT node_id id,label,feature_type,role,module_id,is_center,is_module_hub,degree_hint FROM coexpression_network_nodes WHERE network_id=? ORDER BY node_order',[(int)$n['id']],'i'); foreach($nodes as &$node){$node['is_center']=(int)$node['is_center']===1;$node['is_module_hub']=(int)$node['is_module_hub']===1;if($node['degree_hint']!==null)$node['degree_hint']=(float)$node['degree_hint'];}unset($node);
-    $edges=tekg_coexpression_rows('SELECT source_id source,target_id target,correlation,abs_correlation,fdr,pair_type,role FROM coexpression_network_edges WHERE network_id=? ORDER BY edge_order',[(int)$n['id']],'i'); foreach($edges as &$edge){$edge['correlation']=(float)$edge['correlation'];$edge['abs_correlation']=(float)$edge['abs_correlation'];$edge['fdr']=(float)$edge['fdr'];}unset($edge);
-    if(count($nodes)>50||count($edges)>150)throw new CoexpressionRepositoryException('data_contract_error','The co-expression network exceeds the approved display size.'); $terms=json_decode((string)$n['enrichment_terms_json'],true); if(!is_array($terms))throw new CoexpressionRepositoryException('data_contract_error','The co-expression enrichment metadata is invalid.');
-    return ['version'=>$v['version_key'],'selection'=>['te'=>$te,'context'=>$context,'available_contexts'=>$contexts,'display_tier'=>$n['display_tier'],'quality_flag'=>$n['quality_flag'],'recommended_default'=>(int)$n['recommended_default']===1],'module'=>['id'=>$n['module_id'],'type'=>$n['module_type'],'size'=>(int)$n['module_size'],'te_count'=>(int)$n['te_count'],'gene_count'=>(int)$n['gene_count'],'confidence'=>$n['confidence'],'candidate_label'=>$n['candidate_label'],'top_enriched_terms'=>array_values($terms)],'interpretation'=>['statement_en'=>$n['statement_en'],'statement_zh'=>$n['statement_zh'],'limit'=>$v['interpretation_limit']],'nodes'=>$nodes,'edges'=>$edges];
+    if($network===[])throw new CoexpressionRepositoryException('network_unavailable',"No display network is available for {$te} in {$context}.",['available_contexts'=>$contexts]);
+    return tekg_coexpression_network_payload($v,$network[0],['feature'=>$te,'feature_type'=>'TE','te'=>$te,'context'=>$context,'available_contexts'=>$contexts]);
+}
+
+function tekg_coexpression_load_gene_network(string $geneName,string $context): array {
+    if(!array_key_exists($context,TEKG_COEXPRESSION_CONTEXTS))throw new CoexpressionRepositoryException('invalid_context','The requested co-expression context is invalid.');
+    $v=tekg_coexpression_active_version();
+    $known=tekg_coexpression_rows(
+        "SELECT DISTINCT n.label gene
+         FROM coexpression_networks w JOIN coexpression_network_nodes n ON n.network_id=w.id
+         WHERE w.version_id=? AND n.feature_type='gene' AND LOWER(n.label)=LOWER(?)",
+        [(int)$v['id'],trim($geneName)],
+        'is'
+    );
+    if(count($known)!==1)throw new CoexpressionRepositoryException('unknown_gene','The requested Gene is not present in the approved co-expression catalog.');
+    $gene=(string)$known[0]['gene'];
+    $available=tekg_coexpression_rows(
+        "SELECT DISTINCT w.context_key
+         FROM coexpression_networks w JOIN coexpression_network_nodes n ON n.network_id=w.id
+         WHERE w.version_id=? AND n.feature_type='gene' AND LOWER(n.label)=LOWER(?)
+         ORDER BY w.context_key",
+        [(int)$v['id'],$gene],
+        'is'
+    );
+    $contexts=array_column($available,'context_key');
+    $network=tekg_coexpression_rows(
+        "SELECT w.*, n.node_id selected_node_id,
+                (SELECT COUNT(*) FROM coexpression_network_edges e
+                 WHERE e.network_id=w.id AND (e.source_id=n.node_id OR e.target_id=n.node_id)) selected_degree
+         FROM coexpression_networks w JOIN coexpression_network_nodes n ON n.network_id=w.id
+         WHERE w.version_id=? AND w.context_key=? AND n.feature_type='gene' AND LOWER(n.label)=LOWER(?)
+         ORDER BY selected_degree DESC, w.recommended_default DESC,
+                  CASE w.display_tier WHEN 'core_case' THEN 4 WHEN 'high_confidence' THEN 3 WHEN 'searchable_all' THEN 2 ELSE 1 END DESC,
+                  w.center_te COLLATE utf8mb4_general_ci
+         LIMIT 1",
+        [(int)$v['id'],$context,$gene],
+        'iss'
+    );
+    if($network===[])throw new CoexpressionRepositoryException('network_unavailable',"No display network is available for {$gene} in {$context}.",['available_contexts'=>$contexts]);
+    $n=$network[0];
+    $selection=['feature'=>$gene,'feature_type'=>'Gene','gene'=>$gene,'context'=>$context,'available_contexts'=>$contexts,'source_center_te'=>$n['center_te']];
+    return tekg_coexpression_network_payload($v,$n,$selection,(string)$n['selected_node_id']);
+}
+
+function tekg_coexpression_load_feature_network(string $featureName,string $featureType,string $context): array {
+    return strcasecmp(trim($featureType),'Gene')===0
+        ? tekg_coexpression_load_gene_network($featureName,$context)
+        : tekg_coexpression_load_network($featureName,$context);
 }

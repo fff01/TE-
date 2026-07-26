@@ -29,8 +29,27 @@
 </head>
 <body>
   <div id="container"></div>
-  <script src="../js/renderers/g6/index-g6-type-meta.js"></script>
-  <script src="../js/renderers/g6/index-g6-shared.js"></script>
-  <script src="../js/renderers/g6/index-g6-embed.js"></script>
+  <script>
+    function loadVersionedScripts(sources) {
+      const version = new URL(window.location.href).searchParams.get('v') || '';
+      const suffix = version ? `?v=${encodeURIComponent(version)}` : '';
+      return sources.reduce((chain, source) => chain.then(() => new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = source + suffix;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error(`Unable to load ${source}`));
+        document.body.appendChild(script);
+      })), Promise.resolve());
+    }
+
+    loadVersionedScripts([
+      '../js/renderers/g6/index-g6-type-meta.js',
+      '../js/renderers/g6/g6-svg-export.js',
+      '../js/renderers/g6/index-g6-shared.js',
+      '../js/renderers/g6/index-g6-embed.js',
+    ]).catch((error) => {
+      console.error('Knowledge Graph iframe scripts failed to load.', error);
+    });
+  </script>
 </body>
 </html>

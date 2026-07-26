@@ -52,23 +52,28 @@ try {
         tekg_coexpression_api_response(200, ['ok' => true] + tekg_coexpression_catalog(), true);
     }
 
-    $te = tekg_coexpression_api_query_string('te');
+    $featureType = tekg_coexpression_api_query_string('feature_type');
+    $featureType = strcasecmp($featureType, 'Gene') === 0 ? 'Gene' : 'TE';
+    $feature = $featureType === 'Gene'
+        ? tekg_coexpression_api_query_string('gene')
+        : tekg_coexpression_api_query_string('te');
     $context = tekg_coexpression_api_query_string('context');
     if (!array_key_exists($context, TEKG_COEXPRESSION_CONTEXTS)) {
         tekg_coexpression_api_error(400, 'invalid_context', 'The requested co-expression context is invalid.');
     }
-    if ($te === '') {
-        tekg_coexpression_api_error(404, 'unknown_te', 'The requested TE is not present in the approved co-expression catalog.');
+    if ($feature === '') {
+        $code = $featureType === 'Gene' ? 'unknown_gene' : 'unknown_te';
+        tekg_coexpression_api_error(404, $code, "The requested {$featureType} is not present in the approved co-expression catalog.");
     }
 
-    tekg_coexpression_api_response(200, ['ok' => true] + tekg_coexpression_load_network($te, $context), true);
+    tekg_coexpression_api_response(200, ['ok' => true] + tekg_coexpression_load_feature_network($feature, $featureType, $context), true);
 } catch (CoexpressionRepositoryException $exception) {
     $status = match ($exception->errorCode()) {
         'invalid_context' => 400,
-        'unknown_te', 'network_unavailable' => 404,
+        'unknown_te', 'unknown_gene', 'network_unavailable' => 404,
         default => 500,
     };
-    $code = in_array($exception->errorCode(), ['invalid_context', 'unknown_te', 'network_unavailable'], true)
+    $code = in_array($exception->errorCode(), ['invalid_context', 'unknown_te', 'unknown_gene', 'network_unavailable'], true)
         ? $exception->errorCode()
         : 'data_contract_error';
     tekg_coexpression_api_error($status, $code, $exception->getMessage(), $exception->details());

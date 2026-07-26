@@ -37,20 +37,47 @@
       if (!te || seen.has(te.toLowerCase()) || !available.length) fail('invalid_catalog_item', 'The co-expression catalog contains an invalid TE item.', diagnostics, { type: 'item', index });
       seen.add(te.toLowerCase()); return { te, availableContexts: [...new Set(available)], bestTier: text(source.best_tier), recommendedDefault: source.recommended_default === true, data: cleanData(source) };
     });
+    const geneSeen = new Set();
+    const geneItems = (Array.isArray(payload.gene_items) ? payload.gene_items : []).map((item, index) => {
+      const source = record(item) ? item : {};
+      const gene = text(source.gene); const available = Array.isArray(source.available_contexts) ? source.available_contexts.map(text).filter((id) => ids.has(id)) : [];
+      if (!gene || geneSeen.has(gene.toLowerCase()) || !available.length) fail('invalid_catalog_gene', 'The co-expression catalog contains an invalid Gene item.', diagnostics, { type: 'gene', index });
+      geneSeen.add(gene.toLowerCase()); return { gene, availableContexts: [...new Set(available)], bestTier: text(source.best_tier), data: cleanData(source) };
+    });
     const selection = record(payload.default_selection) ? payload.default_selection : {};
-    const defaultTe = text(selection.te); const defaultContext = text(selection.context);
+    const defaultTe = text(selection.te) || text(selection.feature); const defaultContext = text(selection.context);
     if (!items.some((item) => item.te.toLowerCase() === defaultTe.toLowerCase()) || !ids.has(defaultContext)) fail('invalid_catalog_default', 'The co-expression catalog default selection is invalid.', diagnostics);
-    diagnostics.output.nodes = items.length;
-    return { version: text(payload.version), method: text(payload.method), contexts, items, defaultSelection: { te: defaultTe, context: defaultContext }, thresholds: cleanData(payload.thresholds), interpretationLimit: text(payload.interpretation_limit), diagnostics };
+    const features = [
+      ...items.map((item) => ({ feature: item.te, featureType: 'TE', availableContexts: item.availableContexts.slice(), data: item.data })),
+      ...geneItems.map((item) => ({ feature: item.gene, featureType: 'Gene', availableContexts: item.availableContexts.slice(), data: item.data })),
+    ];
+    diagnostics.output.nodes = features.length;
+    return { version: text(payload.version), method: text(payload.method), contexts, items, geneItems, features, defaultSelection: { feature: defaultTe, featureType: 'TE', te: defaultTe, context: defaultContext }, thresholds: cleanData(payload.thresholds), interpretationLimit: text(payload.interpretation_limit), diagnostics };
+  }
+  function resolveFeatureSelection(catalog, requestedFeature, requestedType, requestedContext) {
+    const featureType = text(requestedType).toLowerCase() === 'gene' ? 'Gene' : 'TE';
+    const wanted = text(requestedFeature).toLowerCase();
+    const source = featureType === 'Gene' ? catalog && catalog.geneItems : catalog && catalog.items;
+    const items = Array.isArray(source) ? source : [];
+    const labelKey = featureType === 'Gene' ? 'gene' : 'te';
+    const typeKey = featureType.toLowerCase();
+    if (!items.length) throw new CoexpressionContractError(`empty_${typeKey}_catalog`, `The co-expression catalog has no selectable ${featureType}.`, report(0, 0));
+    if (!wanted) throw new CoexpressionContractError(`missing_catalog_${typeKey}`, `Select a ${featureType} before resolving a co-expression network.`, report(0, 0));
+    const item = items.find((candidate) => candidate[labelKey].toLowerCase() === wanted);
+    if (!item) throw new CoexpressionContractError(`unknown_catalog_${typeKey}`, `The selected ${featureType} is not available in the co-expression catalog.`, report(0, 0));
+    const requested = text(requestedContext);
+    const defaultContext = text(catalog && catalog.defaultSelection && catalog.defaultSelection.context);
+    const context = item.availableContexts.includes(requested) ? requested : (item.availableContexts.includes(defaultContext) ? defaultContext : item.availableContexts[0]);
+    return { feature: item[labelKey], featureType, context, availableContexts: item.availableContexts.slice(), fallback: context !== requested };
   }
   function resolveSelection(catalog, requestedTe, requestedContext) {
-    const items = Array.isArray(catalog && catalog.items) ? catalog.items : []; const wanted = text(requestedTe).toLowerCase();
-    if (!items.length) throw new CoexpressionContractError('empty_catalog', 'The co-expression catalog has no selectable TE.', report(0, 0));
-    if (!wanted) throw new CoexpressionContractError('missing_catalog_te', 'Select a TE before resolving a co-expression network.', report(0, 0));
-    const item = items.find((candidate) => candidate.te.toLowerCase() === wanted);
-    if (!item) throw new CoexpressionContractError('unknown_catalog_te', 'The selected TE is not available in the co-expression catalog.', report(0, 0));
-    const requested = text(requestedContext); const context = item.availableContexts.includes(requested) ? requested : (item.availableContexts.includes(catalog.defaultSelection.context) ? catalog.defaultSelection.context : item.availableContexts[0]);
-    return { te: item.te, context, availableContexts: item.availableContexts.slice(), fallback: context !== requested };
+    try {
+      const selection = resolveFeatureSelection(catalog, requestedTe, 'TE', requestedContext);
+      return { te: selection.feature, context: selection.context, availableContexts: selection.availableContexts, fallback: selection.fallback };
+    } catch (error) {
+      if (error && error.code === 'empty_te_catalog') error.code = 'empty_catalog';
+      throw error;
+    }
   }
   function normalizeNetwork(payload) {
     const diagnostics = report(Array.isArray(payload && payload.nodes) ? payload.nodes.length : 0, Array.isArray(payload && payload.edges) ? payload.edges.length : 0); success(payload, diagnostics);
@@ -70,5 +97,5 @@
     diagnostics.output.nodes = nodes.length; diagnostics.output.edges = edges.length;
     return { version: text(payload.version), selection: cleanData(payload.selection), module: cleanData(payload.module), interpretation: cleanData(payload.interpretation), nodes, edges, diagnostics };
   }
-  return { CoexpressionContractError, normalizeCatalog, normalizeNetwork, resolveSelection, MAX_NODES, MAX_EDGES };
+  return { CoexpressionContractError, normalizeCatalog, normalizeNetwork, resolveSelection, resolveFeatureSelection, MAX_NODES, MAX_EDGES };
 }));

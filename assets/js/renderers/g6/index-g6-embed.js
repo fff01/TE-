@@ -154,6 +154,9 @@
     exportPngDataUrl() {
       return runner.exportPngDataUrl();
     },
+    exportSvgString() {
+      return runner.exportSvgString();
+    },
     getCurrentQuery() {
       return runner.getCurrentQuery();
     },

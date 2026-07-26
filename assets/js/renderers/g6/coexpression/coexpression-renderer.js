@@ -8,6 +8,30 @@
 
   const { Circle, ExtensionCategory, Graph, register } = G6Lib;
 
+  async function fetchWithDeadline(url, options = {}, timeoutMs = 15000, label = 'Graph request') {
+    const controller = new AbortController();
+    const externalSignal = options.signal;
+    let timedOut = false;
+    const abortFromCaller = () => controller.abort();
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort();
+      else externalSignal.addEventListener('abort', abortFromCaller, { once: true });
+    }
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, Math.max(1, Number(timeoutMs) || 15000));
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+      if (timedOut) throw new Error(`${label} timed out. Please retry.`);
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
+      externalSignal?.removeEventListener?.('abort', abortFromCaller);
+    }
+  }
+
   const TYPE_META = window.__TEKG_G6_TYPE_META && typeof window.__TEKG_G6_TYPE_META === 'object'
     ? window.__TEKG_G6_TYPE_META
     : {};
@@ -339,8 +363,7 @@
     let currentGraphData = null;
     let currentExpressionOverlay = { enabled: false, context: 'off', records: {}, min_value: 0, max_value: 0 };
     let currentLegendFocus = null;
-    let expressionSelectedNodeId = '';
-    let expressionHoveredNodeId = '';
+    let hiddenElementIds = new Set();
 
     if (currentQueryType === 'disease_class') {
       if (!currentClassQuery) currentClassQuery = currentQuery;
@@ -727,9 +750,9 @@
       const tooltip = ensureCoexpressionTooltip();
       const label = String(node.displayLabel || node.rawLabel || node.id || '');
       const role = node.coexpressionIsCenter
-        ? 'Selected TE'
+        ? `Selected ${node.coexpressionFeatureType || node.nodeType || 'node'}`
         : (node.coexpressionIsModuleHub ? 'Module hub' : String(node.coexpressionFeatureType || node.nodeType || 'Node'));
-      const activity = node.nodeType === 'TE' && currentExpressionOverlay.enabled
+      const activity = ['TE', 'Gene'].includes(node.nodeType) && currentExpressionOverlay.enabled
         ? ` · expression ${String(node.expressionActivity || 'Unavailable').toLowerCase()}`
         : '';
       tooltip.textContent = `${label} · ${role}${activity}`;
@@ -973,7 +996,7 @@
         node.coexpressionIsCenter ? kvRow('Gene count', module.gene_count) : '',
         node.coexpressionIsCenter ? kvRow('Confidence', String(module.confidence || '').replaceAll('_', ' ')) : '',
       ].filter(Boolean).join('');
-      const expressionHtml = node.nodeType === 'TE' ? renderExpressionEvidenceHtml(node, !expanded) : '';
+      const expressionHtml = ['TE', 'Gene'].includes(node.nodeType) ? renderExpressionEvidenceHtml(node, !expanded) : '';
       const enrichment = Array.isArray(module.top_enriched_terms)
         ? module.top_enriched_terms.slice(0, expanded ? 5 : 2).join('; ')
         : '';
@@ -1404,11 +1427,11 @@
 
     async function loadEnglishResources() {
       const [nameRes, teDescRes, entityDescRes, teLineageRes, teMetricsRes] = await Promise.allSettled([
-        fetch(window.__TEKG_PATHS.dataUrl('processed/entity_description_key_translation_cache.json'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.dataUrl('processed/te_descriptions.json'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.dataUrl('processed/entity_descriptions.json'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.apiUrl('te_metrics.php'), { credentials: 'same-origin' }),
+        fetchWithDeadline(window.__TEKG_PATHS.dataUrl('processed/entity_description_key_translation_cache.json'), { credentials: 'same-origin' }, 6000, 'Graph terminology data'),
+        fetchWithDeadline(window.__TEKG_PATHS.dataUrl('processed/te_descriptions.json'), { credentials: 'same-origin' }, 6000, 'TE descriptions'),
+        fetchWithDeadline(window.__TEKG_PATHS.dataUrl('processed/entity_descriptions.json'), { credentials: 'same-origin' }, 6000, 'Entity descriptions'),
+        fetchWithDeadline(window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree'), { credentials: 'same-origin' }, 6000, 'Taxonomy support data'),
+        fetchWithDeadline(window.__TEKG_PATHS.apiUrl('te_metrics.php'), { credentials: 'same-origin' }, 6000, 'TE metrics'),
       ]);
 
       if (nameRes.status === 'fulfilled' && nameRes.value.ok) {
@@ -1588,7 +1611,7 @@
       const context = String(currentExpressionOverlay.context || 'global');
       const record = node.expressionRecord || expressionRecordForNode(node);
       if (!record || record.available !== true) {
-        const empty = 'No TE expression summary is available for this context class.';
+        const empty = 'No expression summary is available for this context class.';
         return compact
           ? `<div class="inspect-card__desc">${escapeHtml(empty)}</div>`
           : `<div class="inspect-card__section"><p class="inspect-card__section-title">Expression Activity</p><div class="inspect-card__desc">${escapeHtml(empty)}</div></div>`;
@@ -1647,13 +1670,14 @@
         node.expressionHaloWidth = 0;
         node.expressionRingCount = 0;
         node.expressionRippleRadius = 0;
+        node.graphRipple = false;
         node.expressionLineWidth = node.endpointHighlight ? 5 : 2;
         node.opacity = 1;
         node.fillColor = node.baseFillColor;
         node.strokeColor = node.baseStrokeColor;
 
         if (!enabled) continue;
-        if (node.nodeType !== 'TE') continue;
+        if (!['TE', 'Gene'].includes(node.nodeType)) continue;
 
         const record = expressionRecordForNode(node);
         node.expressionRecord = record;
@@ -1672,45 +1696,15 @@
         node.expressionHaloWidth = 4 + Math.round(strength * 6);
         node.expressionRingCount = 1 + Math.round(strength * 2);
         node.expressionRippleRadius = 10 + Math.round(strength * 20);
+        node.graphRipple = enabled && node.expressionAvailable === true;
       }
-    }
-
-    function syncExpressionPulseState(draw = true) {
-      if (!currentGraphData || !Array.isArray(currentGraphData.nodes)) {
-        return Promise.resolve(false);
-      }
-      const pulseId = expressionHoveredNodeId || expressionSelectedNodeId;
-      const updates = [];
-      for (const node of currentGraphData.nodes) {
-        const shouldPulse = currentExpressionOverlay.enabled === true
-          && node.expressionAvailable === true
-          && node.nodeType === 'TE'
-          && String(node.id || '') === pulseId;
-        if (node.graphRipple === shouldPulse) continue;
-        node.graphRipple = shouldPulse;
-        updates.push({
-          id: node.id,
-          graphRipple: shouldPulse,
-          expressionStrength: node.expressionStrength,
-          expressionRingCount: node.expressionRingCount,
-          expressionRippleRadius: node.expressionRippleRadius,
-          expressionHaloOpacity: node.expressionHaloOpacity,
-        });
-      }
-      if (!graph || typeof graph.updateNodeData !== 'function' || updates.length === 0) {
-        return Promise.resolve(updates.length > 0);
-      }
-      graph.updateNodeData(updates);
-      return draw && typeof graph.draw === 'function'
-        ? Promise.resolve(graph.draw()).then(() => true)
-        : Promise.resolve(true);
     }
 
     function normalizeLegendFocus(focus) {
       if (!focus || typeof focus !== 'object') return null;
       const kind = String(focus.kind || '').trim();
       const value = String(focus.value || '').trim();
-      if ((kind !== 'entity' && kind !== 'relation') || !value) return null;
+      if (!['entity', 'relation', 'module-hub', 'relative-expression'].includes(kind) || !value) return null;
       return { kind, value };
     }
 
@@ -1742,9 +1736,14 @@
       if (!focus) return { nodes: currentGraphData.nodes, edges: currentGraphData.edges };
 
       const highlightedNodeIds = new Set();
-      if (focus.kind === 'entity') {
+      if (focus.kind === 'entity' || focus.kind === 'module-hub' || focus.kind === 'relative-expression') {
         for (const node of currentGraphData.nodes) {
-          if (entityLegendMatchesNode(node, focus.value)) highlightedNodeIds.add(String(node.id || ''));
+          const matches = focus.kind === 'entity'
+            ? entityLegendMatchesNode(node, focus.value)
+            : focus.kind === 'module-hub'
+              ? node.coexpressionIsModuleHub === true
+              : node.expressionAvailable === true;
+          if (matches) highlightedNodeIds.add(String(node.id || ''));
         }
         for (const node of currentGraphData.nodes) {
           const focused = highlightedNodeIds.has(String(node.id || ''));
@@ -2005,8 +2004,8 @@
       const teNodes = nodes.filter((node) => node.nodeType === 'TE');
       for (const node of teNodes) {
         if (node.coexpression) {
-          node.fillColor = '#3b66c4';
-          node.strokeColor = node.coexpressionIsCenter ? '#0f172a' : '#24478e';
+          node.fillColor = node.coexpressionIsCenter ? '#3b66c4' : '#7896d8';
+          node.strokeColor = node.coexpressionIsCenter ? '#0f172a' : '#4164a8';
           continue;
         }
         const canonicalName = canonicalTeLineageName(node.rawLabel || node.displayLabel);
@@ -2018,8 +2017,8 @@
       }
 
       for (const node of nodes.filter((item) => item.coexpression && item.nodeType === 'Gene')) {
-        node.fillColor = '#1aa486';
-        node.strokeColor = node.coexpressionIsModuleHub ? '#0f172a' : '#0f6b5d';
+        node.fillColor = node.coexpressionIsCenter ? '#0f766e' : '#1aa486';
+        node.strokeColor = node.coexpressionIsCenter || node.coexpressionIsModuleHub ? '#0f172a' : '#0f6b5d';
       }
 
       if (nodeSizeScale > 1 || nodeMinSize > 0 || endpointNodeMinSize > 0) {
@@ -2030,16 +2029,6 @@
           node.size = Math.max(scaledSize, minSize || 0);
           node.baseSize = node.size;
         }
-      }
-
-      const coexpressionCenter = nodes.find((node) => node.coexpressionIsCenter === true);
-      if (coexpressionCenter) {
-        const largestPartner = Math.max(
-          0,
-          ...nodes.filter((node) => node !== coexpressionCenter).map((node) => Number(node.size) || 0),
-        );
-        coexpressionCenter.size = Math.max(68, largestPartner + 12);
-        coexpressionCenter.baseSize = coexpressionCenter.size;
       }
 
       const diseaseCategoryNodes = nodes.filter((node) => node.nodeType === 'DiseaseCategory');
@@ -2264,9 +2253,10 @@
           expressionHaloWidth: node.expressionHaloWidth,
           expressionRingCount: node.expressionRingCount,
           expressionRippleRadius: node.expressionRippleRadius,
+          graphRipple: node.graphRipple,
         })));
         if (typeof graph.draw === 'function') {
-          return Promise.resolve(graph.draw()).then(() => syncExpressionPulseState());
+          return Promise.resolve(graph.draw()).then(() => true);
         }
       }
 
@@ -2344,6 +2334,7 @@
     async function renderElements(elements, requestLike, options = {}) {
       const request = normalizeGraphRequest(requestLike);
       currentLegendFocus = null;
+      hiddenElementIds = new Set();
       const query = String(request.query || currentQuery || '').trim() || 'LINE1';
       const sourceLabel = options.sourceLabel === 'qa' ? 'qa' : 'query';
       currentQuery = query;
@@ -2397,14 +2388,6 @@
         }
         const data = buildGraphData(payloadElements, graphDataOptions);
         currentGraphData = data;
-        const coexpressionCenter = data.nodes.find((node) => node.coexpressionIsCenter === true);
-        expressionSelectedNodeId = String(coexpressionCenter?.id || '');
-        expressionHoveredNodeId = '';
-        for (const node of data.nodes) {
-          node.graphRipple = currentExpressionOverlay.enabled === true
-            && node.expressionAvailable === true
-            && String(node.id || '') === expressionSelectedNodeId;
-        }
         applyLegendFocusToGraphData();
         const hasRippleHighlights = data.nodes.some((node) => node.endpointHighlight === true || node.graphRipple === true);
         const rippleNodeAvailable = hasRippleHighlights && ensurePathFinderRippleNodeRegistered();
@@ -2595,12 +2578,10 @@
         graph.off?.('edge:pointerenter');
         graph.off?.('edge:pointerleave');
         graph.off?.('canvas:click');
-        graph.on('node:click', async (event) => {
+        graph.on('node:click', (event) => {
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
-          expressionSelectedNodeId = node.nodeType === 'TE' ? String(node.id || '') : '';
-          await syncExpressionPulseState();
           showInspectCard('node', node, event, data);
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
@@ -2609,21 +2590,15 @@
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
-          expressionHoveredNodeId = node.nodeType === 'TE' ? String(node.id || '') : '';
-          void syncExpressionPulseState();
           showCoexpressionTooltipForNode(node, event);
         });
         graph.on('node:pointerleave', () => {
-          expressionHoveredNodeId = '';
-          void syncExpressionPulseState();
           hideCoexpressionTooltip();
         });
         graph.on('edge:click', (event) => {
           const edgeId = event?.target?.id;
           const edge = data.edges.find((item) => item.id === edgeId);
           if (!edge) return;
-          expressionSelectedNodeId = '';
-          void syncExpressionPulseState();
           if (currentAllowInspectCard) showInspectCard('edge', edge, event, data);
           else hideInspectCard();
           hooks.onSelection(null);
@@ -2636,9 +2611,6 @@
         });
         graph.on('edge:pointerleave', hideCoexpressionTooltip);
         graph.on('canvas:click', () => {
-          expressionSelectedNodeId = '';
-          expressionHoveredNodeId = '';
-          void syncExpressionPulseState();
           hideInspectCard();
           hideCoexpressionTooltip();
           hooks.onSelection(null);
@@ -2677,9 +2649,9 @@
           endpoint.searchParams.set('class', request.classQuery || query);
         }
 
-        const response = await fetch(endpoint.toString(), {
+        const response = await fetchWithDeadline(endpoint.toString(), {
           credentials: 'same-origin',
-        });
+        }, 15000, 'Knowledge Graph request');
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -2801,9 +2773,9 @@
         endpoint.searchParams.set('class', request.classQuery || query);
       }
 
-      const response = await fetch(endpoint.toString(), {
+      const response = await fetchWithDeadline(endpoint.toString(), {
         credentials: 'same-origin',
-      });
+      }, 15000, 'Knowledge Graph expansion request');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -2875,7 +2847,9 @@
 
     function getVisibleSubgraph() {
       const nodes = Array.isArray(currentGraphData?.nodes)
-        ? currentGraphData.nodes.map((node) => ({
+        ? currentGraphData.nodes
+          .filter((node) => !hiddenElementIds.has(String(node.id || '')))
+          .map((node) => ({
             id: String(node.id || ''),
             label: String(node.displayLabel || node.rawLabel || node.id || ''),
             rawLabel: String(node.rawLabel || node.displayLabel || node.id || ''),
@@ -2899,13 +2873,22 @@
               : null,
             expression_activity: String(node.expressionActivity || 'Off'),
             expression_strength: Number(node.expressionStrength || 0),
+            expression_ripple: node.graphRipple === true,
             disease_class: String(node.diseaseClass || ''),
             category_level: Number(node.categoryLevel || 0) || 0,
           }))
         : [];
       const nodeById = new Map(nodes.map((node) => [String(node.id || ''), node]));
       const edges = Array.isArray(currentGraphData?.edges)
-        ? currentGraphData.edges.map((edge) => {
+        ? currentGraphData.edges
+          .filter((edge) => {
+            const source = String(edge.source || '');
+            const target = String(edge.target || '');
+            return !hiddenElementIds.has(String(edge.id || ''))
+              && !hiddenElementIds.has(source)
+              && !hiddenElementIds.has(target);
+          })
+          .map((edge) => {
             const source = String(edge.source || '');
             const target = String(edge.target || '');
             return {
@@ -3065,6 +3048,116 @@
       return canvas.toDataURL('image/png');
     }
 
+    function exportSvgString() {
+      if (!graph || !currentGraphData || typeof graph.getElementPosition !== 'function') {
+        throw new Error('No positioned G6 graph is available for SVG export.');
+      }
+      const visible = getVisibleSubgraph();
+      if (!Array.isArray(visible.nodes) || visible.nodes.length === 0) {
+        throw new Error('The visible graph has no nodes to export.');
+      }
+
+      const sourceNodes = new Map((currentGraphData.nodes || []).map((node) => [String(node.id || ''), node]));
+      const sourceEdges = new Map((currentGraphData.edges || []).map((edge) => [String(edge.id || ''), edge]));
+      const nodes = visible.nodes.map((node) => {
+        const position = graph.getElementPosition(node.id);
+        const x = Number(position?.[0]);
+        const y = Number(position?.[1]);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          throw new Error(`Node ${node.id} has no finite G6 position for SVG export.`);
+        }
+        const source = sourceNodes.get(String(node.id || '')) || node;
+        return { ...node, source, x, y };
+      });
+      const nodeById = new Map(nodes.map((node) => [String(node.id || ''), node]));
+      const edges = (visible.edges || [])
+        .filter((edge) => nodeById.has(String(edge.source || '')) && nodeById.has(String(edge.target || '')))
+        .map((edge) => ({ ...edge, sourceData: sourceEdges.get(String(edge.id || '')) || edge }));
+
+      const serializer = window.__TEKG_G6_SVG_EXPORT;
+      if (!serializer || typeof serializer.serialize !== 'function') {
+        throw new Error('The shared G6 SVG serializer is unavailable.');
+      }
+      const exportNodes = nodes.map((node) => {
+        const model = node.source;
+        const radius = Math.max(5, Number(node.size || model.size || 10) / 2);
+        const opacity = Math.min(
+          typeof model.opacity === 'number' ? model.opacity : 1,
+          typeof model.legendOpacity === 'number' ? model.legendOpacity : 1,
+        );
+        const coexpressionWidth = model.coexpressionIsCenter ? 5 : (model.coexpressionIsModuleHub ? 4 : 2);
+        const baseWidth = model.expressionLineWidth || ((model.endpointHighlight || model.graphRipple) ? 5 : coexpressionWidth);
+        const lineWidth = model.legendFocused ? baseWidth + 2 : baseWidth;
+        const important = model.importantLabel || isImportantLabelNode(model);
+        const label = important ? importantLabelText(model) : secondaryLabelText(model);
+        const rings = [];
+        if (model.expressionAvailable === true) {
+          const strength = Math.max(0, Math.min(1, Number(model.expressionStrength || 0)));
+          const haloOpacity = Math.max(0.08, Math.min(0.7, Number(model.expressionHaloOpacity || 0.18)));
+          const haloWidth = Math.max(2, Number(model.expressionHaloWidth || 4));
+          const ringCount = Math.max(1, Math.min(3, Number(model.expressionRingCount || 1)));
+          const rippleRadius = Math.max(6, Number(model.expressionRippleRadius || 10));
+          rings.push({ radius: radius + haloWidth, stroke: '#38bdf8', strokeWidth: haloWidth, opacity: haloOpacity });
+          for (let index = 1; index <= ringCount; index += 1) {
+            const fraction = index / ringCount;
+            rings.push({
+              radius: radius + 4 + rippleRadius * fraction,
+              stroke: '#60a5fa',
+              strokeWidth: 1.25 + strength,
+              opacity: Math.max(0.05, haloOpacity * (1 - fraction * 0.68)),
+            });
+          }
+        }
+        return {
+          id: node.id,
+          x: node.x,
+          y: node.y,
+          radius,
+          fill: model.fillColor || TYPE_COLORS[model.nodeType] || '#94a3b8',
+          stroke: model.strokeColor || TYPE_STROKES[model.nodeType] || '#111111',
+          strokeWidth: lineWidth,
+          opacity,
+          rings,
+          label: label ? {
+            text: label,
+            fontSize: important ? importantLabelFontSize(model) : secondaryLabelFontSize(model),
+            fontWeight: important ? 700 : 600,
+            opacity,
+          } : null,
+        };
+      });
+      const exportEdges = edges.map((edge) => {
+        const source = nodeById.get(String(edge.source || ''));
+        const target = nodeById.get(String(edge.target || ''));
+        const model = edge.sourceData || edge;
+        return {
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          stroke: model.strokeColor || mixEdgeColor(source?.type, target?.type, boundedEvidenceOpacity(model)),
+          strokeWidth: boundedEvidenceWidth(model) + (model.legendFocused ? 1.5 : 0),
+          opacity: typeof model.legendOpacity === 'number' ? model.legendOpacity : 1,
+          dash: Array.isArray(model.lineDash) ? model.lineDash : [],
+        };
+      });
+      return serializer.serialize({
+        title: visible.query || currentQuery || 'TE-KG co-expression network',
+        description: 'Static vector export of the currently visible TE-KG co-expression network.',
+        metadata: {
+          generator: 'TE-KG shared G6 SVG exporter',
+          graph_mode: 'coexpression',
+          query: visible.query || currentQuery,
+          selection: currentGraphData.nodes?.find((node) => node.coexpressionIsCenter === true)?.coexpressionSelection || {},
+          node_count: exportNodes.length,
+          edge_count: exportEdges.length,
+          expression_context: currentExpressionOverlay.context || 'off',
+          interpretation_limit: 'Correlation and expression activity do not imply causation.',
+        },
+        nodes: exportNodes,
+        edges: exportEdges,
+      });
+    }
+
     function resize() {
       const metrics = getContainerMetrics();
       if ((container.clientWidth || 0) < 25 && metrics.width > 0) {
@@ -3149,6 +3242,30 @@
       return pushLegendFocusVisualState();
     }
 
+    async function setElementVisibility(visible = {}) {
+      if (!graph || !currentGraphData || typeof graph.setElementVisibility !== 'function') {
+        throw new Error('G6 element visibility is unavailable.');
+      }
+      const nodeIds = new Set(Array.isArray(visible.nodeIds) ? visible.nodeIds.map(String) : []);
+      const edgeIds = new Set(Array.isArray(visible.edgeIds) ? visible.edgeIds.map(String) : []);
+      const visibility = {};
+      for (const node of currentGraphData.nodes || []) {
+        const id = String(node.id || '');
+        visibility[id] = nodeIds.has(id) ? 'visible' : 'hidden';
+      }
+      for (const edge of currentGraphData.edges || []) {
+        const id = String(edge.id || '');
+        visibility[id] = edgeIds.has(id) ? 'visible' : 'hidden';
+      }
+      await graph.setElementVisibility(visibility, false);
+      hiddenElementIds = new Set(
+        Object.entries(visibility)
+          .filter(([, state]) => state === 'hidden')
+          .map(([id]) => id),
+      );
+      return getVisibleSubgraph();
+    }
+
     function init() {
       window.addEventListener('resize', resize);
       return ensureResources()
@@ -3184,6 +3301,7 @@
       setKeyNodeLevel,
       setLanguage,
       setLegendFocus,
+      setElementVisibility,
       getGraph: () => graph,
       getCurrentQuery: () => currentQuery,
       getCurrentRequest: () => buildCurrentRequest(),
@@ -3193,6 +3311,7 @@
       inspectEdge,
       getEdgeVisuals,
       exportPngDataUrl,
+      exportSvgString,
       getFixedView: () => fixedView,
       getKeyNodeLevel: () => currentKeyNodeLevel,
       escapeHtml,

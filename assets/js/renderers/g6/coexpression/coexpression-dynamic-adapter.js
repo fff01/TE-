@@ -53,10 +53,10 @@
           isKeyNode: node.isCenter === true || node.isModuleHub === true,
           preferProvidedDescription: true,
           description: node.isCenter === true
-            ? 'Selected TE in this co-expression network.'
+            ? `Selected ${node.kind === 'gene' ? 'Gene' : 'TE'} in this co-expression network.`
             : (node.isModuleHub === true ? 'Module hub in this co-expression network.' : ''),
           coexpression: true,
-          coexpressionRole: node.isCenter === true ? 'selected_te' : (node.isModuleHub === true ? 'module_hub' : 'network_member'),
+          coexpressionRole: node.isCenter === true ? (node.kind === 'gene' ? 'selected_gene' : 'selected_te') : (node.isModuleHub === true ? 'module_hub' : 'network_member'),
           coexpressionSourceRole: String(node.data?.role || ''),
           coexpressionFeatureType: node.kind === 'gene' ? 'Gene' : 'TE',
           coexpressionIsCenter: node.isCenter === true,

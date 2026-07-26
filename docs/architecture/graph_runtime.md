@@ -48,6 +48,42 @@ regulation or causality.
 The complete Co-expression contract is recorded in
 `docs/coexpression/frontend_contract.md`.
 
+## Unified SVG Export
+
+Knowledge Graph and Co-expression keep separate G6 instances and mode-specific
+export adapters, but both SVG paths use
+`assets/js/renderers/g6/g6-svg-export.js`. Each adapter supplies the current
+filtered nodes and edges, the final positions reported by its active G6
+instance, and its domain-specific styles. The shared serializer emits a padded
+vector `viewBox`, edges, optional edge labels, static activity or highlight
+rings, nodes, labels, and metadata.
+
+SVG is a static scientific snapshot rather than a recording of the Canvas
+runtime. Knowledge Graph relation labels follow their current visibility state;
+Co-expression Expression ripples are represented as static rings. Hover,
+dragging, force motion, tooltips, and other transient interactions are not
+serialized. PNG continues to capture the active Canvas directly.
+
+`preview.php` includes the serializer and both child iframe documents in the
+preview asset version. The Knowledge Graph and Co-expression iframe URLs carry
+that version, and each iframe propagates it to its internal renderer scripts, so
+browsers cannot combine a cached pre-SVG bridge with a new SVG-aware renderer.
+
+## Loader Liveness
+
+Graph loaders must always settle to a ready, empty, or error state. Browser-side
+Knowledge Graph and Co-expression data requests have a 15-second deadline;
+optional renderer support data has a 6-second deadline, and Co-expression
+Expression activity has an 8-second deadline. Support-data failure degrades the
+extra labels or metrics rather than blocking the graph indefinitely. Main data
+failure exposes the existing error/Retry path.
+
+Leaving Co-expression while an activation is in progress immediately restores
+the last stable Co-expression selection and hides its Loader. Superseded async
+activations must not restore a captured `loading-*` state. Rejected catalog and
+iframe-bridge promises are cleared so Retry performs a fresh attempt rather than
+reusing a permanently rejected promise.
+
 ## Current Risks
 
 - G6 browser smoke tests can expose blank canvases and stuck loader states.
@@ -74,5 +110,6 @@ ordinary-Graph regression acceptance.
 - `scripts/checks/check_g6_no_legacy_disease_node.py`
 - `scripts/checks/check_g6_relation_legend_expand_mode.py`
 - `scripts/checks/check_g6_legend_expand_tree_fixes.py`
+- `scripts/checks/check_g6_subgraph_export_smoke.py`
 - `scripts/checks/check_coexpression_task8_browser.py`
 - `scripts/checks/check_coexpression_task9_browser.py`

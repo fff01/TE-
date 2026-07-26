@@ -26,18 +26,27 @@ The Co-expression runtime is MySQL-only:
 - offline JSON, TSV, and manifests under `data/coexpression/` are provenance
   and importer inputs, not browser runtime sources.
 
-One display unit is one center TE in one context class. Payloads are capped at
-50 nodes and 150 edges. All displayed edges are positive Spearman correlations
-that passed the approved correlation/FDR filters.
+One display unit is one selected TE or Gene in one context class. Payloads are
+capped at 50 nodes and 150 edges. All displayed edges are positive Spearman
+correlations that passed the approved correlation/FDR filters.
+
+The searchable catalog contains approved TE centers and Genes present in the
+stored display networks. A Gene search is case-insensitive but exact. When a
+Gene occurs in multiple approved networks for one context, runtime selects the
+network where that Gene has the greatest visible incident-edge count, uses
+display tier and source TE only as deterministic tie-breakers, and re-roots the
+payload so the searched Gene is the sole center. The source TE remains in
+selection provenance as `source_center_te`.
 
 Missing or unknown TE names never fall back to L1HS. `CR1` intentionally has no
 `cancer_cell_line` display network and must show its two available alternatives.
 
 ## Visual Semantics
 
-- center TE: largest TE node with a strong outline and persistent label;
-- partner TE: blue circle;
-- Gene: green node;
+- selected center: uses the same degree-based size rule as other nodes and is
+  distinguished by its fill, strong outline, and persistent label;
+- partner TE: lighter blue circle than a selected TE center;
+- Gene: green node, with a darker green fill when selected as the center;
 - module hub: stronger outline, not a separate entity type;
 - edge width and opacity: monotonic with positive correlation;
 - no arrows, causal verbs, or default edge labels.
@@ -51,21 +60,26 @@ edges whose endpoints pass the node filters.
 ## Expression Activity
 
 Expression activity belongs to the Co-expression toolbar, not the Knowledge
-Graph toolbar. It uses batched TE-only requests to `api/graph_expression.php`.
-Gene nodes never receive inferred Expression values.
+Graph toolbar. It uses batched TE and Gene requests to
+`api/graph_expression.php`; both entity types use measured values from the
+shared MySQL expression summaries.
 
 For the active context class:
 
-- every TE with data receives a static activity halo;
+- every TE or Gene with data receives a static activity halo;
 - halo strength is log-normalized within the visible network;
 - low, medium, and high activity increase halo opacity, ripple count, and
   maximum ripple radius monotonically;
-- only the selected or hovered TE animates;
+- every TE or Gene with available expression data uses a stable ripple node
+  while the layer is enabled; expression strength controls ripple opacity,
+  ring count, and maximum radius;
+- selection and hover may emphasize labels or outlines, but must not replace a
+  node type or trigger a graph redraw during force dragging;
 - animation speed is not used as a biological variable;
-- missing TE expression remains explicit in details.
+- missing expression remains explicit in details.
 
 The value is a context-class summary. For example, a `normal_tissue` network
-shows each TE's normal-tissue summary and its top tissue label. It does not
+shows each TE or Gene's normal-tissue summary and its top tissue label. It does not
 change edge weights, node position, force parameters, or layout cooling.
 Expression activity and co-expression are statistical context, not regulation,
 propagation, mechanism, or causality.
@@ -76,7 +90,7 @@ Center details include module ID/type/size, TE and Gene counts, confidence,
 enriched context, interpretation text, and Expression activity.
 
 Partner details include feature type, role, hub status, correlation to center
-when present, and TE-only Expression activity.
+when present, and Expression activity for both TE and Gene nodes.
 
 Edge details include source, target, Spearman correlation, FDR, pair type, edge
 role, and the statistical-association boundary. Runtime text is escaped.
@@ -89,6 +103,12 @@ Supported direct URL:
 preview.php?mode=coexpression&te=L1HS&context=cancer_cell_line
 ```
 
+Gene-centered direct URL:
+
+```text
+preview.php?mode=coexpression&gene=C1orf116&context=cancer_cell_line
+```
+
 Real user mode/selection changes push browser history. Back/Forward restores
 mode, TE, and context without recreating the iframe. Mode restoration does not
 infer a TE from a Knowledge Graph query.
@@ -97,10 +117,15 @@ Network and Expression caches are independent, version-bound, LRU-like, and
 capped at six entries. Request epochs and abort signals prevent stale responses
 from replacing newer selections.
 
-Failures retain the selected TE/context and expose Retry. CSV export contains
+Failures retain the selected feature/context and expose Retry. CSV export contains
 visible nodes/edges, correlation, FDR, Expression values, analysis version,
 method, thresholds, and the interpretation limit. PNG export comes from the
-active Co-expression Canvas. Neither export may contain absolute paths.
+active Co-expression Canvas. SVG export serializes the current filtered network
+from final G6 positions as vector edges, static Expression rings, nodes, and
+labels with an automatically padded `viewBox`. It uses the shared
+`assets/js/renderers/g6/g6-svg-export.js` serializer while retaining a
+Co-expression-specific snapshot adapter; Knowledge Graph and Co-expression do
+not share one G6 instance. No export may contain absolute paths.
 
 ## Representative Acceptance Matrix
 
@@ -111,6 +136,8 @@ active Co-expression Canvas. Neither export may contain absolute paths.
 - `HERVH-int / cancer_cell_line`: dense gene-rich graph with high activity;
 - `CR1 / normal_tissue`: small gene-rich high-confidence graph;
 - `CR1 / cancer_cell_line`: unavailable context with recoverable alternatives.
+- `C1orf116 / cancer_cell_line`: Gene-centered network with one Gene center and
+  preserved source-TE provenance.
 
 Desktop acceptance covers 1440x960, 1280x900, and 1024x768. Mobile layout and
 mobile screenshots are out of scope.

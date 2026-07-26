@@ -35,9 +35,9 @@ def main() -> None:
     )
     require(
         "popstate" in coordinator
-        and "pushState" in coordinator
-        and "replaceState" in coordinator
-        and "clearSelection" in coordinator,
+        and "routeForKnowledge" in coordinator
+        and "routeForCoexpression" in coordinator
+        and "writeRoute" in coordinator,
         "URL and Back/Forward restoration are incomplete.",
     )
     require(

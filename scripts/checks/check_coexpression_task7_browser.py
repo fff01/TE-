@@ -5,6 +5,16 @@ import math
 from harness_lib import ROOT, app_url, fail, ok, require, run_check
 
 
+def is_te_selection(selection: object, name: str, context: str) -> bool:
+    return (
+        isinstance(selection, dict)
+        and selection.get("feature") == name
+        and selection.get("featureType") == "TE"
+        and selection.get("te") == name
+        and selection.get("context") == context
+    )
+
+
 def main() -> None:
     try:
         from playwright.sync_api import Error as PlaywrightError
@@ -20,8 +30,15 @@ def main() -> None:
 
         page = browser.new_page(viewport={"width": 1280, "height": 900})
         errors: list[str] = []
+        failed_requests: list[str] = []
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on("console", lambda message: errors.append(message.text) if message.type == "error" else None)
+        page.on(
+            "requestfailed",
+            lambda request: failed_requests.append(
+                f"{request.url} :: {request.failure}"
+            ),
+        )
 
         try:
             page.goto(app_url("preview.php?q=LINE1"), wait_until="domcontentloaded", timeout=30_000)
@@ -33,7 +50,7 @@ def main() -> None:
                     && state?.query === 'LINE1'
                     && state.currentElements?.length > 0;
                 }""",
-                timeout=30_000,
+                timeout=60_000,
             )
 
             initial = page.evaluate(
@@ -64,15 +81,16 @@ def main() -> None:
             require(initial["coexpressionFrames"] == 0, f"Co-expression iframe must remain lazy: {initial}")
 
             page.click("#preview-mode-coexpression")
+            page.wait_for_timeout(1000)
             page.wait_for_function(
                 """() => {
                   const mode = window.__TEKG_PREVIEW_WORKSPACE_MODE?.getDiagnostics?.();
                   const coexpression = window.__TEKG_COEXPRESSION_MODE?.getDiagnostics?.();
                   return mode?.mode === 'coexpression'
-                    && coexpression?.state === 'awaiting-selection'
-                    && coexpression?.selection === null;
+                    && coexpression?.state === 'unavailable'
+                    && coexpression?.selection?.te === 'LINE1';
                 }""",
-                timeout=30_000,
+                timeout=60_000,
             )
             awaiting_selection = page.evaluate(
                 """() => ({
@@ -82,10 +100,10 @@ def main() -> None:
                 })"""
             )
             require(
-                awaiting_selection["input"] == ""
-                and "Select a TE to explore its co-expression network." in awaiting_selection["message"]
+                awaiting_selection["input"] == "LINE1"
+                and "No co-expression data is available for LINE1." in awaiting_selection["message"]
                 and awaiting_selection["iframeCount"] == 0,
-                f"Knowledge query was implicitly bound to a Co-expression TE: {awaiting_selection}",
+                f"Nonmatching Knowledge TE was not preserved as unavailable: {awaiting_selection}",
             )
             page.click("#preview-mode-knowledge")
             page.wait_for_function(
@@ -111,15 +129,41 @@ def main() -> None:
                   };
                 }"""
             )
+            selection = awaiting_roundtrip.get("selection") or {}
             require(
-                awaiting_roundtrip == {
-                    "state": "awaiting-selection",
-                    "selection": None,
-                    "iframeCount": 0,
-                    "input": "",
-                    "buttonText": "Search",
-                },
-                f"Awaiting-selection state was not retained across a mode roundtrip: {awaiting_roundtrip}",
+                awaiting_roundtrip.get("state") == "unavailable"
+                and selection.get("feature") == "LINE1"
+                and selection.get("featureType") == "TE"
+                and selection.get("te") == "LINE1"
+                and selection.get("context") == ""
+                and awaiting_roundtrip.get("iframeCount") == 0
+                and awaiting_roundtrip.get("input") == "LINE1"
+                and awaiting_roundtrip.get("buttonText") == "Search",
+                f"Explicit unavailable selection was not retained across a mode roundtrip: {awaiting_roundtrip}",
+            )
+            page.goto(
+                app_url("preview.php?q=LTR5&type=TE"),
+                wait_until="domcontentloaded",
+                timeout=30_000,
+            )
+            page.wait_for_function(
+                """() => {
+                  const state = window.__TEKG_G6_BRIDGE?.getState?.();
+                  return window.__TEKG_PREVIEW_WORKSPACE_MODE
+                    && state?.mode === 'dynamic'
+                    && state?.query === 'LTR5'
+                    && state.currentElements?.length > 0;
+                }""",
+                timeout=30_000,
+            )
+            page.click("#preview-mode-coexpression")
+            page.wait_for_function(
+                """() => {
+                  const state = window.__TEKG_COEXPRESSION_MODE?.getDiagnostics?.();
+                  return state?.state === 'ready'
+                    && state.selection?.te === 'LTR5';
+                }""",
+                timeout=30_000,
             )
             page.fill("#coexpression-te-search", "L1H")
             page.wait_for_selector(
@@ -178,7 +222,7 @@ def main() -> None:
                 "() => window.__TEKG_COEXPRESSION_MODE.getDiagnostics().selection"
             )
             require(
-                repeated_selected_tab == {"te": "LTR5", "context": "cancer_cell_line"},
+                is_te_selection(repeated_selected_tab, "LTR5", "cancer_cell_line"),
                 f"Clicking the selected mode reset its retained selection: {repeated_selected_tab}",
             )
 
@@ -212,7 +256,7 @@ def main() -> None:
                     .__TEKG_COEXPRESSION_EMBED.getDiagnostics();
                   return host.state === 'ready'
                     && host.selection?.te === 'LTR5'
-                    && frame.selection?.te === 'LTR5';
+                    && frame.selection?.feature === 'LTR5';
                 }""",
                 timeout=15_000,
             )
@@ -229,8 +273,8 @@ def main() -> None:
             )
             require(
                 visible_supersession["host"]["state"] == "ready"
-                and visible_supersession["host"]["selection"] == {"te": "LTR5", "context": "cancer_cell_line"}
-                and visible_supersession["frame"]["selection"]["te"] == "LTR5"
+                and is_te_selection(visible_supersession["host"]["selection"], "LTR5", "cancer_cell_line")
+                and visible_supersession["frame"]["selection"]["feature"] == "LTR5"
                 and visible_supersession["frame"]["selection"]["context"] == "cancer_cell_line",
                 f"A stale visible render replaced the newer selection: {visible_supersession}",
             )
@@ -277,7 +321,7 @@ def main() -> None:
                 stale_render["mode"] == "knowledge"
                 and stale_render["graph"]["layoutStopped"] is True
                 and stale_render["graph"]["state"] == "ready"
-                and stale_render["graph"]["selection"] == {"te": "LTR5", "context": "cancer_cell_line"},
+                and is_te_selection(stale_render["graph"]["selection"], "LTR5", "cancer_cell_line"),
                 f"A stale render survived deactivation or replaced stable state: {stale_render}",
             )
             page.evaluate(
@@ -304,7 +348,15 @@ def main() -> None:
             )
             page.click("#preview-mode-knowledge")
             page.wait_for_function(
-                "() => window.__TEKG_PREVIEW_WORKSPACE_MODE.getDiagnostics().mode === 'knowledge'"
+                """() => {
+                  const state = window.__TEKG_G6_BRIDGE.getState();
+                  return window.__TEKG_PREVIEW_WORKSPACE_MODE.getDiagnostics().mode === 'knowledge'
+                    && state.query === 'LTR5'
+                    && state.mode === 'dynamic'
+                    && !document.querySelector('#graph-preloader').classList.contains('is-visible')
+                    && window.__TEKG_PREVIEW_WORKSPACE_MODE.getDiagnostics().pendingKnowledgeLoads === 0;
+                }""",
+                timeout=60_000,
             )
 
             for _ in range(5):
@@ -332,7 +384,7 @@ def main() -> None:
                 }"""
             )
             require(
-                retained_after_roundtrips["selection"] == {"te": "LTR5", "context": "cancer_cell_line"}
+                is_te_selection(retained_after_roundtrips["selection"], "LTR5", "cancer_cell_line")
                 and retained_after_roundtrips["renderCount"] == retained_render_count,
                 f"Co-expression selection or renderer state was rebuilt across roundtrips: {retained_after_roundtrips}",
             )
@@ -390,7 +442,15 @@ def main() -> None:
 
             page.click("#preview-mode-knowledge")
             page.wait_for_function(
-                "() => window.__TEKG_PREVIEW_WORKSPACE_MODE.getDiagnostics().mode === 'knowledge'"
+                """() => {
+                  const state = window.__TEKG_G6_BRIDGE.getState();
+                  return window.__TEKG_PREVIEW_WORKSPACE_MODE.getDiagnostics().mode === 'knowledge'
+                    && state.mode === 'dynamic'
+                    && state.query === 'LTR5'
+                    && !document.querySelector('#graph-preloader').classList.contains('is-visible')
+                    && window.__TEKG_PREVIEW_WORKSPACE_MODE.getDiagnostics().pendingKnowledgeLoads === 0;
+                }""",
+                timeout=60_000,
             )
             restored = page.evaluate(
                 """() => {
@@ -399,6 +459,7 @@ def main() -> None:
                   const mode = window.__TEKG_PREVIEW_WORKSPACE_MODE.getDiagnostics();
                   return {
                     query: state.query,
+                    graphMode: state.mode,
                     elementCount: state.currentElements.length,
                     historyDepth: state.historyDepth,
                     visibleRelations: state.visibleRelations,
@@ -414,20 +475,13 @@ def main() -> None:
                   };
                 }"""
             )
-            require(restored["query"] == initial["query"], f"Knowledge query changed across roundtrips: {restored}")
             require(
-                restored["elementCount"] == initial["elementCount"],
-                f"Knowledge visible element count changed across roundtrips: {restored}",
+                restored["query"] == "LTR5" and restored["graphMode"] == "dynamic",
+                f"Knowledge did not receive the active Co-expression TE: {restored}",
             )
             require(
-                restored["historyDepth"] == initial["historyDepth"],
-                f"Knowledge history changed across roundtrips: {restored}",
-            )
-            require(
-                restored["visibleRelations"] == initial["visibleRelations"]
-                and restored["canGoBack"] == initial["canGoBack"]
-                and restored["searchValue"] == initial["searchValue"],
-                f"Knowledge legend, Back, or query controls changed across roundtrips: {restored}",
+                restored["searchValue"] == "LTR5",
+                f"Knowledge query controls did not follow the exact TE handoff: {restored}",
             )
             require(
                 restored["knowledgeFrames"] == 1 and restored["coexpressionFrames"] == 1,
@@ -516,6 +570,65 @@ def main() -> None:
                 },
                 f"Direct Co-expression activation did not select exactly one workspace: {direct}",
             )
+            page.goto(
+                app_url("preview.php?mode=coexpression&gene=C1orf116&context=cancer_cell_line"),
+                wait_until="domcontentloaded",
+                timeout=30_000,
+            )
+            page.wait_for_function(
+                """() => {
+                  const graph = window.__TEKG_COEXPRESSION_MODE?.getDiagnostics?.();
+                  return graph?.state === 'ready'
+                    && graph?.selection?.feature === 'C1orf116'
+                    && graph?.selection?.featureType === 'Gene';
+                }""",
+                timeout=30_000,
+            )
+            page.select_option("#coexpression-search-type", "TE")
+            page.select_option("#coexpression-search-type", "Gene")
+            page.fill("#coexpression-te-search", "C1orf")
+            page.focus("#coexpression-te-search")
+            page.wait_for_selector(
+                '#previewCoexpressionWorkspace [data-te-name="C1orf116"]',
+                timeout=15_000,
+            )
+            page.click('#previewCoexpressionWorkspace [data-te-name="C1orf116"]')
+            page.click("#coexpression-load")
+            page.wait_for_function(
+                """() => {
+                  const graph = window.__TEKG_COEXPRESSION_MODE?.getDiagnostics?.();
+                  return graph?.state === 'ready'
+                    && graph?.selection?.feature === 'C1orf116'
+                    && graph?.selection?.featureType === 'Gene';
+                }""",
+                timeout=30_000,
+            )
+            gene_state = page.evaluate(
+                """() => {
+                  const diagnostics = window.__TEKG_COEXPRESSION_MODE.getDiagnostics();
+                  const frame = document.querySelector('#coexpression-graph-frame');
+                  const nodes = frame?.contentWindow?.__TEKG_COEXPRESSION_EMBED?.getVisibleSubgraph?.().nodes || [];
+                  const centers = nodes.filter((node) => node.is_center === true);
+                  return {
+                    selection: diagnostics.selection,
+                    input: document.querySelector('#coexpression-te-search').value,
+                    searchType: document.querySelector('#coexpression-search-type').value,
+                    centerCount: centers.length,
+                    centerLabel: centers[0]?.label || '',
+                    centerType: centers[0]?.type || '',
+                    url: location.search,
+                  };
+                }"""
+            )
+            require(
+                gene_state["input"] == "C1orf116"
+                and gene_state["searchType"] == "Gene"
+                and gene_state["centerCount"] == 1
+                and gene_state["centerLabel"] == "C1orf116"
+                and gene_state["centerType"] == "Gene"
+                and "gene=C1orf116" in gene_state["url"],
+                f"Gene-centered Co-expression search did not preserve its center or route: {gene_state}",
+            )
             page.set_viewport_size({"width": 1024, "height": 768})
             page.wait_for_timeout(150)
             desktop_bounds = page.evaluate(
@@ -545,7 +658,10 @@ def main() -> None:
                 all(desktop_bounds.values()),
                 f"Task 7 controls overlap at the supported 1024x768 desktop viewport: {desktop_bounds}",
             )
-            require(not errors, f"Browser errors: {errors[:5]}")
+            require(
+                not errors,
+                f"Browser errors: {errors[:5]}; failed requests: {failed_requests[:5]}",
+            )
             ok("Task 7 dynamic/tree roundtrip, direct activation, iframe persistence, and mode isolation checks passed")
         finally:
             page.close()

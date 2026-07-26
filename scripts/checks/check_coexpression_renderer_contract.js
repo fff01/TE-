@@ -64,6 +64,31 @@ assert.ok(
   rendererSource.includes('getGraph: () => graph'),
   'the isolated harness must be able to inspect the copied runner without changing its layout behavior',
 );
+assert.ok(
+  rendererSource.includes('node.graphRipple = enabled && node.expressionAvailable === true;'),
+  'every TE or Gene with Expression data must keep a stable ripple identity while Expression is enabled',
+);
+assert.ok(
+  !rendererSource.includes("graph.on('node:pointerleave', () => {\n          expressionHoveredNodeId = '';\n          void syncExpressionPulseState();"),
+  'leaving a TE must not redraw or replace its node while a force drag is active',
+);
+assert.ok(
+  rendererSource.includes("node.fillColor = node.coexpressionIsCenter ? '#3b66c4' : '#7896d8';")
+    && rendererSource.includes("node.fillColor = node.coexpressionIsCenter ? '#0f766e' : '#1aa486';"),
+  'Co-expression partner TEs must be lighter and a Gene center must be darker without changing global entity colors',
+);
+assert.ok(
+  !rendererSource.includes('const largestPartner = Math.max(')
+    && !rendererSource.includes('coexpressionCenter.size = Math.max(68, largestPartner + 12);'),
+  'The selected Co-expression center must use the same degree-based size rule as every other node',
+);
+assert.ok(
+  rendererSource.includes('function exportSvgString()')
+    && rendererSource.includes("graph.getElementPosition(node.id)")
+    && rendererSource.includes('window.__TEKG_G6_SVG_EXPORT')
+    && rendererSource.includes('.serialize({'),
+  'SVG export must normalize final G6 positions through the shared vector serializer',
+);
 
 const adapter = require(adapterPath);
 const network = {

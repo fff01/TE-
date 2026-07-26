@@ -97,6 +97,7 @@
   function filterNetwork(network) {
     const sourceNodes = Array.isArray(network?.nodes) ? network.nodes : [];
     const sourceEdges = Array.isArray(network?.edges) ? network.edges : [];
+    const centerId = String(sourceNodes.find((node) => node.isCenter === true)?.id || '');
     const nodes = sourceNodes.filter((node) => {
       if (node.isCenter === true) return true;
       if (node.kind === 'gene') return currentViewOptions.showGene;
@@ -106,7 +107,7 @@
     const edges = sourceEdges.filter((edge) => {
       if (!nodeIds.has(String(edge.source || '')) || !nodeIds.has(String(edge.target || ''))) return false;
       if (currentViewOptions.edgeScope === 'center') {
-        return String(edge.role || edge.data?.role || '') === 'center_neighbor_edge';
+        return String(edge.source || '') === centerId || String(edge.target || '') === centerId;
       }
       return true;
     });
@@ -121,7 +122,8 @@
     await runner.setExpressionOverlay(currentExpressionOverlay);
     const elements = adapter.toGraphElements(visibleNetwork);
     const selection = network && network.selection ? network.selection : {};
-    await runner.renderElements(elements, { query: selection.te || 'Co-expression' }, {
+    const selectedFeature = selection.feature || selection.gene || selection.te || 'Co-expression';
+    await runner.renderElements(elements, { query: selectedFeature }, {
       sourceLabel: 'query',
       skipInitialStatus: true,
       graphDataOptions: {
@@ -141,10 +143,27 @@
     layoutStopped = false;
     await waitForNonblank(generation);
     const report = {
-      selection: { te: selection.te || '', context: selection.context || '' },
+      selection: { feature: selectedFeature, featureType: selection.feature_type || 'TE', context: selection.context || '' },
       nodeCount: visibleNetwork.nodes.length,
       edgeCount: visibleNetwork.edges.length,
       nonblank: true,
+    };
+    notify('onNonblank', report);
+    return report;
+  }
+
+  async function applyViewOptions() {
+    if (!currentNetwork) return null;
+    const visibleNetwork = filterNetwork(currentNetwork);
+    const graph = await runner.setElementVisibility({
+      nodeIds: visibleNetwork.nodes.map((node) => String(node.id || '')),
+      edgeIds: visibleNetwork.edges.map((edge) => String(edge.id || '')),
+    });
+    const report = {
+      selection: { ...(currentNetwork.selection || {}) },
+      nodeCount: graph.nodes.length,
+      edgeCount: graph.edges.length,
+      nonblank: graph.nodes.length > 0 && canvasIsNonblank(),
     };
     notify('onNonblank', report);
     return report;
@@ -194,15 +213,27 @@
         showGene: options?.showGene !== false,
         edgeScope: options?.edgeScope === 'center' ? 'center' : 'all',
       };
-      return currentNetwork ? renderNetwork(currentNetwork) : Promise.resolve(null);
+      return applyViewOptions();
+    },
+    setLegendFocus(focus) {
+      return runner.setLegendFocus(focus);
     },
     setVisible,
+    stopLayout() {
+      const graph = runner.getGraph();
+      if (graph && typeof graph.stopLayout === 'function') graph.stopLayout();
+      layoutStopped = true;
+      return Promise.resolve();
+    },
     resize() {
       runner.resize();
       return Promise.resolve();
     },
     exportPngDataUrl() {
       return runner.exportPngDataUrl();
+    },
+    exportSvgString() {
+      return runner.exportSvgString();
     },
     getVisibleSubgraph() {
       return runner.getVisibleSubgraph();

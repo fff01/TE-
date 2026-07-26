@@ -33,7 +33,7 @@
                 <div id="export-menu" class="graph-export-menu" role="menu" hidden>
                   <button id="export-menu-csv" type="button" role="menuitem">CSV</button>
                   <button id="export-menu-png" type="button" role="menuitem">PNG</button>
-                  <button id="export-menu-svg" type="button" role="menuitem" disabled aria-disabled="true">SVG <span>Soon</span></button>
+                  <button id="export-menu-svg" type="button" role="menuitem">SVG</button>
                 </div>
               </div>
             </div>

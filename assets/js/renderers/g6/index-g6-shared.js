@@ -7,6 +7,30 @@
 
   const { Circle, ExtensionCategory, Graph, register } = G6Lib;
 
+  async function fetchWithDeadline(url, options = {}, timeoutMs = 15000, label = 'Graph request') {
+    const controller = new AbortController();
+    const externalSignal = options.signal;
+    let timedOut = false;
+    const abortFromCaller = () => controller.abort();
+    if (externalSignal) {
+      if (externalSignal.aborted) controller.abort();
+      else externalSignal.addEventListener('abort', abortFromCaller, { once: true });
+    }
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, Math.max(1, Number(timeoutMs) || 15000));
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+      if (timedOut) throw new Error(`${label} timed out. Please retry.`);
+      throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
+      externalSignal?.removeEventListener?.('abort', abortFromCaller);
+    }
+  }
+
   const TYPE_META = window.__TEKG_G6_TYPE_META && typeof window.__TEKG_G6_TYPE_META === 'object'
     ? window.__TEKG_G6_TYPE_META
     : {};
@@ -1247,11 +1271,11 @@
 
     async function loadEnglishResources() {
       const [nameRes, teDescRes, entityDescRes, teLineageRes, teMetricsRes] = await Promise.allSettled([
-        fetch(window.__TEKG_PATHS.dataUrl('processed/entity_description_key_translation_cache.json'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.dataUrl('processed/te_descriptions.json'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.dataUrl('processed/entity_descriptions.json'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree'), { credentials: 'same-origin' }),
-        fetch(window.__TEKG_PATHS.apiUrl('te_metrics.php'), { credentials: 'same-origin' }),
+        fetchWithDeadline(window.__TEKG_PATHS.dataUrl('processed/entity_description_key_translation_cache.json'), { credentials: 'same-origin' }, 6000, 'Graph terminology data'),
+        fetchWithDeadline(window.__TEKG_PATHS.dataUrl('processed/te_descriptions.json'), { credentials: 'same-origin' }, 6000, 'TE descriptions'),
+        fetchWithDeadline(window.__TEKG_PATHS.dataUrl('processed/entity_descriptions.json'), { credentials: 'same-origin' }, 6000, 'Entity descriptions'),
+        fetchWithDeadline(window.__TEKG_PATHS.apiUrl('taxonomy.php?view=tree'), { credentials: 'same-origin' }, 6000, 'Taxonomy support data'),
+        fetchWithDeadline(window.__TEKG_PATHS.apiUrl('te_metrics.php'), { credentials: 'same-origin' }, 6000, 'TE metrics'),
       ]);
 
       if (nameRes.status === 'fulfilled' && nameRes.value.ok) {
@@ -2349,9 +2373,9 @@
           endpoint.searchParams.set('class', request.classQuery || query);
         }
 
-        const response = await fetch(endpoint.toString(), {
+        const response = await fetchWithDeadline(endpoint.toString(), {
           credentials: 'same-origin',
-        });
+        }, 15000, 'Knowledge Graph request');
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -2469,9 +2493,9 @@
         endpoint.searchParams.set('class', request.classQuery || query);
       }
 
-      const response = await fetch(endpoint.toString(), {
+      const response = await fetchWithDeadline(endpoint.toString(), {
         credentials: 'same-origin',
-      });
+      }, 15000, 'Knowledge Graph expansion request');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -2715,6 +2739,103 @@
       return canvas.toDataURL('image/png');
     }
 
+    function exportSvgString() {
+      if (!graph || !currentGraphData || typeof graph.getElementPosition !== 'function') {
+        throw new Error('No positioned G6 graph is available for SVG export.');
+      }
+      const serializer = window.__TEKG_G6_SVG_EXPORT;
+      if (!serializer || typeof serializer.serialize !== 'function') {
+        throw new Error('The shared G6 SVG serializer is unavailable.');
+      }
+      const visible = getVisibleSubgraph();
+      if (!Array.isArray(visible.nodes) || visible.nodes.length === 0) {
+        throw new Error('The visible graph has no nodes to export.');
+      }
+      const sourceNodes = new Map((currentGraphData.nodes || []).map((node) => [String(node.id || ''), node]));
+      const sourceEdges = new Map((currentGraphData.edges || []).map((edge) => [String(edge.id || ''), edge]));
+      const positionedNodes = visible.nodes.map((node) => {
+        const position = graph.getElementPosition(node.id);
+        const x = Number(position?.[0]);
+        const y = Number(position?.[1]);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+          throw new Error(`Node ${node.id} has no finite G6 position for SVG export.`);
+        }
+        return { ...node, source: sourceNodes.get(String(node.id || '')) || node, x, y };
+      });
+      const nodeById = new Map(positionedNodes.map((node) => [String(node.id || ''), node]));
+      const exportNodes = positionedNodes.map((node) => {
+        const model = node.source;
+        const radius = Math.max(5, Number(node.size || model.size || 10) / 2);
+        const opacity = Math.min(
+          typeof model.opacity === 'number' ? model.opacity : 1,
+          typeof model.legendOpacity === 'number' ? model.legendOpacity : 1,
+        );
+        const baseWidth = model.expressionLineWidth || ((model.endpointHighlight || model.graphRipple) ? 5 : 2);
+        const lineWidth = model.legendFocused ? baseWidth + 2 : baseWidth;
+        const important = model.importantLabel || isImportantLabelNode(model);
+        const label = important ? importantLabelText(model) : secondaryLabelText(model);
+        const rings = (model.endpointHighlight || model.graphRipple) ? [{
+          radius: radius + 14,
+          stroke: model.strokeColor || TYPE_STROKES[model.nodeType] || '#2563eb',
+          strokeWidth: 4,
+          opacity: 0.28,
+        }] : [];
+        return {
+          id: node.id,
+          x: node.x,
+          y: node.y,
+          radius,
+          fill: model.fillColor || TYPE_COLORS[model.nodeType] || '#94a3b8',
+          stroke: model.strokeColor || TYPE_STROKES[model.nodeType] || '#111111',
+          strokeWidth: lineWidth,
+          opacity,
+          rings,
+          label: label ? {
+            text: label,
+            fontSize: important ? importantLabelFontSize(model) : secondaryLabelFontSize(model),
+            fontWeight: important ? 700 : 600,
+            opacity,
+          } : null,
+        };
+      });
+      const exportEdges = (visible.edges || [])
+        .filter((edge) => nodeById.has(String(edge.source || '')) && nodeById.has(String(edge.target || '')))
+        .map((edge) => {
+          const model = sourceEdges.get(String(edge.id || '')) || edge;
+          const source = nodeById.get(String(edge.source || ''));
+          const target = nodeById.get(String(edge.target || ''));
+          const relationType = String(model.relationKey || model.relation || model.relationType || '').trim();
+          const pmidCount = Array.isArray(model.pmids) ? model.pmids.length : 0;
+          const label = currentShowEdgeLabels && (relationType || pmidCount > 0)
+            ? (pmidCount > 0 ? `${relationType} (${pmidCount})` : relationType)
+            : '';
+          return {
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            stroke: model.strokeColor || mixEdgeColor(source?.type, target?.type, boundedEvidenceOpacity(model)),
+            strokeWidth: boundedEvidenceWidth(model) + (model.legendFocused ? 1.5 : 0),
+            opacity: typeof model.legendOpacity === 'number' ? model.legendOpacity : 1,
+            dash: Array.isArray(model.lineDash) ? model.lineDash : [],
+            label: label ? { text: label, fontSize: 9 } : null,
+          };
+        });
+      return serializer.serialize({
+        title: visible.query || currentQuery || 'TE-KG knowledge graph',
+        description: 'Static vector export of the currently visible TE-KG knowledge graph.',
+        metadata: {
+          generator: 'TE-KG shared G6 SVG exporter',
+          graph_mode: 'knowledge_graph',
+          query: visible.query || currentQuery,
+          node_count: exportNodes.length,
+          edge_count: exportEdges.length,
+          relation_labels_visible: currentShowEdgeLabels,
+        },
+        nodes: exportNodes,
+        edges: exportEdges,
+      });
+    }
+
     function resize() {
       const metrics = getContainerMetrics();
       if ((container.clientWidth || 0) < 25 && metrics.width > 0) {
@@ -2831,6 +2952,7 @@
       inspectEdge,
       getEdgeVisuals,
       exportPngDataUrl,
+      exportSvgString,
       getFixedView: () => fixedView,
       getKeyNodeLevel: () => currentKeyNodeLevel,
       escapeHtml,

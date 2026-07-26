@@ -579,3 +579,34 @@ Stop the active task and return to the last accepted checkpoint if:
   centralize canonical route/exact TE handoff in the parent coordinator, reuse
   one shared Loader implementation, and make filter/focus operations
   lightweight rather than full graph renders.
+- 2026-07-26: Runtime implementation completed. Canonical route ownership,
+  exact bidirectional TE handoff, optimistic TE/context URLs, Back/Forward,
+  latest-request-wins behavior, the shared TE Loader, Co-expression legend
+  focus/help, visibility-only filters, and visible-workspace DeepThink bounds
+  are active. A late integration failure exposed that Knowledge query changes
+  were resetting the live iframe `src`; `ensureDynamicFrame()` now reuses the
+  live bridge/G6 instance and sends the new request through `loadGraph()`.
+- 2026-07-26: New regression checks passed, including in-page Knowledge search,
+  LINE1 negative matching, LTR5 bidirectional handoff, context routing,
+  Back/Forward, iframe identity, injected filter rejection, rapid repeated
+  Apply, shared Loader behavior, and DeepThink bounds. Existing Co-expression
+  Task 6-9, API, Knowledge browser, taxonomy-tree, inspect, and export checks
+  also passed. Desktop browser checks covered 1440x960, 1280x900, and 1024x768.
+- 2026-07-26: Three plan-declared unrelated legacy checks remain red and were
+  not modified: `check_g6_relation_legend_expand_mode.py`,
+  `check_g6_legend_expand_tree_fixes.py`, and
+  `check_taxonomy_runtime_truth.py`. Their failures match the existing records
+  in the acceptance README. No independent subagent review was run because it
+  was not explicitly authorized; the main AI performed the final diff review.
+
+## 10. Completion Status
+
+**Status:** Completed and accepted on 2026-07-26.
+
+All ten user-reported behaviors have executable regression coverage. The two
+G6 instances remain separate, MySQL remains the only Co-expression runtime
+source, and no fuzzy TE alias was introduced. A request epoch in the parent
+controller provides the planned stale-result protection; this is behaviorally
+equivalent to passing a separate generation value into the iframe. Generated
+browser logs/screenshots were restored after verification to avoid unrelated
+artifact churn.

@@ -61,8 +61,12 @@
 
   function getAssistantBounds() {
     const stageBounds = getStageBounds();
-    const graphSurface = stage.querySelector('.preview-g6-surface-stack');
-    if (!graphSurface) {
+    const graphSurface = stage.querySelector(
+      '#previewGraphWorkspace:not([hidden]) .preview-g6-surface-stack, '
+      + '#previewCoexpressionWorkspace:not([hidden]) .preview-g6-surface-stack',
+    );
+    const graphBounds = graphSurface?.getBoundingClientRect();
+    if (!graphBounds || graphBounds.width < 1 || graphBounds.height < 1) {
       return {
         left: 0,
         top: 0,
@@ -70,7 +74,6 @@
         height: stageBounds.height,
       };
     }
-    const graphBounds = graphSurface.getBoundingClientRect();
     return {
       left: Math.max(0, graphBounds.left - stageBounds.left),
       top: Math.max(0, graphBounds.top - stageBounds.top),
@@ -364,6 +367,15 @@
     qaWindowRect = clampDrawerRect(qaWindowRect || getDefaultDrawerRect());
     applyDrawerRect();
     resizeGraph();
+  });
+
+  window.addEventListener('tekg:preview-workspace-mode-change', () => {
+    window.requestAnimationFrame(() => {
+      qaWindowRect = clampDrawerRect(qaWindowRect || getDefaultDrawerRect());
+      applyDrawerRect();
+      clampFabPosition();
+      updateFabPosition();
+    });
   });
 
   window.__TEKG_PREVIEW_SHELL = {

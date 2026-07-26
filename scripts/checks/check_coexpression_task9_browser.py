@@ -101,12 +101,12 @@ def main() -> None:
                 " && window.__TEKG_COEXPRESSION_MODE.getDiagnostics().selection?.te === 'L1HS'",
                 timeout=30_000,
             )
-            page.go_back()
+            page.evaluate("() => history.back()")
             page.wait_for_function(
                 "() => window.__TEKG_PREVIEW_WORKSPACE_MODE.getMode() === 'knowledge'",
                 timeout=20_000,
             )
-            page.go_back()
+            page.evaluate("() => history.back()")
             page.wait_for_function(
                 """() => {
                   const mode = window.__TEKG_PREVIEW_WORKSPACE_MODE?.getMode?.();

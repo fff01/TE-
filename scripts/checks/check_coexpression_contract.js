@@ -33,6 +33,10 @@ function catalogPayload() {
       { te: 'L1HS', available_contexts: ['cancer_cell_line', 'normal_cell_line'], best_tier: 'core_case', recommended_default: true },
       { te: 'CR1', available_contexts: ['normal_cell_line'], best_tier: 'searchable_all', recommended_default: false },
     ],
+    gene_items: [
+      { gene: 'C1orf116', available_contexts: ['cancer_cell_line'], best_tier: 'high_confidence' },
+      { gene: 'CLDN4', available_contexts: ['cancer_cell_line', 'normal_tissue'], best_tier: 'high_confidence' },
+    ],
   };
 }
 
@@ -61,6 +65,8 @@ function run(name, callback) {
 run('catalog normalization, case-insensitive selection, and strict TE matching', () => {
   const catalog = Contract.normalizeCatalog(catalogPayload());
   assert.strictEqual(catalog.items.length, 2);
+  assert.strictEqual(catalog.geneItems.length, 2);
+  assert.strictEqual(catalog.features.length, 4);
   assert.strictEqual(catalog.items[0].te, 'L1HS');
   assert.strictEqual(catalog.items[0].data.internal_path, undefined);
   assert.deepStrictEqual(Contract.resolveSelection(catalog, 'l1hs', 'normal_cell_line'), {
@@ -77,6 +83,13 @@ run('catalog normalization, case-insensitive selection, and strict TE matching',
     () => Contract.resolveSelection(catalog, '', 'normal_cell_line'),
     (error) => error && error.code === 'missing_catalog_te',
   );
+  assert.deepStrictEqual(Contract.resolveFeatureSelection(catalog, 'c1ORF116', 'Gene', 'cancer_cell_line'), {
+    feature: 'C1orf116', featureType: 'Gene', context: 'cancer_cell_line', availableContexts: ['cancer_cell_line'], fallback: false,
+  });
+  assert.throws(
+    () => Contract.resolveFeatureSelection(catalog, 'missing', 'Gene', 'normal_tissue'),
+    (error) => error && error.code === 'unknown_catalog_gene',
+  );
 });
 
 run('network normalization creates stable graph records and strips internal fields', () => {
@@ -90,6 +103,30 @@ run('network normalization creates stable graph records and strips internal fiel
   assert.deepStrictEqual(graph.diagnostics.input, { nodes: 2, edges: 1 });
   assert.deepStrictEqual(graph.diagnostics.output, { nodes: 2, edges: 1 });
   assert.deepStrictEqual(graph.diagnostics.rejected, []);
+});
+
+run('network normalization preserves a Gene-centered selection and center node', () => {
+  const payload = networkPayload();
+  payload.selection = {
+    feature: 'C1orf116',
+    feature_type: 'Gene',
+    gene: 'C1orf116',
+    context: 'cancer_cell_line',
+    source_center_te: 'HERVH-int',
+  };
+  payload.nodes[0].is_center = false;
+  payload.nodes[1] = {
+    ...payload.nodes[1],
+    id: 'C1orf116',
+    label: 'C1orf116',
+    is_center: true,
+    role: 'selected_gene',
+  };
+  payload.edges[0].target = 'C1orf116';
+  const graph = Contract.normalizeNetwork(payload);
+  assert.strictEqual(graph.selection.feature, 'C1orf116');
+  assert.strictEqual(graph.selection.feature_type, 'Gene');
+  assert.strictEqual(graph.nodes.find((node) => node.isCenter).kind, 'gene');
 });
 
 run('reference L1HS raw data remains 26 nodes and 100 edges', () => {

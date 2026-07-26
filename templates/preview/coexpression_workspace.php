@@ -5,10 +5,11 @@
                 <div class="preview-entity-control">
                   <select id="coexpression-search-type" aria-label="Co-expression search entity type">
                     <option value="TE" selected>TE</option>
+                    <option value="Gene">Gene</option>
                   </select>
-                  <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="coexpression-catalog">
-                    <input id="coexpression-te-search" type="text" autocomplete="off" placeholder="Select a TE" aria-label="Co-expression TE" data-te-autocomplete disabled>
-                    <button class="te-autocomplete-toggle" type="button" aria-label="Show Co-expression TE names" aria-expanded="false" data-te-autocomplete-toggle></button>
+                  <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="coexpression-catalog" data-te-autocomplete-type-source="#coexpression-search-type" data-te-autocomplete-clear-on-type-change="true">
+                    <input id="coexpression-te-search" type="text" autocomplete="off" placeholder="Select a TE" aria-label="Co-expression feature" data-te-autocomplete disabled>
+                    <button class="te-autocomplete-toggle" type="button" aria-label="Show Co-expression feature names" aria-expanded="false" data-te-autocomplete-toggle></button>
                     <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>
                   </div>
                   <button id="coexpression-load" class="preview-search-submit" type="button" disabled>Search</button>
@@ -30,6 +31,7 @@
                 <div id="coexpression-export-menu" class="graph-export-menu" role="menu" hidden>
                   <button id="coexpression-export-csv" type="button" role="menuitem">CSV</button>
                   <button id="coexpression-export-png" type="button" role="menuitem">PNG</button>
+                  <button id="coexpression-export-svg" type="button" role="menuitem">SVG</button>
                 </div>
               </div>
             </div>
@@ -37,6 +39,7 @@
               <div id="coexpression-iframe-host" class="coexpression-iframe-host"></div>
               <div id="coexpression-preloader" class="graph-preloader" aria-hidden="true">
                 <div class="graph-preloader-inner">
+                  <div id="coexpression-mechanism-loader-slot" class="te-mechanism-loader-slot" aria-hidden="true"></div>
                   <div class="graph-preloader-icon" aria-hidden="true">
                     <span></span>
                     <span></span>
@@ -50,23 +53,25 @@
               </div>
               <aside id="coexpression-legend" class="graph-legend-panel coexpression-legend" aria-label="Co-expression legend">
                 <div class="graph-legend-title">Co-expression Legend</div>
-                <label class="graph-legend-item">
+                <label class="graph-legend-item" data-highlight-kind="entity" data-highlight-value="TE" tabindex="0" aria-pressed="false">
                   <input id="coexpression-show-te" class="graph-legend-check" type="checkbox" checked>
                   <span class="graph-legend-swatch coexpression-legend-te" aria-hidden="true"></span>
                   <span class="graph-legend-text">TE nodes</span>
                 </label>
-                <label class="graph-legend-item">
+                <label class="graph-legend-item" data-highlight-kind="entity" data-highlight-value="Gene" tabindex="0" aria-pressed="false">
                   <input id="coexpression-show-gene" class="graph-legend-check" type="checkbox" checked>
                   <span class="graph-legend-swatch coexpression-legend-gene" aria-hidden="true"></span>
                   <span class="graph-legend-text">Gene nodes</span>
                 </label>
-                <div class="graph-legend-item coexpression-legend-static">
+                <div class="graph-legend-item coexpression-legend-static" data-highlight-kind="module-hub" data-highlight-value="module-hub" tabindex="0" aria-pressed="false">
                   <span class="coexpression-hub-ring" aria-hidden="true"></span>
                   <span class="graph-legend-text">Module hub</span>
+                  <span class="coexpression-legend-help" role="tooltip">One of the top 5% of features by weighted within-module degree (at least one hub in an eligible module of size 3 or more).</span>
                 </div>
-                <div class="graph-legend-item coexpression-legend-static">
+                <div class="graph-legend-item coexpression-legend-static" data-highlight-kind="relative-expression" data-highlight-value="relative-expression" tabindex="0" aria-pressed="false">
                   <span class="coexpression-activity-ring" aria-hidden="true"></span>
-                  <span class="graph-legend-text">Relative TE expression</span>
+                  <span class="graph-legend-text">Relative expression activity</span>
+                  <span class="coexpression-legend-help" role="tooltip">Median expression for the selected context, log-normalized against the other visible TE and Gene nodes. It does not encode correlation or causality.</span>
                 </div>
                 <label class="coexpression-edge-scope-control" for="coexpression-edge-scope">
                   <span>Edges</span>

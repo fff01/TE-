@@ -79,9 +79,16 @@ def main() -> None:
         "Persistent Co-expression resume diagnostics are missing.",
     )
     require(
+        "LOADING_STATES.has(currentState)" in coexpression
+        and "currentSelection = { ...stableSelection };" in coexpression
+        and "LOADING_STATES.has(previous.state)" in coexpression,
+        "Cancelled Co-expression transitions can leave a stale loading state instead of restoring the stable graph.",
+    )
+    require(
         "nextCatalog.defaultSelection.te" not in coexpression
-        and "Select a TE to explore its co-expression network." in coexpression,
-        "Co-expression must never infer L1HS when no TE is selected.",
+        and "awaitFeatureSelection" in coexpression
+        and "Select a ${type} to explore its co-expression network." in coexpression,
+        "Co-expression must never infer L1HS when no feature is selected.",
     )
     require(
         "ensureKnowledgeForGraphAction" in deepthink,

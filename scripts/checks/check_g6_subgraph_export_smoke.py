@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any
 from urllib.parse import quote
 
@@ -59,7 +60,7 @@ def main() -> None:
             "  python -m playwright install chromium"
         )
 
-    query = "LINE1"
+    query = str(os.environ.get("TEKG_EXPORT_QUERY") or "LINE1").strip() or "LINE1"
     url = app_url(f"preview.php?q={quote(query)}")
     console_errors: list[str] = []
     page_errors: list[str] = []
@@ -127,8 +128,9 @@ def main() -> None:
             require(controls["svgItem"], "Missing SVG menu item\n" + evidence(controls))
             require(controls["exportBridge"], "Missing parent export bridge\n" + evidence(controls))
             require(controls["mainDisabled"] is False, "Export main button is disabled after graph load\n" + evidence(controls))
-            require(controls["svgDisabled"] is True, "SVG menu item should be disabled in first version\n" + evidence(controls))
-            require("Soon" in controls["svgText"] or "Disabled" in controls["svgText"], "SVG item must explicitly show disabled/soon status\n" + evidence(controls))
+            require(controls["svgDisabled"] is False, "SVG menu item is disabled after graph load\n" + evidence(controls))
+            require(controls["svgText"] == "SVG", "SVG menu item still exposes placeholder copy\n" + evidence(controls))
+            require("exportSvg" in controls["exportMethods"], "Parent export bridge is missing exportSvg\n" + evidence(controls))
 
             page.locator("#export-menu-toggle").hover(timeout=15000)
             page.wait_for_selector("#export-menu:not([hidden])", timeout=5000)
@@ -200,6 +202,39 @@ def main() -> None:
             data_url = str(png_payload.get("dataUrl") or "")
             require(data_url.startswith("data:image/png;base64,"), "PNG export did not return a PNG data URL")
             require(int(png_payload.get("byteLength") or 0) > 1024, "PNG export data is unexpectedly small\n" + evidence(png_payload))
+
+            svg_payload = page.evaluate("() => window.__TEKG_G6_EXPORT.exportSvg({ download: false })")
+            require(isinstance(svg_payload, dict), "SVG export did not return an object")
+            svg_text = str(svg_payload.get("svg") or "")
+            require(svg_text.startswith("<svg"), "SVG export did not return an SVG document")
+            svg_report = page.evaluate(
+                """(svg) => {
+                    const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+                    return {
+                        root: doc.documentElement.localName,
+                        errors: doc.querySelectorAll('parsererror').length,
+                        nodes: doc.querySelectorAll('[data-node-id]').length,
+                        edges: doc.querySelectorAll('[data-edge-id]').length,
+                        labels: doc.querySelectorAll('text').length,
+                        viewBox: doc.documentElement.getAttribute('viewBox') || '',
+                    };
+                }""",
+                svg_text,
+            )
+            require(
+                svg_report["root"] == "svg"
+                and svg_report["errors"] == 0
+                and svg_report["nodes"] == subgraph["counts"]["nodes"]
+                and svg_report["edges"] == subgraph["counts"]["edges"]
+                and svg_report["labels"] > 0
+                and len(svg_report["viewBox"].split()) == 4,
+                "SVG structure does not match the visible Knowledge Graph\n" + evidence(svg_report),
+            )
+
+            page.locator("#export-menu-toggle").click(timeout=15000)
+            page.wait_for_selector("#export-menu:not([hidden])", timeout=5000)
+            page.locator("#export-menu-svg").click(timeout=15000)
+            page.wait_for_function("() => (window.__TEKG_EXPORT_DOWNLOADS || []).some((entry) => /\\.svg$/i.test(entry.download))", timeout=10000)
 
             filter_result = page.evaluate(
                 """async () => {

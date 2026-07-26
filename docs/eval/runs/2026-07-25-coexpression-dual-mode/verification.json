@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-25",
+  "date": "2026-07-26",
   "analysis_version": "v1_abs0.4_fdr0.05_res1.8",
   "runtime_source": "MySQL via api/coexpression.php",
   "representative_cases": [
@@ -55,6 +55,16 @@
   ],
   "desktop_viewports": ["1440x960", "1280x900", "1024x768"],
   "new_contracts": "pass",
+  "preview_parity_stabilization": {
+    "canonical_route_and_history": "pass",
+    "exact_te_handoff_and_line1_negative": "pass",
+    "knowledge_iframe_identity_preserved": "pass",
+    "shared_loader_renderer": "pass",
+    "legend_focus_and_scientific_help": "pass",
+    "visibility_filter_under_1000_ms": "pass",
+    "filter_rejection_and_repeat_recovery": "pass",
+    "visible_workspace_assistant_bounds": "pass"
+  },
   "knowledge_graph_live_browser": "pass",
   "taxonomy_tree_only": "pass",
   "legacy_unrelated_failures": [

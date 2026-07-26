@@ -352,6 +352,106 @@ function tekg_taxonomy_file_tree_payload(string $source): array
     ];
 }
 
+function tekg_taxonomy_loader_kinds(array $names, string $source = 'rmsk_repbase'): array
+{
+    $tree = tekg_taxonomy_file_tree_payload($source);
+    $root = (string)($tree['root'] ?? 'Transposable Elements - Human');
+    $labels = [];
+    foreach ((array)($tree['nodes'] ?? []) as $node) {
+        $label = trim((string)($node['name'] ?? ''));
+        if ($label !== '') {
+            $labels[strtolower($label)] = $label;
+        }
+    }
+
+    $parents = [];
+    foreach ((array)($tree['edges'] ?? []) as $edge) {
+        $child = trim((string)($edge['child'] ?? ''));
+        $parent = trim((string)($edge['parent'] ?? ''));
+        if ($child !== '' && $parent !== '') {
+            $parents[strtolower($child)] = $parent;
+        }
+    }
+
+    $topLevelFor = static function (string $label) use ($parents, $root): string {
+        $current = $label;
+        $seen = [];
+        while ($current !== '') {
+            $key = strtolower($current);
+            if (isset($seen[$key])) {
+                return '';
+            }
+            $seen[$key] = true;
+            $parent = (string)($parents[$key] ?? '');
+            if ($parent === '') {
+                return '';
+            }
+            if (strcasecmp($parent, $root) === 0) {
+                return $current;
+            }
+            $current = $parent;
+        }
+        return '';
+    };
+
+    $kindForTopLevel = static function (string $topLevel): string {
+        if (stripos($topLevel, 'Class I:') === 0) {
+            return 'retro';
+        }
+        if (stripos($topLevel, 'Class II:') === 0) {
+            return 'dna';
+        }
+        return 'default';
+    };
+
+    $items = [];
+    foreach ($names as $rawName) {
+        $name = trim((string)$rawName);
+        if ($name === '') {
+            continue;
+        }
+        $nameKey = strtolower($name);
+        $matchedLabels = [];
+        foreach ([$name, 'Family: ' . $name, 'Superfamily: ' . $name] as $candidate) {
+            $candidateKey = strtolower($candidate);
+            if (isset($labels[$candidateKey])) {
+                $matchedLabels[$candidateKey] = $labels[$candidateKey];
+            }
+        }
+        if ($matchedLabels === []) {
+            foreach ($labels as $labelKey => $label) {
+                $plain = preg_replace('/^(?:Class I|Class II|Subclass|Order|Superfamily|Family|Subclade):\s*/i', '', $label) ?? $label;
+                if (str_starts_with(strtolower($plain), $nameKey)) {
+                    $matchedLabels[$labelKey] = $label;
+                }
+            }
+        }
+
+        $topLevels = [];
+        foreach ($matchedLabels as $matchedLabel) {
+            $topLevel = $topLevelFor($matchedLabel);
+            if ($topLevel !== '') {
+                $topLevels[strtolower($topLevel)] = $topLevel;
+            }
+        }
+        $kinds = [];
+        foreach ($topLevels as $topLevel) {
+            $kind = $kindForTopLevel($topLevel);
+            $kinds[$kind] = true;
+        }
+        $resolvedKind = count($kinds) === 1 ? (string)array_key_first($kinds) : 'default';
+        $resolvedTopLevel = count($topLevels) === 1 ? (string)array_values($topLevels)[0] : null;
+        $items[] = [
+            'name' => $name,
+            'kind' => $resolvedKind,
+            'taxonomy_found' => $matchedLabels !== [] && $topLevels !== [],
+            'top_level' => $resolvedTopLevel,
+            'source' => (string)($tree['tree_source'] ?? $source),
+        ];
+    }
+    return $items;
+}
+
 function tekg_taxonomy_tree_payload(array $items): array
 {
     $nodes = [

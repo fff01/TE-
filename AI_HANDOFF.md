@@ -44,6 +44,11 @@ The main graph frontend is under `assets/js/renderers/g6/`. The current evidence
 graph supports G6 rendering, relation legends, Expand/Jump workflows, evidence
 inspection, export behavior, and Agent/DeepThink-driven graph actions.
 
+Knowledge Graph and Co-expression SVG exports share
+`assets/js/renderers/g6/g6-svg-export.js`, but each workspace supplies its own
+filtered snapshot, final G6 positions, and domain styling. They still use
+separate G6 instances and iframe bridges.
+
 Important files include:
 
 - `assets/js/renderers/g6/index-g6-shared.js`
@@ -92,8 +97,46 @@ resumption rules are recorded in
 Co-expression is now an integrated, independently rendered mode in
 `preview.php`. It deliberately does not reuse the Knowledge Graph G6 instance.
 The two workspaces share page-level placement and interaction conventions but
-retain separate iframes, bridges, state, loaders, details, legends, filters,
-caches, and exports.
+retain separate iframes, bridges, G6 state, Loader DOM state, details, legends,
+filters, caches, and exports. The Loader renderer itself is shared through
+`assets/js/pages/preview/te-loader.js` so the same TE uses the same animation in
+both modes.
+Loader mechanism selection is taxonomy-backed through
+`api/taxonomy.php?view=loader_kinds&source=rmsk_repbase`: descendants of
+`Class I: Retrotransposons` use the retrotransposition animation, descendants
+of `Class II: DNA Transposons` use the DNA transposition animation, and
+`Others` uses the default Loader. Name heuristics are only a compatibility
+fallback when the existing taxonomy tree cannot resolve a TE; they must not
+become a second taxonomy truth source. Both Knowledge Graph TE searches and
+Co-expression loads must await this resolver before showing the mechanism
+Loader; otherwise names such as AluJb incorrectly flash the default spinner.
+Co-expression may expose different internal loading states for diagnostics, but
+its public Loader copy is always `Loading <TE> co-expression network...`, and
+the mechanism animation label must always use the TE name rather than stage
+words such as Preparing or Rendering.
+
+Graph request liveness is bounded in the browser: main graph/network requests
+time out after 15 seconds, optional renderer support data after 6 seconds, and
+Co-expression Expression activity after 8 seconds. Co-expression deactivation
+also restores the last stable state synchronously so a superseded mode switch
+cannot leave the hidden workspace in `loading-*` indefinitely.
+
+As of 2026-07-26, `preview-workspace-mode.js` is the canonical owner of Preview
+routes and exact TE handoff. Knowledge search, Co-expression search, context
+changes, mode switches, refresh, and Back/Forward keep the URL and active graph
+in sync. A live Knowledge iframe/G6 instance is reused when the TE changes;
+changing a query must not reset its `src`. Co-expression filters use G6 element
+visibility rather than rebuilding the graph, and legend rows support the same
+click-to-focus interaction model as Knowledge. LINE1 remains an exact
+unavailable Co-expression selection and is never aliased to L1HS.
+
+As of 2026-07-26, every Co-expression TE with available Expression data uses a
+stable ripple node while the Expression layer is enabled. Expression strength
+controls ring opacity, count, and radius. Hover and selection must not switch
+between circle and ripple node types or call `graph.draw()` merely because the
+pointer left a node; this keeps native `drag-element-force` active until mouse
+release and matches Knowledge Graph drag behavior. Gene nodes and TE nodes
+without Expression data remain non-ripple nodes.
 
 Runtime data is MySQL-only:
 
@@ -257,6 +300,12 @@ python scripts/checks/check_coexpression_task8_static.py
 python scripts/checks/check_coexpression_task8_browser.py
 python scripts/checks/check_coexpression_task9_static.py
 python scripts/checks/check_coexpression_task9_browser.py
+python scripts/checks/check_preview_dual_mode_parity_static.py
+python scripts/checks/check_preview_dual_mode_navigation_browser.py
+python scripts/checks/check_coexpression_legend_filter_loader_browser.py
+python scripts/checks/check_preview_assistant_workspace_bounds.py
+python scripts/checks/check_te_loader_taxonomy_contract.py
+python scripts/checks/check_te_loader_taxonomy_browser.py
 python scripts/checks/check_taxonomy_runtime_truth.py
 python scripts/checks/check_no_legacy_db_fallback.py
 ```

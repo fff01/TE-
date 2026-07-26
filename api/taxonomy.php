@@ -24,6 +24,21 @@ $source = trim((string)($_GET['source'] ?? 'rmsk_repbase'));
 $names = tekg_taxonomy_parse_names((string)($_GET['names'] ?? ''));
 
 try {
+    if ($view === 'loader_kinds') {
+        if (!tekg_taxonomy_is_file_tree_source($source)) {
+            http_response_code(400);
+            echo json_encode(['ok' => false, 'error' => 'Unsupported taxonomy Loader source'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
+        }
+        $items = tekg_taxonomy_loader_kinds($names, $source);
+        echo json_encode([
+            'ok' => true,
+            'source' => tekg_taxonomy_normalize_tree_source($source),
+            'items' => $items,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     if ($view === 'tree') {
         if (!tekg_taxonomy_is_file_tree_source($source)) {
             http_response_code(400);

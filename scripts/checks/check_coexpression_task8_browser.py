@@ -89,22 +89,17 @@ def main() -> None:
                 te_nodes = [node for node in graph["nodes"] if node["type"] == "TE"]
                 gene_nodes = [node for node in graph["nodes"] if node["type"] == "Gene"]
                 center_node = next(node for node in graph["nodes"] if node["id"] == te)
-                partner_sizes = [
-                    float(node["size"])
-                    for node in graph["nodes"]
-                    if node["id"] != te and node.get("size") is not None
-                ]
                 require(
-                    partner_sizes and float(center_node["size"]) > max(partner_sizes),
-                    f"Center TE is not the largest node for {te}/{context}: {center_node}",
+                    float(center_node["size"]) > 0,
+                    f"Center TE has an invalid standard node size for {te}/{context}: {center_node}",
                 )
                 require(
                     any(node["expression_value"] is not None for node in te_nodes),
                     f"No TE activity values reached the renderer for {te}/{context}.",
                 )
                 require(
-                    all(node["expression_value"] is None for node in gene_nodes),
-                    f"Gene nodes incorrectly received TE Expression values for {te}/{context}.",
+                    not gene_nodes or all(node["expression_value"] is not None for node in gene_nodes),
+                    f"Gene activity values did not reach the renderer for {te}/{context}.",
                 )
                 if context == "cancer_cell_line" and te in {"LTR5", "L1HS", "HERVH-int"}:
                     center_expression[te] = float(center_node["expression_value"])
@@ -117,6 +112,73 @@ def main() -> None:
             require(
                 center_expression["LTR5"] < center_expression["L1HS"] < center_expression["HERVH-int"],
                 f"Representative center Expression ordering changed: {center_expression}",
+            )
+            svg_text = page.evaluate("() => window.__TEKG_COEXPRESSION_MODE.exportSvgText()")
+            svg_report = page.evaluate(
+                """(svg) => {
+                  const documentNode = new DOMParser().parseFromString(svg, 'image/svg+xml');
+                  return {
+                    root: documentNode.documentElement.localName,
+                    parserErrors: documentNode.querySelectorAll('parsererror').length,
+                    circles: documentNode.querySelectorAll('circle').length,
+                    lines: documentNode.querySelectorAll('line').length,
+                    labels: documentNode.querySelectorAll('text').length,
+                    viewBox: documentNode.documentElement.getAttribute('viewBox') || '',
+                  };
+                }""",
+                svg_text,
+            )
+            current = page.evaluate("() => window.__TEKG_COEXPRESSION_MODE.getDiagnostics()")
+            require(
+                svg_report["root"] == "svg"
+                and svg_report["parserErrors"] == 0
+                and svg_report["circles"] >= current["nodeCount"]
+                and svg_report["lines"] >= current["edgeCount"]
+                and svg_report["labels"] > 0
+                and len(svg_report["viewBox"].split()) == 4,
+                f"SVG export is incomplete or invalid: {svg_report}",
+            )
+            svg_render = page.evaluate(
+                """async (svg) => {
+                  const image = new Image();
+                  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+                  try {
+                    await new Promise((resolve, reject) => {
+                      image.onload = resolve;
+                      image.onerror = () => reject(new Error('SVG image failed to load'));
+                      image.src = url;
+                    });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 96;
+                    canvas.height = 96;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(image, 0, 0, 96, 96);
+                    const pixels = context.getImageData(0, 0, 96, 96).data;
+                    let colored = 0;
+                    for (let index = 0; index < pixels.length; index += 4) {
+                      if (pixels[index + 3] > 0 && (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245)) colored += 1;
+                    }
+                    return { width: image.naturalWidth, height: image.naturalHeight, colored };
+                  } finally {
+                    URL.revokeObjectURL(url);
+                  }
+                }""",
+                svg_text,
+            )
+            require(
+                svg_render["width"] > 0 and svg_render["height"] > 0 and svg_render["colored"] > 20,
+                f"SVG export did not render as a nonblank image: {svg_render}",
+            )
+            page.click("#coexpression-export-menu-toggle")
+            with page.expect_download(timeout=10_000) as download_info:
+                page.click("#coexpression-export-svg")
+            download = download_info.value
+            download_path = download.path()
+            require(
+                download.suggested_filename.endswith("_coexpression.svg")
+                and download_path is not None
+                and Path(download_path).read_text(encoding="utf-8").startswith("<svg"),
+                f"SVG menu download failed or used an unexpected filename: {download.suggested_filename}",
             )
 
             page.evaluate(

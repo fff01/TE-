@@ -82,12 +82,17 @@ Production Co-expression data is read from isolated MySQL
 - `assets/js/renderers/g6/coexpression/`
 
 The active analysis version is `v1_abs0.4_fdr0.05_res1.8`. A runtime network is
-one center TE in one context class, capped at 50 nodes and 150 edges. Unknown
-TEs and unavailable contexts remain explicit; they never fall back to `L1HS`.
+one selected TE or Gene in one context class, capped at 50 nodes and 150 edges.
+TE searches use their approved stored display network. Gene searches
+deterministically choose the approved stored network in which the Gene has the
+highest visible incident-edge count and re-root that payload on the Gene.
+Unknown features and unavailable contexts remain explicit; they never fall
+back to `L1HS`.
 
-Expression activity is a TE-only visual layer in the Co-expression toolbar. It
-uses `api/graph_expression.php`, does not infer Gene expression, and does not
-alter co-expression edges or force-layout parameters. See
+Expression activity is a TE and Gene visual layer in the Co-expression toolbar.
+It uses measured MySQL summaries through `api/graph_expression.php` and does
+not alter co-expression edges or force-layout parameters. CSV, Canvas PNG, and
+final-position vector SVG exports are available from the same toolbar. See
 `frontend_contract.md` for the complete display and acceptance contract.
 
 ## Interpretation Boundary
@@ -111,6 +116,8 @@ validated functional units. In papers or frontend text, describe them as
 - `CR1 / normal_tissue`: small gene-rich high-confidence graph.
 - `CR1 / cancer_cell_line`: deliberately unavailable context with recoverable
   alternatives.
+- `C1orf116 / cancer_cell_line`: Gene-centered search, sourced from the
+  `HERVH-int` approved display network with the Gene as the sole visual center.
 - Avoid over-claiming TE function from module enrichment. The safe claim is:
   "this TE lies in a module whose gene members are enriched for X."
 

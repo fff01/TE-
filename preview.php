@@ -26,11 +26,15 @@ $previewVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/components/te-autocomplete.js')),
     (int)@filemtime(tekg_assets_fs_path('js/components/deepthink-client.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-shell.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/pages/preview/te-loader.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-deepthink.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/coexpression-mode.js')),
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-workspace-mode.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-type-meta.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/default-tree-mindmap.js')),
+    (int)@filemtime(tekg_assets_fs_path('html/preview_g6_embed.html')),
+    (int)@filemtime(tekg_assets_fs_path('html/preview_coexpression_embed.html')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/g6-svg-export.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6.bootstrap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-shared.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-embed.js')),
@@ -105,6 +109,7 @@ $previewConfig = [
         window.__TEKG_RENDERER_MODE = 'g6';
         window.__TEKG_EMBED_MODE = 'preview-direct';
         window.__TEKG_INITIAL_QUERY = <?= json_encode($initialQuery, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
+        window.__TEKG_PREVIEW_VERSION = <?= json_encode((string)$previewVersion, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
         window.__TEKG_COMPACT_EMBED = false;
         window.__TEKG_G6_BOOTSTRAP_OWN_TREE = true;
       </script>
@@ -116,6 +121,7 @@ $previewConfig = [
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-type-meta.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/default-tree-mindmap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-runtime.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/te-loader.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6.bootstrap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/coexpression/coexpression-contract.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/coexpression-mode.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
