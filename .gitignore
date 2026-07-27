@@ -4,6 +4,9 @@ reference/
 docs/
 !docs/
 docs/*
+!docs/architecture/
+docs/architecture/*
+!docs/architecture/database_overview.md
 !docs/exec-plans/
 docs/exec-plans/*
 !docs/exec-plans/active/

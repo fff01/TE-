@@ -9,10 +9,15 @@
           padding: 0 28px;
         }
 
+        .hero-area .proto-container {
+          max-width: 1500px;
+          padding: 0 20px;
+        }
+
         .hero-row {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(560px, 1fr);
-          gap: 34px;
+          grid-template-columns: minmax(0, 0.78fr) minmax(620px, 1.22fr);
+          gap: 20px;
           align-items: center;
         }
 
@@ -40,36 +45,26 @@
         }
 
         .hero-figure {
-          background: #fff;
-          border-radius: 8px;
-          box-shadow: 0 6px 24px rgba(34, 68, 120, 0.12);
-          padding: 0;
-          overflow: hidden;
+          min-width: 0;
+          background: transparent;
         }
 
         .hero-figure-frame {
-          min-height: 520px;
           padding: 0;
           border: none;
-          border-radius: 0;
           background: transparent;
         }
 
         .figure-canvas {
-          display: grid;
-          place-items: center;
-          min-height: 520px;
           padding: 0;
           border: none;
-          border-radius: 0;
-          background: linear-gradient(180deg, #f8fbff 0%, #edf5ff 100%);
+          background: transparent;
         }
 
-        .architecture-placeholder-image {
+        .architecture-overview-image {
           display: block;
           width: 100%;
-          height: 520px;
-          object-fit: contain;
+          height: auto;
         }
 
         .tree-frame {
@@ -136,7 +131,7 @@
         .status-donut-card {
           min-width: 0;
           display: grid;
-          grid-template-rows: 34px 300px auto minmax(150px, auto);
+          grid-template-rows: 34px 300px minmax(0, 1fr);
           gap: 16px;
           align-items: start;
           padding: 24px;
@@ -145,6 +140,10 @@
           background: #ffffff;
           box-shadow: 0 14px 34px rgba(31, 74, 140, 0.1);
           height: 100%;
+        }
+
+        .status-donut-card[data-status-card="te"] {
+          grid-template-rows: 34px 300px auto minmax(0, 1fr);
         }
 
         .status-donut-copy {
@@ -231,7 +230,7 @@
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 6px 14px;
-          align-self: start;
+          align-self: center;
         }
 
         .status-legend-item {

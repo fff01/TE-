@@ -26,6 +26,11 @@ forks without a plan.
 - Homepage taxonomy and ring charts are data entrypoints, not decoration.
 - Homepage statistics should prefer lightweight APIs or caches and avoid heavy
   queries during page load.
+- Changing the TE classification level redraws only the center TE chart. The
+  Entity and Relation charts retain their existing DOM and animation state.
+- Dataset Status cards share the height of the longest current card so their
+  lower borders align. Shorter legends are vertically centered within their
+  remaining lower-card space.
 
 ## Browse / Expression
 

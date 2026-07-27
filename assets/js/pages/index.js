@@ -3,6 +3,7 @@
   const root = document.querySelector('[data-home-stats]');
   const tooltip = document.createElement('div');
   let activeTeLevel = 'class';
+  let statsRequestEpoch = 0;
   const numberFormatter = new Intl.NumberFormat();
   const percentFormatter = new Intl.NumberFormat(undefined, {
     minimumFractionDigits: 1,
@@ -268,6 +269,15 @@
     }
   }
 
+  function showTeFailure() {
+    const legend = root ? root.querySelector('[data-donut-legend="te"]') : null;
+    if (!legend) return;
+    const message = document.createElement('div');
+    message.className = 'status-loading';
+    message.textContent = 'TE classification is temporarily unavailable';
+    legend.replaceChildren(message);
+  }
+
   function syncTeLevelButtons() {
     if (!root) {
       return;
@@ -279,32 +289,43 @@
     });
   }
 
-  function renderStats(data) {
+  function renderTeChart(data) {
+    const teRows = normalizeRows(data.te_classification_composition);
+    const teTotal = teRows.reduce((total, row) => total + row.count, 0);
+    renderChart('te', colorRows('te', teRows), teTotal);
+  }
+
+  function renderStaticCharts(data) {
+    const entityRows = normalizeRows(data.entity_composition);
+    const relationRows = normalizeRows(data.relation_composition);
+    const relationTotal = relationRows.reduce((total, row) => total + row.count, 0);
+    renderChart('entity', colorRows('entity', entityRows), data.nodes_total);
+    renderChart('relation', colorRows('relation', relationRows), relationTotal);
+  }
+
+  function renderStats(data, { teOnly = false } = {}) {
     if (!root) {
       return;
     }
 
     activeTeLevel = String(data.te_level || activeTeLevel || 'class');
     syncTeLevelButtons();
-    const entityRows = normalizeRows(data.entity_composition);
-    const relationRows = normalizeRows(data.relation_composition);
-    const teRows = normalizeRows(data.te_classification_composition);
-    const relationTotal = relationRows.reduce((total, row) => total + row.count, 0);
-    const teTotal = teRows.reduce((total, row) => total + row.count, 0);
-
-    renderChart('entity', colorRows('entity', entityRows), data.nodes_total);
-    renderChart('te', colorRows('te', teRows), teTotal);
-    renderChart('relation', colorRows('relation', relationRows), relationTotal);
+    if (!teOnly) {
+      renderStaticCharts(data);
+    }
+    renderTeChart(data);
     root.classList.remove('is-loading');
     root.classList.add('is-loaded');
   }
 
-  async function loadHomeStats(teLevel = activeTeLevel) {
+  async function loadHomeStats(teLevel = activeTeLevel, options = {}) {
     if (!root) {
       return;
     }
 
-    root.classList.add('is-loading');
+    const teOnly = options.teOnly === true && root.classList.contains('is-loaded');
+    const requestEpoch = ++statsRequestEpoch;
+    if (!teOnly) root.classList.add('is-loading');
     activeTeLevel = teLevel || 'class';
     syncTeLevelButtons();
     setTeLoading();
@@ -320,9 +341,15 @@
       if (!response.ok || data.ok !== true) {
         throw new Error(data.error || `HTTP ${response.status}`);
       }
-      renderStats(data);
+      if (requestEpoch !== statsRequestEpoch) return;
+      renderStats(data, { teOnly });
     } catch (error) {
-      showFailure('Live dataset statistics are temporarily unavailable.');
+      if (requestEpoch !== statsRequestEpoch) return;
+      if (teOnly) {
+        showTeFailure();
+      } else {
+        showFailure('Live dataset statistics are temporarily unavailable.');
+      }
     }
   }
 
@@ -332,7 +359,7 @@
       button.addEventListener('click', () => {
         const level = button.dataset.teLevel || 'class';
         if (level !== activeTeLevel) {
-          loadHomeStats(level);
+          loadHomeStats(level, { teOnly: true });
         }
       });
     });

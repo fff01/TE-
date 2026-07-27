@@ -11,6 +11,8 @@ out of date; verify against live code and `current_system.md`.
 - `../../AI_HANDOFF.md`: current AI handoff for the next session.
 - `current_system.md`: current system overview. Prefer this over older
   handoffs.
+- `database_overview.md`: detailed three-stage overview of data provenance,
+  processing, integrated information, services, and interpretation boundaries.
 - `graph_runtime.md`: G6 / TE-KG graph runtime structure.
 - `data_sources.md`: current data sources, paths, and canonical rules.
 - `database_contract.md`: Neo4j / API contract.

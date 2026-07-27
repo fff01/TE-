@@ -4,9 +4,13 @@ $pageTitle = 'TE-KG Home';
 $activePage = 'home';
 $protoCurrentPath = tekg_app_url('index.php');
 $protoSubtitle = 'A transposable-element knowledge graph for exploration and discovery';
-$indexCssVersion = (int)@filemtime(tekg_assets_fs_path('css/pages/index.css'));
+$indexAssetVersion = max(
+    (int)@filemtime(__FILE__),
+    (int)@filemtime(tekg_assets_fs_path('css/pages/index.css')),
+    (int)@filemtime(tekg_assets_fs_path('js/pages/index.js'))
+);
 $pageExtraStylesheets = [
-    tekg_assets_url('css/pages/index.css') . '?v=' . $indexCssVersion,
+    tekg_assets_url('css/pages/index.css') . '?v=' . $indexAssetVersion,
 ];
 require __DIR__ . '/head.php';
 
@@ -34,9 +38,9 @@ $quickLinks = [
               <div class="hero-figure-frame">
                 <div class="figure-canvas">
                   <img
-                    class="architecture-placeholder-image"
-                    src="<?= htmlspecialchars(tekg_assets_url('img/home-architecture-placeholder.svg'), ENT_QUOTES, 'UTF-8') ?>"
-                    alt="TE-KG architecture diagram placeholder"
+                    class="architecture-overview-image"
+                    src="<?= htmlspecialchars(tekg_assets_url('img/home-database-overview-v1.png'), ENT_QUOTES, 'UTF-8') ?>"
+                    alt="TE-KG overview showing data collection, processing and integration, and information services"
                     loading="lazy"
                   >
                 </div>
@@ -147,7 +151,7 @@ $quickLinks = [
         </div>
       </section>
 
-      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/index.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/index.js') . '?v=' . $indexAssetVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
     </main>
   </div>
 </body>

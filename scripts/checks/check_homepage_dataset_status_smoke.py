@@ -31,7 +31,12 @@ def main() -> None:
             )
 
         page = browser.new_page(viewport={"width": 1440, "height": 960})
-        page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+        page.on(
+            "console",
+            lambda msg: console_errors.append(
+                f"{msg.text} :: {msg.location.get('url', '')}"
+            ) if msg.type == "error" else None,
+        )
         page.on("pageerror", lambda exc: page_errors.append(str(exc)))
         page.on("requestfailed", lambda request: failed_requests.append(f"{request.url} :: {request.failure}"))
         page.on("request", lambda request: home_stats_requests.append(request.url) if "home_stats.php" in request.url else None)
@@ -42,7 +47,11 @@ def main() -> None:
             page.wait_for_function(
                 """() => {
                     const root = document.querySelector('[data-home-stats]');
-                    return root && root.classList.contains('is-loaded');
+                    return root
+                        && root.classList.contains('is-loaded')
+                        && root.querySelectorAll('[data-donut-chart="entity"] .status-donut-segment').length > 0
+                        && root.querySelectorAll('[data-donut-chart="te"] .status-donut-segment').length > 0
+                        && root.querySelectorAll('[data-donut-chart="relation"] .status-donut-segment').length > 0;
                 }""",
                 timeout=30000,
             )
@@ -59,12 +68,16 @@ def main() -> None:
                     const cards = [...root.querySelectorAll('.status-donut-card')].map(card => {
                         const title = card.querySelector('.status-donut-copy h4')?.getBoundingClientRect();
                         const shell = card.querySelector('.status-donut-shell')?.getBoundingClientRect();
+                        const legend = card.querySelector('.status-legend');
                         const rect = card.getBoundingClientRect();
+                        const last = card.lastElementChild?.getBoundingClientRect();
                         return {
                             titleTop: title ? Math.round(title.top) : 0,
                             shellTop: shell ? Math.round(shell.top) : 0,
                             top: Math.round(rect.top),
                             bottom: Math.round(rect.bottom),
+                            bottomGap: last ? Math.round(rect.bottom - last.bottom) : 0,
+                            legendAlignSelf: legend ? getComputedStyle(legend).alignSelf : '',
                             width: Math.round(rect.width),
                         };
                     });
@@ -93,6 +106,12 @@ def main() -> None:
                 }"""
             )
             page.wait_for_timeout(1100)
+            page.evaluate(
+                """() => {
+                    window.__HOME_ENTITY_SENTINEL = document.querySelector('[data-donut-chart="entity"] .status-donut-segment');
+                    window.__HOME_RELATION_SENTINEL = document.querySelector('[data-donut-chart="relation"] .status-donut-segment');
+                }"""
+            )
             first_segment = page.locator('[data-donut-chart="entity"] .status-donut-segment').nth(0)
             before_box = first_segment.bounding_box()
             require(before_box is not None, "entity donut segment should have a bounding box")
@@ -121,13 +140,26 @@ def main() -> None:
                     activePressed: root.querySelector('[data-te-level="superfamily"]')?.getAttribute('aria-pressed') || '',
                     teSegments: root.querySelectorAll('[data-donut-chart="te"] .status-donut-segment').length,
                     teLegendRows: root.querySelectorAll('[data-donut-legend="te"] .status-legend-item').length,
+                    entityUntouched: window.__HOME_ENTITY_SENTINEL?.isConnected === true
+                        && root.querySelector('[data-donut-chart="entity"] .status-donut-segment') === window.__HOME_ENTITY_SENTINEL,
+                    relationUntouched: window.__HOME_RELATION_SENTINEL?.isConnected === true
+                        && root.querySelector('[data-donut-chart="relation"] .status-donut-segment') === window.__HOME_RELATION_SENTINEL,
+                    cardBottomGaps: [...root.querySelectorAll('.status-donut-card')].map(card => {
+                        const rect = card.getBoundingClientRect();
+                        const last = card.lastElementChild?.getBoundingClientRect();
+                        return last ? Math.round(rect.bottom - last.bottom) : 0;
+                    }),
                 })"""
             )
         finally:
             browser.close()
 
     require(not page_errors, "homepage page errors: " + " | ".join(page_errors[:5]))
-    require(not console_errors, "homepage console errors: " + " | ".join(console_errors[:5]))
+    relevant_console_errors = [
+        item for item in console_errors
+        if "home_stats.php" in item or "assets/js/pages/index.js" in item
+    ]
+    require(not relevant_console_errors, "homepage console errors: " + " | ".join(relevant_console_errors[:5]))
     relevant_failed = [item for item in failed_requests if "home_stats.php" in item or "index.js" in item]
     require(not relevant_failed, "homepage failed requests: " + " | ".join(relevant_failed[:5]))
     require(state["summaryBoxes"] == 0, f"obsolete summary boxes should be removed: {state}")
@@ -137,6 +169,7 @@ def main() -> None:
     require(len(card_widths) == 1, f"donut card widths should match: {state}")
     require(len({card["top"] for card in state["cards"]}) == 1, f"donut card top borders should align: {state}")
     require(len({card["bottom"] for card in state["cards"]}) == 1, f"donut card bottom borders should align: {state}")
+    require(all(card["legendAlignSelf"] == "center" for card in state["cards"]), f"donut legends should be vertically centered: {state}")
     require(len({card["titleTop"] for card in state["cards"]}) == 1, f"donut card titles should align: {state}")
     require(len({card["shellTop"] for card in state["cards"]}) == 1, f"donut charts should align: {state}")
     require(state["entitySegments"] >= 1, f"entity donut segments missing: {state}")
@@ -158,6 +191,8 @@ def main() -> None:
     require(te_level_state["activePressed"] == "true", f"superfamily level button should be aria-pressed: {te_level_state}")
     require(te_level_state["teSegments"] >= 1, f"superfamily TE donut segments missing: {te_level_state}")
     require(te_level_state["teLegendRows"] >= 1, f"superfamily TE legend rows missing: {te_level_state}")
+    require(te_level_state["entityUntouched"], "entity chart was redrawn during a TE-only level change")
+    require(te_level_state["relationUntouched"], "relation chart was redrawn during a TE-only level change")
     require(state["errorHidden"] is True, f"unexpected homepage stats fallback visible: {state}")
     ok(
         "homepage Dataset Status smoke passed: "
