@@ -1,9 +1,34 @@
 # TE-KG AI Handoff
 
-Last reviewed: 2026-07-25
+Last reviewed: 2026-07-27
 
 This document gives the next AI maintainer a compact but actionable project
 handoff. Use it together with `AGENTS.md`, `ARCHITECTURE.md`, and live code.
+
+## Next Conversation Scope
+
+The next maintainer should treat the following as the active product-editing
+scope, in this order unless the user redirects it:
+
+1. `preview.php` and the Graph / Co-expression workspace.
+2. `agent.php`, Agent, DeepThink, and their evidence plugins.
+3. `download.php` and its public dataset presentation.
+4. `about.php` and its user-guide content and presentation.
+
+The other main pages are currently accepted working surfaces. They remain
+important sources for the paper and may need factual documentation updates, but
+they should not be casually redesigned or refactored:
+
+- Home has the dataset-status charts and the current database overview figure
+  at `assets/img/home-database-overview-v1.png`.
+- Browse uses the independent MySQL Browse catalog and matching autocomplete.
+- Search remains the detail destination for Browse records.
+- The visible `Path` page has Table and G6 views with CSV, PNG, and SVG export.
+- Expression uses MySQL summaries and a query-aware autocomplete from the same
+  TE-name field as its result table.
+
+Always inspect the live dirty diff before editing. The latest UI cleanup is
+uncommitted and is user work that must not be reverted.
 
 ## What This Project Is
 
@@ -18,7 +43,7 @@ repository root. The main user-facing pages are:
 - `index.php`: homepage and dataset overview.
 - `browse.php`: TE browse and entity lookup.
 - `preview.php`: graph workspace using G6 and iframe-based graph rendering.
-- `path_finder.php`: path search and path graph display.
+- `path_finder.php`: the user-facing `Path` search and path graph display.
 - `expression.php` / `expression_detail.php`: expression data views.
 - `agent.php`: Agent and DeepThink entrypoint.
 - `download.php`: download/catalog page.
@@ -32,6 +57,9 @@ repository root. The main user-facing pages are:
 - Python path helper: `scripts/path_helpers.py`.
 - TE taxonomy runtime truth: Neo4j/API via `api/taxonomy.php`.
 - Expression runtime root: `data/bulk_expression_web`.
+- Expression Keyword autocomplete: query-aware MySQL catalog from
+  `expression_browse_summary` via `api/expression_catalog.php`; it does not use
+  the Neo4j taxonomy list.
 - Browse catalog runtime: MySQL `tekg_catalog` via `api/browse.php`; the Browse
   table and its autocomplete share the same active 276-row catalog version.
 
@@ -40,11 +68,35 @@ migration plan and verification.
 
 ## Major Subsystems
 
+### Recently Stabilized Non-primary Pages
+
+- Browse runtime data comes from MySQL `tekg_catalog`; its table, filters, and
+  Keyword autocomplete share the same active 276-row catalog.
+- Expression Keyword autocomplete comes from `api/expression_catalog.php` and
+  is intentionally independent of the Neo4j taxonomy autocomplete.
+- Path has compact Table / Graph controls, relation-label control, and CSV,
+  PNG, and SVG graph exports.
+- Browse, Expression, Path, Download, and About no longer show the former
+  introductory paragraph and breadcrumb block. Their page titles use a common
+  64px gap before the main content.
+- Browse-style command controls use a 6px corner radius. Download category
+  buttons and the Expression detail search field now follow that treatment.
+
+These pages can be consulted while writing the paper. Unless a concrete bug or
+content correction is reported, keep future implementation focused on Graph,
+Agent, Download, and About.
+
 ### Graph Runtime
 
 The main graph frontend is under `assets/js/renderers/g6/`. The current evidence
 graph supports G6 rendering, relation legends, Expand/Jump workflows, evidence
 inspection, export behavior, and Agent/DeepThink-driven graph actions.
+
+The user considers the main Graph interaction work broadly complete. Future
+Graph work should be incremental and evidence-driven rather than a renderer
+rewrite. Preserve the accepted drag behavior, loader behavior, exact TE route
+handoff, separate Knowledge / Co-expression G6 instances, legend interactions,
+and shared SVG export contract.
 
 Knowledge Graph and Co-expression SVG exports share
 `assets/js/renderers/g6/g6-svg-export.js`, but each workspace supplies its own
@@ -132,13 +184,13 @@ visibility rather than rebuilding the graph, and legend rows support the same
 click-to-focus interaction model as Knowledge. LINE1 remains an exact
 unavailable Co-expression selection and is never aliased to L1HS.
 
-As of 2026-07-26, every Co-expression TE with available Expression data uses a
-stable ripple node while the Expression layer is enabled. Expression strength
-controls ring opacity, count, and radius. Hover and selection must not switch
-between circle and ripple node types or call `graph.draw()` merely because the
-pointer left a node; this keeps native `drag-element-force` active until mouse
-release and matches Knowledge Graph drag behavior. Gene nodes and TE nodes
-without Expression data remain non-ripple nodes.
+As of 2026-07-26, every Co-expression TE or Gene with available Expression data
+uses a stable ripple node while the Expression layer is enabled. Expression
+strength controls ring opacity, count, and radius. Hover and selection must not
+switch between circle and ripple node types or call `graph.draw()` merely
+because the pointer left a node; this keeps native `drag-element-force` active
+until mouse release and matches Knowledge Graph drag behavior. Nodes without
+Expression data remain non-ripple nodes and report the missing value explicitly.
 
 Runtime data is MySQL-only:
 
@@ -156,8 +208,8 @@ The current main analysis standard is:
 
 - Network filter: `abs0.4_fdr0.05`
 - Module result: `v1_abs0.4_fdr0.05_res1.8`
-- Runtime display unit: one center TE and one context class, capped at 50 nodes
-  and 150 edges
+- Runtime display unit: one selected TE or Gene and one context class, capped at
+  50 nodes and 150 edges
 - Summary tables: `all_te_quality_summary.tsv`,
   `display_tier_recommendations.tsv`
 
@@ -168,8 +220,9 @@ Communication boundary:
   regulation or causality.
 - Unknown and unavailable TE/context selections never fall back to `L1HS`.
 - Expression activity belongs only to Co-expression. It is requested in a
-  batched TE-only layer from `api/graph_expression.php`; it never infers Gene
-  expression and never changes correlation edges or force parameters.
+  batched TE-and-Gene layer from `api/graph_expression.php`, uses measured MySQL
+  summaries for both entity types, and never changes correlation edges or force
+  parameters.
 - Representative acceptance cases are `L1HS`, `LTR5`, `MER11B`, `HERVH-int`,
   and `CR1`, including the unavailable `CR1 / cancer_cell_line` case.
 
@@ -199,6 +252,25 @@ Current broad direction:
   prompts.
 - Writing must be model-generated where specified; deterministic fallback
   answers must not mask model-stage failures.
+
+No Agent/DeepThink runtime code was changed during the latest Browse,
+Expression, Path, Download, and About UI pass. The dedicated intelligent QA
+handoff was last deeply audited before this transition, so verify live model
+configuration, endpoints, prompts, and tests before making behavioral claims.
+
+### Download and About
+
+These are active next-session presentation surfaces:
+
+- `download.php` currently exposes category filters and the public download
+  catalog. Its old introductory paragraph and breadcrumb block were removed;
+  category controls use the shared 6px corner treatment.
+- `about.php` now starts with the `About` title and then the guide layout. The
+  previous breadcrumb and large introductory marketing block were removed.
+- Future edits should improve real public content and information hierarchy,
+  not restore placeholder copy or oversized rounded controls.
+- Keep dataset descriptions and About claims aligned with actual runtime data,
+  source provenance, and paper-ready terminology.
 
 ## Documentation Policy
 
@@ -248,16 +320,19 @@ Known remaining work:
 
 ## Current Dirty Worktree Warning
 
-At handoff cleanup time, the working tree included:
+At the 2026-07-27 transition, the working tree contains active user-approved
+changes. Important groups include:
 
-- Modified documentation entries and runtime graph experiment files.
-- A modified user course PPTX artifact under `docs/ppt/`; do not revert or
-  delete it without explicit user instruction.
-- Untracked graph experiment files under `assets/js/renderers/canvas-force/`,
-  `assets/js/renderers/g6/large-force-graph/`, `taxonomy_canvas_demo.php`, and
-  `scripts/checks/check_large_force_graph_contract.js`.
+- Expression MySQL autocomplete work: `api/expression_catalog.php`, repository
+  and frontend integration, plus static/browser checks.
+- Page-header cleanup and shared spacing in Browse, Expression, Path, Download,
+  and About.
+- Download category-button and Expression-detail search corner adjustments.
+- Documentation updates in `AGENTS.md`, this handoff, and current architecture.
 
-Review diffs before cleanup or integration.
+This list is a scope guide, not permission to restore files wholesale. Read
+`git status` and the relevant diffs, preserve unrelated user changes, and undo
+only a precisely identified change when explicitly requested.
 
 ## Harness Engineering Rules
 
@@ -274,16 +349,17 @@ plans, documentation, tests, scripts, or durable handoff notes.
 
 ## Recommended Next Tasks
 
-1. Decide what to do with the G6 `large-force-graph` experiment: keep, archive,
-   or remove after comparing it with the Canvas demo.
-2. Continue improving the Canvas taxonomy demo until the user accepts the visual
-   model, then create a dedicated integration plan.
-3. Maintain the accepted Co-expression runtime contract, representative matrix,
-   and separation from the Knowledge Graph G6 instance.
-4. Maintain Agent/DeepThink as part of the project when requested, using
-   `api/README.md`, `api/docs/intelligent_qa_handoff.md`, and the plugin catalog
-   before edits.
-5. Re-run graph and taxonomy checks after any renderer integration.
+1. Ask the user which of Graph, Agent, Download, or About is the first target;
+   read only that subsystem's current docs and live code.
+2. For Graph, preserve the accepted dual-mode runtime and diagnose through API,
+   bridge, loader, legend, and browser state before renderer edits.
+3. For Agent/DeepThink, read `api/README.md`, the intelligent QA handoff, and
+   the plugin catalog, then re-audit live model configuration before planning.
+4. For Download and About, improve public content and hierarchy while keeping
+   the current compact header and 6px control language.
+5. Treat Home, Browse, Search, Path, and Expression as stable reference pages
+   unless the user reports a specific issue. Use them when preparing the paper,
+   but avoid unrelated implementation churn.
 
 ## Minimum Verification Set
 

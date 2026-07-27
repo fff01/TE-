@@ -11,33 +11,11 @@
 }
 
 .download-page-title {
-  margin: 0 0 14px;
+  margin: 0 0 64px;
   color: #214b8d;
   font-size: 46px;
   font-weight: 700;
   line-height: 1.08;
-}
-
-.download-intro {
-  max-width: 1220px;
-  margin: 0 0 22px;
-  color: #5f6f86;
-  font-size: 15px;
-  line-height: 1.85;
-}
-
-.download-crumbs {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 34px;
-  color: #70809a;
-  font-size: 16px;
-}
-
-.download-crumbs a {
-  color: #2f63b9;
-  font-weight: 500;
 }
 
 .download-panel {
@@ -74,7 +52,7 @@
   gap: 8px;
   min-height: 38px;
   border: 1px solid #cfdef2;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #f7fbff;
   color: #31588f;
   cursor: pointer;

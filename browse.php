@@ -17,12 +17,6 @@ $browseApiUrl = tekg_api_url('browse.php?view=items');
         <section class="browse-shell">
           <div class="proto-container">
             <h1 class="browse-page-title">Browse</h1>
-            <p class="browse-intro">This browse view is designed as a lightweight catalog-style entry point, which prioritizes scanning, filtering, and shortlisting TE records in a clean table layout before users move into deeper search or graph exploration.</p>
-            <div class="browse-crumbs">
-              <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
-              <span>/</span>
-              <span>Browse</span>
-            </div>
 
             <div class="browse-layout">
               <?php require __DIR__ . '/templates/components/browse_filters.php'; ?>
@@ -67,4 +61,3 @@ $browseApiUrl = tekg_api_url('browse.php?view=items');
 <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/browse.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
   </body>
 </html>
-

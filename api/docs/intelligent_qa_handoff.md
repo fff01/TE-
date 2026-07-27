@@ -2,6 +2,12 @@
 
 Last reviewed: 2026-07-14
 
+Transition note: 2026-07-27. No Agent/DeepThink runtime code was changed during
+the latest database-page and UI pass. Agent is a primary candidate for the next
+conversation, but this subsystem has not been deeply re-audited as part of that
+pass. Verify live endpoints, model configuration, prompt assets, plugin catalog,
+and the checks listed in `api/README.md` before changing behavior.
+
 This document is the current handoff for the TE-KG intelligent QA subsystem. It
 covers DeepThink, Agent, plugin routing, LLM nodes, frontend event handling, and
 maintenance risks.

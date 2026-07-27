@@ -1,4 +1,49 @@
 (function () {
+          const pageDataNode = document.getElementById('expression-page-data');
+          const pageConfig = pageDataNode ? JSON.parse(pageDataNode.textContent || '{}') : {};
+          const expressionCatalogApiUrl = String(pageConfig.expressionCatalogApiUrl || '').trim();
+          function loadExpressionCatalog(query) {
+            if (!expressionCatalogApiUrl) {
+              return Promise.reject(new Error('Expression catalog API URL is unavailable.'));
+            }
+            const url = new URL(expressionCatalogApiUrl, window.location.origin);
+            const normalizedQuery = String(query || '').trim();
+            if (normalizedQuery) {
+              url.searchParams.set('q', normalizedQuery);
+            }
+            url.searchParams.set('limit', '180');
+            return fetch(url.toString(), {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                cache: 'no-store'
+              })
+                .then((response) => {
+                  if (!response.ok) throw new Error(`Expression catalog API HTTP ${response.status}`);
+                  return response.json();
+                })
+                .then((payload) => {
+                  if (!payload || payload.ok !== true || payload.source !== 'mysql' || !Array.isArray(payload.items)) {
+                    throw new Error('Expression catalog API returned an invalid payload.');
+                  }
+                  const items = payload.items
+                    .map((item) => ({ name: String(item && item.name ? item.name : '').trim() }))
+                    .filter((item) => item.name);
+                  const uniqueNames = new Set(items.map((item) => item.name.toLowerCase()));
+                  if (Number(payload.count) !== items.length || uniqueNames.size !== items.length) {
+                    throw new Error('Expression catalog API returned inconsistent names.');
+                  }
+                  return items;
+                });
+          }
+
+          if (window.TEKGTeAutocomplete) {
+            window.TEKGTeAutocomplete.registerSource('expression-catalog', {
+              label: 'Expression feature',
+              queryAware: true,
+              loadOptions: ({ query }) => loadExpressionCatalog(query)
+            });
+          }
+
           const resultsId = 'expressionResults';
           const resultsRoot = document.getElementById(resultsId);
           if (!resultsRoot) return;

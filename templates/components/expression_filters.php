@@ -1,10 +1,10 @@
-﻿<form class="expression-panel" method="get" action="<?= htmlspecialchars('/TE-/expression.php', ENT_QUOTES, 'UTF-8') ?>">
+<form class="expression-panel" method="get" action="<?= htmlspecialchars('/TE-/expression.php', ENT_QUOTES, 'UTF-8') ?>">
   <input type="hidden" name="value_mode" value="<?= htmlspecialchars($valueMode, ENT_QUOTES, 'UTF-8') ?>">
   <h3>Filters</h3>
   <div class="expression-filter-grid">
     <div class="expression-filter-group">
       <div class="expression-filter-label">Keyword</div>
-      <div class="te-autocomplete" data-te-autocomplete-root>
+      <div class="te-autocomplete" data-te-autocomplete-root data-te-autocomplete-source="expression-catalog">
         <input class="expression-filter-input" type="text" name="keyword" value="<?= htmlspecialchars($keyword, ENT_QUOTES, 'UTF-8') ?>" placeholder="Search a TE such as L1HS or AluY" data-te-autocomplete data-te-autocomplete-submit="true">
         <button class="te-autocomplete-toggle" type="button" aria-label="Show TE names" aria-expanded="false" data-te-autocomplete-toggle></button>
         <div class="te-autocomplete-menu" data-te-autocomplete-menu hidden></div>

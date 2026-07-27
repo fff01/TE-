@@ -162,6 +162,7 @@ $browse = [
     'sort' => $sort,
 ];
 $errorMessage = null;
+$expressionCatalogApiUrl = tekg_api_url('expression_catalog.php?view=items');
 
 try {
     $options = tekg_expression_fetch_filter_options();
@@ -176,12 +177,6 @@ require __DIR__ . '/head.php';
       <section class="expression-shell">
         <div class="proto-container">
           <h1 class="expression-page-title">Expression</h1>
-          <p class="expression-intro">This browse view is now backed by the MySQL expression summary tables. It lets us shortlist TE records by expression context before we wire in the dedicated Expression detail page.</p>
-          <div class="expression-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
-            <span>/</span>
-            <span>Expression</span>
-          </div>
 
           <div class="expression-layout">
             <?php require __DIR__ . '/templates/components/expression_filters.php'; ?>
@@ -251,6 +246,7 @@ require __DIR__ . '/head.php';
           </div>
         </div>
       </section>
+      <script id="expression-page-data" type="application/json"><?= json_encode(['expressionCatalogApiUrl' => $expressionCatalogApiUrl], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/expression.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <?php require __DIR__ . '/foot.php'; ?>

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/path_config.php';
 require_once __DIR__ . '/api/path_finder_service.php';
 
-$pageTitle = 'TE-KG Path Finder';
+$pageTitle = 'TE-KG Path';
 $activePage = 'path_finder';
 $protoCurrentPath = tekg_app_url('path_finder.php');
 $protoSubtitle = 'Find interpretable paths between TE-KG entities';
@@ -22,13 +22,7 @@ require __DIR__ . '/head.php';
 ?>
         <section class="path-finder-shell">
           <div class="proto-container">
-            <h1 class="path-finder-title">Path Finder</h1>
-            <p class="path-finder-intro">Search for concise, evidence-backed paths between two TE-KG entities. Paper nodes are kept out of the path and PMID evidence is shown on each relationship.</p>
-            <div class="path-finder-crumbs">
-              <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
-              <span>/</span>
-              <span>Path Finder</span>
-            </div>
+            <h1 class="path-finder-title">Path</h1>
 
             <section class="path-finder-panel" aria-label="Path Finder query controls">
               <form class="path-finder-form" id="pathFinderForm">

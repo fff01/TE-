@@ -11,33 +11,11 @@
         }
 
         .browse-page-title {
-          margin: 0 0 14px;
+          margin: 0 0 64px;
           font-size: 46px;
           font-weight: 700;
           color: #214b8d;
           line-height: 1.08;
-        }
-
-        .browse-intro {
-          max-width: 1220px;
-          margin: 0 0 22px;
-          color: #5f6f86;
-          font-size: 15px;
-          line-height: 1.85;
-        }
-
-        .browse-crumbs {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 34px;
-          font-size: 16px;
-          color: #70809a;
-        }
-
-        .browse-crumbs a {
-          color: #2f63b9;
-          font-weight: 500;
         }
 
         .browse-layout {

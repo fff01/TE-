@@ -24,13 +24,13 @@ Main runtime pages include:
 - `index.php`: homepage.
 - `browse.php`: TE browse page.
 - `preview.php`: TE-KG / G6 graph workspace.
-- `path_finder.php`: entity path finder.
+- `path_finder.php`: user-facing `Path` page.
 - `expression.php`, `expression_detail.php`: expression pages.
 - `download.php`: download/catalog page.
 - `agent.php`: Agent and DeepThink entrypoint.
 - `about.php`: help/about page.
 
-Path Finder offers Table and G6 Graph views. Its compact Graph toolbar keeps
+Path offers Table and G6 Graph views. Its compact Graph toolbar keeps
 node names visible, exposes relation-label control, and exports the current
 visible path graph as CSV, PNG, or SVG. These command controls share the 6px
 corner treatment used by the main Graph toolbar.
@@ -49,6 +49,7 @@ sequence and genome detail data.
 - Taxonomy query: `api/taxonomy.php`.
 - Browse catalog query: `api/browse.php`.
 - Expression data: `api/expression_data.php`, `api/expression_repository.php`.
+- Expression autocomplete catalog: `api/expression_catalog.php`.
 - Health / metrics: `api/health.php`, `api/te_metrics.php`.
 - Agent APIs are under `api/agent/`; non-agent tasks should not modify them by
   default.
@@ -83,15 +84,31 @@ sequence and genome detail data.
 - Current expression asset root is `data/bulk_expression_web`.
 - Do not restore `data/raw/new_data/bulk_expression_web` as a runtime root.
 - MySQL summary tables remain important dependencies for expression pages.
+- Expression Keyword autocomplete uses the query-aware MySQL endpoint
+  `api/expression_catalog.php` and searches the same
+  `expression_browse_summary.te_name` field used by the result table. It must
+  not fall back to the Neo4j taxonomy catalog.
 
 ## Co-expression
 
 - Co-expression scripts live under `scripts/coexpression/`.
 - Co-expression outputs live under `data/coexpression/`.
-- Current work is backend/offline-data oriented. Frontend integration should be
-  planned separately.
+- Co-expression is integrated into `preview.php` as a separate G6 workspace and
+  instance alongside Knowledge Graph mode.
+- Its browser/API runtime is MySQL-backed; offline files remain provenance and
+  importer inputs rather than browser runtime sources.
 - Co-expression results are correlation evidence only, not causal or regulatory
   proof.
+
+## Current Maintenance Focus
+
+- Primary next-session surfaces: Graph / Co-expression, Agent / DeepThink,
+  Download, and About.
+- Home, Browse, Search, Path, and Expression are accepted working/reference
+  surfaces. They are relevant to paper writing but should only receive scoped
+  bug fixes or factual corrections unless the user explicitly reopens design.
+- Browse, Expression, Path, Download, and About use compact page headers without
+  the former intro-and-breadcrumb blocks. Their title-to-content gap is 64px.
 
 ## Scripts and Imports
 

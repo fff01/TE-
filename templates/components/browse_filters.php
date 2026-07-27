@@ -1,4 +1,4 @@
-﻿<section class="browse-panel">
+<section class="browse-panel">
   <h3>Filters</h3>
   <div class="browse-filter-grid">
     <div class="browse-filter-group">

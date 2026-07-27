@@ -50,7 +50,8 @@ project encyclopedia. Read the linked documents before making broad changes.
 - Graph API: `api/graph.php`, `api/graph_service.php`.
 - Graph frontend: `assets/js/renderers/g6/`.
 - Taxonomy API: `api/taxonomy.php`.
-- Expression API: `api/expression_data.php`, `api/expression_repository.php`.
+- Expression API: `api/expression_data.php`, `api/expression_repository.php`,
+  `api/expression_catalog.php`.
 - Browse catalog API: `api/browse.php`, backed by MySQL `tekg_catalog`.
 - Path helpers: `path_config.php`, `assets/js/tekg_paths.php`,
   `scripts/path_helpers.py`.
@@ -71,7 +72,9 @@ project encyclopedia. Read the linked documents before making broad changes.
 ## Current Work State
 
 - A co-expression backend pipeline exists under `scripts/coexpression/` and
-  `data/coexpression/`; it is backend/offline-data work, not frontend runtime.
+  `data/coexpression/`. Co-expression is also integrated into `preview.php` as
+  an independent MySQL-backed G6 workspace beside Knowledge Graph mode; the
+  offline files remain provenance and importer inputs.
 - A G6-based `large-force-graph` experiment and a separate Canvas taxonomy demo
   are currently present as in-progress graph-rendering experiments.
 - The Canvas taxonomy demo is experimental and isolated; it should not be
@@ -132,10 +135,9 @@ python scripts/checks/check_g6_legend_expand_tree_fixes.py
 
 ## Next Recommended Work
 
-1. Decide whether the current G6 `large-force-graph` experiment should be
-   kept, archived, or replaced by the Canvas taxonomy renderer.
-2. Keep co-expression frontend work separate from the existing evidence Graph
-   until the display contract is stable.
-3. Maintain Agent/DeepThink when needed, using `api/README.md`,
-   `api/docs/intelligent_qa_handoff.md`, and the plugin catalog before making
-   changes.
+1. The next active surfaces are Graph / Co-expression, Agent / DeepThink,
+   Download, and About. Ask the user which one to address first.
+2. Treat Home, Browse, Search, Path, and Expression as stable reference pages
+   unless the user reports a scoped bug; they remain useful for paper writing.
+3. Before Agent/DeepThink changes, read `api/README.md`,
+   `api/docs/intelligent_qa_handoff.md`, and the plugin catalog.

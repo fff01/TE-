@@ -442,17 +442,6 @@ function about_media_spec(string $sectionKey, string $heading): ?array
       <section class="about-shell">
         <div class="proto-container">
           <h1 class="page-title-hero">About</h1>
-          <div class="page-crumbs">
-            <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
-            <span>/</span>
-            <span>About</span>
-          </div>
-
-          <section class="about-intro">
-            <span class="about-kicker">TE-KG User Guide</span>
-            <h2>Explore TE knowledge as connected evidence, not as isolated tables.</h2>
-            <p>TE-KG combines a Neo4j-backed knowledge graph, searchable entity pages, path-level evidence tables, expression views, and public downloads. This guide defines the resource, explains the main entry points, and describes how to interpret evidence and page-specific controls.</p>
-          </section>
 
           <section class="about-panel">
             <div class="about-layout">

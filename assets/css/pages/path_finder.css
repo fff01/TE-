@@ -11,33 +11,11 @@
 }
 
 .path-finder-title {
-  margin: 0 0 14px;
+  margin: 0 0 64px;
   font-size: 46px;
   font-weight: 700;
   line-height: 1.08;
   color: #214b8d;
-}
-
-.path-finder-intro {
-  max-width: 1220px;
-  margin: 0 0 22px;
-  color: #5f6f86;
-  font-size: 15px;
-  line-height: 1.85;
-}
-
-.path-finder-crumbs {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 34px;
-  color: #70809a;
-  font-size: 16px;
-}
-
-.path-finder-crumbs a {
-  color: #2f63b9;
-  font-weight: 500;
 }
 
 .path-finder-panel,

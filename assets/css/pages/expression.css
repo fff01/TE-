@@ -11,33 +11,11 @@
         }
 
         .expression-page-title {
-          margin: 0 0 14px;
+          margin: 0 0 64px;
           font-size: 46px;
           font-weight: 700;
           color: #214b8d;
           line-height: 1.08;
-        }
-
-        .expression-intro {
-          max-width: 1220px;
-          margin: 0 0 22px;
-          color: #5f6f86;
-          font-size: 15px;
-          line-height: 1.85;
-        }
-
-        .expression-crumbs {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 34px;
-          font-size: 16px;
-          color: #70809a;
-        }
-
-        .expression-crumbs a {
-          color: #2f63b9;
-          font-weight: 500;
         }
 
         .expression-layout {
@@ -125,7 +103,7 @@
           min-height: 40px;
           padding: 0 16px;
           border: 1px solid #d6e2f5;
-          border-radius: 999px;
+          border-radius: 6px;
           background: #ffffff;
           color: #31588f;
           font-size: 13px;
@@ -339,7 +317,7 @@
           min-height: 36px;
           padding: 0 12px;
           border: 1px solid #d6e2f5;
-          border-radius: 999px;
+          border-radius: 6px;
           background: #ffffff;
           color: #31588f;
           font-size: 13px;

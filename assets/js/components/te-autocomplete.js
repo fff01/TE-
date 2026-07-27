@@ -58,8 +58,11 @@
     const source = String(root.dataset.teAutocompleteSource || 'taxonomy').trim();
     const provider = sourceProviders.get(source);
     if (provider) {
+      const query = String(input.value || '').trim();
       return {
-        key: `provider:${source}`,
+        key: provider.queryAware === true
+          ? `provider:${source}:${query.toLowerCase()}`
+          : `provider:${source}`,
         label: String(provider.label || 'TE').trim() || 'TE',
         connected: false,
         provider,

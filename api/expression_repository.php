@@ -207,6 +207,37 @@ function tekg_expression_fetch_one(string $sql, array $params = [], ?string $typ
     return $rows[0] ?? null;
 }
 
+function tekg_expression_fetch_catalog_items(string $query = '', int $limit = 180): array
+{
+    $query = trim($query);
+    $limit = max(1, min(180, $limit));
+    $where = "te_name IS NOT NULL AND TRIM(te_name) <> ''";
+    $params = [];
+    $types = '';
+    if ($query !== '') {
+        $where .= ' AND te_name LIKE ?';
+        $params[] = '%' . $query . '%';
+        $types .= 's';
+    }
+    $params[] = $limit;
+    $types .= 'i';
+
+    $rows = tekg_expression_fetch_all(
+        "SELECT TRIM(te_name) AS name
+         FROM expression_browse_summary
+         WHERE {$where}
+         ORDER BY name ASC
+         LIMIT ?",
+        $params,
+        $types
+    );
+
+    return array_values(array_filter(array_map(
+        static fn(array $row): array => ['name' => trim((string)($row['name'] ?? ''))],
+        $rows
+    ), static fn(array $item): bool => $item['name'] !== ''));
+}
+
 function tekg_expression_resolve_te_name(string $teName): ?string
 {
     $trimmed = trim($teName);
