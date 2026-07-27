@@ -22,6 +22,8 @@ runtime consistency.
   classification, terminology backfill, and maintenance scripts.
 - `export/`: export helpers such as entity-description translation output.
 - `import/`: Cypher generation and import helpers.
+  `import_browse_catalog_mysql.php` manages versioned Browse catalog imports
+  and activation in MySQL `tekg_catalog`.
 - `checks/`: runtime consistency and regression checks.
 - `plot/`: visualization and structure-figure helpers.
 - Root support modules:

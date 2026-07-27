@@ -27,6 +27,5 @@ $classificationLastIndex = count($classificationPath) - 1;
         <?php endif; ?>
       <?php endforeach; ?>
     </div>
-    <div class="summary-classification-note">Rendered from the current tree.txt lineage only. No extra levels are inferred.</div>
   </div>
 </div>

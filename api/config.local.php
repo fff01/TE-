@@ -28,6 +28,7 @@ return [
     'mysql_host' => '127.0.0.1',
     'mysql_port' => 3306,
     'mysql_expression_database' => 'tekg_expression',
+    'mysql_catalog_database' => 'tekg_catalog',
     'mysql_user' => 'root',
     'mysql_password' => '',
     'mysql_charset' => 'utf8mb4',

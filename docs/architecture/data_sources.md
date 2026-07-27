@@ -34,6 +34,18 @@ Important files:
 - MySQL summary tables are the primary runtime source for expression pages.
   TSV fallback paths must also point to the active root.
 
+## Browse Catalog
+
+- Active runtime database: MySQL `tekg_catalog`.
+- Active tables: `browse_catalog_versions`, `browse_catalog_entries`.
+- Runtime API: `api/browse.php?view=items`.
+- Import source: `data/processed/te_repbase_db_matched.json`.
+- Import entrypoint: `scripts/import/import_browse_catalog_mysql.php`.
+- The table, filters, and Browse-only autocomplete consume one API payload.
+- Runtime must not fall back to the processed JSON or Neo4j when the catalog is
+  unavailable. Neo4j remains the canonical TE taxonomy truth; Browse lineage
+  columns are a provenance-tagged display snapshot only.
+
 ## Genome / JBrowse
 
 - JBrowse runtime data lives under `data/JBrowse/`.
@@ -45,3 +57,5 @@ Important files:
 - `scripts/checks/check_taxonomy_runtime_truth.py`
 - `scripts/checks/check_expression_paths.py`
 - `scripts/checks/check_taxonomy_runtime_consistency.py`
+- `scripts/checks/check_browse_catalog_mysql_contract.php`
+- `scripts/checks/check_browse_mysql_api.py`

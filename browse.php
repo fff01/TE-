@@ -1,6 +1,5 @@
 ﻿<?php
 require_once __DIR__ . '/path_config.php';
-require_once __DIR__ . '/api/taxonomy_lib.php';
 $pageTitle = 'TE-KG Browse';
 $activePage = 'browse';
 $protoCurrentPath = tekg_app_url('browse.php');
@@ -10,155 +9,15 @@ $pageExtraStylesheets = [
     tekg_assets_url('css/pages/browse.css'),
 ];
 
-function tekg_browse_normalize_label(string $value): string
-{
-    $value = trim($value);
-    $value = preg_replace('/\s+/', ' ', $value) ?? $value;
-    return str_replace(['_', '-'], ' ', $value);
-}
-
-function tekg_browse_extract_length(array $entry): ?int
-{
-    $summary = $entry['sequence_summary'] ?? null;
-    if (is_array($summary)) {
-        $headline = trim((string) ($summary['headline'] ?? ''));
-        if ($headline !== '' && preg_match('/(\d+)\s*BP/i', $headline, $matches) === 1) {
-            return (int) $matches[1];
-        }
-    }
-
-    $sequence = preg_replace('/\s+/', '', (string) ($entry['sequence'] ?? '')) ?? '';
-    return $sequence !== '' ? strlen($sequence) : null;
-}
-
-function tekg_browse_infer_lineage(array $entry): array
-{
-    $name = (string) ($entry['name'] ?? '');
-    $description = mb_strtolower((string) ($entry['description'] ?? ''));
-    $keywords = array_map(
-        static fn ($keyword): string => mb_strtolower((string) $keyword),
-        is_array($entry['keywords'] ?? null) ? $entry['keywords'] : []
-    );
-    $haystack = mb_strtolower($name . ' ' . $description . ' ' . implode(' ', $keywords));
-
-    $className = 'Unclassified';
-    $family = '';
-    $subtype = '';
-
-    if (
-        str_contains($haystack, 'endogenous retrovirus')
-        || str_contains($haystack, 'herv')
-        || str_contains($haystack, ' erv')
-        || str_contains($haystack, 'ltr')
-    ) {
-        $className = 'Retrotransposon';
-        foreach ($entry['keywords'] ?? [] as $keyword) {
-            if (preg_match('/^(ERV\d+|ERVL|ERVK|HERV[\w\-]+)$/i', (string) $keyword) === 1) {
-                $family = (string) $keyword;
-                break;
-            }
-        }
-        $family = $family !== '' ? $family : 'ERV';
-        $subtype = str_starts_with($name, 'LTR') ? 'LTR' : '';
-    } elseif (
-        str_contains($haystack, 'non-ltr retrotransposon')
-        || str_contains($haystack, ' line ')
-        || str_contains($haystack, 'l1 (line) family')
-    ) {
-        $className = 'Retrotransposon';
-        $family = 'LINE';
-        foreach (['CR1', 'L1', 'L2', 'RTE'] as $candidate) {
-            if (str_contains($haystack, mb_strtolower($candidate))) {
-                $subtype = $candidate;
-                break;
-            }
-        }
-    } elseif (str_contains($haystack, 'sine')) {
-        $className = 'Retrotransposon';
-        $family = 'SINE';
-        if (str_contains($haystack, 'alu')) {
-            $subtype = 'Alu';
-        }
-    } elseif (str_contains($haystack, 'dna transposon')) {
-        $className = 'DNA Transposon';
-        foreach (['hAT-Charlie', 'hAT', 'Mariner/Tc1', 'piggyBac', 'Merlin', 'Helitron'] as $candidate) {
-            if (str_contains($haystack, mb_strtolower($candidate))) {
-                $family = $candidate;
-                break;
-            }
-        }
-    }
-
-    return [
-        'className' => tekg_browse_normalize_label($className),
-        'family' => tekg_browse_normalize_label($family),
-        'subtype' => tekg_browse_normalize_label($subtype),
-    ];
-}
-
-function tekg_browse_load_rows(): array
-{
-    $repbaseFile = tekg_data_fs_path('processed/te_repbase_db_matched.json');
-    if (!is_file($repbaseFile)) {
-        return [];
-    }
-
-    $repbase = json_decode((string) file_get_contents($repbaseFile), true);
-    if (!is_array($repbase) || !is_array($repbase['entries'] ?? null)) {
-        return [];
-    }
-
-    try {
-        $taxonomyIndex = tekg_taxonomy_index_items(tekg_taxonomy_fetch_items());
-    } catch (Throwable) {
-        $taxonomyIndex = [];
-    }
-
-    $rows = [];
-    foreach ($repbase['entries'] as $entry) {
-        $name = trim((string) ($entry['name'] ?? $entry['id'] ?? ''));
-        if ($name === '') {
-            continue;
-        }
-
-        $inferred = tekg_browse_infer_lineage($entry);
-        $taxonomy = $taxonomyIndex[$name] ?? $taxonomyIndex[tekg_taxonomy_canonical_key($name)] ?? null;
-        $taxonomyPath = is_array($taxonomy) && is_array($taxonomy['path'] ?? null) ? $taxonomy['path'] : [];
-        $className = trim((string)($taxonomyPath['class'] ?? '')) ?: $inferred['className'];
-        $family = trim((string)($taxonomyPath['order'] ?? ''))
-            ?: (trim((string)($taxonomyPath['superfamily'] ?? '')) ?: $inferred['family']);
-        $subtype = trim((string)($taxonomyPath['subclade'] ?? ''))
-            ?: (trim((string)($taxonomyPath['family'] ?? '')) ?: $inferred['subtype']);
-
-        $rows[] = [
-            'name' => $name,
-            'className' => tekg_browse_normalize_label($className !== '' ? $className : 'Unclassified'),
-            'family' => tekg_browse_normalize_label($family),
-            'subtype' => tekg_browse_normalize_label($subtype),
-            'description' => trim((string) ($entry['description'] ?? '')),
-            'lengthBp' => tekg_browse_extract_length($entry),
-            'referenceCount' => is_array($entry['references'] ?? null) ? count($entry['references']) : 0,
-            'keywords' => is_array($entry['keywords'] ?? null) ? array_values(array_filter(array_map('strval', $entry['keywords']))) : [],
-        ];
-    }
-
-    usort(
-        $rows,
-        static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name'])
-    );
-
-    return $rows;
-}
-
 require __DIR__ . '/head.php';
 $browseSearchUrl = site_url_with_state(tekg_app_url('search.php'), $siteLang);
-$browseRows = tekg_browse_load_rows();
+$browseApiUrl = tekg_api_url('browse.php?view=items');
 ?>
       <main class="proto-main">
         <section class="browse-shell">
           <div class="proto-container">
             <h1 class="browse-page-title">Browse</h1>
-            <p class="browse-intro">This browse view is designed as a lightweight catalog-style entry point inspired by Dfam. It prioritizes scanning, filtering, and shortlisting TE records in a clean table layout before users move into deeper search or graph exploration.</p>
+            <p class="browse-intro">This browse view is designed as a lightweight catalog-style entry point, which prioritizes scanning, filtering, and shortlisting TE records in a clean table layout before users move into deeper search or graph exploration.</p>
             <div class="browse-crumbs">
               <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php'), $siteLang), ENT_QUOTES, 'UTF-8') ?>">Home</a>
               <span>/</span>
@@ -203,10 +62,9 @@ $browseRows = tekg_browse_load_rows();
         </section>
       </main>
     </div>
-    <script id="browse-page-data" type="application/json"><?= json_encode(['browseSearchBase' => $browseSearchUrl, 'browseRows' => $browseRows], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+    <script id="browse-page-data" type="application/json"><?= json_encode(['browseSearchBase' => $browseSearchUrl, 'browseApiUrl' => $browseApiUrl], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
 <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/browse.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
   </body>
 </html>
-
 

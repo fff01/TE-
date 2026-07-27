@@ -32,11 +32,17 @@ Main runtime pages include:
 
 Do not move root runtime pages merely for cleanup.
 
+`browse.php` is a catalog consumer, not a taxonomy truth source. Its table,
+filters, and TE autocomplete load the active version from MySQL `tekg_catalog`
+through `api/browse.php`. Search detail pages remain responsible for RepBase
+sequence and genome detail data.
+
 ## APIs
 
 - Graph query entrypoint: `api/graph.php`.
 - Graph core service: `api/graph_service.php`.
 - Taxonomy query: `api/taxonomy.php`.
+- Browse catalog query: `api/browse.php`.
 - Expression data: `api/expression_data.php`, `api/expression_repository.php`.
 - Health / metrics: `api/health.php`, `api/te_metrics.php`.
 - Agent APIs are under `api/agent/`; non-agent tasks should not modify them by

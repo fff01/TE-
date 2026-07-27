@@ -114,6 +114,7 @@ ksort($categoryCounts);
       <section class="download-shell">
         <div class="proto-container">
           <h1 class="download-page-title">Download</h1>
+          <p class="download-intro">Explore and download the public expression, graph, and taxonomy datasets that support TE-KG analysis and visualization workflows.</p>
           <div class="download-crumbs">
             <a href="<?= htmlspecialchars(site_url_with_state(tekg_app_url('index.php')), ENT_QUOTES, 'UTF-8') ?>">Home</a>
             <span>/</span>

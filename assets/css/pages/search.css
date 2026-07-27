@@ -271,7 +271,7 @@
         .summary-classification-stage {
           padding: 16px 18px;
           border: 1px solid #dce7f6;
-          border-radius: 12px;
+          border-radius: 8px;
           background: linear-gradient(180deg, #fbfdff 0%, #f4f8ff 100%);
           overflow: hidden;
         }
@@ -289,7 +289,7 @@
           justify-content: center;
           min-height: 40px;
           padding: 8px 16px;
-          border-radius: 999px;
+          border-radius: 6px;
           border: 1px solid #cfe0fb;
           background: #ffffff;
           color: #285097;
@@ -315,13 +315,6 @@
           font-size: 18px;
           line-height: 1;
           font-weight: 700;
-        }
-
-        .summary-classification-note {
-          margin-top: 10px;
-          font-size: 13px;
-          color: #6f83a0;
-          line-height: 1.6;
         }
 
         .sequence-panel {
@@ -460,21 +453,6 @@
           margin: 0;
           padding: 0;
           border: 0;
-        }
-
-        .jbrowse-open-link {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 40px;
-          padding: 0 16px;
-          border-radius: 999px;
-          border: 1px solid #d9e5f7;
-          background: #eef4ff;
-          color: #214b8d;
-          font-size: 14px;
-          font-weight: 700;
-          white-space: nowrap;
         }
 
         .jbrowse-summary {

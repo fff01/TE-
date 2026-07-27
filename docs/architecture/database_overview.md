@@ -220,10 +220,12 @@ validated functional units.
 The integrated runtime uses two storage systems with deliberately different
 responsibilities:
 
-- **Neo4j `tekg3`** stores the evidence knowledge graph, TE taxonomy, entities,
-  and graph relationships used by Browse, Path, Graph, and supporting APIs.
-- **MySQL** stores expression summaries and production co-expression display
-  data used by the Expression page and Co-expression graph mode.
+- **Neo4j `tekg3`** stores the evidence knowledge graph, canonical TE taxonomy,
+  entities, and graph relationships used by Path, Graph, and supporting APIs.
+- **MySQL `tekg_catalog`** stores the versioned 276-entry Browse catalog used by
+  the Browse table, filters, and TE autocomplete.
+- **MySQL `tekg_expression`** stores expression summaries and production
+  co-expression display data used by Expression and Co-expression.
 
 PHP APIs mediate access to both systems. Browser code should not read raw
 analysis files directly, and raw data files must not become an alternative
@@ -405,4 +407,3 @@ should remain understandable without reading a long caption.
 - `docs/architecture/data_sources.md`: canonical runtime data-source rules.
 - `api/README.md` and `api/docs/intelligent_qa_handoff.md`: current Agent and
   DeepThink behavior and evidence boundaries.
-

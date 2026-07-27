@@ -32,6 +32,8 @@ repository root. The main user-facing pages are:
 - Python path helper: `scripts/path_helpers.py`.
 - TE taxonomy runtime truth: Neo4j/API via `api/taxonomy.php`.
 - Expression runtime root: `data/bulk_expression_web`.
+- Browse catalog runtime: MySQL `tekg_catalog` via `api/browse.php`; the Browse
+  table and its autocomplete share the same active 276-row catalog version.
 
 Do not restore old runtime fallbacks or old expression roots without a dedicated
 migration plan and verification.

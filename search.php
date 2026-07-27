@@ -125,7 +125,6 @@ require __DIR__ . '/head.php';
                 <section id="search-jbrowse-panel" class="data-panel jbrowse-panel">
                   <div class="jbrowse-panel-head">
                     <h3>Genome Browser</h3>
-                    <a class="jbrowse-open-link" id="searchJBrowseOpenLink" href="<?= htmlspecialchars((string) ($jbrowseSession['browser_url'] ?? '#'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">Open in full browser</a>
                   </div>
                   <div class="jbrowse-summary">
                     <h2>Genome browser session</h2>

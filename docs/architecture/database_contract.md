@@ -21,6 +21,16 @@ database facts before modifying business logic.
 - `api/taxonomy.php?view=tree&source=rmsk_repbase` should return tree/root data.
 - `api/taxonomy.php?names=L1HS,AluJb,SVA` should return `source=tekg3` and
   parseable items.
+- `api/browse.php?view=items` should return `source=mysql`, exactly 276 unique
+  items from the active `tekg_catalog` version, and include `AluYb10`.
+
+## Browse MySQL Contract
+
+- `tekg_catalog` must contain exactly one active catalog version.
+- The active version must contain 276 case-insensitively unique names derived
+  from the processed `db_to_repbase` mapping keys.
+- Browse runtime must not fall back to local JSON or Neo4j taxonomy items.
+- Previous catalog versions remain available for explicit reactivation.
 
 ## Forbidden Regressions
 
@@ -34,3 +44,6 @@ database facts before modifying business logic.
 - `scripts/checks/check_api_contracts.py`
 - `scripts/checks/check_runtime_db_config.py`
 - `scripts/checks/check_no_legacy_db_fallback.py`
+- `scripts/checks/check_browse_catalog_mysql_contract.php`
+- `scripts/checks/check_browse_mysql_repository.php`
+- `scripts/checks/check_browse_mysql_api.py`

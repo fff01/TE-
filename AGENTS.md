@@ -51,6 +51,7 @@ project encyclopedia. Read the linked documents before making broad changes.
 - Graph frontend: `assets/js/renderers/g6/`.
 - Taxonomy API: `api/taxonomy.php`.
 - Expression API: `api/expression_data.php`, `api/expression_repository.php`.
+- Browse catalog API: `api/browse.php`, backed by MySQL `tekg_catalog`.
 - Path helpers: `path_config.php`, `assets/js/tekg_paths.php`,
   `scripts/path_helpers.py`.
 

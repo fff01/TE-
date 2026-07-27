@@ -58,7 +58,6 @@
         const repeatCountEl = document.getElementById('searchJBrowseRepeatCount');
         const refseqCountEl = document.getElementById('searchJBrowseRefseqCount');
         const defaultLocEl = document.getElementById('searchJBrowseDefaultLoc');
-        const openLink = document.getElementById('searchJBrowseOpenLink');
         const configNode = document.getElementById('search-page-config');
         const pageConfig = configNode ? JSON.parse(configNode.textContent || '{}') : {};
         const browserBaseUrl = String(pageConfig.browserBaseUrl || '');
@@ -288,9 +287,6 @@
           }
           if (refseqCountEl && config.pageMeta) {
             refseqCountEl.textContent = String(config.pageMeta.refseqFeatureCount ?? '-');
-          }
-          if (openLink) {
-            openLink.href = buildBrowserUrl();
           }
           renderBrowser();
           window.requestAnimationFrame(renderBrowser);
