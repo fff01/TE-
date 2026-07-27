@@ -7,19 +7,20 @@
   const maxDepthSelect = document.getElementById('pathMaxDepth');
   const submitButton = document.getElementById('pathSubmit');
   const statusEl = document.getElementById('pathStatus');
-  const resolvedEl = document.getElementById('pathResolved');
   const resultsEl = document.getElementById('pathResults');
   const viewToggleEl = document.getElementById('pathViewToggle');
   const tableViewButton = document.getElementById('pathTableView');
   const graphViewButton = document.getElementById('pathGraphView');
   const graphPanelEl = document.getElementById('pathGraphPanel');
   const graphSurfaceEl = document.getElementById('pathGraphSurface');
-  const graphDetailEl = document.getElementById('pathGraphDetail');
-  const graphShowNamesButton = document.getElementById('pathGraphShowNames');
   const graphShowRelationsButton = document.getElementById('pathGraphShowRelations');
   const graphExportButton = document.getElementById('pathGraphExport');
+  const graphExportMenu = document.getElementById('pathGraphExportMenu');
+  const graphExportCsvButton = document.getElementById('pathGraphExportCsv');
+  const graphExportPngButton = document.getElementById('pathGraphExportPng');
+  const graphExportSvgButton = document.getElementById('pathGraphExportSvg');
 
-  if (!form || !sourceTypeSelect || !sourceInput || !targetTypeSelect || !targetInput || !maxDepthSelect || !submitButton || !statusEl || !resolvedEl || !resultsEl) {
+  if (!form || !sourceTypeSelect || !sourceInput || !targetTypeSelect || !targetInput || !maxDepthSelect || !submitButton || !statusEl || !resultsEl) {
     return;
   }
 
@@ -27,7 +28,6 @@
   let currentView = 'table';
   let graphRunner = null;
   let graphInitPromise = null;
-  let graphShowNames = true;
   let graphShowRelations = true;
 
   const entityExamples = {
@@ -253,28 +253,76 @@
     return [...nodeElements, ...edgeElements];
   }
 
-  function setGraphDetail(title, description) {
-    if (!graphDetailEl) {
+  function setExportMenuOpen(isOpen) {
+    if (!graphExportMenu || !graphExportButton || graphExportButton.disabled) {
       return;
     }
-    const heading = String(title || '').trim();
-    const body = String(description || '').trim();
-    graphDetailEl.innerHTML = [
-      heading ? `<strong>${escapeHtml(heading)}</strong>` : '',
-      body ? `<div>${escapeHtml(body)}</div>` : '',
-    ].filter(Boolean).join('');
+    graphExportMenu.hidden = !isOpen;
+    graphExportButton.setAttribute('aria-expanded', String(isOpen));
   }
 
-  function setGraphDetailHtml(html) {
-    if (graphDetailEl) {
-      graphDetailEl.innerHTML = html || '';
+  function closeExportMenu() {
+    if (graphExportMenu) {
+      graphExportMenu.hidden = true;
+    }
+    if (graphExportButton) {
+      graphExportButton.setAttribute('aria-expanded', 'false');
     }
   }
 
-  function setGraphStatus(text) {
-    if (graphDetailEl) {
-      graphDetailEl.textContent = text;
+  function setExportEnabled(isEnabled) {
+    if (graphExportButton) {
+      graphExportButton.disabled = !isEnabled;
     }
+    [graphExportCsvButton, graphExportPngButton, graphExportSvgButton].forEach((button) => {
+      if (button) {
+        button.disabled = !isEnabled;
+      }
+    });
+    if (!isEnabled) {
+      closeExportMenu();
+    }
+  }
+
+  function csvEscape(value) {
+    const text = Array.isArray(value) ? value.join('|') : String(value ?? '');
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function buildCsv(rows, fields) {
+    const header = fields.map((field) => csvEscape(field.key)).join(',');
+    const body = rows.map((row) => fields.map((field) => csvEscape(field.get(row))).join(','));
+    return [header, ...body].join('\r\n') + '\r\n';
+  }
+
+  function safeExportName(value) {
+    return (String(value || 'path-finder').trim() || 'path-finder')
+      .replace(/[^a-z0-9_.-]+/gi, '_')
+      .replace(/^_+|_+$/g, '') || 'path-finder';
+  }
+
+  function exportDateStamp() {
+    return new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  }
+
+  function downloadText(filename, content, mimeType) {
+    const url = URL.createObjectURL(new Blob([content], { type: mimeType }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function downloadDataUrl(filename, dataUrl) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   function ensureGraphRunner() {
@@ -292,9 +340,9 @@
       initialLang: 'en',
       initialAllowNodeActions: false,
       syncRouteState: () => {},
-      setStatus: setGraphStatus,
-      setDetail: setGraphDetail,
-      setDetailHtml: setGraphDetailHtml,
+      setStatus: () => {},
+      setDetail: () => {},
+      setDetailHtml: () => {},
       setMode: () => {},
       setQueryUi: () => {},
       onSelection: () => {},
@@ -314,17 +362,6 @@
         }
         return graphRunner.getVisibleSubgraph();
       },
-      inspectFirstNode() {
-        if (!graphRunner || typeof graphRunner.getVisibleSubgraph !== 'function' || typeof graphRunner.inspectNode !== 'function') {
-          return false;
-        }
-        const subgraph = graphRunner.getVisibleSubgraph();
-        const firstNode = Array.isArray(subgraph && subgraph.nodes) ? subgraph.nodes[0] : null;
-        if (!firstNode || !firstNode.id) {
-          return false;
-        }
-        return graphRunner.inspectNode(firstNode.id);
-      },
     };
   }
 
@@ -335,10 +372,7 @@
     if (!graphPanelEl || !graphSurfaceEl) {
       return;
     }
-    if (graphExportButton) {
-      graphExportButton.disabled = true;
-    }
-    setGraphStatus('Rendering graph result...');
+    setExportEnabled(false);
     const elements = buildGraphElements(currentPayload);
     const source = nodeLabel(currentPayload.source || {});
     const target = nodeLabel(currentPayload.target || {});
@@ -350,9 +384,9 @@
     await graphRunner.renderElements(elements, { query: `${source} to ${target}` }, {
       skipInitialStatus: true,
       graphDataOptions: {
-        showAllLabels: graphShowNames, // 含义：是否显示节点名称。TE-KG default: controlled by Show names, initially false.
+        showAllLabels: true, // Path results always keep node names visible.
         showEdgeLabels: graphShowRelations, // 含义：是否显示边上的关系名称。TE-KG default: controlled by Show relations, initially false.
-        allowInspectCard: true, // 含义：是否允许点击节点/边后显示详情卡片。TE-KG default: true.
+        allowInspectCard: false, // The compact Path graph no longer owns a persistent detail footer.
         allowNodeActions: false, // 含义：是否允许节点卡片里的 Jump/Expand 按钮。TE-KG default: true; Path Finder disables Jump/Expand.
         restrictToAnchorComponent: false, // 含义：过滤后是否只保留与 anchor 连通的组件。TE-KG default: true.
         forceAnchorLabel: true, // 含义：是否强制显示第一个/anchor 节点标签。TE-KG default: false.
@@ -369,9 +403,7 @@
       },
     });
     updateGraphDebugBridge();
-    if (graphExportButton) {
-      graphExportButton.disabled = false;
-    }
+    setExportEnabled(true);
   }
 
   function updateViewButtons() {
@@ -386,11 +418,6 @@
   }
 
   function updateGraphToggleButtons() {
-    if (graphShowNamesButton) {
-      graphShowNamesButton.classList.toggle('is-on', graphShowNames);
-      graphShowNamesButton.setAttribute('aria-pressed', String(graphShowNames));
-      graphShowNamesButton.textContent = `Show names: ${graphShowNames ? 'On' : 'Off'}`;
-    }
     if (graphShowRelationsButton) {
       graphShowRelationsButton.classList.toggle('is-on', graphShowRelations);
       graphShowRelationsButton.setAttribute('aria-pressed', String(graphShowRelations));
@@ -407,10 +434,8 @@
     }
     if (currentView === 'graph') {
       renderGraphFromCurrentPayload().catch((error) => {
-        setGraphStatus(`${error && error.message ? error.message : 'Graph rendering failed.'}`);
-        if (graphExportButton) {
-          graphExportButton.disabled = true;
-        }
+        statusEl.textContent = `${error && error.message ? error.message : 'Graph rendering failed.'}`;
+        setExportEnabled(false);
       });
     }
   }
@@ -422,12 +447,7 @@
     if (graphSurfaceEl) {
       graphSurfaceEl.innerHTML = '';
     }
-    if (graphDetailEl) {
-      graphDetailEl.textContent = 'Switch to Graph after a search to inspect nodes and relationships.';
-    }
-    if (graphExportButton) {
-      graphExportButton.disabled = true;
-    }
+    setExportEnabled(false);
     if (window.__TEKG_PATH_FINDER_GRAPH_DEBUG) {
       delete window.__TEKG_PATH_FINDER_GRAPH_DEBUG;
     }
@@ -455,21 +475,6 @@
 
   function nodeType(node) {
     return String(node && node.type ? node.type : 'Node').trim() || 'Node';
-  }
-
-  function renderResolved(payload) {
-    const source = payload.source || {};
-    const target = payload.target || {};
-    const sourceMatches = Array.isArray(source.matches) ? source.matches.length : 0;
-    const targetMatches = Array.isArray(target.matches) ? target.matches.length : 0;
-    resolvedEl.hidden = false;
-    resolvedEl.innerHTML = [
-      `<strong>Resolved as</strong>`,
-      `<span>${escapeHtml(nodeLabel(source))} <em>${escapeHtml(nodeType(source))}</em></span>`,
-      `<span class="path-resolved-arrow">to</span>`,
-      `<span>${escapeHtml(nodeLabel(target))} <em>${escapeHtml(nodeType(target))}</em></span>`,
-      `<small>${sourceMatches} source candidate${sourceMatches === 1 ? '' : 's'}, ${targetMatches} target candidate${targetMatches === 1 ? '' : 's'}</small>`,
-    ].join('');
   }
 
   function renderCompactPath(path) {
@@ -579,20 +584,16 @@
   }
 
   function renderPath(path, index) {
-    const nodes = Array.isArray(path.nodes) ? path.nodes : [];
-    const start = nodes[0] || {};
-    const end = nodes[nodes.length - 1] || {};
     const direct = Number(path.hop_count || 0) <= 1;
     return `
       <article class="path-card ${direct ? 'is-direct' : 'is-multihop'}">
         <header class="path-card-header">
           <div>
             <span class="path-rank">Path ${index + 1}</span>
-            <h2>${escapeHtml(nodeLabel(start))} <span>to</span> ${escapeHtml(nodeLabel(end))}</h2>
           </div>
           <div class="path-metrics">
-            <span>${Number(path.hop_count || 0)} hop${Number(path.hop_count || 0) === 1 ? '' : 's'}</span>
-            <span>${Number(path.pmid_count || 0)} PMID${Number(path.pmid_count || 0) === 1 ? '' : 's'}</span>
+            <span class="path-command-control">${Number(path.hop_count || 0)} hop${Number(path.hop_count || 0) === 1 ? '' : 's'}</span>
+            <span class="path-command-control">${Number(path.pmid_count || 0)} PMID${Number(path.pmid_count || 0) === 1 ? '' : 's'}</span>
           </div>
         </header>
         ${renderCompactPath(path)}
@@ -603,7 +604,6 @@
 
   function renderResults(payload) {
     currentPayload = payload;
-    renderResolved(payload);
     const paths = Array.isArray(payload.paths) ? payload.paths : [];
     if (!paths.length) {
       statusEl.textContent = `No path was found within ${Number(payload.max_depth || 3)} hops.`;
@@ -631,8 +631,6 @@
     const targetType = targetTypeSelect.value || 'Disease';
     const maxDepth = maxDepthSelect.value || '3';
 
-    resolvedEl.hidden = true;
-    resolvedEl.innerHTML = '';
     resultsEl.innerHTML = '';
     resultsEl.hidden = false;
     currentPayload = null;
@@ -669,46 +667,103 @@
   if (graphViewButton) {
     graphViewButton.addEventListener('click', () => setResultView('graph'));
   }
-  if (graphShowNamesButton) {
-    graphShowNamesButton.addEventListener('click', () => {
-      graphShowNames = !graphShowNames;
-      updateGraphToggleButtons();
-      if (currentView === 'graph') {
-        renderGraphFromCurrentPayload().catch((error) => setGraphStatus(error && error.message ? error.message : 'Graph rendering failed.'));
-      }
-    });
-  }
   if (graphShowRelationsButton) {
     graphShowRelationsButton.addEventListener('click', () => {
       graphShowRelations = !graphShowRelations;
       updateGraphToggleButtons();
       if (currentView === 'graph') {
-        renderGraphFromCurrentPayload().catch((error) => setGraphStatus(error && error.message ? error.message : 'Graph rendering failed.'));
+        renderGraphFromCurrentPayload().catch((error) => {
+          statusEl.textContent = error && error.message ? error.message : 'Graph rendering failed.';
+        });
       }
     });
   }
   if (graphExportButton) {
-    graphExportButton.addEventListener('click', async () => {
-      if (!graphRunner || typeof graphRunner.exportPngDataUrl !== 'function') {
-        setGraphStatus('Graph export is not available yet.');
-        return;
+    graphExportButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      setExportMenuOpen(!!(graphExportMenu && graphExportMenu.hidden));
+    });
+  }
+
+  async function runGraphExport(kind) {
+    if (!graphRunner) {
+      throw new Error('Graph export is not available yet.');
+    }
+    const query = `${nodeLabel(currentPayload?.source || {})}_to_${nodeLabel(currentPayload?.target || {})}`;
+    const baseName = `tekg_path_${safeExportName(query)}_${exportDateStamp()}`;
+    if (kind === 'png') {
+      if (typeof graphRunner.exportPngDataUrl !== 'function') {
+        throw new Error('PNG export is unavailable.');
       }
-      graphExportButton.disabled = true;
+      downloadDataUrl(`${baseName}.png`, await graphRunner.exportPngDataUrl());
+      return;
+    }
+    if (kind === 'svg') {
+      if (typeof graphRunner.exportSvgString !== 'function') {
+        throw new Error('SVG export is unavailable.');
+      }
+      downloadText(`${baseName}.svg`, graphRunner.exportSvgString(), 'image/svg+xml;charset=utf-8');
+      return;
+    }
+    if (typeof graphRunner.getVisibleSubgraph !== 'function') {
+      throw new Error('CSV export is unavailable.');
+    }
+    const graph = graphRunner.getVisibleSubgraph() || {};
+    const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
+    const edges = Array.isArray(graph.edges) ? graph.edges : [];
+    const nodeFields = [
+      { key: 'id', get: (row) => row.id },
+      { key: 'label', get: (row) => row.label || row.rawLabel || row.id },
+      { key: 'type', get: (row) => row.type || row.nodeType },
+      { key: 'description', get: (row) => row.description },
+      { key: 'pmid', get: (row) => row.pmid },
+    ];
+    const edgeFields = [
+      { key: 'id', get: (row) => row.id },
+      { key: 'source', get: (row) => row.source },
+      { key: 'target', get: (row) => row.target },
+      { key: 'relation', get: (row) => row.relation },
+      { key: 'relationType', get: (row) => row.relationType || row.relationKey },
+      { key: 'pmids', get: (row) => row.pmids },
+      { key: 'evidence', get: (row) => row.evidence },
+    ];
+    downloadText(`${baseName}_nodes.csv`, buildCsv(nodes, nodeFields), 'text/csv;charset=utf-8');
+    downloadText(`${baseName}_edges.csv`, buildCsv(edges, edgeFields), 'text/csv;charset=utf-8');
+  }
+
+  function bindExportAction(button, kind) {
+    if (!button) {
+      return;
+    }
+    button.addEventListener('click', async () => {
+      closeExportMenu();
+      setExportEnabled(false);
       try {
-        const dataUrl = await graphRunner.exportPngDataUrl();
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = 'path-finder-graph.png';
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+        await runGraphExport(kind);
       } catch (error) {
-        setGraphStatus(error && error.message ? error.message : 'Graph export failed.');
+        statusEl.textContent = error && error.message ? error.message : 'Graph export failed.';
       } finally {
-        graphExportButton.disabled = false;
+        setExportEnabled(true);
       }
     });
   }
+
+  bindExportAction(graphExportCsvButton, 'csv');
+  bindExportAction(graphExportPngButton, 'png');
+  bindExportAction(graphExportSvgButton, 'svg');
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('#pathGraphExportWrap')) {
+      closeExportMenu();
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeExportMenu();
+      if (graphExportButton) {
+        graphExportButton.focus();
+      }
+    }
+  });
 
   updateGraphToggleButtons();
   updateViewButtons();

@@ -43,8 +43,6 @@ def main() -> None:
                 "() => !!window.__TEKG_PATH_FINDER_GRAPH_DEBUG?.getVisibleSubgraph()?.nodes?.length",
                 timeout=60000,
             )
-            inspected = page.evaluate("() => window.__TEKG_PATH_FINDER_GRAPH_DEBUG.inspectFirstNode()")
-            require(inspected is True, "Path Finder graph debug bridge should inspect the first node")
             graph_debug_state = page.evaluate(
                 """
                 () => {
@@ -61,26 +59,16 @@ def main() -> None:
                 }
                 """
             )
-            node_action_state = page.evaluate(
-                """
-                () => ({
-                  jumpCount: document.querySelectorAll('#pathGraphSurface [data-node-action="jump"]').length,
-                  expandCount: document.querySelectorAll('#pathGraphSurface [data-node-action="expand"]').length,
-                  detailCount: document.querySelectorAll('#pathGraphSurface [data-node-action="details"]').length,
-                })
-                """
-            )
-
             state = page.evaluate(
                 """
                 () => ({
                   tableHidden: document.querySelector('#pathResults')?.hidden === true,
                   graphHidden: document.querySelector('#pathGraphPanel')?.hidden === true,
-                  showNamesText: document.querySelector('#pathGraphShowNames')?.textContent.trim() || '',
-                  showNamesPressed: document.querySelector('#pathGraphShowNames')?.getAttribute('aria-pressed') || '',
+                  showNamesRemoved: document.querySelector('#pathGraphShowNames') === null,
                   showRelationsText: document.querySelector('#pathGraphShowRelations')?.textContent.trim() || '',
                   showRelationsPressed: document.querySelector('#pathGraphShowRelations')?.getAttribute('aria-pressed') || '',
                   exportDisabled: document.querySelector('#pathGraphExport')?.disabled === true,
+                  exportOptions: Array.from(document.querySelectorAll('#pathGraphExportMenu [role="menuitem"]')).map((item) => item.textContent.trim()),
                   canvasCount: document.querySelectorAll('#pathGraphSurface canvas').length,
                 })
                 """
@@ -94,18 +82,16 @@ def main() -> None:
     require("BIO_RELATION" not in table_text, "Path Finder table should not show raw BIO_RELATION labels")
     require(state["tableHidden"] is True, f"Table results should hide in graph mode: {state}")
     require(state["graphHidden"] is False, f"Graph panel should be visible in graph mode: {state}")
-    require(state["showNamesPressed"] == "true" and "On" in state["showNamesText"], f"Show names should default on: {state}")
+    require(state["showNamesRemoved"] is True, f"Redundant Show names control should be removed: {state}")
     require(state["showRelationsPressed"] == "true" and "On" in state["showRelationsText"], f"Show relations should default on: {state}")
     require(state["exportDisabled"] is False, f"Export should be enabled after graph render: {state}")
+    require(state["exportOptions"] == ["CSV", "PNG", "SVG"], f"Export options should match Graph: {state}")
     require(state["canvasCount"] > 0, f"Graph surface should contain a G6 canvas: {state}")
     require(graph_debug_state["nodeCount"] > 0, f"Graph should expose visible nodes: {graph_debug_state}")
     require(graph_debug_state["edgeCount"] > 0, f"Graph should expose visible edges: {graph_debug_state}")
     require(len(graph_debug_state["highlighted"]) == 2, f"Source and target should be highlighted: {graph_debug_state}")
     require(all(node["size"] >= 104 for node in graph_debug_state["highlighted"]), f"Highlighted nodes should be enlarged: {graph_debug_state}")
     require(graph_debug_state["minSize"] >= 72, f"Path Finder graph nodes should use enlarged minimum sizes: {graph_debug_state}")
-    require(node_action_state["jumpCount"] == 0, f"Path Finder node card should not show Jump: {node_action_state}")
-    require(node_action_state["expandCount"] == 0, f"Path Finder node card should not show Expand: {node_action_state}")
-    require(node_action_state["detailCount"] > 0, f"Path Finder node card should still show Details: {node_action_state}")
     ok("Path Finder graph view smoke passed")
 
 

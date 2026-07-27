@@ -59,13 +59,18 @@ def main() -> int:
         for marker in [
             "pathTableView",
             "pathGraphView",
-            "pathGraphShowNames",
             "pathGraphShowRelations",
             "pathGraphExport",
+            "pathGraphExportCsv",
+            "pathGraphExportPng",
+            "pathGraphExportSvg",
             "index-g6-shared.js",
         ]:
             if marker not in page:
                 failures.append(f"Path Finder page is missing graph marker {marker}")
+        for obsolete_marker in ["pathResolved", "pathGraphShowNames", "pathGraphDetail"]:
+            if obsolete_marker in page:
+                failures.append(f"Path Finder page still contains obsolete marker {obsolete_marker}")
 
     if (ROOT / "api/path_finder_service.php").is_file():
         service = text("api/path_finder_service.php")

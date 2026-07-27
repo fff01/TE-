@@ -14,7 +14,8 @@ $pathFinderEntityTypes = path_finder_entity_type_options();
 $pathFinderVersion = max(
     (int)@filemtime(__FILE__),
     (int)@filemtime(tekg_assets_fs_path('js/components/te-autocomplete.js')),
-    (int)@filemtime(tekg_assets_fs_path('js/pages/path_finder.js'))
+    (int)@filemtime(tekg_assets_fs_path('js/pages/path_finder.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/g6-svg-export.js'))
 );
 
 require __DIR__ . '/head.php';
@@ -70,7 +71,7 @@ require __DIR__ . '/head.php';
                   </select>
                 </label>
                 <div class="path-actions">
-                  <button class="path-submit" id="pathSubmit" type="submit">Find paths</button>
+                  <button class="path-submit path-command-control" id="pathSubmit" type="submit">Find paths</button>
                 </div>
               </form>
               <div class="path-finder-note">Direct relationships are shown as cards only. Multi-hop paths include a compact path strip for quick scanning.</div>
@@ -79,12 +80,11 @@ require __DIR__ . '/head.php';
             <section class="path-results-panel" aria-live="polite">
               <div class="path-results-head">
                 <div class="path-results-status" id="pathStatus">Enter two entities and run a search to inspect relationship paths.</div>
-                <div class="path-results-view-toggle" id="pathViewToggle" role="group" aria-label="Path result view" hidden>
-                  <button class="path-view-toggle is-active" id="pathTableView" type="button" aria-pressed="true">Table</button>
-                  <button class="path-view-toggle" id="pathGraphView" type="button" aria-pressed="false">Graph</button>
+                <div class="path-results-view-toggle path-command-control" id="pathViewToggle" role="group" aria-label="Path result view" hidden>
+                  <button class="path-view-toggle path-command-control is-active" id="pathTableView" type="button" aria-pressed="true">Table</button>
+                  <button class="path-view-toggle path-command-control" id="pathGraphView" type="button" aria-pressed="false">Graph</button>
                 </div>
               </div>
-              <div class="path-resolved" id="pathResolved" hidden></div>
               <div class="path-results-list" id="pathResults"></div>
               <section class="path-graph-panel" id="pathGraphPanel" aria-label="Path graph results" hidden>
                 <div class="path-graph-toolbar">
@@ -93,13 +93,18 @@ require __DIR__ . '/head.php';
                     <span>Only nodes and edges from the current paths are shown.</span>
                   </div>
                   <div class="path-graph-actions">
-                    <button class="path-graph-toggle is-on" id="pathGraphShowNames" type="button" aria-pressed="true">Show names: On</button>
-                    <button class="path-graph-toggle is-on" id="pathGraphShowRelations" type="button" aria-pressed="true">Show relations: On</button>
-                    <button class="path-graph-export" id="pathGraphExport" type="button" disabled>Export</button>
+                    <button class="path-graph-toggle path-command-control is-on" id="pathGraphShowRelations" type="button" aria-pressed="true">Show relations: On</button>
+                    <div class="path-graph-export-menu-wrap" id="pathGraphExportWrap">
+                      <button class="path-graph-export path-command-control" id="pathGraphExport" type="button" aria-haspopup="true" aria-expanded="false" disabled>Export</button>
+                      <div class="path-graph-export-menu" id="pathGraphExportMenu" role="menu" hidden>
+                        <button id="pathGraphExportCsv" type="button" role="menuitem">CSV</button>
+                        <button id="pathGraphExportPng" type="button" role="menuitem">PNG</button>
+                        <button id="pathGraphExportSvg" type="button" role="menuitem">SVG</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="path-graph-surface" id="pathGraphSurface" aria-label="Path result graph"></div>
-                <div class="path-graph-detail" id="pathGraphDetail">Switch to Graph after a search to inspect nodes and relationships.</div>
               </section>
             </section>
           </div>
@@ -109,6 +114,7 @@ require __DIR__ . '/head.php';
     <script src="<?= htmlspecialchars(tekg_assets_url('js/components/te-autocomplete.js') . '?v=' . $pathFinderVersion, ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('vendor/g6/g6.min.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-type-meta.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
+    <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/g6-svg-export.js') . '?v=' . $pathFinderVersion, ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-shared.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/path_finder.js'), ENT_QUOTES, 'UTF-8') ?>" defer></script>
   </body>

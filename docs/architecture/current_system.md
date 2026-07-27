@@ -30,6 +30,11 @@ Main runtime pages include:
 - `agent.php`: Agent and DeepThink entrypoint.
 - `about.php`: help/about page.
 
+Path Finder offers Table and G6 Graph views. Its compact Graph toolbar keeps
+node names visible, exposes relation-label control, and exports the current
+visible path graph as CSV, PNG, or SVG. These command controls share the 6px
+corner treatment used by the main Graph toolbar.
+
 Do not move root runtime pages merely for cleanup.
 
 `browse.php` is a catalog consumer, not a taxonomy truth source. Its table,

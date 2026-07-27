@@ -1204,6 +1204,10 @@
           border-bottom: 3px solid #0f766e !important;
         }
 
+        .preview-graph-toolbar .preview-graph-command {
+          border-radius: 6px !important;
+        }
+
         .preview-graph-toolbar .taxonomy-display-toggle,
         .preview-graph-toolbar .taxonomy-source-toggle {
           min-width: 138px;

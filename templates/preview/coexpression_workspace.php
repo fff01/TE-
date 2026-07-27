@@ -21,11 +21,11 @@
                   <option value="">Select context</option>
                 </select>
               </label>
-              <button id="coexpression-expression-layer" class="is-toggle is-active" type="button" aria-pressed="true">
+              <button id="coexpression-expression-layer" class="is-toggle is-active preview-graph-command" type="button" aria-pressed="true">
                 <span id="coexpression-expression-layer-text">Expression activity: On</span>
               </button>
               <div id="coexpression-export-menu-wrap" class="graph-export-menu-wrap">
-                <button id="coexpression-export-menu-toggle" class="graph-export-action" type="button" aria-haspopup="true" aria-expanded="false" disabled>
+                <button id="coexpression-export-menu-toggle" class="graph-export-action preview-graph-command" type="button" aria-haspopup="true" aria-expanded="false" disabled>
                   Export
                 </button>
                 <div id="coexpression-export-menu" class="graph-export-menu" role="menu" hidden>

@@ -149,7 +149,7 @@
   min-height: 42px;
   padding: 0 20px;
   border: 1px solid #2f63b9;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #2f63b9;
   color: #ffffff;
   font-size: 13px;
@@ -178,6 +178,7 @@
   justify-content: space-between;
   gap: 16px;
   min-height: 34px;
+  margin-bottom: 12px;
 }
 
 .path-results-status {
@@ -193,7 +194,7 @@
   gap: 4px;
   padding: 3px;
   border: 1px solid #d6e2f5;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #f7faff;
 }
 
@@ -207,7 +208,7 @@
   min-height: 30px;
   padding: 0 14px;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: #496785;
   font-size: 12px;
@@ -219,29 +220,6 @@
   background: #2f63b9;
   color: #ffffff;
   box-shadow: 0 6px 14px rgba(47, 99, 185, 0.18);
-}
-
-.path-resolved {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin: 14px 0 16px;
-  padding: 12px 14px;
-  border: 1px solid #dbe7f5;
-  border-radius: 8px;
-  background: #f6f9fd;
-  color: #38516e;
-}
-
-.path-resolved em {
-  color: #6f83a3;
-  font-style: normal;
-}
-
-.path-resolved small {
-  margin-left: auto;
-  color: #71849e;
 }
 
 .path-results-list {
@@ -291,7 +269,7 @@
 .path-graph-export {
   min-height: 34px;
   border: 1px solid #c9d9ef;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #ffffff;
   color: #31588f;
   font-size: 12px;
@@ -314,6 +292,53 @@
   cursor: not-allowed;
 }
 
+.path-command-control {
+  border-radius: 6px;
+}
+
+.path-graph-export-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.path-graph-export-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  min-width: 132px;
+  padding: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
+}
+
+.path-graph-export-menu[hidden] {
+  display: none !important;
+}
+
+.path-graph-export-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 32px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #0f172a;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.path-graph-export-menu button:hover,
+.path-graph-export-menu button:focus-visible {
+  background: #ecfeff;
+  outline: none;
+}
+
 .path-graph-surface {
   position: relative;
   height: min(74vh, 760px);
@@ -322,30 +347,6 @@
   border-radius: 10px;
   overflow: hidden;
   background: radial-gradient(circle at 50% 0%, #ffffff 0%, #f3f7fd 100%);
-}
-
-.path-graph-detail {
-  min-height: 42px;
-  padding: 10px 12px;
-  border: 1px solid #dbe7f5;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #4f6480;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.path-graph-detail .edge-evidence-detail {
-  display: grid;
-  gap: 6px;
-}
-
-.path-graph-detail .edge-evidence-title {
-  color: #1b3558;
-}
-
-.path-graph-detail .edge-evidence-summary {
-  color: #5f6f86;
 }
 
 .path-card {
@@ -374,19 +375,6 @@
   text-transform: uppercase;
 }
 
-.path-card h2 {
-  margin: 0;
-  color: #1b3558;
-  font-size: 18px;
-  line-height: 1.35;
-}
-
-.path-card h2 span {
-  color: #7b8fa9;
-  font-size: 14px;
-  font-weight: 600;
-}
-
 .path-metrics {
   display: flex;
   flex-wrap: wrap;
@@ -396,7 +384,7 @@
 
 .path-metrics span {
   border: 1px solid #d6e2f5;
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 6px 10px;
   color: #31588f;
   font-size: 12px;

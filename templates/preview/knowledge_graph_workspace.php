@@ -19,15 +19,15 @@
               <button id="toggle-focus-view" class="focus-legacy" type="button" style="display:none">
                 <span id="focus-view-text">Focus mode: Global</span>
               </button>
-              <button id="toggle-expand-mode" class="expand-mode is-toggle" type="button" aria-pressed="false"><span id="expand-mode-text">Expand mode: Off</span></button>
+              <button id="toggle-expand-mode" class="expand-mode is-toggle preview-graph-command" type="button" aria-pressed="false"><span id="expand-mode-text">Expand mode: Off</span></button>
               <button id="toggle-non-key-nodes" class="non-key-legacy" type="button" style="display:none">
                 <span id="non-key-nodes-text">Hide non-key nodes: Off</span>
               </button>
-              <button id="toggle-edge-labels" class="is-toggle" type="button" aria-pressed="false"><span id="edge-labels-text">Show relations: Off</span></button>
-              <button id="toggle-fixed-view" class="is-toggle" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
-              <button id="back-graph" type="button" disabled hidden><span id="back-text">Back</span></button>
+              <button id="toggle-edge-labels" class="is-toggle preview-graph-command" type="button" aria-pressed="false"><span id="edge-labels-text">Show relations: Off</span></button>
+              <button id="toggle-fixed-view" class="is-toggle preview-graph-command" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
+              <button id="back-graph" class="preview-graph-command" type="button" disabled hidden><span id="back-text">Back</span></button>
               <div id="export-menu-wrap" class="graph-export-menu-wrap">
-                <button id="export-menu-toggle" class="graph-export-action" type="button" aria-haspopup="true" aria-expanded="false" disabled>
+                <button id="export-menu-toggle" class="graph-export-action preview-graph-command" type="button" aria-haspopup="true" aria-expanded="false" disabled>
                   <span id="export-menu-text">Export</span>
                 </button>
                 <div id="export-menu" class="graph-export-menu" role="menu" hidden>
