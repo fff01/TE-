@@ -13,11 +13,16 @@ ordinary Knowledge Graph and Co-expression workspaces.
   `All | RMSK + RepBase` source switch.
 - `Graph` renders the Canvas taxonomy visualization inside the existing
   classification surface. It does not navigate to `taxonomy_canvas_demo.php`.
-- In Tree or Graph classification mode, the toolbar contains only the two
-  classification switches. Relation controls, export, fixed view, expand mode,
-  Back, and Reset are hidden until an ordinary dynamic Knowledge Graph is open.
+- In Tree or Graph classification mode, entity search, the two classification
+  switches, and Export remain in their established positions. `Show relations`
+  and other dynamic-only commands are hidden until an ordinary Knowledge Graph
+  is open. Export may remain disabled when the active classification renderer
+  does not support it.
 - Canvas class labels are always enabled. The demo's `Show class labels`,
   `Restart`, and `Fit` controls are not integrated.
+- Node dragging preserves the standalone demo's force response: moving a node
+  reheats its local layout and affects connected nodes. Releasing the pointer
+  does not leave a persistent node selection; hover focus clears on pointer exit.
 
 ## Architecture
 
@@ -43,6 +48,29 @@ ordinary Knowledge Graph and Co-expression workspaces.
 - An edge is visible only when both endpoint nodes are visible.
 - Switching Tree/Graph or taxonomy source refreshes legend metadata and clears
   transient focus while preserving the selected source.
+
+## Weighted Taxonomy Layout
+
+- The Canvas layout groups nodes by their depth-1 Class before positioning the
+  depth-2 Order galaxies. It must not give every depth-2 node an equal share of
+  the global ring, because this lets many singleton `Others` nodes dominate the
+  view while populous retrotransposon Orders overlap.
+- For each Class, compute its mass from every node whose depth-1 ancestor is
+  that Class. Convert mass to a target visual share with `sqrt(mass)`, clamp
+  the share to 8%-60%, then renormalize all Class shares. With current data,
+  this yields approximately 57% / 35% / 8% for Retrotransposons, DNA
+  Transposons, and Others in `rmsk_repbase`, and 56% / 34% / 10% in `all`.
+- Assign each Class a stable angular sector around the root using those shares.
+  Depth-2 anchors remain in their Class sector. Their local galaxy scale uses
+  descendant mass with a bounded fourth-root transform, which spreads LTR,
+  LINE, and SINE without allowing LTR to consume the entire canvas.
+- Singleton and very small depth-2 galaxies under `Others` use compact packing
+  inside the Others sector. All nodes remain visible; this is spatial
+  compression, not filtering or aggregation.
+- The weighted anchors guide initialization and the running force simulation.
+  Node dragging must still reheat the layout and influence connected nodes.
+- The calculation is data-driven for both taxonomy sources and contains no
+  hard-coded Class names or fixed source-specific percentages.
 
 ## State And Failure Behavior
 
