@@ -10,6 +10,9 @@
   const ctx = canvas.getContext('2d');
   const TAU = Math.PI * 2;
   const STAR_DEPTH = 2;
+  const MIN_BRANCH_SHARE = 0.08;
+  const MAX_BRANCH_SHARE = 0.60;
+  const SECTOR_START_ANGLE = -Math.PI * 0.72;
   const LABELS = ['Human TE', 'Class', 'Order', 'Superfamily', 'Family', 'Subfamily'];
   const COLORS = ['#123d7a', '#1f66d1', '#2d8bdc', '#54a6db', '#86bfe8', '#b7d7f1', '#d4e6f7'];
   const state = {
@@ -18,8 +21,51 @@
     transform: { x: 0, y: 0, k: 1 },
     dragging: null, panning: false, pointer: null,
     frame: 0, running: false, paused: true, alpha: 1,
-    source: '', requestEpoch: 0, requestController: null,
+    source: '', layoutMeta: { branches: [] }, requestEpoch: 0, requestController: null,
   };
+
+  function clamp(value, minimum, maximum) {
+    return Math.max(minimum, Math.min(maximum, value));
+  }
+  function boundedBranchShares(entries) {
+    if (!entries.length) return new Map();
+    const minimum = Math.min(MIN_BRANCH_SHARE, 1 / entries.length);
+    const maximum = Math.max(MAX_BRANCH_SHARE, 1 / entries.length);
+    const shares = new Map();
+    let remaining = 1;
+    let free = entries.map((entry) => ({
+      name: entry.name,
+      weight: Math.sqrt(Math.max(1, entry.descendantMass)),
+    }));
+
+    while (free.length) {
+      const totalWeight = free.reduce((sum, entry) => sum + entry.weight, 0) || free.length;
+      let constrained = false;
+      const nextFree = [];
+      free.forEach((entry) => {
+        const proposed = remaining * entry.weight / totalWeight;
+        if (proposed < minimum) {
+          shares.set(entry.name, minimum);
+          remaining -= minimum;
+          constrained = true;
+        } else if (proposed > maximum) {
+          shares.set(entry.name, maximum);
+          remaining -= maximum;
+          constrained = true;
+        } else {
+          nextFree.push(entry);
+        }
+      });
+      if (!constrained) {
+        nextFree.forEach((entry) => {
+          shares.set(entry.name, remaining * entry.weight / totalWeight);
+        });
+        break;
+      }
+      free = nextFree;
+    }
+    return shares;
+  }
 
   function keyForDepth(depth) { return `depth-${depth}`; }
   function levelLabel(depth) { return LABELS[depth] || `Level ${depth}`; }
@@ -63,11 +109,9 @@
       || children.get('Transposable Elements - Human')
       || children.get('Transposable Elements (Mobile element) - Human')
       || [];
-    const branchIndex = new Map(rootChildren.map((name, index) => [name, index]));
     const starNames = rawNodes
       .map((raw) => String(raw?.name || '').trim())
       .filter((name) => (depthByName.get(name) || 0) === STAR_DEPTH);
-    const starIndex = new Map(starNames.map((name, index) => [name, index]));
 
     function ancestorAtDepth(name, depth) {
       let current = name;
@@ -80,37 +124,120 @@
       return '';
     }
 
-    function topBranch(name) {
-      let current = name;
-      const seen = new Set();
-      while (current && !seen.has(current)) {
-        seen.add(current);
-        if (branchIndex.has(current)) return branchIndex.get(current);
-        current = parentByChild.get(current);
+    const descendantMass = new Map(rootChildren.map((name) => [name, 0]));
+    const galaxyMass = new Map(starNames.map((name) => [name, 0]));
+    rawNodes.forEach((raw) => {
+      const name = String(raw?.name || '').trim();
+      const depth = Math.max(0, Number(raw?.depth) || 0);
+      if (depth >= 1) {
+        const branchName = ancestorAtDepth(name, 1);
+        if (branchName) descendantMass.set(branchName, (descendantMass.get(branchName) || 0) + 1);
       }
-      return 0;
-    }
+      if (depth >= STAR_DEPTH) {
+        const starName = ancestorAtDepth(name, STAR_DEPTH);
+        if (starName) galaxyMass.set(starName, (galaxyMass.get(starName) || 0) + 1);
+      }
+    });
+
+    const branchEntries = rootChildren.map((name, index) => ({
+      name,
+      index,
+      descendantMass: Math.max(1, descendantMass.get(name) || 0),
+    }));
+    const branchShares = boundedBranchShares(branchEntries);
+    const branchLayouts = new Map();
+    const starLayouts = new Map();
+    let branchCursor = SECTOR_START_ANGLE;
+
+    branchEntries.forEach((entry) => {
+      const branchShare = branchShares.get(entry.name) || (1 / Math.max(1, branchEntries.length));
+      const branchStart = branchCursor;
+      const branchEnd = branchStart + branchShare * TAU;
+      const branchAngle = (branchStart + branchEnd) / 2;
+      const branchX = Math.cos(branchAngle) * 145;
+      const branchY = Math.sin(branchAngle) * 145;
+      const branchStars = (children.get(entry.name) || [])
+        .filter((name) => (depthByName.get(name) || 0) === STAR_DEPTH);
+      const starWeights = branchStars.map((name) => Math.sqrt(Math.max(1, galaxyMass.get(name) || 0)));
+      const starWeightTotal = starWeights.reduce((sum, weight) => sum + weight, 0) || branchStars.length || 1;
+      const sectorPadding = Math.min(0.07, Math.max(0.015, (branchEnd - branchStart) * 0.06));
+      const usableStart = branchStart + sectorPadding;
+      const usableEnd = branchEnd - sectorPadding;
+      const usableSpan = Math.max(0.02, usableEnd - usableStart);
+      const laneCount = branchStars.length > 8 ? Math.min(4, Math.ceil(branchStars.length / 6)) : 1;
+      let starCursor = usableStart;
+
+      branchStars.forEach((name, index) => {
+        const mass = Math.max(1, galaxyMass.get(name) || 0);
+        const galaxyScale = clamp((mass / 24) ** 0.25, 0.72, 1.75);
+        let starAngle;
+        let lane = 0;
+        if (laneCount > 1) {
+          lane = index % laneCount;
+          const slot = Math.floor(index / laneCount);
+          const slotCount = Math.ceil(branchStars.length / laneCount);
+          starAngle = usableStart + (slot + 0.5) / Math.max(1, slotCount) * usableSpan;
+        } else {
+          const starSpan = usableSpan * starWeights[index] / starWeightTotal;
+          starAngle = starCursor + starSpan / 2;
+          starCursor += starSpan;
+        }
+        const starRing = 315 + lane * 58 + (galaxyScale - 1) * 64;
+        starLayouts.set(name, {
+          name,
+          mass,
+          galaxyScale,
+          starAngle,
+          starX: Math.cos(starAngle) * starRing,
+          starY: Math.sin(starAngle) * starRing,
+          lane,
+        });
+      });
+
+      branchLayouts.set(entry.name, {
+        ...entry,
+        branchShare,
+        branchStart,
+        branchEnd,
+        branchAngle,
+        branchX,
+        branchY,
+        stars: branchStars,
+      });
+      branchCursor = branchEnd;
+    });
 
     const nodes = rawNodes.map((raw, index) => {
       const name = String(raw?.name || '').trim();
       const depth = Math.max(0, Number(raw?.depth) || 0);
       const childCount = (children.get(name) || []).length;
+      const branchName = depth >= 1 ? ancestorAtDepth(name, 1) : '';
       const starName = depth <= STAR_DEPTH ? name : ancestorAtDepth(name, STAR_DEPTH);
-      const branch = starIndex.has(starName) ? starIndex.get(starName) : topBranch(name);
-      const starTotal = Math.max(1, starNames.length || rootChildren.length || 6);
-      const starAngle = branch / starTotal * TAU;
-      const starRing = 290 + (branch % 4) * 105;
-      const starX = Math.cos(starAngle) * starRing;
-      const starY = Math.sin(starAngle) * starRing;
+      const branchLayout = branchLayouts.get(branchName);
+      const starLayout = starLayouts.get(starName);
+      const galaxyScale = starLayout?.galaxyScale || 1;
+      const starX = starLayout?.starX || branchLayout?.branchX || 0;
+      const starY = starLayout?.starY || branchLayout?.branchY || 0;
       const localAngle = (index * 2.399963229728653) % TAU + Math.random() * 0.3;
-      const localRadius = depth <= STAR_DEPTH ? 0 : 34 + (depth - STAR_DEPTH) * 25 + Math.random() * 38;
+      const localRadius = depth <= STAR_DEPTH
+        ? 0
+        : (34 + (depth - STAR_DEPTH) * 25 + Math.random() * 38) * galaxyScale;
       const size = depth === 0
         ? 18
         : depth === STAR_DEPTH
-          ? Math.max(8, 12 + Math.min(7, Math.sqrt(childCount + 1)))
+          ? Math.max(8, (12 + Math.min(7, Math.sqrt(childCount + 1))) * (0.88 + galaxyScale * 0.12))
           : Math.max(1.8, 7.2 - (depth - STAR_DEPTH) * 0.85 + Math.min(2.2, Math.sqrt(childCount + 1) * 0.25));
       return {
-        id: nodeId(name, index), name, depth, childCount, degree: 0, branch,
+        id: nodeId(name, index), name, depth, childCount, degree: 0,
+        branch: branchLayout?.index || 0,
+        branchName,
+        branchX: branchLayout?.branchX || 0,
+        branchY: branchLayout?.branchY || 0,
+        branchStart: branchLayout?.branchStart || 0,
+        branchEnd: branchLayout?.branchEnd || 0,
+        branchShare: branchLayout?.branchShare || 0,
+        descendantMass: branchLayout?.descendantMass || 1,
+        galaxyScale,
         starName, starId: '', starX, starY,
         x: starX + Math.cos(localAngle) * localRadius,
         y: starY + Math.sin(localAngle) * localRadius,
@@ -133,7 +260,28 @@
     nodes.forEach((node) => {
       node.radius = Math.max(2.5, node.radius + Math.min(5, Math.sqrt(node.degree) * 0.45));
     });
-    return { nodes, edges };
+    const layoutMeta = {
+      branches: branchEntries.map((entry) => {
+        const layout = branchLayouts.get(entry.name);
+        return {
+          name: entry.name,
+          descendantMass: entry.descendantMass,
+          share: layout.branchShare,
+          start: layout.branchStart,
+          end: layout.branchEnd,
+          galaxies: layout.stars.map((name) => {
+            const galaxy = starLayouts.get(name);
+            return {
+              name,
+              descendantMass: galaxy.mass,
+              scale: galaxy.galaxyScale,
+              lane: galaxy.lane,
+            };
+          }),
+        };
+      }),
+    };
+    return { nodes, edges, layoutMeta };
   }
 
   function rebuildIndexes() {
@@ -217,7 +365,8 @@
       const dy = edge.target.y - edge.source.y;
       const dist = Math.max(1, Math.hypot(dx, dy));
       const sameGalaxy = edge.source.starId === edge.target.starId;
-      const target = edge.target.depth <= STAR_DEPTH ? 135 : edge.target.depth >= 5 ? 16 : sameGalaxy ? 30 : 90;
+      const localScale = edge.target.depth > STAR_DEPTH ? edge.target.galaxyScale : 1;
+      const target = (edge.target.depth <= STAR_DEPTH ? 135 : edge.target.depth >= 5 ? 16 : sameGalaxy ? 30 : 90) * localScale;
       const strength = edge.target.depth > STAR_DEPTH ? 0.038 : 0.012;
       const force = (dist - target) * strength * alpha;
       const fx = dx / dist * force;
@@ -285,9 +434,12 @@
     visible.forEach((node) => {
       if (node === state.dragging) return;
       if (node.depth === STAR_DEPTH) {
-        node.vx += (node.starX - node.x) * 0.018 * alpha;
-        node.vy += (node.starY - node.y) * 0.018 * alpha;
-      } else if (node.depth <= 1) {
+        node.vx += (node.starX - node.x) * 0.032 * alpha;
+        node.vy += (node.starY - node.y) * 0.032 * alpha;
+      } else if (node.depth === 1) {
+        node.vx += (node.branchX - node.x) * 0.026 * alpha;
+        node.vy += (node.branchY - node.y) * 0.026 * alpha;
+      } else if (node.depth === 0) {
         node.vx += -node.x * 0.018 * alpha;
         node.vy += -node.y * 0.018 * alpha;
       } else {
@@ -297,7 +449,7 @@
         const dx = anchorX - node.x;
         const dy = anchorY - node.y;
         const distance = Math.max(1, Math.hypot(dx, dy));
-        const preferred = 42 + (node.depth - STAR_DEPTH) * 24;
+        const preferred = (42 + (node.depth - STAR_DEPTH) * 24) * node.galaxyScale;
         const force = (distance - preferred) * 0.014 * alpha;
         node.vx += dx / distance * force;
         node.vy += dy / distance * force;
@@ -363,6 +515,15 @@
       key: keyForDepth(depth), depth, label: levelLabel(depth), color: levelColor(depth), count,
     }));
   }
+  function getLayoutMeta() {
+    return {
+      source: state.source,
+      branches: state.layoutMeta.branches.map((branch) => ({
+        ...branch,
+        galaxies: branch.galaxies.map((galaxy) => ({ ...galaxy })),
+      })),
+    };
+  }
   function applyLevelState(nextState) {
     if (nextState && typeof nextState === 'object') {
       Object.entries(nextState).forEach(([key, visible]) => {
@@ -413,6 +574,7 @@
       if (!parsed.nodes.length) throw new Error('Taxonomy API returned no nodes');
       state.nodes = parsed.nodes;
       state.edges = parsed.edges;
+      state.layoutMeta = parsed.layoutMeta;
       state.source = source;
       state.visibleLevels = new Set(getDepths(state.nodes));
       rebuildIndexes();
@@ -510,6 +672,7 @@
     applyLevelState,
     setLevelFocus,
     getLegendMeta,
+    getLayoutMeta,
     pause,
     resume,
     resize,

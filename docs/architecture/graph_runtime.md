@@ -100,17 +100,23 @@ prevents new loader markup from being paired with cached pre-progress CSS.
   and `marked`; prefer local assets where possible.
 - Expand mode business correctness remains an independent technical debt item.
   Do not repair it blindly without browser evidence.
-- Taxonomy large-graph rendering is currently experimental. Keep it isolated
-  from ordinary evidence graph behavior until accepted.
+- The native Canvas taxonomy Graph is integrated but remains independently
+  rendered from ordinary evidence graphs. Keep renderer state and failure
+  handling isolated when tuning its layout.
 
 ## Taxonomy Runtime Decision
 
-As of 2026-07-19, the force-directed All-TE classification Graph is archived and
-paused. The preview taxonomy workflow always renders the existing collapsible
-tree, the Tree/Graph display switch is removed, and large-force taxonomy scripts
-are not loaded by the runtime. The experimental source is retained only for
-reference. Restoring it requires a new plan and fresh visual, browser, and
-ordinary-Graph regression acceptance.
+As of 2026-07-28, classification still defaults to the accepted collapsible G6
+Tree, with an optional native Canvas `Graph` beside it. The Canvas renderer uses
+only `api/taxonomy.php?view=tree`, reuses the Knowledge Graph taxonomy legend,
+and does not load the archived G6 large-force implementation.
+
+The Canvas macro layout groups nodes by their depth-1 Class. Class sector shares
+use bounded square-root descendant mass (8%-60%), while depth-2 galaxies use a
+bounded fourth-root scale. Current measured shares are approximately 57% / 35%
+/ 8% for Retrotransposons / DNA Transposons / Others in `rmsk_repbase`, and 56%
+/ 34% / 10% in `all`. Small singleton galaxies remain present but are compactly
+packed rather than receiving equal global ring slots.
 
 ## Related Checks
 
@@ -119,6 +125,8 @@ ordinary-Graph regression acceptance.
 - `scripts/checks/check_g6_no_legacy_disease_node.py`
 - `scripts/checks/check_g6_relation_legend_expand_mode.py`
 - `scripts/checks/check_g6_legend_expand_tree_fixes.py`
+- `scripts/checks/check_taxonomy_canvas_integration.py`
+- `scripts/checks/check_taxonomy_canvas_layout_browser.py`
 - `scripts/checks/check_g6_subgraph_export_smoke.py`
 - `scripts/checks/check_coexpression_task8_browser.py`
 - `scripts/checks/check_coexpression_task9_browser.py`

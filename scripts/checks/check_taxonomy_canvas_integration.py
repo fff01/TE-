@@ -100,7 +100,16 @@ def main() -> None:
     )
     if api_export is not None:
         api_body = api_export.group("body")
-        for method in ("render", "applyLevelState", "setLevelFocus", "getLegendMeta", "pause", "resume", "resize"):
+        for method in (
+            "render",
+            "applyLevelState",
+            "setLevelFocus",
+            "getLegendMeta",
+            "getLayoutMeta",
+            "pause",
+            "resume",
+            "resize",
+        ):
             require_pattern(
                 api_body,
                 rf"\b{re.escape(method)}\b\s*(?::|,|\(|$)",
@@ -149,6 +158,29 @@ def main() -> None:
         r"const\s+byGalaxy\s*=\s*new\s+Map\s*\(\s*\)",
         renderer_path.relative_to(ROOT).as_posix(),
         "Keep the accepted demo's local galaxy repulsion instead of a static anchored layout.",
+        failures,
+    )
+    for token, message in (
+        ("const MIN_BRANCH_SHARE = 0.08", "Class sectors need an 8% minimum share."),
+        ("const MAX_BRANCH_SHARE = 0.60", "Class sectors need a 60% maximum share."),
+        ("function boundedBranchShares", "Class shares must use bounded square-root weighting."),
+        ("descendantMass", "The layout must count all descendants rather than direct children."),
+        ("galaxyScale", "Depth-2 galaxy spacing must respond to descendant mass."),
+        ("branchStart", "Each Class needs a stable angular sector start."),
+        ("branchEnd", "Each Class needs a stable angular sector end."),
+    ):
+        require_token(
+            renderer,
+            token,
+            renderer_path.relative_to(ROOT).as_posix(),
+            message,
+            failures,
+        )
+    forbid_token(
+        renderer,
+        "branch / starTotal * TAU",
+        renderer_path.relative_to(ROOT).as_posix(),
+        "Do not give every depth-2 taxonomy node an equal global ring slot.",
         failures,
     )
     require_pattern(

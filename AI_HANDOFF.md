@@ -116,34 +116,34 @@ Important files include:
 When changing G6 behavior, verify API payloads, iframe bridge behavior, loader
 state, legend state, and browser rendering before changing visual logic.
 
-### Taxonomy Graph Experiments
+### Taxonomy Graph Runtime And Archived Experiments
 
-There are two in-progress graph-rendering experiments:
+The current classification runtime defaults to the existing G6 Tree and offers
+an optional native Canvas Graph through the adjacent `Tree | Graph` switch.
+Search and Export remain visible in classification mode; Show relations is
+hidden. The Canvas Graph always shows Class/Order labels and does not expose the
+standalone demo's label checkbox, Restart, or Fit controls.
 
 - `assets/js/renderers/g6/large-force-graph/`
-  - G6-based lightweight large-graph experiment.
-  - Connected to taxonomy Graph in an earlier attempt.
+  - Archived G6-based lightweight large-graph experiment.
+  - It was connected to taxonomy Graph in an earlier attempt but is not loaded
+    by the current runtime.
   - User feedback: it did not visually diverge enough from the old taxonomy G6
     graph and did not match the desired "space / star and planets" feel.
 
 - `taxonomy_canvas_demo.php` and `assets/js/renderers/canvas-force/`
-  - Isolated Canvas taxonomy demo.
-  - It fetches `api/taxonomy.php?view=tree`.
-  - Current direction: Order-level nodes act as stars, deeper TE nodes orbit
-    their own star, labels are sparse by default, and hover/click reveals local
-    neighborhoods.
-  - This is a demo only. It is not production runtime unless explicitly
-    integrated later.
+  - `taxonomy_canvas_demo.php` remains the standalone interaction reference.
+  - `taxonomy-canvas-renderer.js` is the production renderer and fetches only
+    `api/taxonomy.php?view=tree`.
+  - The production layout groups by depth-1 Class. Bounded square-root
+    descendant mass assigns about 57% / 35% / 8% to Retrotransposons / DNA
+    Transposons / Others for `rmsk_repbase`, and about 56% / 34% / 10% for
+    `all`. Depth-2 galaxies use bounded descendant scaling; singleton Others
+    galaxies are compactly packed without hiding or aggregating nodes.
+  - Dragging reheats the force layout and affects neighboring nodes. Pointer
+    release clears persistent selection while hover focus remains available.
 
-Do not merge either experiment into production without a new execution plan,
-browser screenshots, and checks proving the ordinary evidence Graph still works.
-
-As of 2026-07-19, the force-directed All-TE classification Graph is archived and
-paused. `preview.php` exposes the existing collapsible taxonomy tree only; the
-Tree/Graph display switch was removed, and taxonomy large-force/prototype
-scripts are no longer loaded by the preview runtime. The source remains as
-inactive reference material. The detailed history, frozen files, evidence, and
-resumption rules are recorded in
+The pre-Canvas large-force history and resumption rules remain recorded in
 `docs/eval/runs/2026-07-19-all-te-classification-pre-dynamic-rebase/ARCHIVE_REPORT.md`.
 
 ### Co-expression Runtime
