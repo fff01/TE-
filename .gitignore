@@ -38,6 +38,9 @@ docs/eval/runs/*
 __pycache__/
 *.pyc
 
+# Local AI brainstorming previews
+.superpowers/
+
 # Node dependencies
 node_modules/
 
