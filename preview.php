@@ -16,6 +16,7 @@ $previewVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/pages/preview/preview-workspace-mode.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-type-meta.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/default-tree-mindmap.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/canvas-force/taxonomy-canvas-renderer.js')),
     (int)@filemtime(tekg_assets_fs_path('html/preview_g6_embed.html')),
     (int)@filemtime(tekg_assets_fs_path('html/preview_coexpression_embed.html')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/g6-svg-export.js')),
@@ -54,6 +55,10 @@ $previewConfig = [
 ?>
       <section class="preview-stage" id="previewStage">
         <div class="preview-top-controls">
+          <div class="preview-taxonomy-display-mode" id="previewTaxonomyDisplayMode" role="tablist" aria-label="Taxonomy display">
+            <button id="preview-taxonomy-display-tree" class="preview-taxonomy-mode-tab is-active" type="button" role="tab" aria-selected="true" aria-pressed="true">Tree</button>
+            <button id="preview-taxonomy-display-graph" class="preview-taxonomy-mode-tab" type="button" role="tab" aria-selected="false" aria-pressed="false">Graph</button>
+          </div>
           <div class="preview-taxonomy-mode" id="previewTaxonomyMode" role="tablist" aria-label="Taxonomy source">
             <button id="preview-taxonomy-all" class="preview-taxonomy-mode-tab" type="button" role="tab" aria-selected="false" aria-pressed="false">All</button>
             <button id="preview-taxonomy-rmsk-repbase" class="preview-taxonomy-mode-tab is-active" type="button" role="tab" aria-selected="true" aria-pressed="true">RMSK + RepBase</button>
@@ -120,6 +125,7 @@ $previewConfig = [
       <script src="<?= htmlspecialchars(tekg_assets_url('js/tekg_runtime_data.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-type-meta.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/default-tree-mindmap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/canvas-force/taxonomy-canvas-renderer.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-runtime.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/te-loader.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6.bootstrap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>

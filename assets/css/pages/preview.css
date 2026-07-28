@@ -44,7 +44,8 @@
         }
 
         .preview-workspace-mode,
-        .preview-taxonomy-mode {
+        .preview-taxonomy-mode,
+        .preview-taxonomy-display-mode {
           display: inline-grid;
           padding: 3px;
           border: 1px solid rgba(219, 231, 243, 0.95);
@@ -54,7 +55,8 @@
         }
 
         .preview-workspace-mode[hidden],
-        .preview-taxonomy-mode[hidden] {
+        .preview-taxonomy-mode[hidden],
+        .preview-taxonomy-display-mode[hidden] {
           display: none !important;
         }
 
@@ -64,6 +66,11 @@
 
         .preview-taxonomy-mode {
           grid-template-columns: minmax(70px, auto) minmax(142px, auto);
+        }
+
+        .preview-taxonomy-display-mode {
+          display: inline-grid;
+          grid-template-columns: repeat(2, minmax(68px, auto));
         }
 
         .preview-workspace-mode-tab,
@@ -344,6 +351,7 @@
         }
 
         .preview-g6-surface-stack #g6-default-tree-surface,
+        .preview-g6-surface-stack #taxonomy-canvas-surface,
         .preview-g6-surface-stack #g6-dynamic-surface {
           position: absolute;
           inset: 0;
@@ -354,6 +362,52 @@
 
         .preview-g6-surface-stack #g6-dynamic-surface {
           display: none;
+        }
+
+        #taxonomy-canvas-surface {
+          overflow: hidden;
+          background: #f8fbff;
+        }
+
+        #taxonomy-canvas-surface[hidden] {
+          display: none !important;
+        }
+
+        #taxonomy-canvas {
+          display: block;
+          width: 100%;
+          height: 100%;
+          cursor: grab;
+          touch-action: none;
+        }
+
+        #taxonomy-canvas.is-dragging {
+          cursor: grabbing;
+        }
+
+        .taxonomy-canvas-tooltip,
+        .taxonomy-canvas-status {
+          position: absolute;
+          z-index: 12;
+          border: 1px solid rgba(191, 208, 234, 0.9);
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.94);
+          color: #334155;
+          font-size: 12px;
+          line-height: 1.45;
+          pointer-events: none;
+        }
+
+        .taxonomy-canvas-tooltip {
+          max-width: 280px;
+          padding: 7px 9px;
+          box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+        }
+
+        .taxonomy-canvas-status {
+          left: 12px;
+          bottom: 12px;
+          padding: 6px 8px;
         }
 
         .preview-g6-surface-stack #g6-dynamic-surface iframe {

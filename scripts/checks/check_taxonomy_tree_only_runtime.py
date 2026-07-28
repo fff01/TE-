@@ -18,7 +18,19 @@ def main() -> None:
     iframe = read("assets/html/preview_graph.html")
     bootstrap = read("assets/js/renderers/g6/index-g6.bootstrap.js")
 
-    require('id="toggle-taxonomy-display"' not in preview, "Switch Tree button is still rendered")
+    require(
+        'id="preview-taxonomy-display-tree"' in preview
+        and 'class="preview-taxonomy-mode-tab is-active"' in preview,
+        "taxonomy display does not expose Tree as the default",
+    )
+    require(
+        'id="preview-taxonomy-display-graph"' in preview,
+        "taxonomy display does not expose the Canvas Graph option",
+    )
+    require(
+        "js/renderers/canvas-force/taxonomy-canvas-renderer.js" in preview,
+        "preview.php does not load the native Canvas taxonomy renderer",
+    )
 
     retired_runtime_scripts = (
         "large-force-graph/large-force-graph-contract.js",
@@ -37,15 +49,17 @@ def main() -> None:
         "taxonomy display mode does not default to tree",
     )
     require(
-        "async function renderCurrentTaxonomyView(options = {}) {\n    return renderDefaultTree(options);\n  }" in bootstrap,
-        "taxonomy entrypoint can still route to taxonomy Graph",
+        "currentTaxonomyDisplayMode === 'graph'" in bootstrap
+        and "renderTaxonomyGraph(options)" in bootstrap
+        and "renderDefaultTree(options)" in bootstrap,
+        "taxonomy entrypoint does not route explicitly between Tree and Canvas Graph",
     )
     require(
-        "toggleTaxonomyDisplayMode().catch" not in bootstrap,
-        "Switch Tree click handler is still registered",
+        "taxonomyCanvasRenderer.render({ source: currentTreeVariant })" in bootstrap,
+        "taxonomy Graph is not rendered through the native Canvas bridge",
     )
 
-    print("PASS: taxonomy runtime exposes the classification tree only")
+    print("PASS: taxonomy runtime defaults to Tree and exposes the isolated Canvas Graph option")
 
 
 if __name__ == "__main__":

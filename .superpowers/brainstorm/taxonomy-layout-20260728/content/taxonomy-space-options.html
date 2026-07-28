@@ -1,0 +1,64 @@
+<style>
+  .cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .card-image { height: 290px; background: #f7fbff; position: relative; overflow: hidden; }
+  .map { position: absolute; inset: 12px; border: 1px solid #dbe7f3; background: white; }
+  .zone { position: absolute; border: 1px solid rgba(62, 112, 176, .28); border-radius: 50%; background: rgba(104, 166, 222, .08); color: #24476d; font: 600 11px/1.2 sans-serif; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .zone.retro { border-color: rgba(29, 105, 177, .55); background: rgba(76, 154, 218, .14); }
+  .zone.dna { border-color: rgba(53, 132, 104, .45); background: rgba(83, 172, 139, .12); }
+  .zone.other { border-color: rgba(160, 118, 65, .45); background: rgba(203, 167, 99, .12); }
+  .dot { position:absolute; width:5px; height:5px; border-radius:50%; background:#5c9bd5; opacity:.7; }
+  .tag { position:absolute; padding:4px 7px; border-radius:4px; background:#fff; border:1px solid #dbe7f3; font:600 10px sans-serif; color:#345; }
+  .metric { margin-top:8px; color:#64748b; font-size:12px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+</style>
+
+<h2>如何重新分配分类图空间？</h2>
+<p class="subtitle">RMSK + RepBase 中，LTR 有 773 个后代、LINE 有 281 个、SINE 有 113 个；Others 下却有约 23 个各自独立的单节点“星系”。当前算法给每个深度 2 节点近似同等的宏观位置，所以 Others 看起来反而更大。</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="map">
+        <div class="zone other" style="left:5%;top:7%;width:58%;height:58%">Others<br>23 个小星系</div>
+        <div class="zone retro" style="right:5%;top:28%;width:34%;height:34%">RNA 逆转录<br>1167 个后代挤在 3 个星系</div>
+        <div class="zone dna" style="left:36%;bottom:5%;width:34%;height:30%">DNA</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A 当前方式：每个 Order 等权</h3>
+      <p>忠实复现现有 demo，但视觉面积主要由 Order 数量决定，不由后代数量或科研重要性决定。</p>
+      <div class="metric">问题来源，不建议保留</div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="map">
+        <div class="zone retro" style="left:4%;top:6%;width:68%;height:75%">RNA 逆转录转座子<br><br>LTR 773&nbsp;&nbsp; LINE 281&nbsp;&nbsp; SINE 113</div>
+        <div class="zone dna" style="right:4%;top:18%;width:32%;height:45%">DNA<br>约 438</div>
+        <div class="zone other" style="right:10%;bottom:6%;width:20%;height:20%">Others<br>紧凑区</div>
+        <div class="tag" style="left:8%;bottom:8%">面积按 sqrt(后代数) 分配并设上下限</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B 分层加权：先 Class，后 Order</h3>
+      <p>先给三大 Class 分区，再按后代规模给 LTR、LINE、SINE 等星系分配半径。Others 全部保留，但被限制在较小区域。</p>
+      <div class="metric">推荐：信息完整，视觉重点也合理</div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="map">
+        <div class="zone retro" style="left:5%;top:6%;width:70%;height:76%">RNA 逆转录转座子<br><br>LTR / LINE / SINE</div>
+        <div class="zone dna" style="right:5%;top:16%;width:34%;height:48%">DNA</div>
+        <div class="tag" style="right:7%;bottom:10%">Others · 23 ▶</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C 默认折叠 Others</h3>
+      <p>Others 默认只显示为一个聚合节点，点击后再展开。画面最干净，但默认隐藏了一部分分类结构。</p>
+      <div class="metric">最清楚，但改变当前“全部展示”的原则</div>
+    </div>
+  </div>
+</div>

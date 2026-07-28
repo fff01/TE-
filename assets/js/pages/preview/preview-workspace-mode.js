@@ -8,6 +8,9 @@
   const knowledgeTab = document.getElementById('preview-mode-knowledge');
   const coexpressionTab = document.getElementById('preview-mode-coexpression');
   const taxonomyControl = document.getElementById('previewTaxonomyMode');
+  const taxonomyDisplayControl = document.getElementById('previewTaxonomyDisplayMode');
+  const taxonomyTreeTab = document.getElementById('preview-taxonomy-display-tree');
+  const taxonomyGraphTab = document.getElementById('preview-taxonomy-display-graph');
   const taxonomyAllTab = document.getElementById('preview-taxonomy-all');
   const taxonomyRmskRepbaseTab = document.getElementById('preview-taxonomy-rmsk-repbase');
   const knowledgeToolbar = knowledgeWorkspace?.querySelector('.preview-graph-toolbar');
@@ -17,7 +20,8 @@
   const coexpressionMode = window.__TEKG_COEXPRESSION_MODE;
   if (
     !knowledgeWorkspace || !coexpressionWorkspace || !workspaceControl || !topControls
-    || !knowledgeTab || !coexpressionTab || !taxonomyControl || !taxonomyAllTab
+    || !knowledgeTab || !coexpressionTab || !taxonomyControl || !taxonomyDisplayControl
+    || !taxonomyTreeTab || !taxonomyGraphTab || !taxonomyAllTab
     || !taxonomyRmskRepbaseTab || !knowledgeToolbar || !coexpressionToolbar
     || !edgeLabelsButton || !coexpressionContextControl || !coexpressionMode
   ) return;
@@ -67,9 +71,12 @@
   }
 
   function syncTopControlVisibility() {
-    const showTaxonomyControl = currentMode === 'knowledge' && knowledgeGraphMode === 'tree';
+    const showTaxonomyControl = currentMode === 'knowledge'
+      && (knowledgeGraphMode === 'tree' || knowledgeGraphMode === 'taxonomy_graph');
     taxonomyControl.hidden = !showTaxonomyControl;
     taxonomyControl.setAttribute('aria-hidden', showTaxonomyControl ? 'false' : 'true');
+    taxonomyDisplayControl.hidden = !showTaxonomyControl;
+    taxonomyDisplayControl.setAttribute('aria-hidden', showTaxonomyControl ? 'false' : 'true');
     workspaceControl.hidden = showTaxonomyControl;
     workspaceControl.setAttribute('aria-hidden', showTaxonomyControl ? 'true' : 'false');
   }
@@ -165,6 +172,23 @@
     const selected = variant === 'all' ? 'all' : 'rmsk_repbase';
     updateTaxonomyTab(taxonomyAllTab, selected === 'all');
     updateTaxonomyTab(taxonomyRmskRepbaseTab, selected === 'rmsk_repbase');
+  }
+
+  function syncTaxonomyDisplayMode(mode) {
+    const graphSelected = mode === 'graph' || mode === 'taxonomy_graph';
+    updateTaxonomyTab(taxonomyTreeTab, !graphSelected);
+    updateTaxonomyTab(taxonomyGraphTab, graphSelected);
+  }
+
+  async function setTaxonomyDisplayMode(mode) {
+    if (currentMode !== 'knowledge') return false;
+    const bridge = window.__TEKG_G6_BRIDGE;
+    if (!bridge || typeof bridge.setTaxonomyDisplayMode !== 'function') return false;
+    const selected = mode === 'graph' ? 'graph' : 'tree';
+    await bridge.setTaxonomyDisplayMode(selected);
+    syncTaxonomyDisplayMode(selected);
+    retainedKnowledgeState = bridge.getState?.() || retainedKnowledgeState;
+    return true;
   }
 
   async function setTreeVariant(variant, options = {}) {
@@ -357,11 +381,18 @@
   taxonomyRmskRepbaseTab.addEventListener('click', () => {
     void setTreeVariant('rmsk_repbase', { history: 'push' });
   });
+  taxonomyTreeTab.addEventListener('click', () => {
+    void setTaxonomyDisplayMode('tree');
+  });
+  taxonomyGraphTab.addEventListener('click', () => {
+    void setTaxonomyDisplayMode('graph');
+  });
 
   window.addEventListener('tekg:g6-state-change', (event) => {
     retainedKnowledgeState = event.detail || retainedKnowledgeState;
     knowledgeGraphMode = String(event.detail?.mode || knowledgeGraphMode);
     syncTaxonomyMode(event.detail?.treeVariant);
+    syncTaxonomyDisplayMode(event.detail?.taxonomyDisplayMode || event.detail?.mode);
     syncTopControlVisibility();
   });
 
@@ -391,6 +422,8 @@
     getDiagnostics,
     ensureKnowledgeForGraphAction,
     setTreeVariant,
+    setTaxonomyDisplayMode,
+    getTaxonomyDisplayMode: () => window.__TEKG_G6_BRIDGE?.getTaxonomyDisplayMode?.() || 'tree',
     routeForKnowledge,
     routeForCoexpression,
     writeRoute,
@@ -399,6 +432,7 @@
   knowledgeGraphMode = String(retainedKnowledgeState.mode || 'tree');
   setWorkspaceVisibility('knowledge');
   syncTaxonomyMode(retainedKnowledgeState.treeVariant);
+  syncTaxonomyDisplayMode(retainedKnowledgeState.taxonomyDisplayMode || retainedKnowledgeState.mode);
 
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'coexpression') {

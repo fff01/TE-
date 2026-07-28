@@ -40,6 +40,11 @@
             <div class="g6-surface-stack preview-g6-surface-stack">
               <div id="cy" style="display:none"></div>
               <div id="g6-default-tree-surface"></div>
+              <div id="taxonomy-canvas-surface" aria-label="Taxonomy graph" hidden>
+                <canvas id="taxonomy-canvas"></canvas>
+                <div id="taxonomy-canvas-status" class="taxonomy-canvas-status" role="status" aria-live="polite"></div>
+                <div id="taxonomy-canvas-tooltip" class="taxonomy-canvas-tooltip" hidden></div>
+              </div>
               <div id="g6-dynamic-surface"></div>
               <div id="graph-preloader" class="graph-preloader" aria-hidden="true">
                 <div class="graph-preloader-inner">
