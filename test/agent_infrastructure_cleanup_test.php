@@ -48,7 +48,11 @@ $scanRoots = [
 ];
 $codeReferences = [];
 foreach ($scanRoots as $scanRoot) {
-    $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($scanRoot, FilesystemIterator::SKIP_DOTS));
+    $directory = new RecursiveDirectoryIterator($scanRoot, FilesystemIterator::SKIP_DOTS);
+    $filter = new RecursiveCallbackFilterIterator($directory, static function (SplFileInfo $entry): bool {
+        return !$entry->isDir() || !in_array($entry->getFilename(), ['.git', '.pytest_cache'], true);
+    });
+    $iterator = new RecursiveIteratorIterator($filter);
     foreach ($iterator as $file) {
         $path = str_replace('\\', '/', $file->getPathname());
         if (!preg_match('/\.(php|js|html)$/', $path)) {

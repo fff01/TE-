@@ -122,14 +122,11 @@ $prompt = $method->invoke(
 );
 
 assert_true(str_contains($prompt, 'evidence-walk draft report'), 'writer prompt uses evidence-walk draft path');
-assert_true(str_contains($prompt, '"evidence_package"'), 'writer prompt includes evidence_package key');
-assert_true(str_contains($prompt, '"evidence_walk"'), 'writer prompt includes evidence_walk key');
-assert_true(str_contains($prompt, '"report_plan"'), 'writer prompt includes report_plan key');
-foreach (['raw_result', 'display_details', 'full plugin_results'] as $forbidden) {
+assert_true(str_contains($prompt, '"writing_context"'), 'writer prompt includes user-facing writing context');
+assert_true(str_contains($prompt, '"writing_guidance"'), 'writer prompt includes sanitized writing guidance');
+foreach (['raw_result', 'display_details', 'full plugin_results', '"plugin_results"', '"evidence_package"', '"evidence_walk"', '"claim_evidence_map"', '"report_plan"', '"writing_decision"'] as $forbidden) {
     assert_true(!str_contains($prompt, $forbidden), "writer prompt excludes {$forbidden}");
 }
-assert_true(str_contains($prompt, '"claim_evidence_map"'), 'writer prompt includes claim_evidence_map key');
-assert_true(str_contains($prompt, '"writing_decision"'), 'writer prompt includes writing_decision key');
 
 $invalidValidation = EvidencePackage::validate(['schema_version' => 'evidence_package.v1']);
 assert_same(false, $invalidValidation['ok'], 'missing evidence_package fields fail validation');
