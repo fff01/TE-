@@ -134,6 +134,19 @@ assert_same($validUnderstanding, $validResult->parsed_json, 'valid understanding
 assert_same('understanding_result.v1', $validResult->schema_version, 'valid understanding schema version recorded');
 assert_same([], $validResult->errors, 'valid understanding has no errors');
 
+$nullableStopDecision = [
+    'schema_version' => 'collection_decision.v1',
+    'stage' => 'collecting',
+    'is_sufficient' => false,
+    'missing_dimensions' => ['expression'],
+    'next_plugin' => 'Expression Plugin',
+    'stop_reason' => null,
+    'evidence_gaps' => ['Expression data has not been collected.'],
+    'decision_rationale' => 'Collection must continue.',
+];
+$nullableStopResult = NodeLlmResult::fromRawJson('collecting', json_encode($nullableStopDecision, JSON_THROW_ON_ERROR), $schemas['collection_decision.v1']);
+assert_same(true, $nullableStopResult->ok, 'collection decision accepts null stop_reason while collection continues');
+
 $missingField = $validUnderstanding;
 unset($missingField['intent']);
 $schemaViolation = NodeLlmResult::fromRawJson('understanding', json_encode($missingField, JSON_THROW_ON_ERROR), $schemas['understanding_result.v1']);

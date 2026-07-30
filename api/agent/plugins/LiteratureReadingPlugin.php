@@ -31,6 +31,8 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
                 'results' => [
                     'reviewed_count' => 0,
                     'selected_count' => 0,
+                    'generation_mode' => 'none',
+                    'metadata_summary' => [],
                     'claim_clusters' => [],
                     'citation_groups' => [],
                     'supported_claims' => [],
@@ -57,10 +59,22 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
 
         $model = trim((string)($context['config']['deepseek_model'] ?? $this->config['deepseek_model'] ?? 'deepseek-chat'));
         $synthesis = $this->synthesize($question, $analysis, $selected, $model);
-        $claimClusters = array_values((array)($synthesis['claim_clusters'] ?? []));
-        $supportedClaims = array_values((array)($synthesis['supported_claims'] ?? []));
-        $conflictingClaims = array_values((array)($synthesis['conflicting_claims'] ?? []));
-        $missingEvidence = array_values((array)($synthesis['missing_evidence'] ?? []));
+        $generationMode = $synthesis !== null ? 'llm' : 'metadata_fallback';
+        $errors = $synthesis !== null ? [] : ['LLM synthesis was unavailable or invalid; citation metadata was preserved without generating supported claims.'];
+        $claimClusters = $synthesis !== null ? array_values((array)($synthesis['claim_clusters'] ?? [])) : [];
+        $supportedClaims = $synthesis !== null ? array_values((array)($synthesis['supported_claims'] ?? [])) : [];
+        $conflictingClaims = $synthesis !== null ? array_values((array)($synthesis['conflicting_claims'] ?? [])) : [];
+        $missingEvidence = $synthesis !== null
+            ? array_values((array)($synthesis['missing_evidence'] ?? []))
+            : ['Claim synthesis was not available; inspect the selected citation metadata directly.'];
+        $metadataSummary = array_values(array_map(static fn(array $citation): array => [
+            'title' => trim((string)($citation['title'] ?? '')),
+            'pmid' => trim((string)($citation['pmid'] ?? '')),
+            'journal' => trim((string)($citation['journal'] ?? '')),
+            'year' => trim((string)($citation['year'] ?? '')),
+            'url' => trim((string)($citation['url'] ?? '')),
+            'abstract_summary' => trim((string)($citation['abstract_summary'] ?? '')),
+        ], $selected));
 
         $previewItems = [];
         $evidenceItems = [];
@@ -83,7 +97,7 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
                 $this->getName(),
                 $claim,
                 $claim,
-                count($clusterCitations) >= 2 ? 'high' : 'medium',
+                'medium',
                 [
                     'citation_count' => count($clusterCitations),
                     'question_type' => (string)($analysis['intent'] ?? 'literature'),
@@ -99,26 +113,56 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
                     'subject' => $claim,
                     'provenance' => ['source' => 'literature_reading_llm'],
                     'citations' => $clusterCitations,
+                    'quality_flags' => ['metadata_or_abstract_level'],
                 ]
             );
         }
 
-        $summary = 'The literature reading layer reviewed ' . count($citations) . ' normalized citations and synthesized ' . count($claimClusters) . ' claim clusters.';
+        if ($generationMode === 'metadata_fallback') {
+            $evidenceItems[] = tekg_agent_make_diagnostic_item(
+                $this->getName(),
+                $errors[0],
+                [
+                    'generation_mode' => $generationMode,
+                    'selected_citation_count' => count($selected),
+                ],
+                [
+                    'title' => 'Literature synthesis unavailable',
+                    'meta' => count($selected) . ' citations preserved',
+                    'body' => $errors[0],
+                ],
+                [
+                    'evidence_type' => 'literature_synthesis_status',
+                    'coverage_dimension' => 'literature_evidence',
+                    'provenance' => ['source' => 'literature_reading_plugin'],
+                ]
+            );
+        }
+
+        $summary = $generationMode === 'llm'
+            ? 'The literature reading layer reviewed ' . count($citations) . ' normalized citations and synthesized ' . count($claimClusters) . ' claim clusters.'
+            : 'The literature reading layer preserved ' . count($selected) . ' selected citations, but LLM claim synthesis was unavailable.';
 
         return [
             'plugin_name' => $this->getName(),
-            'status' => 'ok',
-            'query_summary' => 'Synthesized selected literature records into grouped claims and evidence gaps.',
+            'status' => tekg_agent_plugin_status(true, $errors),
+            'query_summary' => $generationMode === 'llm'
+                ? 'Synthesized selected literature records into grouped claims and evidence gaps.'
+                : 'Preserved selected literature metadata after LLM synthesis was unavailable.',
             'results' => [
                 'reviewed_count' => count($citations),
                 'selected_count' => count($selected),
+                'generation_mode' => $generationMode,
+                'metadata_summary' => $metadataSummary,
                 'claim_clusters' => $claimClusters,
                 'citation_groups' => $this->groupCitations($selected),
                 'supported_claims' => $supportedClaims,
                 'conflicting_claims' => $conflictingClaims,
                 'missing_evidence' => $missingEvidence,
             ],
-            'display_label' => 'Synthesized ' . count($claimClusters) . ' literature claims',
+            'display_label' => $generationMode === 'llm'
+                ? 'Synthesized ' . count($claimClusters) . ' literature claims'
+                : 'Preserved ' . count($selected) . ' literature records',
             'display_summary' => $summary,
             'display_details' => [
                 'summary' => $summary,
@@ -132,7 +176,9 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
                     'conflicting_claims' => $conflictingClaims,
                     'missing_evidence' => $missingEvidence,
                 ],
-                'result_message' => 'These grouped literature claims can be passed to later evidence synthesis or answer-writing nodes as JSON.',
+                'result_message' => $generationMode === 'llm'
+                    ? 'These grouped literature claims can be passed to later evidence synthesis or answer-writing nodes as JSON.'
+                    : 'Citation metadata remains available, but this result does not contain synthesized supported claims.',
             ],
             'result_counts' => [
                 'reviewed_count' => count($citations),
@@ -143,12 +189,12 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
             ],
             'evidence_items' => $evidenceItems,
             'citations' => $selected,
-            'errors' => [],
+            'errors' => $errors,
             'latency_ms' => (int)round((microtime(true) - $started) * 1000),
         ];
     }
 
-    private function synthesize(string $question, array $analysis, array $citations, string $model): array
+    private function synthesize(string $question, array $analysis, array $citations, string $model): ?array
     {
         $payload = [
             'question' => $question,
@@ -170,41 +216,28 @@ final class TekgAgentLiteratureReadingPlugin implements TekgAgentPluginInterface
         $generated = $this->llm->generateJson(
             $model,
             TekgAgentPromptLibrary::jsonInstructionPrompt('literature_reading', (string)($analysis['answer_language'] ?? $analysis['language'] ?? 'english')),
-            $payload
+            $payload,
+            null,
+            'literature_reading'
         );
 
-        if (is_array($generated)) {
+        if ($this->isValidSynthesis($generated)) {
             return $generated;
         }
+        return null;
+    }
 
-        $clusters = [];
-        $supported = [];
-        foreach (array_slice($citations, 0, 5) as $citation) {
-            if (!is_array($citation)) {
-                continue;
-            }
-            $title = trim((string)($citation['title'] ?? ''));
-            if ($title === '') {
-                continue;
-            }
-            $summary = trim((string)($citation['abstract_summary'] ?? ''));
-            $clusters[] = [
-                'claim' => $title,
-                'summary' => $summary !== '' ? $summary : 'This citation was selected as directly relevant to the current question.',
-                'citations' => array_values(array_filter([
-                    trim((string)($citation['pmid'] ?? '')),
-                    $title,
-                ])),
-            ];
-            $supported[] = $title;
+    private function isValidSynthesis(mixed $synthesis): bool
+    {
+        if (!is_array($synthesis)) {
+            return false;
         }
-
-        return [
-            'supported_claims' => $supported,
-            'conflicting_claims' => [],
-            'missing_evidence' => [],
-            'claim_clusters' => $clusters,
-        ];
+        foreach (['claim_clusters', 'supported_claims', 'conflicting_claims', 'missing_evidence'] as $key) {
+            if (!array_key_exists($key, $synthesis) || !is_array($synthesis[$key])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private function groupCitations(array $citations): array

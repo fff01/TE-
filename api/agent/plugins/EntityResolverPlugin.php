@@ -56,20 +56,30 @@ final class TekgAgentEntityResolverPlugin implements TekgAgentPluginInterface
             $claim = $matchedAlias !== '' && tekg_agent_lower($matchedAlias) !== tekg_agent_lower($canonical)
                 ? 'Resolved "' . $matchedAlias . '" to the canonical ' . $type . ' entity ' . $canonical . '.'
                 : 'Resolved the ' . $type . ' entity ' . $canonical . ' with ' . count($aliases) . ' strict alias variants.';
-            $evidenceItems[] = tekg_agent_make_evidence_item(
+            $evidenceItems[] = tekg_agent_make_diagnostic_item(
                 $this->getName(),
                 $claim,
-                $canonical,
-                $usedBroadAlias ? 'low' : 'high',
                 [
-                    'matched_alias' => $matchedAlias,
+                    'match_confidence' => $confidence,
+                    'match_type' => $usedBroadAlias ? 'broad_alias' : 'strict_alias',
                     'used_broad_alias' => $usedBroadAlias,
-                    'confidence' => $confidence,
                 ],
                 [
                     'title' => $canonical,
                     'meta' => trim($type . ($matchedAlias !== '' ? ' | matched via ' . $matchedAlias : '') . ' | confidence ' . number_format($confidence, 2)),
                     'body' => $aliases !== [] ? 'Strict aliases: ' . implode(', ', $aliases) : '',
+                ],
+                [
+                    'entity_scope' => $canonical,
+                    'raw_source_ref' => [
+                        'matched_alias' => $matchedAlias,
+                        'used_broad_alias' => $usedBroadAlias,
+                        'confidence' => $confidence,
+                    ],
+                    'evidence_type' => 'entity_resolution',
+                    'coverage_dimension' => 'routing',
+                    'subject' => $canonical,
+                    'provenance' => ['source' => 'entity_normalizer'],
                 ]
             );
 

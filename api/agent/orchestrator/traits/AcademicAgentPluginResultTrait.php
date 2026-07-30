@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/contracts/PluginResultEnvelope.php';
+require_once dirname(__DIR__, 2) . '/contracts/PluginResultProjection.php';
 
 trait TekgAcademicAgentPluginResultTrait
 {
@@ -21,114 +22,7 @@ trait TekgAcademicAgentPluginResultTrait
 
     private function compressPluginResult(string $pluginName, array $result, array $analysis, array $planning): array
     {
-        $rawResult = tekg_agent_json_safe((array)($result['results'] ?? []));
-        $evidenceItems = [];
-        foreach ((array)($result['evidence_items'] ?? []) as $item) {
-            $normalized = tekg_agent_normalize_evidence_item($item, $pluginName);
-            if ($normalized !== null) {
-                $evidenceItems[] = $normalized;
-            }
-        }
-
-        $keyFindings = [];
-        foreach (array_slice($evidenceItems, 0, 5) as $item) {
-            $claim = trim((string)($item['claim'] ?? ''));
-            if ($claim !== '') {
-                $keyFindings[] = $claim;
-            }
-        }
-        if ($keyFindings === []) {
-            foreach (array_slice((array)($result['display_details']['preview_items'] ?? []), 0, 5) as $item) {
-                if (!is_array($item)) {
-                    continue;
-                }
-                $title = trim((string)($item['title'] ?? ''));
-                if ($title !== '') {
-                    $keyFindings[] = $title;
-                }
-            }
-        }
-        if ($keyFindings === []) {
-            $summary = trim((string)($result['display_summary'] ?? $result['query_summary'] ?? ''));
-            if ($summary !== '') {
-                $keyFindings[] = $summary;
-            }
-        }
-
-        $limitations = array_values(array_filter(array_map(
-            static fn($value): string => trim((string)$value),
-            (array)($result['errors'] ?? [])
-        )));
-        if (in_array((string)($result['status'] ?? ''), ['empty', 'error'], true)) {
-            $limitations[] = trim((string)($result['display_summary'] ?? $result['query_summary'] ?? ''));
-        }
-
-        $previewItems = array_values(array_slice((array)($result['display_details']['preview_items'] ?? []), 0, 8));
-        $citationPreview = array_values(array_slice((array)($result['citations'] ?? []), 0, 12));
-        $evidencePreview = array_values(array_map(
-            static fn(array $item): array => [
-                'claim' => (string)($item['claim'] ?? ''),
-                'title' => (string)($item['title'] ?? ''),
-                'meta' => (string)($item['meta'] ?? ''),
-                'support_strength' => (string)($item['support_strength'] ?? 'medium'),
-                'citations' => array_values(array_slice((array)($item['citations'] ?? []), 0, 4)),
-            ],
-            array_slice($evidenceItems, 0, 8)
-        ));
-
-        $carryForward = [
-            'plugin_name' => $pluginName,
-            'status' => (string)($result['status'] ?? 'unknown'),
-            'query_summary' => (string)($result['query_summary'] ?? ''),
-            'display_summary' => (string)($result['display_summary'] ?? ''),
-            'result_counts' => (array)($result['result_counts'] ?? []),
-            'preview_items' => $previewItems,
-            'evidence_preview' => $evidencePreview,
-            'citations' => $citationPreview,
-        ];
-
-        if ($pluginName === 'Cypher Explorer Plugin') {
-            $cypherResult = (array)($rawResult['cypher_result'] ?? []);
-            $carryForward['query_purpose'] = (string)($cypherResult['query_intent'] ?? 'graph_exploration');
-            $carryForward['result_shape'] = [
-                'row_count' => (int)($cypherResult['result_counts']['rows'] ?? 0),
-                'columns' => (array)($cypherResult['column_schema'] ?? []),
-            ];
-            $carryForward['top_rows'] = array_slice((array)($cypherResult['rows'] ?? []), 0, 10);
-            $carryForward['why_it_matters'] = $keyFindings[0] ?? trim((string)($result['display_summary'] ?? ''));
-        } else {
-            $carryForward['raw_result_excerpt'] = $this->rawResultExcerpt($rawResult);
-        }
-
-        return tekg_agent_json_safe([
-            'key_findings' => array_values(array_unique(array_filter($keyFindings))),
-            'coverage' => [
-                'question_type' => (string)($analysis['intent'] ?? 'relationship'),
-                'status' => (string)($result['status'] ?? 'unknown'),
-                'result_counts' => (array)($result['result_counts'] ?? []),
-                'required_evidence' => (array)($planning['required_evidence'] ?? []),
-                'latency_ms' => (int)($result['latency_ms'] ?? 0),
-            ],
-            'limitations' => array_values(array_unique(array_filter($limitations))),
-            'candidate_claims' => array_values(array_unique(array_filter(array_map(
-                static fn(array $item): string => trim((string)($item['claim'] ?? '')),
-                array_slice($evidenceItems, 0, 10)
-            )))),
-            'carry_forward_fields' => $carryForward,
-        ]);
-    }
-
-    private function rawResultExcerpt(array $rawResult): array
-    {
-        $excerpt = [];
-        foreach ($rawResult as $key => $value) {
-            if (is_array($value)) {
-                $excerpt[$key] = array_slice($value, 0, 10);
-                continue;
-            }
-            $excerpt[$key] = $value;
-        }
-        return tekg_agent_json_safe($excerpt);
+        return PluginResultProjection::forLlmContext($pluginName, $result, $analysis, $planning);
     }
 
     private function updateCollectionState(array $collectionState, string $pluginName, array $result): array
@@ -241,30 +135,7 @@ trait TekgAcademicAgentPluginResultTrait
 
     private function toolPayloadForUi(array $result): array
     {
-        $evidenceItems = [];
-        foreach ((array)($result['display_details']['evidence_items'] ?? $result['evidence_items'] ?? []) as $item) {
-            $normalized = tekg_agent_normalize_evidence_item($item, (string)($result['plugin_name'] ?? 'Unknown'));
-            if ($normalized !== null) {
-                $evidenceItems[] = $normalized;
-            }
-        }
-
-        return [
-            'summary' => (string)($result['display_details']['summary'] ?? $result['display_summary'] ?? ''),
-            'preview_items' => array_values((array)($result['display_details']['preview_items'] ?? [])),
-            'evidence_items' => $evidenceItems,
-            'citations' => array_values((array)($result['display_details']['citations'] ?? $result['citations'] ?? [])),
-            'compressed_result' => (array)($result['compressed_result'] ?? []),
-            'raw_result' => (array)($result['raw_result'] ?? []),
-            'raw_preview' => $result['display_details']['raw_preview'] ?? null,
-            'errors' => array_values((array)($result['errors'] ?? [])),
-            'warnings' => array_values((array)($result['warnings'] ?? [])),
-            'caveats' => array_values((array)($result['caveats'] ?? [])),
-            'executing_review_status' => (string)($result['executing_review_status'] ?? ''),
-            'executing_review_errors' => array_values((array)($result['executing_review_errors'] ?? [])),
-            'result_counts' => (array)($result['result_counts'] ?? []),
-            'display_details' => (array)($result['display_details'] ?? []),
-        ];
+        return PluginResultProjection::forUi($result);
     }
 
     private function pluginResultForLlmReview(string $pluginName, array $result): array

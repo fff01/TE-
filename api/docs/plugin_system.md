@@ -14,6 +14,46 @@ Plugins are tools, not answer writers.
 or collection prompts. The catalog should therefore be concise, accurate, and
 safe for model routing.
 
+## Native Result Contract
+
+Every registered plugin returns the same twelve top-level fields documented in
+`api/agent/plugins/README.md`. `PluginResultContract` validates names, native
+statuses, field types, evidence strength/source ownership, citation identity,
+latency, and status/error consistency immediately after `run()` in both Agent
+and DeepThink. A violation becomes a visible standard error result.
+
+Native statuses are `ok`, `partial`, `empty`, and `error`. `partial` means usable
+data survived alongside warnings or errors; it must not be collapsed into
+`error`. The later result envelope may map native `error` to its public failed
+state.
+
+## Evidence Semantics
+
+`support_strength` measures scientific support, not operational confidence.
+Alias confidence, navigation matches, query success, graph rank, and citation
+count are diagnostic metadata and use `support_strength=none` when represented
+as evidence items. Scientific aggregation excludes these diagnostics while the
+tool inspector and reasoning context retain them.
+
+Graph relations are medium-strength association evidence with
+`association_not_causality`; derived graph metrics carry explicit derivation
+metadata. Exact source-backed sequence records can be high-strength, while
+keyword-derived structure hints remain low-strength. Literature retrieval and
+synthesis are bounded by the available metadata or abstracts.
+
+## Downstream Projections
+
+`PluginResultProjection` is the shared Agent/DeepThink projection layer. It
+keeps the complete native result in process, gives LLM stages a bounded context,
+and gives the browser one canonical raw-data representation. Tool event payloads
+do not repeat the same material under `compressed_result`, `display_details`,
+and `raw_preview`.
+
+Literature Reading exposes `generation_mode=llm` only after valid structured
+synthesis. Relay failure or malformed JSON yields `partial` with
+`generation_mode=metadata_fallback`, preserves citation metadata, and does not
+manufacture supported claims from titles.
+
 ## Registered Plugins
 
 - Entity Resolver
@@ -47,7 +87,10 @@ safe for model routing.
   prove biological causality by themselves.
 - Graph Analytics metrics describe current graph contents, not biological
   importance.
-- Literature metadata and PubMed retrieval do not guarantee claim support.
+- Literature Plugin builds PubMed queries from Entity Resolver output, expands
+  unsafe generic abbreviations such as bare `TE`, and filters external records
+  against resolved TE and disease scopes before synthesis. This deterministic
+  gate removes obvious domain mismatches; it does not guarantee claim support.
 - Expression Plugin output summarizes available expression runtime data;
   runtime failure is not biological absence.
 - Genome Plugin representative loci are examples unless the payload explicitly

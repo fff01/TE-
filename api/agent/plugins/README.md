@@ -38,6 +38,18 @@ Common output fields:
 - `errors`
 - `latency_ms`
 
+These twelve fields form the native plugin result contract. Both Agent and
+DeepThink validate the result immediately after `run()` with
+`PluginResultContract`. Invalid output becomes a visible `error` result instead
+of flowing into evidence aggregation or writing.
+
+Native status semantics are shared across plugins:
+
+- `ok`: usable output with no reported plugin errors.
+- `partial`: usable output is present, but warnings or retrieval errors remain.
+- `empty`: the plugin completed normally but found no usable output.
+- `error`: no usable output is available and at least one error is reported.
+
 Plugin output is not the final answer. Final answers are produced after evidence
 packaging, evidence walking, report planning, writing/polishing, and integrity
 checks.
@@ -68,6 +80,26 @@ Failures, empty results, and citation-normalization diagnostics may enter
 `evidence_items`, but they must use `support_strength=none` or quality flags so
 the writing layer does not treat them as biological facts.
 
+`support_strength` describes how directly an item supports a scientific claim;
+it is not query confidence, rank, citation count, or execution success.
+Diagnostics created with `tekg_agent_make_diagnostic_item()` remain inspectable
+but are excluded from scientific evidence aggregation.
+
+## Result Projections
+
+The complete native result remains available inside the orchestrator. Shared
+`PluginResultProjection` methods produce bounded downstream views:
+
+- `forLlmContext()` supplies review and writing stages with named row, evidence,
+  citation, and text limits.
+- `forUi()` supplies one canonical `raw_result` plus summary, evidence,
+  citations, errors, and review status. It intentionally omits duplicate
+  `compressed_result`, `display_details`, and `raw_preview` copies.
+
+Sequence projections keep complete sequences once under `full_sequences` while
+removing duplicate sequence strings from record metadata. Literature Reading
+projections retain `generation_mode`, so metadata-only fallback is visible.
+
 ## Plugin Overview
 
 | Plugin | Purpose | Main source | LLM use | Key risk |
@@ -77,7 +109,7 @@ the writing layer does not treat them as biological facts.
 | Graph Plugin | Query local structured relations | Neo4j TE-KG | No | Graph associations are not automatically causal |
 | Graph Analytics Plugin | Ranking/count/topology templates | Neo4j TE-KG | No | Template metrics are not biological strength |
 | Cypher Explorer Plugin | Generate read-only exploratory Cypher | LLM + Neo4j | Yes | Schema assumptions and read-only validation |
-| Literature Plugin | Local citations and PubMed search | Neo4j + PubMed | No | Weak or false-positive PubMed matches |
+| Literature Plugin | Local citations and entity-scoped PubMed search | Neo4j + PubMed | No | Title/abstract matches still require claim-level interpretation |
 | Literature Reading Plugin | Cluster citation-level claims | Citations + LLM | Yes | Title/abstract synthesis can over-claim |
 | Tree Plugin | TE/disease classification context | Taxonomy runtime | No | Classification context is not mechanism evidence |
 | Expression Plugin | TE expression context | Expression runtime/MySQL | No | Runtime failure must not be read as no expression |
@@ -92,8 +124,9 @@ the writing layer does not treat them as biological facts.
 - Graph Plugin returns local structured associations. Final writing must
   distinguish association, activation, hypomethylation, insertional mutagenesis,
   and other relation semantics.
-- Literature Plugin retrieves candidate literature; it does not prove relevance
-  or support by itself.
+- Literature Plugin expands unsafe TE abbreviations and admits PubMed candidates
+  only after deterministic resolved-entity title/abstract filtering. Passing that
+  gate does not prove that a paper supports a particular scientific claim.
 - Literature Reading Plugin should depend on valid Literature Plugin citations.
 - Expression Plugin failures must be surfaced as retrieval/runtime failures, not
   biological absence.
@@ -141,9 +174,12 @@ Plugins are data tools, not LLM stages. They retrieve or structure evidence.
 LLM stages perform understanding, planning, collection decisions, execution
 review, integration, and writing.
 
-The Agent may run an `ExecutingReview` LLM call after each plugin output. This
-improves traceability but increases latency and failure points. Slowdowns often
-come from plugin-adjacent LLM review rather than the plugin query itself.
+The Agent runs `ExecutingReview` only for scientifically interpretive outputs:
+Graph, Graph Analytics, Cypher Explorer, Literature, Literature Reading, and
+Expression. Sequence is reviewed only when it contains keyword-derived
+structure hints. Deterministic bootstrap, navigation, taxonomy, representative
+locus, exact sequence, empty/error, and citation-normalization results are
+marked `executing_review_status=not_required` without fabricating an LLM event.
 
 ## Current Improvement Priorities
 

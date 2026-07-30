@@ -24,7 +24,7 @@ trait TekgAcademicAgentEvidenceTrait
             }
         }
 
-        $researchRequired = $this->missingResearchSynthesisPlugins($analysis, $planning, $pluginResults);
+        $researchRequired = $this->missingResearchSynthesisPlugins($analysis, $planning, $pluginResults, $routingPolicy);
         if ($researchRequired !== []) {
             return [
                 'is_sufficient' => false,
@@ -78,15 +78,22 @@ trait TekgAcademicAgentEvidenceTrait
         ];
         $generated = $this->llm->assessSufficiency($model, $payload, max(10, (int)($this->config['llm_json_timeout'] ?? 15)));
         if (is_array($generated)) {
+            $requestedExperts = array_values(array_map('strval', (array)($generated['recommended_next_experts'] ?? [])));
+            $allowedExperts = $this->registeredRecommendedExperts(
+                $requestedExperts,
+                $analysis,
+                $pluginResults,
+                $routingPolicy
+            );
             return [
                 'is_sufficient' => (bool)($generated['is_sufficient'] ?? false),
                 'reason' => trim((string)($generated['reason'] ?? 'The sufficiency assessor returned no reason.')),
                 'missing_dimensions' => array_values(array_map('strval', (array)($generated['missing_dimensions'] ?? []))),
-                'recommended_next_experts' => $this->registeredRecommendedExperts(
-                    (array)($generated['recommended_next_experts'] ?? []),
-                    $analysis,
-                    $pluginResults
-                ),
+                'recommended_next_experts' => $allowedExperts,
+                'rejected_recommended_experts' => array_values(array_filter(
+                    $requestedExperts,
+                    fn(string $plugin): bool => !$this->routingPolicyAllowsPlugin($plugin, $analysis, $routingPolicy)
+                )),
             ];
         }
 
@@ -190,7 +197,12 @@ trait TekgAcademicAgentEvidenceTrait
         ];
     }
 
-    private function missingResearchSynthesisPlugins(array $analysis, array $planning, array $pluginResults): array
+    private function missingResearchSynthesisPlugins(
+        array $analysis,
+        array $planning,
+        array $pluginResults,
+        array $routingPolicy = []
+    ): array
     {
         if ((string)($analysis['task_complexity'] ?? '') !== 'research_synthesis') {
             return [];
@@ -199,7 +211,11 @@ trait TekgAcademicAgentEvidenceTrait
         $required = [];
         foreach ((array)($planning['tool_plan'] ?? []) as $item) {
             $plugin = trim((string)($item['plugin'] ?? ''));
-            if ($plugin === '' || $plugin === 'Citation Resolver' || $plugin === 'Site Navigator Plugin') {
+            if ($plugin === ''
+                || $plugin === 'Citation Resolver'
+                || $plugin === 'Site Navigator Plugin'
+                || !$this->routingPolicyAllowsPlugin($plugin, $analysis, $routingPolicy)
+            ) {
                 continue;
             }
             if ($plugin === 'Literature Reading Plugin' && !$this->academicBusinessPluginMayRun($plugin, $analysis, $pluginResults)) {
@@ -229,11 +245,12 @@ trait TekgAcademicAgentEvidenceTrait
     private function recommendedNextExperts(array $routingPolicy, array $pluginResults, array $missingDimensions, array $analysis = []): array
     {
         $executed = array_keys($pluginResults);
-        $forbidden = array_values(array_filter(array_map('strval', (array)($routingPolicy['forbidden_path'] ?? []))));
         $candidates = array_values(array_filter(array_map('strval', array_merge(
             (array)($routingPolicy['fallback_path'] ?? []),
             (array)($routingPolicy['candidate_experts'] ?? [])
-        )), static fn(string $plugin): bool => $plugin !== '' && $plugin !== 'Citation Resolver' && !in_array($plugin, $forbidden, true)));
+        )), fn(string $plugin): bool => $plugin !== ''
+            && $plugin !== 'Citation Resolver'
+            && $this->routingPolicyAllowsPlugin($plugin, $analysis, $routingPolicy)));
         $recommended = [];
         foreach ($candidates as $plugin) {
             if (!in_array($plugin, $executed, true)) {
@@ -243,7 +260,7 @@ trait TekgAcademicAgentEvidenceTrait
         if (($routingPolicy['cypher_explorer_fallback'] ?? false) && !in_array('Cypher Explorer Plugin', $executed, true)) {
             $recommended[] = 'Cypher Explorer Plugin';
         }
-        return $this->registeredRecommendedExperts($recommended, $analysis, $pluginResults);
+        return $this->registeredRecommendedExperts($recommended, $analysis, $pluginResults, $routingPolicy);
     }
 
     private function remainingPrimaryPath(array $routingPolicy, array $pluginResults): array
@@ -324,7 +341,12 @@ trait TekgAcademicAgentEvidenceTrait
             && tekg_agent_plugin_result_citations($literature) !== [];
     }
 
-    private function registeredRecommendedExperts(array $plugins, array $analysis, array $pluginResults): array
+    private function registeredRecommendedExperts(
+        array $plugins,
+        array $analysis,
+        array $pluginResults,
+        array $routingPolicy = []
+    ): array
     {
         $registered = array_keys($this->plugins);
         $executed = array_keys($pluginResults);
@@ -335,6 +357,7 @@ trait TekgAcademicAgentEvidenceTrait
                 || in_array($plugin, ['Entity Resolver', 'Citation Resolver'], true)
                 || !in_array($plugin, $registered, true)
                 || in_array($plugin, $executed, true)
+                || !$this->routingPolicyAllowsPlugin($plugin, $analysis, $routingPolicy)
                 || !$this->academicBusinessPluginMayRun($plugin, $analysis, $pluginResults)
             ) {
                 continue;
@@ -342,6 +365,30 @@ trait TekgAcademicAgentEvidenceTrait
             $recommended[] = $plugin;
         }
         return array_values(array_unique($recommended));
+    }
+
+    private function routingPolicyAllowsPlugin(string $pluginName, array $analysis, array $routingPolicy): bool
+    {
+        $pluginName = trim($pluginName);
+        if ($pluginName === '') {
+            return false;
+        }
+        $forbidden = array_values(array_filter(array_map('strval', (array)($routingPolicy['forbidden_path'] ?? []))));
+        if (!in_array($pluginName, $forbidden, true)) {
+            return true;
+        }
+
+        return match ($pluginName) {
+            'Literature Plugin', 'Literature Reading Plugin' => (bool)($analysis['asks_for_papers'] ?? false),
+            'Cypher Explorer Plugin' => (bool)($analysis['asks_for_cypher_explorer'] ?? false),
+            'Site Navigator Plugin' => (bool)($analysis['asks_for_site_navigation'] ?? false),
+            'Tree Plugin' => (bool)($analysis['asks_for_classification'] ?? false),
+            'Expression Plugin' => (bool)($analysis['asks_for_expression'] ?? false),
+            'Genome Plugin' => (bool)($analysis['asks_for_genome'] ?? false),
+            'Sequence Plugin' => (bool)($analysis['asks_for_sequence'] ?? false),
+            'Graph Analytics Plugin' => (bool)($analysis['asks_for_graph_analytics'] ?? false),
+            default => false,
+        };
     }
 
     private function normalizeRoutingPolicy(array $selected, string $intent): array
@@ -416,7 +463,7 @@ trait TekgAcademicAgentEvidenceTrait
             }
             foreach ((array)($result['evidence_items'] ?? []) as $item) {
                 $normalized = tekg_agent_normalize_evidence_item($item, $pluginName);
-                if ($normalized !== null) {
+                if ($normalized !== null && !tekg_agent_is_diagnostic_evidence($normalized)) {
                     $all[] = $normalized;
                 }
             }

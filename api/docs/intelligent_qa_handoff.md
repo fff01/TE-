@@ -1,12 +1,31 @@
 # TE-KG Intelligent QA Handoff
 
-Last reviewed: 2026-07-14
+Last reviewed: 2026-07-30
 
-Transition note: 2026-07-27. No Agent/DeepThink runtime code was changed during
-the latest database-page and UI pass. Agent is a primary candidate for the next
-conversation, but this subsystem has not been deeply re-audited as part of that
-pass. Verify live endpoints, model configuration, prompt assets, plugin catalog,
-and the checks listed in `api/README.md` before changing behavior.
+Runtime audit note: 2026-07-28. The live frontend, endpoints, orchestrators,
+model configuration, prompts, plugin registry, evidence contracts, tests, and
+selected historical evaluations were re-audited. The follow-up plugin contract
+hardening pass is now implemented and verified with the configured local LLM
+relay. See `api/docs/intelligent_qa_runtime_audit_2026-07-28.md` for the starting
+snapshot and `api/docs/intelligent_qa_plugin_contract_hardening_2026-07-28.md`
+for the implemented behavior and current verification evidence.
+
+Current plugin maintenance state: all twelve public names remain unchanged;
+both orchestrators enforce one native result contract; scientific evidence is
+separated from diagnostics; Literature Reading fallback is explicit; Agent and
+DeepThink share bounded UI/LLM projections; and Agent uses selective execution
+review. Future plugin work should preserve these contracts rather than adding a
+second result shape.
+
+Multi-turn context note: 2026-07-30. Agent and DeepThink now share a bounded
+context resolver before entity normalization and routing. It retains at most
+three successful turns, validates retained and explicit TE entities, and gives
+the existing workflow a standalone effective question while the response and
+browser preserve the user's original wording. Ambiguous or context-free
+references return clarification with zero scientific plugin calls. The browser
+stores the session ID only in the live page's JavaScript memory; reloads and new
+tabs do not restore an earlier conversation. Existing backend session-cache
+retention is unchanged.
 
 This document is the current handoff for the TE-KG intelligent QA subsystem. It
 covers DeepThink, Agent, plugin routing, LLM nodes, frontend event handling, and
@@ -142,6 +161,27 @@ progress. Status labels such as `Understanding`, `Planning`, and `Writing`
 remain English UI labels; generated thinking content follows the request
 language.
 
+The page does not read or write the conversation session ID through
+`localStorage`. It reuses the server-returned ID only while the current page
+instance remains open. DeepThink's shared progress renderer treats a successful
+terminal state as authoritative and marks all four stages complete, preventing
+the Writing indicator from continuing to spin after an answer is shown.
+
+## Conversation Context
+
+- `ConversationMemory` bounds history to the last three successful turns and
+  limits stored text and entity fields.
+- `ConversationContextResolver` runs once before normal normalization and
+  routing in both orchestrators.
+- Plugins, routing policy, evidence contracts, four-stage DeepThink, and
+  six-stage Agent remain unchanged by the context feature.
+- Failed runs and clarification-only responses are not appended as successful
+  turns.
+- Previous answer text is untrusted conversational context, not scientific
+  evidence. The resolver may use it only to disambiguate the current request.
+- A reload or new tab cannot recover the prior page's session ID, but this does
+  not imply immediate deletion of server-side cache files.
+
 ## Known Risks
 
 - Agent Writing is the main latency and failure risk because it consumes large
@@ -154,13 +194,23 @@ language.
   automatic biological causality.
 - Expression, genome, and sequence plugins have strict evidence boundaries that
   must be preserved in final answers.
+- Agent and DeepThink final Writing now receive a user-facing evidence
+  projection rather than raw plugin/evidence structures. Do not remove this
+  boundary or expose raw flags, IDs, plugin names, or evidence-accounting terms
+  in final prose.
+- `SequencePlugin::structureHints()` still has a separate upstream data issue:
+  substring matching can read `Non-LTR` as an `LTR` hint. The writing projection
+  suppresses unrequested structure hints, but the plugin parser itself remains
+  a future scoped fix.
 
 ## Recommended Next Maintenance Tasks
 
 1. Keep `api/README.md` and `api/docs/` current after every Agent/DeepThink
    change.
-2. Audit Agent Writing payload size and latency before changing model settings.
-3. Expand semantic evaluation beyond artifact-presence checks.
+2. Fix and test the `Non-LTR` structure-hint substring match in SequencePlugin.
+3. Use the 36-question evaluation findings to address scoped answer-quality
+   failures, especially missing requested evidence, long path-query failures,
+   literature precision, and remaining internal writing vocabulary.
 4. Keep plugin catalog wording accurate enough for LLM planning.
 5. Treat old `docs/architecture/*agent*` markdown as historical background, not
    runtime truth.

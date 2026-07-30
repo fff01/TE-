@@ -99,6 +99,72 @@ assert_same(['12345'], $valid['cited_pmids'], 'valid report returns cited PMIDs'
 assert_same(['https://pubmed.ncbi.nlm.nih.gov/12345/'], $valid['linked_urls'], 'valid report returns linked URLs');
 assert_same([], $valid['unsupported_markers'], 'valid report has no unsupported markers');
 
+$longReportPackage = [
+    'claims' => $package['claims'],
+    'citation_map' => [
+        ['id' => 'citation_24', 'citation' => ['pmid' => '22968929', 'url' => 'https://pubmed.ncbi.nlm.nih.gov/22968929/']],
+        ['id' => 'citation_25', 'citation' => ['pmid' => '38759652', 'url' => 'https://pubmed.ncbi.nlm.nih.gov/38759652/']],
+        ['id' => 'citation_26', 'citation' => ['pmid' => '37165451', 'url' => 'https://pubmed.ncbi.nlm.nih.gov/37165451/']],
+    ],
+    'route_map' => [],
+];
+$longMarkdownReport = <<<'REPORT'
+## Literature evidence
+
+Somatic LINE-1 activity has been studied in colorectal tumors [PMID 22968929](https://pubmed.ncbi.nlm.nih.gov/22968929/).\n\nEpigenetic observations are discussed separately in a second record [PMID 38759652](https://pubmed.ncbi.nlm.nih.gov/38759652/).\n\nBeyond these examples, a third record provides additional context [PMID 37165451](https://pubmed.ncbi.nlm.nih.gov/37165451/).\n\nOverall, these citations must remain individually traceable in a long report.
+REPORT;
+$longMarkdownLinks = ReportIntegrityGate::check($longMarkdownReport, $longReportPackage);
+assert_same(true, $longMarkdownLinks['ok'], 'long report with Markdown PubMed links and escaped paragraph breaks passes');
+assert_same([], $longMarkdownLinks['errors'], 'Markdown PubMed links do not create duplicate malformed bare URLs');
+assert_same(
+    [
+        'https://pubmed.ncbi.nlm.nih.gov/22968929/',
+        'https://pubmed.ncbi.nlm.nih.gov/38759652/',
+        'https://pubmed.ncbi.nlm.nih.gov/37165451/',
+    ],
+    $longMarkdownLinks['linked_urls'],
+    'long report extracts each Markdown PubMed destination exactly once'
+);
+
+$a34Package = [
+    'claims' => $package['claims'],
+    'citation_map' => [
+        ['id' => 'citation_a34', 'citation' => ['pmid' => '41681929', 'url' => 'https://pubmed.ncbi.nlm.nih.gov/41681929/']],
+    ],
+    'route_map' => [],
+];
+$a34Mismatch = ReportIntegrityGate::check(
+    'LSQCC had the highest total L1HS transcript levels [PMID:4181929](https://pubmed.ncbi.nlm.nih.gov/41681929/).',
+    $a34Package
+);
+assert_same(false, $a34Mismatch['ok'], 'displayed PMID must match the PMID encoded by its PubMed Markdown URL');
+assert_contains_string(
+    'Displayed PMID 4181929 does not match PubMed URL PMID 41681929',
+    $a34Mismatch['errors'],
+    'A34-style PMID and PubMed URL mismatch is reported explicitly'
+);
+assert_same(['4181929'], $a34Mismatch['cited_pmids'], 'colon-form PMID markers participate in integrity validation');
+
+$a34Normalized = ReportIntegrityGate::normalizeUrlsInText(
+    'LSQCC had the highest total L1HS transcript levels [PMID:4181929](https://pubmed.ncbi.nlm.nih.gov/41681929/).'
+);
+assert_same(
+    'LSQCC had the highest total L1HS transcript levels [PMID:41681929](https://pubmed.ncbi.nlm.nih.gov/41681929/).',
+    $a34Normalized,
+    'normalization aligns a displayed PMID with its validated PubMed destination'
+);
+assert_same(
+    true,
+    ReportIntegrityGate::check($a34Normalized, $a34Package)['ok'],
+    'deterministically corrected PMID link passes integrity validation'
+);
+
+$a34Corrected = ReportIntegrityGate::check(
+    'LSQCC had the highest total L1HS transcript levels [PMID:41681929](https://pubmed.ncbi.nlm.nih.gov/41681929/).',
+    $a34Package
+);
+assert_same(true, $a34Corrected['ok'], 'matching colon-form PMID and PubMed URL passes');
+
 $missingPlannedSection = ReportIntegrityGate::check('LINE-1 activation is associated with cancer. PMID 12345', $package, [], [
     'sections' => [
         ['key' => 'limitations', 'title' => 'Limitations'],

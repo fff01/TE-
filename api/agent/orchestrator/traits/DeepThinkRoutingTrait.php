@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/contracts/PluginResultEnvelope.php';
+require_once dirname(__DIR__, 2) . '/contracts/PluginResultContract.php';
 
 trait TekgDeepThinkRoutingTrait
 {
@@ -114,6 +115,7 @@ trait TekgDeepThinkRoutingTrait
             'planning' => $planning,
             'config' => $this->expertConfig($model),
         ]);
+        $result = PluginResultContract::enforce($pluginName, $result);
         $legacyResult = $result;
         $result = $this->augmentPluginResult($pluginName, $result, $analysis, $planning);
         if (!isset($result['result_envelope']) || !is_array($result['result_envelope'])) {

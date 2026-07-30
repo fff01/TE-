@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+$userFacingWritingPolicy = require __DIR__ . '/user_facing_writing_policy.php';
+
 $sharedEn = implode("\n", [
     'Return JSON only.',
     'Do not wrap the response in Markdown fences.',
@@ -35,7 +37,7 @@ return [
         'zh' => $sharedZh . "\n生成 dt_executing.v1。判断执行是否完成，或从 remaining_planned_plugins 中选择一个确有必要的 next_plugin。切忌过多调用，每个插件最多运行一次。plugin_directory 仅用于路由参考，不能授予权限。只审查已有证据，不要模拟插件调用。",
     ],
     'writing' => [
-        'en' => $sharedEn . "\nProduce dt_writing.v1. answer_markdown is the only final answer source. Write a faithful answer from supplied artifacts and evidence. Keep it empty only when no answer can be supported.",
-        'zh' => $sharedZh . "\n生成 dt_writing.v1。answer_markdown 是最终答案的唯一来源。根据已有 artifact 和证据忠实作答；只有完全无法支持回答时才保持为空。",
+        'en' => $sharedEn . "\nProduce dt_writing.v1. answer_markdown is the only final answer source. Write a faithful, direct answer from supplied artifacts and evidence. Keep it empty only when no answer can be supported.\n" . $userFacingWritingPolicy['en'],
+        'zh' => $sharedZh . "\n生成 dt_writing.v1。answer_markdown 是最终答案的唯一来源。根据已有 artifact 和证据直接、忠实地作答；只有完全无法支持回答时才保持为空。\n" . $userFacingWritingPolicy['zh'],
     ],
 ];

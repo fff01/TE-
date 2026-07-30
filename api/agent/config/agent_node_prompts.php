@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+$userFacingWritingPolicy = require __DIR__ . '/user_facing_writing_policy.php';
+
 $sharedEn = implode("\n", [
     'Return JSON only.',
     'Do not wrap the response in Markdown fences.',
@@ -45,7 +47,7 @@ return [
         'zh' => $sharedZh . "\n根据 evidence package、evidence walk 和 report plan 生成 claim_evidence_map.v1。建立 claims 与 evidence 的映射，并暴露 unsupported_claims、conflicts、limitations 和 integrity_notes。",
     ],
     'writing' => [
-        'en' => $sharedEn . "\nProduce writing_decision.v1 before drafting. Specify writing strategy, required sections, forbidden claims, citation requirements, tone, and final checks.",
-        'zh' => $sharedZh . "\n在起草前生成 writing_decision.v1。指定 writing_strategy、required_sections、forbidden_claims、citation_requirements、tone 和 final_checks。",
+        'en' => $sharedEn . "\nProduce writing_decision.v1 before drafting. Specify a user-facing writing strategy, only the sections required by the question, forbidden scientific claims, user-facing citation requirements, tone, and final checks. The report plan and evidence metadata are internal organization aids, not text or headings that must appear in the answer. Do not require the draft to enumerate every claim or repeat every limitation.\n" . $userFacingWritingPolicy['en'],
+        'zh' => $sharedZh . "\n在起草前生成 writing_decision.v1。指定面向用户的 writing_strategy、仅由问题本身要求的 required_sections、禁止出现的科学论断、面向用户的 citation_requirements、tone 和 final_checks。report plan 和证据元数据只是内部组织工具，不是必须出现在回答中的正文或标题。不得要求草稿逐条枚举所有论断或重复每一项限制。\n" . $userFacingWritingPolicy['zh'],
     ],
 ];

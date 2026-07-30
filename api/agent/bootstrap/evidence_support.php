@@ -46,6 +46,14 @@ function tekg_agent_support_strength(string $level): string
     return in_array($value, ['high', 'medium', 'low', 'none'], true) ? $value : 'medium';
 }
 
+function tekg_agent_plugin_status(bool $hasUsableData, array $errors = []): string
+{
+    if ($hasUsableData) {
+        return $errors === [] ? 'ok' : 'partial';
+    }
+    return $errors === [] ? 'empty' : 'error';
+}
+
 function tekg_agent_make_evidence_item(
     string $sourcePlugin,
     string $claim,
@@ -84,6 +92,56 @@ function tekg_agent_make_evidence_item(
         'citations' => tekg_agent_evidence_array($structured['citations'] ?? []),
         'quality_flags' => tekg_agent_evidence_array($structured['quality_flags'] ?? []),
     ];
+}
+
+function tekg_agent_make_diagnostic_item(
+    string $sourcePlugin,
+    string $message,
+    array $diagnostic = [],
+    array $display = [],
+    array $structured = []
+): array {
+    $qualityFlags = array_values(array_unique(array_merge(
+        ['not_biological_claim'],
+        array_map('strval', (array)($structured['quality_flags'] ?? []))
+    )));
+
+    return tekg_agent_make_evidence_item(
+        $sourcePlugin,
+        $message,
+        (string)($structured['entity_scope'] ?? ''),
+        'none',
+        (array)($structured['raw_source_ref'] ?? []),
+        $display,
+        array_merge($structured, [
+            'diagnostic' => $diagnostic,
+            'quality_flags' => $qualityFlags,
+        ])
+    );
+}
+
+function tekg_agent_is_diagnostic_evidence(array $item): bool
+{
+    $flags = array_map('strval', (array)($item['quality_flags'] ?? []));
+    if (array_intersect($flags, ['not_evidence', 'not_biological_claim']) !== []) {
+        return true;
+    }
+
+    $type = trim((string)($item['evidence_type'] ?? ''));
+    if (in_array($type, [
+        'citation_normalization',
+        'entity_resolution',
+        'site_navigation',
+        'literature_query',
+        'literature_synthesis_status',
+        'system_error',
+        'empty_result',
+    ], true)) {
+        return true;
+    }
+
+    return (string)($item['support_strength'] ?? '') === 'none'
+        && (($item['diagnostic'] ?? []) !== [] || ($item['provenance'] ?? []) !== []);
 }
 
 function tekg_agent_evidence_scalar(mixed $value, string $fallback): string

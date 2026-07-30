@@ -346,8 +346,10 @@ trait TekgAcademicAgentPlanningTrait
         if (($analysis['asks_for_site_navigation'] ?? false) && !in_array('Site Navigator Plugin', $queue, true)) {
             array_splice($queue, in_array('Entity Resolver', $queue, true) ? 1 : 0, 0, ['Site Navigator Plugin']);
         }
-        $forbidden = array_values(array_filter(array_map('strval', (array)($routingPolicy['forbidden_path'] ?? []))));
-        $queue = array_values(array_unique(array_filter($queue, static fn(string $plugin): bool => $plugin !== '' && !in_array($plugin, $forbidden, true))));
+        $queue = array_values(array_unique(array_filter(
+            $queue,
+            fn(string $plugin): bool => $plugin !== '' && $this->routingPolicyAllowsPlugin($plugin, $analysis, $routingPolicy)
+        )));
         return $queue;
     }
 

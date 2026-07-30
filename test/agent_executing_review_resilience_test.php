@@ -28,10 +28,34 @@ $reflection = new ReflectionClass($service);
 assert_true($reflection->hasMethod('shouldContinueAfterExecutingReviewFailure'), 'AcademicAgentService exposes a review failure policy helper');
 assert_true($reflection->hasMethod('applyExecutingReviewFailureCaveat'), 'AcademicAgentService exposes a review failure caveat helper');
 assert_true($reflection->hasMethod('toolPayloadForUi'), 'AcademicAgentService exposes tool payload builder');
+assert_true($reflection->hasMethod('executingReviewRequired'), 'AcademicAgentService exposes selective review policy');
+assert_true($reflection->hasMethod('markExecutingReviewNotRequired'), 'AcademicAgentService records deterministic review skips');
 
 $policyMethod = $reflection->getMethod('shouldContinueAfterExecutingReviewFailure');
 $caveatMethod = $reflection->getMethod('applyExecutingReviewFailureCaveat');
 $toolPayloadMethod = $reflection->getMethod('toolPayloadForUi');
+$reviewRequiredMethod = $reflection->getMethod('executingReviewRequired');
+$markNotRequiredMethod = $reflection->getMethod('markExecutingReviewNotRequired');
+
+foreach (['Entity Resolver', 'Site Navigator Plugin', 'Tree Plugin', 'Genome Plugin', 'Citation Resolver'] as $pluginName) {
+    assert_same(false, $reviewRequiredMethod->invoke($service, $pluginName, ['status' => 'ok', 'evidence_items' => []]), "{$pluginName} skips LLM review");
+}
+foreach (['Graph Plugin', 'Graph Analytics Plugin', 'Cypher Explorer Plugin', 'Literature Plugin', 'Literature Reading Plugin', 'Expression Plugin'] as $pluginName) {
+    assert_same(true, $reviewRequiredMethod->invoke($service, $pluginName, ['status' => 'ok', 'evidence_items' => []]), "{$pluginName} keeps LLM review");
+}
+assert_same(false, $reviewRequiredMethod->invoke($service, 'Sequence Plugin', [
+    'status' => 'ok',
+    'evidence_items' => [tekg_agent_make_evidence_item('Sequence Plugin', 'Exact sequence record.', 'L1HS', 'high', [], [], ['evidence_type' => 'sequence_record'])],
+]), 'exact sequence retrieval skips LLM review');
+assert_same(true, $reviewRequiredMethod->invoke($service, 'Sequence Plugin', [
+    'status' => 'ok',
+    'evidence_items' => [tekg_agent_make_evidence_item('Sequence Plugin', 'Keyword hint.', 'L1HS', 'low', [], [], ['evidence_type' => 'structure_hint', 'quality_flags' => ['keyword_derived']])],
+]), 'interpretive sequence hints keep LLM review');
+assert_same(false, $reviewRequiredMethod->invoke($service, 'Graph Plugin', ['status' => 'empty', 'evidence_items' => []]), 'empty plugin result skips LLM review');
+
+$notRequired = $markNotRequiredMethod->invoke($service, ['plugin_name' => 'Genome Plugin', 'status' => 'ok'], 'Deterministic retrieval does not require interpretation.');
+assert_same('not_required', $notRequired['executing_review_status'] ?? null, 'skipped review status is explicit');
+assert_true(str_contains($notRequired['executing_review_reason'] ?? '', 'Deterministic retrieval'), 'skipped review reason is explicit');
 
 $reviewFailure = new NodeLlmResult(
     'executing',

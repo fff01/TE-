@@ -112,6 +112,34 @@ assert(normalDone.failed === false, 'Normal done must remain successful.');
 assert(normalDone.answer === 'normal answer', 'Normal answer must survive done.');
 assert(normalDone.stopTimer === true, 'Normal done must stop the timer.');
 
+function fakeProgressStage(stage) {
+  const classes = new Set();
+  return {
+    dataset: { deepthinkStage: stage },
+    classList: {
+      toggle(name, enabled) {
+        if (enabled) classes.add(name);
+        else classes.delete(name);
+      },
+      contains(name) {
+        return classes.has(name);
+      },
+    },
+    querySelector() {
+      return { textContent: '' };
+    },
+  };
+}
+const completedProgressStages = client.DEEPTHINK_STAGES.map(fakeProgressStage);
+client.applyProgressState({
+  hidden: false,
+  querySelectorAll() {
+    return completedProgressStages;
+  },
+}, { ...normalDone, stage: 'Writing', progressVisible: true });
+assert(completedProgressStages.every((node) => node.classList.contains('is-done')), 'Successful done must mark Writing and every earlier Deep Think stage done.');
+assert(completedProgressStages.every((node) => !node.classList.contains('is-active')), 'Successful done must leave no Deep Think stage icon spinning.');
+
 for (const [label, entrySource] of [
   ['agent page', agentSource],
   ['shared side panel', sideSource],
@@ -132,5 +160,9 @@ for (const [label, entrySource] of [
 }
 
 assert(/js\/components\/deepthink-client\.js/.test(agentPhpSource), 'Agent page must load the shared Deep Think client before agent.js.');
+assert(
+  /if \(turn\.workflow && !turn\.writingFailed\)/.test(agentSource),
+  'A successful done event must mark every workflow stage done even when the shared reducer already set workflow.complete.'
+);
 
 console.log('Deep Think frontend state contract checks passed.');

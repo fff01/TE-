@@ -10,10 +10,12 @@ require_once __DIR__ . '/traits/AcademicAgentPlanningTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentPluginResultTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentNarrationTrait.php';
 require_once __DIR__ . '/traits/AcademicAgentEvidenceTrait.php';
+require_once dirname(__DIR__) . '/contracts/PluginResultContract.php';
 require_once dirname(__DIR__) . '/contracts/EvidencePackage.php';
 require_once dirname(__DIR__) . '/contracts/EvidenceWalk.php';
 require_once dirname(__DIR__) . '/contracts/ReportPlan.php';
 require_once dirname(__DIR__) . '/contracts/ReportIntegrityGate.php';
+require_once dirname(__DIR__) . '/contracts/UserFacingWritingContext.php';
 require_once dirname(__DIR__) . '/contracts/ModeComparisonEvaluation.php';
 
 final class TekgAcademicAgentService
@@ -55,6 +57,7 @@ final class TekgAcademicAgentService
         if ($question === '') {
             throw new InvalidArgumentException('Question is required.');
         }
+        $originalQuestion = $question;
 
         $requestId = trim((string)($payload['request_id'] ?? ''));
         if ($requestId === '') {
@@ -88,10 +91,37 @@ final class TekgAcademicAgentService
         }
 
         $sessionMemory = tekg_agent_load_session_memory($sessionId);
+        $eventSequence = 0;
+        $contextResult = (new ConversationContextResolver($this->normalizer, $this->llm))->resolve(
+            $originalQuestion,
+            $answerLanguage,
+            $sessionMemory,
+            'agent',
+            $controlModel
+        );
+        $this->logConversationContext($requestId, 'agent', $contextResult);
+        if ($contextResult->status === 'needs_clarification') {
+            return $this->buildContextClarificationResponse(
+                $originalQuestion,
+                $payload,
+                $requestId,
+                $answerLanguage,
+                $sessionId,
+                $controlModel,
+                $contextResult,
+                $emit,
+                $eventSequence
+            );
+        }
+        $question = $contextResult->effectiveQuestion;
         $analysis = $this->normalizer->analyze($question, $answerLanguage);
+        $analysis = $contextResult->applyToAnalysis($analysis);
         $analysis['answer_language'] = $answerLanguage;
         $analysis['language'] = 'english';
         $analysis['session_memory'] = $sessionMemory;
+        $analysis['conversation_context'] = $contextResult->toArray();
+        $analysis['original_question'] = $originalQuestion;
+        $analysis['effective_question'] = $question;
         $analysis['request_context'] = [
             'source_page' => (string)($payload['source_page'] ?? ''),
             'current_url' => (string)($payload['current_url'] ?? ''),
@@ -106,7 +136,6 @@ final class TekgAcademicAgentService
         $pluginCalls = [];
         $reasoningTrace = [];
         $detailCounter = 0;
-        $eventSequence = 0;
         $workflowState = $this->initialWorkflowState();
         $sixStageArtifacts = [];
         $collectionState = $this->initialCollectionState($analysis, $planning, $routingPolicy, $pluginQueue);
@@ -148,8 +177,21 @@ final class TekgAcademicAgentService
                 $sufficiencyDecision,
                 $workflowState
             );
+            $response['question'] = $originalQuestion;
+            $response['context_resolution'] = $contextResult->toArray();
             $response['six_stage_artifacts'] = [];
             $response['answer'] = ReportIntegrityGate::normalizeUrlsInText((string)$response['answer']);
+            $updatedMemory = $this->updateSessionMemory($sessionMemory, $response['analysis'], $planning, $pluginResults, [], [], $collectionState, []);
+            $updatedMemory = ConversationMemory::appendCompletedTurn(
+                $updatedMemory,
+                'agent',
+                $originalQuestion,
+                $question,
+                (string)$response['answer'],
+                (array)$response['analysis']
+            );
+            tekg_agent_save_session_memory($sessionId, $updatedMemory);
+            $this->logConversationTurnRecorded($requestId, 'agent', $updatedMemory);
             $this->emitEvent($emit, $eventSequence, [
                 'type' => 'answer',
                 'request_id' => $requestId,
@@ -284,6 +326,7 @@ final class TekgAcademicAgentService
                 'planning' => $planning,
                 'config' => $this->expertConfig($expertModel),
             ]);
+            $result = PluginResultContract::enforce($pluginName, $result);
             $result = $this->augmentPluginResult($pluginName, $result, $analysis, $planning);
             $this->logDiagnostic($requestId, 'plugin_completed', [
                 'plugin_name' => $pluginName,
@@ -295,29 +338,42 @@ final class TekgAcademicAgentService
             $pluginResults[$pluginName] = $result;
             $pluginCalls[] = $result;
             $collectionState = $this->updateCollectionState($collectionState, $pluginName, $result);
-            $executingReviewNode = $this->llm->runExecutingReviewNode($expertModel, $processLanguage, [
-                'question' => $question,
-                'plugin_name' => $pluginName,
-                'plugin_result' => $this->pluginResultForLlmReview($pluginName, $result),
-                'collection_state' => $collectionState,
-                'research_plan' => $planningNode->parsed_json,
-            ]);
-            $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $executingReviewNode, $emit, $eventSequence, $sessionId, $pluginName, $processLanguage);
-            if (!$executingReviewNode->ok) {
-                if ($this->shouldContinueAfterExecutingReviewFailure($result, $executingReviewNode)) {
-                    $result = $this->applyExecutingReviewFailureCaveat($result, $executingReviewNode);
-                    $pluginResults[$pluginName] = $result;
-                    $lastPluginCallIndex = array_key_last($pluginCalls);
-                    if ($lastPluginCallIndex !== null) {
-                        $pluginCalls[$lastPluginCallIndex] = $result;
+            if ($this->executingReviewRequired($pluginName, $result)) {
+                $executingReviewNode = $this->llm->runExecutingReviewNode($expertModel, $processLanguage, [
+                    'question' => $question,
+                    'plugin_name' => $pluginName,
+                    'plugin_result' => $this->pluginResultForLlmReview($pluginName, $result),
+                    'collection_state' => $collectionState,
+                    'research_plan' => $planningNode->parsed_json,
+                ]);
+                $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $executingReviewNode, $emit, $eventSequence, $sessionId, $pluginName, $processLanguage);
+                if (!$executingReviewNode->ok) {
+                    if ($this->shouldContinueAfterExecutingReviewFailure($result, $executingReviewNode)) {
+                        $result = $this->applyExecutingReviewFailureCaveat($result, $executingReviewNode);
+                        $pluginResults[$pluginName] = $result;
+                        $lastPluginCallIndex = array_key_last($pluginCalls);
+                        if ($lastPluginCallIndex !== null) {
+                            $pluginCalls[$lastPluginCallIndex] = $result;
+                        }
+                        $this->logDiagnostic($requestId, 'executing_review_failed_nonfatal', [
+                            'plugin_name' => $pluginName,
+                            'errors' => $executingReviewNode->errors,
+                        ]);
+                    } else {
+                        return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $expertModel, 'Executing', $executingReviewNode, $sixStageArtifacts, $workflowState);
                     }
-                    $this->logDiagnostic($requestId, 'executing_review_failed_nonfatal', [
-                        'plugin_name' => $pluginName,
-                        'errors' => $executingReviewNode->errors,
-                    ]);
-                } else {
-                    return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $expertModel, 'Executing', $executingReviewNode, $sixStageArtifacts, $workflowState);
                 }
+            } else {
+                $result = $this->markExecutingReviewNotRequired($result, 'This deterministic or empty plugin result does not require LLM interpretation.');
+                $pluginResults[$pluginName] = $result;
+                $lastPluginCallIndex = array_key_last($pluginCalls);
+                if ($lastPluginCallIndex !== null) {
+                    $pluginCalls[$lastPluginCallIndex] = $result;
+                }
+                $this->logDiagnostic($requestId, 'executing_review_not_required', [
+                    'plugin_name' => $pluginName,
+                    'reason' => $result['executing_review_reason'],
+                ]);
             }
 
             $detailId = 'tool-' . (++$detailCounter);
@@ -352,10 +408,17 @@ final class TekgAcademicAgentService
 
             foreach ($this->maybeAppendPlugins($analysis, $planning, $pluginName, $result, $pluginQueue) as $additionalPlugin) {
                 if (isset($this->plugins[$additionalPlugin])
+                    && $this->routingPolicyAllowsPlugin($additionalPlugin, $analysis, $routingPolicy)
                     && $this->academicBusinessPluginMayRun($additionalPlugin, $analysis, $pluginResults)
                     && !in_array($additionalPlugin, $pluginQueue, true)
                 ) {
                     $pluginQueue[] = $additionalPlugin;
+                } elseif (!$this->routingPolicyAllowsPlugin($additionalPlugin, $analysis, $routingPolicy)) {
+                    $this->logDiagnostic($requestId, 'plugin_recommendation_rejected', [
+                        'plugin_name' => $additionalPlugin,
+                        'source' => 'deterministic_append',
+                        'reason' => 'The current routing policy forbids this plugin and no explicit user requirement overrides it.',
+                    ]);
                 }
             }
 
@@ -374,15 +437,23 @@ final class TekgAcademicAgentService
                 'is_sufficient' => (bool)($sufficiencyDecision['is_sufficient'] ?? false),
                 'reason' => (string)($sufficiencyDecision['reason'] ?? ''),
                 'recommended_next_experts' => (array)($sufficiencyDecision['recommended_next_experts'] ?? []),
+                'rejected_recommended_experts' => (array)($sufficiencyDecision['rejected_recommended_experts'] ?? []),
             ]);
             foreach (array_values((array)($sufficiencyDecision['recommended_next_experts'] ?? [])) as $recommendedPlugin) {
                 if ($recommendedPlugin !== ''
                     && isset($this->plugins[$recommendedPlugin])
+                    && $this->routingPolicyAllowsPlugin($recommendedPlugin, $analysis, $routingPolicy)
                     && $this->academicBusinessPluginMayRun($recommendedPlugin, $analysis, $pluginResults)
                     && !in_array($recommendedPlugin, $pluginQueue, true)
                     && !in_array($recommendedPlugin, array_keys($pluginResults), true)
                 ) {
                     $pluginQueue[] = $recommendedPlugin;
+                } elseif (!$this->routingPolicyAllowsPlugin($recommendedPlugin, $analysis, $routingPolicy)) {
+                    $this->logDiagnostic($requestId, 'plugin_recommendation_rejected', [
+                        'plugin_name' => $recommendedPlugin,
+                        'source' => 'sufficiency_assessor',
+                        'reason' => 'The current routing policy forbids this plugin and no explicit user requirement overrides it.',
+                    ]);
                 }
             }
 
@@ -460,34 +531,24 @@ final class TekgAcademicAgentService
                     'planning' => $planning,
                     'config' => $this->expertConfig($expertModel),
                 ]);
+                $citationResult = PluginResultContract::enforce('Citation Resolver', $citationResult);
                 $citationResult = $this->augmentPluginResult('Citation Resolver', $citationResult, $analysis, $planning);
 
                 $pluginResults['Citation Resolver'] = $citationResult;
                 $pluginCalls[] = $citationResult;
-                $citationReviewNode = $this->llm->runExecutingReviewNode($expertModel, $processLanguage, [
-                    'question' => $question,
-                    'plugin_name' => 'Citation Resolver',
-                    'plugin_result' => $this->pluginResultForLlmReview('Citation Resolver', $citationResult),
-                    'collection_state' => $collectionState,
-                    'research_plan' => $planningNode->parsed_json,
-                ]);
-                $this->recordSixStageArtifact($sixStageArtifacts, 'executing', $citationReviewNode, $emit, $eventSequence, $sessionId, 'Citation Resolver', $processLanguage);
-                if (!$citationReviewNode->ok) {
-                    if ($this->shouldContinueAfterExecutingReviewFailure($citationResult, $citationReviewNode)) {
-                        $citationResult = $this->applyExecutingReviewFailureCaveat($citationResult, $citationReviewNode);
-                        $pluginResults['Citation Resolver'] = $citationResult;
-                        $lastPluginCallIndex = array_key_last($pluginCalls);
-                        if ($lastPluginCallIndex !== null) {
-                            $pluginCalls[$lastPluginCallIndex] = $citationResult;
-                        }
-                        $this->logDiagnostic($requestId, 'executing_review_failed_nonfatal', [
-                            'plugin_name' => 'Citation Resolver',
-                            'errors' => $citationReviewNode->errors,
-                        ]);
-                    } else {
-                        return $this->buildSixStageFailureResponse($question, $payload, $requestId, $answerLanguage, $sessionId, $expertModel, 'Executing', $citationReviewNode, $sixStageArtifacts, $workflowState);
-                    }
+                $citationResult = $this->markExecutingReviewNotRequired(
+                    $citationResult,
+                    'Citation normalization is deterministic post-processing and does not require LLM review.'
+                );
+                $pluginResults['Citation Resolver'] = $citationResult;
+                $lastPluginCallIndex = array_key_last($pluginCalls);
+                if ($lastPluginCallIndex !== null) {
+                    $pluginCalls[$lastPluginCallIndex] = $citationResult;
                 }
+                $this->logDiagnostic($requestId, 'executing_review_not_required', [
+                    'plugin_name' => 'Citation Resolver',
+                    'reason' => $citationResult['executing_review_reason'],
+                ]);
                 $detailId = 'tool-' . (++$detailCounter);
                 $payloadForUi = $this->toolPayloadForUi($citationResult);
 
@@ -565,7 +626,18 @@ final class TekgAcademicAgentService
             );
 
             $updatedMemory = $this->updateSessionMemory($sessionMemory, $response['analysis'], $planning, $pluginResults, $citations, $evidence, $collectionState, []);
+            $response['question'] = $originalQuestion;
+            $response['context_resolution'] = $contextResult->toArray();
+            $updatedMemory = ConversationMemory::appendCompletedTurn(
+                $updatedMemory,
+                'agent',
+                $originalQuestion,
+                $question,
+                (string)$response['answer'],
+                (array)$response['analysis']
+            );
             tekg_agent_save_session_memory($sessionId, $updatedMemory);
+            $this->logConversationTurnRecorded($requestId, 'agent', $updatedMemory);
 
             $response['answer'] = ReportIntegrityGate::normalizeUrlsInText((string)$response['answer']);
             $this->emitEvent($emit, $eventSequence, [
@@ -670,12 +742,20 @@ final class TekgAcademicAgentService
         ]);
         $this->activateWorkflowStage($workflowState, 'Writing', 'Integrating', $emit, $eventSequence, $sessionId);
         $directSiteNavigationWriting = null;
+        $analysisForWriting = $this->analysisForWriting($analysis);
+        $userFacingWritingContext = UserFacingWritingContext::fromInternal(
+            $question,
+            $analysisForWriting,
+            $evidencePackage,
+            $evidenceWalk,
+            $claimEvidenceMap,
+            $reportPlan
+        );
         $writingDecisionNode = $directSiteNavigationWriting !== null
             ? $directSiteNavigationWriting['writing_decision_node']
             : $this->llm->runWritingDecisionNode($writingModel, $processLanguage, [
                 'question' => $question,
-                'claim_evidence_map' => $claimEvidenceMap,
-                'report_plan' => $reportPlan,
+                'writing_context' => $userFacingWritingContext,
                 'limits' => $limits,
                 'confidence' => $confidence,
             ]);
@@ -685,7 +765,6 @@ final class TekgAcademicAgentService
         }
         $writingDecision = (array)$writingDecisionNode->parsed_json;
 
-        $analysisForWriting = $this->analysisForWriting($analysis);
         $this->logDiagnostic($requestId, 'answer_generation_started', [
             'model' => $writingModel,
             'polisher_model' => $polisherModel,
@@ -715,10 +794,14 @@ final class TekgAcademicAgentService
             'report_plan_validation' => $reportPlanValidation,
             'draft' => null,
             'polish' => null,
+            'draft_user_facing' => null,
+            'polish_user_facing' => null,
             'warnings' => [],
         ];
         $writingFailed = false;
         $failureReason = '';
+        $presentationRepairRequired = false;
+        $polisherUsed = false;
         $writingStartedAt = microtime(true);
 
         if ($directSiteNavigationWriting !== null) {
@@ -784,11 +867,18 @@ final class TekgAcademicAgentService
                 if (($draftIntegrity['ok'] ?? false) !== true) {
                     $writingFailed = true;
                     $failureReason = 'The evidence-walk draft failed integrity checks: ' . implode('; ', (array)($draftIntegrity['errors'] ?? []));
+                } else {
+                    $draftUserFacing = UserFacingWritingContext::auditAnswer($draftReport, $question, $userFacingWritingContext);
+                    $integrityReport['draft_user_facing'] = $draftUserFacing;
+                    $presentationRepairRequired = ($draftUserFacing['ok'] ?? false) !== true;
+                    if ($presentationRepairRequired) {
+                        $integrityReport['warnings'][] = 'Draft contained internal presentation vocabulary and was sent through a mandatory user-facing repair pass.';
+                    }
                 }
             }
         }
 
-        if (!$writingFailed && $directSiteNavigationWriting === null && !$polisherEnabled) {
+        if (!$writingFailed && $directSiteNavigationWriting === null && !$polisherEnabled && !$presentationRepairRequired) {
             $polishedReport = $draftReport;
             $answer = $draftReport;
             $polishLlm = [
@@ -804,7 +894,8 @@ final class TekgAcademicAgentService
             $integrityReport['warnings'][] = 'Polisher skipped by configuration; using the validated draft report.';
         }
 
-        if (!$writingFailed && $directSiteNavigationWriting === null && $polisherEnabled) {
+        if (!$writingFailed && $directSiteNavigationWriting === null && ($polisherEnabled || $presentationRepairRequired)) {
+            $polisherUsed = true;
             try {
                 $polishLlm = $this->llm->polishEvidenceWalkAnswer(
                     $polisherModel,
@@ -816,7 +907,10 @@ final class TekgAcademicAgentService
                     $claimEvidenceMap,
                     $writingDecision,
                     $reportPlan,
-                    (array)$integrityReport['draft'],
+                    array_replace(
+                        (array)$integrityReport['draft'],
+                        ['user_facing_violations' => (array)($integrityReport['draft_user_facing']['violations'] ?? [])]
+                    ),
                     $this->answerTimeoutForModel($polisherModel)
                 );
             } catch (Throwable $error) {
@@ -843,11 +937,32 @@ final class TekgAcademicAgentService
             } else {
                 $polishIntegrity = ReportIntegrityGate::check($polishedReport, $evidencePackage, $evidenceWalk, $reportPlan);
                 $integrityReport['polish'] = $polishIntegrity;
-                if (($polishIntegrity['ok'] ?? false) === true) {
+                $polishUserFacing = UserFacingWritingContext::auditAnswer($polishedReport, $question, $userFacingWritingContext);
+                $integrityReport['polish_user_facing'] = $polishUserFacing;
+                if (($polishIntegrity['ok'] ?? false) === true && ($polishUserFacing['ok'] ?? false) === true) {
                     $answer = $polishedReport;
-                } else {
+                } elseif (($integrityReport['draft_user_facing']['ok'] ?? false) === true) {
                     $answer = $draftReport;
-                    $integrityReport['warnings'][] = 'Polished report failed integrity checks; using the validated draft report as the conservative answer.';
+                    $integrityReport['warnings'][] = 'Polished report failed integrity or presentation checks; using the validated user-facing draft report.';
+                } else {
+                    foreach ([$polishedReport, $draftReport] as $candidateReport) {
+                        $sanitizedReport = UserFacingWritingContext::sanitizeAnswer($candidateReport);
+                        if ($sanitizedReport === '') {
+                            continue;
+                        }
+                        $sanitizedIntegrity = ReportIntegrityGate::check($sanitizedReport, $evidencePackage, $evidenceWalk, $reportPlan);
+                        $sanitizedUserFacing = UserFacingWritingContext::auditAnswer($sanitizedReport, $question, $userFacingWritingContext);
+                        if (($sanitizedIntegrity['ok'] ?? false) === true && ($sanitizedUserFacing['ok'] ?? false) === true) {
+                            $answer = $sanitizedReport;
+                            $integrityReport['sanitized_user_facing'] = $sanitizedUserFacing;
+                            $integrityReport['warnings'][] = 'Deterministic presentation cleanup removed residual internal vocabulary after the repair pass.';
+                            break;
+                        }
+                    }
+                    if ($answer === '') {
+                        $writingFailed = true;
+                        $failureReason = 'The final report could not be converted into user-facing prose without internal presentation leakage.';
+                    }
                 }
             }
         }
@@ -885,10 +1000,10 @@ final class TekgAcademicAgentService
             $polishedReport,
             $writingModel,
             $polisherModel,
-            $polisherEnabled
+            $polisherEnabled || $polisherUsed
         );
         $response = [
-            'question' => $question,
+            'question' => $originalQuestion,
             'mode' => trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
             'request_id' => $requestId,
             'language' => $answerLanguage,
@@ -939,6 +1054,7 @@ final class TekgAcademicAgentService
             'workflow_state' => $workflowState,
             'six_stage_artifacts' => $sixStageArtifacts,
             'node_contracts' => tekg_agent_node_contracts(),
+            'context_resolution' => $contextResult->toArray(),
             'node_payloads' => tekg_agent_json_safe($this->buildNodePayloads(
                 $question,
                 $analysis,
@@ -962,14 +1078,25 @@ final class TekgAcademicAgentService
             )),
         ];
         $evaluationReport = ModeComparisonEvaluation::fromAgentResponse($response, [
-            'question' => $question,
+            'question' => $originalQuestion,
             'category' => (string)($analysis['intent'] ?? ''),
             'expected_best_mode' => 'agent',
         ]);
         $response['evaluation_report'] = $evaluationReport;
 
-        $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence, $collectionState, $synthesizedEvidence);
-        tekg_agent_save_session_memory($sessionId, $updatedMemory);
+        if (!$writingFailed) {
+            $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $planning, $pluginResults, $citations, $evidence, $collectionState, $synthesizedEvidence);
+            $updatedMemory = ConversationMemory::appendCompletedTurn(
+                $updatedMemory,
+                'agent',
+                $originalQuestion,
+                $question,
+                $answer,
+                $analysis
+            );
+            tekg_agent_save_session_memory($sessionId, $updatedMemory);
+            $this->logConversationTurnRecorded($requestId, 'agent', $updatedMemory);
+        }
 
         $this->completeWorkflowStage($workflowState, 'Writing', $emit, $eventSequence, $sessionId);
         $this->logDiagnostic($requestId, 'answer_event_emitting', [
@@ -1024,6 +1151,113 @@ final class TekgAcademicAgentService
         ]);
 
         return $response;
+    }
+
+    private function buildContextClarificationResponse(
+        string $originalQuestion,
+        array $payload,
+        string $requestId,
+        string $answerLanguage,
+        string $sessionId,
+        string $model,
+        ConversationContextResult $contextResult,
+        ?callable $emit,
+        int &$eventSequence
+    ): array {
+        $answer = $contextResult->clarificationMessage($answerLanguage);
+        $workflowState = $this->initialWorkflowState();
+        $workflowState['current_stage'] = 'Clarification';
+        $workflowState['complete'] = true;
+        $response = [
+            'question' => $originalQuestion,
+            'mode' => trim((string)($payload['mode'] ?? 'academic')) ?: 'academic',
+            'request_id' => $requestId,
+            'language' => $answerLanguage,
+            'session_id' => $sessionId,
+            'model' => $model,
+            'model_provider' => $this->inferProvider($model),
+            'models' => ['control' => $model],
+            'analysis' => [
+                'intent' => 'clarification',
+                'answer_language' => $answerLanguage,
+                'normalized_entities' => [],
+                'conversation_context' => $contextResult->toArray(),
+            ],
+            'answer' => $answer,
+            'writing_failed' => false,
+            'failure_stage' => '',
+            'failure_reason' => '',
+            'presentation_failure_reason' => '',
+            'reasoning_trace' => [],
+            'used_plugins' => [],
+            'plugin_calls' => [],
+            'evidence' => [],
+            'citations' => [],
+            'limits' => [],
+            'workflow_state' => $workflowState,
+            'six_stage_artifacts' => [],
+            'context_resolution' => $contextResult->toArray(),
+        ];
+
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'answer',
+            'request_id' => $requestId,
+            'session_id' => $sessionId,
+            'language' => $answerLanguage,
+            'message' => $answer,
+        ]);
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'done',
+            'request_id' => $requestId,
+            'session_id' => $sessionId,
+            'payload' => [
+                'confidence' => 'low',
+                'used_plugins' => [],
+                'answer' => $answer,
+                'language' => $answerLanguage,
+                'writing_failed' => false,
+                'failure_stage' => '',
+                'failure_reason' => '',
+                'workflow_state' => $workflowState,
+            ],
+        ]);
+        return $response;
+    }
+
+    private function logConversationContext(
+        string $requestId,
+        string $mode,
+        ConversationContextResult $contextResult
+    ): void {
+        $event = match (true) {
+            $contextResult->status === 'needs_clarification' => 'conversation_context_clarification_required',
+            $contextResult->resolutionSource === 'deterministic_fallback' => 'conversation_context_fallback',
+            $contextResult->status === 'resolved_follow_up' => 'conversation_context_resolved',
+            default => 'conversation_context_standalone',
+        };
+        $this->logDiagnostic($requestId, $event, [
+            'mode' => $mode,
+            'status' => $contextResult->status,
+            'resolution_source' => $contextResult->resolutionSource,
+            'explicit_entities' => $contextResult->explicitEntities,
+            'inherited_entities' => $contextResult->inheritedEntities,
+            'clarification_candidates' => $contextResult->clarificationCandidates,
+            'reason' => $contextResult->reason,
+        ]);
+    }
+
+    private function logConversationTurnRecorded(string $requestId, string $mode, array $memory): void
+    {
+        $turns = (array)($memory['recent_turns'] ?? []);
+        $lastTurn = $turns === [] ? [] : (array)$turns[array_key_last($turns)];
+        $this->logDiagnostic($requestId, 'conversation_turn_recorded', [
+            'mode' => $mode,
+            'turn_count' => count($turns),
+            'entities' => (array)($lastTurn['entities'] ?? []),
+            'original_question_length' => tekg_agent_strlen((string)($lastTurn['original_question'] ?? '')),
+            'effective_question_length' => tekg_agent_strlen((string)($lastTurn['effective_question'] ?? '')),
+            'answer_summary_length' => tekg_agent_strlen((string)($lastTurn['answer_summary'] ?? '')),
+        ]);
     }
 
     private function buildDirectSiteNavigationWritingResult(
@@ -1194,6 +1428,55 @@ final class TekgAcademicAgentService
                 'summary' => $artifact['summary'],
             ],
         ]);
+    }
+
+    private function executingReviewRequired(string $pluginName, array $pluginResult): bool
+    {
+        if (!in_array((string)($pluginResult['status'] ?? ''), ['ok', 'partial'], true)) {
+            return false;
+        }
+
+        if (in_array($pluginName, [
+            'Entity Resolver',
+            'Site Navigator Plugin',
+            'Tree Plugin',
+            'Genome Plugin',
+            'Citation Resolver',
+        ], true)) {
+            return false;
+        }
+
+        if ($pluginName === 'Sequence Plugin') {
+            foreach ((array)($pluginResult['evidence_items'] ?? []) as $item) {
+                $normalized = tekg_agent_normalize_evidence_item($item, $pluginName);
+                if ($normalized === null) {
+                    continue;
+                }
+                if ((string)($normalized['evidence_type'] ?? '') === 'structure_hint'
+                    || in_array('keyword_derived', (array)($normalized['quality_flags'] ?? []), true)
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        return in_array($pluginName, [
+            'Graph Plugin',
+            'Graph Analytics Plugin',
+            'Cypher Explorer Plugin',
+            'Literature Plugin',
+            'Literature Reading Plugin',
+            'Expression Plugin',
+        ], true);
+    }
+
+    private function markExecutingReviewNotRequired(array $pluginResult, string $reason): array
+    {
+        $pluginResult['executing_review_status'] = 'not_required';
+        $pluginResult['executing_review_reason'] = trim($reason);
+        $pluginResult['executing_review_errors'] = [];
+        return $pluginResult;
     }
 
     private function shouldContinueAfterExecutingReviewFailure(array $pluginResult, NodeLlmResult $reviewResult): bool

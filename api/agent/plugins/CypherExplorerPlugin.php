@@ -91,7 +91,7 @@ final class TekgAgentCypherExplorerPlugin implements TekgAgentPluginInterface
 
         return [
             'plugin_name' => $this->getName(),
-            'status' => $errors !== [] ? 'error' : ($rows === [] ? 'empty' : 'ok'),
+            'status' => tekg_agent_plugin_status($rows !== [], $errors),
             'query_summary' => 'Generated and executed a validated read-only Cypher query for graph exploration.',
             'results' => [
                 'cypher_result' => $cypherResult,

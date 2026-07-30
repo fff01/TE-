@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../config/agent_prompts.php';
 require_once __DIR__ . '/../contracts/NodeLlmResult.php';
+require_once __DIR__ . '/../contracts/UserFacingWritingContext.php';
 
 final class TekgAgentLlmClient
 {
@@ -64,6 +65,13 @@ final class TekgAgentLlmClient
 
     public function generateJson(string $model, string $instruction, array $payload, ?int $timeout = null, string $stage = 'json'): ?array
     {
+        if ((bool)($this->config['agent_test_mode'] ?? false)) {
+            $fixtures = (array)($this->config['agent_json_fixtures'] ?? []);
+            if (array_key_exists($stage, $fixtures)) {
+                return is_array($fixtures[$stage]) ? $fixtures[$stage] : null;
+            }
+        }
+
         $provider = $this->inferProvider($model);
         if (!$this->canCallModel($provider)) {
             return null;
@@ -114,6 +122,23 @@ final class TekgAgentLlmClient
         }
 
         return null;
+    }
+
+    public function resolveConversationContext(
+        string $model,
+        string $language,
+        array $payload,
+        ?int $timeout = null
+    ): ?array {
+        $prompts = require __DIR__ . '/../config/conversation_context_prompts.php';
+        $key = TekgAgentPromptLibrary::normalizeLanguage($language) === 'chinese' ? 'zh' : 'en';
+        return $this->generateJson(
+            $model,
+            (string)($prompts[$key] ?? $prompts['en'] ?? ''),
+            $payload,
+            $timeout,
+            'conversation_context'
+        );
     }
 
     public function runSixStageNode(string $stage, string $model, string $language, array $payload, ?int $timeout = null): NodeLlmResult
@@ -405,6 +430,10 @@ final class TekgAgentLlmClient
         array $limits,
         ?int $timeout = null
     ): array {
+        $fixture = $this->textFixtureResponse('evidence_walk_draft', $model);
+        if ($fixture !== null) {
+            return $fixture;
+        }
         $provider = $this->inferProvider($model);
         $messages = [
             ['role' => 'system', 'content' => $this->systemPrompt($language)],
@@ -442,6 +471,10 @@ final class TekgAgentLlmClient
         array $integrityReport,
         ?int $timeout = null
     ): array {
+        $fixture = $this->textFixtureResponse('evidence_walk_polish', $model);
+        if ($fixture !== null) {
+            return $fixture;
+        }
         $provider = $this->inferProvider($model);
         $messages = [
             ['role' => 'system', 'content' => $this->systemPrompt($language)],
@@ -626,6 +659,26 @@ final class TekgAgentLlmClient
         return (bool)($this->config['agent_test_mode'] ?? false);
     }
 
+    private function textFixtureResponse(string $stage, string $model): ?array
+    {
+        if (!(bool)($this->config['agent_test_mode'] ?? false)) {
+            return null;
+        }
+        $fixtures = $this->config['agent_text_fixtures'] ?? [];
+        if (!is_array($fixtures) || !array_key_exists($stage, $fixtures)) {
+            return null;
+        }
+        $content = trim((string)$fixtures[$stage]);
+        return [
+            'ok' => $content !== '',
+            'provider' => $this->inferProvider($model),
+            'model' => $model,
+            'content' => $content,
+            'error' => $content !== '' ? null : 'Configured text fixture is empty.',
+            'fixture' => true,
+        ];
+    }
+
     private function sixStageErrorContext(string $stage, string $provider, string $model, string $message): string
     {
         $detail = trim($message);
@@ -707,14 +760,19 @@ final class TekgAgentLlmClient
         array $limits,
         string $language = 'english'
     ): string {
+        $writingContext = UserFacingWritingContext::fromInternal(
+            $question,
+            $analysis,
+            $evidencePackage,
+            $evidenceWalk,
+            $claimEvidenceMap,
+            $reportPlan
+        );
         $payload = [
             'question' => $question,
             'analysis' => $analysis,
-            'evidence_package' => $this->promptSafePayload($evidencePackage),
-            'evidence_walk' => $this->promptSafePayload($evidenceWalk),
-            'claim_evidence_map' => $this->promptSafePayload($claimEvidenceMap),
-            'writing_decision' => $this->promptSafePayload($writingDecision),
-            'report_plan' => $this->promptSafePayload($reportPlan),
+            'writing_context' => $this->promptSafePayload($writingContext),
+            'writing_guidance' => $this->promptSafePayload(UserFacingWritingContext::writingGuidance($writingDecision, $reportPlan)),
             'confidence' => $confidence,
             'limits' => $limits,
         ];
@@ -733,14 +791,19 @@ final class TekgAgentLlmClient
         array $integrityReport,
         string $language = 'english'
     ): string {
+        $writingContext = UserFacingWritingContext::fromInternal(
+            (string)($reportPlan['question'] ?? ''),
+            $analysis,
+            $evidencePackage,
+            $evidenceWalk,
+            $claimEvidenceMap,
+            $reportPlan
+        );
         $payload = [
             'draft_answer' => $draftAnswer,
             'analysis' => $analysis,
-            'evidence_package' => $this->promptSafePayload($evidencePackage),
-            'evidence_walk' => $this->promptSafePayload($evidenceWalk),
-            'claim_evidence_map' => $this->promptSafePayload($claimEvidenceMap),
-            'writing_decision' => $this->promptSafePayload($writingDecision),
-            'report_plan' => $this->promptSafePayload($reportPlan),
+            'writing_context' => $this->promptSafePayload($writingContext),
+            'writing_guidance' => $this->promptSafePayload(UserFacingWritingContext::writingGuidance($writingDecision, $reportPlan)),
             'integrity_report' => $integrityReport,
         ];
 

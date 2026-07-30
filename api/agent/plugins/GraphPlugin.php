@@ -229,7 +229,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
                     $this->getName(),
                     $sentence,
                     trim((string)($row['source_name'] ?? '')),
-                    (($row['alias_mode'] ?? 'strict') === 'strict') ? 'high' : 'medium',
+                    'medium',
                     [
                         'relation_type' => (string)($row['relation_type'] ?? ''),
                         'matched_alias' => (string)($row['matched_alias'] ?? ''),
@@ -247,6 +247,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
                         'object' => trim((string)($row['target_name'] ?? '')),
                         'provenance' => ['source' => 'local_graph'],
                         'citations' => $rowCitations,
+                        'quality_flags' => ['association_not_causality'],
                     ]
                 );
                 if (count($previewItems) < 5) {
@@ -275,7 +276,7 @@ final class TekgAgentGraphPlugin implements TekgAgentPluginInterface
 
         return [
             'plugin_name' => $this->getName(),
-            'status' => $errors !== [] ? 'error' : ($rows === [] ? 'empty' : 'ok'),
+            'status' => tekg_agent_plugin_status($rows !== [], $errors),
             'query_summary' => $querySummary,
             'results' => [
                 'rows' => $rows,

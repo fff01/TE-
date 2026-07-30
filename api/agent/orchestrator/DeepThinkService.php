@@ -7,6 +7,7 @@ if (!function_exists('tekg_agent_create_default_plugins')) {
 
 require_once __DIR__ . '/traits/DeepThinkRoutingTrait.php';
 require_once __DIR__ . '/traits/DeepThinkEvidenceTrait.php';
+require_once dirname(__DIR__) . '/contracts/UserFacingWritingContext.php';
 
 final class TekgDeepThinkService
 {
@@ -44,6 +45,7 @@ final class TekgDeepThinkService
         if ($question === '') {
             throw new InvalidArgumentException('Question is required.');
         }
+        $originalQuestion = $question;
 
         $requestId = trim((string)($payload['request_id'] ?? ''));
         if ($requestId === '') {
@@ -63,8 +65,36 @@ final class TekgDeepThinkService
         $reasoningTrace = [];
         $pluginResults = [];
         $artifacts = ['understanding' => null, 'planning' => null, 'executing' => [], 'writing' => null];
-        $normalizerInput = $this->normalizer->analyze($question, $answerLanguage);
-        $base = compact('question', 'requestId', 'sessionId', 'answerLanguage', 'model');
+        $sessionMemory = tekg_agent_load_session_memory($sessionId);
+        $contextResult = (new ConversationContextResolver($this->normalizer, $this->llm))->resolve(
+            $originalQuestion,
+            $answerLanguage,
+            $sessionMemory,
+            'deepthink',
+            $model
+        );
+        $this->logDeepThinkConversationContext($requestId, $contextResult);
+        if ($contextResult->status === 'needs_clarification') {
+            return $this->buildDeepThinkContextClarificationResponse(
+                $originalQuestion,
+                $requestId,
+                $sessionId,
+                $answerLanguage,
+                $model,
+                $contextResult,
+                $emit,
+                $eventSequence
+            );
+        }
+        $question = $contextResult->effectiveQuestion;
+        $normalizerInput = $contextResult->applyToAnalysis($this->normalizer->analyze($question, $answerLanguage));
+        $base = [
+            'question' => $originalQuestion,
+            'requestId' => $requestId,
+            'sessionId' => $sessionId,
+            'answerLanguage' => $answerLanguage,
+            'model' => $model,
+        ];
 
         $understanding = $this->runDeepThinkStage(
             'Understanding',
@@ -72,6 +102,7 @@ final class TekgDeepThinkService
                 'question' => $question,
                 'answer_language' => $answerLanguage,
                 'rule_normalizer' => $normalizerInput,
+                'conversation_context' => $contextResult->toArray(),
             ]),
             $artifacts,
             $emit,
@@ -84,6 +115,10 @@ final class TekgDeepThinkService
             return $this->failDeepThinkRun($base, 'Understanding', $understanding, $artifacts, $pluginResults, $emit, $eventSequence);
         }
         $analysis = $this->analysisFromUnderstanding((array)$understanding->parsed_json, $question);
+        $analysis = $contextResult->applyToAnalysis($analysis);
+        $analysis['conversation_context'] = $contextResult->toArray();
+        $analysis['original_question'] = $originalQuestion;
+        $analysis['effective_question'] = $question;
         $explicitLiterature = $this->hasExplicitLiteratureRequest($question);
 
         $planningNode = $this->runDeepThinkStage(
@@ -195,18 +230,37 @@ final class TekgDeepThinkService
         $evidence = $this->aggregateEvidence($pluginResults);
         $citations = $this->aggregateCitations($pluginResults);
         $limits = $this->aggregateLimits($pluginResults, $evidence);
+        $writingContext = UserFacingWritingContext::fromEvidenceItems(
+            $question,
+            $evidence,
+            $citations,
+            $limits,
+            str_contains(tekg_agent_lower($question), 'report') || str_contains($question, '报告')
+                ? 'research_report'
+                : 'direct_answer'
+        );
+        $writingPayload = [
+            'question' => $question,
+            'writing_context' => $writingContext,
+        ];
+        $directNavigationAnswer = $this->buildDirectSiteNavigationAnswer($analysis, $pluginResults);
         $writing = $this->runDeepThinkStage(
             'Writing',
-            fn(): NodeLlmResult => $this->llm->runDeepThinkWritingNode($model, $answerLanguage, [
-                'question' => $question,
-                'understanding' => $understanding->parsed_json,
-                'planning' => $planningNode->parsed_json,
-                'executing' => $artifacts['executing'],
-                'plugin_results' => $this->compressedPluginResults($pluginResults),
-                'evidence' => $evidence,
-                'citations' => $citations,
-                'limitations' => $limits,
-            ]),
+            fn(): NodeLlmResult => $directNavigationAnswer !== null
+                ? new NodeLlmResult(
+                    'writing',
+                    '',
+                    [
+                        'schema_version' => 'dt_writing.v1',
+                        'stage' => 'writing',
+                        'answer_markdown' => $directNavigationAnswer,
+                        'limitations' => [],
+                    ],
+                    true,
+                    [],
+                    'dt_writing.v1'
+                )
+                : $this->llm->runDeepThinkWritingNode($model, $answerLanguage, $writingPayload),
             $artifacts,
             $emit,
             $eventSequence,
@@ -219,20 +273,160 @@ final class TekgDeepThinkService
         }
         $answer = trim((string)($writing->parsed_json['answer_markdown'] ?? ''));
         if ($answer === '') {
-            return $this->failDeepThinkRun($base, 'Writing', 'Writing artifact answer_markdown is empty.', $artifacts, $pluginResults, $emit, $eventSequence);
+            $emptyRetry = $this->llm->runDeepThinkWritingNode($model, $answerLanguage, array_replace($writingPayload, [
+                'draft_to_repair' => '',
+                'mandatory_repairs' => [
+                    'Return a direct, non-empty user-facing answer. If no scientific record was returned, state that limitation in plain language without treating it as biological absence.',
+                ],
+            ]));
+            $answer = $emptyRetry->ok ? trim((string)($emptyRetry->parsed_json['answer_markdown'] ?? '')) : '';
+            $artifacts['writing']['empty_answer_retry'] = [
+                'attempted' => true,
+                'ok' => $emptyRetry->ok && $answer !== '',
+                'errors' => $emptyRetry->errors,
+            ];
+            if ($answer === '') {
+                return $this->failDeepThinkRun($base, 'Writing', 'Writing artifact answer_markdown is empty after one retry.', $artifacts, $pluginResults, $emit, $eventSequence);
+            }
+        }
+        $userFacingAudit = UserFacingWritingContext::auditAnswer($answer, $question, $writingContext);
+        if (($userFacingAudit['ok'] ?? false) !== true) {
+            $repair = $this->llm->runDeepThinkWritingNode($model, $answerLanguage, [
+                'question' => $question,
+                'writing_context' => $writingContext,
+                'draft_to_repair' => $answer,
+                'mandatory_repairs' => (array)($userFacingAudit['violations'] ?? []),
+                'repair_instruction' => 'Rewrite the draft once as clear user-facing prose. Remove every listed presentation leak without adding or changing scientific claims, numbers, citations, or links.',
+            ]);
+            $repairedAnswer = $repair->ok ? trim((string)($repair->parsed_json['answer_markdown'] ?? '')) : '';
+            $repairAudit = UserFacingWritingContext::auditAnswer($repairedAnswer, $question, $writingContext);
+            $artifacts['writing']['user_facing_repair'] = [
+                'attempted' => true,
+                'ok' => $repair->ok && $repairedAnswer !== '' && ($repairAudit['ok'] ?? false) === true,
+                'violations' => (array)($repairAudit['violations'] ?? []),
+            ];
+            if ($repair->ok && $repairedAnswer !== '' && ($repairAudit['ok'] ?? false) === true) {
+                $answer = $repairedAnswer;
+            } else {
+                $sanitizedAnswer = UserFacingWritingContext::sanitizeAnswer($repairedAnswer !== '' ? $repairedAnswer : $answer);
+                $sanitizedAudit = UserFacingWritingContext::auditAnswer($sanitizedAnswer, $question, $writingContext);
+                if ($sanitizedAnswer !== '' && ($sanitizedAudit['ok'] ?? false) === true) {
+                    $artifacts['writing']['user_facing_repair']['sanitized_fallback'] = true;
+                    $answer = $sanitizedAnswer;
+                } else {
+                    return $this->failDeepThinkRun(
+                        $base,
+                        'Writing',
+                        'The final report could not be converted into user-facing prose without internal presentation leakage.',
+                        $artifacts,
+                        $pluginResults,
+                        $emit,
+                        $eventSequence
+                    );
+                }
+            }
         }
 
         $response = [
-            'question' => $question, 'mode' => 'deepthink', 'request_id' => $requestId, 'session_id' => $sessionId,
+            'question' => $originalQuestion, 'mode' => 'deepthink', 'request_id' => $requestId, 'session_id' => $sessionId,
             'language' => $answerLanguage, 'model' => $model, 'models' => ['understanding' => $model, 'planning' => $model, 'executing' => $model, 'writing' => $model],
             'failed' => false, 'writing_failed' => false, 'failure_stage' => '', 'failure_reason' => '', 'answer' => $answer,
             'analysis' => $analysis, 'dt_artifacts' => $artifacts, 'used_plugins' => array_keys($pluginResults), 'plugin_calls' => array_values($pluginResults),
-            'evidence' => $evidence, 'citations' => $citations, 'limits' => $limits,
+            'evidence' => $evidence, 'citations' => $citations, 'limits' => $limits, 'context_resolution' => $contextResult->toArray(),
         ];
+        $updatedMemory = $this->updateSessionMemory($sessionMemory, $analysis, $pluginResults, $citations);
+        $updatedMemory = ConversationMemory::appendCompletedTurn(
+            $updatedMemory,
+            'deepthink',
+            $originalQuestion,
+            $question,
+            $answer,
+            $analysis
+        );
+        tekg_agent_save_session_memory($sessionId, $updatedMemory);
+        $this->logDiagnostic($requestId, 'conversation_turn_recorded', [
+            'mode' => 'deepthink',
+            'turn_count' => count((array)($updatedMemory['recent_turns'] ?? [])),
+            'entities' => (array)($updatedMemory['topic_entities'] ?? []),
+        ]);
         $this->emitEvent($emit, $eventSequence, ['type' => 'answer', 'request_id' => $requestId, 'session_id' => $sessionId, 'message' => $answer, 'language' => $answerLanguage]);
         $this->emitEvent($emit, $eventSequence, ['type' => 'done', 'request_id' => $requestId, 'session_id' => $sessionId, 'payload' => $this->terminalPayload(false, false, '', '', $answer, $answerLanguage)]);
         $this->logDiagnostic($requestId, 'deepthink_terminal_success', ['answer' => $answer, 'model' => $model]);
         return $response;
+    }
+
+    private function buildDeepThinkContextClarificationResponse(
+        string $originalQuestion,
+        string $requestId,
+        string $sessionId,
+        string $answerLanguage,
+        string $model,
+        ConversationContextResult $contextResult,
+        ?callable $emit,
+        int &$eventSequence
+    ): array {
+        $answer = $contextResult->clarificationMessage($answerLanguage);
+        $response = [
+            'question' => $originalQuestion,
+            'mode' => 'deepthink',
+            'request_id' => $requestId,
+            'session_id' => $sessionId,
+            'language' => $answerLanguage,
+            'model' => $model,
+            'failed' => false,
+            'writing_failed' => false,
+            'failure_stage' => '',
+            'failure_reason' => '',
+            'answer' => $answer,
+            'analysis' => [
+                'intent' => 'clarification',
+                'answer_language' => $answerLanguage,
+                'normalized_entities' => [],
+                'conversation_context' => $contextResult->toArray(),
+            ],
+            'dt_artifacts' => ['understanding' => null, 'planning' => null, 'executing' => [], 'writing' => null],
+            'used_plugins' => [],
+            'plugin_calls' => [],
+            'evidence' => [],
+            'citations' => [],
+            'limits' => [],
+            'context_resolution' => $contextResult->toArray(),
+        ];
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'answer',
+            'request_id' => $requestId,
+            'session_id' => $sessionId,
+            'message' => $answer,
+            'language' => $answerLanguage,
+        ]);
+        $this->emitEvent($emit, $eventSequence, [
+            'type' => 'done',
+            'request_id' => $requestId,
+            'session_id' => $sessionId,
+            'payload' => $this->terminalPayload(false, false, '', '', $answer, $answerLanguage),
+        ]);
+        return $response;
+    }
+
+    private function logDeepThinkConversationContext(
+        string $requestId,
+        ConversationContextResult $contextResult
+    ): void {
+        $event = match (true) {
+            $contextResult->status === 'needs_clarification' => 'conversation_context_clarification_required',
+            $contextResult->resolutionSource === 'deterministic_fallback' => 'conversation_context_fallback',
+            $contextResult->status === 'resolved_follow_up' => 'conversation_context_resolved',
+            default => 'conversation_context_standalone',
+        };
+        $this->logDiagnostic($requestId, $event, [
+            'mode' => 'deepthink',
+            'status' => $contextResult->status,
+            'resolution_source' => $contextResult->resolutionSource,
+            'explicit_entities' => $contextResult->explicitEntities,
+            'inherited_entities' => $contextResult->inheritedEntities,
+            'clarification_candidates' => $contextResult->clarificationCandidates,
+            'reason' => $contextResult->reason,
+        ]);
     }
 
     private function runDeepThinkStage(

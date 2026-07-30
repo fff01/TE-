@@ -20,7 +20,6 @@
 
   const ui = config.ui || {};
   const deepThinkClient = window.TEKGDeepThinkClient || {};
-  const storageKey = 'tekg-academic-agent-session';
 
   const app = document.getElementById('agentApp');
   const form = document.getElementById('agentForm');
@@ -52,11 +51,6 @@
   let currentMode = String(config.defaultMode || 'deepthink').trim().toLowerCase() === 'agent' ? 'agent' : 'deepthink';
   let modeLocked = false;
   let sessionId = '';
-  try {
-    sessionId = window.localStorage.getItem(storageKey) || '';
-  } catch (_error) {
-    sessionId = '';
-  }
 
   let activeAbortController = null;
   let turnCounter = 0;
@@ -922,7 +916,7 @@
       return;
     }
     turn.finalized = true;
-    if (turn.workflow && !turn.workflow.complete && !turn.writingFailed) {
+    if (turn.workflow && !turn.writingFailed) {
       turn.workflow.stage_statuses = turn.workflow.stage_statuses || {};
       WORKFLOW_STAGES.forEach((stage) => {
         turn.workflow.stage_statuses[stage.id] = 'done';
@@ -986,6 +980,7 @@
     const payload = detail && detail.payload && typeof detail.payload === 'object' ? detail.payload : {};
     return normalizeGraphElements(
       payload.graph_elements
+      || payload.raw_result?.graph_elements
       || payload.raw_preview?.graph_elements
       || payload.display_details?.graph_elements
       || payload.results?.graph_elements
@@ -1167,8 +1162,8 @@
           payload.citations || payload.display_details?.citations || [],
           ui.tool_empty_citations || 'No citations were returned for this tool call.',
         )),
-        buildInspectorSection(ui.inspector_data || 'Returned Data', payload.raw_preview
-          ? `<pre class="agent-detail-pre">${escapeHtml(JSON.stringify(payload.raw_preview, null, 2))}</pre>`
+        buildInspectorSection(ui.inspector_data || 'Returned Data', (payload.raw_result || payload.raw_preview)
+          ? `<pre class="agent-detail-pre">${escapeHtml(JSON.stringify(payload.raw_result || payload.raw_preview, null, 2))}</pre>`
           : `<div class="agent-detail-empty">${escapeHtml(ui.tool_empty_data || 'No result payload was returned.')}</div>`),
         buildInspectorSection(ui.inspector_errors || 'Errors', formatInspectorList(
           payload.errors || payload.display_details?.errors || [],
@@ -1380,9 +1375,6 @@
     }
     if (runState.session_id) {
       sessionId = String(runState.session_id);
-      try {
-        window.localStorage.setItem(storageKey, sessionId);
-      } catch (_error) {}
     }
   }
 
@@ -1553,9 +1545,6 @@
       }
       if (payload.session_id) {
         sessionId = String(payload.session_id);
-        try {
-          window.localStorage.setItem(storageKey, sessionId);
-        } catch (_error) {}
       }
 
       await pollAgentRun(turn, runId, abortController);
@@ -1623,9 +1612,6 @@
         }
         if (streamEvent.session_id) {
           sessionId = String(streamEvent.session_id);
-          try {
-            window.localStorage.setItem(storageKey, sessionId);
-          } catch (_error) {}
         }
         handleStreamEvent(turn, streamEvent);
       });

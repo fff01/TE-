@@ -331,12 +331,13 @@
     if (!progressNode || !state) return;
     progressNode.hidden = !state.progressVisible;
     const currentIndex = DEEPTHINK_STAGES.indexOf(state.stage);
+    const terminalSuccess = state.done === true && state.failed !== true;
     progressNode.querySelectorAll('[data-deepthink-stage]').forEach((node, index) => {
       const stage = String(node.dataset.deepthinkStage || '');
       const label = node.querySelector('.deepthink-progress-label');
       if (label) label.textContent = stageDisplayLabel(stage, state.language);
-      node.classList.toggle('is-active', index === currentIndex);
-      node.classList.toggle('is-done', currentIndex > index);
+      node.classList.toggle('is-active', !state.done && index === currentIndex);
+      node.classList.toggle('is-done', terminalSuccess || currentIndex > index);
       node.classList.toggle('is-failed', state.failed && index === currentIndex);
     });
   }

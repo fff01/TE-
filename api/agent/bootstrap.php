@@ -237,6 +237,9 @@ function tekg_agent_default_session_memory(): array
         'compression_notes' => [],
         'next_step_hints' => [],
         'session_snapshot' => [],
+        'recent_turns' => [],
+        'last_mode' => '',
+        'conversation_version' => 1,
     ];
 }
 

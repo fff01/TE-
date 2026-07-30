@@ -159,7 +159,7 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
 
         return [
             'plugin_name' => $this->getName(),
-            'status' => $results === [] && $errors === [] ? 'empty' : ($errors === [] ? 'ok' : 'partial'),
+            'status' => tekg_agent_plugin_status($results !== [], $errors),
             'query_summary' => 'Summarized expression datasets and top contexts for the recognized TE entities.',
             'results' => $results,
             'display_label' => 'Summarized ' . count($results) . ' expression profiles',

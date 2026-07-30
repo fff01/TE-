@@ -95,13 +95,16 @@ final class DtFixturePlugin implements TekgAgentPluginInterface
         return array_replace_recursive([
             'plugin_name' => $this->name,
             'status' => 'ok',
+            'query_summary' => $this->name . ' fixture query completed.',
             'results' => ['fixture' => $this->name],
+            'display_label' => $this->name . ' fixture',
             'display_summary' => $this->name . ' completed.',
             'display_details' => ['preview_items' => [], 'citations' => $this->citations],
             'result_counts' => ['items' => 1],
             'evidence_items' => [],
             'citations' => $this->citations,
             'errors' => [],
+            'latency_ms' => 0,
         ], $this->overrides);
     }
 }
@@ -206,6 +209,80 @@ assert_same(
     'DT naturally skips Executing when the validated remaining plugin list is empty'
 );
 assert_same(3, count(array_filter($events, static fn(array $event): bool => ($event['type'] ?? '') === 'artifact')), 'DT emits no synthetic Executing artifact when no business plugin remains');
+
+$emptyWritingRetryService = dt_service(dt_fixture_set([
+    'writing' => [
+        [
+            'schema_version' => 'dt_writing.v1',
+            'stage' => 'writing',
+            'answer_markdown' => '',
+            'limitations' => ['No direct record was returned.'],
+        ],
+        [
+            'schema_version' => 'dt_writing.v1',
+            'stage' => 'writing',
+            'answer_markdown' => 'TE-KG did not return a direct record for this question. This does not establish biological absence.',
+            'limitations' => [],
+        ],
+    ],
+]));
+$emptyWritingRetry = $emptyWritingRetryService->stream([
+    'question' => 'Which disease links are recorded for MER41-int?',
+    'request_id' => 'dt-empty-writing-retry-test',
+    'session_id' => 'dt-empty-writing-retry-test',
+], static function (array $event): void {
+});
+assert_same(false, $emptyWritingRetry['failed'] ?? null, 'DT retries once when the first writing artifact is empty');
+assert_same(
+    'TE-KG did not return a direct record for this question. This does not establish biological absence.',
+    $emptyWritingRetry['answer'] ?? null,
+    'DT returns the non-empty user-facing retry'
+);
+
+$navigationService = dt_service(dt_fixture_set([
+    'planning' => [
+        'schema_version' => 'dt_planning.v1',
+        'stage' => 'planning',
+        'business_plugins' => ['Site Navigator Plugin'],
+        'execution_goal' => 'Return the requested TE-KG page link.',
+        'citation_resolver_allowed' => false,
+        'rationale' => 'The user explicitly requested navigation.',
+    ],
+    'executing' => [[
+        'schema_version' => 'dt_executing.v1',
+        'stage' => 'executing',
+        'done' => false,
+        'next_plugin' => 'Site Navigator Plugin',
+        'reason' => 'Retrieve the requested link.',
+        'evidence_summary' => [],
+        'gaps' => ['navigation'],
+    ]],
+    'writing' => [
+        'schema_version' => 'dt_writing.v1',
+        'stage' => 'writing',
+        'answer_markdown' => 'WRONG_LLM_NAVIGATION_ANSWER',
+        'limitations' => [],
+    ],
+]));
+set_dt_plugins($navigationService, [
+    'Entity Resolver' => new DtFixturePlugin('Entity Resolver'),
+    'Site Navigator Plugin' => new DtFixturePlugin('Site Navigator Plugin', [], [
+        'results' => [
+            'answer_markdown' => 'Open [L1HS expression](/TE-/expression_detail.php?te=L1HS).',
+        ],
+    ]),
+]);
+$navigation = $navigationService->stream([
+    'question' => 'Give me the clickable TE-KG link for viewing L1HS expression data.',
+    'request_id' => 'dt-direct-navigation-test',
+    'session_id' => 'dt-direct-navigation-test',
+], static function (array $event): void {
+});
+assert_same(
+    'Open [L1HS expression](/TE-/expression_detail.php?te=L1HS).',
+    $navigation['answer'] ?? null,
+    'DT returns the validated Site Navigator answer instead of asking the writing model to recreate a link'
+);
 
 $multiRoundService = dt_service(dt_fixture_set([
     'planning' => [

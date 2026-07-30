@@ -8,7 +8,7 @@ final class ReportPlan
 
     public static function fromEvidenceWalk(string $question, array $analysis, array $evidenceWalk, array $answerStructure = []): array
     {
-        $reportType = self::selectReportType($analysis, $answerStructure);
+        $reportType = self::selectReportType($question, $analysis, $answerStructure);
         $sections = self::sectionsForReportType($reportType);
         $claimSequence = [];
 
@@ -108,11 +108,18 @@ final class ReportPlan
         return ['ok' => $errors === [], 'errors' => $errors];
     }
 
-    private static function selectReportType(array $analysis, array $answerStructure): string
+    private static function selectReportType(string $question, array $analysis, array $answerStructure): string
     {
-        $preferred = self::stringValue($answerStructure['preferred_report_type'] ?? $answerStructure['report_type'] ?? '');
+        $preferred = self::stringValue($answerStructure['preferred_report_type'] ?? $answerStructure['report_type'] ?? $answerStructure['response_mode'] ?? '');
         if (in_array($preferred, self::REPORT_TYPES, true)) {
             return $preferred;
+        }
+
+        $normalizedQuestion = strtolower(trim($question));
+        foreach (['research report', 'research-report', '研究报告', '调研报告'] as $marker) {
+            if (str_contains($normalizedQuestion, $marker)) {
+                return 'research_report';
+            }
         }
 
         $intent = strtolower(self::stringValue($analysis['intent'] ?? ''));
@@ -143,7 +150,7 @@ final class ReportPlan
             'evidence_audit' => ['question_scope', 'evidence_inventory', 'citation_assessment', 'gaps', 'answer'],
             'batch_comparison' => ['comparison_scope', 'entities', 'evidence_matrix', 'differences', 'answer'],
             'graph_ranking' => ['question_scope', 'ranking_method', 'top_entities', 'evidence_paths', 'caveats', 'answer'],
-            default => ['question_scope', 'key_findings', 'evidence_review', 'limitations', 'answer'],
+            default => ['overview', 'requested_findings', 'limitations'],
         };
 
         $sections = [];
@@ -188,6 +195,8 @@ final class ReportPlan
             'background' => 'Frame the biological context before causal interpretation.',
             'mechanism_chain' => 'Order claims as a mechanistic evidence chain.',
             'evidence_review', 'evidence_inventory' => 'Summarize supporting evidence and provenance.',
+            'overview' => 'Introduce the subject briefly without restating the request or describing the internal workflow.',
+            'requested_findings' => 'Organize the findings around the dimensions explicitly requested by the user.',
             'citation_assessment' => 'Check whether literature references support the claims.',
             'ranking_method' => 'Explain graph ranking criteria and limits.',
             'top_entities' => 'Present ranked graph entities with evidence links.',

@@ -71,16 +71,25 @@ final class TekgAgentSiteNavigatorPlugin implements TekgAgentPluginInterface
             (string)$primary['title'],
             (string)$primary['url']
         );
-        $evidence = tekg_agent_make_evidence_item(
+        $evidence = tekg_agent_make_diagnostic_item(
             $this->getName(),
             $claim,
-            $entity,
-            $confidence >= 0.75 ? 'high' : 'medium',
-            $primary,
+            [
+                'match_confidence' => $confidence,
+                'matched_capability' => $capability,
+            ],
             [
                 'title' => (string)$primary['title'],
                 'meta' => $capability,
                 'body' => $claim,
+            ],
+            [
+                'entity_scope' => $entity,
+                'raw_source_ref' => $primary,
+                'evidence_type' => 'site_navigation',
+                'coverage_dimension' => 'navigation',
+                'subject' => $entity !== '' ? $entity : null,
+                'provenance' => ['source' => 'site_navigation_map'],
             ]
         );
 

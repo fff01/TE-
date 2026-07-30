@@ -298,18 +298,7 @@ final class EvidencePackage
 
     private static function isDiagnosticEvidence(array $sourceEvidence): bool
     {
-        $flags = array_map('strval', (array)($sourceEvidence['quality_flags'] ?? []));
-        if (array_intersect($flags, ['not_evidence', 'not_biological_claim']) !== []) {
-            return true;
-        }
-
-        $type = trim((string)($sourceEvidence['evidence_type'] ?? ''));
-        if (in_array($type, ['citation_normalization', 'system_error', 'empty_result'], true)) {
-            return true;
-        }
-
-        return (string)($sourceEvidence['support_strength'] ?? '') === 'none'
-            && (($sourceEvidence['diagnostic'] ?? []) !== [] || ($sourceEvidence['provenance'] ?? []) !== []);
+        return tekg_agent_is_diagnostic_evidence($sourceEvidence);
     }
 
     private static function appendRouteMap(array &$routeMap, string $claimId, string $plugin, array $routes): array

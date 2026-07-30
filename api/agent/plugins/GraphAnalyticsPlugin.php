@@ -41,7 +41,7 @@ final class TekgAgentGraphAnalyticsPlugin implements TekgAgentPluginInterface
 
         return [
             'plugin_name' => $this->getName(),
-            'status' => $errors !== [] ? 'error' : ($rows === [] ? 'empty' : 'ok'),
+            'status' => tekg_agent_plugin_status($rows !== [], $errors),
             'query_summary' => (string)($queryPlan['query_summary'] ?? 'Executed a graph analytics query.'),
             'results' => [
                 'analytics_result' => $analytics,
@@ -220,7 +220,7 @@ final class TekgAgentGraphAnalyticsPlugin implements TekgAgentPluginInterface
                 $this->getName(),
                 $label . ' ranked with an analytics score of ' . $value . ' under the current graph metric.',
                 $label,
-                'high',
+                'medium',
                 [
                     'query_class' => (string)($analytics['query_class'] ?? ''),
                     'value' => $value,
@@ -230,6 +230,21 @@ final class TekgAgentGraphAnalyticsPlugin implements TekgAgentPluginInterface
                     'title' => $label,
                     'meta' => $nodeType . ' | score ' . $value,
                     'body' => 'This row came from a graph analytics aggregation query.',
+                ],
+                [
+                    'evidence_type' => 'graph_metric',
+                    'coverage_dimension' => 'graph_analytics',
+                    'subject' => $label,
+                    'provenance' => [
+                        'source' => 'derived_graph_query',
+                        'query_class' => (string)($analytics['query_class'] ?? ''),
+                        'metric_definition' => (string)($analytics['metric_definition'] ?? ''),
+                    ],
+                    'diagnostic' => [
+                        'rank' => (int)($row['rank'] ?? 0),
+                        'metric_value' => $value,
+                    ],
+                    'quality_flags' => ['derived_metric'],
                 ]
             );
         }

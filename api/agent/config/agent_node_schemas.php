@@ -78,7 +78,7 @@ return [
             'is_sufficient' => ['type' => 'boolean'],
             'missing_dimensions' => ['type' => 'array'],
             'next_plugin' => ['type' => ['string', 'null']],
-            'stop_reason' => ['type' => 'string'],
+            'stop_reason' => ['type' => ['string', 'null']],
             'evidence_gaps' => ['type' => 'array'],
             'decision_rationale' => ['type' => 'string'],
         ],

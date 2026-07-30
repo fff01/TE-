@@ -3,10 +3,13 @@ declare(strict_types=1);
 
 function tekg_agent_require_orchestrator_dependencies(): void
 {
+    require_once __DIR__ . '/contracts/ConversationContextResult.php';
     require_once __DIR__ . '/orchestrator/Neo4jClient.php';
     require_once __DIR__ . '/orchestrator/LlmClient.php';
     require_once __DIR__ . '/orchestrator/CitationResolver.php';
     require_once __DIR__ . '/orchestrator/EntityNormalizer.php';
+    require_once __DIR__ . '/orchestrator/ConversationMemory.php';
+    require_once __DIR__ . '/orchestrator/ConversationContextResolver.php';
 }
 
 function tekg_agent_plugin_files(): array

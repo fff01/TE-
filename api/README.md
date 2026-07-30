@@ -19,12 +19,14 @@ frontend thinking/status stream.
 ## Read First
 
 1. `api/docs/intelligent_qa_handoff.md`
-2. `api/docs/intelligent_qa_architecture.md`
-3. `api/docs/plugin_system.md`
-4. `api/docs/testing_and_evaluation.md`
-5. `api/docs/maintenance_workflow.md`
-6. `api/agent/plugins/PLUGIN_CATALOG.md`
-7. `api/agent/plugins/README.md`
+2. `api/docs/intelligent_qa_runtime_audit_2026-07-28.md`
+3. `api/docs/intelligent_qa_plugin_contract_hardening_2026-07-28.md`
+4. `api/docs/intelligent_qa_architecture.md`
+5. `api/docs/plugin_system.md`
+6. `api/docs/testing_and_evaluation.md`
+7. `api/docs/maintenance_workflow.md`
+8. `api/agent/plugins/PLUGIN_CATALOG.md`
+9. `api/agent/plugins/README.md`
 
 ## Directory Map
 
@@ -57,10 +59,21 @@ frontend thinking/status stream.
   `Understanding -> Planning -> Executing -> Writing`.
 - Agent is the heavier six-stage assistant:
   `Understanding -> Planning -> Collecting -> Executing -> Integrating -> Writing`.
+- Both modes resolve bounded follow-up context before entity normalization and
+  routing. The resolver retains at most three successful turns, keeps the
+  original question for the UI, and supplies a validated standalone effective
+  question to the existing workflow.
+- Ambiguous or context-free references return a natural clarification without
+  running a scientific plugin.
+- Conversation continuity is limited to the currently open page. The frontend
+  keeps the session ID only in JavaScript memory and never restores it from
+  `localStorage`, so reloads and new tabs start without prior page context.
 - The plugin directory is read from `api/agent/plugins/PLUGIN_CATALOG.md` and
   supplied to LLM planning/collection prompts.
 - Plugin results are evidence inputs, not final answers. Writing stages must
   respect evidence boundaries and should expose unsupported or missing evidence.
+- The multi-turn layer does not change the twelve public plugins, routing
+  policy, Agent stage count, or DeepThink stage count.
 
 ## Hard Constraints
 
@@ -85,9 +98,14 @@ php -l api/agent/orchestrator/AcademicAgentService.php
 php test/agent_model_config_test.php
 php test/agent_six_stage_runtime_test.php
 php test/agent_six_stage_llm_contract_test.php
+php test/conversation_memory_test.php
+php test/conversation_context_resolver_test.php
+php test/agent_multiturn_context_runtime_test.php
+php test/deepthink_multiturn_context_runtime_test.php
 php test/deepthink_four_stage_runtime_test.php
 php test/deepthink_four_stage_contract_test.php
 php test/plugin_result_envelope_test.php
+node scripts/checks/check_agent_conversation_session_scope.js
 node scripts/checks/check_agent_llm_event_frontend_contract.js
 node scripts/checks/check_agent_workflow_default_state_guard.js
 node scripts/checks/check_deepthink_frontend_state_contract.js

@@ -6,9 +6,20 @@ final class ReportIntegrityGate
     public static function normalizeUrlsInText(string $text): string
     {
         $text = preg_replace_callback(
-            '/\[[^\]]+\]\(([^)\s]+)\)/u',
+            '/\[([^\]]+)\]\(([^)\s]+)\)/u',
             static function (array $matches): string {
-                return str_replace($matches[1], self::normalizeUrlDashes((string)$matches[1]), $matches[0]);
+                $url = self::normalizeUrlDashes((string)$matches[2]);
+                $label = (string)$matches[1];
+                $linkedPmid = self::pubmedPmidFromUrl($url);
+                if ($linkedPmid !== null && preg_match('/\bPMID\s*:?\s*\d+\b/i', $label) === 1) {
+                    $label = preg_replace_callback(
+                        '/\b(PMID\s*:?\s*)\d+\b/i',
+                        static fn(array $labelMatch): string => (string)$labelMatch[1] . $linkedPmid,
+                        $label,
+                        1
+                    ) ?? $label;
+                }
+                return '[' . $label . '](' . $url . ')';
             },
             $text
         ) ?? $text;
@@ -46,6 +57,10 @@ final class ReportIntegrityGate
             if (!isset($allowedUrls[$url])) {
                 $errors[] = "URL {$url} is not present in evidence_package citations or routes.";
             }
+        }
+
+        foreach (self::extractPmidLinkMismatches($report) as $mismatch) {
+            $errors[] = "Displayed PMID {$mismatch['displayed']} does not match PubMed URL PMID {$mismatch['linked']}.";
         }
 
         if (self::claimsAreEmpty($evidencePackage) && self::containsStrongConclusion($report)) {
@@ -90,7 +105,7 @@ final class ReportIntegrityGate
      */
     private static function extractPmids(string $report): array
     {
-        if (!preg_match_all('/\bPMID\s*(\d+)\b/i', $report, $matches)) {
+        if (!preg_match_all('/\bPMID\s*:?\s*(\d+)\b/i', $report, $matches)) {
             return [];
         }
         return self::uniqueValues(array_map('strval', $matches[1]));
@@ -102,17 +117,61 @@ final class ReportIntegrityGate
     private static function extractUrls(string $report): array
     {
         $urls = [];
-        if (preg_match_all('/\[[^\]]+\]\(([^)\s]+)\)/', $report, $markdownMatches)) {
-            foreach ($markdownMatches[1] as $url) {
-                $urls[] = self::cleanUrl((string)$url);
-            }
-        }
-        if (preg_match_all('/https?:\/\/[^\s<>"\']+/i', $report, $httpMatches)) {
+        $bareUrlText = preg_replace_callback(
+            '/\[[^\]]+\]\(([^)\s]+)\)/',
+            static function (array $matches) use (&$urls): string {
+                $urls[] = self::cleanUrl((string)$matches[1]);
+                return str_repeat(' ', strlen((string)$matches[0]));
+            },
+            $report
+        ) ?? $report;
+        if (preg_match_all('/https?:\/\/[^\s<>"\']+/i', $bareUrlText, $httpMatches)) {
             foreach ($httpMatches[0] as $url) {
                 $urls[] = self::cleanUrl((string)$url);
             }
         }
         return self::uniqueValues(array_values(array_filter($urls, static fn (string $url): bool => $url !== '')));
+    }
+
+    /**
+     * @return array<int,array{displayed:string,linked:string}>
+     */
+    private static function extractPmidLinkMismatches(string $report): array
+    {
+        if (!preg_match_all('/\[([^\]]+)\]\(([^)\s]+)\)/', $report, $matches, PREG_SET_ORDER)) {
+            return [];
+        }
+
+        $mismatches = [];
+        foreach ($matches as $match) {
+            if (!preg_match('/\bPMID\s*:?\s*(\d+)\b/i', (string)$match[1], $labelMatch)) {
+                continue;
+            }
+
+            $url = self::cleanUrl((string)$match[2]);
+            $linked = self::pubmedPmidFromUrl($url);
+            if ($linked === null) {
+                continue;
+            }
+
+            $displayed = (string)$labelMatch[1];
+            if ($displayed !== $linked) {
+                $mismatches[] = ['displayed' => $displayed, 'linked' => $linked];
+            }
+        }
+        return $mismatches;
+    }
+
+    private static function pubmedPmidFromUrl(string $url): ?string
+    {
+        $parts = parse_url(self::cleanUrl($url));
+        if (!is_array($parts)
+            || strtolower((string)($parts['host'] ?? '')) !== 'pubmed.ncbi.nlm.nih.gov'
+            || !preg_match('#^/(\d+)(?:/|$)#', (string)($parts['path'] ?? ''), $pathMatch)
+        ) {
+            return null;
+        }
+        return (string)$pathMatch[1];
     }
 
     /**

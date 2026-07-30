@@ -98,14 +98,11 @@ $writerPrompt = $writerPromptMethod->invoke(
     $limits
 );
 
-assert_contains('"evidence_package"', $writerPrompt, 'writer prompt includes evidence_package');
-assert_contains('"evidence_walk"', $writerPrompt, 'writer prompt includes evidence_walk');
-assert_contains('"claim_evidence_map"', $writerPrompt, 'writer prompt includes claim_evidence_map');
-assert_contains('"writing_decision"', $writerPrompt, 'writer prompt includes writing_decision');
-assert_contains('"report_plan"', $writerPrompt, 'writer prompt includes report_plan');
+assert_contains('"writing_context"', $writerPrompt, 'writer prompt includes user-facing writing context');
+assert_contains('"writing_guidance"', $writerPrompt, 'writer prompt includes sanitized writing guidance');
 assert_contains('evidence first', $writerPrompt, 'writer prompt uses evidence-grounded drafting policy');
 assert_contains('Build the argument before prose', $writerPrompt, 'writer prompt requires argument before prose');
-assert_contains('claim-evidence map', $writerPrompt, 'writer prompt requires claim-evidence map');
+assert_contains('supplied facts and real references', $writerPrompt, 'writer prompt verifies claims without exposing the internal map');
 assert_contains('bounded claims', $writerPrompt, 'writer prompt requires bounded claims');
 assert_contains('missing inputs and evidence gaps', $writerPrompt, 'writer prompt requires gap handling');
 assert_contains('Do not add evidence', $writerPrompt, 'writer prompt forbids new evidence');
@@ -114,7 +111,7 @@ assert_contains('citation_requirements', $writerPrompt, 'writer prompt exposes c
 assert_contains('final_checks', $writerPrompt, 'writer prompt exposes final_checks');
 assert_contains('Do not claim causality without evidence', $writerPrompt, 'writer prompt includes forbidden claim sentinel');
 
-foreach (['raw_result', 'display_details', 'full plugin_results', '"plugin_results"'] as $forbidden) {
+foreach (['raw_result', 'display_details', 'full plugin_results', '"plugin_results"', '"evidence_package"', '"evidence_walk"', '"claim_evidence_map"', '"report_plan"'] as $forbidden) {
     assert_not_contains($forbidden, $writerPrompt, "writer prompt excludes {$forbidden}");
 }
 
@@ -131,16 +128,13 @@ $polisherPrompt = $polisherPromptMethod->invoke(
     $integrityReport
 );
 
-assert_contains('"evidence_package"', $polisherPrompt, 'polisher prompt includes evidence_package');
-assert_contains('"evidence_walk"', $polisherPrompt, 'polisher prompt includes evidence_walk');
-assert_contains('"claim_evidence_map"', $polisherPrompt, 'polisher prompt includes claim_evidence_map');
-assert_contains('"writing_decision"', $polisherPrompt, 'polisher prompt includes writing_decision');
-assert_contains('"report_plan"', $polisherPrompt, 'polisher prompt includes report_plan');
+assert_contains('"writing_context"', $polisherPrompt, 'polisher prompt includes user-facing writing context');
+assert_contains('"writing_guidance"', $polisherPrompt, 'polisher prompt includes sanitized writing guidance');
 assert_contains('no new claims', $polisherPrompt, 'polisher prompt forbids new claims');
 assert_contains('no new PMID', $polisherPrompt, 'polisher prompt forbids new PMID');
 assert_contains('no new URLs', $polisherPrompt, 'polisher prompt forbids new URLs');
 assert_contains('no new citations', $polisherPrompt, 'polisher prompt forbids new citations');
-assert_contains('preserve links and citations', $polisherPrompt, 'polisher prompt preserves links and citations');
+assert_contains('Preserve links and citations', $polisherPrompt, 'polisher prompt preserves links and citations');
 assert_contains('downgrade unsupported claims', $polisherPrompt, 'polisher prompt downgrades unsupported claims');
 assert_contains('Return only the final polished report text', $polisherPrompt, 'polisher prompt returns answer text only');
 assert_contains('forbidden_claims', $polisherPrompt, 'polisher prompt exposes forbidden_claims');
@@ -149,7 +143,7 @@ assert_contains('final_checks', $polisherPrompt, 'polisher prompt exposes final_
 assert_contains('Do not claim causality without evidence', $polisherPrompt, 'polisher prompt includes forbidden claim sentinel');
 assert_not_contains('revision notes if possible', $polisherPrompt, 'polisher prompt does not ask for revision notes in final answer');
 
-foreach (['raw_result', 'display_details', 'full plugin_results', '"plugin_results"'] as $forbidden) {
+foreach (['raw_result', 'display_details', 'full plugin_results', '"plugin_results"', '"evidence_package"', '"evidence_walk"', '"claim_evidence_map"', '"report_plan"'] as $forbidden) {
     assert_not_contains($forbidden, $polisherPrompt, "polisher prompt excludes {$forbidden}");
 }
 

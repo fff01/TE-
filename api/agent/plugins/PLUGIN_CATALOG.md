@@ -9,6 +9,8 @@ Compact routing reference for LLM planners. Plugin names below are exact default
 - `Entity Resolver` is bootstrap-only. Do not select it as a business plugin.
 - `Citation Resolver` is post-processing-only. Run it only after upstream plugins have produced citations.
 - A plugin result is bounded evidence, not a license to infer unsupported mechanisms, causality, negatives, or completeness.
+- `support_strength` measures scientific claim support. Routing confidence, query success, rank, and citation count are diagnostics rather than scientific evidence.
+- Native results use `ok`, `partial`, `empty`, or `error`; `partial` retains usable data together with visible limitations.
 
 ## Default Plugins
 
@@ -48,11 +50,12 @@ Compact routing reference for LLM planners. Plugin names below are exact default
 - **evidence boundary:** Validated read-only query output only. Results remain bounded by generated Cypher and schema assumptions.
 
 ### Literature Plugin
-- **purpose:** Merge local graph citations with PubMed retrieval and normalized citation metadata.
+- **purpose:** Merge local graph citations with domain-qualified PubMed retrieval and normalized citation metadata.
 - **use when:** The user explicitly asks for literature, papers, citations, evidence review, or a synthesis that requires literature support.
-- **do not use as:** Full-text reading, guaranteed relevance filtering, or automatic proof that a citation supports a claim.
-- **requires:** Question and entity context; may consume Graph Plugin citations; uses Neo4j, PubMed services, and cache.
-- **evidence boundary:** Citation metadata and available title/abstract-level material. Retrieved or reviewed citations can still be weak or irrelevant.
+- **do not use as:** Full-text reading, semantic claim verification, or automatic proof that a citation supports a claim.
+- **requires:** Question and resolved entity context; may consume Graph Plugin citations; uses Neo4j, PubMed services, and cache.
+- **retrieval boundary:** PubMed queries must use Entity Resolver output. Unsafe generic abbreviations such as bare `TE` are expanded to transposable-element domain phrases. External records must match the resolved TE scope and, when present, the resolved disease scope in title or available abstract text before entering synthesis.
+- **evidence boundary:** The deterministic relevance gate removes obvious scope mismatches but does not establish scientific claim support. Citation metadata and available title/abstract-level material remain bounded evidence.
 
 ### Literature Reading Plugin
 - **purpose:** Synthesize usable literature citations into claim clusters, conflicts, and evidence gaps.
@@ -60,6 +63,7 @@ Compact routing reference for LLM planners. Plugin names below are exact default
 - **do not use as:** A standalone retriever, full-text reader, or fallback when Literature Plugin citations are absent or unusable.
 - **requires:** Usable `Literature Plugin` citations and LLM configuration.
 - **evidence boundary:** Synthesis is limited to supplied citation material, commonly title/metadata/abstract level. Do not overstate claims beyond that material.
+- **fallback boundary:** If structured LLM synthesis is unavailable, preserve citation metadata with `generation_mode=metadata_fallback`; do not create supported claims from titles.
 
 ### Tree Plugin
 - **purpose:** Retrieve TE lineage paths or disease top-level classification context.

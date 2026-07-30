@@ -62,8 +62,7 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
             $evidenceItems[] = tekg_agent_make_evidence_item(
                 $this->getName(),
                 $name . ' maps to a Repbase-backed sequence record' .
-                ($length !== null ? ' with a consensus length of ' . $length . ' bp' : '') .
-                ($structureHints !== '' ? ' and structure hints including ' . $structureHints : '') . '.',
+                ($length !== null ? ' with a consensus length of ' . $length . ' bp' : '') . '.',
                 $name,
                 (($match['alias_mode'] ?? 'strict') === 'strict') ? 'high' : 'medium',
                 [
@@ -79,11 +78,42 @@ final class TekgAgentSequencePlugin implements TekgAgentPluginInterface
                         $headline,
                     ]))),
                     'body' => trim(implode(' | ', array_filter([
-                        $structureHints !== '' ? 'Structure: ' . $structureHints : '',
                         $showFullSequence && $sequence !== '' ? 'Sequence: ' . $sequence : ($sequencePreview !== '' ? 'Sequence: ' . $sequencePreview : ''),
                     ]))),
+                ],
+                [
+                    'evidence_type' => 'sequence_record',
+                    'coverage_dimension' => 'sequence',
+                    'subject' => $name,
+                    'provenance' => ['source' => 'repbase_aligned_library'],
                 ]
             );
+
+            if ($structureHints !== '') {
+                $evidenceItems[] = tekg_agent_make_evidence_item(
+                    $this->getName(),
+                    $name . ' record metadata contains keyword-derived structure hints: ' . $structureHints . '.',
+                    $name,
+                    'low',
+                    [
+                        'matched_alias' => (string)($match['matched_alias'] ?? ''),
+                        'keywords' => $keywords,
+                        'structure_hints' => $structureHints,
+                    ],
+                    [
+                        'title' => $name . ' structure hints',
+                        'meta' => 'keyword-derived',
+                        'body' => 'Structure: ' . $structureHints,
+                    ],
+                    [
+                        'evidence_type' => 'structure_hint',
+                        'coverage_dimension' => 'sequence_structure',
+                        'subject' => $name,
+                        'provenance' => ['source' => 'repbase_record_metadata'],
+                        'quality_flags' => ['keyword_derived'],
+                    ]
+                );
+            }
 
             foreach ((array)($entry['references'] ?? []) as $reference) {
                 if (!is_array($reference)) {

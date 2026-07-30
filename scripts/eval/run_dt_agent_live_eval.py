@@ -133,7 +133,7 @@ def run_dt(case: dict[str, Any], base_url: str, timeout: int, model: str) -> dic
         "source_page": "agent",
         "current_url": base_url.rstrip("/") + "/agent.php",
         "page_context": {"eval_case_id": case.get("case_id"), "eval_phase": "5B"},
-        "session_id": "eval-dt-" + str(case.get("case_id", "")),
+        "session_id": str(case.get("session_id") or ("eval-dt-" + str(case.get("case_id", "")))),
     }
     started = time.time()
     status, body, headers = post_json(base_url.rstrip("/") + "/api/deep_think_stream.php", payload, timeout)
@@ -174,7 +174,7 @@ def run_agent(case: dict[str, Any], base_url: str, timeout: int, poll_interval: 
         "source_page": "agent",
         "current_url": base_url.rstrip("/") + "/agent.php",
         "page_context": {"eval_case_id": case.get("case_id"), "eval_phase": "5B"},
-        "session_id": "eval-agent-" + str(case.get("case_id", "")),
+        "session_id": str(case.get("session_id") or ("eval-agent-" + str(case.get("case_id", "")))),
     }
     create_url = base_url.rstrip("/") + "/api/agent_runs.php"
     started = time.time()
