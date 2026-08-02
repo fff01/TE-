@@ -1,0 +1,90 @@
+{
+  "input": "D:\\wamp64\\www\\TE-\\docs\\article\\submission\\TE-KG_working_draft_v0.1.docx",
+  "fonts_by_char_count": {
+    "Times New Roman": 1498
+  },
+  "direct_run_formatting_runs": 120,
+  "direct_paragraph_formatting_paragraphs": 57,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 95,
+      "text": "Component and unit",
+      "style": "Compact"
+    },
+    {
+      "para_index": 96,
+      "text": "Count",
+      "style": "Compact"
+    },
+    {
+      "para_index": 97,
+      "text": "Definition",
+      "style": "Compact"
+    },
+    {
+      "para_index": 98,
+      "text": "Source and boundary",
+      "style": "Compact"
+    }
+  ],
+  "examples": {
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "TE-KG:",
+        "style": "Title"
+      },
+      {
+        "para_index": 1,
+        "run_text": " ",
+        "style": "Title"
+      },
+      {
+        "para_index": 1,
+        "run_text": "a",
+        "style": "Title"
+      },
+      {
+        "para_index": 1,
+        "run_text": " ",
+        "style": "Title"
+      },
+      {
+        "para_index": 1,
+        "run_text": "provenance-aware",
+        "style": "Title"
+      }
+    ],
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 4,
+        "text": "WORKING DRAFT - unresolved author and provenance fields are shown in red",
+        "style": "Normal"
+      },
+      {
+        "para_index": 79,
+        "text": "1. \tBao, W., Kojima, K.K. and Kohany, O. (2015) Repbase update, a database of repetitive elements in eukaryotic genomes.",
+        "style": "Bibliography"
+      },
+      {
+        "para_index": 80,
+        "text": "2. \tKojima, K.K. (2018) Human transposable elements in repbase: Genomic footprints from fish to humans. Mobile DNA, 9, 2",
+        "style": "Bibliography"
+      },
+      {
+        "para_index": 81,
+        "text": "3. \tWheeler, T.J., Clements, J., Eddy, S.R., et al. (2013) Dfam: A database of repetitive DNA based on profile hidden ma",
+        "style": "Bibliography"
+      },
+      {
+        "para_index": 82,
+        "text": "4. \tPa\u010des, J., Pavl\u00ed\u010dek, A. and Pa\u010des, V. (2002) HERVd: Database of human endogenous retroviruses. Nucleic Acids Researc",
+        "style": "Bibliography"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}

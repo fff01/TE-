@@ -15,15 +15,15 @@ $aboutSections = [
     'resource' => [
         'nav' => 'Resource',
         'title' => 'About TE-KG',
-        'summary' => 'TE-KG is a transposable-element-centered knowledge graph interface for exploring TE entities, diseases, molecular functions, literature evidence, expression contexts, and public data exports in one local database environment.',
+        'summary' => 'TE-KG is a human transposable element resource that connects classification, literature-derived relationships, representative sequence and genomic records, expression and co-expression contexts, downloadable data, and evidence-bounded natural-language assistance.',
         'sections' => [
             [
                 'heading' => 'What TE-KG is',
                 'items' => [
-                    'TE-KG organizes transposable element knowledge as connected entities rather than as isolated tables.',
-                    'The public interface combines catalog lookup, graph exploration, path search, expression inspection, and downloadable datasets.',
-                    'The runtime graph target is Neo4j tekg3, and user-facing graph pages should be read as views over that runtime source.',
-                    'The goal is to make TE-related relationships reviewable, especially when a relation depends on literature evidence.',
+                    'TE-KG brings complementary views of human transposable elements into one interface instead of treating each dataset as an isolated table.',
+                    'The resource combines a TE catalog, entity detail pages, literature-derived relationship graphs, classification views, expression and co-expression exploration, and downloadable data.',
+                    'Representative sequence and genomic records describe supported references or annotations; they do not represent every genomic copy of a TE.',
+                    'The central goal is to make TE-related information explorable while keeping source evidence and interpretation limits visible.',
                 ],
             ],
             [
@@ -31,27 +31,29 @@ $aboutSections = [
                 'items' => [
                     'The guide explains what each public page is designed to answer.',
                     'It describes the main controls on each page and the order in which users should use them.',
-                    'It separates lookup, graph browsing, path evidence, expression analysis, and public file download workflows.',
-                    'It also documents evidence-reading cautions so users do not overinterpret journal metrics or missing metadata.',
+                    'It separates TE lookup, entity detail, graph and path exploration, expression and co-expression analysis, natural-language assistance, and data download workflows.',
+                    'It also explains the main evidence boundaries so users can distinguish database observations from biological conclusions.',
                 ],
             ],
             [
                 'heading' => 'Data access routes',
                 'items' => [
                     'Use Home for high-level live dataset composition.',
-                    'Use Browse for entity discovery and name lookup.',
-                    'Use Path Finder and TE-KG when relation evidence matters.',
-                    'Use Expression for TE expression contexts.',
-                    'Use Download when you need the public files supporting visible workflows.',
+                    'Use Browse to scan the TE catalog, then open Search for a selected entity\'s detailed record.',
+                    'Use Graph for knowledge relationships, TE classification, and co-expression networks; use Path Finder for a focused connection between two entities.',
+                    'Use Expression for abundance patterns across the supported expression datasets.',
+                    'Use Agent or DeepThink for evidence-grounded natural-language questions and follow-up questions within the current conversation.',
+                    'Use Download when you need the files currently made available through the site.',
                 ],
             ],
             [
                 'heading' => 'Evidence principles',
                 'items' => [
-                    'Relation-level claims should be checked against supporting papers when available.',
-                    'PMID, title, year, journal, IF, JCR, and match type are evidence metadata fields, not interchangeable confidence scores.',
-                    'IF must not be called confidence, and missing IF or JCR should not be guessed.',
-                    'When a page appears inconsistent, check page context and data source before assuming a biological contradiction.',
+                    'Relation-level claims should be checked against supporting papers when available; an observed association does not by itself establish causation.',
+                    'A graph path shows connections stored in the database, not necessarily a biological pathway or mechanism.',
+                    'Co-expression indicates context-specific correlation and does not by itself demonstrate regulation.',
+                    'PMID, title, year, journal, IF, and JCR are descriptive evidence metadata, not interchangeable confidence scores; missing values should remain missing.',
+                    'Counts shown by the TE catalog, knowledge graph, taxonomy, and co-expression catalog use different units and should not be compared as if they measured the same population.',
                 ],
             ],
         ],
@@ -59,21 +61,21 @@ $aboutSections = [
     'home' => [
         'nav' => 'Home',
         'title' => 'Home Overview',
-        'summary' => 'Home is the orientation layer for TE-KG. It introduces the project, shows the live scale of the Neo4j-backed dataset, and gives a compact route into the public database workflows.',
+        'summary' => 'Home is the orientation layer for TE-KG. It introduces the resource, summarizes the current database composition, and provides direct routes into the main public workflows.',
         'sections' => [
             [
                 'heading' => 'What the page contains',
                 'items' => [
-                    'The Overview area summarizes the purpose of TE-KG and reserves the right-side image area for a future architecture diagram.',
-                    'Dataset Status reports live read-only statistics from Neo4j tekg3 rather than fixed numbers in the page source.',
+                    'The Overview area summarizes the purpose and scope of TE-KG.',
+                    'Dataset Status reports live read-only statistics from the current knowledge graph rather than fixed numbers in the page source.',
                     'The donut charts separate entity composition, TE classification, and relation predicate composition.',
-                    'Quick Links provide direct entry points into Browse, Path Finder, TE-KG, Expression, Download, and this guide.',
+                    'Quick Links provide direct entry points into the main lookup, graph, expression, download, and help workflows.',
                 ],
             ],
             [
                 'heading' => 'How to read Dataset Status',
                 'items' => [
-                    'Entity Composition counts major node classes once per Neo4j node.',
+                    'Entity Composition counts major knowledge-graph node classes once per stored node.',
                     'TE Classification can switch classification level, so the chart can move from broad classes to more specific taxonomy levels.',
                     'Relation Composition uses BIO_RELATION predicate-level statistics, making frequent relation types visible without collapsing them into vague labels.',
                     'If live statistics cannot load, the page shows a fallback instead of inventing or guessing values.',
@@ -83,8 +85,8 @@ $aboutSections = [
                 'heading' => 'Recommended workflow',
                 'items' => [
                     'Start here when you need a quick sense of what the database currently contains.',
-                    'Use the architecture placeholder as a reminder that Home is the project-level entry point, not the detailed graph runtime.',
-                    'Move to Browse when you know an entity name, Path Finder when you want a connection, or TE-KG when you want a visual network.',
+                    'Move to Browse when you want to scan TE records, Search when you need a detailed entity record, or Path Finder when you want a focused connection.',
+                    'Open Graph for visual knowledge, classification, or co-expression exploration, and use Agent when a question is easier to express in natural language.',
                 ],
             ],
         ],
@@ -92,32 +94,65 @@ $aboutSections = [
     'browse' => [
         'nav' => 'Browse',
         'title' => 'Browse',
-        'summary' => 'Browse is the table-first lookup surface. It is designed for users who want to scan TE-KG entities directly before opening a graph, path search, or expression workflow.',
+        'summary' => 'Browse is the table-first TE catalog. It is designed for scanning and filtering TE records before opening a selected TE in the detailed Search view.',
         'sections' => [
             [
                 'heading' => 'What the page is for',
                 'items' => [
-                    'Use Browse when you want a catalog-style view rather than a graph-first exploration.',
-                    'The page is suited for checking whether a TE, disease, function, or other supported entity is present.',
-                    'The dropdown suggestions are database-driven, so users do not need to guess exact names from memory.',
-                    'Browse is also a good starting point when you want to compare several records before choosing one for detailed review.',
+                    'Use Browse when you want a catalog-style view of TE records rather than a graph-first exploration.',
+                    'The table presents TE name, class, family, subtype, and description for side-by-side comparison.',
+                    'The catalog supports pagination so large result sets remain easy to scan.',
+                    'Select a TE name from the table when you are ready to inspect its detailed Search record.',
                 ],
             ],
             [
                 'heading' => 'Using the selector',
                 'items' => [
-                    'Choose the entity category first when a category selector is available.',
-                    'Type the beginning of a name to filter suggestions alphabetically within the selected category.',
-                    'Pick a suggestion from the dropdown rather than relying on unchecked free text.',
-                    'After selecting an entity, use the table or linked controls to move into detail, graph, or evidence workflows.',
+                    'Use the class, family, and subtype controls to narrow the catalog by TE classification.',
+                    'Type a TE name or prefix in the search field, then choose a database-backed suggestion when one is available.',
+                    'Combine text search with classification filters to reduce a broad result set.',
+                    'Clear one or more conditions when no records match the current filter combination.',
                 ],
             ],
             [
                 'heading' => 'Data interpretation',
                 'items' => [
-                    'Entity labels and names should be treated as runtime database values from tekg3.',
-                    'When a name appears in multiple contexts, use category and linked metadata to avoid confusing TE, disease, and function records.',
-                    'Browse is optimized for discovery and lookup; evidence-level review should happen in TE-KG or Path Finder when relation support matters.',
+                    'Browse is a TE catalog, so its row count is not the same as the number of TE nodes, taxonomy leaves, or co-expression features shown elsewhere.',
+                    'Class, family, and subtype values describe the catalog lineage associated with each displayed record.',
+                    'Browse is optimized for discovery and comparison; use Search, Graph, or Path Finder when detailed records or relation evidence matter.',
+                ],
+            ],
+        ],
+    ],
+    'search' => [
+        'nav' => 'Search',
+        'title' => 'Search and Entity Detail',
+        'summary' => 'Search opens a detailed record for a TE or another supported entity. Available panels depend on the selected entity and may include a summary, local graph, representative sequence, genome annotation, and genome browser.',
+        'sections' => [
+            [
+                'heading' => 'Finding a record',
+                'items' => [
+                    'Search for a TE, disease, function, or PMID, or arrive from a linked TE name in Browse.',
+                    'Choose a database-backed suggestion when several names are possible so the entity type remains clear.',
+                    'The summary identifies the selected record and provides the metadata available for that entity type.',
+                    'Not every panel appears for every entity; the page only shows detail views supported by the selected record.',
+                ],
+            ],
+            [
+                'heading' => 'Reading TE detail',
+                'items' => [
+                    'Use Local Graph to inspect nearby entities and relations without leaving the detail page.',
+                    'Sequence displays a supported representative or consensus sequence and its available annotation, not every genomic TE copy.',
+                    'Genome Annotation Distribution summarizes supported hits across the displayed assembly, while Genome Browser provides locus-level inspection.',
+                    'Use the page navigation to move directly to an available panel in a long record.',
+                ],
+            ],
+            [
+                'heading' => 'Interpretation boundaries',
+                'items' => [
+                    'A missing panel means that the corresponding record is not available for the selected entity in the current resource.',
+                    'Sequence and genome panels may come from different reference or annotation layers and should be interpreted using their displayed labels.',
+                    'A local graph relation is a database-supported association; review its source evidence before treating it as a biological mechanism.',
                 ],
             ],
         ],
@@ -125,14 +160,14 @@ $aboutSections = [
     'pathfinder' => [
         'nav' => 'Path Finder',
         'title' => 'Path Finder',
-        'summary' => 'Path Finder searches paths between two selected entities and presents relation-level support in a reviewable format. It is useful when the question is about connection rather than simple lookup.',
+        'summary' => 'Path Finder searches stored connections between two selected entities and presents each relation with reviewable evidence. It is useful when the question concerns a specific connection rather than a single record.',
         'sections' => [
             [
                 'heading' => 'Search structure',
                 'items' => [
                     'Each side of the search has a narrow category selector and a wider entity selector inside the same search box.',
                     'The entity dropdown is constrained by the selected category, so choosing TE gives TE names and choosing Disease gives disease names.',
-                    'The default state keeps the fields clean so users can start with a fresh pair of entities.',
+                    'Select a suggestion for both endpoints before starting the search.',
                     'This structure avoids mixing categories in one uncontrolled autocomplete list.',
                 ],
             ],
@@ -143,6 +178,7 @@ $aboutSections = [
                     'Relation labels should be interpreted at the detailed predicate level, such as activate or affect, when that detail is available.',
                     'Under each relation, evidence is shown as a table rather than a loose PMID list.',
                     'Evidence rows can include PMID, year, journal, IF, JCR, match type, and title.',
+                    'A returned graph path is a chain of stored relationships; it is not automatically a biological pathway or mechanistic model.',
                 ],
             ],
             [
@@ -150,76 +186,85 @@ $aboutSections = [
                 'items' => [
                     'Use PMID and title to identify the supporting publication.',
                     'Use journal, IF, and JCR as descriptive metadata, not as a replacement for reading the source.',
-                    'Use match type to understand how a paper was linked to journal metrics.',
+                    'Use match type to understand how publication and journal metadata were linked.',
                     'When a path has multiple relations, review each relation separately rather than assuming the whole path has uniform support.',
                 ],
             ],
         ],
     ],
     'tekg' => [
-        'nav' => 'TE-KG',
-        'title' => 'TE-KG Graph',
-        'summary' => 'TE-KG is the interactive G6 graph runtime. It exposes Neo4j tekg3 entities and BIO_RELATION edges through a G6-based visual interface with legends, filters, node actions, and evidence support.',
+        'nav' => 'Graph',
+        'title' => 'Graph Workspace',
+        'summary' => 'Graph provides three complementary visual workflows: literature-derived knowledge relationships, TE classification in Tree or force-directed Graph form, and a separate context-specific co-expression network.',
         'sections' => [
             [
                 'heading' => 'Graph interaction',
                 'items' => [
-                    'Use search or built-in loading controls to open a graph neighborhood.',
-                    'Pan and zoom to inspect the network without losing the high-level layout.',
-                    'Use node action cards to inspect entity-specific options and metadata.',
-                    'Open relation evidence controls when you need publication support for a visible edge.',
+                    'Keep Knowledge Graph selected to search for an entity and load its visible relationship neighborhood.',
+                    'Pan, zoom, and move nodes to inspect a dense network; use node actions to open entity-specific options and metadata.',
+                    'Open relation evidence when you need the publications supporting a visible edge.',
+                    'Use Export when you need an available snapshot or data representation of the current knowledge-graph view.',
                 ],
             ],
             [
                 'heading' => 'Legend and filters',
                 'items' => [
-                    'Entity legends help distinguish TE, disease, function, paper, and other node types.',
-                    'Relation legends expose predicate categories and make it easier to focus on a subset of relation types.',
-                    'Expanded legend modes are intended for detailed review when the graph is dense.',
-                    'Filter changes should be interpreted as view changes, not database writes.',
+                    'Entity legends distinguish TE, disease, function, paper, and other visible node types.',
+                    'Relation legends expose predicate categories so a dense view can be narrowed to the relationships relevant to the question.',
+                    'Clicking legend items temporarily changes what is emphasized or displayed in the current view; it does not change the stored data.',
+                    'Always interpret a filtered graph together with the active legend state.',
                 ],
             ],
             [
-                'heading' => 'Runtime boundaries',
+                'heading' => 'Classification Tree and Graph',
                 'items' => [
-                    'The graph page reads from the current runtime target tekg3.',
-                    'It should not be treated as a separate taxonomy truth source.',
-                    'Iframe bridge state, loader state, and legend state are part of the graph experience and can affect what the user sees.',
-                    'If visual graph content looks incomplete, compare the API payload and browser rendering before drawing biological conclusions.',
+                    'When a TE classification is displayed, use Tree for a stable hierarchical view or Graph for a force-directed view that can be rearranged interactively.',
+                    'Use All or RMSK + RepBase to change the classification source scope shown by either display.',
+                    'Tree and Graph are two layouts of the same classification data, not separate taxonomy sources.',
+                    'Node spacing and occupied area in the force-directed Graph reflect layout behavior and hierarchy size, not biological abundance or prevalence.',
+                ],
+            ],
+            [
+                'heading' => 'Co-expression workspace',
+                'items' => [
+                    'Switch to Co-expression, choose a context and TE, then search to load a bounded TE-gene correlation neighborhood.',
+                    'Use the legend to show or hide TE and Gene nodes, identify module hubs, and choose the visible edge scope.',
+                    'Expression activity is a separate node-level layer for the selected context and does not encode correlation strength or causality.',
+                    'Co-expression is context-specific association evidence; it does not by itself demonstrate regulation, mechanism, or a complete offline network.',
                 ],
             ],
         ],
     ],
     'agent' => [
         'nav' => 'Agent',
-        'title' => 'Agent',
-        'summary' => 'Agent is the natural-language assistant surface. It is separate from the core table and graph pages and is intended to help users frame questions, navigate workflows, and interpret what to inspect next.',
+        'title' => 'Agent and DeepThink',
+        'summary' => 'Agent is the natural-language research surface. Agent mode gathers evidence through a structured multi-stage workflow, while DeepThink provides a shorter evidence-grounded reasoning flow for more direct questions.',
         'sections' => [
             [
-                'heading' => 'What to ask',
+                'heading' => 'Choosing a mode',
                 'items' => [
-                    'Ask questions about TE entities, diseases, functions, papers, or evidence patterns you want to explore.',
-                    'Use Agent when you need help choosing between Browse, Path Finder, TE-KG, Expression, and Download.',
-                    'Use clear entity names or PMIDs when possible so the answer can be grounded in database context.',
-                    'For ambiguous names, ask the assistant to clarify candidate entities before continuing.',
+                    'Use Agent for research reports or questions that may require evidence from several database areas, such as sequence, genomic location, expression, disease links, and literature.',
+                    'Use DeepThink for a more direct question when a shorter reasoning and writing flow is sufficient.',
+                    'Use clear TE names, disease terms, gene names, or PMIDs when possible; ask for clarification when an abbreviation or entity name is ambiguous.',
+                    'The visible stage trace shows how the request progresses from understanding and planning to evidence collection and writing.',
                 ],
             ],
             [
-                'heading' => 'How to use answers',
+                'heading' => 'Questions and follow-ups',
                 'items' => [
-                    'Treat Agent as a guided navigation and interpretation layer.',
-                    'For relation evidence, verify important claims in Path Finder or TE-KG evidence tables.',
-                    'For dataset contents, verify public files on Download rather than relying only on a text answer.',
-                    'For expression questions, use Expression after the assistant identifies the relevant TE name or context.',
+                    'Ask about TE classification, sequences, genomic records, expression, co-expression, graph relationships, diseases, genes, or literature evidence.',
+                    'After the first answer, use a follow-up question such as “Which of these links has literature support?” without repeating the full topic.',
+                    'Conversation context is retained only for the current browser conversation; reloading the page or starting a new session does not preserve it.',
+                    'Open cited PMID links to review the corresponding PubMed records when literature evidence matters.',
                 ],
             ],
             [
-                'heading' => 'Important limits',
+                'heading' => 'Reading the answer',
                 'items' => [
-                    'Agent should not replace direct evidence review when a claim depends on a specific paper.',
-                    'Agent-facing pages are not the default place for ordinary UI or database changes.',
-                    'If the answer references IF or JCR, remember these are journal metrics and should not be called confidence.',
-                    'Missing journal metrics should remain missing; they should not be guessed.',
+                    'Treat the answer as a synthesis of the evidence retrieved for that request, not as independent experimental validation.',
+                    'Verify important relations in Graph or Path Finder, expression patterns in Expression, and downloadable contents in Download.',
+                    'A statement may be appropriately limited when the database lacks the requested evidence; absence from the retrieved result is not proof of biological absence.',
+                    'Journal metrics are descriptive metadata rather than confidence scores, and association language should not be read as causal language.',
                 ],
             ],
         ],
@@ -227,32 +272,32 @@ $aboutSections = [
     'expression' => [
         'nav' => 'Expression',
         'title' => 'Expression',
-        'summary' => 'Expression is the TE expression lookup surface. It helps users inspect supported bulk expression contexts after choosing a valid TE name from the database-driven selector.',
+        'summary' => 'Expression is the TE abundance lookup surface. It supports catalog-level filtering and TE detail views across the available normal tissue, normal cell line, and cancer cell line datasets.',
         'sections' => [
             [
-                'heading' => 'Choosing a TE',
+                'heading' => 'Finding a TE',
                 'items' => [
-                    'Use the TE dropdown to select a name from the current database-backed list.',
-                    'Type a prefix to narrow the suggestions rather than manually entering a free-form label.',
-                    'The selector pattern is shared with other TE lookup surfaces so names stay consistent across pages.',
-                    'If a TE is not suggested, treat that as a signal to verify its current availability before continuing.',
+                    'Use Keyword to search for a TE, or combine dataset source, top-context text, and minimum global median filters to narrow the table.',
+                    'Use Sort to order the catalog by the available summary measures, then select a TE row for its detail view.',
+                    'The browse table summarizes the top normal tissue, normal cell line, and cancer cell line context when those datasets are available.',
+                    'If a TE is not suggested or returned, verify that it is present in the current expression catalog before interpreting the absence.',
                 ],
             ],
             [
                 'heading' => 'Reading expression views',
                 'items' => [
-                    'Use the summary area to confirm which dataset or context is currently being displayed.',
-                    'Use plots to compare expression patterns across the supported cohorts or sample groups.',
-                    'Open detail-level views when the summary is not enough for interpretation.',
-                    'Keep expression evidence separate from graph relation evidence; they answer different questions.',
+                    'Use the detail summary to confirm the available datasets and the selected median, mean, or maximum metric.',
+                    'Read Normal Tissue, Normal Cell Line, and Cancer Cell Line as separate study contexts, not as a matched cohort comparison.',
+                    'Use the plots to compare contexts within the displayed dataset and metric.',
+                    'Keep expression abundance separate from knowledge-graph relations and co-expression correlations; they answer different questions.',
                 ],
             ],
             [
                 'heading' => 'Data notes',
                 'items' => [
-                    'The current runtime expression root is data/bulk_expression_web.',
-                    'Expression files support the website views and can also be downloaded from the Download page when exposed publicly.',
-                    'Expression values should be interpreted in the context of the displayed dataset and preprocessing path.',
+                    'Expression values should be interpreted within the displayed dataset, metric, and preprocessing context.',
+                    'Differences across normal tissue, normal cell line, and cancer cell line views may reflect both biology and study design.',
+                    'Download provides the expression matrices and metadata currently exposed through the site for independent inspection.',
                 ],
             ],
         ],
@@ -260,12 +305,12 @@ $aboutSections = [
     'download' => [
         'nav' => 'Download',
         'title' => 'Download',
-        'summary' => 'Download exposes public files that support the visible TE-KG workflows. The page uses a traditional table so users can quickly compare dataset name, file, usage, and format.',
+        'summary' => 'Download lists the data files currently made available through TE-KG. The table helps users compare dataset name, filename, site usage, format, and a short description before downloading.',
         'sections' => [
             [
                 'heading' => 'Table layout',
                 'items' => [
-                    'Dataset names describe the public data export at a human-readable level.',
+                    'Dataset names identify each downloadable resource at a human-readable level.',
                     'File links point to the downloadable file path.',
                     'Used in explains which page or pipeline currently depends on that file.',
                     'Format tells whether the file is TSV, CSV, JSON, JSONL, TXT, or another exposed type.',
@@ -277,16 +322,16 @@ $aboutSections = [
                     'Use category filter buttons such as Expression, Graph, or Taxonomy to narrow the table.',
                     'Use Search to match dataset names, filenames, usage descriptions, formats, and row descriptions.',
                     'Expand a dataset row when you need a short explanation before downloading.',
-                    'Clear the search text or return to All when you want to see the full public catalog.',
+                    'Clear the search text or return to All when you want to see the complete current download catalogue.',
                 ],
             ],
             [
                 'heading' => 'Catalog scope',
                 'items' => [
-                    'Files listed here should correspond to visible public TE-KG pages or reviewable runtime data.',
-                    'Internal intermediate outputs and archived files are intentionally not treated as public catalog items by default.',
-                    'A file appearing in Download means it is exposed for user access; it does not imply the page writes to Neo4j.',
-                    'When a path changes, Download should be updated to avoid stale public links.',
+                    'Files listed here correspond to visible TE-KG workflows or data that can be reviewed independently.',
+                    'Internal intermediate outputs and archived working files are not included by default.',
+                    'Availability on this page identifies a current site download; it is not by itself a versioned archival release.',
+                    'For a formal release, use the accompanying stable identifier, version, checksum, and licence information when those fields are provided.',
                 ],
             ],
         ],
@@ -308,21 +353,21 @@ $aboutSections = [
             [
                 'heading' => 'Choosing the right workflow',
                 'items' => [
-                    'Use Browse for catalog lookup.',
+                    'Use Browse for TE catalog lookup and Search for a selected entity\'s detailed record.',
                     'Use Path Finder for entity-to-entity connection questions.',
-                    'Use TE-KG for visual graph exploration and relation evidence inspection.',
-                    'Use Expression for TE expression patterns.',
-                    'Use Download for public data exports.',
-                    'Use Agent for guided natural-language help, then verify important claims in the relevant page.',
+                    'Use Graph for knowledge relationships, TE classification, co-expression, and relation evidence inspection.',
+                    'Use Expression for TE abundance patterns across supported expression datasets.',
+                    'Use Download for the files currently available through the site.',
+                    'Use Agent or DeepThink for natural-language synthesis, then verify important claims in the relevant evidence view.',
                 ],
             ],
             [
                 'heading' => 'Evidence-first reading',
                 'items' => [
-                    'Prefer pages that show source records when making relation-level claims.',
-                    'Do not interpret journal IF as confidence.',
-                    'Do not assume missing IF or JCR values; missing values should remain explicit.',
-                    'When results differ between pages, check the runtime source, API payload, and page context before assuming a biological disagreement.',
+                    'Prefer views that expose source records when making relation-level claims.',
+                    'Distinguish association, graph connection, expression abundance, and co-expression correlation before drawing a biological conclusion.',
+                    'Do not interpret journal IF as confidence, and do not infer missing journal metrics.',
+                    'When results differ between pages, first check the entity, dataset, context, metric, and evidence type shown by each page.',
                 ],
             ],
         ],

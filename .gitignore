@@ -4,6 +4,10 @@ reference/
 docs/
 !docs/
 docs/*
+!docs/article/
+!docs/article/**
+!docs/about/
+!docs/about/**
 !docs/architecture/
 docs/architecture/*
 !docs/architecture/database_overview.md

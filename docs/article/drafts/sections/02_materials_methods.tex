@@ -1,0 +1,50 @@
+\section{Materials and methods}
+
+\subsection{Scope and evidence model}
+
+TE-KG was designed around human TEs as shared identifiers connecting otherwise distinct evidence layers. The literature layer stores biomedical entities and relations extracted from publications. The taxonomy layer represents classification relationships among TE records. Sequence and genomic records provide reference or representative information derived from different upstream sources. Expression matrices retain sample-context measurements, and co-expression networks summarize context-specific rank correlations between TE and gene features. The implementation does not assign a common evidential meaning to these layers. Instead, each runtime route identifies the source type and restricts the language used to describe it.
+
+\subsection{Literature collection, extraction and normalization}
+
+PubMed was queried for human TE literature using a recorded combination of TE names, aliases and TE-related terms. The archived workflow covers publications available through 13 April 2026. Candidate records were screened against a TE whitelist and normalized before inclusion. The final retained corpus comprised 2,308 papers, matching the number of Paper nodes in the current Neo4j database snapshot.
+
+The retained text and metadata were processed with constrained DeepSeek-V3 prompts to identify TE-centred biomedical statements and their participating entities. Extracted entities were mapped to 11 biomedical categories: carbohydrate, disease, function, gene, lipid, mutation, peptide, pharmaceutical, protein, RNA and toxin. Relation records retained a normalized predicate, one or more supporting PubMed identifiers (PMIDs) and the number of supporting PMIDs. Automated normalization included name matching using a Ratcliff--Obershelp similarity threshold of 80\%, followed by manual mapping where automated resolution was insufficient. Manual curation was used to review retained entities and relations before graph import.
+
+The archived method record reports three manual audits of 50 records each. Those percentages are not used as a quantitative performance claim in this manuscript draft because the sampled identifiers, sampling seed, exact denominators and intermediate screening arithmetic have not yet been recovered consistently. \draftnote{Recover the literature query string, exact DeepSeek-V3 endpoint/model version, intermediate record counts and sampled audit decisions before locking this subsection.}
+
+\subsection{TE classification, sequences and genomic records}
+
+TE identity and classification records were assembled from a RepBase-derived local source, whereas genomic positions were obtained from a RepeatMasker-derived (RMSK) annotation source. Repbase is an established reference for repetitive-element families and consensus sequences \citep{Bao2015Repbase,Kojima2018HumanRepbase}; Dfam provides a complementary family-model framework \citep{Wheeler2013Dfam}. TE-KG preserves the distinction between these source roles. RepBase-derived sequences are described as consensus or reference sequences, and RMSK-derived positions are described as representative genomic records. Neither is presented as an exhaustive inventory of active, polymorphic or sample-specific insertions.
+
+Taxonomy is served from the Neo4j-backed API rather than from a second browser-side truth source. Classification edges use the explicit graph relations \texttt{CLASSIFIED\_AS}, \texttt{SUBFAMILY\_OF} and \texttt{HAS\_SUBCATEGORY}. The taxonomy API can expose the current tree for all supported TE records or the RMSK plus RepBase view used by the web interface. \draftnote{Insert the exact upstream RepeatMasker build, RepBase release, acquisition dates and licence/redistribution terms.}
+
+\subsection{Expression datasets and context definitions}
+
+The expression layer comprises three active matrices. The normal-tissue matrix contains 37,868 features and 205 samples; the normal-primary-cell matrix contains 37,868 features and 307 samples; and the cancer-cell-line matrix contains 37,868 features and 646 samples. Together, the matrices contain 1,158 samples. Feature identifiers include TE or repeat features and genes, so the matrices are not described as gene-only expression data.
+
+The normal-tissue data are associated with the E-MTAB-1733 and E-MTAB-2836 studies \citep{Edqvist2015SkinTranscriptome,Uhlen2015HumanProteome}. Cancer-cell-line data are associated with PRJNA523380 and the Cancer Cell Line Encyclopedia \citep{Ghandi2019CCLE}. The current normal-primary-cell matrix is associated with SRP013565, an ENCODE RNA-seq study that contains heterogeneous experiments. \draftnote{Freeze an accession-to-local-sample manifest for all three matrices and identify the precise SRP013565 subset and primary citation.}
+
+Metadata auditing identified duplicated run identifiers in the normal-tissue metadata and five matrix runs without matching metadata (ERR579126, ERR579137, ERR579144, ERR579145 and ERR579154). These records remain visible as a limitation and must be resolved or explicitly excluded in the public release manifest. The runtime key \texttt{normal\_cell\_line} refers to the normal-primary-cell context; manuscript labels use \emph{normal primary cell} to avoid confusing it with transformed cell lines.
+
+\subsection{Context-specific co-expression networks}
+
+Co-expression was computed separately within normal tissue, normal primary cell and cancer cell line contexts. Abundance values were transformed as $\log_{2}(\mathrm{count}+1)$, and TE-gene associations were measured using Spearman rank correlation. Candidate edges were retained when $|r| \geq 0.4$ and the Benjamini--Hochberg false discovery rate (FDR) was at most 0.05 \citep{Benjamini1995FDR}. Positive retained edges were used for Louvain community detection with random seed 42 and resolution 1.8 \citep{Blondel2008Louvain}. The resource presents these edges as statistical correlations, not as evidence that a TE regulates a gene.
+
+Full offline network outputs are retained as provenance and importer inputs. The production interface serves approved MySQL-backed display networks selected from those results. The current display contract limits a returned network to at most 50 nodes and 150 edges, allowing responsive inspection without describing the displayed subgraph as the complete correlation network. The catalogue version reported in this manuscript is \texttt{v1\_abs0.4\_fdr0.05\_res1.8}.
+
+\subsection{Graph, relational storage and web application}
+
+The production graph is stored in Neo4j database \texttt{tekg3}. MySQL stores the versioned Browse catalogue and the expression and approved co-expression datasets. PHP APIs mediate access to both database systems, and browser JavaScript renders tables, charts, the taxonomy views and interactive G6 or Canvas graphs. This separation prevents large expression matrices and display-network records from being forced into the literature graph while retaining a common TE-centred interface.
+
+The knowledge-graph interface supports entity search, relation filtering, interactive node expansion, relation legends and PMID-linked evidence. The Path interface searches for connections between selected entities. Browse, taxonomy and Expression provide structured access to TE identity and quantitative profiles, whereas Download exposes reusable graph, taxonomy and expression artifacts. All manuscript-facing counts were obtained from dated read-only database queries or live API responses rather than copied from interface labels.
+
+\subsection{Evidence-bounded natural-language retrieval}
+
+Agent and DeepThink provide two natural-language access modes over the local resource. Both use a catalogue of 12 evidence-retrieval roles covering entity resolution, graph, path, sequence, taxonomy, genome, expression, co-expression and literature tasks. The language model selects evidence according to the question, while the server enforces route restrictions, evidence sufficiency checks and bounded fallback behavior. Answers can include PubMed links and can use previous turns from the current browser conversation. Conversation context is not persisted across a reload, new tab or new session.
+
+The intelligent interface is treated as an access layer rather than a primary scientific result. Internal routing labels, plugin names and developer diagnostics are removed from user-facing prose. The current manuscript therefore reports implemented behavior and test coverage but does not claim a single overall accuracy value. Targeted limitations, including title-level literature retrieval in some cases and incomplete disease-qualified searches, remain disclosed.
+
+\subsection{Verification and snapshot policy}
+
+Database counts were verified on 31 July 2026 using read-only Neo4j queries, live PHP APIs and repository checks. A biological relation was counted once in its stored direction. The alternative undirected traversal count was rejected because it counted each stored directed relation twice. API contracts, runtime database configuration, graph rendering, taxonomy truth, co-expression catalogue parity and Agent/DeepThink behavior were checked with the repository's automated and browser-oriented regression scripts. Environment-specific response times were not used as biological or performance claims.
+
