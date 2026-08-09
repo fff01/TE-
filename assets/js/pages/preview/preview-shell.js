@@ -189,6 +189,10 @@
   function toggleOverlay() {
     if (stage.classList.contains('is-immersive')) return;
     drawerOpen = !drawerOpen;
+    if (drawerOpen) {
+      positionFabBesideDrawer();
+      updateFabPosition();
+    }
     applyOverlayState();
   }
 

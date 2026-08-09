@@ -345,31 +345,95 @@
         }
 
         .sequence-code-wrap {
-  width: fit-content;
-  min-width: min(100%, 520px);
-  max-width: min(100%, 1120px);
-  max-height: 360px;
-  border: 1px solid #dbe6f4;
-  border-radius: 10px;
-  background: #f9fbff;
-  overflow-x: auto;
-  overflow-y: auto;
-  align-self: start;
-}
+          position: relative;
+          width: 100%;
+          max-height: 360px;
+          border: 1px solid #dbe6f4;
+          border-radius: 10px;
+          background: #f9fbff;
+          overflow: auto;
+          align-self: start;
+        }
+
+        .sequence-copy-button {
+          position: sticky;
+          z-index: 2;
+          top: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          min-width: 78px;
+          min-height: 36px;
+          width: fit-content;
+          margin: 10px 10px -46px auto;
+          padding: 7px 10px;
+          border: 1px solid #cbdaf0;
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.96);
+          color: #214b8d;
+          box-shadow: 0 4px 12px rgba(31, 69, 126, 0.12);
+          cursor: pointer;
+          font: inherit;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .sequence-copy-button:hover,
+        .sequence-copy-button:focus-visible {
+          border-color: #7f9ed7;
+          background: #eef4ff;
+          outline: none;
+        }
+
+        .sequence-copy-button.is-copied {
+          border-color: #8ac49c;
+          background: #edf9f1;
+          color: #286b3e;
+        }
+
+        .sequence-copy-button.is-copy-error {
+          border-color: #e1a3a3;
+          background: #fff2f2;
+          color: #9b3030;
+        }
+
+        .sequence-copy-button svg {
+          width: 17px;
+          height: 17px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+          flex: 0 0 auto;
+        }
+
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
 
         .sequence-code {
-  margin: 0;
-  padding: 16px 18px 20px;
-  width: fit-content;
-  min-width: 100%;
-  box-sizing: border-box;
-  font-family: Consolas, 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre;
-  word-break: normal;
-  color: #183152;
-}
+          margin: 0;
+          padding: 64px 18px 20px;
+          width: 100%;
+          box-sizing: border-box;
+          font-family: Consolas, 'Courier New', monospace;
+          font-size: 13px;
+          line-height: 1.6;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-all;
+          color: #183152;
+        }
 
         .sequence-plot {
           border: 1px solid #dbe6f4;
@@ -426,6 +490,29 @@
           margin: 0;
           font-size: 14px;
           color: #7f91a6;
+        }
+
+        .distribution-feedback {
+          display: inline-flex;
+          align-items: center;
+          justify-self: start;
+          min-height: 34px;
+          margin: -4px 0 0;
+          padding: 7px 12px;
+          border: 1px solid #8cc7a0;
+          border-radius: 8px;
+          background: #edf9f1;
+          color: #286b3e;
+          font-size: 14px;
+          font-weight: 700;
+          opacity: 0;
+          transform: translateY(-4px);
+          transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        .distribution-feedback.is-visible {
+          opacity: 1;
+          transform: translateY(0);
         }
 
         .distribution-karyotype svg {
@@ -514,6 +601,13 @@
         .jbrowse-hit-picker {
           min-width: min(420px, 100%);
           flex: 1 1 420px;
+          border-radius: 12px;
+          transition: box-shadow 0.22s ease, background-color 0.22s ease;
+        }
+
+        .jbrowse-hit-picker.is-hit-updated {
+          background: #edf9f1;
+          box-shadow: 0 0 0 4px rgba(67, 151, 93, 0.2);
         }
 
         .jbrowse-hit-picker-head {
@@ -535,15 +629,23 @@
         }
 
         .jbrowse-hit-restore {
-          border: 1px solid #cfe0fb;
-          background: #eef4ff;
-          color: #214b8d;
-          border-radius: 999px;
-          padding: 7px 12px;
-          font-size: 12px;
+          min-height: 40px;
+          padding: 0 16px;
+          border: 1px solid #d6e2f5;
+          border-radius: 6px;
+          background: #ffffff;
+          color: #31588f;
+          font-size: 13px;
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
+        }
+
+        .jbrowse-hit-restore:hover,
+        .jbrowse-hit-restore:focus-visible {
+          border-color: #79a6ea;
+          background: #f4f7fc;
+          outline: none;
         }
 
         .jbrowse-hit-picker-select {
@@ -610,12 +712,15 @@
         }
 
         #search_jbrowse_linear_genome_view {
-          height: 840px;
+          height: var(--jbrowse-view-height, 360px);
+          min-height: 250px;
           background: transparent;
+          transition: height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .jbrowse-loading {
-          height: 840px;
+          height: 100%;
+          min-height: 250px;
           display: flex;
           align-items: center;
           justify-content: center;

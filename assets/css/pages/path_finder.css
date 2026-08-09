@@ -420,19 +420,70 @@
   background: #ffffff;
 }
 
-.path-evidence summary {
+.path-evidence-toggle {
   display: flex;
+  width: 100%;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
   padding: 11px 13px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   cursor: pointer;
   color: #263f5f;
+  font: inherit;
   font-weight: 800;
+  text-align: left;
 }
 
-.path-evidence summary small {
+.path-evidence-toggle:hover,
+.path-evidence-toggle:focus-visible {
+  background: #f5f8fc;
+}
+
+.path-evidence-toggle:focus-visible {
+  outline: 2px solid #3f6bc3;
+  outline-offset: 2px;
+}
+
+.path-evidence-toggle-meta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.path-evidence-toggle small {
   color: #71849e;
   font-weight: 700;
+}
+
+.path-evidence-toggle-icon {
+  width: 1em;
+  color: #48658a;
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+}
+
+.path-evidence-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: grid-template-rows 240ms ease, opacity 180ms ease, transform 240ms ease;
+}
+
+.path-evidence.is-open .path-evidence-collapse {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.path-evidence-collapse-inner {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .path-evidence-body {
@@ -442,6 +493,12 @@
   color: #4f6480;
   font-size: 13px;
   line-height: 1.65;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-evidence-collapse {
+    transition-duration: 1ms;
+  }
 }
 
 .path-no-pmid {

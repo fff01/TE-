@@ -73,9 +73,9 @@ Compact routing reference for LLM planners. Plugin names below are exact default
 - **evidence boundary:** Classification context only. A taxonomy path does not support mechanistic or causal claims.
 
 ### Expression Plugin
-- **purpose:** Retrieve TE expression profiles and top tissue, cell, or dataset contexts.
+- **purpose:** Retrieve TE expression profiles and explicitly separated highest contexts by median expression and by maximum observed expression.
 - **use when:** The question asks about expression, tissue, cell line, transcriptome, or expression context.
-- **do not use as:** Proof of absent expression when runtime access fails, or a substitute for the full expression page.
+- **do not use as:** Proof of absent expression when runtime access fails, a substitute for the full expression page, or an unlabelled mixture of median-ranked and maximum-ranked contexts.
 - **requires:** TE entity from normalized entities or Graph Plugin fallback; expression runtime and MySQL.
 - **evidence boundary:** Returned profiles summarize available runtime data. `partial`, `empty`, or connection errors are system states, not biological negatives.
 

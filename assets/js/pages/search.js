@@ -9,6 +9,76 @@
         })();
 
 (function () {
+        const copyButton = document.getElementById('search-sequence-copy');
+        const sequence = document.querySelector('.sequence-code[data-raw-sequence]');
+        const status = document.getElementById('search-sequence-copy-status');
+        const label = copyButton ? copyButton.querySelector('[data-copy-label]') : null;
+        let resetTimer = 0;
+
+        if (!copyButton || !sequence) {
+          return;
+        }
+
+        function fallbackCopy(text) {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          const copied = document.execCommand('copy');
+          textarea.remove();
+          if (!copied) {
+            throw new Error('Clipboard copy was rejected');
+          }
+        }
+
+        async function copyRawSequence() {
+          const rawSequence = String(sequence.dataset.rawSequence || sequence.textContent || '').replace(/\s+/g, '');
+          if (!rawSequence) {
+            throw new Error('No sequence is available to copy');
+          }
+          if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            await navigator.clipboard.writeText(rawSequence);
+            return;
+          }
+          fallbackCopy(rawSequence);
+        }
+
+        function setCopyState(message, className) {
+          window.clearTimeout(resetTimer);
+          copyButton.classList.remove('is-copied', 'is-copy-error');
+          if (className) {
+            copyButton.classList.add(className);
+          }
+          if (label) {
+            label.textContent = message;
+          }
+          if (status) {
+            status.textContent = message === 'Copied' ? 'Complete sequence copied.' : message;
+          }
+          resetTimer = window.setTimeout(function () {
+            copyButton.classList.remove('is-copied', 'is-copy-error');
+            if (label) {
+              label.textContent = 'Copy';
+            }
+          }, 1800);
+        }
+
+        copyButton.addEventListener('click', function () {
+          copyRawSequence()
+            .then(function () {
+              setCopyState('Copied', 'is-copied');
+            })
+            .catch(function (error) {
+              console.error(error);
+              setCopyState('Copy failed', 'is-copy-error');
+            });
+        });
+      }());
+
+(function () {
         const panel = document.getElementById('search-karyotype-panel');
         const view = document.getElementById('search-karyotype-view');
         const status = document.getElementById('search-karyotype-status');
@@ -54,7 +124,9 @@
         const hitSelect = document.getElementById('searchJBrowseHitSelect');
         const restoreHitsBtn = document.getElementById('searchJBrowseRestoreHits');
         const hitScopeEl = document.getElementById('searchJBrowseHitScope');
+        const hitPickerEl = hitSelect ? hitSelect.closest('.jbrowse-hit-picker') : null;
         const karyotypeView = document.getElementById('search-karyotype-view');
+        const karyotypeFeedbackEl = document.getElementById('search-karyotype-feedback');
         const repeatCountEl = document.getElementById('searchJBrowseRepeatCount');
         const refseqCountEl = document.getElementById('searchJBrowseRefseqCount');
         const defaultLocEl = document.getElementById('searchJBrowseDefaultLoc');
@@ -71,6 +143,14 @@
         const { React, createRoot, createViewState, JBrowseLinearGenomeView } = window.JBrowseReactLinearGenomeView;
         const root = createRoot(mount);
         let runtimeConfig = null;
+        let feedbackTimer = 0;
+        const browserHeightBounds = { min: 250, max: 780 };
+        const trackHeightEstimates = {
+          repeats_hg38: 170,
+          ncbi_refseq_window: 150,
+          clinvar_variants: 110,
+          clinvar_cnv: 110,
+        };
 
         function hitKeyFromParts(chrom, start, end) {
           const safeChrom = String(chrom || '').trim();
@@ -112,6 +192,45 @@
           return controls.filter(input => input.checked).map(input => input.dataset.trackId);
         }
 
+        function clampGenomeBrowserHeight(value) {
+          return Math.max(browserHeightBounds.min, Math.min(browserHeightBounds.max, Math.round(value)));
+        }
+
+        function estimateGenomeBrowserHeight(selectedTrackIds) {
+          const selected = Array.isArray(selectedTrackIds) ? selectedTrackIds : [];
+          const trackHeight = selected.reduce(function (total, trackId) {
+            return total + Number(trackHeightEstimates[trackId] || 120);
+          }, 0);
+          return clampGenomeBrowserHeight(170 + trackHeight);
+        }
+
+        function applyGenomeBrowserHeight(height) {
+          const normalized = clampGenomeBrowserHeight(height);
+          mount.style.setProperty('--jbrowse-view-height', `${normalized}px`);
+          mount.dataset.browserHeight = String(normalized);
+          return normalized;
+        }
+
+        function syncGenomeBrowserHeight(allowMeasurement) {
+          const estimated = estimateGenomeBrowserHeight(getSelectedTrackIds());
+          const applied = applyGenomeBrowserHeight(estimated);
+          if (!allowMeasurement) {
+            return applied;
+          }
+          const content = mount.firstElementChild;
+          if (!content) {
+            return applied;
+          }
+          const measured = Math.max(content.scrollHeight || 0, Math.ceil(content.getBoundingClientRect().height || 0));
+          if (!Number.isFinite(measured) || measured < browserHeightBounds.min || measured > browserHeightBounds.max) {
+            return applied;
+          }
+          if (Math.abs(measured - applied) < 24) {
+            return applied;
+          }
+          return applyGenomeBrowserHeight(measured);
+        }
+
         function getSelectedHitParams() {
           const option = hitSelect && hitSelect.selectedOptions.length ? hitSelect.selectedOptions[0] : null;
           return {
@@ -130,6 +249,33 @@
           if (restoreHitsBtn) {
             restoreHitsBtn.hidden = !showRestore;
           }
+        }
+
+        function showGenomicHitUpdated() {
+          window.clearTimeout(feedbackTimer);
+          if (karyotypeFeedbackEl) {
+            karyotypeFeedbackEl.textContent = 'Genomic hit updated';
+            karyotypeFeedbackEl.hidden = false;
+            window.requestAnimationFrame(function () {
+              karyotypeFeedbackEl.classList.add('is-visible');
+            });
+          }
+          if (hitPickerEl) {
+            hitPickerEl.classList.add('is-hit-updated');
+          }
+          feedbackTimer = window.setTimeout(function () {
+            if (karyotypeFeedbackEl) {
+              karyotypeFeedbackEl.classList.remove('is-visible');
+              window.setTimeout(function () {
+                if (!karyotypeFeedbackEl.classList.contains('is-visible')) {
+                  karyotypeFeedbackEl.hidden = true;
+                }
+              }, 200);
+            }
+            if (hitPickerEl) {
+              hitPickerEl.classList.remove('is-hit-updated');
+            }
+          }, 2400);
         }
 
         function renderHitOptions(options, preferredKey) {
@@ -198,6 +344,7 @@
             return;
           }
           const selectedTrackIds = getSelectedTrackIds();
+          syncGenomeBrowserHeight(false);
           const trackConfigs = [
             {
               type: 'FeatureTrack',
@@ -275,6 +422,12 @@
             },
           });
           root.render(React.createElement(JBrowseLinearGenomeView, { viewState: state }));
+          window.requestAnimationFrame(function () {
+            syncGenomeBrowserHeight(true);
+          });
+          window.setTimeout(function () {
+            syncGenomeBrowserHeight(true);
+          }, 160);
         }
 
         function applyConfig(config) {
@@ -328,10 +481,14 @@
           renderHitOptions(filteredHitOptions, '');
           setHitScope(`Showing ${filteredHitOptions.length} hit${filteredHitOptions.length === 1 ? '' : 's'} in ${key}`, true);
           loadConfig(buildConfigUrl());
+          showGenomicHitUpdated();
         }
 
         controls.forEach(input => {
-          input.addEventListener('change', renderBrowser);
+          input.addEventListener('change', function () {
+            syncGenomeBrowserHeight(false);
+            renderBrowser();
+          });
         });
         if (hitSelect) {
           hitSelect.addEventListener('change', function () {

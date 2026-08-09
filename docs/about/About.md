@@ -10,15 +10,7 @@ TE-KG is a human transposable element resource that connects classification, lit
 
 - TE-KG brings complementary views of human transposable elements into one interface instead of treating each dataset as an isolated table.
 - The resource combines a TE catalog, entity detail pages, literature-derived relationship graphs, classification views, expression and co-expression exploration, and downloadable data.
-- Representative sequence and genomic records describe supported references or annotations; they do not represent every genomic copy of a TE.
 - The central goal is to make TE-related information explorable while keeping source evidence and interpretation limits visible.
-
-### What this guide covers
-
-- The guide explains what each public page is designed to answer.
-- It describes the main controls on each page and the order in which users should use them.
-- It separates TE lookup, entity detail, graph and path exploration, expression and co-expression analysis, natural-language assistance, and data download workflows.
-- It also explains the main evidence boundaries so users can distinguish database observations from biological conclusions.
 
 ### Data access routes
 
@@ -28,14 +20,6 @@ TE-KG is a human transposable element resource that connects classification, lit
 - Use Expression for abundance patterns across the supported expression datasets.
 - Use Agent or DeepThink for evidence-grounded natural-language questions and follow-up questions within the current conversation.
 - Use Download when you need the files currently made available through the site.
-
-### Evidence principles
-
-- Relation-level claims should be checked against supporting papers when available; an observed association does not by itself establish causation.
-- A graph path shows connections stored in the database, not necessarily a biological pathway or mechanism.
-- Co-expression indicates context-specific correlation and does not by itself demonstrate regulation.
-- PMID, title, year, journal, IF, and JCR are descriptive evidence metadata, not interchangeable confidence scores; missing values should remain missing.
-- Counts shown by the TE catalog, knowledge graph, taxonomy, and co-expression catalog use different units and should not be compared as if they measured the same population.
 
 **Static image specification: `about-resource-overview.png`**
 
@@ -56,7 +40,6 @@ Home is the orientation layer for TE-KG. It introduces the resource, summarizes 
 ### What the page contains
 
 - The Overview area summarizes the purpose and scope of TE-KG.
-- Dataset Status reports live read-only statistics from the current knowledge graph rather than fixed numbers in the page source.
 - The donut charts separate entity composition, TE classification, and relation predicate composition.
 - Quick Links provide direct entry points into the main lookup, graph, expression, download, and help workflows.
 
@@ -66,12 +49,6 @@ Home is the orientation layer for TE-KG. It introduces the resource, summarizes 
 - TE Classification can switch classification level, so the chart can move from broad classes to more specific taxonomy levels.
 - Relation Composition uses detailed predicate-level statistics, making frequent relation types visible without collapsing them into vague labels.
 - If live statistics cannot load, the page shows a fallback instead of inventing or guessing values.
-
-### Recommended workflow
-
-- Start here when you need a quick sense of what the database currently contains.
-- Move to Browse when you want to scan TE records, Search when you need a detailed entity record, or Path Finder when you want a focused connection.
-- Open Graph for visual knowledge, classification, or co-expression exploration, and use Agent when a question is easier to express in natural language.
 
 **Static image specification: `about-home-overview.png`**
 
@@ -87,57 +64,43 @@ The annotation must not suggest that chart segment sizes across different charts
 
 ## 3. Browse
 
-Browse is the table-first TE catalog. It is designed for scanning and filtering TE records before opening a selected TE in the detailed Search view.
+Browse provides the complete workflow for finding and reviewing TE records. The catalog table, classification filters, built-in search, and detailed content for a selected TE all belong to Browse.
 
-### What the page is for
+### Browse the catalog
 
-- Use Browse when you want a catalog-style view of TE records rather than a graph-first exploration.
+- Use Browse when you want a catalog-style view of TE records rather than graph-first exploration.
 - The table presents TE name, class, family, subtype, and description for side-by-side comparison.
 - The catalog supports pagination so large result sets remain easy to scan.
-- Select a TE name from the table when you are ready to inspect its detailed Search record.
+- Select a TE name from the table to review the information available for that record.
 
-### Using the selector
+### Filter and search
 
 - Use the class, family, and subtype controls to narrow the catalog by TE classification.
-- Type a TE name or prefix in the search field, then choose a database-backed suggestion when one is available.
+- Use the search field built into Browse to enter a TE name or prefix, then choose a database-backed suggestion when one is available.
 - Combine text search with classification filters to reduce a broad result set.
 - Clear one or more conditions when no records match the current filter combination.
+
+### Review a selected TE
+
+- The Summary panel identifies the selected record and presents its available metadata.
+- Local Graph shows nearby entities and relations without leaving the Browse workflow.
+- Sequence displays a supported representative or consensus sequence and its available annotation, not every genomic TE copy.
+- Genome Annotation Distribution summarizes supported hits across the displayed assembly, while Genome Browser provides locus-level inspection.
+- Not every TE has the same panels; Browse only shows the information available for the selected record.
 
 ### Data interpretation
 
 - Browse is a TE catalog, so its row count is not the same as the number of TE nodes, taxonomy leaves, or co-expression features shown elsewhere.
 - Class, family, and subtype values describe the catalog lineage associated with each displayed record.
-- Browse is optimized for discovery and comparison; use Search, Graph, or Path Finder when detailed records or relation evidence matter.
+- Sequence and genome panels may come from different reference or annotation layers and should be interpreted using their displayed labels.
+- A Local Graph relation is a database-supported association; review its source evidence before treating it as a biological mechanism.
+- Use Graph or Path Finder when relation-level exploration matters.
 
 **Animated image specification: `about-browse-selector.gif`**
 
-Record a 10-12 second desktop demonstration. Start on an unfiltered Browse table. Open the Class filter and select `Retrotransposons`, select `Non LTR Retrotransposons (LINEs)` under Family, type `L1HS` in the TE search field, choose the database suggestion, and show the filtered row count. Click the L1HS row and finish when its Search detail page is visibly loaded. Keep the pointer visible and pause for about one second after each result update. The animation must demonstrate the handoff from catalog discovery to entity detail; it must not imply that Browse searches diseases or functions.
+Record a 10-12 second desktop demonstration. Start on an unfiltered Browse table. Open the Class filter and select `Retrotransposons`, select `Non LTR Retrotransposons (LINEs)` under Family, type `L1HS` in the built-in TE search field, choose the database suggestion, and show the filtered row count. Click the L1HS row and finish when the selected record is visibly loaded. Keep the pointer visible and pause for about one second after each result update. The animation must demonstrate a continuous Browse workflow from catalog filtering to record review; it must not imply that Browse searches diseases or functions.
 
-## 4. Search and Entity Detail
-
-Search opens a detailed record for a TE or another supported entity. Available panels depend on the selected entity and may include a summary, local graph, representative sequence, genome annotation, and genome browser.
-
-### Finding a record
-
-- Search for a TE, disease, function, or PMID, or arrive from a linked TE name in Browse.
-- Choose a database-backed suggestion when several names are possible so the entity type remains clear.
-- The summary identifies the selected record and provides the metadata available for that entity type.
-- Not every panel appears for every entity; the page only shows detail views supported by the selected record.
-
-### Reading TE detail
-
-- Use Local Graph to inspect nearby entities and relations without leaving the detail page.
-- Sequence displays a supported representative or consensus sequence and its available annotation, not every genomic TE copy.
-- Genome Annotation Distribution summarizes supported hits across the displayed assembly, while Genome Browser provides locus-level inspection.
-- Use the page navigation to move directly to an available panel in a long record.
-
-### Interpretation boundaries
-
-- A missing panel means that the corresponding record is not available for the selected entity in the current resource.
-- Sequence and genome panels may come from different reference or annotation layers and should be interpreted using their displayed labels.
-- A local graph relation is a database-supported association; review its source evidence before treating it as a biological mechanism.
-
-**Static image specification: `about-search-l1hs-detail.png`**
+**Static image specification: `about-browse-l1hs-record.png`**
 
 Use a full-page or vertically stitched L1HS detail capture. Keep Summary, Local Graph, Sequence, Genome Annotation Distribution, and Genome Browser recognizable. Add these English callouts to the specified regions:
 
@@ -147,7 +110,7 @@ Use a full-page or vertically stitched L1HS detail capture. Keep Summary, Local 
 - `Review the assembly and total annotation hits` on the distribution metadata.
 - `Inspect supported loci in genomic context` on Genome Browser.
 
-Do not annotate an unavailable panel as if it appears for all entity types.
+Do not annotate an unavailable panel as if it appears for every TE record.
 
 ## 5. Path Finder
 

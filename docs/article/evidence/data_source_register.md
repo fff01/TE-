@@ -1,16 +1,19 @@
 # TE-KG Data Source Register
 
-Last reviewed: 2026-08-01
+Last reviewed: 2026-08-03
 
 This register separates source identity from the local runtime destination. A
 source is not manuscript-ready until its release/version, acquisition date,
 licence, primary citation, transformation, and runtime role are documented.
+This is the canonical entry point for unresolved data-source, provenance,
+processing, and release requirements. The QA audits provide supporting detail
+but should not be treated as separate source-of-truth checklists.
 
 | source | scientific role | local evidence | runtime destination | version/date status | licence status | manuscript status |
 | --- | --- | --- | --- | --- | --- | --- |
 | PubMed | Human TE literature discovery and paper metadata | `docs/method_english.docx`; 2,308 `Paper` nodes | Neo4j `tekg3` | Search reported through 2026-04-13; query recorded; intermediate counts inconsistent | NCBI terms still to record | Partial |
 | RMSK/UCSC-style repeat table | Repeat names, classes, families, strands, and genomic coordinates | `data/rmsk.txt` | Neo4j graph and genome lookup assets | `AUTHOR_INPUT_NEEDED`: exact assembly/table release and acquisition date | `AUTHOR_INPUT_NEEDED` | Partial |
-| RepBase-derived TE records | TE names, aliases, descriptions, classification, references, and consensus/reference sequences | `data/raw/TE_Repbase.txt` | Browse/sequence/taxonomy build products and runtime stores | `AUTHOR_INPUT_NEEDED`: exact RepBase release and acquisition date | Redistribution conditions must be confirmed | Partial |
+| RepBase-derived TE records | TE names, aliases, descriptions, classification, references, and consensus/reference sequences | `data/raw/TE_Repbase.txt` | Browse/sequence/taxonomy build products and runtime stores | Local file contains 526 records and is dated 2026-03-21; exact full-dataset RepBase release and confirmed acquisition date remain unknown | Redistribution conditions for the acquired snapshot must be confirmed | Partial |
 | ICD-11 | Disease taxonomy reference | disease classification code/import history; architecture overview | Neo4j `DiseaseCategory` hierarchy | `AUTHOR_INPUT_NEEDED`: release identifier and access date | `AUTHOR_INPUT_NEEDED` | Partial |
 | E-MTAB-1733 | Normal-tissue RNA-seq source component | normal-tissue matrix and metadata | MySQL expression summaries; co-expression inputs | Accession verified; local preprocessing release incomplete | Repository reuse terms to record | Partial |
 | E-MTAB-2836 | Normal-tissue RNA-seq source component | normal-tissue matrix and metadata | MySQL expression summaries; co-expression inputs | Accession verified; local preprocessing release incomplete | Repository reuse terms to record | Partial |
@@ -33,6 +36,19 @@ RMSK-derived records answer where repeat occurrences are annotated in the human
 genome. RepBase-derived records answer TE identity, classification, description,
 alias, and representative-sequence questions. The manuscript must not describe
 these as interchangeable sources.
+
+The team reported the following RepBase browser/export URL as the source route:
+
+`https://www.girinst.org/repbase/update/browse.php?type=Transposable+Element&format=EMBL&autonomous=on&nonautonomous=on&simple=on&division=Homo+sapiens&letter=A`
+
+This URL records the organism, record-type, and EMBL-format filters, but it does
+not identify a fixed RepBase release. It also contains `letter=A`, whereas the
+local file includes records such as `L1HS` and `SVA_F`; the procedure used to
+produce the complete 526-record local file therefore still requires author or
+data-provider confirmation. Entry-level `DT` fields are not a substitute for
+the release of the complete export. For example, the local `L1HS` record was
+created in release 5.05 in 2000 and last updated in release 10.01, version 3, in
+2006. These dates describe that record, not the full local dataset.
 
 ### Expression accessions
 
@@ -67,5 +83,55 @@ single primary paper is assigned as its complete provenance.
 4. complete expression preprocessing manifest, including reference genome,
    annotation release, software versions, normalization, and sample exclusion;
 5. the exact SRP013565 experiments included as normal primary cells;
-6. durable public release destinations and licences for TE-KG outputs.
+6. accession-to-local-sample mappings for all three expression matrices, with
+   duplicated identifiers and the five unmatched normal-tissue runs resolved
+   or explicitly excluded;
+7. the exact PubMed query, intermediate screening counts, extraction endpoint
+   or model version, and recoverable manual-audit sample decisions;
+8. the HGNC or other gene-reference version, feature-filtering rules, package
+   versions, and preserved sensitivity outputs used for co-expression;
+9. durable public release destinations and file-level licences for TE-KG
+   outputs; and
+10. a stable, free, login-free Database URL and a documented maintenance and
+    update plan.
 
+## Release Package Completion Gate
+
+The final data release must include all of the following. These requirements
+apply to the graph, taxonomy, expression, co-expression, literature-derived,
+download, and figure-source artifacts as relevant.
+
+- a release name, version, and date;
+- stable filenames, formats, byte sizes, and SHA-256 checksums;
+- upstream source, source version or accession, acquisition date, and primary
+  citation;
+- transformation script or command, parameters, software and package versions,
+  and input-to-output mapping;
+- file-level licence and redistribution status;
+- stable TE identifiers and cross-layer name mappings;
+- a sample-level expression manifest recording source accession, local sample
+  identifier, biological context, inclusion or exclusion decision, and reason;
+- complete offline co-expression outputs, the approved display subset, and the
+  catalogue/parameter version linking the two;
+- literature query strings, retained PMIDs, derived relation tables, and manual
+  audit decisions without redistributing restricted full text;
+- frozen source tables for manuscript figures and Table 1;
+- a versioned code archive and a versioned data archive with permanent
+  identifiers; and
+- repository metadata, public access testing, and the maintenance/update plan.
+
+## Responsibility Split
+
+The following items require confirmation from the data provider or authors and
+must not be inferred from local file timestamps alone:
+
+- the RepBase release, export procedure, acquisition date, and applicable reuse
+  terms;
+- the RMSK/UCSC source table release and acquisition details;
+- expression-sample selection and exclusion decisions, especially the exact
+  SRP013565 subset; and
+- the final public repository, licence, and maintenance commitments.
+
+Checksums, runtime counts, file inventories, current transformation scripts,
+and many software versions can be generated or recovered from the repository
+once the upstream identities and release scope are fixed.

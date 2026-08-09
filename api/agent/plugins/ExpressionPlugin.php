@@ -40,7 +40,7 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
 
         foreach ($teNames as $teName) {
             try {
-                $bundle = tekg_expression_fetch_detail_bundle($teName, 'median', 'default', 'box');
+                $bundle = tekg_expression_fetch_detail_bundle($teName, 'median', 'high_to_low', 'box');
                 if (!is_array($bundle)) {
                     continue;
                 }
@@ -48,16 +48,32 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
                 $datasetSummaries = [];
                 foreach (($bundle['datasets'] ?? []) as $datasetKey => $dataset) {
                     $contexts = is_array($dataset['contexts'] ?? null) ? $dataset['contexts'] : [];
-                    $topContext = $contexts[0] ?? null;
-                    if (!$topContext) {
+                    $topMedianContext = $contexts[0] ?? null;
+                    if (!$topMedianContext) {
                         continue;
                     }
+                    $topMaxContext = $topMedianContext;
+                    foreach ($contexts as $candidate) {
+                        $candidateMax = is_numeric($candidate['max_value'] ?? null) ? (float)$candidate['max_value'] : null;
+                        $currentMax = is_numeric($topMaxContext['max_value'] ?? null) ? (float)$topMaxContext['max_value'] : null;
+                        if ($candidateMax !== null && ($currentMax === null || $candidateMax > $currentMax)) {
+                            $topMaxContext = $candidate;
+                        }
+                    }
+
+                    $topMedianName = (string)($topMedianContext['context_full_name'] ?? $topMedianContext['context_label'] ?? '');
+                    $topMaxName = (string)($topMaxContext['context_full_name'] ?? $topMaxContext['context_label'] ?? '');
                     $datasetSummaries[] = [
                         'dataset_key' => $datasetKey,
                         'dataset_label' => (string)(($dataset['summary']['dataset_label'] ?? '') ?: $datasetKey),
-                        'top_context' => (string)($topContext['context_full_name'] ?? $topContext['context_label'] ?? ''),
-                        'median_of_median' => $topContext['median_value'] ?? null,
-                        'max_of_max' => $topContext['max_value'] ?? null,
+                        'ranking_metric' => 'median',
+                        'top_context' => $topMedianName,
+                        'median_of_median' => $topMedianContext['median_value'] ?? null,
+                        'max_of_max' => $topMaxContext['max_value'] ?? null,
+                        'top_median_context' => $topMedianName,
+                        'top_median_value' => $topMedianContext['median_value'] ?? null,
+                        'top_max_context' => $topMaxName,
+                        'top_max_value' => $topMaxContext['max_value'] ?? null,
                     ];
                 }
 
@@ -73,19 +89,25 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
                 foreach ($datasetSummaries as $summary) {
                     $evidence[] = tekg_agent_make_evidence_item(
                         $this->getName(),
-                        $teName . ' has a top expression context in ' . $summary['dataset_key'] . ': ' . $summary['top_context'] . '.',
+                        $teName . ' has its highest median expression in ' . $summary['dataset_key'] . ' at ' . $summary['top_median_context']
+                            . '; its highest maximum observed expression is at ' . $summary['top_max_context'] . '.',
                         $teName,
                         'medium',
                         [
                             'dataset_key' => $summary['dataset_key'],
                             'dataset_label' => $summary['dataset_label'],
+                            'ranking_metric' => $summary['ranking_metric'],
                             'top_context' => $summary['top_context'],
                             'median_of_median' => $summary['median_of_median'],
                             'max_of_max' => $summary['max_of_max'],
+                            'top_median_context' => $summary['top_median_context'],
+                            'top_median_value' => $summary['top_median_value'],
+                            'top_max_context' => $summary['top_max_context'],
+                            'top_max_value' => $summary['top_max_value'],
                         ],
                         [
                             'title' => $teName,
-                            'meta' => $summary['dataset_label'] . ' | ' . $summary['top_context'],
+                            'meta' => $summary['dataset_label'] . ' | Median: ' . $summary['top_median_context'] . ' | Max: ' . $summary['top_max_context'],
                         ],
                         [
                             'evidence_type' => 'profile_summary',
@@ -100,7 +122,7 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
                 $primary = $datasetSummaries[0];
                 $previewItems[] = [
                     'title' => $teName,
-                    'meta' => $primary['dataset_label'] . ' | ' . $primary['top_context'],
+                    'meta' => $primary['dataset_label'] . ' | Median: ' . $primary['top_median_context'] . ' | Max: ' . $primary['top_max_context'],
                 ];
             } catch (Throwable $error) {
                 $errors[] = $teName . ': ' . $error->getMessage();
@@ -109,7 +131,7 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
 
         $displaySummary = $results === []
             ? 'The expression database did not add useful context in this round.'
-            : 'I also checked the expression datasets and captured the top contexts for the recognized TEs.';
+            : 'I also checked the expression datasets and captured the highest contexts by median and maximum observed expression for the recognized TEs.';
         if ($results === [] && $errors !== []) {
             $displaySummary = 'The expression lookup hit a system error and did not produce usable expression evidence.';
         }
@@ -160,7 +182,7 @@ final class TekgAgentExpressionPlugin implements TekgAgentPluginInterface
         return [
             'plugin_name' => $this->getName(),
             'status' => tekg_agent_plugin_status($results !== [], $errors),
-            'query_summary' => 'Summarized expression datasets and top contexts for the recognized TE entities.',
+            'query_summary' => 'Summarized expression datasets and the highest contexts by median and maximum observed expression for the recognized TE entities.',
             'results' => $results,
             'display_label' => 'Summarized ' . count($results) . ' expression profiles',
             'display_summary' => $displaySummary,

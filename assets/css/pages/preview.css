@@ -1402,6 +1402,13 @@
           user-select: none;
         }
 
+        .preview-deepthink-messages,
+        .preview-deepthink-messages *,
+        .preview-side-dt-root textarea,
+        .preview-side-dt-root input {
+          user-select: text;
+        }
+
         .preview-side-dt-root.side-dt .qa-fab {
           position: absolute;
         }

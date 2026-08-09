@@ -30,10 +30,25 @@ Main runtime pages include:
 - `agent.php`: Agent and DeepThink entrypoint.
 - `about.php`: help/about page.
 
-Path offers Table and G6 Graph views. Its compact Graph toolbar keeps
-node names visible, exposes relation-label control, and exports the current
-visible path graph as CSV, PNG, or SVG. These command controls share the 6px
-corner treatment used by the main Graph toolbar.
+Path offers Table and G6 Graph views with a default depth of three and a
+supported maximum of ten hops. Every Table result, including a direct
+relationship, shows the compact endpoint-and-relation strip. Relationship
+literature sections start collapsed and use animated disclosure controls. The
+Graph view reuses the Knowledge Graph floating edge card for relation and
+PubMed inspection while keeping node Jump/Expand actions disabled. Its compact
+toolbar keeps node names visible, exposes relation-label control, and exports
+the current visible path graph as CSV, PNG, or SVG. These command controls
+share the 6px corner treatment used by the main Graph toolbar.
+
+Path results exclude routes that revisit an entity. Higher-depth retrieval
+first resolves the shortest depth, then collects bounded exact-depth samples
+under a 15-second request-wide Neo4j budget; this avoids enumerating every
+possible trail before applying the 25-result cap. When the shortest route is
+deeper than three hops, Path returns that resolved shortest route directly.
+Otherwise, supplemental alternatives are enumerated only through hop three.
+Bounded responses expose and display `searched_through_hop`. Connected
+autocomplete uses all shortest paths within the selected depth, so its displayed
+count is explicitly labeled `SHORTEST PATH(S)` rather than total paths.
 
 Do not move root runtime pages merely for cleanup.
 

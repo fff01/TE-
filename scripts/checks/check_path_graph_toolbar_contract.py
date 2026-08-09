@@ -25,7 +25,8 @@ for option_id, label in (
 
 assert "g6-svg-export.js" in page, "Path page must load the shared SVG serializer"
 assert "showAllLabels: true" in script, "Path graph names must remain visible"
-assert "allowInspectCard: false" in script, "Removed Path detail footer must not leave dead detail actions"
+assert "allowInspectCard: true" in script, "Path graph edges must use the shared inspect card"
+assert "allowNodeActions: false" in script, "Path graph must keep node Jump/Expand actions disabled"
 assert "exportSvgString" in script, "Path SVG export handler is missing"
 assert "getVisibleSubgraph" in script, "Path CSV export must use the visible graph"
 assert ".path-command-control" in path_css and "border-radius: 6px" in path_css

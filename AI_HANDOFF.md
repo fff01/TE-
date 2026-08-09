@@ -75,7 +75,15 @@ migration plan and verification.
 - Expression Keyword autocomplete comes from `api/expression_catalog.php` and
   is intentionally independent of the Neo4j taxonomy autocomplete.
 - Path has compact Table / Graph controls, relation-label control, and CSV,
-  PNG, and SVG graph exports.
+  PNG, and SVG graph exports. It defaults to three hops and supports up to ten.
+  Direct and multi-hop results both show compact path strips; relationship
+  evidence starts collapsed with an animated disclosure, and Graph edges reuse
+  the shared floating evidence card. Returned routes cannot revisit an entity;
+  higher-depth traversal is bounded by a 15-second request-wide query budget,
+  and autocomplete labels its safety-oriented count as shortest paths. If the
+  resolved shortest route is deeper than three hops, Path returns that route;
+  otherwise supplemental alternatives are enumerated only through hop three.
+  Truncated status copy reports the actual `searched_through_hop` boundary.
 - Browse, Expression, Path, Download, and About no longer show the former
   introductory paragraph and breadcrumb block. Their page titles use a common
   64px gap before the main content.

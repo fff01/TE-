@@ -1,6 +1,15 @@
 <?php
 declare(strict_types=1);
 
+const PATH_FINDER_MAX_DEPTH = 10;
+const PATH_FINDER_QUERY_BUDGET_SECONDS = 15;
+const PATH_FINDER_PER_DEPTH_TIMEOUT_SECONDS = 5;
+
+function path_finder_clamp_depth(int $depth): int
+{
+    return max(1, min(PATH_FINDER_MAX_DEPTH, $depth));
+}
+
 function path_finder_entity_type_options(): array
 {
     return ['TE', 'Disease', 'Function', 'Gene', 'Protein', 'RNA', 'Mutation', 'Pharmaceutical', 'Toxin', 'Lipid', 'Peptide', 'Carbohydrate'];
@@ -35,7 +44,7 @@ final class PathFinderService
         $targetQuery = trim($targetQuery);
         $sourceType = path_finder_normalize_entity_type($sourceType);
         $targetType = path_finder_normalize_entity_type($targetType);
-        $maxDepth = max(1, min(3, $maxDepth));
+        $maxDepth = path_finder_clamp_depth($maxDepth);
 
         if ($sourceQuery === '' || $targetQuery === '') {
             return [
@@ -65,7 +74,8 @@ final class PathFinderService
             ];
         }
 
-        $paths = $this->loadPaths((string)$source['element_id'], (string)$target['element_id'], $maxDepth);
+        $pathResult = $this->loadPaths((string)$source['element_id'], (string)$target['element_id'], $maxDepth);
+        $paths = $pathResult['paths'];
 
         return [
             'ok' => true,
@@ -78,6 +88,8 @@ final class PathFinderService
             'max_depth' => $maxDepth,
             'path_count' => count($paths),
             'paths' => $paths,
+            'search_truncated' => $pathResult['search_truncated'],
+            'searched_through_hop' => $pathResult['searched_through_hop'],
         ];
     }
 
@@ -158,26 +170,30 @@ CYPHER,
 
         $query = $this->normalizeQuery($query);
         $match = $this->autocompleteMatchConfig($targetType, $query);
-        $depth = max(1, min(3, $maxDepth));
+        $depth = path_finder_clamp_depth($maxDepth);
         $limit = max(1, min(180, $limit));
         $rows = $this->runNeo4j(
             sprintf(
                 <<<'CYPHER'
 MATCH (source)
 WHERE elementId(source) = $source_id
-MATCH p = (source)-[:BIO_RELATION*1..%d]-(candidate)
+MATCH (candidate)
 WHERE elementId(candidate) <> elementId(source)
   AND $target_type IN labels(candidate)
   AND NOT 'Paper' IN labels(candidate)
-  AND ALL(node IN nodes(p) WHERE NOT 'Paper' IN labels(node))
   AND trim(toString(coalesce(candidate.name, ''))) <> ''
-WITH candidate,
-     toLower(trim(toString(candidate.name))) AS lower_name,
-     length(p) AS hop,
-     reduce(path_pmids = [], rel IN relationships(p) | path_pmids + coalesce(rel.pmids, [])) AS path_pmids
+WITH source,
+     candidate,
+     toLower(trim(toString(candidate.name))) AS lower_name
 WHERE $query = ''
    OR any(term IN $terms WHERE lower_name STARTS WITH term)
    OR any(term IN $terms WHERE size(term) >= 3 AND lower_name CONTAINS term)
+MATCH p = allShortestPaths((source)-[:BIO_RELATION*1..%d]-(candidate))
+WHERE ALL(node IN nodes(p) WHERE NOT 'Paper' IN labels(node))
+WITH candidate,
+     lower_name,
+     length(p) AS hop,
+     reduce(path_pmids = [], rel IN relationships(p) | path_pmids + coalesce(rel.pmids, [])) AS path_pmids
 WITH candidate,
      min(CASE
        WHEN lower_name IN $preferred_names THEN 0
@@ -294,13 +310,90 @@ CYPHER,
 
     private function loadPaths(string $sourceId, string $targetId, int $maxDepth): array
     {
-        $depth = max(1, min(3, $maxDepth));
-        $cypher = sprintf(
+        $depth = path_finder_clamp_depth($maxDepth);
+        $deadline = microtime(true) + PATH_FINDER_QUERY_BUDGET_SECONDS;
+        try {
+            $shortestRows = $this->runNeo4j(
+                sprintf(
+                    <<<'CYPHER'
+MATCH (source), (target)
+WHERE elementId(source) = $sourceId AND elementId(target) = $targetId
+MATCH p = shortestPath((source)-[:BIO_RELATION*1..%d]-(target))
+WHERE ALL(node IN nodes(p) WHERE NONE(label IN labels(node) WHERE label = 'Paper'))
+WITH p, nodes(p) AS pathNodes, relationships(p) AS pathRels
+RETURN
+  [node IN pathNodes | {
+    element_id: elementId(node),
+    labels: labels(node),
+    name: node.name,
+    description: node.description,
+    pmid: node.pmid,
+    disease_class: node.disease_class
+  }] AS nodes,
+  [i IN range(0, size(pathRels) - 1) | {
+    source: elementId(pathNodes[i]),
+    target: elementId(pathNodes[i + 1]),
+    relation_type: type(pathRels[i]),
+    relation_label: coalesce(pathRels[i].predicate, type(pathRels[i])),
+    evidence: coalesce(pathRels[i].evidence, ''),
+    pmids: coalesce(pathRels[i].pmids, [])
+  }] AS edges,
+  length(p) AS hop_count,
+  reduce(total = 0, rel IN pathRels | total + size(coalesce(rel.pmids, []))) AS pmid_count
+LIMIT 1
+CYPHER,
+                    $depth
+                ),
+                ['sourceId' => $sourceId, 'targetId' => $targetId],
+                $this->remainingQuerySeconds($deadline)
+            );
+        } catch (RuntimeException $error) {
+            if (stripos($error->getMessage(), 'timed out') !== false) {
+                return [
+                    'paths' => [],
+                    'search_truncated' => true,
+                    'searched_through_hop' => 0,
+                ];
+            }
+            throw $error;
+        }
+        if ($shortestRows === []) {
+            return [
+                'paths' => [],
+                'search_truncated' => false,
+                'searched_through_hop' => $depth,
+            ];
+        }
+
+        $minimumDepth = max(1, (int)($shortestRows[0]['hop_count'] ?? 1));
+        $rows = $minimumDepth > 3 ? $shortestRows : [];
+        $resultLimit = 25;
+        $searchTruncated = $minimumDepth > 3;
+        $searchedThroughHop = $minimumDepth > 3 ? $minimumDepth : max(0, $minimumDepth - 1);
+        $supplementalDepth = min($depth, 3);
+        for ($hop = $minimumDepth; $hop <= $supplementalDepth && count($rows) < $resultLimit; $hop++) {
+            $remainingSeconds = $this->remainingQuerySeconds($deadline);
+            if ($remainingSeconds < 1) {
+                $searchTruncated = true;
+                break;
+            }
+            $remaining = $resultLimit - count($rows);
+            $sampleLimit = min(250, max(50, $remaining * 10));
+            $orderClause = $hop <= 3 ? 'ORDER BY pmid_count DESC, path_key ASC' : '';
+            try {
+                $depthRows = $this->runNeo4j(
+                    sprintf(
             <<<'CYPHER'
 MATCH (source), (target)
 WHERE elementId(source) = $sourceId AND elementId(target) = $targetId
-MATCH p = (source)-[:BIO_RELATION*1..%d]-(target)
+MATCH p = (source)-[:BIO_RELATION*%d..%d]-(target)
 WHERE ALL(node IN nodes(p) WHERE NONE(label IN labels(node) WHERE label = 'Paper'))
+  AND size(nodes(p)) = size(reduce(unique_ids = [], node IN nodes(p) |
+    CASE
+      WHEN elementId(node) IN unique_ids THEN unique_ids
+      ELSE unique_ids + elementId(node)
+    END
+  ))
 WITH p, nodes(p) AS pathNodes, relationships(p) AS pathRels
 WITH p, pathNodes, pathRels,
      reduce(pathKey = '', node IN pathNodes | pathKey + '|' + coalesce(node.name, '')) AS path_key
@@ -323,16 +416,40 @@ RETURN
   }] AS edges,
   length(p) AS hop_count,
   reduce(total = 0, rel IN pathRels | total + size(coalesce(rel.pmids, []))) AS pmid_count
-ORDER BY hop_count ASC, pmid_count DESC, path_key ASC
-LIMIT 25
+%s
+LIMIT %d
 CYPHER,
-            $depth
-        );
+                        $hop,
+                        $hop,
+                        $orderClause,
+                        $sampleLimit
+                    ),
+                    ['sourceId' => $sourceId, 'targetId' => $targetId],
+                    min($remainingSeconds, PATH_FINDER_PER_DEPTH_TIMEOUT_SECONDS)
+                );
+            } catch (RuntimeException $error) {
+                if (stripos($error->getMessage(), 'timed out') !== false) {
+                    $searchTruncated = true;
+                    break;
+                }
+                throw $error;
+            }
+            $rows = array_merge($rows, $depthRows);
+            $searchedThroughHop = $hop;
+            if (count($depthRows) >= $sampleLimit) {
+                $searchTruncated = true;
+            }
+        }
 
-        $rows = $this->runNeo4j($cypher, ['sourceId' => $sourceId, 'targetId' => $targetId]);
-        $evidenceRecordsByPmid = $this->loadEvidenceRecordsByPmids($this->collectPathPmids($rows));
+        if (count($rows) >= $resultLimit || $searchedThroughHop < $depth) {
+            $searchTruncated = true;
+        }
+
+        $evidenceResult = $this->loadEvidenceRecordsByPmids($this->collectPathPmids($rows), $deadline);
+        $evidenceRecordsByPmid = $evidenceResult['records'];
+        $searchTruncated = $searchTruncated || $evidenceResult['truncated'];
         $paths = [];
-        foreach ($rows as $index => $row) {
+        foreach ($rows as $row) {
             $nodes = array_map(fn(array $node): array => $this->normalizeNode($node), (array)($row['nodes'] ?? []));
             $edges = array_map(fn(array $edge): array => $this->normalizeEdge($edge, $evidenceRecordsByPmid), (array)($row['edges'] ?? []));
             $pmids = [];
@@ -341,7 +458,7 @@ CYPHER,
             }
             $pmids = $this->normalizePmids($pmids);
             $paths[] = [
-                'id' => 'path_' . ($index + 1),
+                'id' => '',
                 'hop_count' => (int)($row['hop_count'] ?? count($edges)),
                 'pmid_count' => count($pmids),
                 'pmids' => $pmids,
@@ -365,7 +482,17 @@ CYPHER,
             );
         });
 
-        return $paths;
+        $paths = array_slice($paths, 0, $resultLimit);
+        foreach ($paths as $index => &$path) {
+            $path['id'] = 'path_' . ($index + 1);
+        }
+        unset($path);
+
+        return [
+            'paths' => $paths,
+            'search_truncated' => $searchTruncated,
+            'searched_through_hop' => $searchedThroughHop,
+        ];
     }
 
     private function normalizeNode(array $row): array
@@ -384,7 +511,7 @@ CYPHER,
     private function normalizeConnectedCandidate(array $row): array
     {
         $node = $this->normalizeNode($row);
-        $node['min_hop'] = max(1, min(3, (int)($row['min_hop'] ?? 3)));
+        $node['min_hop'] = path_finder_clamp_depth((int)($row['min_hop'] ?? 3));
         $node['path_count'] = max(0, (int)($row['path_count'] ?? 0));
         $node['pmid_count'] = max(0, (int)($row['pmid_count'] ?? 0));
         return $node;
@@ -421,20 +548,27 @@ CYPHER,
         return array_keys($pmids);
     }
 
-    private function loadEvidenceRecordsByPmids(array $pmids): array
+    private function loadEvidenceRecordsByPmids(array $pmids, float $deadline): array
     {
         $pmids = array_values(array_unique(array_filter(array_map(
             static fn($pmid): string => trim((string)$pmid),
             $pmids
         ))));
         if ($pmids === []) {
-            return [];
+            return ['records' => [], 'truncated' => false];
         }
 
         $records = [];
+        $truncated = false;
         foreach (array_chunk($pmids, 500) as $chunk) {
-            $rows = $this->runNeo4j(
-                <<<'CYPHER'
+            $remainingSeconds = $this->remainingQuerySeconds($deadline);
+            if ($remainingSeconds < 1) {
+                $truncated = true;
+                break;
+            }
+            try {
+                $rows = $this->runNeo4j(
+                    <<<'CYPHER'
 MATCH (p:Paper)
 WHERE p.pmid IN $pmids
 RETURN
@@ -448,8 +582,16 @@ RETURN
   p.journal_jcr_quartile AS journal_jcr_quartile,
   p.journal_metric_match_method AS journal_metric_match_method
 CYPHER,
-                ['pmids' => $chunk]
-            );
+                    ['pmids' => $chunk],
+                    $remainingSeconds
+                );
+            } catch (RuntimeException $error) {
+                if (stripos($error->getMessage(), 'timed out') !== false) {
+                    $truncated = true;
+                    break;
+                }
+                throw $error;
+            }
 
             foreach ($rows as $row) {
                 $pmid = trim((string)($row['pmid'] ?? ''));
@@ -460,7 +602,7 @@ CYPHER,
             }
         }
 
-        return $records;
+        return ['records' => $records, 'truncated' => $truncated];
     }
 
     private function evidenceRecordsForPmids(array $pmids, array $recordsByPmid): array
@@ -571,12 +713,18 @@ CYPHER,
         return $text === '' ? null : $text;
     }
 
-    private function runNeo4j(string $statement, array $parameters = []): array
+    private function remainingQuerySeconds(float $deadline): int
+    {
+        return max(0, min(30, (int)ceil($deadline - microtime(true))));
+    }
+
+    private function runNeo4j(string $statement, array $parameters = [], int $timeoutSeconds = 30): array
     {
         if (!function_exists('curl_init')) {
             throw new RuntimeException('PHP cURL extension is required');
         }
 
+        $timeoutSeconds = max(1, min(30, $timeoutSeconds));
         $payload = json_encode([
             'statements' => [[
                 'statement' => $statement,
@@ -592,7 +740,7 @@ CYPHER,
             CURLOPT_USERPWD => (string)$this->config['neo4j_user'] . ':' . (string)$this->config['neo4j_password'],
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
             CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_TIMEOUT => 30,
+            CURLOPT_TIMEOUT => $timeoutSeconds,
         ]);
 
         $response = curl_exec($ch);

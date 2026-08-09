@@ -45,7 +45,6 @@ function tekg_expression_page_build_url(array $overrides = [], ?string $hash = n
 
     $params = [
         'keyword' => trim((string)($_GET['keyword'] ?? '')),
-        'dataset_key' => trim((string)($_GET['dataset_key'] ?? '')),
         'top_context' => trim((string)($_GET['top_context'] ?? '')),
         'min_global_median' => trim((string)($_GET['min_global_median'] ?? '')),
         'sort' => trim((string)($_GET['sort'] ?? 'default')),
@@ -139,7 +138,6 @@ function tekg_expression_row_cv_payload(array $row): array
 }
 
 $keyword = trim((string)($_GET['keyword'] ?? ''));
-$datasetKey = tekg_expression_normalize_dataset_key((string)($_GET['dataset_key'] ?? ''));
 $topContext = trim((string)($_GET['top_context'] ?? ''));
 $minGlobalMedian = tekg_expression_page_float_or_null('min_global_median');
 $sort = tekg_expression_normalize_sort((string)($_GET['sort'] ?? 'default'));
@@ -149,7 +147,6 @@ $pageSize = tekg_expression_page_int('page_size', 10, 5, 100);
 
 $filters = [
     'keyword' => $keyword,
-    'dataset_key' => $datasetKey,
     'top_context' => $topContext,
     'min_global_median' => $minGlobalMedian,
 ];

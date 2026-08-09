@@ -17,13 +17,17 @@
   const coexpressionToolbar = coexpressionWorkspace?.querySelector('.preview-graph-toolbar');
   const edgeLabelsButton = document.getElementById('toggle-edge-labels');
   const coexpressionContextControl = coexpressionWorkspace?.querySelector('.coexpression-context-control');
+  const coexpressionExpressionButton = document.getElementById('coexpression-expression-layer');
+  const sharedBack = document.getElementById('back-graph');
+  const sharedBackText = document.getElementById('back-text');
   const coexpressionMode = window.__TEKG_COEXPRESSION_MODE;
   if (
     !knowledgeWorkspace || !coexpressionWorkspace || !workspaceControl || !topControls
     || !knowledgeTab || !coexpressionTab || !taxonomyControl || !taxonomyDisplayControl
     || !taxonomyTreeTab || !taxonomyGraphTab || !taxonomyAllTab
     || !taxonomyRmskRepbaseTab || !knowledgeToolbar || !coexpressionToolbar
-    || !edgeLabelsButton || !coexpressionContextControl || !coexpressionMode
+    || !edgeLabelsButton || !coexpressionContextControl || !coexpressionExpressionButton || !sharedBack
+    || !sharedBackText || !coexpressionMode
   ) return;
 
   let currentMode = 'knowledge';
@@ -34,6 +38,92 @@
   let knowledgeLoadKey = '';
   let knowledgeLoadPromise = null;
   let retainedKnowledgeState = window.__TEKG_G6_BRIDGE?.getState?.() || {};
+  const sharedBackHistory = [];
+
+  function normalizeBackTarget(selection = {}) {
+    const mode = String(selection.mode || '').trim();
+    if (selection.kind === 'taxonomy' || mode === 'tree' || mode === 'taxonomy_graph') {
+      return {
+        kind: 'taxonomy',
+        treeVariant: selection.treeVariant === 'all' ? 'all' : 'rmsk_repbase',
+        taxonomyDisplayMode: mode === 'taxonomy_graph' || selection.taxonomyDisplayMode === 'graph' ? 'graph' : 'tree',
+      };
+    }
+    const featureType = String(selection.featureType || selection.feature_type || selection.queryType || (selection.gene ? 'Gene' : 'TE')).toLowerCase() === 'gene'
+      ? 'Gene'
+      : 'TE';
+    const feature = String(selection.feature || selection.gene || selection.te || selection.query || '').trim();
+    if (!feature) return null;
+    return {
+      kind: 'entity',
+      feature,
+      featureType,
+      ...(featureType === 'Gene' ? { gene: feature } : { te: feature }),
+      context: String(selection.context || '').trim(),
+    };
+  }
+
+  function sameBackTarget(left, right) {
+    const a = normalizeBackTarget(left);
+    const b = normalizeBackTarget(right);
+    if (!a || !b || a.kind !== b.kind) return false;
+    if (a.kind === 'taxonomy') {
+      return a.treeVariant === b.treeVariant && a.taxonomyDisplayMode === b.taxonomyDisplayMode;
+    }
+    return a.featureType === b.featureType && a.feature.toLowerCase() === b.feature.toLowerCase();
+  }
+
+  function pushBackTarget(selection, nextSelection = null) {
+    const normalized = normalizeBackTarget(selection);
+    if (!normalized || (nextSelection && sameBackTarget(normalized, nextSelection))) return false;
+    const last = sharedBackHistory[sharedBackHistory.length - 1];
+    if (!sameBackTarget(last, normalized)) sharedBackHistory.push(normalized);
+    updateSharedBackButton();
+    return true;
+  }
+
+  function recordKnowledgeTransition(previousState, nextState) {
+    if (String(nextState?.mode || '') !== 'dynamic') return false;
+    return pushBackTarget(previousState, nextState);
+  }
+
+  function updateSharedBackButton() {
+    if (currentMode !== 'coexpression') {
+      window.__TEKG_G6_BRIDGE?.refreshBackButton?.();
+      return;
+    }
+    const previous = sharedBackHistory[sharedBackHistory.length - 1] || null;
+    sharedBack.hidden = !previous;
+    sharedBack.disabled = !previous;
+    sharedBack.classList.toggle('is-inactive', !previous);
+    sharedBackText.textContent = previous
+      ? (previous.kind === 'taxonomy' ? 'Back to taxonomy' : `Back to ${previous.feature}`)
+      : 'Back';
+  }
+
+  async function goBackEntity() {
+    const previous = sharedBackHistory.pop() || null;
+    updateSharedBackButton();
+    if (!previous) return false;
+    if (previous.kind === 'taxonomy') {
+      await setMode('knowledge', {
+        history: 'push',
+        restoreRoute: { treeVariant: previous.treeVariant },
+      });
+      if (previous.taxonomyDisplayMode === 'graph') {
+        await setTaxonomyDisplayMode('graph');
+      }
+      return true;
+    }
+    const current = coexpressionMode.getDiagnostics().selection || {};
+    await setMode('coexpression', {
+      ...previous,
+      context: previous.context || current.context || '',
+      history: 'push',
+      recordEntityHistory: false,
+    });
+    return true;
+  }
 
   async function loadKnowledgeGraph(request) {
     const bridge = window.__TEKG_G6_BRIDGE;
@@ -65,8 +155,10 @@
   function placeTopControls(mode) {
     if (mode === 'coexpression') {
       coexpressionToolbar.insertBefore(topControls, coexpressionContextControl);
+      coexpressionToolbar.insertBefore(sharedBack, coexpressionExpressionButton);
     } else {
       knowledgeToolbar.insertBefore(topControls, edgeLabelsButton);
+      topControls.appendChild(sharedBack);
     }
   }
 
@@ -91,6 +183,7 @@
     updateTab(knowledgeTab, showKnowledge);
     updateTab(coexpressionTab, !showKnowledge);
     syncTopControlVisibility();
+    updateSharedBackButton();
   }
 
   function notifyModeChange() {
@@ -345,11 +438,14 @@
   }
 
   function requestCoexpressionSelection(selection, options = {}) {
+    const current = coexpressionMode.getDiagnostics().selection;
+    if (options.recordEntityHistory !== false) pushBackTarget(current, selection);
     return setMode('coexpression', {
       feature: selection?.feature || selection?.gene || selection?.te,
       featureType: selection?.featureType || selection?.feature_type || (selection?.gene ? 'Gene' : 'TE'),
       context: selection?.context,
       history: options.history || 'push',
+      recordEntityHistory: false,
     });
   }
 
@@ -366,12 +462,20 @@
       knowledgeSelected: knowledgeTab.getAttribute('aria-selected') === 'true',
       coexpressionSelected: coexpressionTab.getAttribute('aria-selected') === 'true',
       pendingKnowledgeLoads,
+      sharedBackHistory: sharedBackHistory.map((item) => ({ ...item })),
     };
   }
 
   knowledgeTab.addEventListener('click', () => {
     void setMode('knowledge', { history: 'push' });
   });
+
+  coexpressionToolbar.addEventListener('click', (event) => {
+    if (currentMode !== 'coexpression' || !event.target.closest('#back-graph')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    void goBackEntity();
+  }, true);
   coexpressionTab.addEventListener('click', () => {
     void setMode('coexpression', { history: 'push' });
   });
@@ -389,7 +493,9 @@
   });
 
   window.addEventListener('tekg:g6-state-change', (event) => {
-    retainedKnowledgeState = event.detail || retainedKnowledgeState;
+    const nextKnowledgeState = event.detail || retainedKnowledgeState;
+    recordKnowledgeTransition(retainedKnowledgeState, nextKnowledgeState);
+    retainedKnowledgeState = nextKnowledgeState;
     knowledgeGraphMode = String(event.detail?.mode || knowledgeGraphMode);
     syncTaxonomyMode(event.detail?.treeVariant);
     syncTaxonomyDisplayMode(event.detail?.taxonomyDisplayMode || event.detail?.mode);
@@ -397,7 +503,10 @@
   });
 
   window.addEventListener('tekg:g6-navigation', (event) => {
-    retainedKnowledgeState = event.detail || retainedKnowledgeState;
+    const previousKnowledgeState = retainedKnowledgeState;
+    const nextKnowledgeState = event.detail || retainedKnowledgeState;
+    recordKnowledgeTransition(previousKnowledgeState, nextKnowledgeState);
+    retainedKnowledgeState = nextKnowledgeState;
     if (currentMode !== 'knowledge') return;
     writeRoute(event.detail?.history || 'push', {
       mode: 'knowledge',
@@ -418,6 +527,7 @@
   window.__TEKG_PREVIEW_WORKSPACE_MODE = {
     setMode,
     requestCoexpressionSelection,
+    goBackEntity,
     getMode: () => currentMode,
     getDiagnostics,
     ensureKnowledgeForGraphAction,
@@ -430,6 +540,7 @@
   };
 
   knowledgeGraphMode = String(retainedKnowledgeState.mode || 'tree');
+  updateSharedBackButton();
   setWorkspaceVisibility('knowledge');
   syncTaxonomyMode(retainedKnowledgeState.treeVariant);
   syncTaxonomyDisplayMode(retainedKnowledgeState.taxonomyDisplayMode || retainedKnowledgeState.mode);

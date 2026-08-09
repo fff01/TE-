@@ -24,6 +24,7 @@ docs/exec-plans/completed/*
 !docs/exec-plans/completed/all-te-g6-performance-stabilization.md
 !docs/exec-plans/completed/coexpression-graph-dual-mode.md
 !docs/exec-plans/completed/preview-dual-mode-parity-and-state-stability.md
+!docs/exec-plans/completed/graph-classification-export-and-inspect-card-cleanup.md
 !docs/exec-plans/completed/browse-mysql-catalog-migration.md
 !docs/exec-plans/completed/agent-plugin-evidence-contract-hardening.md
 !docs/exec-plans/completed/agent-13-question-baseline.md

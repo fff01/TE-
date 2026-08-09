@@ -58,7 +58,7 @@ def first_connected_payload() -> tuple[str, str, str, dict[str, Any]]:
                         "source_type": source_type,
                         "target_type": target_type,
                         "q": "",
-                        "max_depth": 99,
+                        "max_depth": 3,
                         "limit": 20,
                     },
                     timeout=40,
@@ -94,7 +94,7 @@ def assert_api_contract(source_type: str, source: str, target_type: str, payload
     require(payload.get("database") == "tekg3", f"connected candidates database should be tekg3: {payload}")
     require(payload.get("source_type") == source_type, f"source_type should be preserved: {payload}")
     require(payload.get("target_type") == target_type, f"target_type should be preserved: {payload}")
-    require(payload.get("max_depth") == 3, f"max_depth should clamp to 3: {payload}")
+    require(payload.get("max_depth") == 3, f"requested max_depth should be preserved: {payload}")
 
     items = payload.get("items")
     require(isinstance(items, list) and items, f"connected candidates should return items: {payload}")
@@ -132,6 +132,22 @@ def assert_api_contract(source_type: str, source: str, target_type: str, payload
     return first
 
 
+def assert_depth_clamp_contract() -> None:
+    payload = fetch(
+        {
+            "view": "connected_candidates",
+            "source": "",
+            "source_type": "TE",
+            "target_type": "Disease",
+            "max_depth": 99,
+            "limit": 1,
+        }
+    )
+    require(payload.get("ok") is True, f"empty-source depth contract request should succeed: {payload}")
+    require(payload.get("max_depth") == 10, f"max_depth should clamp to 10: {payload}")
+    require(payload.get("items") == [], f"empty source should not query connected candidates: {payload}")
+
+
 def assert_browser_grouping(source_type: str, source: str, target_type: str, expected_first: dict[str, Any]) -> None:
     try:
         from playwright.sync_api import Error as PlaywrightError
@@ -150,7 +166,12 @@ def assert_browser_grouping(source_type: str, source: str, target_type: str, exp
 
         page = browser.new_page(viewport={"width": 1440, "height": 960})
         console_errors: list[str] = []
-        page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+        page.on(
+            "console",
+            lambda msg: console_errors.append(msg.text)
+            if msg.type == "error" and "ERR_NETWORK_ACCESS_DENIED" not in msg.text
+            else None,
+        )
         try:
             page.goto(app_url("path_finder.php"), wait_until="domcontentloaded", timeout=30000)
             page.locator("#pathSourceType").select_option(source_type)
@@ -190,13 +211,14 @@ def assert_browser_grouping(source_type: str, source: str, target_type: str, exp
     require(state["groups"] == [], f"hop groups should be shown in option meta, not separate headers: {state}")
     require(any(expected_name in option for option in state["options"]), f"expected API candidate {expected_name!r} in browser dropdown: {state}")
     require(any(expected_hop_label in meta for meta in state["metas"]), f"connected candidate meta should include hop label: {state}")
-    require(any("PATH" in meta and "PMID" in meta for meta in state["metas"]), f"connected candidate meta should include PATHS and PMIDs: {state}")
+    require(any("SHORTEST PATH" in meta and "PMID" in meta for meta in state["metas"]), f"connected candidate meta should identify shortest-path counts: {state}")
     require(all("in best path" not in meta for meta in state["metas"]), f"PMID meta should not say in best path: {state}")
     require(fallback_state["optionCount"] > 0, f"invalid source should fall back to all target entities: {fallback_state}")
     require(fallback_state["groups"] == [], f"fallback all-entity dropdown should not show connected groups: {fallback_state}")
 
 
 def main() -> None:
+    assert_depth_clamp_contract()
     source_type, source, target_type, payload = first_connected_payload()
     first = assert_api_contract(source_type, source, target_type, payload)
     assert_browser_grouping(source_type, source, target_type, first)

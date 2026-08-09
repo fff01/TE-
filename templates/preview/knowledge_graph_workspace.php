@@ -25,7 +25,6 @@
               </button>
               <button id="toggle-edge-labels" class="is-toggle preview-graph-command" type="button" aria-pressed="false"><span id="edge-labels-text">Show relations: Off</span></button>
               <button id="toggle-fixed-view" class="is-toggle preview-graph-command" type="button" aria-pressed="true"><span id="fixed-view-text">Fixed view: On</span></button>
-              <button id="back-graph" class="preview-graph-command" type="button" disabled hidden><span id="back-text">Back</span></button>
               <div id="export-menu-wrap" class="graph-export-menu-wrap">
                 <button id="export-menu-toggle" class="graph-export-action preview-graph-command" type="button" aria-haspopup="true" aria-expanded="false" disabled>
                   <span id="export-menu-text">Export</span>

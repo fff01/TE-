@@ -62,13 +62,20 @@ require __DIR__ . '/head.php';
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3" selected>3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
                   </select>
                 </label>
                 <div class="path-actions">
                   <button class="path-submit path-command-control" id="pathSubmit" type="submit">Find paths</button>
                 </div>
               </form>
-              <div class="path-finder-note">Direct relationships are shown as cards only. Multi-hop paths include a compact path strip for quick scanning.</div>
+              <div class="path-finder-note">Every result includes a compact path strip. Expand a relationship to inspect its literature evidence.</div>
             </section>
 
             <section class="path-results-panel" aria-live="polite">

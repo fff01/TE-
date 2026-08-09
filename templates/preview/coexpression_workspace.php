@@ -92,7 +92,6 @@
               </aside>
               <div id="coexpression-correlation-notice" class="coexpression-correlation-notice">
                 <strong id="coexpression-method-summary">Spearman correlation</strong>
-                <span>Association only; correlation and expression activity do not imply causation.</span>
               </div>
             </div>
             <div class="detail" id="coexpression-node-details">Preparing co-expression workspace...</div>

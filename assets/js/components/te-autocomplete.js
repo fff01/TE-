@@ -2,6 +2,7 @@
   const cache = new Map();
   const sourceProviders = new Map();
   const maxVisible = 180;
+  const maxConnectedDepth = 10;
 
   function apiUrl(path) {
     const paths = window.__TEKG_PATHS;
@@ -39,7 +40,7 @@
     if (!Number.isFinite(value)) {
       return 3;
     }
-    return Math.max(1, Math.min(3, Math.trunc(value)));
+    return Math.max(1, Math.min(maxConnectedDepth, Math.trunc(value)));
   }
 
   function connectedSource(root) {
@@ -200,7 +201,7 @@
     };
     if (connected) {
       const minHop = Number(option.min_hop || 0);
-      normalized.min_hop = [1, 2, 3].includes(minHop) ? minHop : null;
+      normalized.min_hop = minHop >= 1 && minHop <= maxConnectedDepth ? minHop : null;
       normalized.path_count = Math.max(0, Number(option.path_count || 0));
       normalized.pmid_count = Math.max(0, Number(option.pmid_count || option.best_path_pmid_count || 0));
     }
@@ -257,23 +258,17 @@
     if (minHop === 1) {
       return 'Direct connection';
     }
-    if (minHop === 2) {
-      return '2-hop path';
-    }
-    if (minHop === 3) {
-      return '3-hop path';
-    }
-    return '';
+    return minHop >= 2 && minHop <= maxConnectedDepth ? `${minHop}-hop path` : '';
   }
 
   function optionMeta(option) {
-    if (![1, 2, 3].includes(option.min_hop)) {
+    if (!(option.min_hop >= 1 && option.min_hop <= maxConnectedDepth)) {
       return '';
     }
     const pathCount = Number(option.path_count || 0);
     const pmidCount = Number(option.pmid_count || 0);
     const parts = [groupLabel(option.min_hop)];
-    parts.push(`${pathCount} PATH${pathCount === 1 ? '' : 'S'}`);
+    parts.push(`${pathCount} SHORTEST PATH${pathCount === 1 ? '' : 'S'}`);
     parts.push(`${pmidCount} PMID${pmidCount === 1 ? '' : 's'}`);
     return `<span class="te-autocomplete-meta">${escapeHtml(parts.join(' | '))}</span>`;
   }

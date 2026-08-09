@@ -544,6 +544,66 @@
     draw();
     return state.focus;
   }
+  function getExportSnapshot() {
+    const nodes = state.nodes.filter(isVisible).map((node) => {
+      const point = screenPoint(node);
+      return {
+        id: node.id,
+        label: node.name,
+        rawLabel: node.name,
+        type: 'TE',
+        taxonomyLevel: node.depth,
+        description: '',
+        x: point.x,
+        y: point.y,
+        radius: Math.max(2.5, node.radius * state.transform.k),
+        fill: levelColor(node.depth),
+      };
+    });
+    const ids = new Set(nodes.map((node) => node.id));
+    const edges = state.edges
+      .filter((edge) => ids.has(edge.source.id) && ids.has(edge.target.id))
+      .map((edge, index) => ({
+        id: `taxonomy_edge_${index}`,
+        source: edge.source.id,
+        target: edge.target.id,
+        relation: 'classified under',
+        relationType: 'TAXONOMY',
+        pmids: [],
+        evidence: '',
+      }));
+    return { query: 'taxonomy_graph', nodes, edges, counts: { nodes: nodes.length, edges: edges.length } };
+  }
+  function exportPngDataUrl() {
+    draw();
+    const dataUrl = canvas.toDataURL('image/png');
+    if (!dataUrl.startsWith('data:image/png')) throw new Error('Taxonomy Graph PNG export failed.');
+    return dataUrl;
+  }
+  function exportSvgString() {
+    const snapshot = getExportSnapshot();
+    const serializer = window.__TEKG_G6_SVG_EXPORT;
+    if (!serializer || typeof serializer.serialize !== 'function') throw new Error('The shared SVG exporter is unavailable.');
+    return serializer.serialize({
+      title: 'TE-KG taxonomy graph',
+      description: 'Static vector export of the visible force-directed taxonomy Graph.',
+      metadata: { graph_mode: 'taxonomy_graph', node_count: snapshot.nodes.length, edge_count: snapshot.edges.length },
+      nodes: snapshot.nodes.map((node) => ({
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        radius: node.radius,
+        fill: node.fill,
+        stroke: node.fill,
+        strokeWidth: 1,
+        opacity: 1,
+        label: node.taxonomyLevel <= 2
+          ? { text: node.label, fontSize: node.taxonomyLevel === 0 ? 15 : 12, fontWeight: node.taxonomyLevel === 0 ? 700 : 600, opacity: 1 }
+          : null,
+      })),
+      edges: snapshot.edges.map((edge) => ({ ...edge, stroke: '#64748b', strokeWidth: 0.8, opacity: 0.28, dash: [] })),
+    });
+  }
   function pause() {
     state.paused = true;
     state.running = false;
@@ -676,5 +736,8 @@
     pause,
     resume,
     resize,
+    getExportSnapshot,
+    exportPngDataUrl,
+    exportSvgString,
   };
 }());

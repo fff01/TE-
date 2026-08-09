@@ -48,8 +48,6 @@ $browseApiUrl = tekg_api_url('browse.php?view=items');
                 <div class="browse-empty" id="browseEmpty">No TE records match the current search and filter combination. Try clearing one or more conditions.</div>
 
                 <?php require __DIR__ . '/templates/components/browse_pagination.php'; ?>
-
-                <p class="browse-note">This browse catalog now uses the aligned Repbase-backed TE dataset and current lineage reference. It shows formal catalog pagination and hands TE clicks off to Search for detailed inspection.</p>
               </section>
             </div>
           </div>

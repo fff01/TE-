@@ -96,8 +96,23 @@ require __DIR__ . '/head.php';
                       </object>
                     </div>
                   <?php endif; ?>
+                  <?php $rawRepbaseSequence = preg_replace('/\s+/u', '', (string) ($repbase['sequence'] ?? '')) ?? ''; ?>
                   <div class="sequence-code-wrap">
-                    <pre class="sequence-code"><?= htmlspecialchars(tekg_format_sequence_proto((string) ($repbase['sequence'] ?? '')), ENT_QUOTES, 'UTF-8') ?></pre>
+                    <button
+                      type="button"
+                      class="sequence-copy-button"
+                      id="search-sequence-copy"
+                      aria-label="Copy complete sequence"
+                      title="Copy complete sequence"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="9" y="9" width="11" height="11" rx="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                      <span data-copy-label>Copy</span>
+                    </button>
+                    <span class="sr-only" id="search-sequence-copy-status" role="status" aria-live="polite"></span>
+                    <pre class="sequence-code" data-raw-sequence="<?= htmlspecialchars($rawRepbaseSequence, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rawRepbaseSequence, ENT_QUOTES, 'UTF-8') ?></pre>
                   </div>
                 </section>
               <?php endif; ?>
@@ -112,6 +127,7 @@ require __DIR__ . '/head.php';
                     <div><strong>Total hits: </strong><?= htmlspecialchars(number_format((int) ($genomeDistribution['total_hits'] ?? 0)), ENT_QUOTES, 'UTF-8') ?></div>
                   </div>
                   <p id="search-karyotype-status" class="distribution-status">Loading genome annotation distribution...</p>
+                  <p id="search-karyotype-feedback" class="distribution-feedback" role="status" aria-live="polite" hidden></p>
                   <div class="distribution-karyotype-wrap">
                     <div
                       id="search-karyotype-view"
@@ -159,7 +175,7 @@ require __DIR__ . '/head.php';
                         <div class="jbrowse-hit-picker">
                           <div class="jbrowse-hit-picker-head">
                             <label class="jbrowse-hit-picker-label" for="searchJBrowseHitSelect">Genomic hit</label>
-                            <button type="button" class="jbrowse-hit-restore" id="searchJBrowseRestoreHits" hidden>Show sampled hits</button>
+                            <button type="button" class="jbrowse-hit-restore" id="searchJBrowseRestoreHits" hidden>Back to sampled hits</button>
                           </div>
                           <select id="searchJBrowseHitSelect" class="jbrowse-hit-picker-select">
                             <?php

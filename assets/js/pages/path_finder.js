@@ -362,6 +362,12 @@
         }
         return graphRunner.getVisibleSubgraph();
       },
+      inspectEdge(edgeId) {
+        if (!graphRunner || typeof graphRunner.inspectEdge !== 'function') {
+          return false;
+        }
+        return graphRunner.inspectEdge(edgeId);
+      },
     };
   }
 
@@ -386,7 +392,7 @@
       graphDataOptions: {
         showAllLabels: true, // Path results always keep node names visible.
         showEdgeLabels: graphShowRelations, // 含义：是否显示边上的关系名称。TE-KG default: controlled by Show relations, initially false.
-        allowInspectCard: false, // The compact Path graph no longer owns a persistent detail footer.
+        allowInspectCard: true, // Reuse the Knowledge Graph relation card for edge evidence.
         allowNodeActions: false, // 含义：是否允许节点卡片里的 Jump/Expand 按钮。TE-KG default: true; Path Finder disables Jump/Expand.
         restrictToAnchorComponent: false, // 含义：过滤后是否只保留与 anchor 连通的组件。TE-KG default: true.
         forceAnchorLabel: true, // 含义：是否强制显示第一个/anchor 节点标签。TE-KG default: false.
@@ -479,9 +485,6 @@
 
   function renderCompactPath(path) {
     const nodes = Array.isArray(path.nodes) ? path.nodes : [];
-    if (Number(path.hop_count || 0) <= 1) {
-      return '';
-    }
     const parts = [];
     nodes.forEach((node, index) => {
       if (index > 0) {
@@ -568,17 +571,25 @@
     const edges = Array.isArray(path.edges) ? path.edges : [];
     return edges.map((edge, index) => {
       const evidence = String(edge.evidence || '').trim();
+      const collapseId = `${String(path.id || 'path').replace(/[^a-z0-9_-]+/gi, '-')}-evidence-${index + 1}`;
       return `
-        <details class="path-evidence" ${index === 0 ? 'open' : ''}>
-          <summary>
+        <section class="path-evidence">
+          <button class="path-evidence-toggle" type="button" aria-expanded="false" aria-controls="${escapeHtml(collapseId)}">
             <span>${escapeHtml(relationName(edge) || 'Relationship')}</span>
-            <small>${Number(edge.pmid_count || 0)} PMID${Number(edge.pmid_count || 0) === 1 ? '' : 's'}</small>
-          </summary>
-          <div class="path-evidence-body">
-            ${renderEvidenceTable(edge)}
-            ${evidence ? `<p>${escapeHtml(evidence)}</p>` : ''}
+            <span class="path-evidence-toggle-meta">
+              <small>${Number(edge.pmid_count || 0)} PMID${Number(edge.pmid_count || 0) === 1 ? '' : 's'}</small>
+              <span class="path-evidence-toggle-icon" aria-hidden="true">&#9660;</span>
+            </span>
+          </button>
+          <div class="path-evidence-collapse" id="${escapeHtml(collapseId)}" aria-hidden="true" inert>
+            <div class="path-evidence-collapse-inner">
+              <div class="path-evidence-body">
+                ${renderEvidenceTable(edge)}
+                ${evidence ? `<p>${escapeHtml(evidence)}</p>` : ''}
+              </div>
+            </div>
           </div>
-        </details>
+        </section>
       `;
     }).join('');
   }
@@ -605,8 +616,14 @@
   function renderResults(payload) {
     currentPayload = payload;
     const paths = Array.isArray(payload.paths) ? payload.paths : [];
+    const searchedThroughHop = Math.max(0, Number(payload.searched_through_hop || 0));
+    const safetyLimitText = searchedThroughHop > 0
+      ? `Search reached hop ${searchedThroughHop} before the safety limit.`
+      : 'Search stopped at the safety limit.';
     if (!paths.length) {
-      statusEl.textContent = `No path was found within ${Number(payload.max_depth || 3)} hops.`;
+      statusEl.textContent = payload.search_truncated === true
+        ? `No path was returned within ${Number(payload.max_depth || 3)} hops. ${safetyLimitText}`
+        : `No path was found within ${Number(payload.max_depth || 3)} hops.`;
       resultsEl.innerHTML = '';
       if (viewToggleEl) {
         viewToggleEl.hidden = true;
@@ -615,13 +632,40 @@
       clearGraphResult();
       return;
     }
-    statusEl.textContent = `${paths.length} path${paths.length === 1 ? '' : 's'} found within ${Number(payload.max_depth || 3)} hops.`;
+    statusEl.textContent = payload.search_truncated === true
+      ? `Showing ${paths.length} path${paths.length === 1 ? '' : 's'} within ${Number(payload.max_depth || 3)} hops. ${safetyLimitText}`
+      : `${paths.length} path${paths.length === 1 ? '' : 's'} found within ${Number(payload.max_depth || 3)} hops.`;
     resultsEl.innerHTML = paths.map(renderPath).join('');
     if (viewToggleEl) {
       viewToggleEl.hidden = false;
     }
     setResultView(currentView);
   }
+
+  resultsEl.addEventListener('click', (event) => {
+    const toggle = event.target instanceof Element
+      ? event.target.closest('.path-evidence-toggle')
+      : null;
+    if (!toggle || !resultsEl.contains(toggle)) {
+      return;
+    }
+    const evidence = toggle.closest('.path-evidence');
+    if (!evidence) {
+      return;
+    }
+    const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+    toggle.setAttribute('aria-expanded', String(expanded));
+    evidence.classList.toggle('is-open', expanded);
+    const collapse = evidence.querySelector('.path-evidence-collapse');
+    if (collapse) {
+      collapse.setAttribute('aria-hidden', String(!expanded));
+      collapse.inert = !expanded;
+    }
+    const icon = toggle.querySelector('.path-evidence-toggle-icon');
+    if (icon) {
+      icon.textContent = expanded ? '\u25B2' : '\u25BC';
+    }
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

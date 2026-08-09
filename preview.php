@@ -67,6 +67,7 @@ $previewConfig = [
             <button id="preview-mode-knowledge" class="preview-workspace-mode-tab is-active" type="button" role="tab" aria-controls="previewGraphWorkspace" aria-selected="true" aria-pressed="true">Knowledge Graph</button>
             <button id="preview-mode-coexpression" class="preview-workspace-mode-tab" type="button" role="tab" aria-controls="previewCoexpressionWorkspace" aria-selected="false" aria-pressed="false">Co-expression</button>
           </div>
+          <button id="back-graph" class="preview-graph-command" type="button" disabled hidden><span id="back-text">Back</span></button>
         </div>
         <button class="preview-fullscreen-btn" id="previewFullscreenBtn" type="button" aria-label="Enter fullscreen preview">
           Fullscreen
@@ -124,6 +125,7 @@ $previewConfig = [
       <script src="<?= htmlspecialchars(tekg_assets_url('vendor/g6/g6.min.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/tekg_runtime_data.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-type-meta.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/g6-svg-export.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/default-tree-mindmap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/canvas-force/taxonomy-canvas-renderer.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-runtime.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>

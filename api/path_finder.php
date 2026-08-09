@@ -87,7 +87,7 @@ try {
             'source_query' => $source,
             'source_type' => $sourceType,
             'target_type' => $targetType,
-            'max_depth' => max(1, min(3, $maxDepth)),
+            'max_depth' => path_finder_clamp_depth($maxDepth),
             'items' => $service->suggestConnectedCandidates($source, $sourceType, $targetType, $query, $maxDepth, $limit),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         exit;

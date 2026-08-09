@@ -218,21 +218,6 @@
         const desc = getDescription(data.rawLabel || nodeData.id, data.description || '');
         return `<strong>${escapeHtml(label)}</strong> (Transposable Element)<br>${escapeHtml(desc)}`;
       },
-      async onNodeClick(nodeData, context) {
-        const { fixedModeEnabled, homePreviewMode } = context || {};
-        if (fixedModeEnabled || homePreviewMode || typeof window.__TEKG_LOAD_DYNAMIC_GRAPH !== 'function') {
-          return false;
-        }
-        const data = nodeData?.data || {};
-        const query = data.queryLabel || data.rawLabel || nodeData?.id;
-        const directChildCount = Math.max(
-          0,
-          Number(nodeData?.style?.directChildCount || nodeData?.data?.directChildCount || 0) || 0
-        );
-        if (!query || directChildCount > 0) return false;
-        await window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
-        return true;
-      },
     };
   }
 
@@ -948,20 +933,10 @@
         const targetId = resolveEventNodeId(event);
         if (!targetId || typeof graph.getNodeData !== 'function') return;
         const nodeData = graph.getNodeData(targetId);
-        const fixedModeEnabled = typeof fixedView !== 'undefined' && fixedView === true;
-        const homePreviewMode = window.__TEKG_EMBED_MODE === 'home-preview';
         try {
           if (typeof activeTreeConfig?.onNodeClick === 'function') {
             const handled = await activeTreeConfig.onNodeClick(nodeData, {
               nodeId: targetId,
-              fixedModeEnabled,
-              homePreviewMode,
-              loadDynamicGraph(query) {
-                if (typeof window.__TEKG_LOAD_DYNAMIC_GRAPH !== 'function') {
-                  return Promise.reject(new Error('Dynamic graph loader is unavailable.'));
-                }
-                return window.__TEKG_LOAD_DYNAMIC_GRAPH(query);
-              },
             });
             if (handled) return;
           }
@@ -1119,6 +1094,91 @@
     });
   }
 
+  function isExportVisible(id) {
+    if (!g6Graph || typeof g6Graph.getElementVisibility !== 'function') return true;
+    try {
+      return g6Graph.getElementVisibility(id) !== 'hidden';
+    } catch (_error) {
+      return true;
+    }
+  }
+
+  function getExportSnapshot() {
+    if (!g6Graph || typeof g6Graph.getData !== 'function') {
+      return { query: 'taxonomy_tree', nodes: [], edges: [], counts: { nodes: 0, edges: 0 } };
+    }
+    const data = g6Graph.getData() || {};
+    const nodes = (Array.isArray(data.nodes) ? data.nodes : [])
+      .filter((node) => isExportVisible(node.id))
+      .map((node) => {
+        const raw = node.data || {};
+        const position = typeof g6Graph.getElementPosition === 'function'
+          ? g6Graph.getElementPosition(node.id)
+          : [node.style?.x, node.style?.y];
+        return {
+          id: String(node.id || ''),
+          label: String(resolveTreeLabel(node) || raw.rawLabel || node.id || ''),
+          rawLabel: String(raw.rawLabel || raw.label || node.id || ''),
+          type: 'TE',
+          taxonomyLevel: Number(raw.treeDepth || 0),
+          description: String(raw.description || ''),
+          x: Number(position?.[0]),
+          y: Number(position?.[1]),
+          size: Number(node.style?.size || 22),
+          fill: String(node.style?.fill || '#bfdbfe'),
+          stroke: String(node.style?.stroke || '#1d4ed8'),
+        };
+      });
+    const nodeIds = new Set(nodes.map((node) => node.id));
+    const edges = (Array.isArray(data.edges) ? data.edges : [])
+      .filter((edge) => nodeIds.has(String(edge.source || '')) && nodeIds.has(String(edge.target || '')) && isExportVisible(edge.id))
+      .map((edge) => ({
+        id: String(edge.id || `${edge.source}__${edge.target}`),
+        source: String(edge.source || ''),
+        target: String(edge.target || ''),
+        relation: 'classified under',
+        relationType: 'TAXONOMY',
+        pmids: [],
+        evidence: '',
+      }));
+    return { query: 'taxonomy_tree', nodes, edges, counts: { nodes: nodes.length, edges: edges.length } };
+  }
+
+  async function exportPngDataUrl() {
+    if (g6Graph && typeof g6Graph.toDataURL === 'function') {
+      const result = await g6Graph.toDataURL({ type: 'image/png' });
+      const dataUrl = typeof result === 'string' ? result : result?.dataURL;
+      if (String(dataUrl || '').startsWith('data:image/png')) return dataUrl;
+    }
+    const host = getEl('g6-default-tree-surface');
+    const canvas = Array.from(host?.querySelectorAll('canvas') || []).sort((a, b) => b.width * b.height - a.width * a.height)[0];
+    if (!canvas || typeof canvas.toDataURL !== 'function') throw new Error('Taxonomy Tree canvas is unavailable.');
+    return canvas.toDataURL('image/png');
+  }
+
+  function exportSvgString() {
+    const snapshot = getExportSnapshot();
+    const serializer = window.__TEKG_G6_SVG_EXPORT;
+    if (!serializer || typeof serializer.serialize !== 'function') throw new Error('The shared SVG exporter is unavailable.');
+    return serializer.serialize({
+      title: 'TE-KG taxonomy tree',
+      description: 'Static vector export of the visible taxonomy Tree.',
+      metadata: { graph_mode: 'taxonomy_tree', node_count: snapshot.nodes.length, edge_count: snapshot.edges.length },
+      nodes: snapshot.nodes.map((node) => ({
+        id: node.id,
+        x: node.x,
+        y: node.y,
+        radius: Math.max(5, node.size / 2),
+        fill: node.fill,
+        stroke: node.stroke,
+        strokeWidth: 2,
+        opacity: 1,
+        label: { text: node.label, fontSize: 11, fontWeight: 650, opacity: 1 },
+      })),
+      edges: snapshot.edges.map((edge) => ({ ...edge, stroke: '#93c5fd', strokeWidth: 1.6, opacity: 0.75, dash: [] })),
+    });
+  }
+
   function bindTriggers() {
     if (isBound) return;
     isBound = true;
@@ -1164,5 +1224,8 @@
     getStateTree() {
       return null;
     },
+    getExportSnapshot,
+    exportPngDataUrl,
+    exportSvgString,
   };
 }());

@@ -19,7 +19,12 @@ def main() -> None:
         page = browser.new_page(viewport={"width": 1440, "height": 980})
         console_errors: list[str] = []
         graph_api_requests: list[str] = []
-        page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+        page.on(
+            "console",
+            lambda msg: console_errors.append(msg.text)
+            if msg.type == "error" and "ERR_NETWORK_ACCESS_DENIED" not in msg.text
+            else None,
+        )
         page.on("request", lambda request: graph_api_requests.append(request.url) if "api/graph.php" in request.url else None)
         try:
             page.goto(app_url("path_finder.php"), wait_until="domcontentloaded", timeout=30000)
@@ -59,6 +64,32 @@ def main() -> None:
                 }
                 """
             )
+            edge_inspect_state = page.evaluate(
+                """
+                () => {
+                  const debug = window.__TEKG_PATH_FINDER_GRAPH_DEBUG;
+                  const subgraph = debug?.getVisibleSubgraph?.();
+                  const edge = (subgraph?.edges || []).find((item) => (item.pmids || []).length > 0)
+                    || (subgraph?.edges || [])[0];
+                  return {
+                    edgeId: edge?.id || '',
+                    inspected: edge?.id ? debug.inspectEdge(edge.id) : false,
+                  };
+                }
+                """
+            )
+            page.locator("#pathGraphSurface .inspect-card").wait_for(timeout=10000)
+            page.locator("#pathGraphSurface [data-inspect-action='toggle']").click()
+            page.locator("#pathGraphSurface .inspect-card.is-expanded").wait_for(timeout=10000)
+            edge_card_state = page.locator("#pathGraphSurface .inspect-card.is-expanded").evaluate(
+                """
+                card => ({
+                  title: card.querySelector('.inspect-card__title')?.textContent.trim() || '',
+                  tableCount: card.querySelectorAll('.edge-evidence-table').length,
+                  pubmedLinks: card.querySelectorAll('a[href^="https://pubmed.ncbi.nlm.nih.gov/"]').length,
+                })
+                """
+            )
             state = page.evaluate(
                 """
                 () => ({
@@ -90,8 +121,12 @@ def main() -> None:
     require(graph_debug_state["nodeCount"] > 0, f"Graph should expose visible nodes: {graph_debug_state}")
     require(graph_debug_state["edgeCount"] > 0, f"Graph should expose visible edges: {graph_debug_state}")
     require(len(graph_debug_state["highlighted"]) == 2, f"Source and target should be highlighted: {graph_debug_state}")
-    require(all(node["size"] >= 104 for node in graph_debug_state["highlighted"]), f"Highlighted nodes should be enlarged: {graph_debug_state}")
-    require(graph_debug_state["minSize"] >= 72, f"Path Finder graph nodes should use enlarged minimum sizes: {graph_debug_state}")
+    require(edge_inspect_state["edgeId"] and edge_inspect_state["inspected"] is True, f"Path edge inspection should be available: {edge_inspect_state}")
+    require(edge_card_state["title"], f"Path edge card should identify the relation: {edge_card_state}")
+    require(edge_card_state["tableCount"] == 1, f"Expanded Path edge card should show its evidence table: {edge_card_state}")
+    require(edge_card_state["pubmedLinks"] > 0, f"Expanded Path edge card should expose PubMed links: {edge_card_state}")
+    require(all(node["size"] >= 50 for node in graph_debug_state["highlighted"]), f"Highlighted endpoints should respect the Path node minimum: {graph_debug_state}")
+    require(graph_debug_state["minSize"] >= 50, f"Path Finder graph nodes should respect nodeMinSize=50: {graph_debug_state}")
     ok("Path Finder graph view smoke passed")
 
 

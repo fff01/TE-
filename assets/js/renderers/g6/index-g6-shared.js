@@ -659,6 +659,20 @@
       return `${raw.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
     }
 
+    function naturalTaxonomySource(value) {
+      const source = String(value || '').trim();
+      if (source === 'tree_rmsk_repbase') return 'RMSK + Repbase taxonomy';
+      if (source === 'tree_all') return 'Complete TE taxonomy';
+      return source.replaceAll('_', ' ');
+    }
+
+    function naturalTaxonomyStatus(value) {
+      const status = String(value || '').trim().toLowerCase();
+      if (status === 'leaf') return 'Specific TE entry';
+      if (status === 'non_leaf') return 'TE group';
+      return String(value || '').replaceAll('_', ' ');
+    }
+
     function safeFilename(value) {
       return String(value || 'graph').trim().replace(/[^a-z0-9_.-]+/gi, '_').replace(/^_+|_+$/g, '') || 'graph';
     }
@@ -909,22 +923,23 @@
 
       const sections = [];
       if (expanded) {
-        const rows = [
-          kvRow('Type', type),
-          kvRow('Degree', node.databaseDegree),
-          kvRow('Key node', node.alwaysShowLabel || node.databaseDegree > 15 ? 'Yes' : 'No'),
-          kvRow('Disease class', node.diseaseClass),
-          kvRow('Category level', node.categoryLevel),
-          kvRow('PMID', node.pmid),
-        ].filter(Boolean).join('');
+      const rows = [
+        kvRow('Type', type),
+        kvRow('Database connections', node.databaseDegree),
+        kvRow('Disease class', node.diseaseClass),
+        type === 'Paper' ? kvRow('PMID', node.pmid) : '',
+      ].filter(Boolean).join('');
         if (rows) {
           sections.push(`<div class="inspect-card__section"><p class="inspect-card__section-title">Node</p><div class="inspect-card__kv">${rows}</div></div>`);
         }
         if (taxonomy) {
+          const canonicalName = String(taxonomy.canonical_name || '').trim();
           const taxonomyRows = [
-            kvRow('Canonical', taxonomy.canonical_name),
-            kvRow('Status', taxonomy.status),
-            kvRow('Source', taxonomy.source),
+            canonicalName && canonicalName.toLowerCase() !== String(label).trim().toLowerCase()
+              ? kvRow('Canonical name', canonicalName)
+              : '',
+            kvRow('Status', naturalTaxonomyStatus(taxonomy.status)),
+            kvRow('Taxonomy source', naturalTaxonomySource(taxonomy.source)),
             kvRow('Path', briefPath),
           ].filter(Boolean).join('');
           if (taxonomyRows) {
@@ -946,7 +961,7 @@
         '<div class="inspect-card__actions">',
         currentAllowNodeActions ? '<button class="inspect-card__button" type="button" data-node-action="jump">Jump</button>' : '',
         currentAllowNodeActions ? '<button class="inspect-card__button" type="button" data-node-action="expand">Expand</button>' : '',
-        '<button class="inspect-card__button" type="button" data-node-action="details">Details</button>',
+        `<button class="inspect-card__button" type="button" data-inspect-action="toggle">${expanded ? 'Collapse' : 'Details'}</button>`,
         '</div>',
         '</div>',
       ].join('');
@@ -960,7 +975,7 @@
           ...inspectCardState,
           kind: 'node',
           node,
-          expanded: true,
+          expanded: !inspectCardState?.expanded,
         };
         renderInspectCard();
         return true;
@@ -1010,27 +1025,27 @@
       const relation = relationLabelForEdge(edge);
       const relationType = String(edge?.relationType || '').trim();
       const pmids = Array.isArray(edge?.pmids) ? edge.pmids : [];
+      const pmidSummary = pmids.length === 0
+        ? 'No linked PMID records'
+        : `${pmids.length} linked PMID ${pmids.length === 1 ? 'record' : 'records'}`;
       const evidence = String(edge?.evidence || '').trim();
       const expanded = inspectCardState?.expanded === true;
-      const coverage = Number(edge?.support_metric_coverage);
       const expressionNode = expressionNodeEndpoint(edge, nodes);
       const expressionHtml = expanded && expressionNode
         ? renderExpressionEvidenceHtml(expressionNode, false).replace('Expression Evidence', 'Expression Context')
         : '';
       const rows = [
         kvRow('Relation', relation),
-        kvRow('Type', relationType),
         kvRow('PMID count', edge?.support_pmid_count ?? pmids.length),
-        Number.isFinite(coverage) ? kvRow('Metric coverage', coverage.toFixed(2)) : '',
       ].filter(Boolean).join('');
 
       return [
         '<div class="inspect-card__body">',
         `<h3 class="inspect-card__title">${escapeHtml(sourceLabel)} → ${escapeHtml(relation)} → ${escapeHtml(targetLabel)}</h3>`,
-        `<div class="inspect-card__meta">${escapeHtml(relationType || 'Relation')} · PMID ${pmids.length}</div>`,
+        `<div class="inspect-card__meta">${escapeHtml(pmidSummary)}</div>`,
         expanded && rows ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Relation</p><div class="inspect-card__kv">${rows}</div></div>` : '',
         expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
-        expanded ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence || (isClassificationRelation(relationType) ? 'This is a taxonomy/classification edge, not a literature evidence edge.' : 'No evidence text attached to this edge.'))}</div></div>` : '',
+        expanded && evidence ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence)}</div></div>` : '',
         expressionHtml,
         '<div class="inspect-card__actions">',
         `<button class="inspect-card__button" type="button" data-inspect-action="toggle">${expanded ? 'Collapse' : 'Expand'}</button>`,
@@ -1697,8 +1712,6 @@
       const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
       const relation = relationLabelForEdge(edge);
       const pmidCount = Math.max(0, Number(edge?.support_pmid_count) || (Array.isArray(edge?.pmids) ? edge.pmids.length : 0));
-      const coverage = Number(edge?.support_metric_coverage);
-      const coverageText = Number.isFinite(coverage) ? coverage.toFixed(2) : '—';
       const expressionNode = expressionNodeEndpoint(edge, nodes);
       const expressionHtml = expressionNode
         ? renderExpressionEvidenceHtml(expressionNode, true)
@@ -1711,7 +1724,7 @@
         `&nbsp;&rarr;&nbsp;${escapeHtml(relation)}&nbsp;&rarr;&nbsp;`,
         `<strong>${escapeHtml(targetLabel)}</strong>`,
         '</div>',
-        `<div class="edge-evidence-summary">PMID support: ${escapeHtml(pmidCount)} · Metric coverage: ${escapeHtml(coverageText)}. Expand the edge card to inspect PubMed evidence.</div>`,
+        `<div class="edge-evidence-summary">Linked PMID records: ${escapeHtml(pmidCount)}. Expand the edge card to inspect PubMed evidence.</div>`,
         expressionHtml,
         '</div>',
       ].join('');

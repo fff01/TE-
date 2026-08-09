@@ -63,7 +63,7 @@
       fixedOff: 'Fixed view: Off',
       back: 'Back',
       backTo: (label) => `Back to ${label}`,
-      backToTree: 'Back to tree',
+      backToTree: 'Back to taxonomy',
       reset: 'Reset',
       expandModeOn: 'Expand mode: On',
       expandModeOff: 'Expand mode: Off',
@@ -981,7 +981,7 @@
     ];
     if (sourceTree) lines.push(`<br><span class="meta">Source: ${escapeHtml(sourceTree)}</span>`);
     lines.push(`<br><span class="meta">Matched TE nodes: ${matched} | Lineage edges: ${edges}</span>`);
-    lines.push('<br>Click a TE node to inspect it, then click again to enter the dynamic graph.');
+    lines.push('<br>Click a TE node to inspect it.');
     return lines.join('');
   }
 
@@ -1173,7 +1173,8 @@
     if (els.edgeLabelsBtn) els.edgeLabelsBtn.hidden = classificationMode;
     if (els.fixedBtn) els.fixedBtn.hidden = classificationMode;
     if (els.expandModeBtn) els.expandModeBtn.hidden = classificationMode;
-    const canExportGraph = currentMode === 'dynamic' && !graphIsLoading && !!dynamicFrame;
+    const canExportClassification = classificationMode && !graphIsLoading;
+    const canExportGraph = canExportClassification || (currentMode === 'dynamic' && !graphIsLoading && !!dynamicFrame);
     if (els.exportMenuToggle) els.exportMenuToggle.disabled = !canExportGraph;
     if (els.exportMenuCsv) els.exportMenuCsv.disabled = !canExportGraph;
     if (els.exportMenuPng) els.exportMenuPng.disabled = !canExportGraph;
@@ -2171,7 +2172,17 @@
     return JSON.parse(JSON.stringify(value || {}));
   }
 
+  function getClassificationExporter() {
+    if (currentMode === 'tree') return window.__TEKG_G6_DEFAULT_TREE || null;
+    if (currentMode === 'taxonomy_graph') return taxonomyCanvasRenderer || null;
+    return null;
+  }
+
   async function getVisibleSubgraphForExport() {
+    const classificationExporter = getClassificationExporter();
+    if (classificationExporter && typeof classificationExporter.getExportSnapshot === 'function') {
+      return classificationExporter.getExportSnapshot();
+    }
     const bridge = await getDynamicEmbedBridge();
     if (bridge && typeof bridge.getVisibleSubgraph === 'function') {
       const subgraph = await bridge.getVisibleSubgraph();
@@ -2251,7 +2262,8 @@
   }
 
   async function exportCanvasPng(options = {}) {
-    const bridge = await getDynamicEmbedBridge();
+    const classificationExporter = getClassificationExporter();
+    const bridge = classificationExporter || await getDynamicEmbedBridge();
     if (!bridge || typeof bridge.exportPngDataUrl !== 'function') {
       throw new Error('G6 PNG export bridge is not available');
     }
@@ -2260,7 +2272,7 @@
       throw new Error('G6 PNG export did not return a PNG data URL');
     }
     const payload = {
-      query: currentGraphQuery || 'graph',
+      query: currentGraphQuery || (currentMode === 'tree' ? 'taxonomy_tree' : currentMode === 'taxonomy_graph' ? 'taxonomy_graph' : 'graph'),
       dataUrl,
       byteLength: dataUrlByteLength(dataUrl),
     };
@@ -2273,7 +2285,8 @@
   }
 
   async function exportVisibleSvg(options = {}) {
-    const bridge = await getDynamicEmbedBridge();
+    const classificationExporter = getClassificationExporter();
+    const bridge = classificationExporter || await getDynamicEmbedBridge();
     if (!bridge || typeof bridge.exportSvgString !== 'function') {
       throw new Error('G6 SVG export bridge is not available');
     }
@@ -2282,7 +2295,7 @@
       throw new Error('G6 SVG export did not return a valid SVG document');
     }
     const payload = {
-      query: currentGraphQuery || 'graph',
+      query: currentGraphQuery || (currentMode === 'tree' ? 'taxonomy_tree' : currentMode === 'taxonomy_graph' ? 'taxonomy_graph' : 'graph'),
       svg,
       byteLength: new TextEncoder().encode(svg).byteLength,
     };
@@ -2595,6 +2608,9 @@
     },
     canGoBack() {
       return graphHistory.length > 0;
+    },
+    refreshBackButton() {
+      updateBackButton();
     },
     showTree() {
       return renderDefaultTree();

@@ -12,17 +12,6 @@
     </div>
 
     <div class="expression-filter-group">
-      <div class="expression-filter-label">Dataset Source</div>
-      <select class="expression-filter-select" name="dataset_key">
-        <option value="">All datasets</option>
-        <?php foreach (($options['datasets'] ?? []) as $dataset): ?>
-          <?php $optionKey = (string)($dataset['dataset_key'] ?? ''); ?>
-          <option value="<?= htmlspecialchars($optionKey, ENT_QUOTES, 'UTF-8') ?>" <?= $datasetKey === $optionKey ? 'selected' : '' ?>><?= htmlspecialchars((string)($dataset['dataset_label'] ?? $optionKey), ENT_QUOTES, 'UTF-8') ?></option>
-        <?php endforeach; ?>
-      </select>
-    </div>
-
-    <div class="expression-filter-group">
       <div class="expression-filter-label">Top Context Contains</div>
       <input class="expression-filter-input" type="text" name="top_context" value="<?= htmlspecialchars($topContext, ENT_QUOTES, 'UTF-8') ?>" placeholder="e.g. skin, ESCC, lung">
     </div>
