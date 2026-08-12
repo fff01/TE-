@@ -1,5 +1,4 @@
 (() => {
-  const ANSWER_GRAPH_ACTION_ENABLED = false;
   const root = document.getElementById('previewDeepThink');
   const form = document.getElementById('previewDeepThinkForm');
   const input = document.getElementById('previewDeepThinkInput');
@@ -194,229 +193,6 @@
     }
   }
 
-  function normalizeGraphElements(candidate) {
-    if (!candidate || typeof candidate !== 'object') return null;
-    const nodes = Array.isArray(candidate.nodes) ? candidate.nodes : [];
-    const edges = Array.isArray(candidate.edges) ? candidate.edges : [];
-    if (!nodes.length || !edges.length) return null;
-    return { nodes, edges };
-  }
-
-  function graphElementsFromPayload(payload) {
-    if (!payload || typeof payload !== 'object') return null;
-    const direct = normalizeGraphElements(payload.graph_elements)
-      || normalizeGraphElements(payload.raw_result?.graph_elements)
-      || normalizeGraphElements(payload.raw_preview?.graph_elements)
-      || normalizeGraphElements(payload.display_details?.graph_elements)
-      || normalizeGraphElements(payload.display_details?.raw_preview?.graph_elements)
-      || normalizeGraphElements(payload.compressed_result?.graph_elements);
-    if (direct) return direct;
-
-    const rawRows = payload.raw_result?.rows || payload.raw_preview?.rows || payload.display_details?.raw_preview?.rows;
-    if (!Array.isArray(rawRows) || !rawRows.length) return null;
-    const nodes = new Map();
-    const edges = [];
-    rawRows.slice(0, 80).forEach((row, index) => {
-      const source = String(row.source_name || row.source || row.te || '').trim();
-      const target = String(row.target_name || row.target || row.disease || row.entity || '').trim();
-      if (!source || !target) return;
-      const relation = String(row.relation_type || row.relation || 'related_to').trim();
-      const targetType = String(row.target_label || row.target_type || row.type || 'Disease').trim();
-      const sourceId = `deepthink-node-${source.toLowerCase().replace(/[^a-z0-9]+/g, '-') || index}`;
-      const targetId = `deepthink-node-${target.toLowerCase().replace(/[^a-z0-9]+/g, '-') || index}`;
-      nodes.set(sourceId, { id: sourceId, label: source, type: 'TE', description: '' });
-      nodes.set(targetId, { id: targetId, label: target, type: targetType, description: String(row.relation_description || '') });
-      edges.push({ id: `deepthink-edge-${index}`, source: sourceId, target: targetId, relation });
-    });
-    if (!nodes.size || !edges.length) return null;
-    return { nodes: Array.from(nodes.values()), edges };
-  }
-
-  function graphActionFromElements(elements, fallbackQuery) {
-    return {
-      graph_action: {
-        enabled: true,
-        query: fallbackQuery || 'Deep Think result',
-        preset_state: {
-          key_node_level: 1,
-          fixed_view: true,
-        },
-        subgraph: {
-          nodes: elements.nodes.map((node) => ({
-            id: String(node.id || node.label || node.displayLabel || ''),
-            label: String(node.displayLabel || node.label || node.id || ''),
-            type: String(node.nodeType || node.type || 'TE'),
-            description: String(node.description || ''),
-            pmid: String(node.pmid || ''),
-          })),
-          edges: elements.edges.map((edge, index) => ({
-            id: String(edge.id || `deepthink-edge-${index}`),
-            source: String(edge.source || ''),
-            target: String(edge.target || ''),
-            relation: String(edge.relation || edge.relationType || edge.relation_type || edge.label || 'related_to'),
-            evidence: String(edge.evidence || ''),
-            pmids: Array.isArray(edge.pmids) ? edge.pmids : [],
-          })),
-        },
-      },
-    };
-  }
-
-  function normalizeMentionText(value) {
-    return String(value || '')
-      .normalize('NFKC')
-      .toLocaleLowerCase()
-      .replace(/[‐‑‒–—―]/g, '-')
-      .trim();
-  }
-
-  function answerMentionSpans(answer, label) {
-    const text = normalizeMentionText(answer);
-    const needle = normalizeMentionText(label);
-    if (!text || !needle) return [];
-    const wordCharacter = /[\p{L}\p{N}_]/u;
-    const spans = [];
-    let offset = 0;
-    while (offset <= text.length - needle.length) {
-      const index = text.indexOf(needle, offset);
-      if (index < 0) break;
-      const before = index > 0 ? text[index - 1] : '';
-      const afterIndex = index + needle.length;
-      const after = afterIndex < text.length ? text[afterIndex] : '';
-      if ((!before || !wordCharacter.test(before)) && (!after || !wordCharacter.test(after))) {
-        spans.push({ start: index, end: afterIndex });
-      }
-      offset = index + Math.max(1, needle.length);
-    }
-    return spans;
-  }
-
-  function collectAnswerGraphEvidence(event, turn) {
-    if (!event || event.type !== 'tool_result' || !turn) return;
-    const pluginName = String(event.plugin_name || '');
-    if (!/(Graph|Cypher|Analytics)/i.test(pluginName)) return;
-    const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
-    const elements = graphElementsFromPayload(payload);
-    if (!elements) return;
-
-    if (!turn.answerGraphEvidence) {
-      turn.answerGraphEvidence = { nodes: new Map(), edges: new Map() };
-    }
-    elements.nodes.forEach((node) => {
-      const id = String(node.id || '').trim();
-      if (id) turn.answerGraphEvidence.nodes.set(id, { ...node, id });
-    });
-    elements.edges.forEach((edge, index) => {
-      const source = String(edge.source || '').trim();
-      const target = String(edge.target || '').trim();
-      if (!source || !target) return;
-      const id = String(edge.id || `${source}\u0000${target}\u0000${edge.relation || edge.relationType || index}`);
-      turn.answerGraphEvidence.edges.set(id, { ...edge, id, source, target });
-    });
-    const entityQuery = extractEntityQuery(event);
-    if (entityQuery && !turn.answerGraphQuery) turn.answerGraphQuery = entityQuery;
-  }
-
-  function buildAnswerGraphElements(turn) {
-    const evidence = turn && turn.answerGraphEvidence;
-    const answer = String(turn && turn.answer || '');
-    if (!evidence || !answer) return null;
-
-    const candidates = Array.from(evidence.nodes.values()).map((node) => {
-      const label = String(node.displayLabel || node.label || node.rawLabel || '').trim();
-      return {
-        node,
-        labelLength: normalizeMentionText(label).length,
-        spans: label === '' ? [] : answerMentionSpans(answer, label),
-      };
-    }).filter((candidate) => candidate.spans.length > 0)
-      .sort((left, right) => right.labelLength - left.labelLength);
-
-    const occupiedSpans = [];
-    const mentionedNodes = [];
-    candidates.forEach((candidate) => {
-      const hasDistinctMention = candidate.spans.some((span) => !occupiedSpans.some((occupied) => (
-        span.start < occupied.end && span.end > occupied.start
-      )));
-      if (!hasDistinctMention) return;
-      mentionedNodes.push(candidate.node);
-      occupiedSpans.push(...candidate.spans);
-    });
-    const mentionedIds = new Set(mentionedNodes.map((node) => String(node.id)));
-    const edges = Array.from(evidence.edges.values()).filter((edge) => (
-      mentionedIds.has(String(edge.source)) && mentionedIds.has(String(edge.target))
-    ));
-    if (!edges.length) return null;
-
-    const connectedIds = new Set(edges.flatMap((edge) => [String(edge.source), String(edge.target)]));
-    const nodes = mentionedNodes.filter((node) => connectedIds.has(String(node.id)));
-    if (nodes.length < 2) return null;
-    return { nodes, edges };
-  }
-
-  function renderAnswerGraphAction(turn) {
-    if (!ANSWER_GRAPH_ACTION_ENABLED) return;
-    if (!turn || turn.failed || !turn.answerNode) return;
-    const elements = buildAnswerGraphElements(turn);
-    if (!elements) return;
-    const relationLabel = elements.edges.length === 1 ? 'relation' : 'relations';
-    const nodeLabel = elements.nodes.length === 1 ? 'node' : 'nodes';
-    const action = document.createElement('div');
-    action.className = 'preview-answer-graph-action';
-    action.innerHTML = `
-      <span class="preview-answer-graph-summary" data-answer-graph-summary>${elements.nodes.length} ${nodeLabel} · ${elements.edges.length} ${relationLabel}</span>
-      <button type="button" class="preview-answer-graph-button" data-answer-graph-action="view">View answer graph</button>
-      <span class="preview-answer-graph-error" data-answer-graph-error hidden></span>
-    `;
-    const button = action.querySelector('[data-answer-graph-action="view"]');
-    const errorNode = action.querySelector('[data-answer-graph-error]');
-    button.addEventListener('click', async () => {
-      if (button.disabled) return;
-      button.disabled = true;
-      errorNode.hidden = true;
-      try {
-        const workspaceMode = window.__TEKG_PREVIEW_WORKSPACE_MODE;
-        if (workspaceMode && typeof workspaceMode.ensureKnowledgeForGraphAction === 'function') {
-          await workspaceMode.ensureKnowledgeForGraphAction();
-        }
-        const bridge = getGraphBridge();
-        if (!bridge || typeof bridge.applyAnswerGraph !== 'function') {
-          throw new Error('Answer graph is unavailable.');
-        }
-        const query = turn.answerGraphQuery || compactGraphContext().query || turn.question;
-        const applied = await bridge.applyAnswerGraph(graphActionFromElements(elements, query));
-        if (!applied) throw new Error('Answer graph could not be opened.');
-        button.textContent = 'Answer graph opened';
-        turn.graphChanged = true;
-      } catch (error) {
-        button.disabled = false;
-        errorNode.textContent = String(error && error.message ? error.message : 'Answer graph could not be opened.');
-        errorNode.hidden = false;
-      }
-    });
-    turn.answerNode.appendChild(action);
-    turn.answerGraphProposal = elements;
-  }
-
-  function extractEntityQuery(event) {
-    const payload = event && event.payload && typeof event.payload === 'object' ? event.payload : {};
-    const candidates = [
-      payload.compressed_result?.entity,
-      payload.compressed_result?.canonical_entity,
-      payload.raw_result?.entity,
-      payload.raw_result?.canonical_entity,
-      payload.display_details?.entity,
-      payload.preview_items?.[0]?.label,
-      payload.evidence_items?.[0]?.subject,
-      payload.evidence_items?.[0]?.entity,
-    ];
-    for (const candidate of candidates) {
-      const value = String(candidate || '').trim();
-      if (value) return value;
-    }
-    return '';
-  }
-
   function handleStreamEvent(turn, event) {
     if (!event || typeof event !== 'object') return;
     const streamState = applyStreamState(turn, event);
@@ -437,8 +213,6 @@
     if (event.type === 'tool_result') {
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       mergeTurnCitations(turn, payload.citations || payload.display_details?.citations || []);
-      turn.toolEvents.push(event);
-      if (ANSWER_GRAPH_ACTION_ENABLED) collectAnswerGraphEvidence(event, turn);
       return;
     }
     if (event.type === 'answer') {
@@ -470,7 +244,6 @@
         }
         turn.answerNode = createAnswerMessage(turn, turn.answer);
       }
-      renderAnswerGraphAction(turn);
       stopTurnTimer(turn, turn.failed ? 'failed' : 'done');
     }
   }
@@ -485,11 +258,6 @@
       answer: '',
       done: false,
       failed: false,
-      graphChanged: false,
-      answerGraphEvidence: null,
-      answerGraphProposal: null,
-      answerGraphQuery: '',
-      toolEvents: [],
       citations: [],
       streamState: typeof deepThinkClient.createStreamState === 'function' ? deepThinkClient.createStreamState() : null,
       progressNode: null,
