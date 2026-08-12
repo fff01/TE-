@@ -280,6 +280,8 @@
   }
 
   function getHorizontalGap() {
+    const configured = Number(getActiveTreeConfig()?.horizontalGap);
+    if (Number.isFinite(configured) && configured >= 20) return configured;
     return isCompactTreeLayout() ? COMPACT_H_GAP : DEFAULT_H_GAP;
   }
 

@@ -1,4 +1,5 @@
 (() => {
+  const ANSWER_GRAPH_ACTION_ENABLED = false;
   const root = document.getElementById('previewDeepThink');
   const form = document.getElementById('previewDeepThinkForm');
   const input = document.getElementById('previewDeepThinkInput');
@@ -252,13 +253,149 @@
             id: String(edge.id || `deepthink-edge-${index}`),
             source: String(edge.source || ''),
             target: String(edge.target || ''),
-            relation: String(edge.relation || edge.relationType || edge.label || 'related_to'),
+            relation: String(edge.relation || edge.relationType || edge.relation_type || edge.label || 'related_to'),
             evidence: String(edge.evidence || ''),
             pmids: Array.isArray(edge.pmids) ? edge.pmids : [],
           })),
         },
       },
     };
+  }
+
+  function normalizeMentionText(value) {
+    return String(value || '')
+      .normalize('NFKC')
+      .toLocaleLowerCase()
+      .replace(/[‐‑‒–—―]/g, '-')
+      .trim();
+  }
+
+  function answerMentionSpans(answer, label) {
+    const text = normalizeMentionText(answer);
+    const needle = normalizeMentionText(label);
+    if (!text || !needle) return [];
+    const wordCharacter = /[\p{L}\p{N}_]/u;
+    const spans = [];
+    let offset = 0;
+    while (offset <= text.length - needle.length) {
+      const index = text.indexOf(needle, offset);
+      if (index < 0) break;
+      const before = index > 0 ? text[index - 1] : '';
+      const afterIndex = index + needle.length;
+      const after = afterIndex < text.length ? text[afterIndex] : '';
+      if ((!before || !wordCharacter.test(before)) && (!after || !wordCharacter.test(after))) {
+        spans.push({ start: index, end: afterIndex });
+      }
+      offset = index + Math.max(1, needle.length);
+    }
+    return spans;
+  }
+
+  function collectAnswerGraphEvidence(event, turn) {
+    if (!event || event.type !== 'tool_result' || !turn) return;
+    const pluginName = String(event.plugin_name || '');
+    if (!/(Graph|Cypher|Analytics)/i.test(pluginName)) return;
+    const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
+    const elements = graphElementsFromPayload(payload);
+    if (!elements) return;
+
+    if (!turn.answerGraphEvidence) {
+      turn.answerGraphEvidence = { nodes: new Map(), edges: new Map() };
+    }
+    elements.nodes.forEach((node) => {
+      const id = String(node.id || '').trim();
+      if (id) turn.answerGraphEvidence.nodes.set(id, { ...node, id });
+    });
+    elements.edges.forEach((edge, index) => {
+      const source = String(edge.source || '').trim();
+      const target = String(edge.target || '').trim();
+      if (!source || !target) return;
+      const id = String(edge.id || `${source}\u0000${target}\u0000${edge.relation || edge.relationType || index}`);
+      turn.answerGraphEvidence.edges.set(id, { ...edge, id, source, target });
+    });
+    const entityQuery = extractEntityQuery(event);
+    if (entityQuery && !turn.answerGraphQuery) turn.answerGraphQuery = entityQuery;
+  }
+
+  function buildAnswerGraphElements(turn) {
+    const evidence = turn && turn.answerGraphEvidence;
+    const answer = String(turn && turn.answer || '');
+    if (!evidence || !answer) return null;
+
+    const candidates = Array.from(evidence.nodes.values()).map((node) => {
+      const label = String(node.displayLabel || node.label || node.rawLabel || '').trim();
+      return {
+        node,
+        labelLength: normalizeMentionText(label).length,
+        spans: label === '' ? [] : answerMentionSpans(answer, label),
+      };
+    }).filter((candidate) => candidate.spans.length > 0)
+      .sort((left, right) => right.labelLength - left.labelLength);
+
+    const occupiedSpans = [];
+    const mentionedNodes = [];
+    candidates.forEach((candidate) => {
+      const hasDistinctMention = candidate.spans.some((span) => !occupiedSpans.some((occupied) => (
+        span.start < occupied.end && span.end > occupied.start
+      )));
+      if (!hasDistinctMention) return;
+      mentionedNodes.push(candidate.node);
+      occupiedSpans.push(...candidate.spans);
+    });
+    const mentionedIds = new Set(mentionedNodes.map((node) => String(node.id)));
+    const edges = Array.from(evidence.edges.values()).filter((edge) => (
+      mentionedIds.has(String(edge.source)) && mentionedIds.has(String(edge.target))
+    ));
+    if (!edges.length) return null;
+
+    const connectedIds = new Set(edges.flatMap((edge) => [String(edge.source), String(edge.target)]));
+    const nodes = mentionedNodes.filter((node) => connectedIds.has(String(node.id)));
+    if (nodes.length < 2) return null;
+    return { nodes, edges };
+  }
+
+  function renderAnswerGraphAction(turn) {
+    if (!ANSWER_GRAPH_ACTION_ENABLED) return;
+    if (!turn || turn.failed || !turn.answerNode) return;
+    const elements = buildAnswerGraphElements(turn);
+    if (!elements) return;
+    const relationLabel = elements.edges.length === 1 ? 'relation' : 'relations';
+    const nodeLabel = elements.nodes.length === 1 ? 'node' : 'nodes';
+    const action = document.createElement('div');
+    action.className = 'preview-answer-graph-action';
+    action.innerHTML = `
+      <span class="preview-answer-graph-summary" data-answer-graph-summary>${elements.nodes.length} ${nodeLabel} · ${elements.edges.length} ${relationLabel}</span>
+      <button type="button" class="preview-answer-graph-button" data-answer-graph-action="view">View answer graph</button>
+      <span class="preview-answer-graph-error" data-answer-graph-error hidden></span>
+    `;
+    const button = action.querySelector('[data-answer-graph-action="view"]');
+    const errorNode = action.querySelector('[data-answer-graph-error]');
+    button.addEventListener('click', async () => {
+      if (button.disabled) return;
+      button.disabled = true;
+      errorNode.hidden = true;
+      try {
+        const workspaceMode = window.__TEKG_PREVIEW_WORKSPACE_MODE;
+        if (workspaceMode && typeof workspaceMode.ensureKnowledgeForGraphAction === 'function') {
+          await workspaceMode.ensureKnowledgeForGraphAction();
+        }
+        const bridge = getGraphBridge();
+        if (!bridge || typeof bridge.applyAnswerGraph !== 'function') {
+          throw new Error('Answer graph is unavailable.');
+        }
+        const query = turn.answerGraphQuery || compactGraphContext().query || turn.question;
+        const applied = await bridge.applyAnswerGraph(graphActionFromElements(elements, query));
+        if (!applied) throw new Error('Answer graph could not be opened.');
+        button.textContent = 'Answer graph opened';
+        turn.graphChanged = true;
+      } catch (error) {
+        button.disabled = false;
+        errorNode.textContent = String(error && error.message ? error.message : 'Answer graph could not be opened.');
+        errorNode.hidden = false;
+      }
+    });
+    turn.answerNode.appendChild(action);
+    turn.answerGraphProposal = elements;
   }
 
   function extractEntityQuery(event) {
@@ -278,40 +415,6 @@
       if (value) return value;
     }
     return '';
-  }
-
-  async function driveGraphFromEvent(event, turn) {
-    if (!event || event.type !== 'tool_result') return;
-    const pluginName = String(event.plugin_name || '');
-    const graphRelevant = /Graph|Cypher|Analytics|Sequence|Genome/i.test(pluginName);
-    if (!graphRelevant) return;
-
-    const workspaceMode = window.__TEKG_PREVIEW_WORKSPACE_MODE;
-    if (workspaceMode && typeof workspaceMode.ensureKnowledgeForGraphAction === 'function') {
-      await workspaceMode.ensureKnowledgeForGraphAction();
-    }
-    const bridge = getGraphBridge();
-    if (!bridge) return;
-    const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
-    const elements = graphElementsFromPayload(payload);
-    try {
-      if (elements && typeof bridge.applyAnswerGraph === 'function') {
-        const query = extractEntityQuery(event) || compactGraphContext().query || turn.question;
-        const applied = await bridge.applyAnswerGraph(graphActionFromElements(elements, query));
-        if (applied) {
-          turn.graphChanged = true;
-          return;
-        }
-      }
-
-      const entityQuery = extractEntityQuery(event);
-      if (entityQuery && typeof bridge.loadGraph === 'function') {
-        const loaded = await bridge.loadGraph({ query: entityQuery });
-        if (loaded) {
-          turn.graphChanged = true;
-        }
-      }
-    } catch (_error) {}
   }
 
   function handleStreamEvent(turn, event) {
@@ -335,7 +438,7 @@
       const payload = event.payload && typeof event.payload === 'object' ? event.payload : {};
       mergeTurnCitations(turn, payload.citations || payload.display_details?.citations || []);
       turn.toolEvents.push(event);
-      driveGraphFromEvent(event, turn);
+      if (ANSWER_GRAPH_ACTION_ENABLED) collectAnswerGraphEvidence(event, turn);
       return;
     }
     if (event.type === 'answer') {
@@ -367,6 +470,7 @@
         }
         turn.answerNode = createAnswerMessage(turn, turn.answer);
       }
+      renderAnswerGraphAction(turn);
       stopTurnTimer(turn, turn.failed ? 'failed' : 'done');
     }
   }
@@ -382,6 +486,9 @@
       done: false,
       failed: false,
       graphChanged: false,
+      answerGraphEvidence: null,
+      answerGraphProposal: null,
+      answerGraphQuery: '',
       toolEvents: [],
       citations: [],
       streamState: typeof deepThinkClient.createStreamState === 'function' ? deepThinkClient.createStreamState() : null,

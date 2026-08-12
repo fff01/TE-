@@ -106,6 +106,57 @@ rewrite. Preserve the accepted drag behavior, loader behavior, exact TE route
 handoff, separate Knowledge / Co-expression G6 instances, legend interactions,
 and shared SVG export contract.
 
+Dynamic Knowledge Graph navigation is now parent-owned. Search and typed node
+Jump requests enter `navigateGraph`; URL identity, search controls, parent
+elements, relation legend metadata, iframe rendering, and page Back history are
+committed only after the request succeeds. Superseded loads cannot attach old
+handlers to a newer iframe graph, and failed loads restore the last stable
+dynamic or taxonomy surface. Browser Back/Forward restores the routed entity
+without retaining misleading page-level Back entries. Preserve this contract
+when adding Agent-driven navigation or disease classification Graph mode. The
+legend, relation, and Min PMID controls remain disabled during a semantic
+navigation so a cache redraw cannot supersede the incoming entity request. The
+  focused regressions are
+  `scripts/checks/check_graph_canonical_navigation_contract.py` and
+  `scripts/checks/check_graph_canonical_navigation_browser.js`.
+
+Preview routes now preserve the accepted TE taxonomy and applied Graph view
+state. `tree=all|rmsk_repbase` selects the taxonomy source;
+`taxonomy=graph` selects Canvas Graph and is omitted for the default Tree.
+Dynamic entity routes use `nodes`, `relations`, and `min_pmids` only for
+user-applied nondefault filters. An applied empty node or relation selection is
+encoded as `none`; all-applied and Min PMID `0` are omitted. The URL, not
+session storage, is the durable truth for applied filters, while unapplied
+checkbox/input drafts remain local and disappear on refresh. Restore filters
+only after the active graph's node and relation catalogs exist. Preserve the
+atomic taxonomy transition and filter rollback behavior covered by
+`scripts/checks/check_graph_route_view_state_contract.py` and
+`scripts/checks/check_graph_route_view_state_browser.js`.
+
+Graph assistant answers no longer reverse-drive the visible graph from each
+raw tool result. The experimental structured answer-subgraph implementation is
+retained internally, but `ANSWER_GRAPH_ACTION_ENABLED` is false because entity
+recognition is not yet precise enough for users. Do not expose `View answer
+graph`, its counts, or any automatic `tool_result` graph loading until that
+recognition has a separate reviewed fix. The Agent page Graph Plugin inspector
+remains its separate, already user-initiated popup.
+Regressions are `scripts/checks/check_graph_answer_subgraph_contract.py` and
+`scripts/checks/check_graph_answer_subgraph_browser.js`.
+
+Disease classification now has the same routed Tree/Graph display choice as TE
+classification. Its stable route is
+`q=<class>&type=disease_class&class=<class>` with `taxonomy=graph` only for the
+Canvas view. It continues to consume the existing Graph API hierarchy payload;
+`assets/js/renderers/canvas-force/disease-classification-adapter.js` adapts that
+payload to the shared Canvas force core without introducing another truth
+source. DiseaseClass and DiseaseCategory nodes do not navigate. Clicking a
+concrete Disease uses canonical typed Jump, while dragging never activates it.
+The disease Canvas export carries disease-specific node types and metadata.
+Preserve this contract and the bounded nature of the current hierarchy payload.
+Focused regressions are
+`scripts/checks/check_disease_classification_canvas_contract.py` and
+`scripts/checks/check_disease_classification_canvas_browser.js`.
+
 Knowledge Graph and Co-expression SVG exports share
 `assets/js/renderers/g6/g6-svg-export.js`, but each workspace supplies its own
 filtered snapshot, final G6 positions, and domain styling. They still use

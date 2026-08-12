@@ -118,6 +118,19 @@ bounded fourth-root scale. Current measured shares are approximately 57% / 35%
 / 34% / 10% in `all`. Small singleton galaxies remain present but are compactly
 packed rather than receiving equal global ring slots.
 
+Disease classification reuses the same Canvas interaction core through
+`disease-classification-adapter.js`, but it does not reuse the TE taxonomy API
+or TE taxonomy labels. Its runtime truth remains the existing
+`api/graph.php?type=disease_class` element payload. Disease Class and Disease
+Category nodes are inspect-only; a click on a concrete Disease enters the
+canonical typed Knowledge Graph route, while a drag never navigates. The
+classification route keeps `q`, `type=disease_class`, and `class`; the optional
+Canvas display adds `taxonomy=graph`, and Tree omits it. The TE-only taxonomy
+source selector is hidden for disease classification. Page Back, browser
+Back/Forward, refresh, and export preserve the disease class and display mode.
+The current hierarchy endpoint returns a bounded set of paths and must not be
+described as a complete ICD-11 export.
+
 ## Related Checks
 
 - `scripts/checks/check_g6_browser_smoke.py`
@@ -127,6 +140,8 @@ packed rather than receiving equal global ring slots.
 - `scripts/checks/check_g6_legend_expand_tree_fixes.py`
 - `scripts/checks/check_taxonomy_canvas_integration.py`
 - `scripts/checks/check_taxonomy_canvas_layout_browser.py`
+- `scripts/checks/check_disease_classification_canvas_contract.py`
+- `scripts/checks/check_disease_classification_canvas_browser.js`
 - `scripts/checks/check_g6_subgraph_export_smoke.py`
 - `scripts/checks/check_coexpression_task8_browser.py`
 - `scripts/checks/check_coexpression_task9_browser.py`

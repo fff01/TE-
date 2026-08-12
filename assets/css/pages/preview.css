@@ -1490,6 +1490,51 @@
           vertical-align: baseline;
         }
 
+        .preview-answer-graph-action {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 8px 12px;
+          margin-top: 14px;
+          padding-top: 12px;
+          border-top: 1px solid #dbe4f3;
+        }
+
+        .preview-answer-graph-summary {
+          color: #68799b;
+          font-size: 0.84rem;
+          font-weight: 700;
+        }
+
+        .preview-answer-graph-button {
+          min-height: 34px;
+          padding: 7px 12px;
+          border: 1px solid #486ad5;
+          border-radius: 6px;
+          background: #486ad5;
+          color: #fff;
+          font: inherit;
+          font-size: 0.86rem;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .preview-answer-graph-button:hover:not(:disabled) {
+          border-color: #2f4fad;
+          background: #2f4fad;
+        }
+
+        .preview-answer-graph-button:disabled {
+          cursor: default;
+          opacity: 0.72;
+        }
+
+        .preview-answer-graph-error {
+          flex-basis: 100%;
+          color: #a33b45;
+          font-size: 0.82rem;
+        }
+
         .preview-inline-citation {
           position: relative;
           display: inline-flex;

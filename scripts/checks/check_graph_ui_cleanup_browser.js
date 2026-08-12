@@ -55,7 +55,14 @@ function assert(condition, message, details = null) {
     await page.waitForFunction(() => window.__TEKG_G6_BRIDGE?.getState?.().mode === 'tree', null, { timeout: 30000 });
     await page.fill('#node-search', 'L1HS');
     await page.click('#graph-search-submit');
-    await page.waitForFunction(() => window.__TEKG_G6_BRIDGE?.getState?.().mode === 'dynamic' && String(window.__TEKG_G6_BRIDGE?.getState?.().query || '').toLowerCase() === 'l1hs', null, { timeout: 30000 });
+    await page.waitForFunction(() => {
+      const state = window.__TEKG_G6_BRIDGE?.getState?.() || {};
+      return state.mode === 'dynamic'
+        && String(state.query || '').toLowerCase() === 'l1hs'
+        && Array.isArray(state.currentElements)
+        && state.currentElements.length > 0
+        && !document.querySelector('#graph-loader')?.classList.contains('is-visible');
+    }, null, { timeout: 30000 });
     const taxonomyBackKnowledge = await page.evaluate(() => ({
       text: document.querySelector('#back-text')?.textContent || '',
       hidden: document.querySelector('#back-graph')?.hidden,
@@ -91,7 +98,15 @@ function assert(condition, message, details = null) {
     assert(assistant.userSelect === 'text', 'AI messages are not selectable.', assistant);
 
     await page.goto(`${base}/preview.php?q=LINE1&type=TE`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForFunction(() => window.__TEKG_G6_BRIDGE?.getState?.().mode === 'dynamic' && document.querySelector('#g6-dynamic-surface iframe'), null, { timeout: 30000 });
+    await page.waitForFunction(() => {
+      const state = window.__TEKG_G6_BRIDGE?.getState?.() || {};
+      return state.mode === 'dynamic'
+        && String(state.query || '').toLowerCase() === 'line1'
+        && Array.isArray(state.currentElements)
+        && state.currentElements.length > 0
+        && document.querySelector('#g6-dynamic-surface iframe')
+        && !document.querySelector('#graph-loader')?.classList.contains('is-visible');
+    }, null, { timeout: 30000 });
     const jumpFrame = await (await page.locator('#g6-dynamic-surface iframe').elementHandle()).contentFrame();
     assert(jumpFrame, 'Knowledge Graph iframe was not created for the Back workflow.');
     await jumpFrame.waitForFunction(() => window.__TEKG_G6_EMBED?.getVisibleSubgraph?.().counts?.nodes > 0, null, { timeout: 30000 });
@@ -104,7 +119,14 @@ function assert(condition, message, details = null) {
       return { id: node.id, label: node.label || node.rawLabel };
     });
     assert(jumpTarget, 'LINE1 graph does not expose L1HS for the real Jump workflow.');
-    await page.waitForFunction(() => String(window.__TEKG_G6_BRIDGE?.getState?.().query || '').toLowerCase() === 'l1hs', null, { timeout: 30000 });
+    await page.waitForFunction(() => {
+      const state = window.__TEKG_G6_BRIDGE?.getState?.() || {};
+      return String(state.query || '').toLowerCase() === 'l1hs'
+        && Array.isArray(state.currentElements)
+        && state.currentElements.length > 0
+        && new URL(window.location.href).searchParams.get('q')?.toLowerCase() === 'l1hs'
+        && !document.querySelector('#graph-loader')?.classList.contains('is-visible');
+    }, null, { timeout: 30000 });
     const knowledgeBack = await page.evaluate(() => ({
       text: document.querySelector('#back-text')?.textContent || '',
       hidden: document.querySelector('#back-graph')?.hidden,

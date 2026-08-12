@@ -362,6 +362,7 @@
     let currentGraphData = null;
     let currentExpressionOverlay = { enabled: false, context: 'off', records: {}, max_value: 0 };
     let currentLegendFocus = null;
+    let graphLoadGeneration = 0;
 
     if (currentQueryType === 'disease_class') {
       if (!currentClassQuery) currentClassQuery = currentQuery;
@@ -389,6 +390,7 @@
       setMode: typeof options.setMode === 'function' ? options.setMode : noop,
       onSelection: typeof options.onSelection === 'function' ? options.onSelection : noop,
       onDiseaseClassClick: typeof options.onDiseaseClassClick === 'function' ? options.onDiseaseClassClick : noop,
+      onNodeJump: typeof options.onNodeJump === 'function' ? options.onNodeJump : noop,
       onNodeExpand: typeof options.onNodeExpand === 'function' ? options.onNodeExpand : noop,
       onReady: typeof options.onReady === 'function' ? options.onReady : noop,
       setQueryUi: typeof options.setQueryUi === 'function' ? options.setQueryUi : noop,
@@ -1011,7 +1013,13 @@
             return true;
           }
         }
-        await loadGraph(query);
+        const request = {
+          query,
+          queryType: normalizeQueryType(node.nodeType || node.type || ''),
+        };
+        const handled = await Promise.resolve(hooks.onNodeJump(node, request));
+        if (handled) return true;
+        await loadGraph(request);
         return true;
       }
       return false;
@@ -2102,6 +2110,11 @@
 
     async function renderElements(elements, requestLike, options = {}) {
       const request = normalizeGraphRequest(requestLike);
+      const loadGeneration = options.claimGeneration === true
+        ? ++graphLoadGeneration
+        : Math.max(0, Number(options.loadGeneration) || 0);
+      const isSupersededLoad = () => loadGeneration > 0 && loadGeneration !== graphLoadGeneration;
+      if (isSupersededLoad()) return { elements: [], relationLegendMeta: [], superseded: true };
       currentLegendFocus = null;
       const query = String(request.query || currentQuery || '').trim() || 'LINE1';
       const sourceLabel = options.sourceLabel === 'qa' ? 'qa' : 'query';
@@ -2136,6 +2149,7 @@
       try {
         await ensureResources();
         const metrics = await waitForContainerSize();
+        if (isSupersededLoad()) return { elements: [], relationLegendMeta: [], superseded: true };
         if ((container.clientWidth || 0) < 25 && metrics.width > 0) {
           container.style.width = `${metrics.width}px`;
         }
@@ -2164,6 +2178,9 @@
         const chargeScale = Math.max(1, Number(graphDataOptions.chargeScale) || 1.55);
         const edgeLabelFontSize = Math.max(9, Number(graphDataOptions.edgeLabelFontSize) || 9);
 
+        if (isSupersededLoad()) {
+          return { elements: payloadElements, relationLegendMeta: data.relationLegendMeta, superseded: true };
+        }
         if (!Array.isArray(data.nodes) || data.nodes.length === 0) {
           hideInspectCard();
           if (graph && typeof graph.destroy === 'function') {
@@ -2184,11 +2201,17 @@
           return { elements: payloadElements };
         }
 
+        if (isSupersededLoad()) {
+          return { elements: payloadElements, relationLegendMeta: data.relationLegendMeta, superseded: true };
+        }
         if (graph && typeof graph.destroy === 'function') {
           graph.destroy();
         }
 
-        graph = new Graph({
+        if (isSupersededLoad()) {
+          return { elements: payloadElements, relationLegendMeta: data.relationLegendMeta, superseded: true };
+        }
+        const renderingGraph = new Graph({
           container,
           autoFit: false,
           data,
@@ -2308,7 +2331,8 @@
           ],
         });
 
-        const renderPromise = graph.render();
+        graph = renderingGraph;
+        const renderPromise = renderingGraph.render();
         if (renderPromise && typeof renderPromise.then === 'function') {
           let renderSettled = false;
           await Promise.race([
@@ -2327,11 +2351,21 @@
             });
           }
         }
+        if (isSupersededLoad() || graph !== renderingGraph) {
+          if (graph === renderingGraph) {
+            renderingGraph.destroy?.();
+            graph = null;
+          }
+          return { elements: payloadElements, relationLegendMeta: data.relationLegendMeta, superseded: true };
+        }
         hideInspectCard();
-        graph.off?.('node:click');
-        graph.off?.('edge:click');
-        graph.off?.('canvas:click');
-        graph.on('node:click', async (event) => {
+        renderingGraph.off?.('node:click');
+        renderingGraph.off?.('edge:click');
+        renderingGraph.off?.('canvas:click');
+        if (isSupersededLoad() || graph !== renderingGraph) {
+          return { elements: payloadElements, relationLegendMeta: data.relationLegendMeta, superseded: true };
+        }
+        renderingGraph.on('node:click', async (event) => {
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
@@ -2339,7 +2373,7 @@
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
         });
-        graph.on('edge:click', (event) => {
+        renderingGraph.on('edge:click', (event) => {
           const edgeId = event?.target?.id;
           const edge = data.edges.find((item) => item.id === edgeId);
           if (!edge) return;
@@ -2348,7 +2382,7 @@
           hooks.onSelection(null);
           hooks.setDetailHtml(buildEdgeDetailHtml(edge, data.nodes));
         });
-        graph.on('canvas:click', () => {
+        renderingGraph.on('canvas:click', () => {
           hideInspectCard();
           hooks.onSelection(null);
           hooks.setDetail('No node selected', 'Click a node or edge to inspect graph details.');
@@ -2363,6 +2397,9 @@
         );
         return { elements: payloadElements, relationLegendMeta: data.relationLegendMeta };
       } catch (error) {
+        if (isSupersededLoad()) {
+          return { elements: payloadElements, relationLegendMeta: [], superseded: true };
+        }
         hooks.setStatus(`Failed: ${error && error.message ? error.message : 'unknown error'}`);
         console.error('G6 graph failed:', error);
         throw error;
@@ -2370,6 +2407,7 @@
     }
 
     async function loadGraph(requestLike, options = {}) {
+      const generation = ++graphLoadGeneration;
       const request = normalizeGraphRequest(requestLike);
       currentLegendFocus = null;
       const query = String(request.query || '').trim() || 'LINE1';
@@ -2394,6 +2432,9 @@
         }
 
         const payload = await response.json();
+        if (generation !== graphLoadGeneration) {
+          return { ...payload, elements: [], relationLegendMeta: [], superseded: true };
+        }
         const graphDataOptions = { ...(options.graphDataOptions || {}) };
         if (!Object.prototype.hasOwnProperty.call(graphDataOptions, 'visibleTypes')) {
           const currentBridge = window.__TEKG_G6_BRIDGE;
@@ -2420,8 +2461,12 @@
         const rendered = await renderElements(payload.elements || [], request, {
           sourceLabel: 'query',
           skipInitialStatus: true,
+          loadGeneration: generation,
           graphDataOptions,
         });
+        if (generation !== graphLoadGeneration) {
+          return { ...payload, elements: rendered.elements, relationLegendMeta: rendered.relationLegendMeta, superseded: true };
+        }
         return { ...payload, elements: rendered.elements, relationLegendMeta: rendered.relationLegendMeta };
       } catch (error) {
         hooks.setStatus(`Failed: ${error && error.message ? error.message : 'unknown error'}`);

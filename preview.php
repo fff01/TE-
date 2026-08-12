@@ -17,6 +17,7 @@ $previewVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/index-g6-type-meta.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/default-tree-mindmap.js')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/canvas-force/taxonomy-canvas-renderer.js')),
+    (int)@filemtime(tekg_assets_fs_path('js/renderers/canvas-force/disease-classification-adapter.js')),
     (int)@filemtime(tekg_assets_fs_path('html/preview_g6_embed.html')),
     (int)@filemtime(tekg_assets_fs_path('html/preview_coexpression_embed.html')),
     (int)@filemtime(tekg_assets_fs_path('js/renderers/g6/g6-svg-export.js')),
@@ -128,6 +129,7 @@ $previewConfig = [
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/g6-svg-export.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/default-tree-mindmap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/canvas-force/taxonomy-canvas-renderer.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
+      <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/canvas-force/disease-classification-adapter.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6-runtime.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/preview/te-loader.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/renderers/g6/index-g6.bootstrap.js') . '?v=' . $previewVersion, ENT_QUOTES, 'UTF-8') ?>"></script>

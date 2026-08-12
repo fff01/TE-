@@ -21,7 +21,10 @@
     transform: { x: 0, y: 0, k: 1 },
     dragging: null, panning: false, pointer: null,
     frame: 0, running: false, paused: true, alpha: 1,
-    source: '', layoutMeta: { branches: [] }, requestEpoch: 0, requestController: null,
+    source: '', mode: 'taxonomy_graph', title: 'TE-KG taxonomy graph',
+    description: 'Static vector export of the visible force-directed taxonomy Graph.',
+    levelLabels: LABELS, colors: COLORS, onNodeActivate: null,
+    layoutMeta: { branches: [] }, requestEpoch: 0, requestController: null,
   };
 
   function clamp(value, minimum, maximum) {
@@ -68,8 +71,8 @@
   }
 
   function keyForDepth(depth) { return `depth-${depth}`; }
-  function levelLabel(depth) { return LABELS[depth] || `Level ${depth}`; }
-  function levelColor(depth) { return COLORS[Math.min(depth, COLORS.length - 1)] || '#94a3b8'; }
+  function levelLabel(depth) { return state.levelLabels[depth] || `Level ${depth}`; }
+  function levelColor(depth) { return state.colors[Math.min(depth, state.colors.length - 1)] || '#94a3b8'; }
   function nodeId(name, index) {
     const slug = String(name || '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
     return `taxonomy_${slug || 'node'}_${index}`;
@@ -104,7 +107,9 @@
       parentByChild.set(childName, parentName);
     });
 
-    const rootChildren = children.get('TE')
+    const rootKey = String(payload?.root || '').trim();
+    const rootChildren = children.get(rootKey)
+      || children.get('TE')
       || children.get('Human TE')
       || children.get('Transposable Elements - Human')
       || children.get('Transposable Elements (Mobile element) - Human')
@@ -208,11 +213,12 @@
     });
 
     const nodes = rawNodes.map((raw, index) => {
-      const name = String(raw?.name || '').trim();
+      const key = String(raw?.name || '').trim();
+      const name = String(raw?.label || raw?.name || '').trim();
       const depth = Math.max(0, Number(raw?.depth) || 0);
-      const childCount = (children.get(name) || []).length;
-      const branchName = depth >= 1 ? ancestorAtDepth(name, 1) : '';
-      const starName = depth <= STAR_DEPTH ? name : ancestorAtDepth(name, STAR_DEPTH);
+      const childCount = (children.get(key) || []).length;
+      const branchName = depth >= 1 ? ancestorAtDepth(key, 1) : '';
+      const starName = depth <= STAR_DEPTH ? key : ancestorAtDepth(key, STAR_DEPTH);
       const branchLayout = branchLayouts.get(branchName);
       const starLayout = starLayouts.get(starName);
       const galaxyScale = starLayout?.galaxyScale || 1;
@@ -228,7 +234,10 @@
           ? Math.max(8, (12 + Math.min(7, Math.sqrt(childCount + 1))) * (0.88 + galaxyScale * 0.12))
           : Math.max(1.8, 7.2 - (depth - STAR_DEPTH) * 0.85 + Math.min(2.2, Math.sqrt(childCount + 1) * 0.25));
       return {
-        id: nodeId(name, index), name, depth, childCount, degree: 0,
+        id: String(raw?.id || nodeId(key, index)), key, name, depth, childCount, degree: 0,
+        nodeType: String(raw?.nodeType || raw?.type || 'TE'),
+        queryLabel: String(raw?.queryLabel || raw?.label || raw?.name || ''),
+        description: String(raw?.description || ''),
         branch: branchLayout?.index || 0,
         branchName,
         branchX: branchLayout?.branchX || 0,
@@ -243,8 +252,8 @@
         y: starY + Math.sin(localAngle) * localRadius,
         vx: 0, vy: 0, radius: size,
       };
-    }).filter((node) => node.name);
-    const byName = new Map(nodes.map((node) => [node.name, node]));
+    }).filter((node) => node.key);
+    const byName = new Map(nodes.map((node) => [node.key, node]));
     nodes.forEach((node) => {
       const star = byName.get(node.starName);
       node.starId = star ? star.id : node.id;
@@ -551,9 +560,11 @@
         id: node.id,
         label: node.name,
         rawLabel: node.name,
-        type: 'TE',
+        type: node.nodeType || 'TE',
+        nodeType: node.nodeType || 'TE',
+        queryLabel: node.queryLabel || node.name,
         taxonomyLevel: node.depth,
-        description: '',
+        description: node.description || '',
         x: point.x,
         y: point.y,
         radius: Math.max(2.5, node.radius * state.transform.k),
@@ -572,7 +583,7 @@
         pmids: [],
         evidence: '',
       }));
-    return { query: 'taxonomy_graph', nodes, edges, counts: { nodes: nodes.length, edges: edges.length } };
+    return { query: state.mode, nodes, edges, counts: { nodes: nodes.length, edges: edges.length } };
   }
   function exportPngDataUrl() {
     draw();
@@ -585,9 +596,9 @@
     const serializer = window.__TEKG_G6_SVG_EXPORT;
     if (!serializer || typeof serializer.serialize !== 'function') throw new Error('The shared SVG exporter is unavailable.');
     return serializer.serialize({
-      title: 'TE-KG taxonomy graph',
-      description: 'Static vector export of the visible force-directed taxonomy Graph.',
-      metadata: { graph_mode: 'taxonomy_graph', node_count: snapshot.nodes.length, edge_count: snapshot.edges.length },
+      title: state.title,
+      description: state.description,
+      metadata: { graph_mode: state.mode, node_count: snapshot.nodes.length, edge_count: snapshot.edges.length },
       nodes: snapshot.nodes.map((node) => ({
         id: node.id,
         x: node.x,
@@ -636,6 +647,12 @@
       state.edges = parsed.edges;
       state.layoutMeta = parsed.layoutMeta;
       state.source = source;
+      state.mode = 'taxonomy_graph';
+      state.title = 'TE-KG taxonomy graph';
+      state.description = 'Static vector export of the visible force-directed taxonomy Graph.';
+      state.levelLabels = LABELS;
+      state.colors = COLORS;
+      state.onNodeActivate = null;
       state.visibleLevels = new Set(getDepths(state.nodes));
       rebuildIndexes();
       resize();
@@ -653,6 +670,34 @@
       window.clearTimeout(timeout);
       if (state.requestController === controller) state.requestController = null;
     }
+  }
+  async function renderModel(model = {}) {
+    const epoch = ++state.requestEpoch;
+    if (state.requestController) state.requestController.abort();
+    state.requestController = null;
+    state.focus = null;
+    setStatus('Loading classification graph...');
+    const parsed = parse(model);
+    if (epoch !== state.requestEpoch) return false;
+    if (!parsed.nodes.length) throw new Error('Classification graph returned no nodes');
+    state.nodes = parsed.nodes;
+    state.edges = parsed.edges;
+    state.layoutMeta = parsed.layoutMeta;
+    state.source = String(model.source || 'disease_classification');
+    state.mode = String(model.mode || 'classification_graph');
+    state.title = String(model.title || 'TE-KG classification graph');
+    state.description = String(model.description || 'Static vector export of the visible classification graph.');
+    state.levelLabels = Array.isArray(model.levelLabels) && model.levelLabels.length ? model.levelLabels : LABELS;
+    state.colors = Array.isArray(model.colors) && model.colors.length ? model.colors : COLORS;
+    state.onNodeActivate = typeof model.onNodeActivate === 'function' ? model.onNodeActivate : null;
+    state.visibleLevels = new Set(getDepths(state.nodes));
+    rebuildIndexes();
+    resize();
+    fit();
+    state.alpha = 1;
+    reheat(1);
+    setStatus(`${state.nodes.length} nodes | ${state.edges.length} edges`);
+    return true;
   }
   function getDepths(nodes) { return [...new Set(nodes.map((node) => node.depth))].sort((a, b) => a - b); }
 
@@ -681,7 +726,14 @@
     const node = hit(event.clientX, event.clientY);
     state.dragging = node;
     state.panning = !node;
-    state.pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    state.pointer = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      moved: false,
+      pressedNode: node,
+    };
     state.selected = node?.id || null;
     canvas.classList.add('is-dragging');
     canvas.setPointerCapture(event.pointerId);
@@ -690,6 +742,9 @@
   canvas.addEventListener('pointermove', (event) => {
     const rect = canvas.getBoundingClientRect();
     const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    if (state.pointer && Math.hypot(event.clientX - state.pointer.startClientX, event.clientY - state.pointer.startClientY) > 7) {
+      state.pointer.moved = true;
+    }
     if (state.dragging) {
       Object.assign(state.dragging, worldPoint(point.x, point.y), { vx: 0, vy: 0 });
       reheat(0.18);
@@ -706,14 +761,26 @@
     showTooltip(node, event);
     draw();
   });
-  function endPointer(event) {
+  function endPointer(event, allowActivation = true) {
+    const pointer = state.pointer;
+    const activated = allowActivation && pointer?.pressedNode && !pointer.moved ? pointer.pressedNode : null;
     state.dragging = null; state.panning = false; state.pointer = null; state.selected = null;
     canvas.classList.remove('is-dragging');
     try { canvas.releasePointerCapture(event.pointerId); } catch (_error) {}
     reheat(0.12);
+    if (activated && typeof state.onNodeActivate === 'function') {
+      Promise.resolve(state.onNodeActivate({
+        id: activated.id,
+        label: activated.name,
+        rawLabel: activated.name,
+        nodeType: activated.nodeType,
+        queryLabel: activated.queryLabel,
+        description: activated.description,
+      })).catch((error) => console.error('Classification node activation failed.', error));
+    }
   }
-  canvas.addEventListener('pointerup', endPointer);
-  canvas.addEventListener('pointercancel', endPointer);
+  canvas.addEventListener('pointerup', (event) => endPointer(event, true));
+  canvas.addEventListener('pointercancel', (event) => endPointer(event, false));
   canvas.addEventListener('pointerleave', () => { state.hover = null; showTooltip(null); draw(); });
   canvas.addEventListener('wheel', (event) => {
     event.preventDefault();
@@ -729,6 +796,7 @@
   window.addEventListener('resize', resize);
   window.__TEKG_CANVAS_TAXONOMY = {
     render,
+    renderModel,
     applyLevelState,
     setLevelFocus,
     getLegendMeta,

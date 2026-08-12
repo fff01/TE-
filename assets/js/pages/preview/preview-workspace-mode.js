@@ -31,7 +31,7 @@
   ) return;
 
   let currentMode = 'knowledge';
-  let knowledgeGraphMode = 'tree';
+  let knowledgeGraphMode = String(window.__TEKG_G6_BRIDGE?.getState?.().mode || 'tree');
   let transitionEpoch = 0;
   let switchCount = 0;
   let pendingKnowledgeLoads = 0;
@@ -39,6 +39,7 @@
   let knowledgeLoadPromise = null;
   let retainedKnowledgeState = window.__TEKG_G6_BRIDGE?.getState?.() || {};
   const sharedBackHistory = [];
+  let restoringBrowserRoute = false;
 
   function normalizeBackTarget(selection = {}) {
     const mode = String(selection.mode || '').trim();
@@ -101,6 +102,11 @@
       : 'Back';
   }
 
+  function resetSharedBackHistory() {
+    sharedBackHistory.length = 0;
+    updateSharedBackButton();
+  }
+
   async function goBackEntity() {
     const previous = sharedBackHistory.pop() || null;
     updateSharedBackButton();
@@ -125,14 +131,15 @@
     return true;
   }
 
-  async function loadKnowledgeGraph(request) {
+  async function loadKnowledgeGraph(request, options = {}) {
     const bridge = window.__TEKG_G6_BRIDGE;
     if (!bridge?.loadGraph) return null;
-    const key = `${String(request?.queryType || 'TE').toUpperCase()}\u0000${String(request?.query || '').toLowerCase()}`;
+    const filterKey = options.routeFilters ? JSON.stringify(options.routeFilters) : '';
+    const key = `${String(request?.queryType || 'TE').toUpperCase()}\u0000${String(request?.query || '').toLowerCase()}\u0000${filterKey}`;
     if (knowledgeLoadPromise && knowledgeLoadKey === key) return knowledgeLoadPromise;
     pendingKnowledgeLoads += 1;
     knowledgeLoadKey = key;
-    const promise = Promise.resolve(bridge.loadGraph(request));
+    const promise = Promise.resolve(bridge.loadGraph(request, options));
     knowledgeLoadPromise = promise;
     try {
       return await promise;
@@ -163,14 +170,16 @@
   }
 
   function syncTopControlVisibility() {
-    const showTaxonomyControl = currentMode === 'knowledge'
+    const showTaxonomySource = currentMode === 'knowledge'
       && (knowledgeGraphMode === 'tree' || knowledgeGraphMode === 'taxonomy_graph');
-    taxonomyControl.hidden = !showTaxonomyControl;
-    taxonomyControl.setAttribute('aria-hidden', showTaxonomyControl ? 'false' : 'true');
-    taxonomyDisplayControl.hidden = !showTaxonomyControl;
-    taxonomyDisplayControl.setAttribute('aria-hidden', showTaxonomyControl ? 'false' : 'true');
-    workspaceControl.hidden = showTaxonomyControl;
-    workspaceControl.setAttribute('aria-hidden', showTaxonomyControl ? 'true' : 'false');
+    const showClassificationDisplay = showTaxonomySource || (currentMode === 'knowledge'
+      && (knowledgeGraphMode === 'disease_class_tree' || knowledgeGraphMode === 'disease_class_graph'));
+    taxonomyControl.hidden = !showTaxonomySource;
+    taxonomyControl.setAttribute('aria-hidden', showTaxonomySource ? 'false' : 'true');
+    taxonomyDisplayControl.hidden = !showClassificationDisplay;
+    taxonomyDisplayControl.setAttribute('aria-hidden', showClassificationDisplay ? 'false' : 'true');
+    workspaceControl.hidden = showClassificationDisplay;
+    workspaceControl.setAttribute('aria-hidden', showClassificationDisplay ? 'true' : 'false');
   }
 
   function setWorkspaceVisibility(mode) {
@@ -200,16 +209,68 @@
   }
 
   function clearGraphParams(url) {
-    ['mode', 'te', 'gene', 'context', 'q', 'type', 'class', 'tree'].forEach((key) => {
+    ['mode', 'te', 'gene', 'context', 'q', 'type', 'class', 'tree', 'taxonomy', 'nodes', 'relations', 'min_pmids'].forEach((key) => {
       url.searchParams.delete(key);
     });
     return url;
   }
 
+  function parseAppliedRouteValue(params, key, rawValue = params.get(key)) {
+    const present = params.has(key);
+    const raw = present ? String(rawValue || '').trim() : '';
+    if (!present) return { present: false, none: false, values: [] };
+    if (raw.toLowerCase() === 'none') return { present: true, none: true, values: [] };
+    return {
+      present: true,
+      none: false,
+      values: [...new Set(raw.split(',').map((value) => value.trim()).filter(Boolean))],
+    };
+  }
+
+  function parseKnowledgeRoute(params = new URLSearchParams(window.location.search)) {
+    const nodes = params.get('nodes');
+    const relations = params.get('relations');
+    return {
+      query: params.get('q') || '',
+      queryType: params.get('type') || 'TE',
+      classQuery: params.get('class') || '',
+      treeVariant: params.get('tree') === 'all' ? 'all' : 'rmsk_repbase',
+      taxonomyDisplayMode: params.get('taxonomy') === 'graph' ? 'graph' : 'tree',
+      routeFilters: {
+        resetDefaults: true,
+        nodes: parseAppliedRouteValue(params, 'nodes', nodes),
+        relations: parseAppliedRouteValue(params, 'relations', relations),
+        minPmids: params.has('min_pmids')
+          ? Math.max(0, Number.parseInt(params.get('min_pmids') || '0', 10) || 0)
+          : 0,
+      },
+    };
+  }
+
+  function serializeAppliedRouteValue(url, key, catalog, state) {
+    const stableCatalog = [...new Set((Array.isArray(catalog) ? catalog : []).map((value) => String(value || '').trim()).filter(Boolean))];
+    if (!stableCatalog.length) return;
+    const applied = stableCatalog.filter((value) => !state || state[value] !== false);
+    if (applied.length === stableCatalog.length) return;
+    const serialized = applied.length ? applied.join(',') : 'none';
+    if (key === 'nodes') url.searchParams.set('nodes', serialized);
+    if (key === 'relations') url.searchParams.set('relations', serialized);
+  }
+
   function routeForKnowledge(state = {}) {
     const url = clearGraphParams(new URL(window.location.href));
     const mode = String(state.mode || 'tree');
-    if (mode === 'dynamic') {
+    if (mode === 'disease_class_tree' || mode === 'disease_class_graph') {
+      const classQuery = String(state.classQuery || state.query || '').trim();
+      if (classQuery) {
+        url.searchParams.set('q', classQuery);
+        url.searchParams.set('type', 'disease_class');
+        url.searchParams.set('class', classQuery);
+      }
+      if (mode === 'disease_class_graph' || state.taxonomyDisplayMode === 'graph') {
+        url.searchParams.set('taxonomy', 'graph');
+      }
+    } else if (mode === 'dynamic') {
       const query = String(state.query || '').trim();
       const queryType = String(state.queryType || 'TE').trim() || 'TE';
       if (query) {
@@ -219,8 +280,15 @@
       if (queryType === 'disease_class' && state.classQuery) {
         url.searchParams.set('class', String(state.classQuery));
       }
+      serializeAppliedRouteValue(url, 'nodes', state.legendTypes, state.visibleTypes);
+      serializeAppliedRouteValue(url, 'relations', state.relationTypes, state.visibleRelations);
+      const minPmids = Math.max(0, Number.parseInt(state.relationMinPmids || '0', 10) || 0);
+      if (minPmids > 0) url.searchParams.set('min_pmids', String(minPmids));
     } else {
       url.searchParams.set('tree', state.treeVariant === 'all' ? 'all' : 'rmsk_repbase');
+      if (state.taxonomyDisplayMode === 'graph' || mode === 'taxonomy_graph') {
+        url.searchParams.set('taxonomy', 'graph');
+      }
     }
     return url;
   }
@@ -273,14 +341,16 @@
     updateTaxonomyTab(taxonomyGraphTab, graphSelected);
   }
 
-  async function setTaxonomyDisplayMode(mode) {
+  async function setTaxonomyDisplayMode(mode, options = {}) {
     if (currentMode !== 'knowledge') return false;
     const bridge = window.__TEKG_G6_BRIDGE;
     if (!bridge || typeof bridge.setTaxonomyDisplayMode !== 'function') return false;
     const selected = mode === 'graph' ? 'graph' : 'tree';
-    await bridge.setTaxonomyDisplayMode(selected);
+    const changed = await bridge.setTaxonomyDisplayMode(selected);
+    if (changed === false) return false;
     syncTaxonomyDisplayMode(selected);
     retainedKnowledgeState = bridge.getState?.() || retainedKnowledgeState;
+    writeRoute(options.history || 'push', { mode: 'knowledge', knowledge: retainedKnowledgeState });
     return true;
   }
 
@@ -289,7 +359,8 @@
     const bridge = window.__TEKG_G6_BRIDGE;
     if (!bridge || typeof bridge.setTreeVariant !== 'function') return false;
     const nextVariant = variant === 'all' ? 'all' : 'rmsk_repbase';
-    await bridge.setTreeVariant(nextVariant);
+    const changed = await bridge.setTreeVariant(nextVariant);
+    if (changed === false) return false;
     syncTaxonomyMode(nextVariant);
     const state = bridge.getState?.() || { mode: 'tree', treeVariant: nextVariant };
     retainedKnowledgeState = state;
@@ -361,14 +432,23 @@
         }
       } else if (options.restoreRoute) {
         const route = options.restoreRoute;
-        if (route.query) {
+        if (route.query && route.queryType === 'disease_class') {
+          await window.__TEKG_G6_BRIDGE?.restoreDiseaseClassRoute?.(route);
+        } else if (route.query) {
           await loadKnowledgeGraph({
             query: route.query,
             queryType: route.queryType || 'TE',
             classQuery: route.classQuery || '',
+          }, {
+            pushHistory: false,
+            resetHistory: options.history === 'none',
+            routeFilters: route.routeFilters,
           });
         } else {
-          await window.__TEKG_G6_BRIDGE?.setTreeVariant?.(route.treeVariant || 'rmsk_repbase');
+          await window.__TEKG_G6_BRIDGE?.restoreTaxonomyRoute?.({
+            treeVariant: route.treeVariant || 'rmsk_repbase',
+            taxonomyDisplayMode: route.taxonomyDisplayMode || 'tree',
+          });
         }
       }
       if (epoch !== transitionEpoch) return currentMode;
@@ -453,6 +533,12 @@
     return setMode('knowledge');
   }
 
+  function navigateGraph(request, options = {}) {
+    const bridge = window.__TEKG_G6_BRIDGE;
+    if (!bridge?.navigateGraph) return Promise.resolve(false);
+    return Promise.resolve(bridge.navigateGraph(request, options));
+  }
+
   function getDiagnostics() {
     return {
       mode: currentMode,
@@ -494,7 +580,7 @@
 
   window.addEventListener('tekg:g6-state-change', (event) => {
     const nextKnowledgeState = event.detail || retainedKnowledgeState;
-    recordKnowledgeTransition(retainedKnowledgeState, nextKnowledgeState);
+    if (!restoringBrowserRoute) recordKnowledgeTransition(retainedKnowledgeState, nextKnowledgeState);
     retainedKnowledgeState = nextKnowledgeState;
     knowledgeGraphMode = String(event.detail?.mode || knowledgeGraphMode);
     syncTaxonomyMode(event.detail?.treeVariant);
@@ -505,8 +591,12 @@
   window.addEventListener('tekg:g6-navigation', (event) => {
     const previousKnowledgeState = retainedKnowledgeState;
     const nextKnowledgeState = event.detail || retainedKnowledgeState;
-    recordKnowledgeTransition(previousKnowledgeState, nextKnowledgeState);
+    if (!restoringBrowserRoute) recordKnowledgeTransition(previousKnowledgeState, nextKnowledgeState);
     retainedKnowledgeState = nextKnowledgeState;
+    knowledgeGraphMode = String(nextKnowledgeState?.mode || knowledgeGraphMode);
+    syncTaxonomyMode(nextKnowledgeState?.treeVariant);
+    syncTaxonomyDisplayMode(nextKnowledgeState?.taxonomyDisplayMode || nextKnowledgeState?.mode);
+    syncTopControlVisibility();
     if (currentMode !== 'knowledge') return;
     writeRoute(event.detail?.history || 'push', {
       mode: 'knowledge',
@@ -528,6 +618,7 @@
     setMode,
     requestCoexpressionSelection,
     goBackEntity,
+    navigateGraph,
     getMode: () => currentMode,
     getDiagnostics,
     ensureKnowledgeForGraphAction,
@@ -558,6 +649,8 @@
 
   window.addEventListener('popstate', () => {
     const route = new URLSearchParams(window.location.search);
+    restoringBrowserRoute = true;
+    resetSharedBackHistory();
     if (route.get('mode') === 'coexpression') {
       const gene = route.get('gene') || '';
       void setMode('coexpression', {
@@ -565,17 +658,19 @@
         featureType: gene ? 'Gene' : 'TE',
         context: route.get('context') || undefined,
         history: 'none',
+      }).finally(() => {
+        restoringBrowserRoute = false;
+        resetSharedBackHistory();
       });
       return;
     }
+    window.__TEKG_G6_BRIDGE?.resetHistory?.();
     void setMode('knowledge', {
       history: 'none',
-      restoreRoute: {
-        query: route.get('q') || '',
-        queryType: route.get('type') || 'TE',
-        classQuery: route.get('class') || '',
-        treeVariant: route.get('tree') || 'rmsk_repbase',
-      },
+      restoreRoute: parseKnowledgeRoute(route),
+    }).then(() => window.__TEKG_G6_BRIDGE?.resetHistory?.()).finally(() => {
+      restoringBrowserRoute = false;
+      resetSharedBackHistory();
     });
   });
 })();

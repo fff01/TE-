@@ -221,3 +221,15 @@
 - Loader mechanism scientific polish: keep it separate from loader lifecycle. The current loaders are mechanism-inspired and should only be refined after graph loading stability remains green.
 - Large graph `evidence_records` lazy endpoint: only pursue if future large graph checks show payload or browser performance regressions from eager per-edge evidence records.
 - Journal metric manual review / official JCR replacement: before external-facing claims, review `title_exact` journal matches and consider replacing `impact_factor_package_2025` with an official licensed source.
+
+### Disease classification initial-load failure fallback - 2026-08-11
+
+- Status: non-blocking residual risk after the routed disease Tree/Graph implementation.
+- Normal navigation, refresh, sharing, page Back, browser Back/Forward, drag/click behavior, and exports are covered by browser regression tests.
+- If the first direct disease-class URL fails before any disease surface has committed, the renderer can show the default taxonomy fallback while the address still identifies the requested disease class. A future error-state pass should render an explicit routed classification failure surface rather than borrowing the taxonomy surface.
+
+### Graph answer-subgraph entity recognition - 2026-08-12
+
+- Status: experimental implementation retained but user-facing action disabled through `ANSWER_GRAPH_ACTION_ENABLED = false`.
+- Reason: matching entity labels against generated answer prose can still select an imprecise node set. Until a reviewed resolver contract exists, Preview must not show `View answer graph`, display its counts, or mutate Graph from assistant answers.
+- Re-enable only after broader TE/disease/gene ambiguity regressions demonstrate that the proposed subgraph contains exactly the intended answer entities.

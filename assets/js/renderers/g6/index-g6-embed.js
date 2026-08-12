@@ -61,6 +61,14 @@
     return false;
   }
 
+  function pushNodeJump(node, request) {
+    const host = getHost();
+    if (host && typeof host.onNodeJump === 'function') {
+      return host.onNodeJump(node || null, request || null);
+    }
+    return false;
+  }
+
   function pushReady() {
     const host = getHost();
     if (host && typeof host.onReady === 'function') host.onReady();
@@ -94,6 +102,7 @@
     setMode: pushMode,
     onSelection: pushSelection,
     onDiseaseClassClick: pushDiseaseClassClick,
+    onNodeJump: pushNodeJump,
     onNodeExpand: pushNodeExpand,
     onReady: pushReady,
   });

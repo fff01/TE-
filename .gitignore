@@ -17,6 +17,7 @@ docs/exec-plans/*
 docs/exec-plans/active/*
 !docs/exec-plans/active/all-te-g6-performance-stabilization.md
 !docs/exec-plans/active/agent-deepthink-multiturn-context.md
+!docs/exec-plans/active/graph-route-state-and-disease-classification.md
 !docs/exec-plans/completed/
 docs/exec-plans/completed/*
 !docs/exec-plans/completed/agent-deepthink-multiturn-context.md
