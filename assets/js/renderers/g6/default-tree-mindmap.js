@@ -228,11 +228,16 @@
   }
 
   function normalizeTextWidth(text, isRoot) {
-    const compact = !!getActiveTreeConfig()?.compactLayout;
+    const config = getActiveTreeConfig();
+    const compact = !!config?.compactLayout;
     const length = Math.max(2, String(text || '').length);
     const avg = isRoot ? (compact ? 8.8 : 9.6) : (compact ? 6.2 : 7.1);
     const padding = isRoot ? (compact ? 8 : ROOT_PADDING_X) : (compact ? 6 : NODE_PADDING_X);
-    return Math.round(length * avg + padding);
+    const measuredWidth = Math.round(length * avg + padding);
+    const configuredMax = Number(config?.maxNodeWidth);
+    return !isRoot && Number.isFinite(configuredMax) && configuredMax > 0
+      ? Math.min(measuredWidth, configuredMax)
+      : measuredWidth;
   }
 
   function getDisplayLabel(label, description, depth) {

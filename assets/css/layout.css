@@ -72,8 +72,9 @@
     }
 
     .proto-brand-logo {
-      width: 92px;
-      height: 46px;
+      width: 68px;
+      height: 68px;
+      flex: 0 0 68px;
       object-fit: contain;
       background: transparent;
       padding: 0;
@@ -213,7 +214,8 @@
       }
 
       .proto-brand-logo {
-        width: 84px;
-        height: 42px;
+        width: 60px;
+        height: 60px;
+        flex-basis: 60px;
       }
     }

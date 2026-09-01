@@ -50,7 +50,6 @@ $previewConfig = [
     'sessionStorageKey' => 'tekg-preview-deepthink-session',
     'sourcePage' => 'preview',
     'initialQuery' => $initialQuery,
-    'defaultQuestion' => $initialQuery !== '' ? $initialQuery . ' related diseases' : 'LINE-1 related diseases',
     'defaultModel' => 'deepseek-v4-flash',
 ];
 ?>
@@ -91,7 +90,7 @@ $previewConfig = [
                 </header>
                 <div class="preview-deepthink-messages side-dt-messages" id="previewDeepThinkMessages" aria-live="polite"></div>
                 <form class="preview-deepthink-form side-dt-form" id="previewDeepThinkForm">
-                  <textarea id="previewDeepThinkInput" rows="2" placeholder="Ask about L1HS, LINE-1, diseases, locations, expression, or mechanisms."><?= htmlspecialchars($initialQuery !== '' ? $initialQuery . ' 和哪些疾病相关' : '', ENT_QUOTES, 'UTF-8') ?></textarea>
+                  <textarea id="previewDeepThinkInput" rows="2" placeholder="Ask about L1HS, LINE-1, diseases, locations, expression, or mechanisms."></textarea>
                   <button id="previewDeepThinkSubmit" type="submit">Send</button>
                 </form>
               </section>

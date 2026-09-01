@@ -1162,9 +1162,6 @@
           payload.citations || payload.display_details?.citations || [],
           ui.tool_empty_citations || 'No citations were returned for this tool call.',
         )),
-        buildInspectorSection(ui.inspector_data || 'Returned Data', (payload.raw_result || payload.raw_preview)
-          ? `<pre class="agent-detail-pre">${escapeHtml(JSON.stringify(payload.raw_result || payload.raw_preview, null, 2))}</pre>`
-          : `<div class="agent-detail-empty">${escapeHtml(ui.tool_empty_data || 'No result payload was returned.')}</div>`),
         buildInspectorSection(ui.inspector_errors || 'Errors', formatInspectorList(
           payload.errors || payload.display_details?.errors || [],
           ui.tool_empty_errors || 'No plugin errors were reported.',

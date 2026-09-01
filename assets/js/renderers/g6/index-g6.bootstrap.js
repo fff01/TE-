@@ -1762,6 +1762,7 @@
       expandAll: true,
       compactLayout: true,
       horizontalGap: 36,
+      maxNodeWidth: 256,
       buildDetailHtml(nodeData) {
         const data = nodeData?.data || {};
         const label = String(data.displayLabel || data.rawLabel || nodeData?.id || '');

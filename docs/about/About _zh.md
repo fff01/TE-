@@ -10,6 +10,12 @@ TE-KG 是一个面向人类转座元件的综合资源，将分类体系、文�
 
 TE-KG 将人类转座元件的多种互补视图汇集到同一界面，而不是把每种数据当作孤立表格。该资源包括 TE 目录、实体详情页、基于文献的关系图、分类视图、表达与共表达探索，以及可下载数据。TE-KG 的核心目标是在便于探索 TE 信息的同时，让来源证据与解释边界保持可见。
 
+### TE-KG 的架构
+
+（文字待补充）
+
+![alt text](<figs/TE-KG Data Architecture and Public Services.svg>)
+
 ### 数据访问入口
 
 - 使用 Home 查看数据库当前的整体组成。
@@ -33,21 +39,11 @@ Home 是 TE-KG 的总览入口，用于介绍资源、概括当前数据库组�
   - Relation Composition 使用详细谓词统计，能够显示常见关系类型。
 - Quick Links 可直接进入主要的检索、图谱、表达、下载和帮助工作流。
 
-**静态图说明：`about-home-overview.png`**
-
-在桌面宽度下截取 Home，需同时显示页面简介、完整 Dataset Status 图表和 Quick Links。使用编号标记和以下英文说明：
-
-- `Read the resource scope before choosing a workflow`：标注 Overview 文字。
-- `Check the current knowledge-graph composition`：标注 Dataset Status。
-- `Change the classification level shown in this chart`：标注 TE Classification 的层级控件。
-- `Compare detailed relationship predicates`：标注 Relation Composition。
-- `Open the workflow that matches your question`：标注 Quick Links。
-
-标注不得暗示不同图表的扇区使用相同分母。
-
 ## 3. Browse
 
 Browse 提供查找和查看 TE 记录的完整流程。内容包括Summary、Local Graph、Sequence、Genome Annotation、Genome Browser
+
+![alt text](figs/Browse.png)
 
 - Summary 用于确认当前记录，并展示现有的元数据。
 - Local Graph 用于查看邻近实体和关系
@@ -60,6 +56,8 @@ Browse 提供查找和查看 TE 记录的完整流程。内容包括Summary、Lo
 ## 4. Path
 
 Path 搜索两个指定实体之间已存储的连接，并以可核验形式展示每条关系的证据。它适合处理“两个实体如何连接”的问题，而不是单个实体的查询。
+
+![alt text](figs/Path.png)
 
 ### 搜索结构
 
@@ -107,17 +105,8 @@ Graph 提供三种互补的可视化工作流：基于文献的知识关系、Tr
 - 搜索以及扩展的节点会有波纹提示
 - 可以点击 "Show relations" 来显示边名，点击 "Export" 可以导出图像信息
 - 实体图例用于区分 TE、疾病等节点类型，关系图例显示active、affect等谓词类别，并支持筛选特定图例
-- 在此处使用Deep Think回答知识图谱相关的问题时，图会呈现回答里的内容
 
-**静态图说明：`about-graph-knowledge.png`**
-
-截取一个已经加载的 Knowledge Graph，画面需要包含工作区切换、搜索框、实体图例、关系图例、一个已选节点和可见的证据入口。使用以下英文标注：
-
-- `Switch between knowledge and co-expression workflows`：标注工作区页签。
-- `Search for an entity and load its neighborhood`：标注搜索控件。
-- `Click a legend item to change the current view temporarily`：标注图例。
-- `Open source evidence for a visible relationship`：标注边的证据入口。
-- `Move and filter the view without changing stored data`：标注图画布。
+![alt text](figs/Graph.png)
 
 ### Co-expression 工作区
 
@@ -125,16 +114,6 @@ Graph 提供三种互补的可视化工作流：基于文献的知识关系、Tr
 - 开启Expression activity后，节点根据表达强度展示不同的波纹
 - 可以在Context下拉框中选择不同Context
 - 构建共表达网络时用的筛选指标为：spearman r >= 0.4 . FDR <= 0.05
-
-
-
-**动态图说明：`about-graph-classification.gif`**
-
-从已显示的分类 Tree 开始。切换为 `Graph`，等待力导向布局稳定，拖动一个 TE 节点并展示周围节点响应；点击一个 class 图例项暂时隐藏该类，再恢复显示；随后从 `RMSK + RepBase` 切换到 `All`，最后回到 Tree。整个过程保持 Tree/Graph 和来源范围控件可见。动态图应让用户理解两种布局使用同一分类数据，并且图中面积不是丰度比例。
-
-**动态图说明：`about-graph-coexpression.gif`**
-
-从 Knowledge Graph 切换到 Co-expression，选择环境和 TE 后运行 Search。网络加载后，关闭再恢复 Gene 节点显示，指向 module-hub 图例，改变边范围，切换 `Expression activity`，最后打开导出菜单或导出 PNG。结束画面必须显示相关性提示，并增加：`Correlation and expression activity do not imply causation.`
 
 ## 6. Agent 与 DeepThink
 
@@ -171,19 +150,3 @@ Expression 是 TE 丰度查询界面，支持目录级筛选，以及 normal tis
 - 使用 Keyword 搜索 TE，也可以组合 dataset source、top-context 文字和 minimum global median 筛选表格。可以使用 Sort 按现有汇总指标排序，再点击 TE 行进入详情页。
 - 在对应数据存在时，浏览表会汇总最高的 normal tissue、normal cell line 和 cancer cell line 环境以及变异系数
 - 可以在详情页面的Display Controls选择不同的Chart Type, Metric和Order
-
-**静态图说明：`about-expression-detail.png`**
-
-截取一个 TE 的详情页，并通过纵向拼接让 Summary 和三个现有数据集区域都可见。使用以下英文标注：
-
-- `Choose Median, Mean, or Max before comparing values`：标注指标控件。
-- `Confirm which datasets are available for this TE`：标注 Summary。
-- `Compare contexts within the Normal Tissue dataset`：标注第一张图。
-- `Normal Cell Line is a separate study context`：标注第二张图。
-- `Cancer Cell Line is not a matched cohort comparison`：标注第三张图。
-
-图片底部增加：`Interpret values within the displayed dataset and preprocessing context.`
-
-**动态图说明：`about-download-filter.gif`**
-
-从 All 开始，点击 `Expression`，在 Search 中输入一个表达文件名片段，展开匹配行显示说明，再点击文件名链接但不要触发影响录制的完整下载。清除搜索，选择 `Taxonomy`，最后回到 All。全过程保持类别数量以及 Dataset、File、Used in、Format 列可见。结尾增加：`A current site download is not automatically a versioned archival release.`

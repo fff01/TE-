@@ -38,9 +38,9 @@ $quickLinks = [
               <div class="hero-figure-frame">
                 <div class="figure-canvas">
                   <img
-                    class="architecture-overview-image"
-                    src="<?= htmlspecialchars(tekg_assets_url('img/home-database-overview-v1.png'), ENT_QUOTES, 'UTF-8') ?>"
-                    alt="TE-KG overview showing data collection, processing and integration, and information services"
+                    class="home-welcome-image"
+                    src="<?= htmlspecialchars(tekg_assets_url('img/home-welcome-v2.png'), ENT_QUOTES, 'UTF-8') ?>"
+                    alt="Welcome to the TE-KG Database"
                     loading="lazy"
                   >
                 </div>

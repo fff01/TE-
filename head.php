@@ -16,6 +16,8 @@ $sideDeepThinkVersion = max(
     (int)@filemtime(tekg_assets_fs_path('js/components/deepthink-client.js')),
     (int)@filemtime(tekg_assets_fs_path('js/components/side-deepthink.js'))
 );
+$brandLogoUrl = tekg_assets_url('img/brand/tekg-logo.png');
+$brandLogoVersion = (int)@filemtime(tekg_assets_fs_path('img/brand/tekg-logo.png'));
 
 $navItems = [
     'home' => ['label' => 'Home', 'href' => tekg_app_url('index.php')],
@@ -35,6 +37,8 @@ $navItems = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8') ?></title>
+  <link rel="icon" type="image/png" href="<?= htmlspecialchars($brandLogoUrl . '?v=' . $brandLogoVersion, ENT_QUOTES, 'UTF-8') ?>">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars($brandLogoUrl . '?v=' . $brandLogoVersion, ENT_QUOTES, 'UTF-8') ?>">
   <link rel="stylesheet" href="<?= htmlspecialchars(tekg_assets_url('css/layout.css'), ENT_QUOTES, 'UTF-8') ?>">
   <?php if ($enableSideDeepThink): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars(tekg_assets_url('css/components/side-deepthink.css') . '?v=' . $sideDeepThinkVersion, ENT_QUOTES, 'UTF-8') ?>">
@@ -54,7 +58,7 @@ $navItems = [
     <header class="proto-header" id="protoHeader">
       <div class="proto-header-inner">
         <div class="proto-brand">
-          <img class="proto-brand-logo" src="<?= htmlspecialchars(tekg_assets_url('img/brand/tekg-logo.png'), ENT_QUOTES, 'UTF-8') ?>" alt="TE-KG logo">
+          <img class="proto-brand-logo" src="<?= htmlspecialchars($brandLogoUrl . '?v=' . $brandLogoVersion, ENT_QUOTES, 'UTF-8') ?>" alt="TE-KG logo">
           <div>
             <h1 class="proto-brand-title">Transposable Elements Knowledge Graph</h1>
             <p class="proto-brand-subtitle"><?= htmlspecialchars($protoSubtitle, ENT_QUOTES, 'UTF-8') ?></p>
