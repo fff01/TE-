@@ -614,7 +614,7 @@
         }
         .coexpression-tooltip {
           position: absolute;
-          z-index: 24;
+          z-index: 10;
           max-width: 260px;
           border: 1px solid rgba(148, 163, 184, 0.4);
           border-radius: 7px;
@@ -777,6 +777,10 @@
 
     function showCoexpressionTooltipForNode(node, event) {
       if (!node?.coexpression) return;
+      if (inspectCardState) {
+        hideCoexpressionTooltip();
+        return;
+      }
       const tooltip = ensureCoexpressionTooltip();
       const label = String(node.displayLabel || node.rawLabel || node.id || '');
       const role = node.coexpressionIsCenter
@@ -792,6 +796,10 @@
 
     function showCoexpressionTooltipForEdge(edge, nodes, event) {
       if (!edge?.coexpression) return;
+      if (inspectCardState) {
+        hideCoexpressionTooltip();
+        return;
+      }
       const source = resolveNode(edge.source, nodes);
       const target = resolveNode(edge.target, nodes);
       const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge.source || '');
@@ -2637,6 +2645,7 @@
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
+          hideCoexpressionTooltip();
           showInspectCard('node', node, event, data);
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
@@ -2654,6 +2663,7 @@
           const edgeId = event?.target?.id;
           const edge = data.edges.find((item) => item.id === edgeId);
           if (!edge) return;
+          hideCoexpressionTooltip();
           if (currentAllowInspectCard) showInspectCard('edge', edge, event, data);
           else hideInspectCard();
           hooks.onSelection(null);
