@@ -533,15 +533,15 @@
           background: rgba(148, 163, 184, 0.28);
         }
 
-        .coexpression-edge-line {
+        .coexpression-legend .graph-relation-line.coexpression-edge-line {
           border-top-color: #2563eb;
         }
 
-        .coexpression-edge-line.coexpression-edge-eqtl {
+        .coexpression-legend .graph-relation-line.coexpression-edge-eqtl {
           border-top-color: #d97706;
         }
 
-        .coexpression-edge-line.coexpression-edge-both {
+        .coexpression-legend .graph-relation-line.coexpression-edge-both {
           border-top-color: #0f766e;
         }
 

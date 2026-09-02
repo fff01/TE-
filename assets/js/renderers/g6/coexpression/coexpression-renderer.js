@@ -1171,6 +1171,7 @@
       const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
       const relation = relationLabelForEdge(edge);
       const relationType = String(edge?.relationType || '').trim();
+      const isEqtl = relationType === 'eQTL' || relation === 'eQTL';
       const pmids = Array.isArray(edge?.pmids) ? edge.pmids : [];
       const pmidSummary = pmids.length === 0
         ? 'No linked PMID records'
@@ -1194,7 +1195,7 @@
         `<h3 class="inspect-card__title">${escapeHtml(sourceLabel)} → ${escapeHtml(relation)} → ${escapeHtml(targetLabel)}</h3>`,
         `<div class="inspect-card__meta">${escapeHtml(pmidSummary)}</div>`,
         expanded && rows ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Relation</p><div class="inspect-card__kv">${rows}</div></div>` : '',
-        expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
+        !isEqtl && expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (!isEqtl && pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
         expanded && evidence ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence)}</div></div>` : '',
         expressionHtml,
         '<div class="inspect-card__actions">',
@@ -1936,6 +1937,7 @@
       const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
       const relation = relationLabelForEdge(edge);
       const eqtl = edge?.eqtlEvidence || null;
+      const isEqtl = relation === 'eQTL';
       const pmidCount = Math.max(0, Number(edge?.support_pmid_count) || (Array.isArray(edge?.pmids) ? edge.pmids.length : 0));
       const expressionNode = expressionNodeEndpoint(edge, nodes);
       const expressionHtml = expressionNode
@@ -1950,6 +1952,7 @@
         `<strong>${escapeHtml(targetLabel)}</strong>`,
         '</div>',
           `<div class="edge-evidence-summary">${escapeHtml(relation)} evidence. ${eqtl?.supporting_variant_count != null ? `Supporting variants: ${escapeHtml(eqtl.supporting_variant_count)}.` : ''}</div>`,
+          !isEqtl && pmidCount > 0 ? `<div class="edge-evidence-summary">Linked PMID records: ${escapeHtml(pmidCount)}.</div>` : '',
         expressionHtml,
         '</div>',
       ].join('');
