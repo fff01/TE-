@@ -114,6 +114,7 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
         foreach ($rows as $row) {
             $gene = trim((string)($row['gene_name'] ?? ''));
             if ($gene === '') continue;
+            if (!tekg_coexpression_eqtl_gene_is_high_confidence($gene)) continue;
             $geneId = 'gene:' . $gene;
             if (!isset($nodeIds[strtolower($gene)]) && count($payload['nodes']) >= $maxNodes) break;
             if (!isset($nodeIds[strtolower($gene)])) {
@@ -147,6 +148,29 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
         // eQTL is an additive layer; an unavailable eQTL table must not break co-expression.
     }
     return $payload;
+}
+
+function tekg_coexpression_eqtl_gene_is_high_confidence(string $gene): bool
+{
+    static $allowed = null;
+    if ($allowed === null) {
+        $allowed = [];
+        $path = dirname(__DIR__) . '/data/coexpression/feature_annotation/feature_annotation.tsv';
+        $handle = @fopen($path, 'rb');
+        if ($handle !== false) {
+            $header = fgetcsv($handle, 0, "\t");
+            while (($row = fgetcsv($handle, 0, "\t")) !== false) {
+                if (!is_array($header) || count($row) < count($header)) continue;
+                $item = array_combine($header, $row);
+                if (strtolower(trim((string)($item['feature_type'] ?? ''))) !== 'gene') continue;
+                if (strtolower(trim((string)($item['confidence'] ?? ''))) !== 'high') continue;
+                $symbol = strtolower(trim((string)($item['feature'] ?? '')));
+                if ($symbol !== '') $allowed[$symbol] = true;
+            }
+            fclose($handle);
+        }
+    }
+    return isset($allowed[strtolower(trim($gene))]);
 }
 
 function tekg_coexpression_load_gene_network(string $geneName,string $context): array {
