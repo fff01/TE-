@@ -109,10 +109,13 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
         $edgePairs = [];
         foreach ($payload['edges'] as $edge) $edgePairs[(string)$edge['source'] . "\0" . (string)$edge['target']] = true;
         $added = 0;
+        $maxNodes = 50;
+        $maxEdges = 150;
         foreach ($rows as $row) {
             $gene = trim((string)($row['gene_name'] ?? ''));
             if ($gene === '') continue;
             $geneId = 'gene:' . $gene;
+            if (!isset($nodeIds[strtolower($gene)]) && count($payload['nodes']) >= $maxNodes) break;
             if (!isset($nodeIds[strtolower($gene)])) {
                 $payload['nodes'][] = ['id'=>$geneId,'label'=>$gene,'feature_type'=>'gene','role'=>'eqtl_gene','is_center'=>false,'is_module_hub'=>false];
                 $nodeIds[strtolower($gene)] = $geneId;
@@ -132,9 +135,10 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
                 unset($existing);
                 continue;
             }
+            if (count($payload['edges']) >= $maxEdges) break;
             $payload['edges'][] = ['id'=>'eqtl:' . sha1($te . "\0" . $gene),'source'=>$teId,'target'=>$geneId,'correlation'=>0.0,'abs_correlation'=>0.0,'fdr'=>1.0,'pair_type'=>'TE_gene_eqtl','role'=>'eQTL','edge_label'=>'eQTL','eqtl_evidence'=>['scope'=>'all','supporting_variant_count'=>(int)$row['supporting_variant_count'],'minimum_pval_nominal'=>$row['minimum_pval_nominal'] === null ? null : (float)$row['minimum_pval_nominal']]];
             $added++;
-            if ($added >= 200) break;
+            if ($added >= 100) break;
         }
         $payload['metadata']['te_gene_mode'] = 'appended_to_coexpression';
         $payload['metadata']['eqtl_version'] = (string)($version['version_key'] ?? '');

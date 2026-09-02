@@ -73,16 +73,18 @@
         id: String(edge.id || `${edge.source}::${edge.target}::${index}`),
         source: String(edge.source),
         target: String(edge.target),
-        relation: 'positive correlation',
-        relationType: 'COEXPRESSION_CORRELATION',
-        coexpression: true,
+        relation: String(edge.edgeLabel || edge.role || 'Co-expression'),
+        relationType: String(edge.edgeLabel || edge.role || 'Co-expression') === 'eQTL' ? 'EQTL_ASSOCIATION' : 'COEXPRESSION_CORRELATION',
+        coexpression: String(edge.edgeLabel || edge.role || 'Co-expression') !== 'eQTL',
         correlation: Number(edge.correlation),
         abs_correlation: Number(edge.absCorrelation ?? edge.abs_correlation ?? edge.correlation),
         fdr: Number(edge.fdr),
         pairType: String(edge.pairType || edge.pair_type || ''),
         coexpressionEdgeRole: String(edge.role || ''),
         role: String(edge.role || ''),
-        evidence: `Spearman r = ${formatMetric(edge.correlation)}; FDR = ${formatMetric(edge.fdr)}. ${INTERPRETATION_LIMIT}`,
+        evidence: String(edge.edgeLabel || edge.role || 'Co-expression') === 'eQTL'
+          ? `GTEx eQTL overlap evidence. ${INTERPRETATION_LIMIT}`
+          : `Spearman r = ${formatMetric(edge.correlation)}; FDR = ${formatMetric(edge.fdr)}. ${INTERPRETATION_LIMIT}`,
         pmids: [],
       },
     }));

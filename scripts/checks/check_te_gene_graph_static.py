@@ -9,14 +9,13 @@ coordinator = (ROOT / 'assets/js/pages/preview/preview-workspace-mode.js').read_
 adapter = (ROOT / 'assets/js/renderers/g6/coexpression/coexpression-dynamic-adapter.js').read_text(encoding='utf-8')
 renderer = (ROOT / 'assets/js/renderers/g6/coexpression/coexpression-renderer.js').read_text(encoding='utf-8')
 
+repository = (ROOT / 'api/coexpression_repository.php').read_text(encoding='utf-8')
 checks = {
-    'workspace label': 'TE-Gene Graph' in preview and 'TE-Gene Graph workspace' in workspace,
-    'scope control': 'te-gene-scope-select' in workspace and 'populateScopeOptions' in mode,
-    'new endpoint': "te_gene.php" in mode,
-    'route scope': "searchParams.set('scope'" in coordinator and "mode', 'te_gene'" in coordinator,
-    'evidence labels': all(label in adapter for label in ['edgeLabel', 'coexpressionEvidence', 'eqtlEvidence']),
-    'detail evidence': 'renderTeGeneEdgeInspectCard' in renderer and 'supportingTissues' in renderer,
-    'no evidence colour mode': 'TE_GENE_EVIDENCE' in adapter,
+    'original co-expression workspace': 'co-expression graph workspace' in workspace.lower() and "coexpression.php" in mode,
+    'original route': "mode', 'coexpression'" in coordinator,
+    'additive eqtl API layer': 'tekg_coexpression_append_eqtl_edges' in repository,
+    'edge labels': all(label in repository for label in ["'eQTL'", "'Both'"]) and 'co-expression' in repository.lower(),
+    'renderer preserved': 'path-finder-ripple-circle' in renderer,
 }
 missing = [name for name, passed in checks.items() if not passed]
 if missing:
