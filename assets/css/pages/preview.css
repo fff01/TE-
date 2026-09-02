@@ -534,12 +534,15 @@
         }
 
         .coexpression-edge-line {
-          border-top-color: #64748b;
+          border-top-color: #2563eb;
         }
 
-        .coexpression-edge-line.is-double {
-          border-top-width: 2px;
-          box-shadow: 0 3px 0 -1px #64748b;
+        .coexpression-edge-line.coexpression-edge-eqtl {
+          border-top-color: #d97706;
+        }
+
+        .coexpression-edge-line.coexpression-edge-both {
+          border-top-color: #0f766e;
         }
 
         .coexpression-hub-ring,

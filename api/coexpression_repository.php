@@ -118,10 +118,17 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
             $geneId = 'gene:' . $gene;
             if (!isset($nodeIds[strtolower($gene)]) && count($payload['nodes']) >= $maxNodes) break;
             if (!isset($nodeIds[strtolower($gene)])) {
-                $payload['nodes'][] = ['id'=>$geneId,'label'=>$gene,'feature_type'=>'gene','role'=>'eqtl_gene','is_center'=>false,'is_module_hub'=>false];
+                $payload['nodes'][] = ['id'=>$geneId,'label'=>$gene,'feature_type'=>'gene','role'=>'eqtl_gene','is_center'=>false,'is_module_hub'=>false,'expression_disabled'=>true];
                 $nodeIds[strtolower($gene)] = $geneId;
             } else {
                 $geneId = $nodeIds[strtolower($gene)];
+                foreach ($payload['nodes'] as &$candidateNode) {
+                    if ((string)$candidateNode['id'] === $geneId && strtolower((string)($candidateNode['feature_type'] ?? '')) === 'gene') {
+                        $candidateNode['expression_disabled'] = true;
+                        break;
+                    }
+                }
+                unset($candidateNode);
             }
             $edgeKey = $teId . "\0" . $geneId;
             if (isset($edgePairs[$edgeKey])) {

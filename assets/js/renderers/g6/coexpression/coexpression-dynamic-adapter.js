@@ -61,6 +61,7 @@
           coexpressionFeatureType: node.kind === 'gene' ? 'Gene' : 'TE',
           coexpressionIsCenter: node.isCenter === true,
           coexpressionIsModuleHub: node.isModuleHub === true,
+          expressionDisabled: node.data?.expression_disabled === true || node.data?.expressionDisabled === true,
           coexpressionModule,
           coexpressionSelection,
           coexpressionInterpretation,

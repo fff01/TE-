@@ -85,11 +85,11 @@
                   <span class="graph-legend-text">Co-expression</span>
                 </div>
                 <div class="graph-legend-item coexpression-legend-static" data-highlight-kind="relation" data-highlight-value="eQTL" tabindex="0" aria-pressed="false">
-                  <span class="graph-relation-line coexpression-edge-line is-dashed" aria-hidden="true"></span>
+                  <span class="graph-relation-line coexpression-edge-line coexpression-edge-eqtl" aria-hidden="true"></span>
                   <span class="graph-legend-text">eQTL</span>
                 </div>
                 <div class="graph-legend-item coexpression-legend-static" data-highlight-kind="relation" data-highlight-value="Both" tabindex="0" aria-pressed="false">
-                  <span class="graph-relation-line coexpression-edge-line is-double" aria-hidden="true"></span>
+                  <span class="graph-relation-line coexpression-edge-line coexpression-edge-both" aria-hidden="true"></span>
                   <span class="graph-legend-text">Both</span>
                 </div>
                 <label class="coexpression-edge-scope-control" for="coexpression-edge-scope">

@@ -1024,7 +1024,9 @@
         kvRow('Composition', String(module.type || '').replaceAll('-', ' ')),
         entitySummary ? kvRow('Entities', entitySummary) : '',
       ].filter(Boolean).join('');
-      const expressionHtml = ['TE', 'Gene'].includes(node.nodeType) ? renderExpressionEvidenceHtml(node, !expanded) : '';
+      const expressionHtml = node.expressionDisabled === true
+        ? ''
+        : (['TE', 'Gene'].includes(node.nodeType) ? renderExpressionEvidenceHtml(node, !expanded) : '');
       const enrichment = Array.isArray(module.top_enriched_terms)
         ? module.top_enriched_terms.slice(0, expanded ? 5 : 2).join('; ')
         : '';
@@ -1707,6 +1709,13 @@
         node.fillColor = node.baseFillColor;
         node.strokeColor = node.baseStrokeColor;
 
+        if (node.expressionDisabled === true) {
+          node.expressionContext = 'off';
+          node.expressionActivity = 'Not shown for eQTL-only evidence';
+          node.expressionLineWidth = node.endpointHighlight ? 5 : 2;
+          continue;
+        }
+
         if (!enabled) continue;
         if (!['TE', 'Gene'].includes(node.nodeType)) continue;
 
@@ -1888,6 +1897,12 @@
 
     function relationStyleForType(relationType) {
       const type = String(relationType || 'RELATION').trim() || 'RELATION';
+      const coexpressionStyles = {
+        'Co-expression': { color: '#2563eb', dashed: false, lineDash: [] },
+        eQTL: { color: '#d97706', dashed: false, lineDash: [] },
+        Both: { color: '#0f766e', dashed: false, lineDash: [] },
+      };
+      if (coexpressionStyles[type]) return coexpressionStyles[type];
       const index = hashString(type) % RELATION_STYLE_COLORS.length;
       const dashed = /CLASSIFICATION|CATEGORY|TAXONOMY|SYNTHETIC/i.test(type);
       return {
@@ -2001,6 +2016,7 @@
           coexpressionFeatureType: String(data.coexpressionFeatureType || nodeType),
           coexpressionIsCenter: data.coexpressionIsCenter === true,
           coexpressionIsModuleHub: data.coexpressionIsModuleHub === true,
+          expressionDisabled: data.expressionDisabled === true,
           coexpressionModule: data.coexpressionModule && typeof data.coexpressionModule === 'object'
             ? { ...data.coexpressionModule }
             : {},
