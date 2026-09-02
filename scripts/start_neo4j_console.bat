@@ -55,7 +55,17 @@ echo Keep this window open while Neo4j is running.
 echo Close this window to stop the console process.
 echo.
 
-call "%NEO4J_BIN%" console
+rem Neo4j 2026.02 requires Java 21 or 25. The bundled PowerShell wrapper
+rem can fail on newer PowerShell versions with a duplicate-key error, so use
+rem the project-local JDK 21 directly when it is available.
+set "PROJECT_JAVA=%~dp0..\.runtime\jdk21\jdk-21.0.12.1+1\bin\java.exe"
+if exist "%PROJECT_JAVA%" (
+    echo Using project-local Java 21: %PROJECT_JAVA%
+    "%PROJECT_JAVA%" -cp "%NEO4J_DBMS_HOME%\lib\*" "-Dbasedir=%NEO4J_DBMS_HOME%" org.neo4j.server.startup.Neo4jCommand console
+) else (
+    echo Project-local Java 21 was not found; falling back to Neo4j launcher.
+    call "%NEO4J_BIN%" console
+)
 
 set "EXIT_CODE=%ERRORLEVEL%"
 echo.

@@ -115,6 +115,24 @@ sequence and genome detail data.
 - Co-expression results are correlation evidence only, not causal or regulatory
   proof.
 
+## eQTL
+
+- The active GTEx v11 strict TE-overlap dataset is versioned in MySQL
+  `tekg_expression`; MySQL is its only runtime source.
+- The current active version is `gtex_v11_strict_te_overlap_v1`, covering all
+  50 GTEx tissues and Browse TE instances that map to the approved hg38
+  RepeatMasker inventory.
+- Offline Parquet, gzip TSV, SQLite, reports, and manifests under
+  `data/eQTL/derived/` are provenance and importer inputs, not runtime sources.
+- The base model stores TE-instance-to-Variant overlaps separately from
+  Variant-to-Gene-in-Tissue associations. TE-Gene evidence is their join.
+- This phase uses strict reference-span intersection only. It does not claim
+  TE-mediated causality and does not include flanking/proximity mapping.
+- The `TE-Gene Graph` presentation is served by `api/te_gene.php` and merges
+  unchanged Co-expression evidence with active GTEx eQTL evidence. The
+  Knowledge Graph and Neo4j contracts remain independent.
+- Scientific contract and recovery commands: `docs/eqtl/README.md`.
+
 ## Current Maintenance Focus
 
 - Primary next-session surfaces: Graph / Co-expression, Agent / DeepThink,

@@ -25,6 +25,8 @@ runtime consistency.
   `import_browse_catalog_mysql.php` manages versioned Browse catalog imports
   and activation in MySQL `tekg_catalog`.
 - `checks/`: runtime consistency and regression checks.
+- `eqtl/`: resumable GTEx v11 TE-overlap processing, deterministic MySQL
+  artifact consolidation, tests, and the versioned MySQL importer.
 - `plot/`: visualization and structure-figure helpers.
 - Root support modules:
   - `path_helpers.py`
@@ -39,6 +41,8 @@ Run from the repository root:
 python scripts\checks\check_runtime_db_config.py
 python scripts\checks\check_taxonomy_runtime_consistency.py
 python scripts\checks\check_expression_paths.py
+& '.\data\eQTL\.venv\Scripts\python.exe' scripts\checks\check_gtex_eqtl_all_tissues.py --require-mysql
+& 'D:\wamp64\bin\php\php8.4.15\php.exe' scripts\checks\check_gtex_eqtl_mysql_contract.php --version-key=gtex_v11_strict_te_overlap_v1 --require-active
 ```
 
 ## Current Key Build Entrypoints
@@ -49,6 +53,8 @@ python scripts\build\prepare_expression_assets.py
 python scripts\build\prepare_jbrowse_assets.py
 python scripts\build\parse_dfam_embl.py
 python scripts\build\parse_te_repbase.py
+& '.\data\eQTL\.venv\Scripts\python.exe' scripts\eqtl\build_gtex_all_tissues.py --resume
+& '.\data\eQTL\.venv\Scripts\python.exe' scripts\eqtl\consolidate_gtex_mysql_artifacts.py
 ```
 
 ## Path Rules

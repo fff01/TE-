@@ -80,7 +80,69 @@ function tekg_coexpression_load_network(string $teName,string $context): array {
     $available=tekg_coexpression_rows('SELECT context_key FROM coexpression_networks WHERE version_id=? AND center_te=? ORDER BY context_key',[(int)$v['id'],$te],'is'); $contexts=array_column($available,'context_key');
     $network=tekg_coexpression_rows('SELECT * FROM coexpression_networks WHERE version_id=? AND center_te=? AND context_key=? LIMIT 1',[(int)$v['id'],$te,$context],'iss');
     if($network===[])throw new CoexpressionRepositoryException('network_unavailable',"No display network is available for {$te} in {$context}.",['available_contexts'=>$contexts]);
-    return tekg_coexpression_network_payload($v,$network[0],['feature'=>$te,'feature_type'=>'TE','te'=>$te,'context'=>$context,'available_contexts'=>$contexts]);
+    $payload = tekg_coexpression_network_payload($v,$network[0],['feature'=>$te,'feature_type'=>'TE','te'=>$te,'context'=>$context,'available_contexts'=>$contexts]);
+    return tekg_coexpression_append_eqtl_edges($payload, $te);
+}
+
+/** Append eQTL evidence to the existing co-expression payload without replacing its graph. */
+function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string $geneFilter = null): array
+{
+    try {
+        $versions = tekg_coexpression_rows('SELECT * FROM eqtl_analysis_versions WHERE is_active=1 LIMIT 2');
+        if (count($versions) !== 1) return $payload;
+        $version = $versions[0];
+        $rows = tekg_coexpression_rows(
+            'SELECT s.*, g.gene_name FROM eqtl_te_gene_cross_tissue_summary s
+             JOIN eqtl_genes g ON g.version_id=s.version_id AND g.gene_id=s.gene_id
+             WHERE s.version_id=? AND LOWER(s.te_name)=LOWER(?)
+               AND (? IS NULL OR LOWER(g.gene_name)=LOWER(?)) ORDER BY g.gene_name',
+            [(int)$version['id'], $te, $geneFilter, $geneFilter], 'isss'
+        );
+        if ($rows === []) return $payload;
+        $nodeIds = [];
+        foreach ($payload['nodes'] as $node) $nodeIds[strtolower((string)$node['label'])] = (string)$node['id'];
+        $teId = 'te:' . $te;
+        if (!isset($nodeIds[strtolower($te)])) {
+            $payload['nodes'][] = ['id'=>$teId,'label'=>$te,'feature_type'=>'te','role'=>'eqtl_te','is_center'=>true,'is_module_hub'=>false];
+            $nodeIds[strtolower($te)] = $teId;
+        }
+        $edgePairs = [];
+        foreach ($payload['edges'] as $edge) $edgePairs[(string)$edge['source'] . "\0" . (string)$edge['target']] = true;
+        $added = 0;
+        foreach ($rows as $row) {
+            $gene = trim((string)($row['gene_name'] ?? ''));
+            if ($gene === '') continue;
+            $geneId = 'gene:' . $gene;
+            if (!isset($nodeIds[strtolower($gene)])) {
+                $payload['nodes'][] = ['id'=>$geneId,'label'=>$gene,'feature_type'=>'gene','role'=>'eqtl_gene','is_center'=>false,'is_module_hub'=>false];
+                $nodeIds[strtolower($gene)] = $geneId;
+            } else {
+                $geneId = $nodeIds[strtolower($gene)];
+            }
+            $edgeKey = $teId . "\0" . $geneId;
+            if (isset($edgePairs[$edgeKey])) {
+                foreach ($payload['edges'] as &$existing) {
+                    if ((string)$existing['source'] === $teId && (string)$existing['target'] === $geneId) {
+                        $existing['role'] = 'Both';
+                        $existing['edge_label'] = 'Both';
+                        $existing['eqtl_evidence'] = ['scope'=>'all','supporting_variant_count'=>(int)$row['supporting_variant_count'],'minimum_pval_nominal'=>$row['minimum_pval_nominal'] === null ? null : (float)$row['minimum_pval_nominal']];
+                        break;
+                    }
+                }
+                unset($existing);
+                continue;
+            }
+            $payload['edges'][] = ['id'=>'eqtl:' . sha1($te . "\0" . $gene),'source'=>$teId,'target'=>$geneId,'correlation'=>0.0,'abs_correlation'=>0.0,'fdr'=>1.0,'pair_type'=>'TE_gene_eqtl','role'=>'eQTL','edge_label'=>'eQTL','eqtl_evidence'=>['scope'=>'all','supporting_variant_count'=>(int)$row['supporting_variant_count'],'minimum_pval_nominal'=>$row['minimum_pval_nominal'] === null ? null : (float)$row['minimum_pval_nominal']]];
+            $added++;
+            if ($added >= 200) break;
+        }
+        $payload['metadata']['te_gene_mode'] = 'appended_to_coexpression';
+        $payload['metadata']['eqtl_version'] = (string)($version['version_key'] ?? '');
+        $payload['counts'] = ['coexpression_edges'=>count($payload['edges'])-$added,'eqtl_edges'=>$added,'aggregate_edges'=>count($payload['edges'])];
+    } catch (Throwable) {
+        // eQTL is an additive layer; an unavailable eQTL table must not break co-expression.
+    }
+    return $payload;
 }
 
 function tekg_coexpression_load_gene_network(string $geneName,string $context): array {
@@ -120,7 +182,8 @@ function tekg_coexpression_load_gene_network(string $geneName,string $context): 
     if($network===[])throw new CoexpressionRepositoryException('network_unavailable',"No display network is available for {$gene} in {$context}.",['available_contexts'=>$contexts]);
     $n=$network[0];
     $selection=['feature'=>$gene,'feature_type'=>'Gene','gene'=>$gene,'context'=>$context,'available_contexts'=>$contexts,'source_center_te'=>$n['center_te']];
-    return tekg_coexpression_network_payload($v,$n,$selection,(string)$n['selected_node_id']);
+    $payload = tekg_coexpression_network_payload($v,$n,$selection,(string)$n['selected_node_id']);
+    return tekg_coexpression_append_eqtl_edges($payload, (string)$n['center_te'], $gene);
 }
 
 function tekg_coexpression_load_feature_network(string $featureName,string $featureType,string $context): array {
