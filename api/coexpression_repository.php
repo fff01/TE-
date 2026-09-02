@@ -101,9 +101,9 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
         if ($rows === []) return $payload;
         $nodeIds = [];
         foreach ($payload['nodes'] as $node) $nodeIds[strtolower((string)$node['label'])] = (string)$node['id'];
-        $teId = 'te:' . $te;
+        $teId = $nodeIds[strtolower($te)] ?? $te;
         if (!isset($nodeIds[strtolower($te)])) {
-            $payload['nodes'][] = ['id'=>$teId,'label'=>$te,'feature_type'=>'te','role'=>'eqtl_te','is_center'=>true,'is_module_hub'=>false];
+            $payload['nodes'][] = ['id'=>$teId,'label'=>$te,'feature_type'=>'TE','role'=>'eqtl_te','is_center'=>true,'is_module_hub'=>false];
             $nodeIds[strtolower($te)] = $teId;
         }
         $edgePairs = [];

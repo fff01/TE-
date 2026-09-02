@@ -527,6 +527,21 @@
           border-radius: 3px;
         }
 
+        .coexpression-legend-divider {
+          height: 1px;
+          margin: 8px 0;
+          background: rgba(148, 163, 184, 0.28);
+        }
+
+        .coexpression-edge-line {
+          border-top-color: #64748b;
+        }
+
+        .coexpression-edge-line.is-double {
+          border-top-width: 2px;
+          box-shadow: 0 3px 0 -1px #64748b;
+        }
+
         .coexpression-hub-ring,
         .coexpression-activity-ring {
           width: 15px;
