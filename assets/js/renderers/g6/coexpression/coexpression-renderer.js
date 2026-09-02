@@ -1172,10 +1172,13 @@
       const relation = relationLabelForEdge(edge);
       const relationType = String(edge?.relationType || '').trim();
       const isEqtl = relationType === 'eQTL' || relation === 'eQTL';
+      const isBoth = relationType === 'Both' || relation === 'Both';
+      const isTeGeneEvidence = isEqtl || isBoth;
+      const eqtl = edge?.eqtlEvidence && typeof edge.eqtlEvidence === 'object' ? edge.eqtlEvidence : null;
       const pmids = Array.isArray(edge?.pmids) ? edge.pmids : [];
-      const pmidSummary = pmids.length === 0
-        ? 'No linked PMID records'
-        : `${pmids.length} linked PMID ${pmids.length === 1 ? 'record' : 'records'}`;
+      const summary = isEqtl
+        ? `GTEx eQTL overlap${eqtl?.supporting_variant_count != null ? ` · ${eqtl.supporting_variant_count} supporting variants` : ''}${eqtl?.tissue_count != null ? ` · ${eqtl.tissue_count} tissues` : ''}`
+        : (isBoth ? `Combined co-expression + GTEx eQTL evidence${eqtl?.supporting_variant_count != null ? ` · ${eqtl.supporting_variant_count} supporting variants` : ''}` : (pmids.length === 0 ? 'No linked PMID records' : `${pmids.length} linked PMID ${pmids.length === 1 ? 'record' : 'records'}`));
       const evidence = String(edge?.evidence || '').trim();
       const expanded = inspectCardState?.expanded === true;
       const expressionNode = expressionNodeEndpoint(edge, nodes);
@@ -1184,18 +1187,20 @@
         : '';
       const rows = [
         kvRow('Relation', relation),
-        kvRow('PMID count', edge?.support_pmid_count ?? pmids.length),
-        edge?.eqtlEvidence?.supporting_variant_count != null ? kvRow('Supporting variants', edge.eqtlEvidence.supporting_variant_count) : '',
-        edge?.eqtlEvidence?.tissue_count != null ? kvRow('Supporting tissues', edge.eqtlEvidence.tissue_count) : '',
-        edge?.eqtlEvidence?.minimum_pval_nominal != null ? kvRow('Minimum nominal P', edge.eqtlEvidence.minimum_pval_nominal) : '',
+        !isTeGeneEvidence ? kvRow('PMID count', edge?.support_pmid_count ?? pmids.length) : '',
+        eqtl?.supporting_variant_count != null ? kvRow('Supporting variants', eqtl.supporting_variant_count) : '',
+        eqtl?.tissue_count != null ? kvRow('Supporting tissues', eqtl.tissue_count) : '',
+        eqtl?.minimum_pval_nominal != null ? kvRow('Minimum nominal P', eqtl.minimum_pval_nominal) : '',
+        isBoth ? kvRow('Spearman r', coexpressionMetric(edge?.correlation)) : '',
+        isBoth ? kvRow('Adjusted P value (FDR)', coexpressionMetric(edge?.fdr)) : '',
       ].filter(Boolean).join('');
 
       return [
         '<div class="inspect-card__body">',
         `<h3 class="inspect-card__title">${escapeHtml(sourceLabel)} → ${escapeHtml(relation)} → ${escapeHtml(targetLabel)}</h3>`,
-        `<div class="inspect-card__meta">${escapeHtml(pmidSummary)}</div>`,
+        `<div class="inspect-card__meta">${escapeHtml(summary)}</div>`,
         expanded && rows ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Relation</p><div class="inspect-card__kv">${rows}</div></div>` : '',
-        !isEqtl && expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (!isEqtl && pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
+        !isTeGeneEvidence && expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (!isTeGeneEvidence && pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
         expanded && evidence ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence)}</div></div>` : '',
         expressionHtml,
         '<div class="inspect-card__actions">',
