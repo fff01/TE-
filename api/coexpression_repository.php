@@ -68,7 +68,7 @@ function tekg_coexpression_network_payload(array $v,array $n,array $selection,?s
         if(!$found)throw new CoexpressionRepositoryException('data_contract_error','The selected Gene is missing from its approved display network.');
     }
     $edges=tekg_coexpression_rows('SELECT source_id source,target_id target,correlation,abs_correlation,fdr,pair_type,role FROM coexpression_network_edges WHERE network_id=? ORDER BY edge_order',[(int)$n['id']],'i'); foreach($edges as &$edge){$edge['correlation']=(float)$edge['correlation'];$edge['abs_correlation']=(float)$edge['abs_correlation'];$edge['fdr']=(float)$edge['fdr'];}unset($edge);
-    if(count($nodes)>50||count($edges)>150)throw new CoexpressionRepositoryException('data_contract_error','The co-expression network exceeds the approved display size.'); $terms=json_decode((string)$n['enrichment_terms_json'],true); if(!is_array($terms))throw new CoexpressionRepositoryException('data_contract_error','The co-expression enrichment metadata is invalid.');
+    if(count($nodes)>100||count($edges)>150)throw new CoexpressionRepositoryException('data_contract_error','The co-expression network exceeds the approved display size.'); $terms=json_decode((string)$n['enrichment_terms_json'],true); if(!is_array($terms))throw new CoexpressionRepositoryException('data_contract_error','The co-expression enrichment metadata is invalid.');
     $selection['display_tier']=$n['display_tier'];$selection['quality_flag']=$n['quality_flag'];$selection['recommended_default']=(int)$n['recommended_default']===1;
     return ['version'=>$v['version_key'],'selection'=>$selection,'module'=>['id'=>$n['module_id'],'type'=>$n['module_type'],'size'=>(int)$n['module_size'],'te_count'=>(int)$n['te_count'],'gene_count'=>(int)$n['gene_count'],'confidence'=>$n['confidence'],'candidate_label'=>$n['candidate_label'],'top_enriched_terms'=>array_values($terms)],'interpretation'=>['statement_en'=>$n['statement_en'],'statement_zh'=>$n['statement_zh'],'limit'=>$v['interpretation_limit']],'nodes'=>$nodes,'edges'=>$edges];
 }
@@ -108,8 +108,17 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
         }
         $edgePairs = [];
         foreach ($payload['edges'] as $edge) $edgePairs[(string)$edge['source'] . "\0" . (string)$edge['target']] = true;
+        // Preserve the most informative overlap first: merge eQTL with existing
+        // co-expression Gene nodes before spending the display node budget on
+        // eQTL-only Gene nodes.
+        usort($rows, static function (array $left, array $right) use ($nodeIds): int {
+            $leftExisting = isset($nodeIds[strtolower(trim((string)($left['gene_name'] ?? '')))]);
+            $rightExisting = isset($nodeIds[strtolower(trim((string)($right['gene_name'] ?? '')))]);
+            return (int)$rightExisting <=> (int)$leftExisting
+                ?: strnatcasecmp((string)($left['gene_name'] ?? ''), (string)($right['gene_name'] ?? ''));
+        });
         $added = 0;
-        $maxNodes = 50;
+        $maxNodes = 100;
         $maxEdges = 150;
         foreach ($rows as $row) {
             $gene = trim((string)($row['gene_name'] ?? ''));

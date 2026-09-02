@@ -4,7 +4,7 @@
   if (typeof module === 'object' && module.exports) module.exports = api;
 }(typeof globalThis === 'object' ? globalThis : null, function () {
   'use strict';
-  const MAX_NODES = 50;
+  const MAX_NODES = 100;
   const MAX_EDGES = 150;
   const INTERNAL_KEY = /(?:path|file|directory|root|internal|edge_source)/i;
   class CoexpressionContractError extends Error {

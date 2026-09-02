@@ -23,7 +23,7 @@ te_gene_test(($labels['eQTL'] ?? 0) > 0, 'L1HS must expose eQTL-only evidence');
 te_gene_test(($labels['Co-expression'] ?? 0) > 0, 'L1HS must expose co-expression-only evidence');
 te_gene_test(($all['counts']['aggregate_edges'] ?? 0) >= count($all['edges']), 'aggregate count cannot be below display count');
 te_gene_test(($all['metadata']['display_truncated'] ?? false) === true, 'large All tissues network must advertise display truncation');
-te_gene_test(count($all['nodes']) <= 50 && count($all['edges']) <= 150, 'display payload must respect G6 limits');
+te_gene_test(count($all['nodes']) <= 100 && count($all['edges']) <= 150, 'display payload must respect G6 limits');
 
 $liver = tekg_te_gene_load_network('L1HS', 'tissue', 'Liver');
 te_gene_test(($liver['selection']['scope'] ?? '') === 'tissue', 'Liver response must use tissue scope');

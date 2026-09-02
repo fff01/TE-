@@ -29,7 +29,7 @@ The Co-expression runtime is MySQL-only:
   and importer inputs, not browser runtime sources.
 
 One TE-Gene display unit is one selected TE in `All tissues` or one GTEx
-tissue. Payloads are capped at 50 nodes and 150 edges by the existing G6
+tissue. Payloads are capped at 100 nodes and 150 edges by the existing G6
 contract; the TE-Gene API uses a 49-edge display cap so the center TE fits in
 the node limit. Complete aggregate counts remain in `counts` and truncation is
 explicit in `metadata.display_truncated`.
