@@ -91,10 +91,10 @@
     const edges = payload.edges.map((item, index) => {
       const source = text(item && item.source); const target = text(item && item.target); if (!source || !target || !ids.has(source) || !ids.has(target)) fail('invalid_edge_endpoint', 'The co-expression network contains an unresolved edge endpoint.', diagnostics, { type: 'edge', index, source, target });
       const correlation = item.correlation; const absCorrelation = item.abs_correlation; const fdr = item.fdr;
-      const role = text(item.edge_label || item.role) || 'Co-expression';
+      const role = text(item.edge_label) || 'Co-expression';
       const nonCorrelation = role === 'eQTL';
       if (!numeric(correlation) || !numeric(absCorrelation) || !numeric(fdr) || (!nonCorrelation && (correlation <= 0 || correlation > 1)) || (nonCorrelation && (correlation < 0 || correlation > 1)) || absCorrelation < 0 || absCorrelation > 1 || fdr < 0 || fdr > 1) fail('invalid_edge_values', 'The co-expression network contains invalid correlation or FDR values.', diagnostics, { type: 'edge', index, source, target });
-      return { id: `${source}::${target}::${index}`, source, target, correlation, absCorrelation, fdr, pairType: text(item.pair_type), role, edgeLabel: role, data: cleanData(item) };
+      return { id: `${source}::${target}::${index}`, source, target, correlation, absCorrelation, fdr, pairType: text(item.pair_type), role: text(item.role), edgeLabel: role, data: cleanData(item) };
     });
     diagnostics.output.nodes = nodes.length; diagnostics.output.edges = edges.length;
     return { version: text(payload.version), selection: cleanData(payload.selection), module: cleanData(payload.module), interpretation: cleanData(payload.interpretation), nodes, edges, diagnostics };

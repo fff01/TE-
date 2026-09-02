@@ -128,7 +128,7 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
                     if ((string)$existing['source'] === $teId && (string)$existing['target'] === $geneId) {
                         $existing['role'] = 'Both';
                         $existing['edge_label'] = 'Both';
-                        $existing['eqtl_evidence'] = ['scope'=>'all','supporting_variant_count'=>(int)$row['supporting_variant_count'],'minimum_pval_nominal'=>$row['minimum_pval_nominal'] === null ? null : (float)$row['minimum_pval_nominal']];
+                        $existing['eqtl_evidence'] = ['scope'=>'all','tissue_count'=>(int)($row['tissue_count'] ?? 0),'supporting_variant_count'=>(int)$row['supporting_variant_count'],'minimum_pval_nominal'=>$row['minimum_pval_nominal'] === null ? null : (float)$row['minimum_pval_nominal']];
                         break;
                     }
                 }
@@ -136,7 +136,7 @@ function tekg_coexpression_append_eqtl_edges(array $payload, string $te, ?string
                 continue;
             }
             if (count($payload['edges']) >= $maxEdges) break;
-            $payload['edges'][] = ['id'=>'eqtl:' . sha1($te . "\0" . $gene),'source'=>$teId,'target'=>$geneId,'correlation'=>0.0,'abs_correlation'=>0.0,'fdr'=>1.0,'pair_type'=>'TE_gene_eqtl','role'=>'eQTL','edge_label'=>'eQTL','eqtl_evidence'=>['scope'=>'all','supporting_variant_count'=>(int)$row['supporting_variant_count'],'minimum_pval_nominal'=>$row['minimum_pval_nominal'] === null ? null : (float)$row['minimum_pval_nominal']]];
+            $payload['edges'][] = ['id'=>'eqtl:' . sha1($te . "\0" . $gene),'source'=>$teId,'target'=>$geneId,'correlation'=>0.0,'abs_correlation'=>0.0,'fdr'=>1.0,'pair_type'=>'TE_gene_eqtl','role'=>'eQTL','edge_label'=>'eQTL','eqtl_evidence'=>['scope'=>'all','tissue_count'=>(int)($row['tissue_count'] ?? 0),'supporting_variant_count'=>(int)$row['supporting_variant_count'],'minimum_pval_nominal'=>$row['minimum_pval_nominal'] === null ? null : (float)$row['minimum_pval_nominal']]];
             $added++;
             if ($added >= 100) break;
         }

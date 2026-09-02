@@ -1162,7 +1162,7 @@
     }
 
     function renderEdgeInspectCard(edge, nodes) {
-      if (edge?.coexpression) return renderCoexpressionEdgeInspectCard(edge, nodes);
+      if (edge?.coexpression && edge?.relationType === 'Co-expression') return renderCoexpressionEdgeInspectCard(edge, nodes);
       const source = resolveNode(edge?.source, nodes);
       const target = resolveNode(edge?.target, nodes);
       const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
@@ -1182,6 +1182,9 @@
       const rows = [
         kvRow('Relation', relation),
         kvRow('PMID count', edge?.support_pmid_count ?? pmids.length),
+        edge?.eqtlEvidence?.supporting_variant_count != null ? kvRow('Supporting variants', edge.eqtlEvidence.supporting_variant_count) : '',
+        edge?.eqtlEvidence?.tissue_count != null ? kvRow('Supporting tissues', edge.eqtlEvidence.tissue_count) : '',
+        edge?.eqtlEvidence?.minimum_pval_nominal != null ? kvRow('Minimum nominal P', edge.eqtlEvidence.minimum_pval_nominal) : '',
       ].filter(Boolean).join('');
 
       return [
@@ -1899,7 +1902,7 @@
     }
 
     function buildEdgeDetailHtml(edge, nodes) {
-      if (edge?.coexpression) {
+      if (edge?.coexpression && edge?.relationType === 'Co-expression') {
         const source = resolveNode(edge?.source, nodes);
         const target = resolveNode(edge?.target, nodes);
         const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
@@ -1917,6 +1920,7 @@
       const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
       const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
       const relation = relationLabelForEdge(edge);
+      const eqtl = edge?.eqtlEvidence || null;
       const pmidCount = Math.max(0, Number(edge?.support_pmid_count) || (Array.isArray(edge?.pmids) ? edge.pmids.length : 0));
       const expressionNode = expressionNodeEndpoint(edge, nodes);
       const expressionHtml = expressionNode
@@ -1930,7 +1934,7 @@
         `&nbsp;&rarr;&nbsp;${escapeHtml(relation)}&nbsp;&rarr;&nbsp;`,
         `<strong>${escapeHtml(targetLabel)}</strong>`,
         '</div>',
-        `<div class="edge-evidence-summary">Linked PMID records: ${escapeHtml(pmidCount)}. Expand the edge card to inspect PubMed evidence.</div>`,
+          `<div class="edge-evidence-summary">${escapeHtml(relation)} evidence. ${eqtl?.supporting_variant_count != null ? `Supporting variants: ${escapeHtml(eqtl.supporting_variant_count)}.` : ''}</div>`,
         expressionHtml,
         '</div>',
       ].join('');
@@ -2099,6 +2103,7 @@
           fdr: Number(data.fdr),
           pairType: String(data.pairType || ''),
           coexpressionEdgeRole: String(data.coexpressionEdgeRole || data.role || ''),
+          eqtlEvidence: data.eqtlEvidence && typeof data.eqtlEvidence === 'object' ? clonePlain(data.eqtlEvidence) : null,
           evidence: String(data.evidence || '').trim(),
           pmids,
           evidence_records: Array.isArray(data.evidence_records) ? data.evidence_records : [],
@@ -2933,6 +2938,7 @@
               fdr: Number.isFinite(Number(edge.fdr)) ? Number(edge.fdr) : null,
               pair_type: String(edge.pairType || ''),
               edge_role: String(edge.coexpressionEdgeRole || ''),
+              eqtl_evidence: edge.eqtlEvidence && typeof edge.eqtlEvidence === 'object' ? clonePlain(edge.eqtlEvidence) : null,
               pmids: Array.isArray(edge.pmids) ? edge.pmids.map((pmid) => String(pmid || '')).filter(Boolean) : [],
               pmid_count: Array.isArray(edge.pmids) ? edge.pmids.length : 0,
               evidence_records: Array.isArray(edge.evidence_records) ? clonePlain(edge.evidence_records) : [],
