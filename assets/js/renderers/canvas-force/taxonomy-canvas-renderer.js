@@ -10,6 +10,7 @@
   const ctx = canvas.getContext('2d');
   const TAU = Math.PI * 2;
   const STAR_DEPTH = 2;
+  const MAX_TAXONOMY_DEPTH = 5;
   const MIN_BRANCH_SHARE = 0.08;
   const MAX_BRANCH_SHARE = 0.60;
   const SECTOR_START_ANGLE = -Math.PI * 0.72;
@@ -71,6 +72,9 @@
   }
 
   function keyForDepth(depth) { return `depth-${depth}`; }
+  function isAvailableDepth(depth) {
+    return state.mode !== 'taxonomy_graph' || depth <= MAX_TAXONOMY_DEPTH;
+  }
   function levelLabel(depth) { return state.levelLabels[depth] || `Level ${depth}`; }
   function levelColor(depth) { return state.colors[Math.min(depth, state.colors.length - 1)] || '#94a3b8'; }
   function nodeId(name, index) {
@@ -301,7 +305,7 @@
       state.adjacency.get(edge.target.id)?.add(edge.source.id);
     });
   }
-  function isVisible(node) { return state.visibleLevels.has(node.depth); }
+  function isVisible(node) { return isAvailableDepth(node.depth) && state.visibleLevels.has(node.depth); }
   function isNearActive(node) {
     const active = state.selected || state.hover;
     return !active || node.id === active || state.adjacency.get(active)?.has(node.id);
@@ -520,9 +524,12 @@
   function getLegendMeta() {
     const counts = new Map();
     state.nodes.forEach((node) => counts.set(node.depth, (counts.get(node.depth) || 0) + 1));
-    return [...counts.entries()].sort((a, b) => a[0] - b[0]).map(([depth, count]) => ({
-      key: keyForDepth(depth), depth, label: levelLabel(depth), color: levelColor(depth), count,
-    }));
+    return [...counts.entries()]
+      .filter(([depth]) => isAvailableDepth(depth))
+      .sort((a, b) => a[0] - b[0])
+      .map(([depth, count]) => ({
+        key: keyForDepth(depth), depth, label: levelLabel(depth), color: levelColor(depth), count,
+      }));
   }
   function getLayoutMeta() {
     return {
@@ -539,6 +546,10 @@
         const match = /^depth-(\d+)$/.exec(key);
         if (!match) return;
         const depth = Number(match[1]);
+        if (!isAvailableDepth(depth)) {
+          state.visibleLevels.delete(depth);
+          return;
+        }
         if (visible === false) state.visibleLevels.delete(depth);
         else state.visibleLevels.add(depth);
       });
@@ -653,7 +664,7 @@
       state.levelLabels = LABELS;
       state.colors = COLORS;
       state.onNodeActivate = null;
-      state.visibleLevels = new Set(getDepths(state.nodes));
+      state.visibleLevels = new Set(getDepths(state.nodes).filter((depth) => isAvailableDepth(depth)));
       rebuildIndexes();
       resize();
       fit();

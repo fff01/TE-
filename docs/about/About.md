@@ -4,23 +4,25 @@ This document is the English source for the public About page. It contains both 
 
 ## 1. About TE-KG
 
-TE-KG is an integrated resource for human transposable elements. It connects classification systems, literature-derived relationships, representative sequence and genomic records, expression and co-expression contexts, downloadable data, and evidence-grounded natural-language question answering.
+TE-KG is an integrated resource for human transposable elements. It connects classification systems, literature-derived relationships, representative sequence and genomic records, expression and co-expression contexts, Variant and eQTL evidence, downloadable data, and evidence-grounded natural-language question answering.
 
 ### What TE-KG is
 
-TE-KG brings several complementary views of human transposable elements into one interface rather than treating every dataset as an isolated table. The resource includes a TE catalog, entity details, literature-derived relationship graphs, classification views, expression and co-expression exploration, and downloadable data. Its central aim is to make TE information easier to explore while keeping source evidence and interpretation boundaries visible.
+TE-KG brings several complementary views of human transposable elements into one interface rather than treating every dataset as an isolated table. The resource includes a TE catalog, entity details, literature-derived relationship graphs, classification views, expression and TE-Gene evidence exploration, and downloadable data. Its central aim is to make TE information easier to explore while keeping source evidence and interpretation boundaries visible.
 
 ### TE-KG architecture
 
-TE-KG integrates three main data streams. Literature is screened before AI-assisted entity and relationship extraction, normalization, and manual curation. RMSK genomic annotations and RepBase classification and sequence records are harmonized into a shared taxonomy and sequence layer. Expression datasets are processed separately and used to build context-specific TE-gene co-expression results. These curated resources are exposed through integrated APIs and evidence services that support Browse, Path, Graph, Expression, Agent, and DeepThink workflows.
+TE-KG integrates four main data streams. Literature is screened before AI-assisted entity and relationship extraction, normalization, and manual curation. RMSK genomic annotations and RepBase classification and sequence records are harmonized into a shared taxonomy, sequence, and genomic annotation layer. Expression datasets are processed separately and used to build context-specific TE-Gene co-expression results. GTEx v11 eQTL data are organized through Variant normalization, strict TE-Variant coordinate overlap, and Variant-Gene-Tissue association, producing queryable TE-Gene eQTL evidence.
+
+The basic eQTL relationship is that a TE instance strictly overlaps the reference-allele interval of a Variant, and that Variant has a GTEx eQTL association with a Gene in a specific tissue. The knowledge graph and taxonomy run in Neo4j. The catalog, expression, co-expression, and eQTL/Variant runtime data are stored in MySQL and exposed through unified APIs and evidence services for Browse, Path, Graph, Expression, Agent, and DeepThink workflows.
 
 ![TE-KG data architecture and public services](<figs/TE-KG Data Architecture and Public Services.svg>)
 
 ### Data access routes
 
 - Use Home to review the current overall composition of the database.
-- Use Browse to find a TE and inspect its summary, local graph, sequence, genome annotation, and genome browser views.
-- Use Graph to explore knowledge relationships, TE classification, and co-expression networks; use Path to inspect connections between two specified entities.
+- Use Browse to explore the TE catalog, then use Search to inspect the selected entity's detailed records, genomic locations, and Variant/eQTL evidence.
+- Use Graph to explore knowledge relationships, TE classification, and the TE-Gene Graph; use Path Finder to inspect connections between two specified entities.
 - Use Expression to examine abundance patterns in the currently available expression datasets.
 - Use Agent or DeepThink to ask evidence-grounded natural-language questions and continue with follow-up questions in the current conversation.
 - Use Download to obtain files currently provided by the website.
@@ -41,7 +43,7 @@ Home is the main overview entry point for TE-KG. It introduces the resource, sum
 
 ## 3. Browse
 
-Browse provides the complete workflow for finding and reviewing a TE record. Its content includes Summary, Local Graph, Sequence, Genome Annotation Distribution, and Genome Browser.
+Browse provides the complete workflow for finding and reviewing a TE record. Its content includes Summary, Local Graph, Sequence, Genome Annotation Distribution, Genome Browser, and Variants.
 
 ![Browse record overview](figs/Browse.png)
 
@@ -50,6 +52,7 @@ Browse provides the complete workflow for finding and reviewing a TE record. Its
 - Sequence displays a supported representative or consensus sequence and its available annotation; it does not represent every genomic copy of a TE.
 - Genome Annotation Distribution summarizes supported hits on the current assembly.
 - Genome Browser shows specific genomic locations. Selecting a hit in Genome Annotation Distribution updates the Genomic hit list.
+- Variants displays GTEx eQTL variants that strictly overlap the current TE. The default summary view presents one row per Variant with linked Gene and tissue counts and the minimum nominal p-value. Evidence rows expose each Variant-Gene-Tissue association with its slope and p-value. Overlapping Variants without an associated Gene remain visible.
 
 ![Browse genomic hit workflow](figs/Browse.gif)
 
@@ -76,7 +79,7 @@ Results are available in two modes: Table and Graph.
 
 ## 5. Graph Workspace
 
-Graph provides three complementary visual workflows: literature-derived knowledge relationships, TE classification in Tree or Graph form, and an independent context-specific co-expression network.
+Graph provides three complementary visual workflows: literature-derived knowledge relationships, TE classification in Tree or Graph form, and a TE-Gene Graph that integrates co-expression and eQTL evidence.
 
 ### Classification Tree and Graph
 
@@ -87,7 +90,7 @@ Graph provides three complementary visual workflows: literature-derived knowledg
 
 - Select an entity category and enter an entity name in the search box to move directly to its graph.
 - Use Show relations to display edge labels, Back to entity to return to the previous graph, and Export to export the current graph.
-- When the searched entity is a TE, use Knowledge Graph and Co-expression to switch between its two network views.
+- When the searched entity is a TE, use Knowledge Graph and TE-Gene Graph to switch between its two network views.
 - Select legend entries to emphasize content temporarily, or change legend filters and select Apply to focus on specific entity or relationship types.
 
 ### Knowledge Graph workspace
@@ -99,12 +102,13 @@ Graph provides three complementary visual workflows: literature-derived knowledg
 
 ![Knowledge Graph controls and detail card](figs/Graph.png)
 
-### Co-expression workspace
+### TE-Gene Graph workspace
 
-- Use the legend to show or hide TE and Gene nodes, identify module hubs, and choose the currently visible edge range.
-- When Expression activity is enabled, nodes display ripples that reflect expression intensity.
-- Choose a context from the Context menu.
-- The displayed co-expression network uses the thresholds Spearman r >= 0.4 and FDR <= 0.05.
+- The edge legend contains Co-expression, eQTL, and Both. Both means that the same TE-Gene pair has both types of evidence.
+- The co-expression network retains its existing context-specific structure. The legend can show or hide TE or Gene nodes, identify module hubs, and choose the visible edge range.
+- When Expression activity is enabled, co-expression nodes with expression-intensity data display ripples that reflect expression intensity. Non-central Genes introduced only by eQTL do not display these ripples.
+- All tissues summarizes eQTL evidence across tissues. A tissue selector can be used to inspect one GTEx tissue at a time.
+- The co-expression network uses Spearman r >= 0.4 and FDR <= 0.05. No additional p-value threshold is currently applied to eQTL evidence.
 
 ## 6. Agent and DeepThink
 
@@ -112,13 +116,13 @@ Agent is the natural-language research interface. Agent mode collects evidence t
 
 ### Choosing a mode
 
-- Agent integrates sequence, genomic location, expression, disease relationships, literature, and other database areas. It uses multiple models and proceeds through six stages: Understanding, Planning, Collecting, Executing, Integrating, and Writing.
+- Agent integrates sequence, genomic location, Variant/eQTL, expression, disease relationships, literature, and other database areas. It uses multiple models and proceeds through six stages: Understanding, Planning, Collecting, Executing, Integrating, and Writing.
 - DeepThink is suitable when a direct question can be handled with a shorter reasoning and writing process. It uses one model and proceeds through four stages: Understanding, Planning, Executing, and Writing.
 
 ### Asking questions
 
 - Use clear TE, disease, or gene names, or a PMID, whenever possible. Ask for clarification when an abbreviation or entity name is ambiguous.
-- Questions may cover TE classification, sequences, genomic records, expression, co-expression, graph relationships, diseases, genes, or literature evidence.
+- Questions may cover TE classification, sequences, genomic records, Variant overlap, GTEx eQTL, expression, co-expression, graph relationships, diseases, genes, or literature evidence.
 - When literature evidence matters, follow PMID links in the answer to inspect the corresponding PubMed records.
 - Answers may remain appropriately limited when the database lacks the requested evidence. Absence from a retrieved result does not demonstrate biological absence.
 
