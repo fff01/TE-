@@ -25,6 +25,8 @@ out of date; verify against live code and `current_system.md`.
 
 ## Topic Documents
 
+- `../eqtl/README.md`: GTEx v11 strict TE-overlap scientific contract,
+  versioned artifacts, MySQL runtime boundary, and recovery commands.
 - `targets.md`: frontend and exploration capability targets.
 - `network_explorer_next_tasks.md`: graph/network follow-up work.
 - `kg_database_next_directions_2026-05-17.md`: database improvement direction.

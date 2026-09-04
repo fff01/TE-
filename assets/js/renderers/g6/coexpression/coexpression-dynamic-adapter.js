@@ -61,6 +61,7 @@
           coexpressionFeatureType: node.kind === 'gene' ? 'Gene' : 'TE',
           coexpressionIsCenter: node.isCenter === true,
           coexpressionIsModuleHub: node.isModuleHub === true,
+          expressionDisabled: node.data?.expression_disabled === true || node.data?.expressionDisabled === true,
           coexpressionModule,
           coexpressionSelection,
           coexpressionInterpretation,
@@ -68,24 +69,32 @@
         },
       }));
 
-    const graphEdges = edges.map((edge, index) => ({
+    const graphEdges = edges.map((edge, index) => {
+      const edgeLabel = String(edge.edgeLabel || edge.role || 'Co-expression');
+      const eqtlEvidence = edge.data?.eqtl_evidence || edge.data?.eqtlEvidence || null;
+      return {
       data: {
         id: String(edge.id || `${edge.source}::${edge.target}::${index}`),
         source: String(edge.source),
         target: String(edge.target),
-        relation: 'positive correlation',
-        relationType: 'COEXPRESSION_CORRELATION',
-        coexpression: true,
+        relation: edgeLabel,
+        relationType: edgeLabel,
+        relationKey: edgeLabel,
+        coexpression: edgeLabel === 'Co-expression' || edgeLabel === 'Both',
         correlation: Number(edge.correlation),
         abs_correlation: Number(edge.absCorrelation ?? edge.abs_correlation ?? edge.correlation),
         fdr: Number(edge.fdr),
         pairType: String(edge.pairType || edge.pair_type || ''),
         coexpressionEdgeRole: String(edge.role || ''),
         role: String(edge.role || ''),
-        evidence: `Spearman r = ${formatMetric(edge.correlation)}; FDR = ${formatMetric(edge.fdr)}. ${INTERPRETATION_LIMIT}`,
+        eqtlEvidence,
+        evidence: edgeLabel === 'eQTL' || edgeLabel === 'Both'
+          ? `GTEx eQTL overlap evidence${eqtlEvidence?.supporting_variant_count != null ? `; ${eqtlEvidence.supporting_variant_count} supporting variants` : ''}. ${INTERPRETATION_LIMIT}`
+          : `Spearman r = ${formatMetric(edge.correlation)}; FDR = ${formatMetric(edge.fdr)}. ${INTERPRETATION_LIMIT}`,
         pmids: [],
       },
-    }));
+      };
+    });
 
     return [...orderedNodes, ...graphEdges];
   }

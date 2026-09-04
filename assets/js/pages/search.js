@@ -79,6 +79,139 @@
       }());
 
 (function () {
+        const panel = document.getElementById('search-variants-panel');
+        if (!panel) return;
+        const configEl = document.getElementById('search-page-config');
+        let config = {};
+        try { config = JSON.parse(configEl ? configEl.textContent || '{}' : '{}'); } catch (error) { config = {}; }
+        const apiUrl = String(config.variantsApiUrl || '');
+        const query = String(config.variantsQuery || '');
+        const status = document.getElementById('search-variants-status');
+        const tableWrap = document.getElementById('search-variants-table-wrap');
+        const pagination = document.getElementById('search-variants-pagination');
+        const sourceTabs = Array.from(panel.querySelectorAll('[data-variant-source]'));
+        const viewTabs = Array.from(panel.querySelectorAll('[data-variant-view]'));
+        let source = 'eqtl';
+        let view = 'variant';
+        let page = 1;
+        let pageSize = 10;
+        let controller = null;
+
+        function el(tag, text, className) {
+          const node = document.createElement(tag);
+          if (className) node.className = className;
+          if (text !== undefined && text !== null) node.textContent = String(text);
+          return node;
+        }
+
+        function value(v) { return v === null || v === undefined || v === '' ? '-' : v; }
+        function setTabs(tabs, key, selected) {
+          tabs.forEach((tab) => {
+            const active = tab.dataset[key] === selected;
+            tab.classList.toggle('is-active', active);
+            tab.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+        }
+
+        function renderMessage(message, className) {
+          tableWrap.replaceChildren(el('div', message, className || 'variants-empty'));
+          pagination.replaceChildren();
+        }
+
+        function renderTable(payload) {
+          if (!payload.available) {
+            renderMessage(payload.unavailable_reason || 'This Variant source is unavailable.', 'variants-empty');
+            return;
+          }
+          const rows = Array.isArray(payload.rows) ? payload.rows : [];
+          if (!rows.length) {
+            renderMessage('No Variants found for this Browse object.', 'variants-empty');
+            return;
+          }
+          const table = el('table', undefined, 'variants-table');
+          const headers = source === 'eqtl'
+            ? (view === 'variant' ? ['Variant', 'Coordinate (hg38)', 'REF', 'ALT', 'Genes', 'Tissues', 'Min nominal p-value'] : ['Variant', 'Coordinate (hg38)', 'REF', 'ALT', 'Gene', 'Tissue', 'p-value', 'Slope'])
+            : ['Record', 'Coordinate (hg38)', 'Alleles', 'Clinical significance', 'Conditions'];
+          const thead = el('thead');
+          const headRow = el('tr');
+          headers.forEach((header) => headRow.appendChild(el('th', header)));
+          thead.appendChild(headRow); table.appendChild(thead);
+          const tbody = el('tbody');
+          rows.forEach((row) => {
+            const tr = el('tr');
+            const coordinate = `${value(row.chrom)}:${Number(row.variant_start || row.start || 0) + 1}-${value(row.variant_end || row.end)}`;
+            const cells = source === 'eqtl'
+              ? (view === 'variant'
+                ? [row.variant_id, coordinate, row.ref, row.alt, row.gene_names || 'No linked gene', row.tissue_names || 'No tissue evidence', row.minimum_pval_nominal]
+                : [row.variant_id, coordinate, row.ref, row.alt, row.gene_name, row.tissue_name, row.pval_nominal, row.slope])
+              : [row.record_id, coordinate, row.alleles || '-', row.clinical_significance || '-', row.conditions || '-'];
+            cells.forEach((cell) => tr.appendChild(el('td', value(cell))));
+            tr.addEventListener('click', () => {
+              const existing = tr.nextElementSibling;
+              if (existing && existing.classList.contains('variants-detail-row')) { existing.remove(); return; }
+              const detailRow = el('tr', undefined, 'variants-detail-row');
+              const detailCell = el('td'); detailCell.colSpan = headers.length;
+              const detail = el('div', undefined, 'variants-detail');
+              if (source === 'eqtl') {
+                detail.appendChild(el('div', `Variant: ${value(row.variant_id)}`));
+                detail.appendChild(el('div', `Coordinate: ${coordinate} | REF/ALT: ${value(row.ref)}/${value(row.alt)}`));
+                if (view === 'variant') detail.appendChild(el('div', `Genes: ${value(row.gene_names || 'No linked gene')} | Tissues: ${value(row.tissue_names || 'No tissue evidence')} | Evidence rows: ${value(row.evidence_row_count)}`));
+                else detail.appendChild(el('div', `Gene: ${value(row.gene_name)} | Tissue: ${value(row.tissue_name)} | p-value: ${value(row.pval_nominal)} | Slope: ${value(row.slope)} | AF: ${value(row.af)}`));
+              } else {
+                detail.appendChild(el('div', `Record: ${value(row.record_id)}`));
+                detail.appendChild(el('div', `Clinical significance: ${value(row.clinical_significance)} | Conditions: ${value(row.conditions)}`));
+              }
+              detailCell.appendChild(detail); detailRow.appendChild(detailCell); tr.after(detailRow);
+            });
+            tbody.appendChild(tr);
+          });
+          table.appendChild(tbody); tableWrap.replaceChildren(table);
+          const total = Number(payload.total || 0); const totalPages = Math.max(1, Math.ceil(total / pageSize));
+          const controls = el('div', undefined, 'variants-page-controls');
+          const prev = el('button', 'Previous', 'variants-page-button'); prev.type = 'button'; prev.disabled = page <= 1; prev.addEventListener('click', () => { page -= 1; load(); });
+          const next = el('button', 'Next', 'variants-page-button'); next.type = 'button'; next.disabled = page >= totalPages; next.addEventListener('click', () => { page += 1; load(); });
+          controls.append(prev, next);
+          pagination.replaceChildren(el('span', `${total.toLocaleString()} rows | Page ${page} of ${totalPages}`), controls);
+        }
+
+        function renderLoading() {
+          tableWrap.replaceChildren();
+          const skeleton = el('div', undefined, 'variants-loading-skeleton');
+          for (let i = 0; i < 4; i += 1) skeleton.appendChild(el('span'));
+          tableWrap.appendChild(skeleton);
+          pagination.replaceChildren();
+        }
+
+        async function load() {
+          if (!apiUrl || !query) { renderMessage('Variant data is unavailable for this page.'); return; }
+          if (controller) controller.abort();
+          controller = new AbortController();
+          status.textContent = 'Loading';
+          renderLoading();
+          const params = new URLSearchParams({ te: query, source, view, page: String(page), page_size: String(pageSize) });
+          try {
+            const response = await fetch(`${apiUrl}?${params.toString()}`, { cache: 'no-store', signal: controller.signal });
+            const payload = await response.json();
+            if (!response.ok || !payload.ok) throw new Error(payload.error && payload.error.message ? payload.error.message : 'Variant request failed');
+            renderTable(payload); status.textContent = payload.available ? `${Number(payload.total || 0).toLocaleString()} records` : (payload.unavailable_reason || 'Unavailable');
+          } catch (error) {
+            if (error && error.name === 'AbortError') return;
+            renderMessage(error.message || 'Variant data is unavailable right now.', 'variants-error'); status.textContent = 'Unable to load variants';
+          }
+        }
+
+        sourceTabs.forEach((tab) => tab.addEventListener('click', () => {
+          source = tab.dataset.variantSource || 'eqtl'; page = 1;
+          const eqtl = source === 'eqtl'; viewTabs.forEach((viewTab) => { viewTab.disabled = !eqtl; });
+          if (!eqtl) view = 'variant';
+          setTabs(sourceTabs, 'variantSource', source); setTabs(viewTabs, 'variantView', view); load();
+        }));
+        viewTabs.forEach((tab) => tab.addEventListener('click', () => { if (source !== 'eqtl') return; view = tab.dataset.variantView || 'variant'; page = 1; setTabs(viewTabs, 'variantView', view); load(); }));
+        viewTabs.forEach((tab) => { tab.disabled = false; });
+        load();
+      }());
+
+(function () {
         const panel = document.getElementById('search-karyotype-panel');
         const view = document.getElementById('search-karyotype-view');
         const status = document.getElementById('search-karyotype-status');

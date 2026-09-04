@@ -65,7 +65,7 @@ $previewConfig = [
           </div>
           <div class="preview-workspace-mode" id="previewWorkspaceMode" role="tablist" aria-label="Graph workspace mode">
             <button id="preview-mode-knowledge" class="preview-workspace-mode-tab is-active" type="button" role="tab" aria-controls="previewGraphWorkspace" aria-selected="true" aria-pressed="true">Knowledge Graph</button>
-            <button id="preview-mode-coexpression" class="preview-workspace-mode-tab" type="button" role="tab" aria-controls="previewCoexpressionWorkspace" aria-selected="false" aria-pressed="false">Co-expression</button>
+            <button id="preview-mode-coexpression" class="preview-workspace-mode-tab" type="button" role="tab" aria-controls="previewCoexpressionWorkspace" aria-selected="false" aria-pressed="false">TE-Gene Graph</button>
           </div>
           <button id="back-graph" class="preview-graph-command" type="button" disabled hidden><span id="back-text">Back</span></button>
         </div>

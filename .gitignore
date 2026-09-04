@@ -6,6 +6,8 @@ docs/
 docs/*
 !docs/article/
 !docs/article/**
+!docs/article_scientific_data/
+!docs/article_scientific_data/**
 !docs/about/
 !docs/about/**
 !docs/architecture/
@@ -31,10 +33,16 @@ docs/exec-plans/completed/*
 !docs/exec-plans/completed/agent-13-question-baseline.md
 !docs/exec-plans/completed/agent-literature-disambiguation.md
 !docs/exec-plans/completed/agent-routing-stop-conditions.md
+!docs/exec-plans/completed/gtex-v11-all-tissue-eqtl-mysql.md
+!docs/exec-plans/completed/scientific-data-materials-migration.md
 !docs/coexpression/
 docs/coexpression/*
 !docs/coexpression/README.md
 !docs/coexpression/frontend_contract.md
+!docs/eqtl/
+docs/eqtl/*
+!docs/eqtl/README.md
+.runtime/
 !docs/eval/
 docs/eval/*
 !docs/eval/runs/

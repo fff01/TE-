@@ -23,6 +23,9 @@ $genomeDistribution = tekg_karyotype_lookup_proto($query, $type, $repbase);
 $jbrowseSession = tekg_jbrowse_lookup_proto($query, $type, $repbase, $siteLang);
 $karyotypeHitMap = tekg_karyotype_bin_hit_map_proto($genomeDistribution, $jbrowseSession);
 $classificationSession = tekg_tree_classification_lookup_proto($query, $type, $repbase, $dfamSequence);
+$variantsEnabled = $query !== ''
+    && !in_array(strtoupper(trim($type)), ['DISEASE', 'FUNCTION', 'PAPER'], true)
+    && ($repbase !== null || $jbrowseSession !== null || $classificationSession !== null);
 $searchGraphSrc = site_url_with_state(tekg_assets_url('html/preview_graph.html'), $siteLang, null, array_filter([
     'embed' => 'search-result',
     'q' => $query !== '' ? $query : null,
@@ -40,6 +43,9 @@ if ($genomeDistribution !== null) {
 }
 if ($jbrowseSession !== null) {
     $detailSections[] = ['id' => 'search-jbrowse-panel', 'label' => 'Genome Browser'];
+}
+if ($variantsEnabled) {
+    $detailSections[] = ['id' => 'search-variants-panel', 'label' => 'Variants'];
 }
 
 require __DIR__ . '/head.php';
@@ -235,6 +241,9 @@ require __DIR__ . '/head.php';
                   </div>
                 </section>
               <?php endif; ?>
+              <?php if ($variantsEnabled): ?>
+                <?php require __DIR__ . '/templates/components/search_variants_panel.php'; ?>
+              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -258,6 +267,9 @@ require __DIR__ . '/head.php';
         'browserBaseUrl' => (string) ($jbrowseSession['browser_url'] ?? ''),
         'configUrl' => (string) ($jbrowseSession['config_url'] ?? ''),
         'karyotypeHitMap' => $karyotypeHitMap,
+        'variantsApiUrl' => tekg_api_url('variants.php'),
+        'variantsQuery' => $query,
+        'variantsType' => $type,
       ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?></script>
       <script src="<?= htmlspecialchars(tekg_assets_url('js/pages/search.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
     </main>

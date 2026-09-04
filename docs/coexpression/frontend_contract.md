@@ -1,6 +1,6 @@
 # Co-expression Frontend Contract
 
-Last verified: 2026-07-25
+Last verified: 2026-09-02
 
 ## Runtime Shape
 
@@ -8,10 +8,12 @@ Last verified: 2026-07-25
 
 - Knowledge Graph uses its existing G6 iframe, Neo4j API, legend, details, and
   history.
-- Co-expression uses `templates/preview/coexpression_workspace.php`, a
-  dedicated iframe, a dedicated G6 instance, and `api/coexpression.php`.
+- The TE-Gene Graph uses `templates/preview/coexpression_workspace.php`, a
+  dedicated iframe, a dedicated G6 instance, and `api/te_gene.php` for TE
+  selections. The legacy `api/coexpression.php` remains available for
+  compatibility and Gene-centered behavior.
 
-The shared `Knowledge Graph | Co-expression` control moves between the active
+The shared `Knowledge Graph | TE-Gene Graph` control moves between the active
 toolbars. Switching workspaces hides rather than destroys either initialized
 renderer. Co-expression stops its force layout while hidden and restores the
 same iframe, coordinates, selection, filters, and zoom when resumed.
@@ -26,9 +28,15 @@ The Co-expression runtime is MySQL-only:
 - offline JSON, TSV, and manifests under `data/coexpression/` are provenance
   and importer inputs, not browser runtime sources.
 
-One display unit is one selected TE or Gene in one context class. Payloads are
-capped at 50 nodes and 150 edges. All displayed edges are positive Spearman
-correlations that passed the approved correlation/FDR filters.
+One TE-Gene display unit is one selected TE in `All tissues` or one GTEx
+tissue. Payloads are capped at 100 nodes and 150 edges by the existing G6
+contract; the TE-Gene API uses a 49-edge display cap so the center TE fits in
+the node limit. Complete aggregate counts remain in `counts` and truncation is
+explicit in `metadata.display_truncated`.
+
+TE-Gene edges are aggregate pair evidence labeled exactly `Co-expression`,
+`eQTL`, or `Both`. `Both` means both evidence types exist for the same pair in
+the selected evidence scope; supporting tissues are listed in the edge detail.
 
 The searchable catalog contains approved TE centers and Genes present in the
 stored display networks. A Gene search is case-insensitive but exact. When a
@@ -100,13 +108,13 @@ role, and the statistical-association boundary. Runtime text is escaped.
 Supported direct URL:
 
 ```text
-preview.php?mode=coexpression&te=L1HS&context=cancer_cell_line
+preview.php?mode=te_gene&te=L1HS&scope=all
 ```
 
-Gene-centered direct URL:
+Single-tissue direct URL:
 
 ```text
-preview.php?mode=coexpression&gene=C1orf116&context=cancer_cell_line
+preview.php?mode=te_gene&te=L1HS&scope=tissue&tissue=Liver
 ```
 
 Real user mode/selection changes push browser history. Back/Forward restores
@@ -118,9 +126,10 @@ capped at six entries. Request epochs and abort signals prevent stale responses
 from replacing newer selections.
 
 Failures retain the selected feature/context and expose Retry. CSV export contains
-visible nodes/edges, correlation, FDR, Expression values, analysis version,
-method, thresholds, and the interpretation limit. PNG export comes from the
-active Co-expression Canvas. SVG export serializes the current filtered network
+visible nodes/edges, edge label, scope, supporting tissues, eQTL summary values,
+correlation, FDR, Expression values, analysis version, method, thresholds, and
+the interpretation limit. PNG export comes from the active TE-Gene Graph Canvas.
+SVG export serializes the current filtered network
 from final G6 positions as vector edges, static Expression rings, nodes, and
 labels with an automatically padded `viewBox`. It uses the shared
 `assets/js/renderers/g6/g6-svg-export.js` serializer while retaining a

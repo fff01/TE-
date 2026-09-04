@@ -51,6 +51,21 @@ Important files:
 - JBrowse runtime data lives under `data/JBrowse/`.
 - `jbrowse.php` is the active entrypoint.
 
+## GTEx eQTL
+
+- Active runtime database: MySQL `tekg_expression`.
+- Active version: `gtex_v11_strict_te_overlap_v1`.
+- Source archive: `data/eQTL/GTEx_Analysis_v11_eQTL.tar`.
+- TE interval input: `data/JBrowse/repeats/hg38.rmsk.repeats.bed`.
+- Browse-name input: `data/processed/te_repbase_db_matched.json`.
+- Versioned provenance/import root:
+  `data/eQTL/derived/gtex_v11_strict_te_overlap_v1/`.
+- Runtime must not read the tar, Parquet, gzip TSV, or SQLite staging database.
+  It must select the sole validated active MySQL version.
+- The approved mapping rule is GRCh38 reference-span intersection with no
+  flanking window. See `docs/eqtl/README.md` for the coordinate contract and
+  interpretation boundary.
+
 ## Related Checks
 
 - `scripts/checks/check_no_legacy_db_fallback.py`
@@ -59,3 +74,6 @@ Important files:
 - `scripts/checks/check_taxonomy_runtime_consistency.py`
 - `scripts/checks/check_browse_catalog_mysql_contract.php`
 - `scripts/checks/check_browse_mysql_api.py`
+- `scripts/checks/check_gtex_eqtl_all_tissues.py`
+- `scripts/checks/check_gtex_eqtl_mysql_static.py`
+- `scripts/checks/check_gtex_eqtl_mysql_contract.php`

@@ -82,7 +82,7 @@ Production Co-expression data is read from isolated MySQL
 - `assets/js/renderers/g6/coexpression/`
 
 The active analysis version is `v1_abs0.4_fdr0.05_res1.8`. A runtime network is
-one selected TE or Gene in one context class, capped at 50 nodes and 150 edges.
+one selected TE or Gene in one context class, capped at 100 nodes and 150 edges.
 TE searches use their approved stored display network. Gene searches
 deterministically choose the approved stored network in which the Gene has the
 highest visible incident-edge count and re-root that payload on the Gene.

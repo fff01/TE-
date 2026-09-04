@@ -57,8 +57,8 @@
                 <span id="coexpression-state-message"></span>
                 <button id="coexpression-retry" type="button" hidden>Retry</button>
               </div>
-              <aside id="coexpression-legend" class="graph-legend-panel coexpression-legend" aria-label="Co-expression legend">
-                <div class="graph-legend-title">Co-expression Legend</div>
+              <aside id="coexpression-legend" class="graph-legend-panel coexpression-legend" aria-label="TE-Gene Graph legend">
+                <div class="graph-legend-title">TE-Gene Graph Legend</div>
                 <label class="graph-legend-item" data-highlight-kind="entity" data-highlight-value="TE" tabindex="0" aria-pressed="false">
                   <input id="coexpression-show-te" class="graph-legend-check" type="checkbox" checked>
                   <span class="graph-legend-swatch coexpression-legend-te" aria-hidden="true"></span>
@@ -78,6 +78,19 @@
                   <span class="coexpression-activity-ring" aria-hidden="true"></span>
                   <span class="graph-legend-text">Relative expression activity</span>
                   <span class="coexpression-legend-help" role="tooltip">Median expression for the selected context, log-normalized against the other visible TE and Gene nodes. It does not encode correlation or causality.</span>
+                </div>
+                <div class="coexpression-legend-divider" aria-hidden="true"></div>
+                <div class="graph-legend-item coexpression-legend-static" data-highlight-kind="relation" data-highlight-value="Co-expression" tabindex="0" aria-pressed="false">
+                  <span class="graph-relation-line coexpression-edge-line" aria-hidden="true"></span>
+                  <span class="graph-legend-text">Co-expression</span>
+                </div>
+                <div class="graph-legend-item coexpression-legend-static" data-highlight-kind="relation" data-highlight-value="eQTL" tabindex="0" aria-pressed="false">
+                  <span class="graph-relation-line coexpression-edge-line coexpression-edge-eqtl" aria-hidden="true"></span>
+                  <span class="graph-legend-text">eQTL</span>
+                </div>
+                <div class="graph-legend-item coexpression-legend-static" data-highlight-kind="relation" data-highlight-value="Both" tabindex="0" aria-pressed="false">
+                  <span class="graph-relation-line coexpression-edge-line coexpression-edge-both" aria-hidden="true"></span>
+                  <span class="graph-legend-text">Both</span>
                 </div>
                 <label class="coexpression-edge-scope-control" for="coexpression-edge-scope">
                   <span>Edges</span>

@@ -4,23 +4,25 @@
 
 ## 1. 关于 TE-KG
 
-TE-KG 是一个面向人类转座元件的综合资源，将分类体系、文献提取的关系、代表性序列和基因组记录、表达与共表达环境、可下载数据，以及受证据约束的自然语言问答连接在一起。
+TE-KG 是一个面向人类转座元件的综合资源，将分类体系、文献提取的关系、代表性序列和基因组记录、表达与共表达环境、Variant 与 eQTL 证据、可下载数据，以及受证据约束的自然语言问答连接在一起。
 
 ### TE-KG 是什么
 
-TE-KG 将人类转座元件的多种互补视图汇集到同一界面，而不是把每种数据当作孤立表格。该资源包括 TE 目录、实体详情页、基于文献的关系图、分类视图、表达与共表达探索，以及可下载数据。TE-KG 的核心目标是在便于探索 TE 信息的同时，让来源证据与解释边界保持可见。
+TE-KG 将人类转座元件的多种互补视图汇集到同一界面，而不是把每种数据当作孤立表格。该资源包括 TE 目录、实体详情页、基于文献的关系图、分类视图、表达与 TE-Gene 证据探索，以及可下载数据。TE-KG 的核心目标是在便于探索 TE 信息的同时，让来源证据与解释边界保持可见。
 
 ### TE-KG 的架构
 
-（文字待补充）
+TE-KG 整合四类主要数据流。文献首先经过筛选，再进行 AI 辅助的实体和关系提取、标准化与人工整理。RMSK 基因组注释与 RepBase 分类和序列记录被统一到分类、序列和基因组注释层。表达数据集经过独立处理，用于构建特定环境下的 TE-Gene 共表达结果。GTEx v11 eQTL 数据则经 Variant 标准化、TE-Variant 严格坐标重叠和 Variant-Gene-Tissue 关联整理，形成可查询的 TE-Gene eQTL 证据。
+
+其中，eQTL 证据的基本关系为：TE instance 与 Variant 的参考等位基因区间严格重叠，Variant 再在特定 tissue 中与 Gene 存在 GTEx eQTL 关联。知识图谱和分类运行于 Neo4j；目录、表达、共表达及 eQTL/Variant 运行数据保存在 MySQL，并通过统一 API 和证据服务支持 Browse、Path、Graph、Expression、Agent 和 DeepThink 工作流。
 
 ![alt text](<figs/TE-KG Data Architecture and Public Services.svg>)
 
 ### 数据访问入口
 
 - 使用 Home 查看数据库当前的整体组成。
-- 使用 Browse 浏览 TE 目录，再通过 Search 查看选中实体的详细记录。
-- 使用 Graph 探索知识关系、TE 分类和共表达网络；使用 Path Finder 查看两个指定实体之间的连接。
+- 使用 Browse 浏览 TE 目录，再通过 Search 查看选中实体的详细记录、基因组位置和 Variant/eQTL 证据。
+- 使用 Graph 探索知识关系、TE 分类和 TE-Gene Graph；使用 Path Finder 查看两个指定实体之间的连接。
 - 使用 Expression 查看当前表达数据集中的丰度模式。
 - 使用 Agent 或 DeepThink 提出有证据支撑的自然语言问题，并在当前对话中继续追问。
 - 使用 Download 获取网站当前提供的文件。
@@ -41,15 +43,16 @@ Home 是 TE-KG 的总览入口，用于介绍资源、概括当前数据库组�
 
 ## 3. Browse
 
-Browse 提供查找和查看 TE 记录的完整流程。内容包括Summary、Local Graph、Sequence、Genome Annotation、Genome Browser
+Browse 提供查找和查看 TE 记录的完整流程。内容包括 Summary、Local Graph、Sequence、Genome Annotation、Genome Browser 和 Variants。
 
 ![alt text](figs/Browse.png)
 
 - Summary 用于确认当前记录，并展示现有的元数据。
-- Local Graph 用于查看邻近实体和关系
+- Local Graph 用于查看邻近实体和关系。
 - Sequence 显示受支持的代表性或共识序列及现有注释，不代表每一个基因组 TE 拷贝。
-- Genome Annotation Distribution 汇总当前 assembly 上支持的命中
-- Genome Browser 用于查看具体基因组位置，且可以通过点击Genome Annotation Distribution的命中来更新Genomic hit列表
+- Genome Annotation Distribution 汇总当前 assembly 上支持的命中。
+- Genome Browser 用于查看具体基因组位置，且可以通过点击 Genome Annotation Distribution 的命中来更新 Genomic hit 列表。
+- Variants 默认以表格展示与当前 TE 严格重叠的 GTEx eQTL Variant。默认视图一行对应一个 Variant，并汇总关联 Gene、tissue 数量和最小 nominal p-value；也可以切换到 Evidence rows，以查看逐条 Variant-Gene-Tissue 证据及其 slope 和 p-value。无关联 Gene 的重叠 Variant 仍会保留显示。
 
 ![alt text](figs/Browse.gif)
 
@@ -82,7 +85,7 @@ Path 搜索两个指定实体之间已存储的连接，并以可核验形式展
 
 ## 5. Graph 工作区
 
-Graph 提供三种互补的可视化工作流：基于文献的知识关系、Tree 或 Graph 形式的 TE 分类，以及独立的特定环境共表达网络。
+Graph 提供三种互补的可视化工作流：基于文献的知识关系、Tree 或 Graph 形式的 TE 分类，以及整合共表达和 eQTL 证据的 TE-Gene Graph。
 
 ### 分类 Tree 与 Graph
 
@@ -93,7 +96,7 @@ Graph 提供三种互补的可视化工作流：基于文献的知识关系、Tr
 
 - 在搜索框中选择实体类别并输入实体名称，以快速跳转到特定实体图谱
 - 点击 Show relations 可以显示边名，点击 Back to entity 可以返回上一张Graph，点击Export可以导出Graph
-- 若搜索实体为TE，则可通过 Knowledge Graph / Co-expression 切换按钮查看该TE的不同信息
+- 若搜索实体为 TE，则可通过 Knowledge Graph / TE-Gene Graph 切换按钮查看该 TE 的不同信息。
 - 可以点击图例以在Graph中暂时强调该内容，也可筛选图例类别等并Apply以聚焦到特定实体或关系上
 
 ### Knowledge Graph 工作区
@@ -108,12 +111,13 @@ Graph 提供三种互补的可视化工作流：基于文献的知识关系、Tr
 
 ![alt text](figs/Graph.png)
 
-### Co-expression 工作区
+### TE-Gene Graph 工作区
 
-- 使用图例显示或隐藏 TE 或 Gene 节点、识别 module hub，并选择当前显示的边范围。
-- 开启Expression activity后，节点根据表达强度展示不同的波纹
-- 可以在Context下拉框中选择不同Context
-- 构建共表达网络时用的筛选指标为：spearman r >= 0.4 . FDR <= 0.05
+- 图例中的边分为 Co-expression、eQTL 和 Both。Both 表示同一 TE-Gene 对同时具有共表达和 eQTL 两类证据。
+- 共表达部分保留原有特定 Context 的网络结构，使用图例显示或隐藏 TE 或 Gene 节点、识别 module hub，并选择当前显示的边范围。
+- 开启 Expression activity 后，具有表达强度意义的共表达节点根据表达强度展示不同的波纹；仅由 eQTL 引入的非中心 Gene 不显示该波纹。
+- 可以选择 All tissues 汇总 eQTL 证据，也可以在 tissue 下拉框中查看单个 GTEx tissue 的证据。
+- 构建共表达网络时用的筛选指标为：Spearman r >= 0.4，FDR <= 0.05，而 eQTL 当前不额外设置 p-value 阈值。
 
 ## 6. Agent 与 DeepThink
 
@@ -121,7 +125,7 @@ Agent 是自然语言研究界面。Agent 模式通过结构化多阶段流程�
 
 ### 适用模式
 
-- Agent: 综合序列、基因组位置、表达、疾病关系和文献等多个数据库区域，由多个大模型完成，需经历六阶段
+- Agent: 综合序列、基因组位置、Variant/eQTL、表达、疾病关系和文献等多个数据库区域，由多个大模型完成，需经历六阶段
   - Understanding
   - Planning
   - Collecting
@@ -137,7 +141,7 @@ Agent 是自然语言研究界面。Agent 模式通过结构化多阶段流程�
 ### 提问
 
 - 尽量使用清晰的 TE、疾病、基因名称或 PMID；缩写或实体名称有歧义时应先要求澄清。
-- 可以询问 TE 分类、序列、基因组记录、表达、共表达、图关系、疾病、基因或文献证据。
+- 可以询问 TE 分类、序列、基因组记录、Variant 重叠、GTEx eQTL、表达、共表达、图关系、疾病、基因或文献证据。
 - 文献证据重要时，点击答案中的 PMID 链接查看对应 PubMed 记录。
 - 数据库缺少相应证据时，回答可能合理地保持有限；检索结果中缺失不能证明生物学上不存在。
 

@@ -614,7 +614,7 @@
         }
         .coexpression-tooltip {
           position: absolute;
-          z-index: 24;
+          z-index: 10;
           max-width: 260px;
           border: 1px solid rgba(148, 163, 184, 0.4);
           border-radius: 7px;
@@ -777,6 +777,10 @@
 
     function showCoexpressionTooltipForNode(node, event) {
       if (!node?.coexpression) return;
+      if (inspectCardState) {
+        hideCoexpressionTooltip();
+        return;
+      }
       const tooltip = ensureCoexpressionTooltip();
       const label = String(node.displayLabel || node.rawLabel || node.id || '');
       const role = node.coexpressionIsCenter
@@ -792,6 +796,10 @@
 
     function showCoexpressionTooltipForEdge(edge, nodes, event) {
       if (!edge?.coexpression) return;
+      if (inspectCardState) {
+        hideCoexpressionTooltip();
+        return;
+      }
       const source = resolveNode(edge.source, nodes);
       const target = resolveNode(edge.target, nodes);
       const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge.source || '');
@@ -1024,7 +1032,9 @@
         kvRow('Composition', String(module.type || '').replaceAll('-', ' ')),
         entitySummary ? kvRow('Entities', entitySummary) : '',
       ].filter(Boolean).join('');
-      const expressionHtml = ['TE', 'Gene'].includes(node.nodeType) ? renderExpressionEvidenceHtml(node, !expanded) : '';
+      const expressionHtml = node.expressionDisabled === true
+        ? ''
+        : (['TE', 'Gene'].includes(node.nodeType) ? renderExpressionEvidenceHtml(node, !expanded) : '');
       const enrichment = Array.isArray(module.top_enriched_terms)
         ? module.top_enriched_terms.slice(0, expanded ? 5 : 2).join('; ')
         : '';
@@ -1162,17 +1172,21 @@
     }
 
     function renderEdgeInspectCard(edge, nodes) {
-      if (edge?.coexpression) return renderCoexpressionEdgeInspectCard(edge, nodes);
+      if (edge?.coexpression && edge?.relationType === 'Co-expression') return renderCoexpressionEdgeInspectCard(edge, nodes);
       const source = resolveNode(edge?.source, nodes);
       const target = resolveNode(edge?.target, nodes);
       const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
       const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
       const relation = relationLabelForEdge(edge);
       const relationType = String(edge?.relationType || '').trim();
+      const isEqtl = relationType === 'eQTL' || relation === 'eQTL';
+      const isBoth = relationType === 'Both' || relation === 'Both';
+      const isTeGeneEvidence = isEqtl || isBoth;
+      const eqtl = edge?.eqtlEvidence && typeof edge.eqtlEvidence === 'object' ? edge.eqtlEvidence : null;
       const pmids = Array.isArray(edge?.pmids) ? edge.pmids : [];
-      const pmidSummary = pmids.length === 0
-        ? 'No linked PMID records'
-        : `${pmids.length} linked PMID ${pmids.length === 1 ? 'record' : 'records'}`;
+      const summary = isEqtl
+        ? `GTEx eQTL overlap${eqtl?.supporting_variant_count != null ? ` · ${eqtl.supporting_variant_count} supporting variants` : ''}${eqtl?.tissue_count != null ? ` · ${eqtl.tissue_count} tissues` : ''}`
+        : (isBoth ? `Combined co-expression + GTEx eQTL evidence${eqtl?.supporting_variant_count != null ? ` · ${eqtl.supporting_variant_count} supporting variants` : ''}` : (pmids.length === 0 ? 'No linked PMID records' : `${pmids.length} linked PMID ${pmids.length === 1 ? 'record' : 'records'}`));
       const evidence = String(edge?.evidence || '').trim();
       const expanded = inspectCardState?.expanded === true;
       const expressionNode = expressionNodeEndpoint(edge, nodes);
@@ -1181,15 +1195,20 @@
         : '';
       const rows = [
         kvRow('Relation', relation),
-        kvRow('PMID count', edge?.support_pmid_count ?? pmids.length),
+        !isTeGeneEvidence ? kvRow('PMID count', edge?.support_pmid_count ?? pmids.length) : '',
+        eqtl?.supporting_variant_count != null ? kvRow('Supporting variants', eqtl.supporting_variant_count) : '',
+        eqtl?.tissue_count != null ? kvRow('Supporting tissues', eqtl.tissue_count) : '',
+        eqtl?.minimum_pval_nominal != null ? kvRow('Minimum nominal P', eqtl.minimum_pval_nominal) : '',
+        isBoth ? kvRow('Spearman r', coexpressionMetric(edge?.correlation)) : '',
+        isBoth ? kvRow('Adjusted P value (FDR)', coexpressionMetric(edge?.fdr)) : '',
       ].filter(Boolean).join('');
 
       return [
         '<div class="inspect-card__body">',
         `<h3 class="inspect-card__title">${escapeHtml(sourceLabel)} → ${escapeHtml(relation)} → ${escapeHtml(targetLabel)}</h3>`,
-        `<div class="inspect-card__meta">${escapeHtml(pmidSummary)}</div>`,
+        `<div class="inspect-card__meta">${escapeHtml(summary)}</div>`,
         expanded && rows ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Relation</p><div class="inspect-card__kv">${rows}</div></div>` : '',
-        expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
+        !isTeGeneEvidence && expanded ? `<div class="inspect-card__section"><div class="inspect-card__section-head"><p class="inspect-card__section-title">PubMed</p>${buildEvidenceCsvButtonHtml(edge)}</div>${buildEvidenceTableHtml(edge)}</div>` : (!isTeGeneEvidence && pmids.length ? `<div class="inspect-card__desc">PMID: ${escapeHtml(pmids.slice(0, 4).join(', '))}${pmids.length > 4 ? '...' : ''}</div>` : ''),
         expanded && evidence ? `<div class="inspect-card__section"><p class="inspect-card__section-title">Evidence</p><div class="inspect-card__desc">${escapeHtml(evidence)}</div></div>` : '',
         expressionHtml,
         '<div class="inspect-card__actions">',
@@ -1704,6 +1723,13 @@
         node.fillColor = node.baseFillColor;
         node.strokeColor = node.baseStrokeColor;
 
+        if (node.expressionDisabled === true) {
+          node.expressionContext = 'off';
+          node.expressionActivity = 'Not shown for eQTL-only evidence';
+          node.expressionLineWidth = node.endpointHighlight ? 5 : 2;
+          continue;
+        }
+
         if (!enabled) continue;
         if (!['TE', 'Gene'].includes(node.nodeType)) continue;
 
@@ -1885,6 +1911,12 @@
 
     function relationStyleForType(relationType) {
       const type = String(relationType || 'RELATION').trim() || 'RELATION';
+      const coexpressionStyles = {
+        'Co-expression': { color: '#2563eb', dashed: false, lineDash: [] },
+        eQTL: { color: '#d97706', dashed: false, lineDash: [] },
+        Both: { color: '#0f766e', dashed: false, lineDash: [] },
+      };
+      if (coexpressionStyles[type]) return coexpressionStyles[type];
       const index = hashString(type) % RELATION_STYLE_COLORS.length;
       const dashed = /CLASSIFICATION|CATEGORY|TAXONOMY|SYNTHETIC/i.test(type);
       return {
@@ -1899,7 +1931,7 @@
     }
 
     function buildEdgeDetailHtml(edge, nodes) {
-      if (edge?.coexpression) {
+      if (edge?.coexpression && edge?.relationType === 'Co-expression') {
         const source = resolveNode(edge?.source, nodes);
         const target = resolveNode(edge?.target, nodes);
         const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
@@ -1917,6 +1949,8 @@
       const sourceLabel = source?.displayLabel || source?.rawLabel || String(edge?.source || '');
       const targetLabel = target?.displayLabel || target?.rawLabel || String(edge?.target || '');
       const relation = relationLabelForEdge(edge);
+      const eqtl = edge?.eqtlEvidence || null;
+      const isEqtl = relation === 'eQTL';
       const pmidCount = Math.max(0, Number(edge?.support_pmid_count) || (Array.isArray(edge?.pmids) ? edge.pmids.length : 0));
       const expressionNode = expressionNodeEndpoint(edge, nodes);
       const expressionHtml = expressionNode
@@ -1930,7 +1964,8 @@
         `&nbsp;&rarr;&nbsp;${escapeHtml(relation)}&nbsp;&rarr;&nbsp;`,
         `<strong>${escapeHtml(targetLabel)}</strong>`,
         '</div>',
-        `<div class="edge-evidence-summary">Linked PMID records: ${escapeHtml(pmidCount)}. Expand the edge card to inspect PubMed evidence.</div>`,
+          `<div class="edge-evidence-summary">${escapeHtml(relation)} evidence. ${eqtl?.supporting_variant_count != null ? `Supporting variants: ${escapeHtml(eqtl.supporting_variant_count)}.` : ''}</div>`,
+          !isEqtl && pmidCount > 0 ? `<div class="edge-evidence-summary">Linked PMID records: ${escapeHtml(pmidCount)}.</div>` : '',
         expressionHtml,
         '</div>',
       ].join('');
@@ -1997,6 +2032,7 @@
           coexpressionFeatureType: String(data.coexpressionFeatureType || nodeType),
           coexpressionIsCenter: data.coexpressionIsCenter === true,
           coexpressionIsModuleHub: data.coexpressionIsModuleHub === true,
+          expressionDisabled: data.expressionDisabled === true,
           coexpressionModule: data.coexpressionModule && typeof data.coexpressionModule === 'object'
             ? { ...data.coexpressionModule }
             : {},
@@ -2099,6 +2135,7 @@
           fdr: Number(data.fdr),
           pairType: String(data.pairType || ''),
           coexpressionEdgeRole: String(data.coexpressionEdgeRole || data.role || ''),
+          eqtlEvidence: data.eqtlEvidence && typeof data.eqtlEvidence === 'object' ? clonePlain(data.eqtlEvidence) : null,
           evidence: String(data.evidence || '').trim(),
           pmids,
           evidence_records: Array.isArray(data.evidence_records) ? data.evidence_records : [],
@@ -2608,6 +2645,7 @@
           const nodeId = event?.target?.id;
           const node = data.nodes.find((item) => item.id === nodeId);
           if (!node) return;
+          hideCoexpressionTooltip();
           showInspectCard('node', node, event, data);
           hooks.onSelection(node);
           hooks.setDetail(node.displayLabel || node.rawLabel, node.description);
@@ -2625,6 +2663,7 @@
           const edgeId = event?.target?.id;
           const edge = data.edges.find((item) => item.id === edgeId);
           if (!edge) return;
+          hideCoexpressionTooltip();
           if (currentAllowInspectCard) showInspectCard('edge', edge, event, data);
           else hideInspectCard();
           hooks.onSelection(null);
@@ -2933,6 +2972,7 @@
               fdr: Number.isFinite(Number(edge.fdr)) ? Number(edge.fdr) : null,
               pair_type: String(edge.pairType || ''),
               edge_role: String(edge.coexpressionEdgeRole || ''),
+              eqtl_evidence: edge.eqtlEvidence && typeof edge.eqtlEvidence === 'object' ? clonePlain(edge.eqtlEvidence) : null,
               pmids: Array.isArray(edge.pmids) ? edge.pmids.map((pmid) => String(pmid || '')).filter(Boolean) : [],
               pmid_count: Array.isArray(edge.pmids) ? edge.pmids.length : 0,
               evidence_records: Array.isArray(edge.evidence_records) ? clonePlain(edge.evidence_records) : [],

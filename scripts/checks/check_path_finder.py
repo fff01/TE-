@@ -31,15 +31,15 @@ def main() -> int:
     browse_pos = nav.find("'browse'")
     path_pos = nav.find("'path_finder'")
     preview_pos = nav.find("'preview'")
-    if not (browse_pos != -1 and path_pos != -1 and preview_pos != -1 and browse_pos < path_pos < preview_pos):
-        failures.append("Path Finder nav item is not between Browse and TE-KG")
+    if not (browse_pos != -1 and path_pos != -1 and preview_pos != -1 and browse_pos < preview_pos < path_pos):
+        failures.append("Graph nav item is not between Browse and Path")
 
     index = text("index.php")
     browse_quick = index.find("'Browse'")
     path_quick = index.find("'Path'")
     preview_quick = index.find("'Graph'")
-    if not (browse_quick != -1 and path_quick != -1 and preview_quick != -1 and browse_quick < path_quick < preview_quick):
-        failures.append("Path quick link is not between Browse and Graph")
+    if not (browse_quick != -1 and path_quick != -1 and preview_quick != -1 and browse_quick < preview_quick < path_quick):
+        failures.append("Graph quick link is not between Browse and Path")
 
     if (ROOT / "assets/js/pages/path_finder.js").is_file():
         js = text("assets/js/pages/path_finder.js")

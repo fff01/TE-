@@ -66,6 +66,20 @@ def main() -> None:
                 "Others": (0.09, 0.12),
             },
         )
+        visible_contract = page.evaluate(
+            """() => ({
+                legendDepths: window.__TEKG_CANVAS_TAXONOMY.getLegendMeta().map(item => item.depth),
+                exportedDepths: window.__TEKG_CANVAS_TAXONOMY.getExportSnapshot().nodes.map(node => node.taxonomyLevel),
+                legendText: document.querySelector('#graph-legend-list')?.textContent || '',
+            })"""
+        )
+        require(max(visible_contract["legendDepths"], default=-1) == 5,
+                f"Taxonomy legend must end at Level 5: {visible_contract}")
+        require(max(visible_contract["exportedDepths"], default=-1) <= 5,
+                f"Taxonomy Graph still exposes Level 6-8 nodes: {visible_contract}")
+        for hidden_label in ("Level 6", "Level 7", "Level 8"):
+            require(hidden_label not in visible_contract["legendText"],
+                    f"Taxonomy legend still displays {hidden_label}")
 
         surface = page.locator("#taxonomy-canvas-surface").evaluate(
             """element => {

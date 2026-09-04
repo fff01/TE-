@@ -18,8 +18,8 @@ $overviewCopy = 'TE-KG is a comprehensive resource designed to support explorati
 
 $quickLinks = [
     ['title' => 'Browse', 'href' => site_url_with_state(tekg_app_url('browse.php'), $siteLang), 'icon' => 'browse'],
-    ['title' => 'Path', 'href' => site_url_with_state(tekg_app_url('path_finder.php'), $siteLang), 'icon' => 'pathfinder'],
     ['title' => 'Graph', 'href' => site_url_with_state(tekg_app_url('preview.php'), $siteLang), 'icon' => 'graph'],
+    ['title' => 'Path', 'href' => site_url_with_state(tekg_app_url('path_finder.php'), $siteLang), 'icon' => 'pathfinder'],
     ['title' => 'Expression', 'href' => site_url_with_state(tekg_app_url('expression.php'), $siteLang), 'icon' => 'expression'],
     ['title' => 'Download', 'href' => site_url_with_state(tekg_app_url('download.php'), $siteLang), 'icon' => 'download'],
     ['title' => 'About', 'href' => site_url_with_state(tekg_app_url('about.php'), $siteLang), 'icon' => 'about'],
