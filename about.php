@@ -221,7 +221,9 @@ function about_media_spec(string $sectionKey, string $heading): ?array
             'alt' => 'Browse record showing summary, local graph, sequence, genome annotation, and genome browser sections.',
         ],
         'browse:Record panels' => [
-            'filename' => 'browse.gif',
+            'filename' => 'browse.mp4',
+            'type' => 'video',
+            'poster' => 'browse.png',
             'alt' => 'Animated Browse workflow demonstrating genome annotation and genomic hit selection.',
         ],
         'path:Interface overview' => [
@@ -229,7 +231,9 @@ function about_media_spec(string $sectionKey, string $heading): ?array
             'alt' => 'Path interface with entity selectors and returned connection results.',
         ],
         'path:Reading path results' => [
-            'filename' => 'path.gif',
+            'filename' => 'path.mp4',
+            'type' => 'video',
+            'poster' => 'path.png',
             'alt' => 'Animated Path workflow switching between result views and inspecting relationships.',
         ],
         'graph:Knowledge Graph workspace' => [
@@ -297,9 +301,21 @@ function about_media_spec(string $sectionKey, string $heading): ?array
 <?php
     $mediaUrl = tekg_assets_url('img/about/' . $media['filename']);
     $mediaVersion = (int)@filemtime(tekg_assets_fs_path('img/about/' . $media['filename']));
+    $isVideo = ($media['type'] ?? 'image') === 'video';
+    $posterUrl = null;
+    if ($isVideo && !empty($media['poster'])) {
+        $posterVersion = (int)@filemtime(tekg_assets_fs_path('img/about/' . $media['poster']));
+        $posterUrl = tekg_assets_url('img/about/' . $media['poster']) . '?v=' . $posterVersion;
+    }
 ?>
                       <figure class="about-placeholder-media">
+<?php if ($isVideo): ?>
+                        <video class="about-media-video" autoplay loop muted playsinline preload="metadata"<?= $posterUrl !== null ? ' poster="' . htmlspecialchars($posterUrl, ENT_QUOTES, 'UTF-8') . '"' : '' ?> aria-label="<?= htmlspecialchars($media['alt'], ENT_QUOTES, 'UTF-8') ?>">
+                          <source src="<?= htmlspecialchars($mediaUrl . '?v=' . $mediaVersion, ENT_QUOTES, 'UTF-8') ?>" type="video/mp4">
+                        </video>
+<?php else: ?>
                         <img class="about-media-image" src="<?= htmlspecialchars($mediaUrl . '?v=' . $mediaVersion, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($media['alt'], ENT_QUOTES, 'UTF-8') ?>" loading="lazy" decoding="async">
+<?php endif; ?>
                       </figure>
 <?php endif; ?>
                     </section>

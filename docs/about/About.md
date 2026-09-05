@@ -54,7 +54,7 @@ Browse provides the complete workflow for finding and reviewing a TE record. Its
 - Genome Browser shows specific genomic locations. Selecting a hit in Genome Annotation Distribution updates the Genomic hit list.
 - Variants displays GTEx eQTL variants that strictly overlap the current TE. The default summary view presents one row per Variant with linked Gene and tissue counts and the minimum nominal p-value. Evidence rows expose each Variant-Gene-Tissue association with its slope and p-value. Overlapping Variants without an associated Gene remain visible.
 
-![Browse genomic hit workflow](figs/Browse.gif)
+<video src="figs/Browse.mp4" poster="figs/Browse.png" controls loop muted playsinline></video>
 
 ## 4. Path
 
@@ -75,7 +75,7 @@ Results are available in two modes: Table and Graph.
 - Table records each path in detail, including entity names, entity categories, and relationships between entities. Select a relationship to expand or collapse its supporting literature table. Evidence rows can include PMID, Year, Journal, IF, JCR, Match, and Title.
 - Graph combines all returned paths in one network. Select nodes or edges to inspect details, including literature associated with an edge. Use Show relations to display relationship labels and Export to export the graph view.
 
-![Switching between Path result views](figs/Path.gif)
+<video src="figs/Path.mp4" poster="figs/Path.png" controls loop muted playsinline></video>
 
 ## 5. Graph Workspace
 

@@ -211,13 +211,18 @@
   box-shadow: 0 8px 22px rgba(31, 62, 106, 0.06);
 }
 
-.about-media-image {
+.about-media-image,
+.about-media-video {
   display: block;
   width: 100%;
   height: auto;
   max-height: 620px;
   object-fit: contain;
   background: #f5f8fc;
+}
+
+.about-media-video {
+  aspect-ratio: 16 / 9;
 }
 
 .about-placeholder-stage {

@@ -54,7 +54,7 @@ Browse 提供查找和查看 TE 记录的完整流程。内容包括 Summary、L
 - Genome Browser 用于查看具体基因组位置，且可以通过点击 Genome Annotation Distribution 的命中来更新 Genomic hit 列表。
 - Variants 默认以表格展示与当前 TE 严格重叠的 GTEx eQTL Variant。默认视图一行对应一个 Variant，并汇总关联 Gene、tissue 数量和最小 nominal p-value；也可以切换到 Evidence rows，以查看逐条 Variant-Gene-Tissue 证据及其 slope 和 p-value。无关联 Gene 的重叠 Variant 仍会保留显示。
 
-![alt text](figs/Browse.gif)
+<video src="figs/Browse.mp4" poster="figs/Browse.png" controls loop muted playsinline></video>
 
 ## 4. Path
 
@@ -81,7 +81,7 @@ Path 搜索两个指定实体之间已存储的连接，并以可核验形式展
   - 可以点击节点和边以了解详细信息，如边的文献表格
   - 可以点击 "Show relations" 来显示边名，点击 "Export" 可以导出图像信息
 
-![alt text](figs/Path.gif)
+<video src="figs/Path.mp4" poster="figs/Path.png" controls loop muted playsinline></video>
 
 ## 5. Graph 工作区
 
