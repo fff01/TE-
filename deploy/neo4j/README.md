@@ -8,8 +8,11 @@ The supplied configuration binds Bolt and HTTP to loopback only. Apache does
 not proxy the Neo4j Browser, and neither database port should be exposed
 publicly.
 
-After the matching Neo4j distribution is installed and the database dump is
-loaded, an administrator can install the service with:
+The systemd unit below is retained for hosts that boot with systemd. It must not
+be used in the current Docker deployment, whose PID 1 is supervisord. Use the
+configuration under `deploy/supervisor` for the current server.
+
+On a future systemd host, an administrator can install the service with:
 
 ```bash
 sudo cp /app/tekg/app/deploy/neo4j/tekg-neo4j.service /etc/systemd/system/tekg-neo4j.service

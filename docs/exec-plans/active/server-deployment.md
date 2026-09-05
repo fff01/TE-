@@ -58,8 +58,8 @@ that are intentionally not all stored in Git.
 7. Create the server-local runtime configuration and least-privilege database
    credentials.
 8. Prepare the Apache `/TE-/` configuration and complete the administrator
-   actions required for PHP 8.4, Apache reload, and persistent Neo4j service
-   management.
+   actions required for PHP 8.4, an in-container Apache reload, and persistent
+   Neo4j management through the container's existing supervisord process.
 9. Run API, static-file, representative-TE, and user-flow checks before public
    cutover.
 
@@ -90,6 +90,11 @@ system changes that require administrator privileges are prepared in
 - 2026-09-05: Server investigation completed. MySQL 8.0.42 and persistent
   storage were confirmed by the user. `/data/tekg` CRUD access is available.
   PHP 8.4 installation is pending. Formal migration execution started.
+- 2026-09-05: The deployment target was confirmed to be a Docker container
+  whose PID 1 is supervisord rather than systemd. With user approval, the
+  service-management part of step 8 was changed from systemd to the container's
+  existing supervisord/Apache controls; database and application goals are
+  unchanged.
 
 ## Residual Risks
 

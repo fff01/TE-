@@ -29,6 +29,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--port", type=int, default=3306)
     parser.add_argument("--user", default="root")
     parser.add_argument(
+        "--net-buffer-length",
+        type=int,
+        default=64 * 1024,
+        help=(
+            "Maximum approximate size of extended INSERT statements emitted by "
+            "mysqldump (default: 65536 bytes)."
+        ),
+    )
+    parser.add_argument(
         "--defaults-extra-file",
         type=Path,
         help="Optional MySQL client option file. This argument must precede other client options.",
@@ -60,6 +69,7 @@ def build_command(args: argparse.Namespace, database: str) -> list[str]:
             f"--host={args.host}",
             f"--port={args.port}",
             f"--user={args.user}",
+            f"--net-buffer-length={args.net_buffer_length}",
             "--default-character-set=utf8mb4",
             "--column-statistics=0",
             "--set-gtid-purged=OFF",
@@ -129,6 +139,8 @@ def main() -> int:
     args = parse_args()
     if not args.mysqldump.is_file():
         raise FileNotFoundError(args.mysqldump)
+    if not 4096 <= args.net_buffer_length <= 1024 * 1024:
+        raise ValueError("--net-buffer-length must be between 4096 and 1048576")
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -136,6 +148,7 @@ def main() -> int:
     manifest = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "mysqldump": str(args.mysqldump.resolve()),
+        "net_buffer_length": args.net_buffer_length,
         "databases": records,
     }
     manifest_path = output_dir / "mysql-release-manifest.json"
