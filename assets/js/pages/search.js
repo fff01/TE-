@@ -89,13 +89,21 @@
         const status = document.getElementById('search-variants-status');
         const tableWrap = document.getElementById('search-variants-table-wrap');
         const pagination = document.getElementById('search-variants-pagination');
+        const pageSizeSelect = document.getElementById('search-variants-page-size');
+        const pageStatus = document.getElementById('search-variants-page-status');
+        const pageJumpInput = document.getElementById('search-variants-page-jump');
+        const prevButton = document.getElementById('search-variants-prev');
+        const nextButton = document.getElementById('search-variants-next');
         const sourceTabs = Array.from(panel.querySelectorAll('[data-variant-source]'));
         const viewTabs = Array.from(panel.querySelectorAll('[data-variant-view]'));
         let source = 'eqtl';
         let view = 'variant';
         let page = 1;
         let pageSize = 10;
+        let totalPages = 1;
         let controller = null;
+
+        if (!pagination || !pageSizeSelect || !pageStatus || !pageJumpInput || !prevButton || !nextButton) return;
 
         function el(tag, text, className) {
           const node = document.createElement(tag);
@@ -115,7 +123,7 @@
 
         function renderMessage(message, className) {
           tableWrap.replaceChildren(el('div', message, className || 'variants-empty'));
-          pagination.replaceChildren();
+          pagination.hidden = true;
         }
 
         function renderTable(payload) {
@@ -166,12 +174,16 @@
             tbody.appendChild(tr);
           });
           table.appendChild(tbody); tableWrap.replaceChildren(table);
-          const total = Number(payload.total || 0); const totalPages = Math.max(1, Math.ceil(total / pageSize));
-          const controls = el('div', undefined, 'variants-page-controls');
-          const prev = el('button', 'Previous', 'variants-page-button'); prev.type = 'button'; prev.disabled = page <= 1; prev.addEventListener('click', () => { page -= 1; load(); });
-          const next = el('button', 'Next', 'variants-page-button'); next.type = 'button'; next.disabled = page >= totalPages; next.addEventListener('click', () => { page += 1; load(); });
-          controls.append(prev, next);
-          pagination.replaceChildren(el('span', `${total.toLocaleString()} rows | Page ${page} of ${totalPages}`), controls);
+          const total = Number(payload.total || 0);
+          totalPages = Math.max(1, Math.ceil(total / pageSize));
+          const start = (page - 1) * pageSize + 1;
+          const end = Math.min(start + rows.length - 1, total);
+          pageStatus.textContent = `${start.toLocaleString()} - ${end.toLocaleString()} of ${total.toLocaleString()}`;
+          pageJumpInput.value = String(page);
+          pageJumpInput.max = String(totalPages);
+          prevButton.disabled = page <= 1;
+          nextButton.disabled = page >= totalPages;
+          pagination.hidden = false;
         }
 
         function renderLoading() {
@@ -179,7 +191,7 @@
           const skeleton = el('div', undefined, 'variants-loading-skeleton');
           for (let i = 0; i < 4; i += 1) skeleton.appendChild(el('span'));
           tableWrap.appendChild(skeleton);
-          pagination.replaceChildren();
+          pagination.hidden = true;
         }
 
         async function load() {
@@ -207,6 +219,28 @@
           setTabs(sourceTabs, 'variantSource', source); setTabs(viewTabs, 'variantView', view); load();
         }));
         viewTabs.forEach((tab) => tab.addEventListener('click', () => { if (source !== 'eqtl') return; view = tab.dataset.variantView || 'variant'; page = 1; setTabs(viewTabs, 'variantView', view); load(); }));
+        pageSizeSelect.addEventListener('change', () => {
+          const selected = Number.parseInt(pageSizeSelect.value || '10', 10);
+          pageSize = Number.isNaN(selected) ? 10 : selected;
+          page = 1;
+          load();
+        });
+        function jumpToPage() {
+          const requested = Number.parseInt(pageJumpInput.value || String(page), 10);
+          if (Number.isNaN(requested)) {
+            pageJumpInput.value = String(page);
+            return;
+          }
+          const nextPage = Math.max(1, Math.min(requested, totalPages));
+          pageJumpInput.value = String(nextPage);
+          if (nextPage === page) return;
+          page = nextPage;
+          load();
+        }
+        pageJumpInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') jumpToPage(); });
+        pageJumpInput.addEventListener('change', jumpToPage);
+        prevButton.addEventListener('click', () => { if (page > 1) { page -= 1; load(); } });
+        nextButton.addEventListener('click', () => { if (page < totalPages) { page += 1; load(); } });
         viewTabs.forEach((tab) => { tab.disabled = false; });
         load();
       }());

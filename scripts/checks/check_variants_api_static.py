@@ -18,9 +18,9 @@ for needle in ["'eqtl', 'clinvar_variant', 'clinvar_cnv'", "'variant', 'evidence
     require(repo + api, needle, 'variant API')
 require(repo, 'superfamily-level records', 'taxonomy gate')
 require(page, "'id' => 'search-variants-panel'", 'Search page')
-for needle in ['data-variant-view="variant"', 'data-variant-view="evidence"']:
+for needle in ['data-variant-view="variant"', 'data-variant-view="evidence"', 'search-variants-page-size', 'search-variants-page-jump', 'search-variants-prev', 'search-variants-next']:
     require(component, needle, 'Variants component')
-for needle in ['variantsApiUrl', 'AbortController', 'No Variants found']:
+for needle in ['variantsApiUrl', 'AbortController', 'No Variants found', 'pageStatus.textContent', 'jumpToPage']:
     require(js, needle, 'Search frontend')
 if re.search(r'\b(?:parquet|tsv|tar)\b', repo.lower()):
     raise SystemExit('runtime repository must not read offline artifact formats')

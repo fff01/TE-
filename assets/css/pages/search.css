@@ -506,30 +506,94 @@
         .variants-pagination {
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          margin-top: 12px;
-          color: #6b7f96;
-          font-size: 13px;
+          justify-content: flex-end;
+          gap: 24px;
+          margin-top: 16px;
+          flex-wrap: wrap;
         }
 
-        .variants-page-controls {
-          display: flex;
-          gap: 7px;
+        .variants-page-size,
+        .variants-page-jump {
+          display: inline-flex;
           align-items: center;
+          gap: 14px;
+          color: #445a79;
+          font-size: 15px;
+        }
+
+        .variants-page-size-label,
+        .variants-page-jump-label {
+          white-space: nowrap;
+          font-weight: 500;
+        }
+
+        .variants-page-size-select,
+        .variants-page-jump-input {
+          min-height: 46px;
+          border: 1px solid #d8e0ea;
+          border-radius: 8px;
+          background: #fff;
+          padding: 0 14px;
+          color: #2a436a;
+          font: inherit;
+          outline: none;
+          transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .variants-page-size-select:focus,
+        .variants-page-jump-input:focus {
+          border-color: #79a6ea;
+          box-shadow: 0 0 0 4px rgba(92, 143, 219, .14);
+        }
+
+        .variants-page-size-select {
+          width: 118px;
+          font-weight: 600;
+          appearance: auto;
+        }
+
+        .variants-page-jump-input {
+          width: 86px;
+        }
+
+        .variants-page-status {
+          min-width: 140px;
+          color: #243b61;
+          font-size: 15px;
+          text-align: center;
+        }
+
+        .variants-page-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
         .variants-page-button {
-          min-height: 32px;
-          padding: 5px 10px;
-          border: 1px solid #d5e1f0;
-          border-radius: 6px;
-          background: #fff;
-          color: #315b93;
+          display: inline-flex;
+          width: 40px;
+          height: 40px;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          border: 0;
+          background: transparent;
+          color: #70819a;
           cursor: pointer;
-          font: inherit;
-          font-size: 12px;
-          font-weight: 700;
+        }
+
+        .variants-page-button svg {
+          width: 24px;
+          height: 24px;
+          fill: none;
+          stroke: currentColor;
+          stroke-width: 2.4;
+          stroke-linecap: round;
+          stroke-linejoin: round;
+        }
+
+        .variants-page-button:hover:not(:disabled) {
+          color: #2f63b9;
         }
 
         .variants-page-button:disabled {
@@ -538,8 +602,7 @@
         }
 
         @media (max-width: 720px) {
-          .variants-panel-head,
-          .variants-pagination {
+          .variants-panel-head {
             display: block;
           }
 
@@ -548,8 +611,8 @@
             text-align: left;
           }
 
-          .variants-page-controls {
-            margin-top: 10px;
+          .variants-pagination {
+            justify-content: flex-start;
           }
         }
 
